@@ -1,15 +1,15 @@
 //
 //  main.cpp
-//  HumanDynamicsEstimator
+//  HumanForcesProvider
 //
-//  Created by Claudia Latella on 03/02/17.
+//  Created by Claudia Latella on 14/02/17.
 //  Copyright © 2017 Claudia Latella. All rights reserved.
 //
 
-#include <iostream>
-#include <yarp/os/LogStream.h>  //for using yError()
+#include <yarp/os/LogStream.h>
 #include <yarp/os/Network.h>
-#include "HumanDynamicsEstimator.h"
+#include "HumanForcesProvider.h"
+
 
 int main(int argc, char * argv[])
 {
@@ -20,17 +20,15 @@ int main(int argc, char * argv[])
         yError() << " YARP server not available!";
         return EXIT_FAILURE;
     }
-    
+
     // Configure ResourceFinder
     yarp::os::ResourceFinder &rf = yarp::os::ResourceFinder::getResourceFinderSingleton();
     rf.setVerbose(true);
-    rf.setDefaultContext("HumanDynamicsEstimator"); //when no parameters are given to the module this is the default context
-    rf.setDefaultConfigFile("HumanDynamicsEstimator.ini"); //default config file.ini 
+    rf.setDefaultContext("HumanForcesProvider"); //when no parameters are given to the module this is the default context
+    rf.setDefaultConfigFile("HumanForcesProvider.ini"); //default config file.ini
     rf.configure(argc, argv);
     
-    // Configure the module 
-    HumanDynamicsEstimator module;
-    std::cout<<"Configure & start module..."<<std::endl;
+    // Configure the module
+    HumanForcesProvider module;
     return module.runModule(rf);
 }
-

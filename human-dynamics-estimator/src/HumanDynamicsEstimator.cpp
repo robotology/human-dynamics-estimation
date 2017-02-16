@@ -10,7 +10,6 @@
 #include <yarp/os/LogStream.h>  //for using yError()
 #include <iDynTree/Estimation/BerdyHelper.h>
 #include <iDynTree/ModelIO/ModelLoader.h>
-#include <iDynTree/KinDynComputations.h>
 #include <iDynTree/Sensors/Sensors.h>
 #include "HumanDynamicsEstimator.h"
 
@@ -95,7 +94,7 @@ bool HumanDynamicsEstimator::configure(yarp::os::ResourceFinder &rf)
 bool HumanDynamicsEstimator::updateModule()
 {
     count++;
-    std::cout<<"["<<count<<"]"<< " updateModule..."<<std::endl;
+    std::cout<<"["<<count<<"]"<< " updateModule:< HumanDynamicsEstimator >"<<std::endl;
     return true;
     
     // TODO: MAP computation --> Maria's code to be integrated

@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.0)
 
+project(HumanDynamicsEstimation CXX)
 
+## Find packages
 find_package(YARP REQUIRED)
 find_package(YCM REQUIRED)
 
