@@ -65,8 +65,8 @@ bool HumanDynamicsEstimator::configure(yarp::os::ResourceFinder &rf)
     berdyOpts.includeFixedBaseExternalWrench                  = true;
     
     // Remove sensors that are placed on the base (not supported by Berdy)
-    humanSensors.removeSensor(iDynTree::SensorType::ACCELEROMETER, base + "_accelerometer");
-    humanSensors.removeSensor(iDynTree::SensorType::GYROSCOPE, base + "_gyro");
+    humanSensors.removeSensor(iDynTree::ACCELEROMETER, base + "_accelerometer");
+    humanSensors.removeSensor(iDynTree::GYROSCOPE, base + "_gyro");
 
     
     /*
