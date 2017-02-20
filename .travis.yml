@@ -1,0 +1,80 @@
+sudo: required
+dist: trusty
+osx_image: xcode7.3
+language: cpp
+cache: ccache 
+
+matrix:
+  include:
+    - os: linux
+      compiler: clang
+      env: TRAVIS_CMAKE_GENERATOR="Unix Makefiles", TRAVIS_BUILD_TYPE="Debug"
+    - os: linux
+      compiler: clang
+      env: TRAVIS_CMAKE_GENERATOR="Unix Makefiles", TRAVIS_BUILD_TYPE="Release"
+    - os: linux
+      compiler: gcc
+      env: TRAVIS_CMAKE_GENERATOR="Unix Makefiles", TRAVIS_BUILD_TYPE="Debug"
+    - os: linux
+      compiler: gcc
+      env: TRAVIS_CMAKE_GENERATOR="Unix Makefiles", TRAVIS_BUILD_TYPE="Release"
+    - os: osx
+      compiler: gcc
+      env: TRAVIS_CMAKE_GENERATOR="Unix Makefiles", TRAVIS_BUILD_TYPE="Debug"
+    - os: osx
+      compiler: clang
+      env: TRAVIS_CMAKE_GENERATOR="Xcode", TRAVIS_BUILD_TYPE="Release"
+
+before_script:
+  # Install ccache on osx
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew install ccache; fi
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then export PATH="/usr/local/opt/ccache/libexec:$PATH"; fi
+
+  # Use ccache also for clang and clang++ on linux
+  # See https://github.com/travis-ci/travis-ci/issues/5383#issuecomment-224630584
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then if [ "$CC" == "clang" ]; then sudo ln -s ../../bin/ccache /usr/lib/ccache/clang; fi; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then if [ "$CC" == "clang" ]; then export CFLAGS="-Qunused-arguments"; fi; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then if [ "$CXX" == "clang++" ]; then sudo ln -s ../../bin/ccache /usr/lib/ccache/clang++; fi; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then if [ "$CXX" == "clang++" ]; then export CXXFLAGS="-Qunused-arguments"; fi; fi
+
+  # Install (system, i.e. apt-get and homebrew) deps
+  - sh .ci/travis-deps.sh
+  # Install dependencies from source code 
+  # iDynTree 
+  - cd ..
+  - git clone https://github.com/robotology/idyntree
+  - cd idyntree
+  - mkdir build
+  - cd build 
+  - cmake -G"${TRAVIS_CMAKE_GENERATOR}" -DCMAKE_BUILD_TYPE=${TRAVIS_BUILD_TYPE} -DIDYNTREE_USES_KDL=OFF -DIDYNTREE_USES_YARP=ON -DIDYNTREE_USES_ICUB_MAIN=OFF ..
+  - cmake --build . --config ${TRAVIS_BUILD_TYPE}
+  - sudo cmake --build . --config ${TRAVIS_BUILD_TYPE} --target install
+  # YCM 
+  - cd ../..
+  - git clone https://github.com/robotology/ycm
+  - cd ycm
+  - mkdir build
+  - cd build 
+  - cmake -G"${TRAVIS_CMAKE_GENERATOR}" -DCMAKE_BUILD_TYPE=${TRAVIS_BUILD_TYPE}  ..
+  - cmake --build . --config ${TRAVIS_BUILD_TYPE}
+  - sudo cmake --build . --config ${TRAVIS_BUILD_TYPE} --target install
+  # Configure human-dynamics-estimation
+  - cd ../../human-dynamics-estimation
+  - cmake --version
+  - mkdir build
+  - cd build
+  - cmake -G"${TRAVIS_CMAKE_GENERATOR}" -DCMAKE_BUILD_TYPE=${TRAVIS_BUILD_TYPE}  ..
+
+script:
+  - cmake --build . --config ${TRAVIS_BUILD_TYPE}
+
+after_success:
+  - sudo cmake --build . --config ${TRAVIS_BUILD_TYPE} --target install
+  
+# Enable when tests are added to the repo
+# - ctest --build . --config ${TRAVIS_BUILD_TYPE}
+
+# Fill with mantainer(s) emails 
+# notifications:
+#  email:
+#    - whowantstobemantainedr@email.com 
