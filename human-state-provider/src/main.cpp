@@ -8,6 +8,7 @@
 
 #include <yarp/os/LogStream.h>
 #include <yarp/os/Network.h>
+#include <yarp/os/ResourceFinder.h>
 #include "HumanStateProvider.h"
 
 
@@ -27,6 +28,6 @@ int main(int argc, char * argv[])
     rf.configure(argc, argv);
     
     // Configure the module
-    HumanStateProvider module;
+    human::HumanStateProvider module;
     return module.runModule(rf);
 }

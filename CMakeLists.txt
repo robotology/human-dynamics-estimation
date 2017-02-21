@@ -27,6 +27,11 @@ include(AddInstallRPATHSupport)
 #                           DEPENDS ENABLE_RPATH
 #                           USE_LINK_PATH)
 
+#Add temporary directory
+add_subdirectory(yarp-experimental)
+#Add IK solver
+add_subdirectory(inverse-kinematics)
+
 add_subdirectory(human-state-provider)
 add_subdirectory(human-forces-provider)
 # Adding the estimator as last module
