@@ -2,6 +2,27 @@ cmake_minimum_required(VERSION 3.0)
 
 project(human-state-provider CXX)
 
+#Adding C++11 for core
+include(CheckCXXCompilerFlag)
+unset(CXX11_FLAGS)
+check_cxx_compiler_flag("-std=c++11" CXX_HAS_STD_CXX11)
+check_cxx_compiler_flag("-std=c++0x" CXX_HAS_STD_CXX0X)
+if(CXX_HAS_STD_CXX11)
+set(CXX11_FLAGS "-std=c++11")
+elseif(CXX_HAS_STD_CXX0X)
+set(CXX11_FLAGS "-std=c++0x")
+endif()
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED 11)
+if(NOT CMAKE_MINIMUM_REQUIRED_VERSION VERSION_LESS 3.1)
+  message(AUTHOR_WARNING "CMAKE_MINIMUM_REQUIRED_VERSION is now ${CMAKE_MINIMUM_REQUIRED_VERSION}. This check can be removed.")
+endif()
+if(${CMAKE_VERSION} VERSION_LESS 3.1)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX11_FLAGS}")
+endif()
+
+
 ## Find packages
 find_package(YARP REQUIRED)
 find_package(iDynTree REQUIRED)
@@ -19,12 +40,21 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 set(SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/HumanStateProvider.cpp 
             ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp)
-
 set(HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/include/HumanStateProvider.h)
 
+set(PRIVATE_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/HumanStateProviderPrivate.cpp
+                    ${CMAKE_CURRENT_SOURCE_DIR}/src/HumanIKWorkerPool.cpp)
+set(PRIVATE_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/include/private/HumanStateProviderPrivate.h
+                    ${CMAKE_CURRENT_SOURCE_DIR}/include/private/HumanIKWorkerPool.h)
+
 ## Declare a C++ executable
-add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
+add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS} ${PRIVATE_SOURCES} ${PRIVATE_HEADERS})
+
+source_group("Private\\Header Files" FILES ${PRIVATE_HEADERS})
+source_group("Private\\SourceFiles" FILES ${PRIVATE_SOURCES})
+
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include/private)
 target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${YARP_INCLUDE_DIRS})
 
 ## Specify targets for the linkage

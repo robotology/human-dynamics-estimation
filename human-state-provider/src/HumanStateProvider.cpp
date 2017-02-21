@@ -7,6 +7,8 @@
 //
 #include "HumanStateProvider.h"
 
+#include "HumanStateProviderPrivate.h"
+
 #include <thrifts/HumanState.h>
 
 #include <inversekinematics/InverseKinematics.h>
@@ -28,38 +30,9 @@
 #include <string>
 #include <vector>
 #include <stack>
+#include <thread>
 
 namespace human {
-
-
-    class HumanStateProvider::HumanStateProviderPrivate {
-    public:
-        double m_period;
-        yarp::os::BufferedPort<human::HumanState> m_outputPort;
-        yarp::dev::PolyDriver m_humanDriver;
-        yarp::dev::IHumanSkeleton *m_human;
-
-        struct IKSolverData {
-            InverseKinematics* solver;
-            iDynTree::VectorDynSize solution;
-            std::pair<std::string, std::string> frameNames;
-            std::pair<unsigned, unsigned> frameIndeces;
-            std::vector<std::pair<unsigned, unsigned> > consideredJointLocations;
-        };
-
-        std::vector<IKSolverData> m_solvers;
-
-        struct {
-            std::vector<yarp::sig::Vector> poses;
-            std::vector<yarp::sig::Vector> velocities;
-            std::vector<yarp::sig::Vector> accelerations;
-            std::vector<iDynTree::Transform> linkPoseWRTWorld;
-
-            iDynTree::VectorDynSize jointsConfiguration;
-        } m_buffers;
-
-        HumanStateProviderPrivate() : m_human(0) {}
-    };
 
     static void createEndEffectorsPairs(const iDynTree::Model& model,
                                         const std::vector<std::string>& humanSegments,
@@ -107,7 +80,7 @@ namespace human {
         }
 
         //now to each solver pass the correct information
-        for (std::vector<HumanStateProviderPrivate::IKSolverData>::iterator iterator(m_pimpl->m_solvers.begin());
+        for (std::vector<IKSolverData>::iterator iterator(m_pimpl->m_solvers.begin());
              iterator != m_pimpl->m_solvers.end(); ++iterator) {
             //This for loop can be parallelized.
             //Theoretically there is no shared data here. Also the access to the final vector should not cause a
@@ -142,8 +115,13 @@ namespace human {
         int period = rf.check("period", yarp::os::Value(100), "Checking period in [ms]").asInt();
         m_pimpl->m_period = period / 1000.0;
 
+        std::string remote = rf.check("xsens_remote_name", yarp::os::Value("/xsens"), "Checking xsens driver port prefix").asString();
+        std::string local = rf.check("xsens_local_name", yarp::os::Value("/xsens_remote"), "Checking xsens local port prefix").asString();
+
         yarp::os::Property driverOptions;
-        driverOptions.put("device", "xsens_mvn");
+        driverOptions.put("device", "xsens_mvn_remote");
+        driverOptions.put("remote", remote);
+        driverOptions.put("local", local);
 
         if (!m_pimpl->m_humanDriver.open(driverOptions)) {
             yError("Could not create connection to human driver");
@@ -203,7 +181,7 @@ namespace human {
         for (std::vector<std::pair<std::string, std::string> >::iterator iterator(pairNames.begin());
              iterator != pairNames.end(); ++iterator) {
             //create solver structure
-            HumanStateProviderPrivate::IKSolverData solver;
+            IKSolverData solver;
             //save which frames (parent and target) the solver will consider
             solver.frameNames = *iterator;
             //and their indeces in the segments vector
@@ -237,7 +215,29 @@ namespace human {
             m_pimpl->m_solvers.push_back(solver);
         }
 
-        //TODO: create a thread pool for the IK
+        //Thread pool
+        int poolSize = -1;
+        yarp::os::Value poolOption = rf.check("ikpool", yarp::os::Value(-1), "Checking size of pool");
+        if (poolOption.isString()) {
+            if (poolOption.asString() != "auto") {
+                yWarning("Pool option not recognized. Do not using pool");
+            } else {
+                poolSize = std::thread::hardware_concurrency();
+            }
+
+        } else {
+            poolSize = poolOption.asInt();
+        }
+        m_pimpl->m_ikPool = new human::HumanIKWorkerPool(poolSize,
+                                                         m_pimpl->m_solvers,
+                                                         m_pimpl->m_buffers.linkPoseWRTWorld,
+                                                         m_pimpl->m_buffers.jointsConfiguration);
+
+        if (!m_pimpl->m_ikPool) {
+            yError("Could not create IK thread pool");
+            close();
+            return false;
+        }
 
         std::string outputPortName = "/" + getName() + "/state:o";
 
@@ -256,7 +256,10 @@ namespace human {
         assert(m_pimpl);
 
         m_pimpl->m_outputPort.close();
-        for (std::vector<HumanStateProviderPrivate::IKSolverData>::iterator iterator(m_pimpl->m_solvers.begin());
+
+        delete m_pimpl->m_ikPool;
+
+        for (std::vector<IKSolverData>::iterator iterator(m_pimpl->m_solvers.begin());
              iterator != m_pimpl->m_solvers.end(); ++iterator) {
             delete iterator->solver;
         }
