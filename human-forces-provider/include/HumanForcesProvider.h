@@ -65,7 +65,6 @@ public:
     bool configure(yarp::os::ResourceFinder &rf);
     bool updateModule();
     bool close();
-    
 };
 
 #endif /* end of include guard: HUMANFORCESPROVIDER_H */

@@ -13,20 +13,29 @@
 #ifndef HUMAN_FRAMETRANSFORMER_H
 #define HUMAN_FRAMETRANSFORMER_H
 
+#include <string>
+
 namespace human
 {
-    class ForceReader;
-    class Force6D;
+    class FrameTransformer;
+}
+
+namespace yarp
+{
+    namespace sig
+    {
+        class Vector;
+    }
 }
 
 
-class human::ForceReader
+class human::FrameTransformer
 {
-    
 public:
-    virtual bool readForce(Force6D &readForce) = 0;
-    virtual ~ForceReader();
-    
+    virtual bool transformForceFrame(const yarp::sig::Vector &inputforce,
+                                     yarp::sig::Vector &transformedForce,
+                                     std::string &tranformedExpressedFrame) = 0;
+    virtual ~FrameTransformer();
 };
 
 #endif /* HUMAN_FRAMETRANSFORMER_H */

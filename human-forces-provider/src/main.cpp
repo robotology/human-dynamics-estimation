@@ -6,9 +6,10 @@
 //  Copyright © 2017 Claudia Latella. All rights reserved.
 //
 
+#include "HumanForcesProvider.h"
+
 #include <yarp/os/LogStream.h>
 #include <yarp/os/Network.h>
-#include "HumanForcesProvider.h"
 
 
 int main(int argc, char * argv[])

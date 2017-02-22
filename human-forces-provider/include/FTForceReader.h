@@ -15,9 +15,7 @@
 #ifndef HUMAN_FTFORCEREADER_H
 #define HUMAN_FTFORCEREADER_H
 
-#include "ForceReader.h"
-#include <yarp/sig/Vector.h>
-#include <string>
+#include "ForceHandler.h"
 
 namespace human
 {
@@ -31,22 +29,20 @@ namespace yarp
         class IAnalogSensor;
     }
 }
-                  
-class human::FTForceReader : public human::ForceReader
+
+
+class human::FTForceReader : public human::ForceHandler
 {
 private:
-    std::string m_attachedLink;
-    std::string m_referenceFrame;
     yarp::dev::IAnalogSensor &m_sensor;
-    yarp::sig::Vector m_readForces;
+    
+protected:
+    virtual bool lowLevelRead(yarp::sig::Vector& force);
     
 public:
     FTForceReader(std::string attachedLink,
                   std::string referenceFrame,
                   yarp::dev::IAnalogSensor &sensor);
-    
-    virtual bool readForce(Force6D &readForce);
-    
 };
 
 

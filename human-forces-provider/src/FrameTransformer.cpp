@@ -8,3 +8,5 @@
 
 #include "FrameTransformer.h"
 
+//destructor
+human::FrameTransformer::~FrameTransformer() {}

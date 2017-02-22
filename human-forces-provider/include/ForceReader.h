@@ -21,7 +21,6 @@ namespace human
 
 class human::ForceReader
 {
-    
 public:
     virtual bool readForce(Force6D &readForce) = 0;
     virtual ~ForceReader();

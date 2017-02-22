@@ -17,5 +17,12 @@
 #ifndef HUMAN_CONSTFRAMETRANSFORMATION_H
 #define HUMAN_CONSTFRAMETRANSFORMATION_H
 
+namespace human
+{
+    class ConstFrameTransformation;
+}
+
+
+// implement virtual bool transformForceFrame(Force6D &readforce)
 
 #endif /* HUMAN_CONSTFRAMETRANSFORMATION_H */

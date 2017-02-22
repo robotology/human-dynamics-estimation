@@ -7,7 +7,6 @@
 //  Copyright © 2017 Claudia Latella. All rights reserved.
 
 #include "HumanForcesProvider.h"
-
 #include "ForceReader.h"
 #include "FTForceReader.h"
 #include "PortForceReader.h"
@@ -15,7 +14,6 @@
 #include <yarp/os/LogStream.h>  //for using yError()
 #include <yarp/dev/IAnalogSensor.h>
 #include <yarp/dev/IEncoders.h>
-
 #include <iostream>
 
 
@@ -105,7 +103,7 @@ bool HumanForcesProvider::configure(yarp::os::ResourceFinder &rf)
         return false;
     }
     
-    // TODO: Tranforming forceplate1 forces in human forces
+    // TODO: Tranforming forceplate1 forces in human forces --> by using FrameTransformer interface
     human::FTForceReader *forceReader1 = new human::FTForceReader(appliedLink_fp1,
                                                                   expressedFrame_fp1,
                                                                   *firstSensor);
@@ -131,7 +129,7 @@ bool HumanForcesProvider::configure(yarp::os::ResourceFinder &rf)
         return false;
     }
     
-    // TODO: Tranforming forceplate2 forces in human forces
+    // TODO: Tranforming forceplate2 forces in human forces --> by using FrameTransformer interface
     human::FTForceReader *forceReader2 = new human::FTForceReader(appliedLink_fp2,
                                                                   expressedFrame_fp2,
                                                                   *secondSensor);
@@ -202,6 +200,7 @@ bool HumanForcesProvider::configure(yarp::os::ResourceFinder &rf)
     }
     
     //TODO: use robotJointConfig data for transforming robot forces in human forces
+    //       --> by using FrameTransformer interface
     
     /*
      * 2. robot arms forces estimation
@@ -212,6 +211,8 @@ bool HumanForcesProvider::configure(yarp::os::ResourceFinder &rf)
         yError() << "Unable to open port " << (getName() + "/robotLeftForces:i");
         return false;
     }
+    
+    
     
     if (!m_robotRightArmForceEstimation.open("/"+ getName() + "/robotRightForces:i"))
     {
