@@ -16,15 +16,24 @@ target_link_libraries(human-forces-provider-data YARP::YARP_OS)
 ## Include directories
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-set(SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/HumanForcesProvider.cpp 
-            ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp
+set(SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp 
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/HumanForcesProvider.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/ForceReader.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/FTForceReader.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/PortForceReader.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/FrameTransformer.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/ConstFrameTransformation.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/RobotFrameTransformation.cpp
 )
 
 set(HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/include/HumanForcesProvider.h
             ${CMAKE_CURRENT_SOURCE_DIR}/include/ForceReader.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/include/FTForceReader.h)
+            ${CMAKE_CURRENT_SOURCE_DIR}/include/FTForceReader.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/include/PortForceReader.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/include/FrameTransformer.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/include/ConstFrameTransformation.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/include/RobotFrameTransformation.h
+)
 
 ## Declare a C++ executable
 add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})

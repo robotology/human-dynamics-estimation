@@ -6,6 +6,12 @@
 //
 //
 
+/* FTFORCEREADER.H is an implementation of the interface <ForceReader.h> 
+ * for reading forces coming from devices.
+ * This is useful because the forces read by this class are then handled by 
+ * a polydriver.
+ */
+
 #ifndef HUMAN_FTFORCEREADER_H
 #define HUMAN_FTFORCEREADER_H
 

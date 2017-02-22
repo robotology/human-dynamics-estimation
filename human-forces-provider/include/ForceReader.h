@@ -6,6 +6,9 @@
 //
 //
 
+/* FORCEREADER.H is an interface for reading forces.
+ */
+
 #ifndef HUMAN_FORCEREADER_H
 #define HUMAN_FORCEREADER_H
 
