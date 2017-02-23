@@ -1,0 +1,5 @@
+Vector3.h
+Vector4.h
+XsensSegmentData.h
+XsensSensorData.h
+XsensFrame.h

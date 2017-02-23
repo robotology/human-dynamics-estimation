@@ -1,0 +1,6 @@
+/home/mlorenzini/gitHub/human-dynamics-estimation/xsens-tf-bridge/build/CMakeFiles/edit_cache.dir
+/home/mlorenzini/gitHub/human-dynamics-estimation/xsens-tf-bridge/build/CMakeFiles/rebuild_cache.dir
+/home/mlorenzini/gitHub/human-dynamics-estimation/xsens-tf-bridge/build/CMakeFiles/thrift_XsensFrame_thrift.dir
+/home/mlorenzini/gitHub/human-dynamics-estimation/xsens-tf-bridge/build/CMakeFiles/xsens-tf-bridge.dir
+/home/mlorenzini/gitHub/human-dynamics-estimation/xsens-tf-bridge/build/CMakeFiles/thrift_XsensDriverService_thrift.dir
+/home/mlorenzini/gitHub/human-dynamics-estimation/xsens-tf-bridge/build/CMakeFiles/yarpModuleLib.dir
