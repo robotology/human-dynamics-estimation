@@ -131,11 +131,11 @@ public:
 
         xsensDataPort.open("/xsens_data_reader");
         xsensServerName = "/xsens/frames:o";                // >>yarp conf 10.255.36.7 10000 >> yarp rpc /xsens/cmd:i >>yarp read ... /xsens/frames:o
-        if (!Network::connect(xsensServerName.c_str(),"/xsens_data_reader"))
-        {
-            std::cout << "Error! Could not connect to server " << xsensServerName << std::endl;
-            return false;
-        }
+//         if (!Network::connect(xsensServerName.c_str(),"/xsens_data_reader"))
+//         {
+//             std::cout << "Error! Could not connect to server " << xsensServerName << std::endl;
+//             return false;
+//         }
         //xsensDataPort.useCallback(*this);
 
         // fake segments list received from the XsensDriverService
