@@ -36,3 +36,5 @@ target_link_libraries(${PROJECT_NAME} human-forces-provider-data
                                       YARP::YARP_init
                                       YARP::YARP_sig
                                       YARP::YARP_dev)
+
+add_warnings_configuration_to_target(TARGETS ${PROJECT_NAME} PRIVATE)
