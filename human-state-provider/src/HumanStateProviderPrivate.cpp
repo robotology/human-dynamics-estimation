@@ -7,9 +7,13 @@
 //
 
 #include "HumanStateProviderPrivate.h"
+//The following is needed by the unique_ptr as it needs to know the delete function
+//And at this point without the include it only knows the forward declaration
+#include "HumanIKWorkerPool.h"
 
 namespace human {
     HumanStateProvider::HumanStateProviderPrivate::HumanStateProviderPrivate()
-    : m_human(0)
-    , m_ikPool(0) {}
+    : m_frameProvider(0) {}
+
+    HumanStateProvider::HumanStateProviderPrivate::~HumanStateProviderPrivate() {}
 }

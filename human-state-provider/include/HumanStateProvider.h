@@ -15,11 +15,14 @@ namespace human {
     class HumanStateProvider;
 }
 
-/**
+/*!
  * This module is responsible of collecting information from 
- * the Xsens suit and provide the configuration, velocity
- * and acceleration of each generalized coordinate composing
+ * the Xsens suit and provide the configuration and velocity
+ * of each generalized coordinate composing
  * the human model.
+ *
+ * Output is sent to a buffered port containing objects as
+ * defined in the HumanState.thrift file
  */
 class human::HumanStateProvider : public yarp::os::RFModule
 {

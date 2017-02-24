@@ -8,6 +8,7 @@
 #include "HumanStateProvider.h"
 
 #include "HumanStateProviderPrivate.h"
+#include "HumanIKWorkerPool.h"
 
 #include <thrifts/HumanState.h>
 
@@ -16,14 +17,19 @@
 #include <iDynTree/Core/VectorFixSize.h>
 #include <iDynTree/Core/VectorDynSize.h>
 #include <iDynTree/Model/Model.h>
+#include <iDynTree/KinDynComputations.h>
+#include <iDynTree/Core/EigenHelpers.h>
 
 #include <yarp/os/BufferedPort.h>
 #include <yarp/os/LogStream.h>
 #include <yarp/os/ResourceFinder.h>
 #include <yarp/os/Value.h>
 #include <yarp/dev/PolyDriver.h>
-#include <yarp/dev/IHumanSkeleton.h>
+#include <yarp/dev/IFrameProvider.h>
+#include <yarp/dev/IXsensMVNInterface.h>
 #include <yarp/sig/Vector.h>
+
+#include <Eigen/QR>
 
 #include <algorithm>
 #include <cassert>
@@ -34,8 +40,16 @@
 
 namespace human {
 
+    /*!
+     * @brief analyze model and list of segments to create all possible segment pairs
+     *
+     * @param[in] model the full model
+     * @param[in] humanSegments list of segments on which look for the possible pairs
+     * @param[out] framePairs resulting list of all possible pairs. First element is parent, second is child
+     * @param[out] framePairIndeces indeces in the humanSegments list of the pairs in framePairs
+     */
     static void createEndEffectorsPairs(const iDynTree::Model& model,
-                                        const std::vector<std::string>& humanSegments,
+                                        const std::vector<yarp::experimental::dev::FrameReference>& humanSegments,
                                         std::vector<std::pair<std::string, std::string> > &framePairs,
                                         std::vector<std::pair<unsigned, unsigned> > &framePairIndeces);
 
@@ -60,47 +74,43 @@ namespace human {
         assert(m_pimpl);
 
         //read from Xsens
-        if (!m_pimpl->m_human) return false;
+        if (!m_pimpl->m_frameProvider) return false;
 
-        if (!m_pimpl->m_human->getSegmentInformation(m_pimpl->m_buffers.poses,
-                                                     m_pimpl->m_buffers.velocities,
-                                                     m_pimpl->m_buffers.accelerations)) {
-            yError("Failed to read subject segment information");
-            return true; //do not close the module for now
-            //TODO: put a countdown?
+        //Read goes to buffers
+        yarp::experimental::dev::IFrameProviderStatus status = m_pimpl->m_frameProvider->getFrameInformation(m_pimpl->m_buffers.poses,
+                                                                                                             m_pimpl->m_buffers.velocities,
+                                                                                                             m_pimpl->m_buffers.accelerations);
+        if (status != yarp::experimental::dev::IFrameProviderStatusOK) {
+            //TODO: instead of return true we should handle timeout
+            return true;
         }
 
         //process incoming data
-        for (unsigned index = 0; index < m_pimpl->m_buffers.linkPoseWRTWorld.size(); ++index) {
+        //In this first part we associate the data in the buffers into the respective segments
+        for (unsigned index = 0; index < m_pimpl->m_buffers.poses.size(); ++index) {
             iDynTree::Position position(m_pimpl->m_buffers.poses[index](0),
-                                              m_pimpl->m_buffers.poses[index](1),
-                                              m_pimpl->m_buffers.poses[index](2));
+                                        m_pimpl->m_buffers.poses[index](1),
+                                        m_pimpl->m_buffers.poses[index](2));
             iDynTree::Rotation orientation = iDynTree::Rotation::RotationFromQuaternion(iDynTree::Vector4(m_pimpl->m_buffers.poses[index].data() + 3, 4));
-            m_pimpl->m_buffers.linkPoseWRTWorld[index] = iDynTree::Transform(orientation, position);
+
+            human::SegmentInfo &segmentInfo = m_pimpl->m_segments[index];
+            segmentInfo.poseWRTWorld = iDynTree::Transform(orientation, position);
+            for (unsigned i = 0; i < m_pimpl->m_buffers.velocities[index].size(); ++i) {
+                segmentInfo.velocities(i) = m_pimpl->m_buffers.velocities[index](i);
+            }
         }
 
-        //now to each solver pass the correct information
-        for (std::vector<IKSolverData>::iterator iterator(m_pimpl->m_solvers.begin());
-             iterator != m_pimpl->m_solvers.end(); ++iterator) {
-            //This for loop can be parallelized.
-            //Theoretically there is no shared data here. Also the access to the final vector should not cause a
-            //data race as joints should not be shared between solvers
-            iterator->solver->setDesiredParentFrameAndEndEffectorTransformations(m_pimpl->m_buffers.linkPoseWRTWorld[iterator->frameIndeces.first],
-                                                                                 m_pimpl->m_buffers.linkPoseWRTWorld[iterator->frameIndeces.second]);
-            int result = iterator->solver->runIK(iterator->solution);
-            if (result != 0) {
-                yError("Failed to compute IK for frames %s, %s", iterator->frameNames.first.c_str(), iterator->frameNames.second.c_str());
-                continue;
-            }
-            //Copy solution to the global vector
-            for (std::vector<std::pair<unsigned, unsigned> >::const_iterator location(iterator->consideredJointLocations.begin());
-                 location != iterator->consideredJointLocations.end(); ++location) {
-                //copy from location.first for location.second elements into the final vector
-                for (unsigned i = 0; i < location->second; ++i) {
-                    m_pimpl->m_buffers.jointsConfiguration(location->first + i) = iterator->solution(i);
-                }
-            }
-        }
+        m_pimpl->m_ikPool->runAndWait();
+
+        // Now reconstruct everything
+        //TODO: map from single segments to global vector
+        //Data saved in jointsConfiguration and jointsVelocity
+
+        human::HumanState &currentState = m_pimpl->m_outputPort.prepare();
+        currentState.positions = m_pimpl->m_buffers.jointsConfiguration;
+        currentState.velocities = m_pimpl->m_buffers.jointsVelocity;
+
+        m_pimpl->m_outputPort.write();
 
         return true;
     }
@@ -109,12 +119,15 @@ namespace human {
     {
         assert(m_pimpl);
 
+        //Name of the module
         std::string name = rf.check("name", yarp::os::Value("human-state-provider"), "Checking module name").asString();
         setName(name.c_str());
 
+        //Period to compute the state
         int period = rf.check("period", yarp::os::Value(100), "Checking period in [ms]").asInt();
         m_pimpl->m_period = period / 1000.0;
 
+        //Open the IFrameProvider device
         std::string remote = rf.check("xsens_remote_name", yarp::os::Value("/xsens"), "Checking xsens driver port prefix").asString();
         std::string local = rf.check("xsens_local_name", yarp::os::Value("/xsens_remote"), "Checking xsens local port prefix").asString();
 
@@ -128,8 +141,8 @@ namespace human {
             return false;
         }
 
-        if (!m_pimpl->m_humanDriver.view(m_pimpl->m_human) || !m_pimpl->m_human) {
-            yError("Specified driver does not support human interface");
+        if (!m_pimpl->m_humanDriver.view(m_pimpl->m_frameProvider) || !m_pimpl->m_frameProvider) {
+            yError("Specified driver does not support FrameProvider interface");
             close();
             return false;
         }
@@ -148,71 +161,110 @@ namespace human {
             return false;
         }
 
+        //Load the full model
         iDynTree::ModelLoader modelLoader;
         if (!modelLoader.loadModelFromFile(urdfFile) || !modelLoader.isValid()) {
             yError("Could not load URDF model %s", urdfFile.c_str());
             close();
             return false;
         }
+        //Copy this model as we will change the one loaded my the loader
+        iDynTree::Model humanModel = modelLoader.model();
 
-        m_pimpl->m_buffers.jointsConfiguration.resize(modelLoader.model().getNrOfDOFs());
-        m_pimpl->m_buffers.jointsConfiguration.zero();
-
-        std::vector<std::string> segments = m_pimpl->m_human->segmentNames();
+        // Resize internal data
+        // 1) data of size # of segments (i.e. input data)
+        std::vector<yarp::experimental::dev::FrameReference> segments = m_pimpl->m_frameProvider->frames();
 
         m_pimpl->m_buffers.poses.resize(segments.size());
         m_pimpl->m_buffers.velocities.resize(segments.size());
         m_pimpl->m_buffers.accelerations.resize(segments.size());
-        m_pimpl->m_buffers.linkPoseWRTWorld.resize(segments.size());
         for (unsigned index = 0; index < segments.size(); ++index) {
             m_pimpl->m_buffers.poses[index].resize(7, 0.0);
             m_pimpl->m_buffers.velocities[index].resize(6, 0.0);
             m_pimpl->m_buffers.accelerations[index].resize(6, 0.0);
         }
 
-        //configure IK solvers
-        //Get all the possible pairs for which we need an IK
+        // 2) output buffer: size of # Dofs
+        m_pimpl->m_buffers.jointsConfiguration.resize(humanModel.getNrOfDOFs());
+        m_pimpl->m_buffers.jointsConfiguration.zero();
+        m_pimpl->m_buffers.jointsVelocity.resize(humanModel.getNrOfDOFs());
+        m_pimpl->m_buffers.jointsVelocity.zero();
+
+        // 3) segments information
+        m_pimpl->m_segments.resize(segments.size());
+        for (unsigned index = 0; index < segments.size(); ++index) {
+            m_pimpl->m_segments[index].velocities.resize(6);
+            m_pimpl->m_segments[index].velocities.zero();
+            //TODO if needed acceleration do it
+        }
+
+
+        // 4) Get all the possible pairs composing the model
         std::vector<std::pair<std::string, std::string> > pairNames;
-        std::vector<std::pair<unsigned, unsigned> > pairIndeces;
-        createEndEffectorsPairs(modelLoader.model(), segments, pairNames, pairIndeces);
+        std::vector<std::pair<unsigned, unsigned> > pairSegmentIndeces;
+        createEndEffectorsPairs(humanModel, segments, pairNames, pairSegmentIndeces);
 
-        //#pair = #solvers
-        m_pimpl->m_solvers.reserve(pairNames.size());
-        for (std::vector<std::pair<std::string, std::string> >::iterator iterator(pairNames.begin());
-             iterator != pairNames.end(); ++iterator) {
-            //create solver structure
-            IKSolverData solver;
-            //save which frames (parent and target) the solver will consider
-            solver.frameNames = *iterator;
-            //and their indeces in the segments vector
-            solver.frameIndeces = pairIndeces[std::distance(pairNames.begin(), iterator)];
+        m_pimpl->m_linkPairs.reserve(pairNames.size());
 
-            solver.solver = new InverseKinematics();
-            if (!solver.solver->setModel(modelLoader.model(), iterator->first, iterator->second)) {
-                yWarning("Could not configure IK solver for frames %s,%s. Skipping pair", iterator->first.c_str(), iterator->second.c_str());
+        for (unsigned index = 0; index < pairNames.size(); ++index) {
+            LinkPairInfo pairInfo;
+
+            pairInfo.parentFrameName = pairNames[index].first;
+            pairInfo.parentFrameSegmentsIndex = pairSegmentIndeces[index].first;
+
+            pairInfo.childFrameName = pairNames[index].second;
+            pairInfo.childFrameSegmentsIndex = pairSegmentIndeces[index].second;
+
+            // Allocate the solver which provides also useful methods
+            pairInfo.ikSolver = std::unique_ptr<InverseKinematics>(new InverseKinematics());
+
+            if (!pairInfo.ikSolver->setModel(humanModel, pairInfo.parentFrameName, pairInfo.childFrameName)) {
+                yWarning("Could not configure IK solver for frames %s,%s. Skipping pair", pairInfo.parentFrameName.c_str(), pairInfo.childFrameName.c_str());
                 continue;
             }
             //now we have to obtain the information needed to map the IK solution
             //back to the total Dofs vector we need to output
             std::vector<std::string> solverJoints;
-            solver.solver->getConsideredJoints(solverJoints);
-            solver.consideredJointLocations.reserve(solverJoints.size());
+            pairInfo.ikSolver->getConsideredJoints(solverJoints);
+
+            pairInfo.consideredJointLocations.reserve(solverJoints.size());
             for (std::vector<std::string>::const_iterator jointName(solverJoints.begin());
                  jointName != solverJoints.end(); ++jointName) {
-                iDynTree::JointIndex jointIndex = modelLoader.model().getJointIndex(*jointName);
+                iDynTree::JointIndex jointIndex = humanModel.getJointIndex(*jointName);
                 if (jointIndex == iDynTree::JOINT_INVALID_INDEX) {
                     yWarning("IK considered joint %s not found in the complete model", jointName->c_str());
                     continue;
                 }
-                iDynTree::IJointConstPtr joint = modelLoader.model().getJoint(jointIndex);
+                iDynTree::IJointConstPtr joint = humanModel.getJoint(jointIndex);
                 //Save location and length of each DoFs
-                solver.consideredJointLocations.push_back(std::pair<unsigned, unsigned>(joint->getDOFsOffset(), joint->getNrOfDOFs()));
+                pairInfo.consideredJointLocations.push_back(std::pair<unsigned, unsigned>(joint->getDOFsOffset(), joint->getNrOfDOFs()));
             }
 
-            solver.solution.resize(solverJoints.size());
-            solver.solution.zero();
+            pairInfo.jointConfigurations.resize(solverJoints.size());
+            pairInfo.jointConfigurations.zero();
 
-            m_pimpl->m_solvers.push_back(solver);
+            //same size and initialization
+            pairInfo.jointVelocities = pairInfo.jointConfigurations;
+
+            //Now configure the kinDynComputation objects
+            modelLoader.loadReducedModelFromFullModel(humanModel, solverJoints);
+            const iDynTree::Model &reducedModel = modelLoader.model();
+            //save the indeces
+            //TODO: check if link or frame
+            pairInfo.parentFrameModelIndex = reducedModel.getFrameIndex(pairInfo.parentFrameName);
+            pairInfo.childFrameModelIndex = reducedModel.getFrameIndex(pairInfo.childFrameName);
+
+            pairInfo.kinDynComputations = std::unique_ptr<iDynTree::KinDynComputations>(new iDynTree::KinDynComputations());
+
+            pairInfo.kinDynComputations->loadRobotModel(modelLoader.model());
+            pairInfo.parentJacobian.resize(6, modelLoader.model().getNrOfDOFs());
+            pairInfo.parentJacobian.zero();
+            pairInfo.childJacobian = pairInfo.relativeJacobian = pairInfo.parentJacobian;
+            //overwriting the default contructed object
+            pairInfo.jacobianDecomposition = Eigen::ColPivHouseholderQR<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> >(pairInfo.relativeJacobian.rows(), pairInfo.relativeJacobian.cols());
+
+            m_pimpl->m_linkPairs.push_back(std::move(pairInfo));
+
         }
 
         //Thread pool
@@ -228,10 +280,9 @@ namespace human {
         } else {
             poolSize = poolOption.asInt();
         }
-        m_pimpl->m_ikPool = new human::HumanIKWorkerPool(poolSize,
-                                                         m_pimpl->m_solvers,
-                                                         m_pimpl->m_buffers.linkPoseWRTWorld,
-                                                         m_pimpl->m_buffers.jointsConfiguration);
+        m_pimpl->m_ikPool = std::unique_ptr<human::HumanIKWorkerPool>(new human::HumanIKWorkerPool(poolSize,
+                                                         m_pimpl->m_linkPairs,
+                                                         m_pimpl->m_segments));
 
         if (!m_pimpl->m_ikPool) {
             yError("Could not create IK thread pool");
@@ -247,6 +298,11 @@ namespace human {
             return false;
         }
 
+        human::HumanState &tempOutput = m_pimpl->m_outputPort.prepare();
+        tempOutput.positions.resize(m_pimpl->m_buffers.jointsConfiguration.size());
+        tempOutput.velocities.resize(m_pimpl->m_buffers.jointsConfiguration.size());
+        m_pimpl->m_outputPort.unprepare();
+
         return true;
 
     }
@@ -255,16 +311,10 @@ namespace human {
     {
         assert(m_pimpl);
 
+        //explitily clear the pool
+        m_pimpl->m_ikPool.reset();
+
         m_pimpl->m_outputPort.close();
-
-        delete m_pimpl->m_ikPool;
-
-        for (std::vector<IKSolverData>::iterator iterator(m_pimpl->m_solvers.begin());
-             iterator != m_pimpl->m_solvers.end(); ++iterator) {
-            delete iterator->solver;
-        }
-        m_pimpl->m_solvers.clear();
-
         m_pimpl->m_humanDriver.close();
 
         return true;
@@ -272,7 +322,7 @@ namespace human {
 
 
     static void createEndEffectorsPairs(const iDynTree::Model& model,
-                                        const std::vector<std::string>& humanSegments,
+                                        const std::vector<yarp::experimental::dev::FrameReference>& humanSegments,
                                         std::vector<std::pair<std::string, std::string> > &framePairs,
                                         std::vector<std::pair<unsigned, unsigned> > &framePairIndeces)
     {
@@ -280,17 +330,17 @@ namespace human {
         //extract it from the vector (to avoid duplications)
         //Look for it in the model and get neighbours.
 
-        std::vector<std::string> segments(humanSegments);
+        std::vector<yarp::experimental::dev::FrameReference> segments(humanSegments);
         unsigned segmentCount = segments.size();
 
         while (!segments.empty()) {
-            std::string segment = segments.back();
+            yarp::experimental::dev::FrameReference segment = segments.back();
             segments.pop_back();
             segmentCount--;
 
-            iDynTree::LinkIndex linkIndex = model.getLinkIndex(segment);
+            iDynTree::LinkIndex linkIndex = model.getLinkIndex(segment.frameName);
             if (linkIndex < 0 || linkIndex >= model.getNrOfLinks()) {
-                yWarning("Segment %s not found in the URDF model", segment.c_str());
+                yWarning("Segment %s not found in the URDF model", segment.frameName.c_str());
                 continue;
             }
 
@@ -316,11 +366,13 @@ namespace human {
                     std::string linkName = model.getLinkName(currentLink);
 
                     // check if this is a human segment
-                    std::vector<std::string>::iterator foundSegment = std::find(segments.begin(), segments.end(), linkName);
+                    std::vector<yarp::experimental::dev::FrameReference>::iterator foundSegment = std::find_if(segments.begin(),
+                                                                                                               segments.end(),
+                                                                                                               [&](yarp::experimental::dev::FrameReference& frame){ return frame.frameName == linkName; });
                     if (foundSegment != segments.end()) {
                         unsigned foundLinkIndex = std::distance(segments.begin(), foundSegment);
                         //Found! This is a segment
-                        framePairs.push_back(std::pair<std::string, std::string>(segment, linkName));
+                        framePairs.push_back(std::pair<std::string, std::string>(segment.frameName, linkName));
                         framePairIndeces.push_back(std::pair<unsigned, unsigned>(segmentCount, foundLinkIndex));
                         break;
                     }

@@ -28,7 +28,7 @@ include(AddInstallRPATHSupport)
 #                           USE_LINK_PATH)
 
 #Add temporary directory
-add_subdirectory(yarp-experimental)
+# add_subdirectory(yarp-experimental)
 #Add IK solver
 add_subdirectory(inverse-kinematics)
 
