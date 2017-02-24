@@ -41,26 +41,26 @@ inline TickTime normalizeSecNSec(double yarpTimeStamp)
     return ret;
 }
 
-class MyModule : public RFModule, public yarp::os::TypedReaderCallback<xsens::XsensFrame>
+class xsensTfPublisherModule : public RFModule, public yarp::os::TypedReaderCallback<xsens::XsensFrame>
 {
-    Port handlerPort; // a port to handle messages
+    Port handlerPort;                                       // a port to handle messages
     Port client_port;
-    
+
     Publisher<tf2_msgs_TFMessage> publisher_tf;
-    
+
     yarp::os::BufferedPort<xsens::XsensFrame> xsensDataPort;
     xsens::XsensDriverService xsensDriver;
-    
+
     //variables declaration
     int i, segmentsCount, trueSegmentCount;
-    
+
     //tf_tfMessage tfMessage;
     tf2_msgs_TFMessage tf;
 
     std::string xsensServerName;
     std::string driverServerName;
     std::vector<std::string> segments;
-    
+
 public:
     double getPeriod()
     {
@@ -74,52 +74,47 @@ public:
         xsens::XsensFrame *xsensData = xsensDataPort.read();
         if (xsensData!=NULL) {
             cout << "got xsens data " << endl;
-            }
+          }
 
         // Send the transforms
         for (i=0;i<trueSegmentCount;i++){
-        tf.transforms[i].header.seq   = i;
-        tf.transforms[i].header.stamp = normalizeSecNSec(xsensData->time);
-        tf.transforms[i].transform.translation.x = xsensData->segmentsData[i].position.c1;
-        tf.transforms[i].transform.translation.y = xsensData->segmentsData[i].position.c2;
-        tf.transforms[i].transform.translation.z = xsensData->segmentsData[i].position.c3;
-        tf.transforms[i].transform.rotation.x = xsensData->segmentsData[i].orientation.c2;
-        tf.transforms[i].transform.rotation.y = xsensData->segmentsData[i].orientation.c3;
-        tf.transforms[i].transform.rotation.z = xsensData->segmentsData[i].orientation.c4;
-        tf.transforms[i].transform.rotation.w = xsensData->segmentsData[i].orientation.c1;
-        }
-        
+            tf.transforms[i].header.seq   = i;
+            tf.transforms[i].header.stamp = normalizeSecNSec(xsensData->time);
+            tf.transforms[i].transform.translation.x = xsensData->segmentsData[i].position.c1;
+            tf.transforms[i].transform.translation.y = xsensData->segmentsData[i].position.c2;
+            tf.transforms[i].transform.translation.z = xsensData->segmentsData[i].position.c3;
+            tf.transforms[i].transform.rotation.x = xsensData->segmentsData[i].orientation.c2;
+            tf.transforms[i].transform.rotation.y = xsensData->segmentsData[i].orientation.c3;
+            tf.transforms[i].transform.rotation.z = xsensData->segmentsData[i].orientation.c4;
+            tf.transforms[i].transform.rotation.w = xsensData->segmentsData[i].orientation.c1;
+          }
+
         for (i=(trueSegmentCount-1);i<segmentsCount;i++){
-        tf.transforms[i].header.seq   = i;
-        tf.transforms[i].header.stamp = normalizeSecNSec(xsensData->time);
-        tf.transforms[i].transform.translation.x = 0;
-        tf.transforms[i].transform.translation.y = 0;
-        tf.transforms[i].transform.translation.z = 0;
-        tf.transforms[i].transform.rotation.x = 0;
-        tf.transforms[i].transform.rotation.y = 0;
-        tf.transforms[i].transform.rotation.z = 0;
-        tf.transforms[i].transform.rotation.w = 1;
-        }
+            tf.transforms[i].header.seq   = i;
+            tf.transforms[i].header.stamp = normalizeSecNSec(xsensData->time);
+            tf.transforms[i].transform.translation.x = 0;
+            tf.transforms[i].transform.translation.y = 0;
+            tf.transforms[i].transform.translation.z = 0;
+            tf.transforms[i].transform.rotation.x = 0;
+            tf.transforms[i].transform.rotation.y = 0;
+            tf.transforms[i].transform.rotation.z = 0;
+            tf.transforms[i].transform.rotation.w = 1;
+          }
 
         publisher_tf.write(tf);
 
         i++;
-        for (i=0;i<segmentsCount;i++){
-        cout << tf.transforms[i].child_frame_id << endl;
-        cout << "position [" << tf.transforms[i].transform.translation.x << " " << tf.transforms[i].transform.translation.x << " " << tf.transforms[i].transform.translation.x << "]" << endl;
-        cout << "orientation [" << tf.transforms[i].transform.rotation.w << " " << tf.transforms[i].transform.rotation.x << " " << tf.transforms[i].transform.rotation.y << " " << tf.transforms[i].transform.rotation.z << "]" << endl;
-        }
+
         xsensDataPort.write();
         return true;
     }
     // Message handler. Just echo all received messages.
     bool respond(const Bottle& command, Bottle& reply)
     {
-        cout << "Got something, echo is on" << endl;
         if (command.get(0).asString() == "quit")
-            return false;
+        return false;
         else
-            reply = command;
+        reply = command;
         return true;
     }
     // Configure function. Receive a previously initialized
@@ -127,21 +122,21 @@ public:
     // If you are migrating from the old module, this is the function
     // equivalent to the "open" method.
     bool configure(yarp::os::ResourceFinder &rf)
-    {     
+    {
         if (!publisher_tf.topic("/tf")) {
-        cerr<< "Failed to create publisher to /tf\n";
-        return -1;
-        }
-        
+            cerr<< "Failed to create publisher to /tf\n";
+            return false;
+          }
+
         xsensDataPort.open("/xsens_data_reader");
-        xsensServerName = "/xsens/frames:o"; // >>yarp conf 10.255.36.7 10000 >> yarp rpc /xsens/cmd:i >>yarp read ... /xsens/frames:o
-        if (!Network::connect("/xsens_data_writer","/xsens_data_reader"))
+        xsensServerName = "/xsens/frames:o";                // >>yarp conf 10.255.36.7 10000 >> yarp rpc /xsens/cmd:i >>yarp read ... /xsens/frames:o
+        if (!Network::connect(xsensServerName.c_str(),"/xsens_data_reader"))
         {
-           std::cout << "Error! Could not connect to server " << xsensServerName << std::endl;
-           return -1;
+            std::cout << "Error! Could not connect to server " << xsensServerName << std::endl;
+            return false;
         }
         //xsensDataPort.useCallback(*this);
-        
+
         // fake segments list received from the XsensDriverService
         segments.resize(23);
         segments[0] = "Pelvis";
@@ -167,20 +162,20 @@ public:
         segments[20] = "LeftLowerLeg";
         segments[21] = "LeftFoot";
         segments[22] = "LeftToe";
-        
+
         i = 0;
-        segmentsCount = 49; //49
+        segmentsCount = 49;                                 //49
         trueSegmentCount = 23;
-        tf.transforms.resize(49); //49
-        
+        tf.transforms.resize(49);                           //49
+
         for (i=0;i<segmentsCount;i++){
-        tf.transforms[i].header.frame_id = "ground";
-        }
-        
+            tf.transforms[i].header.frame_id = "ground";
+          }
+
         for (i=0;i<trueSegmentCount;i++){
-        tf.transforms[i].child_frame_id = segments[i];
-        }
-        
+            tf.transforms[i].child_frame_id = segments[i];
+          }
+
         tf.transforms[23].child_frame_id = "L5_f1";
         tf.transforms[24].child_frame_id = "L3_f1";
         tf.transforms[25].child_frame_id = "T12_f1";
@@ -211,15 +206,15 @@ public:
         handlerPort.open("/myModule");
         attach(handlerPort);
 
-        driverServerName = "/xsens/cmd:i"; // >>yarp conf 10.255.36.7 10000 >> yarp rpc /xsens/cmd:i >>yarp read ... /xsens/frames:o
-        client_port.open("/XsensDriverService/client");
-//         if (!Network::connect("/XsensDriverService/client",driverServerName.c_str()))
-//         {
-//            std::cout << "Error! Could not connect to server " << driverServerName << std::endl;
-//            return -1;
-//         }
-        xsensDriver.yarp().attachAsClient(client_port);
-        cout << xsensDriver.segments() << endl;
+        //         driverServerName = "/xsens/cmd:i"; // >>yarp conf 10.255.36.7 10000 >> yarp rpc /xsens/cmd:i >>yarp read ... /xsens/frames:o
+        //         client_port.open("/XsensDriverService/client");
+        //         if (!Network::connect("/XsensDriverService/client",driverServerName.c_str()))
+        //         {
+        //            std::cout << "Error! Could not connect to server " << driverServerName << std::endl;
+        //            return -1;
+        //         }
+        //         xsensDriver.yarp().attachAsClient(client_port);
+        //         cout << xsensDriver.segments() << endl;
 
         return true;
     }
@@ -237,26 +232,23 @@ public:
         handlerPort.close();
         return true;
     }
-    
-     virtual void onRead(xsens::XsensFrame& b) {
-        // process data in b
-    }
+
+    virtual void onRead(xsens::XsensFrame& b) {
+      // process data in b
+      }
 };
 
 int main(int argc, char * argv[])
 {
     /* initialize yarp network */
     Network yarp;
-    Node node("/human/yarp_human_state_publisher");
-    
+    Node node("/human/yarp_human_tf_publisher");
     /* create your module */
-    MyModule module;
+    xsensTfPublisherModule module;
     /* prepare and configure the resource finder */
     ResourceFinder rf;
     rf.configure(argc, argv);
     rf.setVerbose(true);
-    cout << "Configuring and starting module. \n";
-    module.runModule(rf);   // This calls configure(rf) and, upon success, the module execution begins with a call to updateModule()
-    cout<<"Main returning..."<<endl;
+    module.runModule(rf);                                   // This calls configure(rf) and, upon success, the module execution begins with a call to updateModule()
     return 0;
 }
