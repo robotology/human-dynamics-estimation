@@ -73,7 +73,7 @@ public:
         cout << "waiting for input" << endl;
         xsens::XsensFrame *xsensData = xsensDataPort.read();
         if (xsensData==NULL) {
-            cerr << "xsens data not received" << endl;
+            cout << "xsens data not received" << endl;
             return true;
         }
 
@@ -253,3 +253,4 @@ int main(int argc, char * argv[])
     module.runModule(rf);                                   // This calls configure(rf) and, upon success, the module execution begins with a call to updateModule()
     return 0;
 }
+
