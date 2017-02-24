@@ -245,7 +245,7 @@ int main(int argc, char * argv[])
     Network yarp;
     Node node("/human/yarp_human_tf_publisher");
     /* create your module */
-    xsensTfPublisherModule module;
+    XsensTFPublisherModule module;
     /* prepare and configure the resource finder */
     ResourceFinder rf;
     rf.configure(argc, argv);
