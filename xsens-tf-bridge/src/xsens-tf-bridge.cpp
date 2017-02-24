@@ -41,7 +41,7 @@ inline TickTime normalizeSecNSec(double yarpTimeStamp)
     return ret;
 }
 
-class xsensTfPublisherModule : public RFModule, public yarp::os::TypedReaderCallback<xsens::XsensFrame>
+class XsensTFPublisherModule : public RFModule, public yarp::os::TypedReaderCallback<xsens::XsensFrame>
 {
     Port handlerPort;                                       // a port to handle messages
     Port client_port;
@@ -72,9 +72,10 @@ public:
     {
         cout << "waiting for input" << endl;
         xsens::XsensFrame *xsensData = xsensDataPort.read();
-        if (xsensData!=NULL) {
-            cout << "got xsens data " << endl;
-          }
+        if (xsensData==NULL) {
+            cerr << "xsens data not received" << endl;
+            return true;
+        }
 
         // Send the transforms
         for (i=0;i<trueSegmentCount;i++){
@@ -87,7 +88,7 @@ public:
             tf.transforms[i].transform.rotation.y = xsensData->segmentsData[i].orientation.c3;
             tf.transforms[i].transform.rotation.z = xsensData->segmentsData[i].orientation.c4;
             tf.transforms[i].transform.rotation.w = xsensData->segmentsData[i].orientation.c1;
-          }
+        }
 
         for (i=(trueSegmentCount-1);i<segmentsCount;i++){
             tf.transforms[i].header.seq   = i;
@@ -99,7 +100,7 @@ public:
             tf.transforms[i].transform.rotation.y = 0;
             tf.transforms[i].transform.rotation.z = 0;
             tf.transforms[i].transform.rotation.w = 1;
-          }
+        }
 
         publisher_tf.write(tf);
 
@@ -112,9 +113,9 @@ public:
     bool respond(const Bottle& command, Bottle& reply)
     {
         if (command.get(0).asString() == "quit")
-        return false;
+            return false;
         else
-        reply = command;
+            reply = command;
         return true;
     }
     // Configure function. Receive a previously initialized
@@ -126,7 +127,7 @@ public:
         if (!publisher_tf.topic("/tf")) {
             cerr<< "Failed to create publisher to /tf\n";
             return false;
-          }
+        }
 
         xsensDataPort.open("/xsens_data_reader");
         xsensServerName = "/xsens/frames:o";                // >>yarp conf 10.255.36.7 10000 >> yarp rpc /xsens/cmd:i >>yarp read ... /xsens/frames:o
@@ -170,11 +171,11 @@ public:
 
         for (i=0;i<segmentsCount;i++){
             tf.transforms[i].header.frame_id = "ground";
-          }
+        }
 
         for (i=0;i<trueSegmentCount;i++){
             tf.transforms[i].child_frame_id = segments[i];
-          }
+        }
 
         tf.transforms[23].child_frame_id = "L5_f1";
         tf.transforms[24].child_frame_id = "L3_f1";
@@ -234,8 +235,8 @@ public:
     }
 
     virtual void onRead(xsens::XsensFrame& b) {
-      // process data in b
-      }
+        // process data in b
+    }
 };
 
 int main(int argc, char * argv[])
