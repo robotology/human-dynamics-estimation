@@ -1,12 +1,10 @@
-//
-//  ForceReader.cpp
-//  HumanDynamicsEstimation
-//
-//  Created by Claudia Latella on 16/02/17.
-//
-//
+/*!
+ * @file ForceReader.cpp
+ * @author Claudia Latella
+ * @date 2017
+ * @copyright iCub Facility - Istituto Italiano di Tecnologia
+ */
 
 #include "ForceReader.h"
 
-//destructor
 human::ForceReader::~ForceReader() {}

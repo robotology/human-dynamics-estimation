@@ -1,14 +1,10 @@
-//
-//  FrameTransformer.h
-//  HumanDynamicsEstimation
-//
-//  Created by Claudia Latella on 22/02/17.
-//
-//
-
-/* FRAMETRANSFORMER.H is an interface for transforming forces from a defined 
- * frame with respect to another given one.
+/*!
+ * @file ForceTransformer.h
+ * @author Claudia Latella
+ * @date 2017
+ * @copyright iCub Facility - Istituto Italiano di Tecnologia
  */
+
 
 #ifndef HUMAN_FRAMETRANSFORMER_H
 #define HUMAN_FRAMETRANSFORMER_H
@@ -28,13 +24,16 @@ namespace yarp
     }
 }
 
-
+/*! @brief Interface for transforming forces into human frames. */
 class human::FrameTransformer
 {
 public:
     virtual bool transformForceFrame(const yarp::sig::Vector &inputforce,
                                      yarp::sig::Vector &transformedForce,
                                      std::string &tranformedExpressedFrame) = 0;
+    /*!
+     * Destructor.
+     */
     virtual ~FrameTransformer();
 };
 

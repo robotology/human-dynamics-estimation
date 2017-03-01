@@ -1,12 +1,10 @@
-//
-//  FrameTransformer.cpp
-//  HumanDynamicsEstimation
-//
-//  Created by Claudia Latella on 22/02/17.
-//
-//
+/*!
+ * @file ForceTransformer.cpp
+ * @author Claudia Latella
+ * @date 2017
+ * @copyright iCub Facility - Istituto Italiano di Tecnologia
+ */
 
 #include "FrameTransformer.h"
 
-//destructor
 human::FrameTransformer::~FrameTransformer() {}

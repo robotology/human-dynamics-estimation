@@ -1,9 +1,9 @@
-//
-//  HumanForcesProvider.h
-//  HumanForcesProvider
-//
-//  Created by Claudia Latella on 14/02/17.
-//  Copyright © 2017 Claudia Latella. All rights reserved.
+/*!
+ * @file HumanForcesProvider.h
+ * @author Claudia Latella
+ * @date 2017
+ * @copyright iCub Facility - Istituto Italiano di Tecnologia
+ */
 
 #ifndef HUMANFORCESPROVIDER_H
 #define HUMANFORCESPROVIDER_H
@@ -58,12 +58,32 @@ private:
     std::vector<human::ForceReader*> m_readers;
     
 public:
+    /*!
+     * Default constructor.
+     */
     HumanForcesProvider();
+    /*!
+     * Destructor.
+     */
     virtual ~HumanForcesProvider();
-
+    /*!
+     * Return the module period.
+     */
     double getPeriod();
+    /*!
+     * Module configuration by means of:
+     * - generic parameters (name, periodicity)
+     * - specific force plates parameters
+     * - specific robot parameters
+     */
     bool configure(yarp::os::ResourceFinder &rf);
+    /*!
+     * Module updating: at each timestamp it returns a transformed force.
+     */
     bool updateModule();
+    /*!
+     * Close module and perform cleanup.
+     */
     bool close();
 };
 

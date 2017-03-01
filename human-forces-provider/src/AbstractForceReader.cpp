@@ -1,45 +1,44 @@
-//
-//  ForceHandler.cpp
-//  HumanDynamicsEstimation
-//
-//  Created by Claudia Latella on 28/02/17.
-//
-//
+/*!
+ * @file AbstractForceReader.cpp
+ * @author Claudia Latella
+ * @date 2017
+ * @copyright iCub Facility - Istituto Italiano di Tecnologia
+ */
 
-#include "ForceHandler.h"
+#include "AbstractForceReader.h"
 #include "FrameTransformer.h"
 
 #include <thrifts/Force6D.h>
 #include <yarp/os/LogStream.h>
 
 namespace human {
-    ForceHandler::ForceHandler(std::string attachedLink,
-                               std::string referenceFrame)
+    AbstractForceReader::AbstractForceReader(std::string attachedLink,
+                                             std::string referenceFrame)
     : m_frameTransformer(0)
     , m_attachedLink(attachedLink)
     , m_referenceFrame(referenceFrame)
     , m_packedForce(6, 0.0) {}
     
     
-    void ForceHandler::setTransformer(FrameTransformer *frameTransformer)
+    void AbstractForceReader::setTransformer(FrameTransformer *frameTransformer)
     {
         m_frameTransformer = frameTransformer;
     }
 
     
-    FrameTransformer* ForceHandler::getTransformer()
+    FrameTransformer* AbstractForceReader::getTransformer()
     {
         return m_frameTransformer;
     }
+
     
-    
-    bool ForceHandler::readForce(Force6D &packedForce)
+    bool AbstractForceReader::readForce(Force6D &packedForce)
     {
         packedForce.appliedLink = m_attachedLink;
         packedForce.expressedFrame = m_referenceFrame;
         
         if (!this->lowLevelRead(m_packedForce)) {
-            yError() << "Something wrong in the forces reading!";
+            yError("Something wrong in the forces reading!");
             return false;
         }
 
@@ -49,7 +48,7 @@ namespace human {
                                                          m_packedForce,
                                                          packedForce.appliedLink))
             {
-                yError() << "Something wrong in the forces transformation!";
+                yError("Something wrong in the forces transformation!");
                 return false;
             }
         }

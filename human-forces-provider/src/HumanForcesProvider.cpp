@@ -1,34 +1,46 @@
-
-//
-//  HumanForcesProvider.cpp
-//  HumanForcesProvider
-//
-//  Created by Claudia Latella on 14/02/17.
-//  Copyright © 2017 Claudia Latella. All rights reserved.
+/*!
+ * @file ForceReader.h
+ * @author Claudia Latella
+ * @date 2017
+ * @copyright iCub Facility - Istituto Italiano di Tecnologia
+ */
 
 #include "HumanForcesProvider.h"
 #include "ForceReader.h"
+#include "AbstractForceReader.h"
 #include "FTForceReader.h"
 #include "PortForceReader.h"
+#include "FrameTransformer.h"
+#include "ConstFrameTransformation.h"
 
 #include <yarp/os/LogStream.h>  //for using yError()
 #include <yarp/dev/IAnalogSensor.h>
 #include <yarp/dev/IEncoders.h>
+
+#include <iDynTree/Core/MatrixFixSize.h>
+#include <iDynTree/Core/VectorDynSize.h>
+#include <iDynTree/Core/Transform.h>
 #include <iostream>
+
+//Utility functions for parsing INI file
+static bool parseRotationMatrix(const yarp::os::Value&, iDynTree::Rotation&);
+static bool parsePositionVector(const yarp::os::Value&, iDynTree::Position&);
+//---------------------------------------------------------------------
 
 
 HumanForcesProvider::HumanForcesProvider()
 : m_period(0.1) {}
 
+
 HumanForcesProvider::~HumanForcesProvider() {}
 
-//---------------------------------------------------------------------
+
 double HumanForcesProvider::getPeriod()
 {
     return m_period;
 }
 
-//---------------------------------------------------------------------
+
 bool HumanForcesProvider::configure(yarp::os::ResourceFinder &rf)
 {
     /*
@@ -50,35 +62,110 @@ bool HumanForcesProvider::configure(yarp::os::ResourceFinder &rf)
     
     
     /* HANDLING OF THE FORCEPLATES*********************************************************/
-    // The two forceplates are handled with a polydriver that is configured as follows:
-     
-    /*
-     * ------Configure force plates devices
+    /* The configuration of the forceplates consists into 2 parts:
+     * 1 -> INI configuration for the polydriver (since they are handled with a polydriver) ;
+     * 2 -> INI configuration with the utility functions for the frame transformation.
      */
-    std::string appliedLink_fp1 = rf.find("appliedLink_fp1").asString();
-    std::string expressedFrame_fp1 = rf.find("expressedFrame_fp1").asString();
     
-    std::string ft1LocalName = rf.check("ft1_localName",
+    
+    /*
+     * ---------------------CONFIGURE FP1------------------------//
+     */
+    std::string appliedLink_fp1  = rf.find("appliedLink_fp1").asString();
+    std::string inputFrame_fp1   = rf.find("inputFrame_fp1").asString();
+    std::string outputFrame_fp1  = rf.find("outputFrame_fp1").asString();
+
+    std::string ft1LocalName  = rf.check("ft1_localName",
                                         yarp::os::Value("/" + getName() + "/FTSensor1:i"),
                                         "Checking FP1 port local name").asString();
     std::string ft1RemoteName = rf.check("ft1_remoteName",
                                          yarp::os::Value("/amti/first/analog:o"),
                                          "Checking FP1 port remote name").asString();
     
+    iDynTree::Rotation rotationMatrix_fp1;
+    iDynTree::Position footPosition_fp1;
+    iDynTree::Position solePosition_fp1;
+    iDynTree::Position calibPosition_fp1;
+    iDynTree::Position position_fp1;
     
-    std::string appliedLink_fp2 = rf.find("appliedLink_fp2").asString();
-    std::string expressedFrame_fp2 = rf.find("expressedFrame_fp2").asString();
+    if (!parseRotationMatrix(rf.find("rotationMatrix_fp1"), rotationMatrix_fp1))
+    {
+        yError("Somenthing wrong in parsing the rotation matrix!");
+        return false;
+    }
     
-    std::string ft2LocalName = rf.check("ft2_localName",
+    if (!parsePositionVector(rf.find("footPosition_fp1"), footPosition_fp1))
+    {
+        yError("Somenthing wrong in parsing the foot position vector!");
+        return false;
+    }
+    
+    if (!parsePositionVector(rf.find("solePosition_fp1"), solePosition_fp1))
+    {
+        yError("Somenthing wrong in parsing the sole position vector!");
+        return false;
+    }
+    
+    if (!parsePositionVector(rf.find("calibPosition_fp1"), calibPosition_fp1))
+    {
+        yError("Somenthing wrong in parsing the calibration position vector!");
+        return false;
+    }
+    
+    position_fp1 = footPosition_fp1 + solePosition_fp1 + calibPosition_fp1;
+    iDynTree::Transform transform_fp1(rotationMatrix_fp1, position_fp1 );
+    
+    
+    /*
+     * ---------------------CONFIGURE FP2------------------------//
+     */
+    std::string appliedLink_fp2  = rf.find("appliedLink_fp2").asString();
+    std::string inputFrame_fp2   = rf.find("inputFrame_fp2").asString();
+    std::string outputFrame_fp2  = rf.find("outputFrame_fp2").asString();
+   
+    std::string ft2LocalName  = rf.check("ft2_localName",
                                         yarp::os::Value("/" + getName() + "/FTSensor2:i"),
                                         "Checking FP2 port local name").asString();
     std::string ft2RemoteName = rf.check("ft2_remoteName",
                                          yarp::os::Value("/amti/second/analog:o"),
                                          "Checking FP2 port remote name").asString();
     
+    iDynTree::Rotation rotationMatrix_fp2;
+    iDynTree::Position footPosition_fp2;
+    iDynTree::Position solePosition_fp2;
+    iDynTree::Position calibPosition_fp2;
+    iDynTree::Position position_fp2;
+    
+    if (!parseRotationMatrix(rf.find("rotationMatrix_fp2"), rotationMatrix_fp2))
+    {
+        yError("Somenthing wrong in parsing the rotation matrix!");
+        return false;
+    }
+    
+    if (!parsePositionVector(rf.find("footPosition_fp2"), footPosition_fp2))
+    {
+        yError("Somenthing wrong in parsing the foot position vector!");
+        return false;
+    }
+    
+    if (!parsePositionVector(rf.find("solePosition_fp2"), solePosition_fp2))
+    {
+        yError("Somenthing wrong in parsing the sole position vector!");
+        return false;
+    }
+    
+    if (!parsePositionVector(rf.find("calibPosition_fp2"), calibPosition_fp2))
+    {
+        yError("Somenthing wrong in parsing the calibration position vector!");
+        return false;
+    }
+    
+    position_fp2 = footPosition_fp2 + solePosition_fp2 + calibPosition_fp2;
+    iDynTree::Transform transform_fp2(rotationMatrix_fp2, position_fp2 );
+
     
     /*
-     * ------Configure and open the polydriver [in AnalogSensorClient.cpp of github/YARP]
+     * ------CONFIGURE AND OPEN THE POLYDRIVER [in AnalogSensorClient.cpp of github/YARP]
      */
     yarp::os::Property options_FP;
     options_FP.put("device", "analogsensorclient");
@@ -103,10 +190,11 @@ bool HumanForcesProvider::configure(yarp::os::ResourceFinder &rf)
         return false;
     }
     
-    // TODO: Tranforming forceplate1 forces in human forces --> by using FrameTransformer interface
+    human::ConstFrameTransformation frameTransform_fp1(outputFrame_fp1,transform_fp1);
     human::FTForceReader *forceReader1 = new human::FTForceReader(appliedLink_fp1,
-                                                                  expressedFrame_fp1,
+                                                                  inputFrame_fp1,
                                                                   *firstSensor);
+    forceReader1->setTransformer(&frameTransform_fp1);
     m_readers.push_back(forceReader1);
     
     // -----------------------SENSOR 2 : FP2-----------------------//
@@ -129,18 +217,19 @@ bool HumanForcesProvider::configure(yarp::os::ResourceFinder &rf)
         return false;
     }
     
-    // TODO: Tranforming forceplate2 forces in human forces --> by using FrameTransformer interface
+    human::ConstFrameTransformation frameTransform_fp2(outputFrame_fp2,transform_fp2);
     human::FTForceReader *forceReader2 = new human::FTForceReader(appliedLink_fp2,
-                                                                  expressedFrame_fp2,
+                                                                  inputFrame_fp2,
                                                                   *secondSensor);
+    forceReader2->setTransformer(&frameTransform_fp2);
     m_readers.push_back(forceReader2);
     
     
     /* HANDLING OF THE ROBOT*********************************************************/
     /* From the robot we need:
-     *  1. the configuration of the joints of interest --> handled by a
-     *     RemoteControlBoardRemapper device
-     *  2. the estimated forces acquired by the two FTS in the robot arms
+     *  1 -> the configuration of the joints of interest --> handled by a
+     *       RemoteControlBoardRemapper device
+     *  2 -> the estimated forces acquired by the two FTS in the robot arms
      */
     
     /*
@@ -149,11 +238,14 @@ bool HumanForcesProvider::configure(yarp::os::ResourceFinder &rf)
     yarp::os::Property options_robot;
     options_robot.put("device", "remotecontrolboardremapper");
     yarp::os::Bottle axesNames;
-    yarp::os::Bottle & axesList = axesNames.addList();
-    yarp::os::Bottle * axesNameList = rf.find("axesNames").asList();
-    if (!axesNameList) {
+    yarp::os::Bottle &axesList = axesNames.addList();
+    yarp::os::Bottle *axesNameList = rf.find("axesNames").asList();
+    
+    if (!axesNameList)
+    {
         //TODO: check on the order of joints == same as the one in the iCub urdf!!
     }
+    
     axesList = *axesNameList;
 //    axesList.addString("torso_pitch");
 //    axesList.addString("torso_roll");
@@ -279,9 +371,6 @@ bool HumanForcesProvider::updateModule()
 }
 
 //---------------------------------------------------------------------
-/*
- * Close function, to perform cleanup.
- */
 bool HumanForcesProvider::close()
 {
     m_outputPort.close();
@@ -300,3 +389,62 @@ bool HumanForcesProvider::close()
     
     return true;
 }
+
+
+
+//---------------------------------------------------------------------
+/*
+ * Implementation of the utility functions.
+ */
+static bool parseRotationMatrix(const yarp::os::Value& ini, iDynTree::Rotation& rotation)
+{
+    if (ini.isNull() || !ini.isList())
+    {
+        return false;
+    }
+    yarp::os::Bottle *outerList = ini.asList();
+    if (!outerList || outerList->size() != 3)
+    {
+        return false;
+    }
+    for (int row = 0; row < outerList->size(); ++row)
+    {
+        yarp::os::Value& innerValue = outerList->get(row);
+        if (innerValue.isNull() || !innerValue.isList())
+        {
+            return false;
+        }
+        yarp::os::Bottle *innerList = innerValue.asList();
+        if (!innerList || innerList->size() != 3)
+        {
+            return false;
+        }
+        for (int column = 0; column < innerList->size(); ++column)
+        {
+            rotation.setVal(row, column, innerList->get(column).asDouble());
+        }
+    }
+    return true;
+}
+
+
+static bool parsePositionVector(const yarp::os::Value& ini, iDynTree::Position& position)
+{
+    if (ini.isNull() || !ini.isList())
+    {
+        return false;
+    }
+    yarp::os::Bottle *List = ini.asList();
+    if (!List || List->size() != 3)
+    {
+        return false;
+    }
+    for (int i = 0; i < List->size(); ++i)
+    {
+        position.setVal(i, List->get(i).asDouble());
+    }
+    return true;
+}
+
+
+

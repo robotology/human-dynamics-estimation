@@ -1,10 +1,9 @@
-//
-//  FTForceReader.cpp
-//  HumanDynamicsEstimation
-//
-//  Created by Claudia Latella on 15/02/17.
-//
-//
+/*!
+ * @file FTForceReader.cpp
+ * @author Claudia Latella
+ * @date 2017
+ * @copyright iCub Facility - Istituto Italiano di Tecnologia
+ */
 
 #include "FTForceReader.h"
 
@@ -15,7 +14,7 @@ namespace human
     FTForceReader::FTForceReader(std::string attachedLink,
                                  std::string referenceFrame,
                                  yarp::dev::IAnalogSensor &sensor)
-    : ForceHandler(attachedLink, referenceFrame)
+    : AbstractForceReader(attachedLink, referenceFrame)
     , m_sensor(sensor) {}
     
     bool FTForceReader::lowLevelRead(yarp::sig::Vector& force)

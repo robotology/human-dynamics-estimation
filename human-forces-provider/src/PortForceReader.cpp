@@ -1,10 +1,9 @@
-//
-//  PortForceReader.cpp
-//  HumanDynamicsEstimation
-//
-//  Created by Claudia Latella on 22/02/17.
-//
-//
+/*!
+ * @file PortForceReader.cpp
+ * @author Claudia Latella
+ * @date 2017
+ * @copyright iCub Facility - Istituto Italiano di Tecnologia
+ */
 
 #include "PortForceReader.h"
 
@@ -18,9 +17,8 @@ namespace human
     PortForceReader::PortForceReader(std::string attachedLink,
                                      std::string referenceFrame,
                                      yarp::os::BufferedPort<yarp::sig::Vector> &bufferedPort)
-    : ForceHandler(attachedLink, referenceFrame)
-    , m_bufferedPort(bufferedPort)
-    , m_readForces(6, 0.0) {}
+    : AbstractForceReader(attachedLink, referenceFrame)
+    , m_bufferedPort(bufferedPort){}
    
     
     bool PortForceReader::lowLevelRead(yarp::sig::Vector &force)
@@ -30,7 +28,7 @@ namespace human
         //check if the pointer is pointing to a null force OR the dimension is not 6
         if (tmp == NULL || tmp->size() != 6)
         {
-            yError() << "Something wrong in the read force: check it!!";
+            yError("Something wrong in the read force: check it!!");
             return false;
         }
         force = *tmp;
