@@ -2,7 +2,7 @@ sudo: required
 dist: trusty
 osx_image: xcode7.3
 language: cpp
-cache: ccache 
+# cache: ccache 
 
 matrix:
   include:
@@ -11,7 +11,7 @@ matrix:
       env: TRAVIS_CMAKE_GENERATOR="Unix Makefiles", TRAVIS_BUILD_TYPE="Debug"
     - os: linux
       compiler: clang
-      env: TRAVIS_CMAKE_GENERATOR="Unix Makefiles", TRAVIS_BUILD_TYPE="Release"
+      env: TRAVIS_CMAKE_GENERATOR="Unix Makefiles", TRAVIS_BUILD_TYPE="Release", TRAVIS_BUILD_DOCS=true
     - os: linux
       compiler: gcc
       env: TRAVIS_CMAKE_GENERATOR="Unix Makefiles", TRAVIS_BUILD_TYPE="Debug"
@@ -70,7 +70,11 @@ script:
 
 after_success:
   - sudo cmake --build . --config ${TRAVIS_BUILD_TYPE} --target install
-  
+  - if [ "$TRAVIS_BRANCH" == "master" -a "$TRAVIS_BUILD_DOCS" ]; then cd $TRAVIS_BUILD_DIR; fi
+  - if [ "$TRAVIS_BRANCH" == "master" -a "$TRAVIS_BUILD_DOCS" ]; then source .ci/setup-ssh.sh; fi
+  - if [ "$TRAVIS_BRANCH" == "master" -a "$TRAVIS_BUILD_DOCS" ]; then chmod +x .ci/generateDocumentation.sh; fi
+  - if [ "$TRAVIS_BRANCH" == "master" -a "$TRAVIS_BUILD_DOCS" ]; then .ci/generateDocumentation.sh; fi
+
 # Enable when tests are added to the repo
 # - ctest --build . --config ${TRAVIS_BUILD_TYPE}
 
