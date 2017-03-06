@@ -32,7 +32,9 @@ namespace human
         Map<const VectorXd> inputForceEigen(inputforce.data(), 6);
         Map<VectorXd> outputForceEigen(transformedForce.data(), 6);
         
-        outputForceEigen = toEigen(m_matrixTransformed) * inputForceEigen;
+        //multiplied by -1 (as the force applied on the human is exactly the
+        //opposite of the one excerted on the robot)
+        outputForceEigen = -1 * toEigen(m_matrixTransformed) * inputForceEigen;
         
         tranformedExpressedFrame = m_transformedExpressedFrame;
 
