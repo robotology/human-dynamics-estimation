@@ -5,6 +5,7 @@
  * @copyright iCub Facility - Istituto Italiano di Tecnologia
  */
 
+
 #include "HumanForcesProvider.h"
 
 #include <yarp/os/LogStream.h>

@@ -5,14 +5,17 @@
  * @copyright iCub Facility - Istituto Italiano di Tecnologia
  */
 
+
 #ifndef HUMAN_FORCEREADER_H
 #define HUMAN_FORCEREADER_H
+
 
 namespace human
 {
     class ForceReader;
     class Force6D;
 }
+
 
 /*! @brief Interface for reading forces from device and sensors. */
 class human::ForceReader
@@ -32,7 +35,6 @@ public:
      * Destructor.
      */
     virtual ~ForceReader();
-    
 };
 
 #endif /* HUMAN_FORCEREADER_H */

@@ -5,6 +5,7 @@
  * @copyright iCub Facility - Istituto Italiano di Tecnologia
  */
 
+
 #ifndef HUMAN_PORTFORCEREADER_H
 #define HUMAN_PORTFORCEREADER_H
 
@@ -27,6 +28,7 @@ namespace yarp
     }
 }
 
+
 /*! @brief Implementation of the ForceReader interface for handling forces coming from a YARP port. */
 class human::PortForceReader : public human::AbstractForceReader
 {
@@ -46,8 +48,6 @@ public:
     PortForceReader(std::string attachedLink,
                     std::string referenceFrame,
                     yarp::os::BufferedPort<yarp::sig::Vector> &bufferedPort);
-    
 };
-
 
 #endif /* HUMAN_PORTFORCEREADER_H */

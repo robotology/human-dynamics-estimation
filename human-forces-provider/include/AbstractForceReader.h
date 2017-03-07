@@ -13,6 +13,7 @@
 
 #include <yarp/sig/Vector.h>
 
+
 namespace human
 {
     class AbstractForceReader;
@@ -27,6 +28,7 @@ namespace yarp
         class Vector;
     }
 }
+
 
 /*! @brief Abstract class for implementing code required from its derived classes. */
 class human::AbstractForceReader : public human::ForceReader

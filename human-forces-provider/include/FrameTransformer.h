@@ -11,6 +11,7 @@
 
 #include <string>
 
+
 namespace human
 {
     class FrameTransformer;
@@ -24,7 +25,10 @@ namespace yarp
     }
 }
 
-/*! @brief Interface for transforming forces into human frames. */
+
+/*! 
+ * @brief Interface for transforming forces into human frames.
+ */
 class human::FrameTransformer
 {
 public:

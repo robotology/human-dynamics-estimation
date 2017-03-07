@@ -5,27 +5,32 @@
  * @copyright iCub Facility - Istituto Italiano di Tecnologia
  */
 
+
 #include "HumanForcesProvider.h"
 #include "ForceReader.h"
 #include "AbstractForceReader.h"
 #include "FTForceReader.h"
 #include "PortForceReader.h"
 #include "FrameTransformer.h"
-#include "ConstFrameTransformation.h"
+#include "GenericFrameTransformer.h"
+#include "RobotFrameTransformer.h"
 
-#include <yarp/os/LogStream.h>  //for using yError()
+#include <yarp/os/LogStream.h> 
 #include <yarp/dev/IAnalogSensor.h>
 #include <yarp/dev/IEncoders.h>
 
 #include <iDynTree/Core/MatrixFixSize.h>
 #include <iDynTree/Core/VectorDynSize.h>
 #include <iDynTree/Core/Transform.h>
+
 #include <iostream>
 
+
+//---------------------------------------------------------------------------
 //Utility functions for parsing INI file
 static bool parseRotationMatrix(const yarp::os::Value&, iDynTree::Rotation&);
 static bool parsePositionVector(const yarp::os::Value&, iDynTree::Position&);
-//---------------------------------------------------------------------
+//---------------------------------------------------------------------------
 
 
 HumanForcesProvider::HumanForcesProvider()
@@ -59,6 +64,16 @@ bool HumanForcesProvider::configure(yarp::os::ResourceFinder &rf)
                               yarp::os::Value(100),
                               "Checking period in [ms]").asInt();
     m_period = periodInMs / 1000.0;
+    
+    
+    /*
+     * ------Open ports for human joint configuration
+     */
+    if (!m_humanJointConfiguration_port.open("/humanJointConfiguration:i"))
+    {
+        yError() << "Unable to open port /humanJointConfiguration:i";
+        return false;
+    }
     
     
     /* HANDLING OF THE FORCEPLATES*********************************************************/
@@ -113,7 +128,7 @@ bool HumanForcesProvider::configure(yarp::os::ResourceFinder &rf)
     }
     
     position_fp1 = footPosition_fp1 + solePosition_fp1 + calibPosition_fp1;
-    iDynTree::Transform transform_fp1(rotationMatrix_fp1, position_fp1 );
+    iDynTree::Transform transform_fp1(rotationMatrix_fp1, position_fp1);
     
     
     /*
@@ -170,6 +185,7 @@ bool HumanForcesProvider::configure(yarp::os::ResourceFinder &rf)
     yarp::os::Property options_FP;
     options_FP.put("device", "analogsensorclient");
     
+    
     // -----------------------SENSOR 1 : FP1-----------------------//
     options_FP.put("local", ft1LocalName);          //local port name
     options_FP.put("remote", ft1RemoteName);        //device port name where we connect to
@@ -190,12 +206,15 @@ bool HumanForcesProvider::configure(yarp::os::ResourceFinder &rf)
         return false;
     }
     
-    human::ConstFrameTransformation frameTransform_fp1(outputFrame_fp1,transform_fp1);
+    human::GenericFrameTransformer frameTransform_fp1(inputFrame_fp1,outputFrame_fp1);
+    frameTransform_fp1.setTransform(transform_fp1);
+    
     human::FTForceReader *forceReader1 = new human::FTForceReader(appliedLink_fp1,
                                                                   inputFrame_fp1,
                                                                   *firstSensor);
     forceReader1->setTransformer(&frameTransform_fp1);
     m_readers.push_back(forceReader1);
+    
     
     // -----------------------SENSOR 2 : FP2-----------------------//
     options_FP.put("local" , ft2LocalName);          //local port name
@@ -217,7 +236,9 @@ bool HumanForcesProvider::configure(yarp::os::ResourceFinder &rf)
         return false;
     }
     
-    human::ConstFrameTransformation frameTransform_fp2(outputFrame_fp2,transform_fp2);
+    human::GenericFrameTransformer frameTransform_fp2(inputFrame_fp2,outputFrame_fp2);
+    frameTransform_fp2.setTransform(transform_fp2);
+    
     human::FTForceReader *forceReader2 = new human::FTForceReader(appliedLink_fp2,
                                                                   inputFrame_fp2,
                                                                   *secondSensor);
@@ -227,13 +248,42 @@ bool HumanForcesProvider::configure(yarp::os::ResourceFinder &rf)
     
     /* HANDLING OF THE ROBOT*********************************************************/
     /* From the robot we need:
-     *  1 -> the configuration of the joints of interest --> handled by a
-     *       RemoteControlBoardRemapper device
-     *  2 -> the estimated forces acquired by the two FTS in the robot arms
+     *  - the configuration of the joints of interest --> handled by a
+     *       RemoteControlBoardRemapper device...
      */
     
     /*
-     * 1. Robot configuration
+     *  ------Settings for the transforms
+     */
+    
+    iDynTree::Rotation robotLeftSole_R_humanLeftSole;
+    iDynTree::Position robotLeftSole_pos_humanLeftSole;
+    
+    if (!parseRotationMatrix(rf.find("robotLeftSole_R_humanLeftSole"), robotLeftSole_R_humanLeftSole))
+    {
+        yError("Somenthing wrong in parsing the rotation matrix between robotLeftSole and humanLeftSole!");
+        return false;
+    }
+    if (!parsePositionVector(rf.find("robotLeftSole_pos_humanLeftSole"), robotLeftSole_pos_humanLeftSole))
+    {
+        yError("Somenthing wrong in parsing the position between robotLeftSole and humanLeftSole!");
+        return false;
+    }
+    iDynTree::Transform robotLeftSole_T_humanLeftSole(robotLeftSole_R_humanLeftSole,
+                                                      robotLeftSole_pos_humanLeftSole);
+    
+    //TODO: if string checks!
+    std::string frameRobotSole   = rf.find("frameRobotSole").asString();
+    std::string frameHumanFoot   = rf.find("frameHumanFoot").asString();
+    
+    std::string frameRobotArm_left   = rf.find("frameRobotArm_left").asString();
+    std::string frameRobotArm_right  = rf.find("frameRobotArm_right").asString();
+    std::string frameHumanHand_left  = rf.find("frameHumanHand_left").asString();
+    std::string frameHumanHand_right = rf.find("frameHumanHand_right").asString();
+    
+    
+    /*
+     *  ------Robot configuration for the RemoteControlBoardRemapper
      */
     yarp::os::Property options_robot;
     options_robot.put("device", "remotecontrolboardremapper");
@@ -247,112 +297,137 @@ bool HumanForcesProvider::configure(yarp::os::ResourceFinder &rf)
     }
     
     axesList = *axesNameList;
-//    axesList.addString("torso_pitch");
-//    axesList.addString("torso_roll");
-//    axesList.addString("torso_yaw");
-//    axesList.addString("leftLeg_pitch");
-//    axesList.addString("leftLeg_roll");
-//    axesList.addString("leftLeg_yaw");
-//    axesList.addString("rightLeg_pitch");
-//    axesList.addString("rightLeg_roll");
-//    axesList.addString("rightLeg_yaw");
-//    axesList.addString("leftArm_pitch");
-//    axesList.addString("leftArm_roll");
-//    axesList.addString("leftArm_yaw");
-//    axesList.addString("rightArm_pitch");
-//    axesList.addString("rightArm_roll");
-//    axesList.addString("rightArm_yaw");
+    axesList.addString("torso_pitch");
+    axesList.addString("torso_roll");
+    axesList.addString("torso_yaw");
+    axesList.addString("l_shoulder_pitch");
+    axesList.addString("l_shoulder_roll");
+    axesList.addString("l_shoulder_yaw");
+    axesList.addString("l_elbow");
+    axesList.addString("r_shoulder_pitch");
+    axesList.addString("r_shoulder_roll");
+    axesList.addString("r_shoulder_yaw");
+    axesList.addString("r_elbow");
+    axesList.addString("l_hip_picth");
+    axesList.addString("l_hip_roll");
+    axesList.addString("l_hip_yaw");
+    axesList.addString("l_knee");
+    axesList.addString("l_ankle_pitch");
+    axesList.addString("l_ankle_roll");
+    axesList.addString("r_hip_picth");
+    axesList.addString("r_hip_roll");
+    axesList.addString("r_hip_yaw");
+    axesList.addString("r_knee");
+    axesList.addString("r_ankle_pitch");
+    axesList.addString("r_ankle_roll");
     options_robot.put("axesNames", axesNames.get(0));
     
     yarp::os::Bottle remoteControlBoards;
     yarp::os::Bottle & remoteControlBoardsList = remoteControlBoards.addList();
     remoteControlBoardsList.addString("/icub/torso");
-    remoteControlBoardsList.addString("/icub/leftLeg");
-    remoteControlBoardsList.addString("/icub/rightLeg");
-    remoteControlBoardsList.addString("/icub/leftArm");
-    remoteControlBoardsList.addString("/icub/rightArm");
+    remoteControlBoardsList.addString("/icub/left_leg");
+    remoteControlBoardsList.addString("/icub/right_leg");
+    remoteControlBoardsList.addString("/icub/left_arm");
+    remoteControlBoardsList.addString("/icub/right_arm");
     options_robot.put("remoteControlBoards", remoteControlBoards.get(0));
     options_robot.put("localPortPrefix", "/" + getName() + "/robot");
     
-    // Open the polydriver
+    
+    // Open the polydriver for the joints configuration
     ok = m_PolyRobot.open(options_robot);
     if (!ok)
     {
-        yError("Error in opening remoteControlBoards device for the robot!");
+        yError("Error in opening the device for the robot!");
         close();
         return false;
     }
     
-    yarp::dev::IEncoders *robotJointConfig = 0;
-    if (!m_PolyRobot.view(robotJointConfig) || !robotJointConfig)
+    yarp::dev::IEncoders *robotEncoder = 0;
+    if (!m_PolyRobot.view(robotEncoder) || !robotEncoder)
     {
-        yError("Error in viewing IEncoders!");
+        yError("Error in viewing robot sensors!");
         close();
         return false;
     }
-    
-    //TODO: use robotJointConfig data for transforming robot forces in human forces
-    //       --> by using FrameTransformer interface
     
     /*
-     * 2. robot arms forces estimation
+     * ------Open ports for robot forces
      */
     
-    if (!m_robotLeftArmForceEstimation.open("/"+ getName() + "/robotLeftForces:i"))
+    if (!m_robotLeftArmForce_port.open("/robotLeftForces:i"))
     {
-        yError() << "Unable to open port " << (getName() + "/robotLeftForces:i");
+        yError() << "Unable to open port /robotLeftForces:i";
         return false;
     }
     
-    
-    
-    if (!m_robotRightArmForceEstimation.open("/"+ getName() + "/robotRightForces:i"))
+    if (!m_robotRightArmForce_port.open("/robotRightForces:i"))
     {
-        yError() << "Unable to open port " << (getName() + "/robotRightForces:i");
+        yError() << "Unable to open port /robotRightForces:i";
         return false;
     }
     
-    // // -----------------------SENSOR ON ROBOT RIGHT ARM -----------------------//
-    // std::string humanContactLink_rightArmRobot = rf.find("humanContactLink_rightArmRobot").asString();
-    // std::string humanContactFrame_rightArmRobot = rf.find("humanContactFrame_rightArmRobot").asString();
-    // yarp::dev::IAnalogSensor *rightArmRobotSensor = 0;
-    //
-    // human::PortForceReader *forceReader3 = new human::PortForceReader("humanContactLink_rightArmRobot",
-    //                                                                     "humanContactFrame_rightArmRobot",
-    //                                                                     *rightArmRobotSensor);
-    // m_readers.push_back(forceReader3);
-    //
-    // // -----------------------SENSOR ON ROBOT LEFT ARM -----------------------//
-    // std::string humanContactLink_leftArmRobot = rf.find("humanContactLink_leftArmRobot").asString();
-    // std::string humanContactFrame_leftArmRobot = rf.find("humanContactFrame_leftArmRobot").asString();
-    // yarp::dev::IAnalogSensor *leftArmRobotSensor = 0;
-    //
-    // human::PortForceReader *forceReader4 = new human::PortForceReader("humanContactLink_leftArmRobot",
-    //                                                                     "humanContactFrame_leftArmRobot",
-    //                                                                     *leftArmRobotSensor);
-    // m_readers.push_back(forceReader4);
+    //-----------------------FTS SENSOR ON ROBOT RIGHT ARM -----------------------//
+
+    
+    std::string humanContactLinkWithRobotRightArm = rf.find("humanContactLinkWithRobotRightArm").asString();
+    
+    human::RobotFrameTransformer frameTransform_robotRightArm(robotLeftSole_T_humanLeftSole,
+                                                              frameRobotArm_right,
+                                                              frameRobotSole,
+                                                              frameHumanFoot,
+                                                              frameHumanHand_left,
+                                                              *robotEncoder,
+                                                              m_humanJointConfiguration_port);
+    
+    human::PortForceReader *forceReader3 = new human::PortForceReader(humanContactLinkWithRobotRightArm,
+                                                                      frameRobotArm_right,
+                                                                      m_robotRightArmForce_port);
+    
+    forceReader3->setTransformer(&frameTransform_robotRightArm);
+    m_readers.push_back(forceReader3);
+    
+    //-----------------------FTS SENSOR ON ROBOT LEFT ARM -----------------------//
+    
+    
+    std::string humanContactLinkWithRobotLeftArm = rf.find("humanContactLinkWithRobotLeftArm").asString();
+    
+    human::RobotFrameTransformer frameTransform_robotLeftArm(robotLeftSole_T_humanLeftSole,
+                                                             frameRobotArm_left,
+                                                             frameRobotSole,
+                                                             frameHumanFoot,
+                                                             frameHumanHand_right,
+                                                             *robotEncoder,
+                                                             m_humanJointConfiguration_port);
+    
+    human::PortForceReader *forceReader4 = new human::PortForceReader(humanContactLinkWithRobotLeftArm,
+                                                                      frameRobotArm_left,
+                                                                      m_robotRightArmForce_port);
+    
+    forceReader4->setTransformer(&frameTransform_robotLeftArm);
+    m_readers.push_back(forceReader4);
+
 
     /* *****************************************************************************/
     
     /*
      * ------Open port:o for the module output (to the next module human-dynamics-estimation)
      */
-    if (!m_outputPort.open("/"+ getName() + "/forces:o"))
+    if (!m_output_port.open("/"+ getName() + "/forces:o"))
     {
         yError() << "Unable to open port " << (getName() + "/forces:o");
         return false;
     }
     
-    human::HumanForces &allForces = m_outputPort.prepare();
+    human::HumanForces &allForces = m_output_port.prepare();
     allForces.forces.reserve(2);
-    m_outputPort.unprepare();
+    m_output_port.unprepare();
     return true;
 }
 
 //---------------------------------------------------------------------
 bool HumanForcesProvider::updateModule()
 {
-    human::HumanForces &allForces = m_outputPort.prepare();
+    human::HumanForces &allForces = m_output_port.prepare();
     std::vector<human::Force6D> &forcesVector = allForces.forces;
     
     forcesVector.resize(m_readers.size());
@@ -366,16 +441,17 @@ bool HumanForcesProvider::updateModule()
     /*
      * ------Write data on port:o
      */
-    m_outputPort.write();
+    m_output_port.write();
     return true;
 }
 
 //---------------------------------------------------------------------
 bool HumanForcesProvider::close()
 {
-    m_outputPort.close();
-    m_robotRightArmForceEstimation.close();
-    m_robotLeftArmForceEstimation.close();
+    m_output_port.close();
+    m_robotRightArmForce_port.close();
+    m_robotLeftArmForce_port.close();
+    m_humanJointConfiguration_port.close();
     
     
     for (std::vector<human::ForceReader*>::iterator it(m_readers.begin());
@@ -392,7 +468,7 @@ bool HumanForcesProvider::close()
 
 
 
-//---------------------------------------------------------------------
+//---------------------------------------------------------------------------
 /*
  * Implementation of the utility functions.
  */
@@ -445,6 +521,3 @@ static bool parsePositionVector(const yarp::os::Value& ini, iDynTree::Position& 
     }
     return true;
 }
-
-
-

@@ -11,6 +11,7 @@
 
 #include "AbstractForceReader.h"
 
+
 namespace human
 {
     class FTForceReader;
@@ -23,6 +24,7 @@ namespace yarp
         class IAnalogSensor;
     }
 }
+
 
 /*! @brief Implementation of the ForceReader interface for handling forces coming from devices. */
 class human::FTForceReader : public human::AbstractForceReader
@@ -45,6 +47,5 @@ public:
                   std::string referenceFrame,
                   yarp::dev::IAnalogSensor &sensor);
 };
-
 
 #endif /* HUMAN_FTFORCEREADER_H */

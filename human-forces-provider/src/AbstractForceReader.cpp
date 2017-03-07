@@ -5,13 +5,17 @@
  * @copyright iCub Facility - Istituto Italiano di Tecnologia
  */
 
+
 #include "AbstractForceReader.h"
 #include "FrameTransformer.h"
 
-#include <thrifts/Force6D.h>
 #include <yarp/os/LogStream.h>
 
-namespace human {
+#include <thrifts/Force6D.h>
+
+
+namespace human
+{
     AbstractForceReader::AbstractForceReader(std::string attachedLink,
                                              std::string referenceFrame)
     : m_frameTransformer(0)
@@ -37,12 +41,14 @@ namespace human {
         packedForce.appliedLink = m_attachedLink;
         packedForce.expressedFrame = m_referenceFrame;
         
-        if (!this->lowLevelRead(m_packedForce)) {
+        if (!this->lowLevelRead(m_packedForce))
+        {
             yError("Something wrong in the forces reading!");
             return false;
         }
 
-        if (m_frameTransformer) {
+        if (m_frameTransformer)
+        {
             //TODO: Check if the input and output variable can be the same
             if (!m_frameTransformer->transformForceFrame(m_packedForce,
                                                          m_packedForce,
