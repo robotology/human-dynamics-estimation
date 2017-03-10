@@ -34,7 +34,7 @@ yarp_idl_to_dir("${CMAKE_CURRENT_SOURCE_DIR}/thrifts/HumanState.thrift" "${CMAKE
 add_library("${PROJECT_NAME}-data" ${THRIFT_STATE_SOURCES} ${THRIFT_STATE_HEADERS})
 target_include_directories("${PROJECT_NAME}-data" SYSTEM PUBLIC ${THRIFT_STATE_INCLUDE_DIRS})
 target_include_directories("${PROJECT_NAME}-data" SYSTEM PUBLIC ${YARP_INCLUDE_DIRS})
-target_link_libraries("${PROJECT_NAME}-data" YARP::YARP_OS)
+target_link_libraries("${PROJECT_NAME}-data" YARP::YARP_OS YARP::YARP_sig)
 
 ## Include directories
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
