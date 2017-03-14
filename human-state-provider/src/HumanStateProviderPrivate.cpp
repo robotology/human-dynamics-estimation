@@ -16,4 +16,10 @@ namespace human {
     : m_frameProvider(0) {}
 
     HumanStateProvider::HumanStateProviderPrivate::~HumanStateProviderPrivate() {}
+
+    std::vector<std::string> HumanStateProvider::HumanStateProviderPrivate::joints()
+    {
+        return m_humanJointNames;
+    }
+
 }

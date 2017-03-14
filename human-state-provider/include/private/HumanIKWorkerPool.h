@@ -64,7 +64,7 @@ class human::HumanIKWorkerPool {
     std::mutex m_inputMutex;
 
 
-    std::unordered_map<unsigned, bool> m_results;
+    std::unordered_map<long, bool> m_results;
     std::condition_variable m_outputSynchronizer;
     std::mutex m_outputMutex;
 
@@ -76,7 +76,7 @@ class human::HumanIKWorkerPool {
     unsigned m_poolSize;
 
     int computeIK(WorkerTaskData& task);
-    void computeJointVelocities(WorkerTaskData& task);
+    void computeJointVelocities(WorkerTaskData& task, iDynTree::VectorDynSize& relativeVelocity);
 
     void worker();
 

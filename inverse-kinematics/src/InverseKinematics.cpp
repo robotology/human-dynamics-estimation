@@ -32,7 +32,7 @@ InverseKinematics::~InverseKinematics()
 }
 
 InverseKinematics::InverseKinematics(const InverseKinematics&) { assert(false); }
-InverseKinematics& InverseKinematics::operator=(const InverseKinematics&) { assert(false); }
+InverseKinematics& InverseKinematics::operator=(const InverseKinematics&) { assert(false); return *this;}
 
 bool InverseKinematics::getReducedModel(const iDynTree::Model& fullModel, const std::vector< std::string >& consideredJoints, iDynTree::Model& modelOutput)
 {

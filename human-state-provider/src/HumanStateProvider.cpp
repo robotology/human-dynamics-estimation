@@ -11,6 +11,7 @@
 #include "HumanIKWorkerPool.h"
 
 #include <thrifts/HumanState.h>
+#include <thrifts/HumanStateProviderService.h>
 
 #include <inversekinematics/InverseKinematics.h>
 #include <iDynTree/Core/Transform.h>
@@ -51,7 +52,7 @@ namespace human {
     static void createEndEffectorsPairs(const iDynTree::Model& model,
                                         const std::vector<yarp::experimental::dev::FrameReference>& humanSegments,
                                         std::vector<std::pair<std::string, std::string> > &framePairs,
-                                        std::vector<std::pair<unsigned, unsigned> > &framePairIndeces);
+                                        std::vector<std::pair<iDynTree::FrameIndex, iDynTree::FrameIndex> > &framePairIndeces);
 
 
     HumanStateProvider::HumanStateProvider()
@@ -99,8 +100,9 @@ namespace human {
                 segmentInfo.velocities(i) = m_pimpl->m_buffers.velocities[index](i);
             }
         }
-
+        std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
         m_pimpl->m_ikPool->runAndWait();
+        std::cerr << "Data process took " <<std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - t1).count() << "ms" << std::endl;
 
         // Now reconstruct everything
         //TODO: map from single segments to global vector
@@ -127,14 +129,27 @@ namespace human {
         int period = rf.check("period", yarp::os::Value(100), "Checking period in [ms]").asInt();
         m_pimpl->m_period = period / 1000.0;
 
+        yarp::os::Value falseValue; falseValue.fromString("false");
+        bool playbackMode = rf.check("playback", falseValue, "Checking playback mode").asBool();
+
         //Open the IFrameProvider device
         std::string remote = rf.check("xsens_remote_name", yarp::os::Value("/xsens"), "Checking xsens driver port prefix").asString();
-        std::string local = rf.check("xsens_local_name", yarp::os::Value("/xsens_remote"), "Checking xsens local port prefix").asString();
+        std::string local = rf.check("xsens_local_name", yarp::os::Value("/" + name + "/xsens"), "Checking xsens local port prefix").asString();
 
         yarp::os::Property driverOptions;
-        driverOptions.put("device", "xsens_mvn_remote");
-        driverOptions.put("remote", remote);
-        driverOptions.put("local", local);
+        if (playbackMode) {
+            driverOptions.put("device", "xsens_mvn_remote_light");
+            driverOptions.put("remote", remote);
+            driverOptions.put("local", local);
+            driverOptions.put("segments", rf.find("segments"));
+            driverOptions.put("autoconnect", "false");
+
+        } else {
+            driverOptions.put("device", "xsens_mvn_remote");
+            driverOptions.put("remote", remote);
+            driverOptions.put("local", local);
+        }
+
 
         if (!m_pimpl->m_humanDriver.open(driverOptions)) {
             yError("Could not create connection to human driver");
@@ -171,6 +186,21 @@ namespace human {
         //Copy this model as we will change the one loaded my the loader
         iDynTree::Model humanModel = modelLoader.model();
 
+        //get all joints
+        //If a joint has multiple dofs, it will appear multiple times
+        m_pimpl->m_humanJointNames.resize(humanModel.getNrOfDOFs());
+        for (iDynTree::JointIndex index = 0; static_cast<size_t>(index) < humanModel.getNrOfJoints(); ++index) {
+            iDynTree::IJointPtr joint = humanModel.getJoint(index);
+            std::string jointName = humanModel.getJointName(index);
+
+            size_t offset = joint->getDOFsOffset();
+            if (offset >= humanModel.getNrOfDOFs() || joint->getNrOfDOFs() == 0)
+                continue;
+            for (unsigned dof = 0; dof < joint->getNrOfDOFs(); ++dof) {
+                m_pimpl->m_humanJointNames[offset + dof] = jointName;
+            }
+        }
+
         // Resize internal data
         // 1) data of size # of segments (i.e. input data)
         std::vector<yarp::experimental::dev::FrameReference> segments = m_pimpl->m_frameProvider->frames();
@@ -201,7 +231,7 @@ namespace human {
 
         // 4) Get all the possible pairs composing the model
         std::vector<std::pair<std::string, std::string> > pairNames;
-        std::vector<std::pair<unsigned, unsigned> > pairSegmentIndeces;
+        std::vector<std::pair<iDynTree::FrameIndex, iDynTree::FrameIndex> > pairSegmentIndeces;
         createEndEffectorsPairs(humanModel, segments, pairNames, pairSegmentIndeces);
 
         m_pimpl->m_linkPairs.reserve(pairNames.size());
@@ -245,6 +275,7 @@ namespace human {
 
             //same size and initialization
             pairInfo.jointVelocities = pairInfo.jointConfigurations;
+            
 
             //Now configure the kinDynComputation objects
             modelLoader.loadReducedModelFromFullModel(humanModel, solverJoints);
@@ -274,7 +305,7 @@ namespace human {
             if (poolOption.asString() != "auto") {
                 yWarning("Pool option not recognized. Do not using pool");
             } else {
-                poolSize = std::thread::hardware_concurrency();
+                poolSize = static_cast<int>(std::thread::hardware_concurrency());
             }
 
         } else {
@@ -303,6 +334,15 @@ namespace human {
         tempOutput.velocities.resize(m_pimpl->m_buffers.jointsConfiguration.size());
         m_pimpl->m_outputPort.unprepare();
 
+        std::string rpcPortName = "/" + getName() + "/rpc";
+        m_pimpl->yarp().attachAsServer(m_pimpl->m_rpcPort);
+        if (!m_pimpl->m_rpcPort.open(rpcPortName)) {
+            yError("Could not open %s RPC port", rpcPortName.c_str());
+            close();
+            return false;
+        }
+
+
         return true;
 
     }
@@ -315,23 +355,23 @@ namespace human {
         m_pimpl->m_ikPool.reset();
 
         m_pimpl->m_outputPort.close();
+        m_pimpl->m_rpcPort.close();
         m_pimpl->m_humanDriver.close();
 
         return true;
     }
 
-
     static void createEndEffectorsPairs(const iDynTree::Model& model,
                                         const std::vector<yarp::experimental::dev::FrameReference>& humanSegments,
                                         std::vector<std::pair<std::string, std::string> > &framePairs,
-                                        std::vector<std::pair<unsigned, unsigned> > &framePairIndeces)
+                                        std::vector<std::pair<iDynTree::FrameIndex, iDynTree::FrameIndex> > &framePairIndeces)
     {
         //for each element in human segments
         //extract it from the vector (to avoid duplications)
         //Look for it in the model and get neighbours.
 
         std::vector<yarp::experimental::dev::FrameReference> segments(humanSegments);
-        unsigned segmentCount = segments.size();
+        size_t segmentCount = segments.size();
 
         while (!segments.empty()) {
             yarp::experimental::dev::FrameReference segment = segments.back();
@@ -339,7 +379,7 @@ namespace human {
             segmentCount--;
 
             iDynTree::LinkIndex linkIndex = model.getLinkIndex(segment.frameName);
-            if (linkIndex < 0 || linkIndex >= model.getNrOfLinks()) {
+            if (linkIndex < 0 || static_cast<unsigned>(linkIndex) >= model.getNrOfLinks()) {
                 yWarning("Segment %s not found in the URDF model", segment.frameName.c_str());
                 continue;
             }
@@ -370,10 +410,10 @@ namespace human {
                                                                                                                segments.end(),
                                                                                                                [&](yarp::experimental::dev::FrameReference& frame){ return frame.frameName == linkName; });
                     if (foundSegment != segments.end()) {
-                        unsigned foundLinkIndex = std::distance(segments.begin(), foundSegment);
+                        std::vector<yarp::experimental::dev::FrameReference>::difference_type foundLinkIndex = std::distance(segments.begin(), foundSegment);
                         //Found! This is a segment
                         framePairs.push_back(std::pair<std::string, std::string>(segment.frameName, linkName));
-                        framePairIndeces.push_back(std::pair<unsigned, unsigned>(segmentCount, foundLinkIndex));
+                        framePairIndeces.push_back(std::pair<iDynTree::FrameIndex, iDynTree::FrameIndex>(segmentCount, foundLinkIndex));
                         break;
                     }
                     //insert all non-visited neighbours

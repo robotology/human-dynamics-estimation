@@ -13,9 +13,6 @@ target_include_directories(human-forces-provider-data SYSTEM PUBLIC ${THRIFT_INC
 target_link_libraries(human-forces-provider-data YARP::YARP_init)
 target_link_libraries(human-forces-provider-data YARP::YARP_OS)
 
-## Include directories
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
-
 set(SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp 
             ${CMAKE_CURRENT_SOURCE_DIR}/src/HumanForcesProvider.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/ForceReader.cpp
@@ -39,6 +36,9 @@ set(HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/include/HumanForcesProvider.h
 
 ## Declare a C++ executable
 add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
+
+## Include directories
+target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 ## Specify targets for the linkage
 target_link_libraries(${PROJECT_NAME} human-forces-provider-data 

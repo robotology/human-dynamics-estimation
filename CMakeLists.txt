@@ -2,6 +2,11 @@ cmake_minimum_required(VERSION 3.0)
 
 project(HumanDynamicsEstimation CXX)
 
+include(GNUInstallDirs)
+include(CTest)
+
+option(BUILD_TESTING "Build tests" OFF)
+
 ## Find packages
 find_package(YARP REQUIRED)
 find_package(YCM REQUIRED)

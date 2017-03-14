@@ -12,14 +12,17 @@
 #include "HumanStateProvider.h"
 
 #include <thrifts/HumanState.h>
+#include <thrifts/HumanStateProviderService.h>
 
 #include <iDynTree/Core/MatrixDynSize.h>
 #include <iDynTree/Core/VectorDynSize.h>
 #include <iDynTree/Core/Transform.h>
+#include <iDynTree/Model/Indeces.h>
 #include <iDynTree/KinDynComputations.h>
 #include <inversekinematics/InverseKinematics.h>
 #include <yarp/dev/PolyDriver.h>
 #include <yarp/os/BufferedPort.h>
+#include <yarp/os/Port.h>
 #include <yarp/sig/Vector.h>
 
 #include <Eigen/QR>
@@ -85,22 +88,28 @@ struct human::LinkPairInfo {
 
     //Mapping from link pair to full model. Needed to map from small to complete problem
     std::string parentFrameName; //name of the parent frame
-    unsigned parentFrameModelIndex; //index of the frame in the iDynTree Model
-    unsigned parentFrameSegmentsIndex; //index of the parent frame in the segment list
+    iDynTree::FrameIndex parentFrameModelIndex; //index of the frame in the iDynTree Model
+    iDynTree::FrameIndex parentFrameSegmentsIndex; //index of the parent frame in the segment list
 
     std::string childFrameName; //name of the child frame
-    unsigned childFrameModelIndex; //index of the frame in the iDynTree Model
-    unsigned childFrameSegmentsIndex; //index of the child frame in the segment list
+    iDynTree::FrameIndex childFrameModelIndex; //index of the frame in the iDynTree Model
+    iDynTree::FrameIndex childFrameSegmentsIndex; //index of the child frame in the segment list
 
     std::vector<std::pair<unsigned, unsigned> > consideredJointLocations; /*!< For each joint connecting the pair: first = offset in the full model , second = dofs of joint */
 };
 
 
 
-class human::HumanStateProvider::HumanStateProviderPrivate {
+class human::HumanStateProvider::HumanStateProviderPrivate
+: public human::HumanStateProviderService
+{
 public:
     double m_period;
+
     yarp::os::BufferedPort<human::HumanState> m_outputPort;
+    yarp::os::Port m_rpcPort;
+    std::vector<std::string> m_humanJointNames; //cached list of joint names
+
     yarp::dev::PolyDriver m_humanDriver;
     yarp::experimental::dev::IFrameProvider* m_frameProvider;
 
@@ -124,6 +133,8 @@ public:
 
     HumanStateProviderPrivate();
     ~HumanStateProviderPrivate();
+
+    virtual std::vector<std::string> joints();
 };
 
 

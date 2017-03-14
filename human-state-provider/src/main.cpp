@@ -25,6 +25,8 @@ int main(int argc, char * argv[])
     // Configure ResourceFinder
     yarp::os::ResourceFinder &rf = yarp::os::ResourceFinder::getResourceFinderSingleton();
     rf.setVerbose(true);
+    rf.setDefaultContext("human-dynamic-estimation");
+    rf.setDefaultConfigFile("human-state-provider.ini");
     rf.configure(argc, argv);
     
     // Configure the module

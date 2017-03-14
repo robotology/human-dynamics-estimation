@@ -7,7 +7,6 @@ include(YCMDefaultDirs)
 find_package(iDynTree REQUIRED)
 find_package(IPOPT REQUIRED)
 
-# set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 find_package(Eigen3 REQUIRED)
 
 set(SOURCES src/InverseKinematicsIPOPT.cpp
@@ -33,7 +32,7 @@ target_link_libraries(${PROJECT_NAME} ${iDynTree_LIBRARIES} ${IPOPT_LIBRARIES})
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY PUBLIC_HEADER include/InverseKinematics.h)
 
-include(CTest)
+
 if(BUILD_TESTING)
    add_subdirectory(tests)
 endif()

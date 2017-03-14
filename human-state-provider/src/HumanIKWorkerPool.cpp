@@ -24,7 +24,7 @@ namespace human {
     , m_shouldTerminate(false)
     {
         if (size < 0) {
-            size = linkPairs.size();
+            size = static_cast<int>(linkPairs.size());
         } else if (size == 0) {
             size = 1;
         }
@@ -57,18 +57,20 @@ namespace human {
     void HumanIKWorkerPool::runAndWait()
     {
         //Fill data for a thread
-        std::unique_lock<std::mutex> guard(m_inputMutex);
-        for (auto& linkPair : m_linkPairs) {
-            // Create a new struct of type WorkerData and pass it to the pool
-            WorkerTaskData taskData = {
-                .pairInfo = linkPair,
-                .parentFrameInfo = m_segments[linkPair.parentFrameSegmentsIndex],
-                .childFrameInfo = m_segments[linkPair.childFrameSegmentsIndex],
-                .identifier = std::distance(&*(m_linkPairs.begin()), &linkPair) //this is not properly clear with the range-based iterators
-            };
-            m_tasks.push(taskData);
+        {
+            std::unique_lock<std::mutex> guard(m_inputMutex);
+            for (auto& linkPair : m_linkPairs) {
+                // Create a new struct of type WorkerData and pass it to the pool
+                WorkerTaskData taskData = {
+                    linkPair,
+                    m_segments[static_cast<size_t>(linkPair.parentFrameSegmentsIndex)],
+                    m_segments[static_cast<size_t>(linkPair.childFrameSegmentsIndex)],
+                    std::distance(&*(m_linkPairs.begin()), &linkPair) //this is not properly clear with the range-based iterators
+                };
+                m_tasks.push(taskData);
+            }
+            m_inputSynchronizer.notify_all();
         }
-        m_inputSynchronizer.notify_all();
 
         //as this call is blocking I have to wait for all the results
         std::unique_lock<std::mutex> outputGuard(m_outputMutex);
@@ -87,7 +89,7 @@ namespace human {
         return result;
     }
 
-    void HumanIKWorkerPool::computeJointVelocities(WorkerTaskData& task)
+    void HumanIKWorkerPool::computeJointVelocities(WorkerTaskData& task, iDynTree::VectorDynSize& relativeVelocity)
     {
         // Update kinDynComputations object
         iDynTree::Vector3 worldGravity;
@@ -112,13 +114,14 @@ namespace human {
         //Compute the QR decomposition
         task.pairInfo.jacobianDecomposition.compute(iDynTree::toEigen(relativeJacobian));
         //the solve method on the decomposition directly solves the associated least-squares problem
-        //TODO: memory allocation
-        iDynTree::VectorDynSize relativeVelocity = task.parentFrameInfo.velocities; //move this somewhere else
+        relativeVelocity = task.parentFrameInfo.velocities;
         iDynTree::toEigen(relativeVelocity) -= iDynTree::toEigen(task.childFrameInfo.velocities);
         iDynTree::toEigen(task.pairInfo.jointVelocities) = task.pairInfo.jacobianDecomposition.solve(iDynTree::toEigen(relativeVelocity));
     }
 
     void HumanIKWorkerPool::worker() {
+        //Preallocate some thread-local variables to be used in the computation
+        iDynTree::VectorDynSize relativeVelocity(6);
 
         while (true) {
             std::unique_lock<std::mutex> guard(m_inputMutex);
@@ -138,14 +141,17 @@ namespace human {
             guard.unlock();
 
             //Do computations
+            //std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
             int ikResult = computeIK(task);
+            //std::cerr << "IK took " <<std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - t1).count() << "ms" << std::endl;
+
             if (ikResult < 0) {
                 yError("Failed to compute IK for frames %s, %s with error %d",
                        task.pairInfo.parentFrameName.c_str(),
                        task.pairInfo.childFrameName.c_str(),
                        ikResult);
             }
-            computeJointVelocities(task);
+            computeJointVelocities(task, relativeVelocity);
 
             //Notify caller
             std::unique_lock<std::mutex> outputGuard(m_outputMutex);

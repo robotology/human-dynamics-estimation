@@ -26,6 +26,7 @@
 #include <iDynTree/ModelIO/ModelLoader.h>
 
 #include <iostream>
+#include <cassert>
 
 
 //---------------------------------------------------------------------------
@@ -453,8 +454,9 @@ bool HumanForcesProvider::updateModule()
     forcesVector.resize(m_readers.size());
     for (std::vector<human::ForceReader*>::iterator it(m_readers.begin());
          it != m_readers.end(); ++it) {
-        unsigned index = std::distance(m_readers.begin(), it);
-        (*it)->readForce(forcesVector[index]);
+        std::vector<human::ForceReader*>::difference_type index = std::distance(m_readers.begin(), it);
+        assert(index >= 0);
+        (*it)->readForce(forcesVector[static_cast<size_t>(index)]);
     }
     
 
@@ -538,14 +540,14 @@ static bool parsePositionVector(const yarp::os::Value& ini, iDynTree::Position& 
     {
         return false;
     }
-    yarp::os::Bottle *List = ini.asList();
-    if (!List || List->size() != 3)
+    yarp::os::Bottle *list = ini.asList();
+    if (!list || list->size() != 3)
     {
         return false;
     }
-    for (int i = 0; i < List->size(); ++i)
+    for (int i = 0; i < list->size(); ++i)
     {
-        position.setVal(i, List->get(i).asDouble());
+        position.setVal(i, list->get(i).asDouble());
     }
     return true;
 }
