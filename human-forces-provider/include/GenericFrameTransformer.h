@@ -9,7 +9,7 @@
 #ifndef HUMAN_GENERICFORCETRANSFORMER_H
 #define HUMAN_GENERICFORCETRANSFORMER_H
 
-#include <FrameTransformer.h>
+#include "FrameTransformer.h"
 
 #include <iDynTree/core/Transform.h>
 
@@ -20,17 +20,10 @@ namespace human
 }
 
 
-/*! @brief Apply a generic transform to a given force.
- *
- * Given two generic frames A and B, it basically implements the following convertion:
- * \f[
- *  {}^Bf_B = -{}^B T_A {}^A f_B
- * \f]
- * where  is the adjoint transformation
- * for the wrenchces.
- *
- *  @note The multiplication by -1 is mandatory since the force applied on the human is exactly the
- *  opposite of the one excerted on external sensor (both forceplates and robot).
+/*! @brief 
+ * Implementation of the FrameTransformer interface for the
+ * conversion of the robot forces into human forces.
+ * It applies a generic transform to a given force.
  */
 class human::GenericFrameTransformer : public human::FrameTransformer
 {
@@ -46,14 +39,14 @@ public:
     GenericFrameTransformer(const std::string &originExpressedFrame,
                             const std::string &transformedExpressedFrame);
     /*!
-     * Get origin frame name.
+     * Get the origin frame name.
      */
-    const std::string getOriginFrame();
+    const std::string& getOriginFrame();
 
     /*!
-     * Get transformed frame name.
+     * Get the transformed frame name.
      */
-    const std::string getTransformedFrame();
+    const std::string& getTransformedFrame();
     
     /*!
      * Set the frame transform.
@@ -64,7 +57,7 @@ public:
      */
     const iDynTree::Transform& getTransform();
     
-    virtual bool transformForceFrame(const yarp::sig::Vector &inputforce,
+    virtual bool transformForceFrame(const yarp::sig::Vector &inputForce,
                                      yarp::sig::Vector &transformedForce,
                                      std::string &transformedExpressedFrame);
 };

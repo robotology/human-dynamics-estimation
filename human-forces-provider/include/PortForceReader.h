@@ -36,9 +36,6 @@ private:
     yarp::os::BufferedPort<yarp::sig::Vector> &m_bufferedPort;
     
 protected:
-    /*!
-     * Read a force coming from a port.
-     */
     virtual bool lowLevelRead(yarp::sig::Vector &force);
     
 public:

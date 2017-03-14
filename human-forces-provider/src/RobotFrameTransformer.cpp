@@ -9,6 +9,7 @@
 #include "RobotFrameTransformer.h"
 
 #include <yarp/os/Log.h>
+#include <yarp/dev/api.h> //for IEncoders binaries
 #include <yarp/dev/IEncoders.h>
 
 #include <iDynTree/KinDynComputations.h>
@@ -28,7 +29,6 @@ namespace human
     , m_constTransformFromFixture(constTransformFromFixture)
     , m_robotSole(robotSole)
     , m_humanFoot(humanFoot)
-    , m_humanHand(humanHand)
     , m_robotJointConfiguration_encoder(robotJointConfiguration_encoder)
     , m_humanJointConfiguration_port(humanJointConfiguration_port){}
     
@@ -57,11 +57,10 @@ namespace human
         m_robotVelocity.zero();
         
         return true;
-        
     }
     
     
-    bool RobotFrameTransformer::transformForceFrame(const yarp::sig::Vector &inputforce,
+    bool RobotFrameTransformer::transformForceFrame(const yarp::sig::Vector &inputForce,
                                                     yarp::sig::Vector &transformedForce,
                                                     std::string &transformedExpressedFrame)
     {
@@ -73,14 +72,18 @@ namespace human
         // -----read human configuration
         human::HumanState *tmp = m_humanJointConfiguration_port.read();
         
+        if (tmp == NULL)
+        {
+            yError("Something wrong in reading the human configuration port!");
+            return false;
+        }
+        
         // transform yarp Vector in iDynTree vector
         if (!iDynTree::toiDynTree(tmp->positions,m_humanConfiguration))
         {
-            yError("Somenthing wrong in the convertion from YARP to iDynTree vector!");
+            yError("Somenthing wrong in the conversion from a YARP to iDynTree vector!");
             return false;
         };
-        //TODO: read tmp->velocities.
-        //Let's assume for the moment m_humanVelocity = 0;
         
         // -----set human configuration
         m_humanComputations.setRobotState(m_humanConfiguration,
@@ -96,12 +99,12 @@ namespace human
                                           worldGravity);
         
         // non const transform
-        iDynTree::Transform robotArm_T_leftSole;
-        robotArm_T_leftSole = m_robotComputations.getRelativeTransform(m_robotArm, m_robotSole);
+        iDynTree::Transform robotArm_T_leftSole = m_robotComputations.getRelativeTransform(getOriginFrame(),
+                                                                                           m_robotSole);
         
         // non const transform
-        iDynTree::Transform humanLeftFoot_T_humanHand;
-        humanLeftFoot_T_humanHand = m_humanComputations.getRelativeTransform(m_humanFoot, m_humanHand);
+        iDynTree::Transform humanLeftFoot_T_humanHand = m_humanComputations.getRelativeTransform(m_humanFoot,
+                                                                                                 getTransformedFrame());
         
         iDynTree::Transform matrixTransform = (robotArm_T_leftSole * m_constTransformFromFixture *humanLeftFoot_T_humanHand).inverse();
         
@@ -109,7 +112,7 @@ namespace human
         //matrixTransform is the matrix humanHand_T_robotArm that converts forces in robot frames
         //into forces in human ones.
         
-        return GenericFrameTransformer::transformForceFrame(inputforce,
+        return GenericFrameTransformer::transformForceFrame(inputForce,
                                                             transformedForce,
                                                             transformedExpressedFrame);
     }

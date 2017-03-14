@@ -6,7 +6,7 @@
  */
 
 
-#include <GenericFrameTransformer.h>
+#include "GenericFrameTransformer.h"
 
 #include <yarp/sig/Vector.h>
 
@@ -18,8 +18,8 @@ namespace human
 {
     GenericFrameTransformer::GenericFrameTransformer (const std::string &originExpressedFrame,
                                                       const std::string &transformedExpressedFrame)
-    : m_transformedExpressedFrame(originExpressedFrame)
-    , m_originExpressedFrame(transformedExpressedFrame)
+    : m_originExpressedFrame(originExpressedFrame)
+    , m_transformedExpressedFrame(transformedExpressedFrame)
     , m_matrixTransform(iDynTree::Transform()) {}
     
     
@@ -29,13 +29,13 @@ namespace human
     }
 
     
-    const std::string GenericFrameTransformer::getOriginFrame()
+    const std::string& GenericFrameTransformer::getOriginFrame()
     {
         return m_originExpressedFrame;
     }
     
     
-    const std::string GenericFrameTransformer::getTransformedFrame()
+    const std::string& GenericFrameTransformer::getTransformedFrame()
     {
         return m_transformedExpressedFrame;
     }
@@ -46,17 +46,17 @@ namespace human
     }
     
     
-    bool GenericFrameTransformer::transformForceFrame(const yarp::sig::Vector &inputforce,
+    bool GenericFrameTransformer::transformForceFrame(const yarp::sig::Vector &inputForce,
                                                        yarp::sig::Vector &transformedForce,
                                                        std::string &transformedExpressedFrame)
     {
         using namespace iDynTree;
         using namespace Eigen;
-        if (inputforce.size() < 6) return false;
+        if (inputForce.size() < 6) return false;
         transformedForce.resize(6);
         
         //Eigen Map types on Vector of YARP
-        Map<const VectorXd> inputForceEigen(inputforce.data(), 6);
+        Map<const VectorXd> inputForceEigen(inputForce.data(), 6);
         Map<VectorXd> outputForceEigen(transformedForce.data(), 6);
         
         //multiplied by -1 (as the force applied on the human is exactly the

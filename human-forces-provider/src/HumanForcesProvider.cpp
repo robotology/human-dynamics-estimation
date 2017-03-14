@@ -17,11 +17,13 @@
 
 #include <yarp/os/LogStream.h> 
 #include <yarp/dev/IAnalogSensor.h>
+#include <yarp/dev/api.h> //for IEncoders binaries
 #include <yarp/dev/IEncoders.h>
 
 #include <iDynTree/Core/MatrixFixSize.h>
 #include <iDynTree/Core/VectorDynSize.h>
 #include <iDynTree/Core/Transform.h>
+#include <iDynTree/ModelIO/ModelLoader.h>
 
 #include <iostream>
 
@@ -34,7 +36,7 @@ static bool parsePositionVector(const yarp::os::Value&, iDynTree::Position&);
 
 
 HumanForcesProvider::HumanForcesProvider()
-: m_period(0.1) {}
+: m_period(0.1){}
 
 
 HumanForcesProvider::~HumanForcesProvider() {}
@@ -56,18 +58,16 @@ bool HumanForcesProvider::configure(yarp::os::ResourceFinder &rf)
                                       "Checking module name").asString();
     setName(moduleName.c_str());
     
-    
     /*
-     * ------Configure module periodicty
+     * ------Configure module periodicity
      */
     int periodInMs = rf.check("period",
                               yarp::os::Value(100),
                               "Checking period in [ms]").asInt();
     m_period = periodInMs / 1000.0;
     
-    
     /*
-     * ------Open ports for human joint configuration
+     * ------Open a port for the human joint configuration
      */
     if (!m_humanJointConfiguration_port.open("/humanJointConfiguration:i"))
     {
@@ -76,15 +76,16 @@ bool HumanForcesProvider::configure(yarp::os::ResourceFinder &rf)
     }
     
     
-    /* HANDLING OF THE FORCEPLATES*********************************************************/
-    /* The configuration of the forceplates consists into 2 parts:
-     * 1 -> INI configuration for the polydriver (since they are handled with a polydriver) ;
-     * 2 -> INI configuration with the utility functions for the frame transformation.
-     */
-    
+   /* **************** NOTE ON THE FORCE PLATES ********************************
+    * The configuration of the force plates consists into 2 parts:
+    * 1 -> INI configuration for the polydriver (since they are handled with a 
+    *      polydriver, documented in AnalogSensorClient.cpp of github/YARP) ;
+    * 2 -> INI configuration with the utility functions for the frame 
+    *      transformation.
+    * **************************************************************************/
     
     /*
-     * ---------------------CONFIGURE FP1------------------------//
+     * ------Configure force plate 1 (FP1)
      */
     std::string appliedLink_fp1  = rf.find("appliedLink_fp1").asString();
     std::string inputFrame_fp1   = rf.find("inputFrame_fp1").asString();
@@ -130,9 +131,8 @@ bool HumanForcesProvider::configure(yarp::os::ResourceFinder &rf)
     position_fp1 = footPosition_fp1 + solePosition_fp1 + calibPosition_fp1;
     iDynTree::Transform transform_fp1(rotationMatrix_fp1, position_fp1);
     
-    
     /*
-     * ---------------------CONFIGURE FP2------------------------//
+     * ------Configure force plate 2 (FP2)
      */
     std::string appliedLink_fp2  = rf.find("appliedLink_fp2").asString();
     std::string inputFrame_fp2   = rf.find("inputFrame_fp2").asString();
@@ -180,13 +180,13 @@ bool HumanForcesProvider::configure(yarp::os::ResourceFinder &rf)
 
     
     /*
-     * ------CONFIGURE AND OPEN THE POLYDRIVER [in AnalogSensorClient.cpp of github/YARP]
+     * ------Configure and open the polidriver
      */
     yarp::os::Property options_FP;
     options_FP.put("device", "analogsensorclient");
     
+    //-----------------------SENSOR 1 : FP1 -------------------------------------//
     
-    // -----------------------SENSOR 1 : FP1-----------------------//
     options_FP.put("local", ft1LocalName);          //local port name
     options_FP.put("remote", ft1RemoteName);        //device port name where we connect to
     
@@ -206,17 +206,19 @@ bool HumanForcesProvider::configure(yarp::os::ResourceFinder &rf)
         return false;
     }
     
-    human::GenericFrameTransformer frameTransform_fp1(inputFrame_fp1,outputFrame_fp1);
-    frameTransform_fp1.setTransform(transform_fp1);
+    human::GenericFrameTransformer *frameTransform_fp1 = new human::GenericFrameTransformer(inputFrame_fp1,
+                                                                                            outputFrame_fp1);
+    frameTransform_fp1->setTransform(transform_fp1);
     
     human::FTForceReader *forceReader1 = new human::FTForceReader(appliedLink_fp1,
                                                                   inputFrame_fp1,
                                                                   *firstSensor);
-    forceReader1->setTransformer(&frameTransform_fp1);
+    forceReader1->setTransformer(frameTransform_fp1);
     m_readers.push_back(forceReader1);
     
     
-    // -----------------------SENSOR 2 : FP2-----------------------//
+    //-----------------------SENSOR 2 : FP2 -------------------------------------//
+    
     options_FP.put("local" , ft2LocalName);          //local port name
     options_FP.put("remote", ft2RemoteName);         //device port name where we connect to
     
@@ -236,26 +238,49 @@ bool HumanForcesProvider::configure(yarp::os::ResourceFinder &rf)
         return false;
     }
     
-    human::GenericFrameTransformer frameTransform_fp2(inputFrame_fp2,outputFrame_fp2);
-    frameTransform_fp2.setTransform(transform_fp2);
+    human::GenericFrameTransformer *frameTransform_fp2 = new human::GenericFrameTransformer(inputFrame_fp2,
+                                                                                            outputFrame_fp2);
+    frameTransform_fp2->setTransform(transform_fp2);
     
     human::FTForceReader *forceReader2 = new human::FTForceReader(appliedLink_fp2,
                                                                   inputFrame_fp2,
                                                                   *secondSensor);
-    forceReader2->setTransformer(&frameTransform_fp2);
+    forceReader2->setTransformer(frameTransform_fp2);
     m_readers.push_back(forceReader2);
     
     
-    /* HANDLING OF THE ROBOT*********************************************************/
-    /* From the robot we need:
-     *  - the configuration of the joints of interest --> handled by a
-     *       RemoteControlBoardRemapper device...
+    /* ******************* NOTE ON THE ROBOT ***********************************
+     * From the robot we need:
+     * 1 -> the configuration of the robot joints of interest handled by a
+     *      RemoteControlBoardRemapper device (documented in 
+     *      YARP/RemoteControlBoardRemapper);
+     * 2 -> the configuration of the human
+     * *************************************************************************/
+    
+    /*
+     * ------Models loading
      */
+    std::string humanModelFilename = rf.find("humanModelFilename").asString();
+    std::string robotModelFilename = rf.find("robotModelFilename").asString();
+    
+    iDynTree::ModelLoader modelLoader;
+    if(!modelLoader.loadModelFromFile(humanModelFilename))
+    {
+        yError("Something wrong with the human model loading!");
+        return false;
+    }
+    iDynTree::Model humanModel = modelLoader.model();
+    
+    if(!modelLoader.loadModelFromFile(robotModelFilename))
+    {
+        yError("Something wrong with the robot model loading!");
+        return false;
+    }
+    iDynTree::Model robotModel = modelLoader.model();
     
     /*
      *  ------Settings for the transforms
      */
-    
     iDynTree::Rotation robotLeftSole_R_humanLeftSole;
     iDynTree::Position robotLeftSole_pos_humanLeftSole;
     
@@ -272,18 +297,16 @@ bool HumanForcesProvider::configure(yarp::os::ResourceFinder &rf)
     iDynTree::Transform robotLeftSole_T_humanLeftSole(robotLeftSole_R_humanLeftSole,
                                                       robotLeftSole_pos_humanLeftSole);
     
-    //TODO: if string checks!
+    //TODO: check on strings
     std::string frameRobotSole   = rf.find("frameRobotSole").asString();
     std::string frameHumanFoot   = rf.find("frameHumanFoot").asString();
-    
     std::string frameRobotArm_left   = rf.find("frameRobotArm_left").asString();
     std::string frameRobotArm_right  = rf.find("frameRobotArm_right").asString();
     std::string frameHumanHand_left  = rf.find("frameHumanHand_left").asString();
     std::string frameHumanHand_right = rf.find("frameHumanHand_right").asString();
     
-    
     /*
-     *  ------Robot configuration for the RemoteControlBoardRemapper
+     * ------Robot configuration for the RemoteControlBoardRemapper
      */
     yarp::os::Property options_robot;
     options_robot.put("device", "remotecontrolboardremapper");
@@ -353,7 +376,6 @@ bool HumanForcesProvider::configure(yarp::os::ResourceFinder &rf)
     /*
      * ------Open ports for robot forces
      */
-    
     if (!m_robotLeftArmForce_port.open("/robotLeftForces:i"))
     {
         yError() << "Unable to open port /robotLeftForces:i";
@@ -368,42 +390,40 @@ bool HumanForcesProvider::configure(yarp::os::ResourceFinder &rf)
     
     //-----------------------FTS SENSOR ON ROBOT RIGHT ARM -----------------------//
 
-    
     std::string humanContactLinkWithRobotRightArm = rf.find("humanContactLinkWithRobotRightArm").asString();
-    
-    human::RobotFrameTransformer frameTransform_robotRightArm(robotLeftSole_T_humanLeftSole,
-                                                              frameRobotArm_right,
-                                                              frameRobotSole,
-                                                              frameHumanFoot,
-                                                              frameHumanHand_left,
-                                                              *robotEncoder,
-                                                              m_humanJointConfiguration_port);
+
+    human::RobotFrameTransformer *frameTransform_robotRightArm = new human::RobotFrameTransformer(robotLeftSole_T_humanLeftSole,
+                                                                                                 frameRobotArm_right,
+                                                                                                 frameRobotSole,
+                                                                                                 frameHumanFoot,
+                                                                                                 frameHumanHand_left,
+                                                                                                 *robotEncoder,
+                                                                                                 m_humanJointConfiguration_port);
+    frameTransform_robotRightArm->init(humanModel, robotModel);
     
     human::PortForceReader *forceReader3 = new human::PortForceReader(humanContactLinkWithRobotRightArm,
                                                                       frameRobotArm_right,
                                                                       m_robotRightArmForce_port);
-    
-    forceReader3->setTransformer(&frameTransform_robotRightArm);
+    forceReader3->setTransformer(frameTransform_robotRightArm);
     m_readers.push_back(forceReader3);
     
     //-----------------------FTS SENSOR ON ROBOT LEFT ARM -----------------------//
     
-    
     std::string humanContactLinkWithRobotLeftArm = rf.find("humanContactLinkWithRobotLeftArm").asString();
     
-    human::RobotFrameTransformer frameTransform_robotLeftArm(robotLeftSole_T_humanLeftSole,
-                                                             frameRobotArm_left,
-                                                             frameRobotSole,
-                                                             frameHumanFoot,
-                                                             frameHumanHand_right,
-                                                             *robotEncoder,
-                                                             m_humanJointConfiguration_port);
+    human::RobotFrameTransformer *frameTransform_robotLeftArm = new human::RobotFrameTransformer(robotLeftSole_T_humanLeftSole,
+                                                                                                 frameRobotArm_left,
+                                                                                                 frameRobotSole,
+                                                                                                 frameHumanFoot,
+                                                                                                 frameHumanHand_right,
+                                                                                                 *robotEncoder,
+                                                                                                 m_humanJointConfiguration_port);
+    frameTransform_robotLeftArm->init(humanModel, robotModel);
     
     human::PortForceReader *forceReader4 = new human::PortForceReader(humanContactLinkWithRobotLeftArm,
                                                                       frameRobotArm_left,
                                                                       m_robotRightArmForce_port);
-    
-    forceReader4->setTransformer(&frameTransform_robotLeftArm);
+    forceReader4->setTransformer(frameTransform_robotLeftArm);
     m_readers.push_back(forceReader4);
 
 
@@ -437,7 +457,7 @@ bool HumanForcesProvider::updateModule()
         (*it)->readForce(forcesVector[index]);
     }
     
-    
+
     /*
      * ------Write data on port:o
      */
@@ -448,17 +468,25 @@ bool HumanForcesProvider::updateModule()
 //---------------------------------------------------------------------
 bool HumanForcesProvider::close()
 {
+    //releasing allocated memory
+    for (std::vector<human::ForceReader*>::iterator it(m_readers.begin());
+    it != m_readers.end(); ++it)
+    {
+        human::AbstractForceReader *AbstractForceReader = dynamic_cast<human::AbstractForceReader*>(*it);
+        if (AbstractForceReader)
+        {
+            delete AbstractForceReader->getTransformer();
+        }
+        delete *it;
+    }
+    m_readers.clear();
+    
     m_output_port.close();
     m_robotRightArmForce_port.close();
     m_robotLeftArmForce_port.close();
     m_humanJointConfiguration_port.close();
     
     
-    for (std::vector<human::ForceReader*>::iterator it(m_readers.begin());
-         it != m_readers.end(); ++it) {
-        delete *it;
-    }
-    m_readers.clear();
     m_PolyRobot.close();
     m_forcePoly2.close();
     m_forcePoly1.close();

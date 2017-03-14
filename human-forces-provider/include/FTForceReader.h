@@ -33,10 +33,6 @@ private:
     yarp::dev::IAnalogSensor &m_sensor;
     
 protected:
-    /*!
-     * Read a force coming from a YARP interface for handlig polydriver
-     * (see the documentation [here]( http://www.yarp.it/classyarp_1_1dev_1_1IAnalogSensor.html#details )).
-     */
     virtual bool lowLevelRead(yarp::sig::Vector& force);
     
 public:

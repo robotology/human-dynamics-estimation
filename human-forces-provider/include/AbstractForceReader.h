@@ -40,6 +40,14 @@ private:
     yarp::sig::Vector m_packedForce;
     
 protected:
+    /*!
+     * Read the force external to the module.
+     * @param[in] force external force to be read
+     * @return true if read successfull, false otherwise
+     *
+     * @note At this stage the external force can come from a YARP port (the robot case)
+     * or from a device (the force plates case).
+     */
     virtual bool lowLevelRead(yarp::sig::Vector& force) = 0;
     
 public:
@@ -56,10 +64,7 @@ public:
      * Return the frame transform.
      */
     virtual FrameTransformer *getTransformer();
-    /*!
-     * Provide the read force as defined in Force6D.  This force represents the output
-     * of the module and, therefore, an input of the HumanDynamicsEstimator module.
-     */
+
     virtual bool readForce(Force6D &readForce);
 };
 

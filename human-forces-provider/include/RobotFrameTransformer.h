@@ -43,10 +43,21 @@ namespace yarp
 }
 
 
+
+/*! @brief Implementation of the FrameTransformer interface for the
+ *  conversion of the robot forces into human forces. This class is in
+ *  charge of converting the forces that are not constant during the
+ *  physical human-robot interaction.  It computes at each timestamp
+ *  an updating of the transform matrix by means of the human and robot
+ *  joint configurations.
+ */
 class human::RobotFrameTransformer : public human::GenericFrameTransformer
 {
 private:
     iDynTree::Transform m_matrixTransform;
+    iDynTree::Transform m_constTransformFromFixture;
+    std::string m_robotSole;
+    std::string m_humanFoot;
     
     iDynTree::KinDynComputations m_humanComputations;
     iDynTree::VectorDynSize m_humanConfiguration;
@@ -56,17 +67,16 @@ private:
     iDynTree::VectorDynSize m_robotConfiguration;
     iDynTree::VectorDynSize m_robotVelocity;
     
-    // for transforms
-    iDynTree::Transform m_constTransformFromFixture;
-    std::string m_robotArm;
-    std::string m_robotSole;
-    std::string m_humanFoot;
-    std::string m_humanHand;
-    
     yarp::dev::IEncoders &m_robotJointConfiguration_encoder;
     yarp::os::BufferedPort<HumanState> &m_humanJointConfiguration_port;
     
 public:
+    /*!
+     * Constructor from a constant iDynTree Transform object,
+     * constant strings for both human and robot parameters,
+     * an encoder for the robot configuration and a buffered
+     * YARP port for the human configuration.
+     */
     RobotFrameTransformer(const iDynTree::Transform &constTransformFromFixture,
                           const std::string &robotArm,
                           const std::string &robotSole,
@@ -74,11 +84,16 @@ public:
                           const std::string &humanHand,
                           yarp::dev::IEncoders &robotJointConfiguration_encoder,
                           yarp::os::BufferedPort<HumanState> &humanJointConfiguration_port);
-    
+    /*!
+     * Initialize the human and robot models.
+     * @param[in] humanModel iDynTree model for the human
+     * @param[in] robotModel idynTree model for the robot
+     * @return true if the models initialization was successfull, false otherwise
+     */
     bool init(const iDynTree::Model &humanModel,
               const iDynTree::Model &robotModel);
     
-    virtual bool transformForceFrame(const yarp::sig::Vector &inputforce,
+    virtual bool transformForceFrame(const yarp::sig::Vector &inputForce,
                                      yarp::sig::Vector &transformedForce,
                                      std::string &transformedExpressedFrame);
 };

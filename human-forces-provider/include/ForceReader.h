@@ -23,10 +23,6 @@ class human::ForceReader
 public:
     /*!
      * Read the force and return an object ready to be transmitted.
-     *
-     * @code
-     * f = readForce(a)
-     * @endcode
      * @param[out] readForce the force read
      * @return true if read successfull, false otherwise
      */

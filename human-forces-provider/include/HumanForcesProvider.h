@@ -80,11 +80,12 @@ public:
      */
     bool configure(yarp::os::ResourceFinder &rf);
     /*!
-     * Module updating: at each timestamp it returns a transformed force.
+     * Module updating: at each timestamp it writes a transformed force on
+     * an output YARP port.
      */
     bool updateModule();
     /*!
-     * Close module and perform cleanup.
+     * Close module, release allocated memory and perform cleanup.
      */
     bool close();
 };
