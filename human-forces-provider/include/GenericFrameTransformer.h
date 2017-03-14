@@ -11,7 +11,7 @@
 
 #include "FrameTransformer.h"
 
-#include <iDynTree/core/Transform.h>
+#include <iDynTree/Core/Transform.h>
 
 
 namespace human
