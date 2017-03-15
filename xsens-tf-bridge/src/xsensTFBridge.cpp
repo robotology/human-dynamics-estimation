@@ -248,8 +248,8 @@ int main(int argc, char * argv[])
 
     xsensTfPublisherModule module;
     ResourceFinder rf;
-    rf.setDefaultConfigFile("xsensTFBridge.ini");
-    rf.setDefaultContext("human-dynamic-estimation");
+//     rf.setDefaultConfigFile("xsensTFBridge.ini");
+//     rf.setDefaultContext("human-dynamic-estimation");
     rf.configure(argc, argv);
     rf.setVerbose(true);
     module.runModule(rf);                                   // This calls configure(rf) and, upon success, the module execution begins with a call to updateModule()
