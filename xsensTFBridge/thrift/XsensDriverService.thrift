@@ -1,9 +1,31 @@
 namespace yarp xsens
 
+struct FrameReferece {
+    1: string frameReference;
+    2: string frameName;
+}
+
 /**
  * Methods definition for the XsensDriver Wrapper service
  */
 service XsensDriverService {
+
+    /**
+     * Calibrate the Xsens device with the default calibration procedure
+     * \note this returns immediately
+     */
+    oneway void calibrateAsync();
+
+    /**
+     * Calibrate the Xsens device with the calibration procedure identified
+     * by the specified parameter
+     *
+     *
+     * \note this returns immediately
+     * @param calibrationType name of the calibration to execute
+     * @return true if the calibration is successful, false otherwise
+     */
+    oneway void calibrateAsyncWithType(1: string calibrationType);
 
     /**
      * Calibrate the Xsens device with the default calibration procedure
@@ -21,6 +43,11 @@ service XsensDriverService {
     bool calibrateWithType(1: string calibrationType);
 
     /**
+     * Abort the calibration procedure
+     */
+    oneway void abortCalibration();
+
+    /**
      * Start acquiring data from the Xsens suit
      */
     oneway void startAcquisition();
@@ -36,7 +63,7 @@ service XsensDriverService {
      * one used to output the data
      * @return the list of segment names
      */
-    list<string> segments();
+    list<FrameReferece> segments();
 
     /** returns the body dimensions currently used in the Xsens suit
      *

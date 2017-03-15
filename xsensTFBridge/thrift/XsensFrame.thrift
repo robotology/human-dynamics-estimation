@@ -4,19 +4,17 @@ namespace yarp xsens
  * Representation of a 3D vector
  */
 struct Vector3 {
-    1: double c1;
-    2: double c2;
-    3: double c3;
+    1: double x;
+    2: double y;
+    3: double z;
 }
 
 /**
- * Representation of a 4D vector
+ * Representation of a Quaternion
  */
-struct Vector4 {
-    1: double c1;
-    2: double c2;
-    3: double c3;
-    4: double c4;
+struct Quaternion {
+    1: double w;
+    2: Vector3 imaginary;
 }
 
 /**
@@ -33,14 +31,21 @@ struct XsensSegmentData {
     2:  Vector3 velocity;
     /** linear acceleration of the segment frame */
     3:  Vector3 acceleration;
-
+    
     //Angular quantities
     /** orientation of the segment frame in quaternion */
-    4:  Vector4 orientation;
+    4:  Quaternion orientation;
     /** angular velocity of the segment frame */
     5:  Vector3 angularVelocity;
     /** angular acceleration of the segment frame */
     6:  Vector3 angularAcceleration;
+}
+
+enum XsensStatus {
+    OK = 0,
+    ERROR = 1,
+    NO_DATA = 2,
+    TIMEOUT = 4
 }
 
 /**
@@ -56,16 +61,22 @@ struct XsensSensorData {
     /** The magnetometer data in arbitrary units */
     3:  Vector3 magnetometer;
     /** The sensor computed orientation */
-    4:  Vector4 orientation;
+    4:  Quaternion orientation;
 }
 
-/** Frame output from Xsens
+/** Frame output from Xsens with segments data
  */
-struct XsensFrame {
-    /** absolute time in seconds */
-    1: double time;
+struct XsensSegmentsFrame {
+    1: required XsensStatus status;
     /** segments data */
-    2: list<XsensSegmentData> segmentsData;
-    /** sensors data */
-    3: list<XsensSensorData> sensorsData
+    2: optional list<XsensSegmentData> segmentsData;
 }
+
+/** Frame output from Xsens with sensors raw data
+ */
+struct XsensSensorsFrame {
+    1: required XsensStatus status;
+    /** sensors data */
+    2: optional list<XsensSensorData> sensorsData
+}
+        
