@@ -38,11 +38,10 @@ target_link_libraries(xsensTFBridge ${YARP_LIBRARIES} thriftLibrary)
 target_include_directories(xsensTFBridge PUBLIC ${YARP_INCLUDE_DIRS} "${CMAKE_CURRENT_SOURCE_DIR}/include" YARP::YARP_OS)
 target_include_directories(xsensTFBridge PUBLIC ${STRING_INCLUDE_DIRS} ${TFMESSAGE_INCLUDE_DIRS} ${HEADER_INCLUDE_DIRS} ${QUATERNION_INCLUDE_DIRS} ${TRANSFORM_INCLUDE_DIRS} ${TRANSFORMSTAMPED_INCLUDE_DIRS} ${VECTOR_INCLUDE_DIRS} ${WRENCH_INCLUDE_DIRS} ${WRENCHSTAMPED_INCLUDE_DIRS} ${JOINTSTATE__INCLUDE_DIRS} ${TFTFMESSAGE__INCLUDE_DIRS})
 
-set(conf config/xsensTFBridge.ini)
-yarp_install(FILES ${conf} DESTINATION ${YARP_CONTEXTS_INSTALL_DIR}/human-dynamic-estimation)
-message(WARNING "ciaoooo" ${YARP_CONTEXTS_INSTALL_DIR} "queste")
+#set(conf config/xsensTFBridge.ini)
+#yarp_install(FILES ${conf} DESTINATION ${YARP_CONTEXTS_INSTALL_DIR}/human-dynamic-estimation)
 
-install(TARGETS xsensTFBridge DESTINATION ${CMAKE_INSTALL_FULL_BINDIR})
+#install(TARGETS xsensTFBridge DESTINATION ${CMAKE_INSTALL_FULL_BINDIR})
 
 #### add the "uninstall" target
 include(AddUninstallTarget)
