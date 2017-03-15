@@ -1,17 +1,16 @@
-//
-//  FTForceReader.h
-//  HumanDynamicsEstimation
-//
-//  Created by Claudia Latella on 15/02/17.
-//
-//
+/*!
+ * @file FTForceReader.h
+ * @author Claudia Latella
+ * @date 2017
+ * @copyright iCub Facility - Istituto Italiano di Tecnologia
+ */
+
 
 #ifndef HUMAN_FTFORCEREADER_H
 #define HUMAN_FTFORCEREADER_H
 
-#include "ForceReader.h"
-#include <yarp/sig/Vector.h>
-#include <string>
+#include "AbstractForceReader.h"
+
 
 namespace human
 {
@@ -25,23 +24,24 @@ namespace yarp
         class IAnalogSensor;
     }
 }
-                  
-class human::FTForceReader : public human::ForceReader
+
+
+/*! @brief Implementation of the ForceReader interface for handling forces coming from devices. */
+class human::FTForceReader : public human::AbstractForceReader
 {
 private:
-    std::string m_attachedLink;
-    std::string m_referenceFrame;
     yarp::dev::IAnalogSensor &m_sensor;
-    yarp::sig::Vector m_readForces;
+    
+protected:
+    virtual bool lowLevelRead(yarp::sig::Vector& force);
     
 public:
+    /*!
+     * Constructor from a link, a frame and a sensor (useful for the polydriver).
+     */
     FTForceReader(std::string attachedLink,
                   std::string referenceFrame,
                   yarp::dev::IAnalogSensor &sensor);
-    
-    virtual bool readForce(Force6D &readForce);
-    
 };
-
 
 #endif /* HUMAN_FTFORCEREADER_H */

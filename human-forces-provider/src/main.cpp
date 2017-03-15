@@ -1,14 +1,15 @@
-//
-//  main.cpp
-//  HumanForcesProvider
-//
-//  Created by Claudia Latella on 14/02/17.
-//  Copyright © 2017 Claudia Latella. All rights reserved.
-//
+/*!
+ * @file main.cpp
+ * @author Claudia Latella
+ * @date 2017
+ * @copyright iCub Facility - Istituto Italiano di Tecnologia
+ */
+
+
+#include "HumanForcesProvider.h"
 
 #include <yarp/os/LogStream.h>
 #include <yarp/os/Network.h>
-#include "HumanForcesProvider.h"
 
 
 int main(int argc, char * argv[])
