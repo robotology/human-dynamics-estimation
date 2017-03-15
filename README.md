@@ -1,4 +1,4 @@
-##YARP module for the Human Dynamics Estimation (HDE).
+## YARP module for the Human Dynamics Estimation (HDE).
 
 [![Build Status](https://travis-ci.org/robotology-playground/human-dynamics-estimation.svg?branch=master)](https://travis-ci.org/robotology-playground/human-dynamics-estimation)
 
@@ -11,7 +11,7 @@ A ROS visualizer allows to visualize in real-time the interaction.
 ### Overview
 A general overview of HDE is described as follows: 
 - a [human-state-provider]() module;
-- a [human-forces-provider]() module;
+- a [human-forces-provider](https://github.com/claudia-lat/human-dynamics-estimation/blob/READMEimproving/human-forces-provider/README.md) module;
 - a [human-dynamics-estimator]() module;
 - a [xxxx]() module for the visualization.
 
