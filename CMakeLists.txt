@@ -32,3 +32,4 @@ add_subdirectory(human-forces-provider)
 # Adding the estimator as last module
 # as it needs the interfaces exposed by the previous targets
 add_subdirectory(human-dynamics-estimator)
+add_subdirectory(xsens-tf-bridge)
