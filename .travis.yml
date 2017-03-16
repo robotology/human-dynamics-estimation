@@ -58,6 +58,15 @@ before_script:
   - cmake -G"${TRAVIS_CMAKE_GENERATOR}" -DCMAKE_BUILD_TYPE=${TRAVIS_BUILD_TYPE}  ..
   - cmake --build . --config ${TRAVIS_BUILD_TYPE}
   - sudo cmake --build . --config ${TRAVIS_BUILD_TYPE} --target install
+  # yarp experimental
+  - cd ../..
+  - git clone https://github.com/robotology-playground/xsens-mvn
+  - cd xsens-mvn
+  - mkdir build
+  - cd build
+  - cmake -G"${TRAVIS_CMAKE_GENERATOR}" -DCMAKE_BUILD_TYPE=${TRAVIS_BUILD_TYPE} -DENABLE_xsens_mvn=OFF -DENABLE_xsens_mvn_wrapper=OFF -DENABLE_xsens_mvn_remote=OFF  ..
+  - cmake --build . --config ${TRAVIS_BUILD_TYPE}
+  - sudo cmake --build . --config ${TRAVIS_BUILD_TYPE} --target install
   # Configure human-dynamics-estimation
   - cd ../../human-dynamics-estimation
   - cmake --version

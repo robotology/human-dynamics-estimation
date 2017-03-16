@@ -18,4 +18,3 @@ struct HumanState {
     2: Vector velocities;
     3: Vector accelerations;
 }
-

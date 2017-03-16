@@ -2,6 +2,11 @@ cmake_minimum_required(VERSION 3.0)
 
 project(HumanDynamicsEstimation CXX)
 
+include(GNUInstallDirs)
+include(CTest)
+
+option(BUILD_TESTING "Build tests" OFF)
+
 ## Find packages
 find_package(YARP REQUIRED)
 find_package(YCM REQUIRED)
@@ -26,6 +31,10 @@ include(AddInstallRPATHSupport)
 #                           LIB_DIRS "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}"
 #                           DEPENDS ENABLE_RPATH
 #                           USE_LINK_PATH)
+
+
+#Add IK solver
+add_subdirectory(inverse-kinematics)
 
 add_subdirectory(human-state-provider)
 add_subdirectory(human-forces-provider)

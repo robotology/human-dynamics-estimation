@@ -46,6 +46,7 @@ function(ADD_WARNINGS_CONFIGURATION_TO_TARGET)
           #Remove some other warnings on paddings
           list(APPEND COMPILE_OPTIONS "-Wno-padded")
           list(APPEND COMPILE_OPTIONS "-Wno-cast-align")
+          list(APPEND COMPILE_OPTIONS "-Wno-c++98-compat")
 
         elseif(${CMAKE_COMPILER_IS_GNUCC})
           list(APPEND COMPILE_OPTIONS "-Wall")
