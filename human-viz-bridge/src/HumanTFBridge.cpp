@@ -7,7 +7,7 @@
 #include "thrift/XsensDriverService.h"
 #include "thrift/XsensSegmentsFrame.h"
 
-#include <iDynTree/Core/TestUtils.h>
+#include <iDynTree/Model/Indeces.h>
 #include <iDynTree/ModelIO/ModelLoader.h>
 #include <TickTime.h>
 #include <yarp/os/all.h>
@@ -17,6 +17,7 @@
 #include <yarp/os/Wire.h>
 #include <yarp/os/LogStream.h>
 
+#include <algorithm>
 #include <cmath>
 #include <iostream>
 #include <limits.h>
@@ -87,7 +88,7 @@ public:
     bool configure(ResourceFinder &rf)
     {
         string moduleName = rf.check("name", Value("human-tf-bridge"), "Checking module name").asString();
-        string serverName = rf.check("serverName", Value("xsens"), "Checking module name").asString();
+        string serverName = rf.check("serverName", Value("xsens"), "Checking server name").asString();
         string urdfModelFile = rf.findFile("urdf_model");
         setName(moduleName.c_str());
         
@@ -224,7 +225,7 @@ int main(int argc, char * argv[])
         return EXIT_FAILURE;
     }
     
-    Node node("/human/yarp_human_state_publisher");
+    Node node("/human/tf_publisher");
 
     HumanTFBridge module;
     ResourceFinder rf;
