@@ -60,6 +60,7 @@ static bool parseFrameListOption(const Value &option, vector<string> &parsedSegm
     return true;
 }
 
+
 class xsensJointStatePublisherModule : public RFModule, public TypedReaderCallback<HumanState> 
 {
     Port client_port;
@@ -71,16 +72,50 @@ class xsensJointStatePublisherModule : public RFModule, public TypedReaderCallba
     //variables declaration
     sensor_msgs_JointState joint_state;
     tf2_msgs_TFMessage tf;
-    
+
 public:
     double getPeriod()
     {
         // module periodicity (seconds).
-        return 100;
+        return 0.1;
     }
     // Main function. Will be called periodically every getPeriod() seconds
     bool updateModule()
     {
+        std::cerr << "hi\n";
+        HumanState* humanStateData = humanStateDataPort.read();
+//         HumanState humanStateData;
+//         humanStateData.positions.resize(5);
+//         humanStateData.positions[0] = (1.0); 
+//         humanStateData.positions[1] = (1.4); 
+//         humanStateData.positions.push_back(4.5); 
+//         humanStateData.positions.push_back(2.3); 
+//         humanStateData.positions.push_back(5.6);
+        std::cerr << "after\n";
+        if (!humanStateData) return true;
+        double we = humanStateData->positions[0];
+        yInfo() << we;
+        
+//         tf.transforms.clear();
+//         TickTime currentTime = normalizeSecNSec(yarp::os::Time::now());
+//         joint_state.header.stamp = currentTime;
+//         joint_state.position[39] = var;
+//         var += inc;
+//         if (var<-0.3 || var>0.3) inc *= -1;
+//         
+//         ground_to_Pelvis.header.seq   = 1;
+//         ground_to_Pelvis.header.stamp = currentTime;
+//         ground_to_Pelvis.transform.translation.x = 0;
+//         ground_to_Pelvis.transform.translation.y = 0;
+//         ground_to_Pelvis.transform.translation.z = 0;
+//         ground_to_Pelvis.transform.rotation.x = 0;
+//         ground_to_Pelvis.transform.rotation.y = 0;
+//         ground_to_Pelvis.transform.rotation.z = 0;
+//         ground_to_Pelvis.transform.rotation.w = 1;
+// 
+//         tf.transforms.push_back(ground_to_Pelvis);
+//         publisher_tf.write(tf);
+//         publisher.write(joint_state);
         return true;
     }
     // Configure function. 
