@@ -105,12 +105,43 @@ namespace human {
         std::cerr << "Data process took " <<std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - t1).count() << "ms" << std::endl;
 
         // Now reconstruct everything
-        //TODO: map from single segments to global vector
-        //Data saved in jointsConfiguration and jointsVelocity
+        //Data saved in jointsConfiguration and jointsVelocity of the various pairInfo
+        // Probably this can be done also at the single thread level
+        for (auto &pair : m_pimpl->m_linkPairs) {
+            size_t jointIndex = 0;
+            for (auto &pairJoint : pair.consideredJointLocations) {
+                Eigen::Map<Eigen::VectorXd> jointPositions(m_pimpl->m_buffers.jointsConfiguration.data(), m_pimpl->m_buffers.jointsConfiguration.size());
+                jointPositions.segment(pairJoint.first, pairJoint.second) = iDynTree::toEigen(pair.jointConfigurations).segment(jointIndex, pairJoint.second);
+                Eigen::Map<Eigen::VectorXd> jointVelocities(m_pimpl->m_buffers.jointsVelocity.data(), m_pimpl->m_buffers.jointsVelocity.size());
+                jointVelocities.segment(pairJoint.first, pairJoint.second) = iDynTree::toEigen(pair.jointVelocities).segment(jointIndex, pairJoint.second);
+
+                jointIndex += pairJoint.second;
+            }
+        }
+
 
         human::HumanState &currentState = m_pimpl->m_outputPort.prepare();
         currentState.positions = m_pimpl->m_buffers.jointsConfiguration;
         currentState.velocities = m_pimpl->m_buffers.jointsVelocity;
+
+        {
+            std::lock_guard<std::mutex> guard(m_pimpl->m_objectMutex);
+            if (m_pimpl->m_baseLink < m_pimpl->m_segments.size()) {
+                //Output base link
+                yarp::sig::Vector &basePose = m_pimpl->m_buffers.poses[m_pimpl->m_baseLink];
+                yarp::sig::Vector &baseVelocity = m_pimpl->m_buffers.velocities[m_pimpl->m_baseLink];
+
+                currentState.baseOriginWRTGlobal.x = basePose[0];
+                currentState.baseOriginWRTGlobal.y = basePose[1];
+                currentState.baseOriginWRTGlobal.z = basePose[2];
+
+                currentState.baseOrientationWRTGlobal.w = basePose[3];
+                currentState.baseOrientationWRTGlobal.imaginary.x = basePose[4];
+                currentState.baseOrientationWRTGlobal.imaginary.y = basePose[5];
+                currentState.baseOrientationWRTGlobal.imaginary.z = basePose[6];
+                currentState.baseVelocityWRTGlobal = baseVelocity;
+            }
+        }
 
         m_pimpl->m_outputPort.write();
 
@@ -120,6 +151,7 @@ namespace human {
     bool HumanStateProvider::configure(yarp::os::ResourceFinder &rf)
     {
         assert(m_pimpl);
+        std::lock_guard<std::mutex> guard(m_pimpl->m_objectMutex);
 
         //Name of the module
         std::string name = rf.check("name", yarp::os::Value("human-state-provider"), "Checking module name").asString();
@@ -201,9 +233,14 @@ namespace human {
             }
         }
 
+        // Get the base link
+        std::string baseLink = rf.check("base_link", yarp::os::Value(""), "Checking base link").asString();
+        //TODO: decide if we want to have also a different link and we should perform a transformation in the output phase
+
         // Resize internal data
         // 1) data of size # of segments (i.e. input data)
         std::vector<yarp::experimental::dev::FrameReference> segments = m_pimpl->m_frameProvider->frames();
+        m_pimpl->m_baseLink = segments.size(); //initialized to end, i.e. no base
 
         m_pimpl->m_buffers.poses.resize(segments.size());
         m_pimpl->m_buffers.velocities.resize(segments.size());
@@ -222,12 +259,20 @@ namespace human {
 
         // 3) segments information
         m_pimpl->m_segments.resize(segments.size());
-        for (unsigned index = 0; index < segments.size(); ++index) {
+        for (size_t index = 0; index < segments.size(); ++index) {
             m_pimpl->m_segments[index].velocities.resize(6);
             m_pimpl->m_segments[index].velocities.zero();
             //TODO if needed acceleration do it
-        }
 
+            m_pimpl->m_segments[index].segmentName = segments[index].frameName;
+            if (baseLink == m_pimpl->m_segments[index].segmentName) {
+                m_pimpl->m_baseLink = index;
+                yInfo("Using base link %s", baseLink.c_str());
+            }
+        }
+        if (m_pimpl->m_baseLink == segments.size()) {
+            yInfo("No base link selected");
+        }
 
         // 4) Get all the possible pairs composing the model
         std::vector<std::pair<std::string, std::string> > pairNames;
@@ -267,7 +312,7 @@ namespace human {
                 }
                 iDynTree::IJointConstPtr joint = humanModel.getJoint(jointIndex);
                 //Save location and length of each DoFs
-                pairInfo.consideredJointLocations.push_back(std::pair<unsigned, unsigned>(joint->getDOFsOffset(), joint->getNrOfDOFs()));
+                pairInfo.consideredJointLocations.push_back(std::pair<size_t, size_t>(joint->getDOFsOffset(), joint->getNrOfDOFs()));
             }
 
             pairInfo.jointConfigurations.resize(solverJoints.size());
@@ -332,6 +377,15 @@ namespace human {
         human::HumanState &tempOutput = m_pimpl->m_outputPort.prepare();
         tempOutput.positions.resize(m_pimpl->m_buffers.jointsConfiguration.size());
         tempOutput.velocities.resize(m_pimpl->m_buffers.jointsConfiguration.size());
+        tempOutput.baseVelocityWRTGlobal.resize(6);
+        tempOutput.baseVelocityWRTGlobal.zero();
+        tempOutput.baseOriginWRTGlobal.x = 0;
+        tempOutput.baseOriginWRTGlobal.y = 0;
+        tempOutput.baseOriginWRTGlobal.z = 0;
+        tempOutput.baseOrientationWRTGlobal.w = 0;
+        tempOutput.baseOrientationWRTGlobal.imaginary.x = 0;
+        tempOutput.baseOrientationWRTGlobal.imaginary.y = 0;
+        tempOutput.baseOrientationWRTGlobal.imaginary.z = 0;
         m_pimpl->m_outputPort.unprepare();
 
         std::string rpcPortName = "/" + getName() + "/rpc";
@@ -350,6 +404,7 @@ namespace human {
     bool HumanStateProvider::close()
     {
         assert(m_pimpl);
+        std::lock_guard<std::mutex> guard(m_pimpl->m_objectMutex);
 
         //explitily clear the pool
         m_pimpl->m_ikPool.reset();

@@ -10,5 +10,9 @@ service HumanStateProviderService {
      * @return the list of joints of the model
      */
     list<string> joints();
+    
+    bool setBaseLink(1: string baseLink);
+    
+    string baseLink();
 
 }
