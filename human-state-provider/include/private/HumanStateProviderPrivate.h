@@ -27,9 +27,10 @@
 
 #include <Eigen/QR>
 
+#include <memory>
+#include <mutex>
 #include <string>
 #include <vector>
-#include <memory>
 
 namespace human {
     struct IKSolverData;
@@ -61,6 +62,8 @@ class InverseKinematics;
  * This saves the information coming from a FrameProvider
  */
 struct human::SegmentInfo {
+    std::string segmentName;
+
     iDynTree::Transform poseWRTWorld;
     iDynTree::VectorDynSize velocities;
     //TODO if not needed acceleration delete them
@@ -95,7 +98,7 @@ struct human::LinkPairInfo {
     iDynTree::FrameIndex childFrameModelIndex; //index of the frame in the iDynTree Model
     iDynTree::FrameIndex childFrameSegmentsIndex; //index of the child frame in the segment list
 
-    std::vector<std::pair<unsigned, unsigned> > consideredJointLocations; /*!< For each joint connecting the pair: first = offset in the full model , second = dofs of joint */
+    std::vector<std::pair<size_t, size_t> > consideredJointLocations; /*!< For each joint connecting the pair: first = offset in the full model , second = dofs of joint */
 };
 
 
@@ -116,6 +119,8 @@ public:
     std::vector<human::LinkPairInfo> m_linkPairs;
     std::vector<human::SegmentInfo> m_segments;
 
+    size_t m_baseLink;
+
     struct {
         //These vectors have the size of # of segments
         //Needed for reading inputs from the IFrameProviders object
@@ -131,10 +136,14 @@ public:
 
     std::unique_ptr<human::HumanIKWorkerPool> m_ikPool; //this should be transformed into unique_ptr, but it needs the include. Check if this creates a look or not
 
+    std::mutex m_objectMutex;
+
     HumanStateProviderPrivate();
     ~HumanStateProviderPrivate();
 
     virtual std::vector<std::string> joints();
+    virtual std::string baseLink();
+    virtual bool setBaseLink(const std::string &baseLink);
 };
 
 
