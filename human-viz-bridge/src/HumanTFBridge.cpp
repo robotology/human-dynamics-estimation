@@ -10,12 +10,13 @@
 #include <iDynTree/Model/Indeces.h>
 #include <iDynTree/ModelIO/ModelLoader.h>
 #include <TickTime.h>
-#include <yarp/os/all.h>
-#include <yarp/os/idl/WireTypes.h>
-#include <yarp/os/Network.h>
-#include <yarp/os/RFModule.h>
-#include <yarp/os/Wire.h>
+#include <yarp/os/BufferedPort.h>
 #include <yarp/os/LogStream.h>
+#include <yarp/os/Network.h>
+#include <yarp/os/Node.h>
+#include <yarp/os/Publisher.h>
+#include <yarp/os/RFModule.h>
+#include <yarp/os/Time.h>
 
 #include <algorithm>
 #include <cmath>
