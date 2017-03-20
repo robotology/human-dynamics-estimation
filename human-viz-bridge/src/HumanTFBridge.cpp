@@ -155,12 +155,12 @@ public:
         
         string worldRFName = rf.find("worldRFName").asString();
         for (size_t index = 0; index < segments.size(); ++index) {
-            tf.transforms[index].child_frame_id = segments[index];
+            tf.transforms[index].child_frame_id = rf.find("tfPrefix").asString() + "/" + segments[index];
             tf.transforms[index].header.frame_id = worldRFName;
         }
         
         for (size_t index = 0; index < fakeSegments.size(); ++index) {
-            tf.transforms[segments.size() + index].child_frame_id = fakeSegments[index];
+            tf.transforms[segments.size() + index].child_frame_id = rf.find("tfPrefix").asString() + "/" + fakeSegments[index];
             tf.transforms[segments.size() + index].header.frame_id = worldRFName;
             tf.transforms[segments.size() + index].header.seq   = index;
             tf.transforms[segments.size() + index].transform.translation.x = 0;
@@ -195,6 +195,7 @@ public:
         client_port.close();
         xsensDataPort.close();
         publisher_tf.interrupt();
+        publisher_tf.close();
         return true;
     }
     
@@ -239,5 +240,6 @@ int main(int argc, char * argv[])
     rf.setVerbose(true);
     Node node(rf.find("nodeName").asString());
     module.runModule(rf);                                   // This calls configure(rf) and, upon success, the module execution begins with a call to updateModule()
+    node.interrupt();
     return 0;
 }

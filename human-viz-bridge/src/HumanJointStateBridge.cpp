@@ -113,7 +113,7 @@ public:
 
         tf.transforms.resize(1);
         tf.transforms[0].header.frame_id = rf.find("worldRFName").asString();
-        tf.transforms[0].child_frame_id = rf.find("childLinkRFName").asString();
+        tf.transforms[0].child_frame_id = rf.find("tfPrefix").asString() + "/" + rf.find("childLinkRFName").asString();
         
         vector<string> joints;
         if (!parseFrameListOption(rf.find("jointList"), joints)) {
@@ -174,7 +174,9 @@ public:
     {
         humanStateDataPort.close();
         publisher.interrupt();
+        publisher.close();
         publisher_tf.interrupt();
+        publisher_tf.close();
         return true;
     }
     
@@ -220,8 +222,8 @@ int main(int argc, char * argv[])
     rf.setDefaultContext("human-dynamic-estimation");
     rf.configure(argc, argv);
     rf.setVerbose(true);
-    Node node(rf.find("/human/joint_state_publisher").asString());
+    Node node(rf.find("nodeName").asString());
     module.runModule(rf);                                   // This calls configure(rf) and, upon success, the module execution begins with a call to updateModule()
-    
+    node.interrupt();
     return 0;
 }
