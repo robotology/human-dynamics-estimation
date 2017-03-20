@@ -21,6 +21,7 @@
 #include <iDynTree/KinDynComputations.h>
 #include <inversekinematics/InverseKinematics.h>
 #include <yarp/dev/PolyDriver.h>
+#include <yarp/dev/PreciselyTimed.h>
 #include <yarp/os/BufferedPort.h>
 #include <yarp/os/Port.h>
 #include <yarp/sig/Vector.h>
@@ -115,6 +116,7 @@ public:
 
     yarp::dev::PolyDriver m_humanDriver;
     yarp::experimental::dev::IFrameProvider* m_frameProvider;
+    yarp::dev::IPreciselyTimed* m_frameProviderTimed;
 
     std::vector<human::LinkPairInfo> m_linkPairs;
     std::vector<human::SegmentInfo> m_segments;

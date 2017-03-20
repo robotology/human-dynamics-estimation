@@ -12,7 +12,9 @@ set(HEADERS include/inversekinematics/InverseKinematicsIPOPT.h
 
 add_library(${PROJECT_NAME} SHARED ${SOURCES} ${HEADERS})
 
+
 target_compile_definitions(${PROJECT_NAME} PUBLIC ${IPOPT_DEFINITIONS})
+target_compile_definitions(${PROJECT_NAME} PRIVATE "$<$<CONFIG:Debug>:EIGEN_RUNTIME_NO_MALLOC>")
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include/inversekinematics)
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)

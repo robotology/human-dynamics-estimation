@@ -8,6 +8,8 @@ InverseKinematics::InverseKinematics()
 : updated(false)
 , initialized(false)
 , alreadyOptimized(false)
+, verbosityLevel(2)
+, maxIterations(3000)
 {
     solverPointer = new InverseKinematicsV2IPOPT();
     iDynTree::toEigen(solverPointer->gains) << 100, 100, 0.01;
@@ -19,6 +21,8 @@ InverseKinematics::InverseKinematics(const std::string& solverName)
 : updated(false)
 , initialized(false)
 , alreadyOptimized(false)
+, verbosityLevel(2)
+, maxIterations(3000)
 {
     solverPointer = new InverseKinematicsV2IPOPT();
     loader = IpoptApplicationFactory();
@@ -100,7 +104,7 @@ bool InverseKinematics::autoSelectJointsFromTraversal(const iDynTree::Model& mod
     bool success;
     
     
-    std::cerr << "[IK] Automatically select joints between "<< parentFrame << " and " << endEffectorFrame << std::endl; 
+    //std::cerr << "[IK] Automatically select joints between "<< parentFrame << " and " << endEffectorFrame << std::endl;
     
     success = getFrameIndeces(parentFrame, endEffectorFrame, modelInput, parent, endEffector);
     if(!success)
@@ -126,11 +130,11 @@ bool InverseKinematics::autoSelectJointsFromTraversal(const iDynTree::Model& mod
         visitedLink = parentLinkIdx;
     }
     
-    std::cerr << "[IK] Considered joints are:"<< std::endl;
-    for (std::vector< std::string >::const_iterator i = consideredJointsAuto.begin(); i != consideredJointsAuto.end(); ++i){
-        std::cerr <<"->"<< *i << std::endl;
-    }
-    std::cerr << std::endl;
+//    std::cerr << "[IK] Considered joints are:"<< std::endl;
+//    for (std::vector< std::string >::const_iterator i = consideredJointsAuto.begin(); i != consideredJointsAuto.end(); ++i){
+//        std::cerr <<"->"<< *i << std::endl;
+//    }
+//    std::cerr << std::endl;
     
     success = getReducedModel(modelInput, consideredJointsAuto, modelOutput);
     if(!success)
@@ -393,16 +397,19 @@ iDynTree::VectorDynSize& InverseKinematics::getLastSolution()
     return lastSolution;
 }
 
+void InverseKinematics::setVerbosityLevel(unsigned int level) { verbosityLevel = level; }
+
 bool InverseKinematics::initialize()
 {
     if (!initialized) {
         Ipopt::ApplicationReturnStatus status;
-        //loader->Options()->SetStringValue("derivative_test", "first-order");
-        //loader->Options()->SetStringValue("derivative_test_print_all", "yes");
-        loader->Options()->SetIntegerValue("print_level", 2); //default 5
+//        loader->Options()->SetStringValue("derivative_test", "first-order");
+//        loader->Options()->SetStringValue("derivative_test_print_all", "yes");
+        loader->Options()->SetIntegerValue("print_level", verbosityLevel); //default 5
         loader->Options()->SetNumericValue("tol", 1e-6); //default 1e-8
         loader->Options()->SetNumericValue("acceptable_tol", 1e-3); //default 1e-6
         loader->Options()->SetIntegerValue("acceptable_iter", 5); //default 15
+        loader->Options()->SetIntegerValue("max_iter", maxIterations);
 
         status = loader->Initialize();
 
