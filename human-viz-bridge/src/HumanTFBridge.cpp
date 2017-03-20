@@ -103,8 +103,8 @@ public:
         
         model = modelLoader.model();
 
-        if (!publisher_tf.topic("/tf")) {
-            cerr<< "Failed to create publisher to /tf\n";
+        if (!publisher_tf.topic(rf.find("tfTopicName").asString())) {
+            yError() << "Failed to create publisher to /tf";
             return false;
         }
         
@@ -175,11 +175,15 @@ public:
         xsensDataPort.useCallback(*this);
         string xsensServerName = "/" + rf.find("serverName").asString() + "/frames:o";
         string frameReaderPortName = "/" + getName() + "/frames:i";
-        xsensDataPort.open(frameReaderPortName);           
-        if (!Network::connect(xsensServerName.c_str(),frameReaderPortName))
-        {
-            yError() << "Error! Could not connect to server " << xsensServerName;
-            return false;
+        xsensDataPort.open(frameReaderPortName);       
+        Value defaultAutoconn; defaultAutoconn.fromString("true");
+        bool autoconn = rf.check("automaticConnection", defaultAutoconn, "Checking autoconnection mode").asBool();
+        if(autoconn){
+            if (!Network::connect(xsensServerName.c_str(),frameReaderPortName))
+            {
+                yError() << "Error! Could not connect to server " << xsensServerName;
+                return false;
+            }
         }
         
         
@@ -190,6 +194,7 @@ public:
     {
         client_port.close();
         xsensDataPort.close();
+        publisher_tf.interrupt();
         return true;
     }
     
@@ -226,14 +231,13 @@ int main(int argc, char * argv[])
         return EXIT_FAILURE;
     }
     
-    Node node("/human/tf_publisher");
-
     HumanTFBridge module;
     ResourceFinder rf;
     rf.setDefaultConfigFile("human-tf-bridge.ini");
     rf.setDefaultContext("human-dynamic-estimation");
     rf.configure(argc, argv);
     rf.setVerbose(true);
+    Node node(rf.find("nodeName").asString());
     module.runModule(rf);                                   // This calls configure(rf) and, upon success, the module execution begins with a call to updateModule()
     return 0;
 }

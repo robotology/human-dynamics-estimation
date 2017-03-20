@@ -7,7 +7,6 @@
 #include "tf2_msgs_TFMessage.h"
 #include "thrifts/HumanState.h"
 
-#include <iDynTree/Core/TestUtils.h>
 #include <iDynTree/ModelIO/ModelLoader.h>
 #include <TickTime.h>
 #include <yarp/os/BufferedPort.h>
@@ -18,6 +17,7 @@
 #include <yarp/os/RFModule.h>
 #include <yarp/os/Time.h>
 
+#include <algorithm>
 #include <cmath>
 #include <iostream>
 #include <limits.h>
@@ -44,6 +44,20 @@ inline TickTime normalizeSecNSec(double yarpTimeStamp)
     ret.sec  = sec_part;
     ret.nsec = nsec_part;
     return ret;
+}
+
+static bool parseFrameListOption(const Value &option, vector<string> &parsedSegments)
+{
+    if (option.isNull() || !option.isList() || !option.asList()) return false;
+    Bottle *frames = option.asList();
+    parsedSegments.reserve(static_cast<size_t>(frames->size()));
+
+    for (int i = 0; i < frames->size(); ++i) {
+        if (frames->get(i).isString()) {
+            parsedSegments.push_back(frames->get(i).asString());
+        }
+    }
+    return true;
 }
 
 class xsensJointStatePublisherModule : public RFModule, public TypedReaderCallback<HumanState> 
@@ -87,34 +101,53 @@ public:
         
         model = modelLoader.model();
 
-        if (!publisher.topic("/human/joint_states")) {
-            cerr<< "Failed to create publisher to /joint_states\n";
+        if (!publisher.topic(rf.find("jointStateTopicName").asString())) {
+            yError() << "Failed to create publisher to /joint_states";
             return false;
         }
         
-        if (!publisher_tf.topic("/tf")) {
-        cerr<< "Failed to create publisher to /tf\n";
-        return -1;
+        if (!publisher_tf.topic(rf.find("tfTopicName").asString())) {
+            yError() << "Failed to create publisher to /tf";
+            return false;
         }
-        
+
         tf.transforms.resize(1);
-        tf.transforms[0].header.frame_id = "ground";
-        tf.transforms[0].child_frame_id = "Pelvis";
+        tf.transforms[0].header.frame_id = rf.find("worldRFName").asString();
+        tf.transforms[0].child_frame_id = rf.find("childLinkRFName").asString();
         
         vector<string> joints;
-        joints.reserve(model.getNrOfJoints());
+        if (!parseFrameListOption(rf.find("jointList"), joints)) {
+            yError() << "Error while parsing joints list";
+            return false;
+        }
+        
+        yInfo() << "Joints from config file: " << model.getNrOfJoints() << joints;
+       
+        vector<string> URDFjoints;
+        URDFjoints.reserve(model.getNrOfJoints());
         for (iDynTree::JointIndex jointIndex = 0; jointIndex < model.getNrOfJoints(); ++jointIndex) {
             string jointName = model.getJointName(jointIndex);
-            joints.push_back(jointName);
+            if (!(find(joints.begin(), joints.end(), jointName) == joints.end())) {
+            URDFjoints.push_back(jointName);
+                if ((URDFjoints[jointIndex].compare(joints[jointIndex]))) {
+                    yError() << "URDF joints is different from the order of the received joints";
+                    return false;
+                }
+            }
+            else 
+            {
+                yError() << "URDF joints and received joints do not match";
+                return false;   
+            }
         }
+        
+        yInfo() << "Joints from URDf: " << URDFjoints[0].compare(joints[0]) << URDFjoints;
         
         joint_state.name.resize(model.getNrOfJoints());
         
-        for (size_t index = 0; index < joints.size(); ++index) {
-            joint_state.name[index] = joints[index];
+        for (size_t index = 0; index < URDFjoints.size(); ++index) {
+            joint_state.name[index] = URDFjoints[index];
         }
-        
-        yInfo() << "Joints: " << model.getNrOfJoints() << joints;
         
         joint_state.position.resize(model.getNrOfJoints());
         joint_state.velocity.resize(model.getNrOfJoints());
@@ -123,11 +156,15 @@ public:
         humanStateDataPort.useCallback(*this);
         string stateProviderServerName = "/" + rf.find("serverName").asString() + "/state:o";
         string stateReaderPortName = "/" + getName() + "/state:i";
-        humanStateDataPort.open(stateReaderPortName);           
-        if (!Network::connect(stateProviderServerName.c_str(),stateReaderPortName))
-        {
-            yError() << "Error! Could not connect to server " << stateProviderServerName;
-            return false;
+        humanStateDataPort.open(stateReaderPortName);
+        Value defaultAutoconn; defaultAutoconn.fromString("true");
+        bool autoconn = rf.check("automaticConnection", defaultAutoconn, "Checking autoconnection mode").asBool();
+        if(autoconn){
+            if (!Network::connect(stateProviderServerName.c_str(),stateReaderPortName))
+            {
+                yError() << "Error! Could not connect to server " << stateProviderServerName;
+                return false;
+            }
         }
         
         return true;
@@ -136,6 +173,8 @@ public:
     bool close()
     {
         humanStateDataPort.close();
+        publisher.interrupt();
+        publisher_tf.interrupt();
         return true;
     }
     
@@ -175,14 +214,14 @@ int main(int argc, char * argv[])
         return EXIT_FAILURE;
     }
     
-    Node node("/human/joint_state_publisher");
-
     xsensJointStatePublisherModule module;
     ResourceFinder rf;
     rf.setDefaultConfigFile("human-jointstate-bridge.ini");
     rf.setDefaultContext("human-dynamic-estimation");
     rf.configure(argc, argv);
     rf.setVerbose(true);
+    Node node(rf.find("/human/joint_state_publisher").asString());
     module.runModule(rf);                                   // This calls configure(rf) and, upon success, the module execution begins with a call to updateModule()
+    
     return 0;
 }
