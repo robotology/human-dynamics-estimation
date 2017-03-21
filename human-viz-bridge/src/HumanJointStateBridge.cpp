@@ -87,7 +87,6 @@ public:
     bool configure(ResourceFinder &rf)
     {
         string moduleName = rf.check("name", Value("human-jointstate-bridge"), "Checking module name").asString();
-        string serverName = rf.check("serverName", Value("human-state-provider"), "Checking server name").asString();
         string urdfModelFile = rf.findFile("urdf_model");
         setName(moduleName.c_str());
         
@@ -116,13 +115,16 @@ public:
         tf.transforms[0].child_frame_id = rf.find("tfPrefix").asString() + "/" + rf.find("childLinkRFName").asString();
         
         vector<string> joints;
-        if (!parseFrameListOption(rf.find("jointList"), joints)) {
+        if (!parseFrameListOption(rf.find("jointlist"), joints)) {
             yError() << "Error while parsing joints list";
             return false;
         }
-        
+
+        Value defaultAutoconn; defaultAutoconn.fromString("false");
+        bool autoconnect = rf.check("autoconnect", defaultAutoconn, "Checking autoconnection mode").asBool();
+
         yInfo() << "Joints from config file: " << model.getNrOfJoints() << joints;
-       
+
         vector<string> URDFjoints;
         URDFjoints.reserve(model.getNrOfJoints());
         for (iDynTree::JointIndex jointIndex = 0; jointIndex < model.getNrOfJoints(); ++jointIndex) {
@@ -154,13 +156,13 @@ public:
         joint_state.effort.resize(model.getNrOfJoints());
         
         humanStateDataPort.useCallback(*this);
+        string serverName = rf.check("stateprovider_name", Value("human-state-provider"), "Checking server name").asString();
         string stateProviderServerName = "/" + rf.find("serverName").asString() + "/state:o";
         string stateReaderPortName = "/" + getName() + "/state:i";
         humanStateDataPort.open(stateReaderPortName);
-        Value defaultAutoconn; defaultAutoconn.fromString("true");
-        bool autoconn = rf.check("automaticConnection", defaultAutoconn, "Checking autoconnection mode").asBool();
-        if(autoconn){
-            if (!Network::connect(stateProviderServerName.c_str(),stateReaderPortName))
+
+        if (autoconnect){
+            if (!Network::connect(stateProviderServerName.c_str(), stateReaderPortName))
             {
                 yError() << "Error! Could not connect to server " << stateProviderServerName;
                 return false;

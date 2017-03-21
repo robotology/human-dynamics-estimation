@@ -30,10 +30,12 @@ option(BUILD_SHARED_LIBS "Build libraries as shared as opposed to static" ON)
 
 include(AddInstallRPATHSupport)
 #check discussion in YARP
-# add_install_rpath_support(BIN_DIRS "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}"
-#                           LIB_DIRS "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}"
-#                           DEPENDS ENABLE_RPATH
-#                           USE_LINK_PATH)
+option(ENABLE_RPATH "Enable rpath" TRUE)
+mark_as_advanced(ENABLE_RPATH)
+add_install_rpath_support(BIN_DIRS "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}"
+                          LIB_DIRS "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}"
+                          DEPENDS ENABLE_RPATH
+                          USE_LINK_PATH)
 
 
 #Add IK solver
@@ -49,6 +51,7 @@ add_subdirectory(human-forces-provider)
 add_subdirectory(human-dynamics-estimator)
 add_subdirectory(human-viz-bridge)
 
+add_subdirectory(app)
 
 #### add the "uninstall" target
 include(AddUninstallTarget)

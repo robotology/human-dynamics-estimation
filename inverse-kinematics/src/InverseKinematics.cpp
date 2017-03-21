@@ -386,7 +386,10 @@ signed int InverseKinematics::runIK()
     } else {
         //std::cerr << "Optimize!!" << std::endl;
         loader->OptimizeTNLP(solverPointer);
-        alreadyOptimized = true;
+        if (solverPointer->exitCode >=0 
+            || solverPointer->exitCode == -2) {
+                alreadyOptimized = true;
+        }
         lastSolution = solverPointer->jointResult;
         return solverPointer->exitCode;
     }

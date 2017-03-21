@@ -39,6 +39,8 @@ target_include_directories(human-viz-bridge-rosmsgs INTERFACE ${STRING_INCLUDE_D
 
 add_executable(human-tf-bridge src/HumanTFBridge.cpp)
 
+add_warnings_configuration_to_target(TARGETS human-tf-bridge PRIVATE)
+
 target_link_libraries(human-tf-bridge YARP::YARP_OS 
                                       YARP::YARP_dev
                                       iDynTree::idyntree-model
@@ -54,6 +56,8 @@ list(APPEND conf config/human-tf-bridge.ini)
 # Joints bridge                                                
                                                 
 add_executable(human-jointstate-bridge src/HumanJointStateBridge.cpp)
+
+add_warnings_configuration_to_target(TARGETS human-jointstate-bridge PRIVATE)
 
 target_link_libraries(human-jointstate-bridge YARP::YARP_OS 
                                               YARP::YARP_dev

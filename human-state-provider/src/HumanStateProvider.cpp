@@ -201,15 +201,15 @@ namespace human {
         }
 
         //get URDF model which will be needed for the IK
-        if (!rf.check("human_urdf", "Checking subject URDF file")) {
+        if (!rf.check("urdf_model", "Checking subject URDF file")) {
             yError("Could not find \"human_urdf\" parameter");
             close();
             return false;
 
         }
-        std::string urdfFile = rf.findFile(rf.find("human_urdf").asString());
+        std::string urdfFile = rf.findFile(rf.find("urdf_model").asString());
         if (urdfFile.empty()) {
-            yError("Could not find urdf file %s", rf.find("human_urdf").asString().c_str());
+            yError("Could not find urdf file %s", rf.find("urdf_model").asString().c_str());
             close();
             return false;
         }
@@ -286,8 +286,8 @@ namespace human {
         createEndEffectorsPairs(humanModel, segments, pairNames, pairSegmentIndeces);
 
         m_pimpl->m_linkPairs.reserve(pairNames.size());
-
-        std::string solverName = rf.check("ik_linear_solver", yarp::os::Value("ma27"), "Checking Linear solver name for IPOPT").asString();
+        
+        std::string solverName = rf.check("ik_linear_solver", yarp::os::Value(""), "Checking Linear solver name for IPOPT").asString();
 
         for (unsigned index = 0; index < pairNames.size(); ++index) {
             LinkPairInfo pairInfo;
@@ -299,8 +299,13 @@ namespace human {
             pairInfo.childFrameSegmentsIndex = pairSegmentIndeces[index].second;
 
             // Allocate the solver which provides also useful methods
-            pairInfo.ikSolver = std::unique_ptr<InverseKinematics>(new InverseKinematics(solverName));
-            pairInfo.ikSolver->setVerbosityLevel(0);
+            if (solverName.empty()) {
+                pairInfo.ikSolver = std::unique_ptr<InverseKinematics>(new InverseKinematics());
+            } else {
+                pairInfo.ikSolver = std::unique_ptr<InverseKinematics>(new InverseKinematics(solverName));
+            }
+            
+            pairInfo.ikSolver->setVerbosityLevel(5);
 
             if (!pairInfo.ikSolver->setModel(humanModel, pairInfo.parentFrameName, pairInfo.childFrameName)) {
                 yWarning("Could not configure IK solver for frames %s,%s. Skipping pair", pairInfo.parentFrameName.c_str(), pairInfo.childFrameName.c_str());
