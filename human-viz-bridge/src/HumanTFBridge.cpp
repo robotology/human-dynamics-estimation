@@ -2,6 +2,7 @@
 #include "geometry_msgs_TransformStamped.h"
 #include "geometry_msgs_Vector3.h"
 #include "msgs/String.h"
+#include "sensor_msgs_Temperature.h"
 #include "std_msgs_Header.h"
 #include "tf2_msgs_TFMessage.h"
 #include "thrift/XsensDriverService.h"
@@ -68,11 +69,22 @@ class HumanTFBridge : public RFModule, public TypedReaderCallback<XsensSegmentsF
     XsensDriverService xsensDriver;
     
     Publisher<tf2_msgs_TFMessage> publisher_tf;
+    Publisher<sensor_msgs_Temperature> publisher_temp1;
+    Publisher<sensor_msgs_Temperature> publisher_temp2;
+    Publisher<sensor_msgs_Temperature> publisher_temp3;
+    Publisher<sensor_msgs_Temperature> publisher_temp4;
     
     //variables declaration
+    sensor_msgs_Temperature leftFootTemp;
+    sensor_msgs_Temperature rightFootTemp;
+    sensor_msgs_Temperature leftKneeTemp;
+    sensor_msgs_Temperature rightKneeTemp;
+
     tf2_msgs_TFMessage tf;
     vector<string> segments;
     vector<string> fakeSegments;
+    
+    int var, inc;
     
 public:
     double getPeriod()
@@ -105,6 +117,23 @@ public:
 
         if (!publisher_tf.topic(rf.find("tfTopicName").asString())) {
             yError() << "Failed to create publisher to /tf";
+            return false;
+        }
+        
+        if (!publisher_temp1.topic("/human/temp1")) {
+            yError() << "Failed to create publisher to /temperature";
+            return false;
+        }
+        if (!publisher_temp2.topic("/human/temp2")) {
+            yError() << "Failed to create publisher to /temperature";
+            return false;
+        }
+        if (!publisher_temp3.topic("/human/temp3")) {
+            yError() << "Failed to create publisher to /temperature";
+            return false;
+        }
+        if (!publisher_temp4.topic("/human/temp4")) {
+            yError() << "Failed to create publisher to /temperature";
             return false;
         }
         
@@ -177,6 +206,22 @@ public:
             tf.transforms[segments.size() + index].transform.rotation.w = 1;
         }
         
+        leftFootTemp.header.frame_id = "humanTFBridge/LeftFoot";
+        leftFootTemp.header.seq = 1;
+        leftFootTemp.variance = 0;
+        leftKneeTemp.header.frame_id = "humanTFBridge/LeftLowerLeg";
+        leftKneeTemp.header.seq = 1;
+        leftKneeTemp.variance = 0;
+        rightFootTemp.header.frame_id = "humanTFBridge/RightFoot";
+        rightFootTemp.header.seq = 1;
+        rightFootTemp.variance = 0;
+        rightKneeTemp.header.frame_id = "humanTFBridge/RightLowerLeg";
+        rightKneeTemp.header.seq = 1;
+        rightKneeTemp.variance = 0;
+
+        var = 0;
+        inc = 1;
+        
         xsensDataPort.useCallback(*this);
         string xsensServerName = "/" + rf.find("serverName").asString() + "/frames:o";
         string frameReaderPortName = "/" + getName() + "/frames:i";
@@ -223,6 +268,22 @@ public:
             tf.transforms[segments.size() + index].header.stamp = currentTime;
         }
         publisher_tf.write(tf); 
+        
+        var += inc;
+        if (var<0 || var>100) inc *= -1;
+        
+        leftFootTemp.header.stamp = currentTime;
+        leftFootTemp.temperature = var;
+        leftKneeTemp.header.stamp = currentTime;
+        leftKneeTemp.temperature = var;
+        rightFootTemp.header.stamp = currentTime;
+        rightFootTemp.temperature = var;
+        rightKneeTemp.header.stamp = currentTime;
+        rightKneeTemp.temperature = var;
+        publisher_temp1.write(leftFootTemp);
+        publisher_temp2.write(leftKneeTemp);
+        publisher_temp3.write(rightFootTemp);
+        publisher_temp4.write(rightKneeTemp);
     }
 };
 

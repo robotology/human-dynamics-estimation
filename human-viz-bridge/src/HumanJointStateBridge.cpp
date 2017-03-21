@@ -3,6 +3,7 @@
 #include "geometry_msgs_Vector3.h"
 #include "msgs/String.h"
 #include "sensor_msgs_JointState.h"
+#include "sensor_msgs_Temperature.h"
 #include "std_msgs_Header.h"
 #include "tf2_msgs_TFMessage.h"
 #include "thrifts/HumanState.h"
@@ -67,8 +68,17 @@ class xsensJointStatePublisherModule : public RFModule, public TypedReaderCallba
 
     Publisher<sensor_msgs_JointState> publisher;
     Publisher<tf2_msgs_TFMessage> publisher_tf;
+    Publisher<sensor_msgs_Temperature> publisher_temp1;
+    Publisher<sensor_msgs_Temperature> publisher_temp2;
+    Publisher<sensor_msgs_Temperature> publisher_temp3;
+    Publisher<sensor_msgs_Temperature> publisher_temp4;
     
     //variables declaration
+    sensor_msgs_Temperature leftFootTemp;
+    sensor_msgs_Temperature rightFootTemp;
+    sensor_msgs_Temperature leftKneeTemp;
+    sensor_msgs_Temperature rightKneeTemp;
+    
     sensor_msgs_JointState joint_state;
     tf2_msgs_TFMessage tf;
 
@@ -109,10 +119,43 @@ public:
             yError() << "Failed to create publisher to /tf";
             return false;
         }
+        
+        if (!publisher_temp1.topic("/human/temp1")) {
+            yError() << "Failed to create publisher to /temperature";
+            return false;
+        }
+        if (!publisher_temp2.topic("/human/temp2")) {
+            yError() << "Failed to create publisher to /temperature";
+            return false;
+        }
+        if (!publisher_temp3.topic("/human/temp3")) {
+            yError() << "Failed to create publisher to /temperature";
+            return false;
+        }
+        if (!publisher_temp4.topic("/human/temp4")) {
+            yError() << "Failed to create publisher to /temperature";
+            return false;
+        }
 
         tf.transforms.resize(1);
         tf.transforms[0].header.frame_id = rf.find("worldRFName").asString();
         tf.transforms[0].child_frame_id = rf.find("tfPrefix").asString() + "/" + rf.find("childLinkRFName").asString();
+        
+        leftFootTemp.header.frame_id = "humanTFBridge/LeftFoot";
+        leftFootTemp.header.seq = 1;
+        leftFootTemp.variance = 0;
+        leftKneeTemp.header.frame_id = "humanTFBridge/LeftLowerLeg";
+        leftKneeTemp.header.seq = 1;
+        leftKneeTemp.variance = 0;
+        rightFootTemp.header.frame_id = "humanTFBridge/RightFoot";
+        rightFootTemp.header.seq = 1;
+        rightFootTemp.variance = 0;
+        rightKneeTemp.header.frame_id = "humanTFBridge/RightLowerLeg";
+        rightKneeTemp.header.seq = 1;
+        rightKneeTemp.variance = 0;
+
+        var = 0;
+        inc = 1;
         
         vector<string> joints;
         if (!parseFrameListOption(rf.find("jointList"), joints)) {
@@ -204,6 +247,20 @@ public:
         tf.transforms[0].transform.rotation.w = humanStateData.baseOrientationWRTGlobal.w;
 
         publisher_tf.write(tf);
+        
+        
+        leftFootTemp.header.stamp = currentTime;
+        leftFootTemp.temperature = var;
+        leftKneeTemp.header.stamp = currentTime;
+        leftKneeTemp.temperature = var;
+        rightFootTemp.header.stamp = currentTime;
+        rightFootTemp.temperature = var;
+        rightKneeTemp.header.stamp = currentTime;
+        rightKneeTemp.temperature = var;
+        publisher_temp1.write(leftFootTemp);
+        publisher_temp2.write(leftKneeTemp);
+        publisher_temp3.write(rightFootTemp);
+        publisher_temp4.write(rightKneeTemp);
 
     }
 };
