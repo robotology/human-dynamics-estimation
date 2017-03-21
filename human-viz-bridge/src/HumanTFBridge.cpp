@@ -7,16 +7,18 @@
 #include "thrift/XsensDriverService.h"
 #include "thrift/XsensSegmentsFrame.h"
 
-#include <iDynTree/Core/TestUtils.h>
+#include <iDynTree/Model/Indeces.h>
 #include <iDynTree/ModelIO/ModelLoader.h>
 #include <TickTime.h>
-#include <yarp/os/all.h>
-#include <yarp/os/idl/WireTypes.h>
-#include <yarp/os/Network.h>
-#include <yarp/os/RFModule.h>
-#include <yarp/os/Wire.h>
+#include <yarp/os/BufferedPort.h>
 #include <yarp/os/LogStream.h>
+#include <yarp/os/Network.h>
+#include <yarp/os/Node.h>
+#include <yarp/os/Publisher.h>
+#include <yarp/os/RFModule.h>
+#include <yarp/os/Time.h>
 
+#include <algorithm>
 #include <cmath>
 #include <iostream>
 #include <limits.h>
@@ -87,7 +89,7 @@ public:
     bool configure(ResourceFinder &rf)
     {
         string moduleName = rf.check("name", Value("human-tf-bridge"), "Checking module name").asString();
-        string serverName = rf.check("serverName", Value("xsens"), "Checking module name").asString();
+        string serverName = rf.check("serverName", Value("xsens"), "Checking server name").asString();
         string urdfModelFile = rf.findFile("urdf_model");
         setName(moduleName.c_str());
         
@@ -101,8 +103,8 @@ public:
         
         model = modelLoader.model();
 
-        if (!publisher_tf.topic("/tf")) {
-            cerr<< "Failed to create publisher to /tf\n";
+        if (!publisher_tf.topic(rf.find("tfTopicName").asString())) {
+            yError() << "Failed to create publisher to /tf";
             return false;
         }
         
@@ -153,12 +155,12 @@ public:
         
         string worldRFName = rf.find("worldRFName").asString();
         for (size_t index = 0; index < segments.size(); ++index) {
-            tf.transforms[index].child_frame_id = segments[index];
+            tf.transforms[index].child_frame_id = rf.find("tfPrefix").asString() + "/" + segments[index];
             tf.transforms[index].header.frame_id = worldRFName;
         }
         
         for (size_t index = 0; index < fakeSegments.size(); ++index) {
-            tf.transforms[segments.size() + index].child_frame_id = fakeSegments[index];
+            tf.transforms[segments.size() + index].child_frame_id = rf.find("tfPrefix").asString() + "/" + fakeSegments[index];
             tf.transforms[segments.size() + index].header.frame_id = worldRFName;
             tf.transforms[segments.size() + index].header.seq   = index;
             tf.transforms[segments.size() + index].transform.translation.x = 0;
@@ -173,11 +175,15 @@ public:
         xsensDataPort.useCallback(*this);
         string xsensServerName = "/" + rf.find("serverName").asString() + "/frames:o";
         string frameReaderPortName = "/" + getName() + "/frames:i";
-        xsensDataPort.open(frameReaderPortName);           
-        if (!Network::connect(xsensServerName.c_str(),frameReaderPortName))
-        {
-            yError() << "Error! Could not connect to server " << xsensServerName;
-            return false;
+        xsensDataPort.open(frameReaderPortName);       
+        Value defaultAutoconn; defaultAutoconn.fromString("true");
+        bool autoconn = rf.check("automaticConnection", defaultAutoconn, "Checking autoconnection mode").asBool();
+        if(autoconn){
+            if (!Network::connect(xsensServerName.c_str(),frameReaderPortName))
+            {
+                yError() << "Error! Could not connect to server " << xsensServerName;
+                return false;
+            }
         }
         
         
@@ -188,6 +194,8 @@ public:
     {
         client_port.close();
         xsensDataPort.close();
+        publisher_tf.interrupt();
+        publisher_tf.close();
         return true;
     }
     
@@ -224,14 +232,13 @@ int main(int argc, char * argv[])
         return EXIT_FAILURE;
     }
     
-    Node node("/human/yarp_human_state_publisher");
-
     HumanTFBridge module;
     ResourceFinder rf;
     rf.setDefaultConfigFile("human-tf-bridge.ini");
     rf.setDefaultContext("human-dynamic-estimation");
     rf.configure(argc, argv);
     rf.setVerbose(true);
+    Node node(rf.find("nodeName").asString());
     module.runModule(rf);                                   // This calls configure(rf) and, upon success, the module execution begins with a call to updateModule()
     return 0;
 }

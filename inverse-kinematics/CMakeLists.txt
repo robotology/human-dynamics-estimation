@@ -1,14 +1,6 @@
 cmake_minimum_required(VERSION 3.0)
 project(inverse-kinematics CXX)
 
-find_package(YCM REQUIRED)
-include(YCMDefaultDirs)
-
-find_package(iDynTree REQUIRED)
-find_package(IPOPT REQUIRED)
-
-find_package(Eigen3 REQUIRED)
-
 set(SOURCES src/InverseKinematicsIPOPT.cpp
             src/InverseKinematicsV2IPOPT.cpp
             src/InverseKinematics.cpp)

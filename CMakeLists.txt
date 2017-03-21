@@ -34,8 +34,11 @@ include(AddInstallRPATHSupport)
 
 
 #Add IK solver
-add_subdirectory(inverse-kinematics)
-
+find_package(IPOPT)
+option(HUMAN_DYNAMICS_ESTIMATION_USE_IPOPT "Set if compile IPOPT dependent projects" ${IPOPT_FOUND})
+if (HUMAN_DYNAMICS_ESTIMATION_USE_IPOPT)
+  add_subdirectory(inverse-kinematics)
+endif()
 add_subdirectory(human-state-provider)
 add_subdirectory(human-forces-provider)
 # Adding the estimator as last module
