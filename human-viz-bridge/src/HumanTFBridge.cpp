@@ -240,6 +240,5 @@ int main(int argc, char * argv[])
     rf.setVerbose(true);
     Node node(rf.find("nodeName").asString());
     module.runModule(rf);                                   // This calls configure(rf) and, upon success, the module execution begins with a call to updateModule()
-    node.interrupt();
     return 0;
 }
