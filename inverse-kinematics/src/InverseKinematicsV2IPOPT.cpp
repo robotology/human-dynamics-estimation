@@ -14,7 +14,6 @@ InverseKinematicsV2IPOPT::InverseKinematicsV2IPOPT()
 , gainsLoaded(false)
 , parentFrame(0)
 , endEffectorFrame(0)
-, kJoints(0)
 , exitCode(-6)
 {
     positionResult.zero();
@@ -69,7 +68,18 @@ bool InverseKinematicsV2IPOPT::loadFromModel(const Model& modelInput, FrameIndex
     e_J_we.resize(iKDC.model());
     
     jacobian.resize(6,totalDOF);
-    
+
+    guess.resize(totalDOF);
+    guess.zero();
+    //TODO: ? put guess into limits
+
+    //defaults gains
+    gains(0) = gains(1) = 1;
+    gains(2) = 1e-8;
+
+
+    iKDC.setFrameVelocityRepresentation(MIXED_REPRESENTATION);
+
     modelLoaded = true;
     return true;
 }
@@ -91,7 +101,7 @@ bool InverseKinematicsV2IPOPT::update(const Vector3& gainsIn, const Position& de
        return false;
     }
 
-    if(desiredJointsIn.size() != (totalDOF)){
+    if(desiredJointsIn.size() != totalDOF){
         std::cerr<<"[ERROR] Dimension of desired joints vector different than the number of considered joints"<<desiredJointsIn.size()<<"!="<<model.getNrOfDOFs()<< std::endl;
         return false;
     }
@@ -99,26 +109,21 @@ bool InverseKinematicsV2IPOPT::update(const Vector3& gainsIn, const Position& de
     desiredPosition = desiredPositionIn;
     desiredJoints = desiredJointsIn;
     
-    if( (toEigen(desiredQuaternionIn).norm() < 0.95) || (toEigen(desiredQuaternionIn).norm() > 1.05) ){
+    if ((toEigen(desiredQuaternionIn).norm() < 0.95) || (toEigen(desiredQuaternionIn).norm() > 1.05)){
         std::cerr << "[ERROR] Not unitary quaternion" << std::endl;
         return false;
     }
-        
-    
+
     desiredQuaternion = desiredQuaternionIn;
     gains = gainsIn;
-    
-    kJoints = gains(2);
-    
-    toEigen(kF).block<3,3>(0,0) = toEigen(kF).block<3,3>(0,0).setIdentity()*gains(0);
-    toEigen(kF).block<4,4>(3,3) = toEigen(kF).block<4,4>(3,3).setIdentity()*gains(1);
-    
+
+    kF = gains;
+
     toEigen(pDesired).segment<3>(0) = toEigen(desiredPosition);
     toEigen(pDesired).segment<4>(3) = toEigen(desiredQuaternion);
-    
-    //std::cerr << "pDesired = "<< pDesired.toString() << std::endl;
-    
+
     gainsLoaded = true;
+
     return true;
 }
 
@@ -144,58 +149,37 @@ bool InverseKinematicsV2IPOPT::randomInitialization(const double feed, VectorDyn
 
 void InverseKinematicsV2IPOPT::twistToQuaternionTwist(Vector4& quaternion, MatrixFixSize< 7, 6 >& mapOut)
 {
-    MatrixFixSize<7,6> map;
-    MatrixFixSize<3,4> omegaToQuat;
-    Eigen::Vector3d imQuat;
-    IndexRange rowRange, columnRange;
-    
-    imQuat = toEigen(quaternion).tail(3);
-    
-    omegaToQuat.zero();
-    
-    toEigen(omegaToQuat).leftCols<1>() = -imQuat;
-    toEigen(omegaToQuat).block<3,3>(0,1).setIdentity();
-    toEigen(omegaToQuat).block<3,3>(0,1) *= quaternion(0);
-    toEigen(omegaToQuat).block<3,3>(0,1) += skew(imQuat);
-    toEigen(omegaToQuat) *= 0.5;
-    
-    map.zero();
-    
-    rowRange.offset = 0;
-    rowRange.size = 3;
-    columnRange.offset = 0;
-    columnRange.size = 3;
-    
-    setSubMatrixToIdentity(map,rowRange,columnRange);
-    
-    rowRange.offset = 3;
-    rowRange.size = 4;
-    columnRange.offset = 3;
-    columnRange.size = 3;
-    setSubMatrix(map,rowRange,columnRange,toEigen(omegaToQuat).transpose());
+    Eigen::Map<Eigen::Matrix<double, 7, 6, Eigen::RowMajor> > outMap = toEigen(mapOut);
+    outMap.setZero();
+    outMap.topLeftCorner<3, 3>().setIdentity();
 
-    mapOut = map;
+    outMap.bottomRightCorner<4, 3>().topRows<1>() = -toEigen(quaternion).tail<3>().transpose();
+    outMap.bottomRightCorner<4, 3>().bottomRows<3>().setIdentity();
+    outMap.bottomRightCorner<4, 3>().bottomRows<3>() *= quaternion(0);
+    outMap.bottomRightCorner<4, 3>().bottomRows<3>() += skew(toEigen(quaternion).tail<3>());
+    outMap.bottomRightCorner<4, 3>() *= 0.5;
+
+    return;
 }
 
-void InverseKinematicsV2IPOPT::relativeJacobian(const VectorDynSize& configuration, MatrixDynSize& jacobianOut)
+void InverseKinematicsV2IPOPT::relativeJacobian(MatrixDynSize& jacobianOut)
 {
-    Matrix6x6 right2mixed, left2mixed;
-    
-    iKDC.setJointPos(configuration);
-    iKDC.setFrameVelocityRepresentation(BODY_FIXED_REPRESENTATION); //left trivialized velocity
-    
-    left2mixed = iKDC.getRelativeTransformExplicit(endEffectorFrame,parentFrame,endEffectorFrame,endEffectorFrame).asAdjointTransform(); //is the adjoint transformation from left-trivialized velocity to mixed velocity with the origin on the target frame and the orientation of the parent frame
-    right2mixed = iKDC.getRelativeTransformExplicit(endEffectorFrame,parentFrame,parentFrame,parentFrame).asAdjointTransform(); //is the adjoit trasnformation from right-trivialized velocity to mixed velocity. It comes from a multiplication of two adjoints: from left to mixed times from right to left
-    
-    iKDC.getFrameFreeFloatingJacobian(parentFrame, p_J_wp); //getting the jacobian from world to parent frame with left-trivialized velocity representation
-    iKDC.getFrameFreeFloatingJacobian(endEffectorFrame, e_J_we);  //getting the jacobian from world to target frame with left-trivialized velocity representation
-    
-    toEigen(jacobianOut) = toEigen(left2mixed)*(toEigen(e_J_we).rightCols(totalDOF)) - toEigen(right2mixed)*(toEigen(p_J_wp).rightCols(totalDOF));
+    //Not used for now as it has been "Inlined" in the jacobian computation
+    iKDC.getRelativeJacobian(parentFrame, endEffectorFrame, jacobianOut);
 }
 
+
+void InverseKinematicsV2IPOPT::updateAfterOptimizationStep(const Number* x)
+{
+    Eigen::Map< const Eigen::VectorXd > x_in (x, totalDOF);
+    toEigen(jointsTemp) = x_in;
+    iKDC.setJointPos(jointsTemp);
+    p_H_e = iKDC.getRelativeTransform(parentFrame,endEffectorFrame);
+
+}
 
 bool InverseKinematicsV2IPOPT::get_nlp_info(Ipopt::Index& n, Ipopt::Index& m, Ipopt::Index& nnz_jac_g,
-                              Ipopt::Index& nnz_h_lag, IndexStyleEnum& index_style)
+                                            Ipopt::Index& nnz_h_lag, IndexStyleEnum& index_style)
 {
     if(!modelLoaded){
         std::cerr<<"[ERROR] First you have to load the model"<< std::endl;
@@ -221,7 +205,8 @@ bool InverseKinematicsV2IPOPT::get_bounds_info(Ipopt::Index n, Number* x_l, Numb
 {
     
     for (Ipopt::Index j = 0; j < totalDOF; j++){
-        x_l[j] = jointsLimits[j].first; x_u[j] = jointsLimits[j].second; 
+        x_l[j] = jointsLimits[j].first;
+        x_u[j] = jointsLimits[j].second;
     }
    
     return true;
@@ -229,91 +214,82 @@ bool InverseKinematicsV2IPOPT::get_bounds_info(Ipopt::Index n, Number* x_l, Numb
 
 bool InverseKinematicsV2IPOPT::get_starting_point(Ipopt::Index n, bool init_x, Number* x, bool init_z, Number* z_L, Number* z_U, Ipopt::Index m, bool init_lambda, Number* lambda)
 {
-    if(init_z) return false;
-    if(init_lambda) return false;
+    if (init_z) return false;
+    if (init_lambda) return false;
  
-    if(init_x){
-        if(guess.size() == totalDOF){
-                for(int i = 0; i < totalDOF; i++){
-                    x[i] = guess(i);
-                }
-            //guess.resize(0);
-        }
-        
-        else{
-            if(guess.size() >0){
-                std::cerr << "[IK WARNING] The guess dimension is different from the number of DOFs: "<< guess.size() << "!=" <<totalDOF-7 <<". Guess ignored." << std::endl;
+    if (init_x){
+        if (guess.size() == totalDOF){
+            for (int i = 0; i < totalDOF; i++){
+                x[i] = guess(i);
             }
-                for(int i = 0; i < totalDOF; i++){
-                    x[i] = desiredJoints(i);
-                }
+        }
+        else {
+            std::cerr << "[IK WARNING] The guess dimension is different from the number of DOFs: "<< guess.size() << "!=" <<totalDOF-7 <<". Guess ignored." << std::endl;
+
+            for(int i = 0; i < totalDOF; i++){
+                x[i] = desiredJoints(i);
+            }
         }
     }
-   /* std::cerr << "STARTING POINT " << std::endl;
-    for(int i =0; i < totalDOF; ++i){
-        std::cerr << x[i] << " ";
-    }
-    std::cerr <<std::endl<<std::endl;*/
     return true;
 }
 
 bool InverseKinematicsV2IPOPT::eval_f(Ipopt::Index n, const Number* x, bool new_x, Number& obj_value)
 {
+#ifdef EIGEN_RUNTIME_NO_MALLOC
+    Eigen::internal::set_is_malloc_allowed(false);
+#endif
+
+    if (new_x) {
+        updateAfterOptimizationStep(x);
+    }
+
     Eigen::Map< const Eigen::VectorXd > x_in (x, totalDOF);
-    iDynTree::VectorFixSize<7> p; //position + quaternion
-    iDynTree::Transform p_H_e; //forward kinematics
-    
-    toEigen(jointsTemp) = x_in;
-    
-    //std::cerr << "Print of q: "<< jointsTemp.toString() << std::endl;
-    
-    iKDC.setJointPos(jointsTemp);
-    p_H_e = iKDC.getRelativeTransform(parentFrame,endEffectorFrame);
-    
-    toEigen(p).segment<3>(0) = toEigen(p_H_e.getPosition());
-    toEigen(p).segment<4>(3) = toEigen(p_H_e.getRotation().asQuaternion());
-    
-    //std::cerr << "Print of p: "<< p.toString() << std::endl;
-    
-    
-    double obj_value1 = 0.5*toEigen(p).transpose() * toEigen(kF) * toEigen(p);
-    double obj_value2 = - toEigen(pDesired).transpose() * toEigen(kF) * toEigen(p); 
-    double obj_value3 =  0.5*kJoints* x_in.transpose() * x_in;
-    double obj_value4 = - kJoints * toEigen(desiredJoints).transpose() * x_in;
-    
-    obj_value = obj_value1 + obj_value2 + obj_value3 + obj_value4; 
+
+    obj_value = kF(0) * (toEigen(p_H_e.getPosition()) - toEigen(pDesired).head<3>()).squaredNorm();
+
+    obj_value += kF(1) * (toEigen(p_H_e.getRotation().asQuaternion()) - toEigen(pDesired).tail<4>()).squaredNorm();
+
+    obj_value += kF(2) * (x_in - toEigen(desiredJoints)).squaredNorm();
+
+    obj_value /= 2;
+#ifdef EIGEN_RUNTIME_NO_MALLOC
+    Eigen::internal::set_is_malloc_allowed(true);
+#endif
     return true;
 }
 
 bool InverseKinematicsV2IPOPT::eval_grad_f(Ipopt::Index n, const Number* x, bool new_x, Number* grad_f)
 {
+#ifdef EIGEN_RUNTIME_NO_MALLOC
+    Eigen::internal::set_is_malloc_allowed(false);
+#endif
+
+    if (new_x) {
+        updateAfterOptimizationStep(x);
+    }
+
     Eigen::Map< const Eigen::VectorXd > x_in (x, totalDOF);
-    Eigen::Map< Eigen::VectorXd > Grad_f (grad_f, totalDOF);
-    MatrixFixSize<7,6> map;
-    iDynTree::Transform p_H_e;
-    iDynTree::VectorFixSize<7> p; //position + quaternion
-    Vector4 quaternion;
-    
-    toEigen(jointsTemp) = x_in;
-    iKDC.setJointPos(jointsTemp);
-    p_H_e = iKDC.getRelativeTransform(parentFrame,endEffectorFrame);
-    
-    toEigen(p).segment<3>(0) = toEigen(p_H_e.getPosition());
-    toEigen(p).segment<4>(3) = toEigen(p_H_e.getRotation().asQuaternion());
-    
-    quaternion = p_H_e.getRotation().asQuaternion();
-    
-    twistToQuaternionTwist(quaternion, map);
-    relativeJacobian(jointsTemp,jacobian);
-    
-    Grad_f = toEigen(jacobian).transpose() * toEigen(map).transpose() * toEigen(kF) * (toEigen(p) - toEigen(pDesired)) + kJoints*(x_in -toEigen(desiredJoints)); 
-    
+
+    Eigen::Map< Eigen::VectorXd > gradient(grad_f, totalDOF);
+    iDynTree::VectorFixSize<4> quaternion = p_H_e.getRotation().asQuaternion();
+    MatrixFixSize<4, 3> map = Rotation::QuaternionRightTrivializedDerivative(quaternion);
+    iKDC.getRelativeJacobian(parentFrame, endEffectorFrame, jacobian);
+
+    gradient.noalias() = kF(0) * (toEigen(p_H_e.getPosition()) - toEigen(pDesired).head<3>()).transpose() * toEigen(jacobian).topRows<3>();
+
+    gradient.noalias() += kF(1) * ((toEigen(quaternion) - toEigen(pDesired).tail<4>()).transpose() * toEigen(map)) * toEigen(jacobian).bottomRows<3>();
+
+    gradient.noalias() += kF(2) * (x_in - toEigen(desiredJoints)).transpose();
+
+#ifdef EIGEN_RUNTIME_NO_MALLOC
+    Eigen::internal::set_is_malloc_allowed(true);
+#endif
     return true;
 }
 
 bool InverseKinematicsV2IPOPT::eval_g(Ipopt::Index n, const Number* x, bool new_x, Ipopt::Index m, Number* g)
 {
-
     return false;
 
 }
@@ -325,25 +301,18 @@ bool InverseKinematicsV2IPOPT::eval_jac_g(Ipopt::Index n, const Number* x, bool 
 
 void InverseKinematicsV2IPOPT::finalize_solution(SolverReturn status, Ipopt::Index n, const Number* x, const Number* z_L, const Number* z_U, Ipopt::Index m, const Number* g, const Number* lambda, Number obj_value, const IpoptData* ip_data, IpoptCalculatedQuantities* ip_cq)
 {
-    if((status == Ipopt::SUCCESS)||status == Ipopt::STOP_AT_ACCEPTABLE_POINT){
-        Eigen::Map< const Eigen::VectorXd > x_in (x, totalDOF);
-        iDynTree::Transform p_H_e;
-        
-        toEigen(jointResult) = x_in;
-        
-        iKDC.setJointPos(jointResult);
-        p_H_e = iKDC.getRelativeTransform(parentFrame,endEffectorFrame);
-        
-        positionResult = p_H_e.getPosition();
-        
-        quaternionResult = p_H_e.getRotation().asQuaternion();
-        
-        //std::cerr << "[IK Result] Cost value: "<< obj_value << std::endl;
+    //Save the output in any case
+    Eigen::Map< const Eigen::VectorXd > x_in (x, totalDOF);
+    toEigen(jointResult) = x_in;
 
-        if(status == Ipopt::SUCCESS){
+    if ((status == Ipopt::SUCCESS)
+        || status == Ipopt::STOP_AT_ACCEPTABLE_POINT){
+
+        if (status == Ipopt::SUCCESS){
             exitCode = 0;
+        } else {
+            exitCode = 1;
         }
-        else exitCode = 1;
     }
     else {
         switch(status){
@@ -378,12 +347,12 @@ void InverseKinematicsV2IPOPT::finalize_solution(SolverReturn status, Ipopt::Ind
 
         }
     }
-    guess = desiredJoints;
+    //this is needed for next computation
+    guess = jointResult;
 }
 
 bool InverseKinematicsV2IPOPT::eval_h(Ipopt::Index n, const Number* x, bool new_x, Number obj_factor, Ipopt::Index m, const Number* lambda, bool new_lambda, Ipopt::Index nele_hess, Ipopt::Index* iRow, Ipopt::Index* jCol, Number* values)
 {
-    //return Ipopt::TNLP::eval_h(n, x, new_x, obj_factor, m, lambda, new_lambda, nele_hess, iRow, jCol, values);
     return false;
 }
 

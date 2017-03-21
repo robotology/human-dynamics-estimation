@@ -58,6 +58,7 @@ namespace human {
     {
         //Fill data for a thread
         {
+            unsigned index = 0;
             std::unique_lock<std::mutex> guard(m_inputMutex);
             for (auto& linkPair : m_linkPairs) {
                 // Create a new struct of type WorkerData and pass it to the pool
@@ -68,12 +69,15 @@ namespace human {
                     std::distance(&*(m_linkPairs.begin()), &linkPair) //this is not properly clear with the range-based iterators
                 };
                 m_tasks.push(taskData);
+//                ++index;
+//                if (index == 1) break;
             }
             m_inputSynchronizer.notify_all();
         }
 
         //as this call is blocking I have to wait for all the results
         std::unique_lock<std::mutex> outputGuard(m_outputMutex);
+//        m_outputSynchronizer.wait(outputGuard, [&]() { return m_results.size() >= 1; });//m_linkPairs.size(); });
         m_outputSynchronizer.wait(outputGuard, [&]() { return m_results.size() >= m_linkPairs.size(); });
 
         m_results.clear();
@@ -124,6 +128,10 @@ namespace human {
         iDynTree::VectorDynSize relativeVelocity(6);
 
         while (true) {
+#ifdef EIGEN_RUNTIME_NO_MALLOC
+            Eigen::internal::set_is_malloc_allowed(false);
+#endif
+
             std::unique_lock<std::mutex> guard(m_inputMutex);
             m_inputSynchronizer.wait(guard, [&](){ return m_shouldTerminate || !m_tasks.empty(); } );
             if (m_shouldTerminate) {
@@ -160,6 +168,10 @@ namespace human {
             //insert
             m_results.insert(std::unordered_map<unsigned, int>::value_type(task.identifier, ikResult > 0));
             m_outputSynchronizer.notify_all();
+
+#ifdef EIGEN_RUNTIME_NO_MALLOC
+            Eigen::internal::set_is_malloc_allowed(true);
+#endif
         }
     }
 

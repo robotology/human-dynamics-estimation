@@ -13,6 +13,8 @@ class InverseKinematics {
     bool alreadyOptimized;
     std::string _parentFrame;
     std::string _targetFrame;
+    unsigned verbosityLevel;
+    unsigned maxIterations;
 
     bool update();
     bool getReducedModel(const iDynTree::Model& fullModel, const std::vector< std::string >& consideredJoints, iDynTree::Model& modelOutput);
@@ -226,5 +228,9 @@ public:
      * This can be useful when the solver is left free to select the joints when passing the model, or to understad the order adopted in jointsOut vector.
      */
     bool getConsideredJoints(std::vector< std::string >& consideredJoints);
+
+    void setVerbosityLevel(unsigned level);
+
+    void setMaxIterations(unsigned maxIteration);
 };
 #endif /* end of include guard: INVERSEKINEMATICS_H */

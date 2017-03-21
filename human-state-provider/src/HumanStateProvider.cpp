@@ -194,6 +194,12 @@ namespace human {
             return false;
         }
 
+        if (!m_pimpl->m_humanDriver.view(m_pimpl->m_frameProviderTimed) || !m_pimpl->m_frameProviderTimed) {
+            yError("Specified driver does not support PreciselyTimed interface");
+            close();
+            return false;
+        }
+
         //get URDF model which will be needed for the IK
         if (!rf.check("human_urdf", "Checking subject URDF file")) {
             yError("Could not find \"human_urdf\" parameter");
@@ -281,6 +287,8 @@ namespace human {
 
         m_pimpl->m_linkPairs.reserve(pairNames.size());
 
+        std::string solverName = rf.check("ik_linear_solver", yarp::os::Value("ma27"), "Checking Linear solver name for IPOPT").asString();
+
         for (unsigned index = 0; index < pairNames.size(); ++index) {
             LinkPairInfo pairInfo;
 
@@ -291,7 +299,8 @@ namespace human {
             pairInfo.childFrameSegmentsIndex = pairSegmentIndeces[index].second;
 
             // Allocate the solver which provides also useful methods
-            pairInfo.ikSolver = std::unique_ptr<InverseKinematics>(new InverseKinematics());
+            pairInfo.ikSolver = std::unique_ptr<InverseKinematics>(new InverseKinematics(solverName));
+            pairInfo.ikSolver->setVerbosityLevel(0);
 
             if (!pairInfo.ikSolver->setModel(humanModel, pairInfo.parentFrameName, pairInfo.childFrameName)) {
                 yWarning("Could not configure IK solver for frames %s,%s. Skipping pair", pairInfo.parentFrameName.c_str(), pairInfo.childFrameName.c_str());
