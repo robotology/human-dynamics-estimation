@@ -1,12 +1,7 @@
 #ifndef INVERSEKINEMATICSV2IPOPT_H
 #define INVERSEKINEMATICSV2IPOPT_H
 
-//#define HAVE_STDDEF_H
-//#define HAVE_CSTDDEF
 #include <IpTNLP.hpp>
-//#undef HAVE_STDDEF_H
-//#undef HAVE_CSTDDEF //workaroud for missing libraries
-
 #include <iDynTree/Core/VectorFixSize.h>
 #include <iDynTree/Core/VectorDynSize.h>
 #include <iDynTree/Core/MatrixDynSize.h>

@@ -15,6 +15,9 @@ find_package(iDynTree REQUIRED)
 
 list(APPEND CMAKE_MODULE_PATH ${YARP_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
+include(YarpInstallationHelpers)
+include(YarpIDL)
+
 include(AddWarningsConfigurationToTarget)
 
 # To build shared libraries in Windows, we set CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS to TRUE
@@ -45,3 +48,8 @@ add_subdirectory(human-forces-provider)
 # as it needs the interfaces exposed by the previous targets
 add_subdirectory(human-dynamics-estimator)
 add_subdirectory(human-viz-bridge)
+
+
+#### add the "uninstall" target
+include(AddUninstallTarget)
+
