@@ -1,10 +1,12 @@
-#include "InverseKinematics.h"
+#include <human-ik/InverseKinematics.h>
 #include "URDFdir.h"
-#include "iDynTree/Model/Traversal.h"
+#include <iDynTree/Model/Traversal.h>
+#include <iDynTree/ModelIO/ModelLoader.h>
 #include <iDynTree/Core/TestUtils.h>
 #include <iDynTree/Core/EigenHelpers.h>
 #include <matio.h>
 #include <ctime>
+#include <map>
 
 struct IKErrorLog{
     std::vector< int > timeInstants;
@@ -165,10 +167,10 @@ int main(int argc, char **argv) {
     //START Test
     
     
-    std::vector< InverseKinematics* > solvers(linksName.size()-1);
+    std::vector< human::InverseKinematics* > solvers(linksName.size()-1);
     
     for(int solverIterator = 0; solverIterator < solvers.size(); ++solverIterator){
-        solvers[solverIterator] = new InverseKinematics();
+        solvers[solverIterator] = new human::InverseKinematics();
     }
     
     
