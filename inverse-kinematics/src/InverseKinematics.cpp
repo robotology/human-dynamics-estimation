@@ -431,6 +431,9 @@ bool InverseKinematics::initialize()
         m_pimpl->loader->Options()->SetNumericValue("acceptable_tol", 1e-3); //default 1e-6
         m_pimpl->loader->Options()->SetIntegerValue("acceptable_iter", 5); //default 15
         m_pimpl->loader->Options()->SetIntegerValue("max_iter", m_pimpl->maxIterations);
+        if (!m_pimpl->m_solverName.empty()) {
+             m_pimpl->loader->Options()->SetStringValue("linear_solver",  m_pimpl->m_solverName);
+        }
 
         status = m_pimpl->loader->Initialize();
 
