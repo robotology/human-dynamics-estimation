@@ -1,0 +1,6 @@
+include(YarpPlugin)
+set(YARP_FORCE_DYNAMIC_PLUGINS TRUE)
+
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+add_subdirectory(ReadOnlyRemoteControlBoard)
+add_subdirectory(ReadOnlyControlBoardRemapper)
