@@ -54,6 +54,9 @@ add_subdirectory(human-viz-bridge)
 
 add_subdirectory(app)
 
+
+add_subdirectory(yarp)
+
 #### add the "uninstall" target
 include(AddUninstallTarget)
 
