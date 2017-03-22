@@ -9,9 +9,12 @@
 
 #include <yarp/dev/IEncodersTimed.h>
 #include <yarp/dev/DeviceDriver.h>
+#include <yarp/dev/ControlBoardInterfaces.h>
 
 #include <yarp/os/Semaphore.h>
 #include "stateExtendedReader.hpp"
+
+#include <vector>
 
 namespace yarp {
         namespace dev {
@@ -23,6 +26,7 @@ namespace yarp {
 class yarp::dev::ReadOnlyRemoteControlBoard
 : public yarp::dev::IEncodersTimed
 , public yarp::dev::DeviceDriver
+, public yarp::dev::IAxisInfo
 {
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
@@ -31,6 +35,8 @@ class yarp::dev::ReadOnlyRemoteControlBoard
     // from the YARP .thrift file
     StateExtendedInputPort m_extendedIntputStatePort;  // Buffered port storing new data
     yarp::os::Semaphore m_extendedPortMutex;
+
+    std::vector<std::pair<yarp::os::ConstString, yarp::dev::JointTypeEnum> > m_axes;
 
     mutable Stamp m_lastStamp;  //this is shared among all calls that read encoders
     // Semaphore mutex;
@@ -68,6 +74,12 @@ public:
     virtual bool getEncoderSpeeds(double *spds);
     virtual bool getEncoderAcceleration(int j, double *acc);
     virtual bool getEncoderAccelerations(double *accs);
+
+    /* IAxisInfo */
+    virtual bool getAxisName(int j, yarp::os::ConstString &name);
+
+    virtual bool getJointType(int j, yarp::dev::JointTypeEnum &type);
+
 
 };
 

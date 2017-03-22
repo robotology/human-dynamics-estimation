@@ -71,7 +71,7 @@ namespace dev {
         return true;
     }
 
-     bool ReadOnlyRemoteControlBoard::open(Searchable& config) {
+    bool ReadOnlyRemoteControlBoard::open(Searchable& config) {
         ConstString remote = config.find("remote").asString();
         ConstString local = config.find("local").asString();
 
@@ -120,10 +120,32 @@ namespace dev {
         }
 
         m_numberOfJoints = axes.asInt();
-         m_extendedIntputStatePort.init(m_numberOfJoints);
+        m_extendedIntputStatePort.init(m_numberOfJoints);
+        m_axes.reserve(m_numberOfJoints);
+        Value &axesDescription = config.find("axesDescription");
+        if (axesDescription.isNull() || !axesDescription.isList()
+            || axesDescription.asList()->size() != m_numberOfJoints) {
+            yError("*** Option 'axesDescription' not found or malformed.");
+            m_extendedIntputStatePort.close();
+            return false;
+        }
+
+        Bottle *axesDescriptionList = axesDescription.asList();
+        for (int index = 0; index < axesDescriptionList->size(); ++index) {
+            const Value& axis = axesDescriptionList->get(index);
+            if (axis.isNull() || !axis.isList() || axis.asList()->size() != 2) {
+                yError("*** Option 'axesDescription' malformed at index %d.", index);
+                m_extendedIntputStatePort.close();
+                return false;
+            }
+            ConstString axisName = axis.asList()->get(0).asString();
+            JointTypeEnum axisVocab = static_cast<JointTypeEnum>(axis.asList()->get(1).asVocab());
+            m_axes.push_back(std::pair<yarp::os::ConstString, yarp::dev::JointTypeEnum>(axisName, axisVocab));
+        }
+        
         return true;
     }
-
+    
     /**
      * Close the device driver and stop the port connections.
      * @return true/false on success/failure.
@@ -358,6 +380,18 @@ namespace dev {
         }
 
         return ret;
+    }
+
+    bool ReadOnlyRemoteControlBoard::getAxisName(int j, yarp::os::ConstString& name) {
+        if (j < 0 || j >= m_numberOfJoints) return false;
+        name = m_axes[j].first;
+        return true;
+    }
+
+    bool ReadOnlyRemoteControlBoard::getJointType(int j, yarp::dev::JointTypeEnum& type) {
+        if (j < 0 || j >= m_numberOfJoints) return false;
+        type = m_axes[j].second;
+        return true;
     }
 
 }
