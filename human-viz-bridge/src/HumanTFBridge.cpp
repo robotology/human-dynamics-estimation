@@ -31,7 +31,7 @@ using namespace xsens;
 
 inline TickTime normalizeSecNSec(double yarpTimeStamp)
 {
-    uint64_t time = (uint64_t) (yarpTimeStamp * 1000000000UL);
+    uint64_t time = static_cast<uint64_t>(yarpTimeStamp * 1000000000UL);
     uint64_t nsec_part = (time % 1000000000UL);
     uint64_t sec_part = (time / 1000000000UL);
     TickTime ret;
@@ -109,7 +109,10 @@ public:
         }
         
         tf.transforms.resize(model.getNrOfLinks());
-        
+
+        Value defaultAutoconn; defaultAutoconn.fromString("false");
+        bool autoconnect = rf.check("autoconnect", defaultAutoconn, "Checking autoconnection mode").asBool();
+
         Value defaultOffline; defaultOffline.fromString("true");
         bool offline = rf.check("offline", defaultOffline, "Checking offline mode").asBool();
         
@@ -118,14 +121,15 @@ public:
             string driverServerName = "/" + rf.find("serverName").asString() + "/cmd:i"; 
             string segmentsListReaderPortName = "/" + getName() + "/segmentsList:o";
             client_port.open(segmentsListReaderPortName);
-            if (!Network::connect(segmentsListReaderPortName,driverServerName.c_str()))
+            xsensDriver.yarp().attachAsClient(client_port);
+
+            if (!Network::connect(segmentsListReaderPortName, driverServerName.c_str()))
             {
                yError() << "Error! Could not connect to server " << driverServerName;
                return false;
             }
-            xsensDriver.yarp().attachAsClient(client_port);
+
             vector<FrameReferece> xsensSegments = xsensDriver.segments();
-            
             segments.reserve(xsensSegments.size());
             
             for (vector<FrameReferece>::const_iterator element(xsensSegments.begin());
@@ -154,13 +158,14 @@ public:
         yInfo() << "Fake Segments: " << fakeSegments;
         
         string worldRFName = rf.find("worldRFName").asString();
+	string tfPrefix = rf.find("tfPrefix").asString();
         for (size_t index = 0; index < segments.size(); ++index) {
-            tf.transforms[index].child_frame_id = rf.find("tfPrefix").asString() + "/" + segments[index];
+            tf.transforms[index].child_frame_id = tfPrefix + "/" + segments[index];
             tf.transforms[index].header.frame_id = worldRFName;
         }
         
         for (size_t index = 0; index < fakeSegments.size(); ++index) {
-            tf.transforms[segments.size() + index].child_frame_id = rf.find("tfPrefix").asString() + "/" + fakeSegments[index];
+            tf.transforms[segments.size() + index].child_frame_id = tfPrefix + "/" + fakeSegments[index];
             tf.transforms[segments.size() + index].header.frame_id = worldRFName;
             tf.transforms[segments.size() + index].header.seq   = index;
             tf.transforms[segments.size() + index].transform.translation.x = 0;
@@ -175,11 +180,10 @@ public:
         xsensDataPort.useCallback(*this);
         string xsensServerName = "/" + rf.find("serverName").asString() + "/frames:o";
         string frameReaderPortName = "/" + getName() + "/frames:i";
-        xsensDataPort.open(frameReaderPortName);       
-        Value defaultAutoconn; defaultAutoconn.fromString("true");
-        bool autoconn = rf.check("automaticConnection", defaultAutoconn, "Checking autoconnection mode").asBool();
-        if(autoconn){
-            if (!Network::connect(xsensServerName.c_str(),frameReaderPortName))
+        xsensDataPort.open(frameReaderPortName);
+
+        if(autoconnect){
+            if (!Network::connect(xsensServerName.c_str(), frameReaderPortName))
             {
                 yError() << "Error! Could not connect to server " << xsensServerName;
                 return false;

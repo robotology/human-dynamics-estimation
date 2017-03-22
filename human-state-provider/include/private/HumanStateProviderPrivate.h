@@ -19,7 +19,7 @@
 #include <iDynTree/Core/Transform.h>
 #include <iDynTree/Model/Indeces.h>
 #include <iDynTree/KinDynComputations.h>
-#include <inversekinematics/InverseKinematics.h>
+#include <human-ik/InverseKinematics.h>
 #include <yarp/dev/PolyDriver.h>
 #include <yarp/dev/PreciselyTimed.h>
 #include <yarp/os/BufferedPort.h>
@@ -40,6 +40,7 @@ namespace human {
 
     class HumanStateProvider;
     class HumanIKWorkerPool;
+    class InverseKinematics;
 
 }
 
@@ -55,8 +56,6 @@ namespace yarp {
 namespace iDynTree {
     class KinDynComputations;
 }
-
-class InverseKinematics;
 
 /*!
  * Relevant information on the segment input
@@ -81,7 +80,7 @@ struct human::LinkPairInfo {
     iDynTree::VectorDynSize jointVelocities;
 
     //IK elements (i.e. compute joints)
-    std::unique_ptr<InverseKinematics> ikSolver;
+    std::unique_ptr<human::InverseKinematics> ikSolver;
 
     //Velocity-related elements
     iDynTree::MatrixDynSize parentJacobian;

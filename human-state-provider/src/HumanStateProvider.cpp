@@ -13,11 +13,12 @@
 #include <thrifts/HumanState.h>
 #include <thrifts/HumanStateProviderService.h>
 
-#include <inversekinematics/InverseKinematics.h>
+#include <human-ik/InverseKinematics.h>
 #include <iDynTree/Core/Transform.h>
 #include <iDynTree/Core/VectorFixSize.h>
 #include <iDynTree/Core/VectorDynSize.h>
 #include <iDynTree/Model/Model.h>
+#include <iDynTree/ModelIO/ModelLoader.h>
 #include <iDynTree/KinDynComputations.h>
 #include <iDynTree/Core/EigenHelpers.h>
 
@@ -201,15 +202,15 @@ namespace human {
         }
 
         //get URDF model which will be needed for the IK
-        if (!rf.check("human_urdf", "Checking subject URDF file")) {
-            yError("Could not find \"human_urdf\" parameter");
+        if (!rf.check("urdf_model", "Checking subject URDF file")) {
+            yError("Could not find \"urdf_model\" parameter");
             close();
             return false;
 
         }
-        std::string urdfFile = rf.findFile(rf.find("human_urdf").asString());
+        std::string urdfFile = rf.findFile(rf.find("urdf_model").asString());
         if (urdfFile.empty()) {
-            yError("Could not find urdf file %s", rf.find("human_urdf").asString().c_str());
+            yError("Could not find urdf file %s", rf.find("urdf_model").asString().c_str());
             close();
             return false;
         }
@@ -286,8 +287,8 @@ namespace human {
         createEndEffectorsPairs(humanModel, segments, pairNames, pairSegmentIndeces);
 
         m_pimpl->m_linkPairs.reserve(pairNames.size());
-
-        std::string solverName = rf.check("ik_linear_solver", yarp::os::Value("ma27"), "Checking Linear solver name for IPOPT").asString();
+        
+        std::string solverName = rf.check("ik_linear_solver", yarp::os::Value(""), "Checking Linear solver name for IPOPT").asString();
 
         for (unsigned index = 0; index < pairNames.size(); ++index) {
             LinkPairInfo pairInfo;
@@ -299,7 +300,12 @@ namespace human {
             pairInfo.childFrameSegmentsIndex = pairSegmentIndeces[index].second;
 
             // Allocate the solver which provides also useful methods
-            pairInfo.ikSolver = std::unique_ptr<InverseKinematics>(new InverseKinematics(solverName));
+            if (solverName.empty()) {
+                pairInfo.ikSolver = std::unique_ptr<InverseKinematics>(new InverseKinematics());
+            } else {
+                pairInfo.ikSolver = std::unique_ptr<InverseKinematics>(new InverseKinematics(solverName));
+            }
+            
             pairInfo.ikSolver->setVerbosityLevel(0);
 
             if (!pairInfo.ikSolver->setModel(humanModel, pairInfo.parentFrameName, pairInfo.childFrameName)) {

@@ -1,29 +1,27 @@
-#ifndef INVERSEKINEMATICS_H
-#define INVERSEKINEMATICS_H
+#ifndef HUMAN_HUMAN_INVERSEKINEMATICS_H
+#define HUMAN_HUMAN_INVERSEKINEMATICS_H
 
-#include "InverseKinematicsV2IPOPT.h"
+#include <iDynTree/Core/VectorFixSize.h>
+
 #include <string>
+#include <vector>
 
-class InverseKinematics {
+namespace human {
+    class InverseKinematics;
+}
 
-    Ipopt::SmartPtr< InverseKinematicsV2IPOPT > solverPointer;
-    Ipopt::SmartPtr< Ipopt::IpoptApplication > loader;
-    bool updated;
-    bool initialized;
-    bool alreadyOptimized;
-    std::string _parentFrame;
-    std::string _targetFrame;
-    unsigned verbosityLevel;
-    unsigned maxIterations;
+namespace iDynTree {
+    class Model;
+    class VectorDynSize;
+    class Transform;
+    class Position;
+    class Rotation;
+}
 
-    bool update();
-    bool getReducedModel(const iDynTree::Model& fullModel, const std::vector< std::string >& consideredJoints, iDynTree::Model& modelOutput);
-    bool getFrameIndeces(const std::string& parentFrame, const std::string& endEffectorFrame, const iDynTree::Model model, iDynTree::FrameIndex& parentFrameIndex, iDynTree::FrameIndex& endEffectorFrameIndex);
-    void removeUnsupportedJoints(const iDynTree::Model& modelInput, iDynTree::Model& modelOutput);
-    bool autoSelectJointsFromTraversal(const iDynTree::Model& modelInput, const std::string& parentFrame, const std::string& endEffectorFrame, iDynTree::Model& modelOutput);
-    
-    iDynTree::VectorDynSize tempGuess; //auxiliary variable for random initialization
-    iDynTree::VectorDynSize lastSolution;
+class human::InverseKinematics {
+
+    class InverseKinematicsPrivate;
+    InverseKinematicsPrivate *m_pimpl;
 
     //private copy constructor
     InverseKinematics(const InverseKinematics&);
@@ -233,4 +231,4 @@ public:
 
     void setMaxIterations(unsigned maxIteration);
 };
-#endif /* end of include guard: INVERSEKINEMATICS_H */
+#endif /* end of include guard: HUMAN_INVERSEKINEMATICS_H */

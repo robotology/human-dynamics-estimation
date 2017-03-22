@@ -59,7 +59,7 @@ if (HUMAN_DYNAMICS_ESTIMATION_USE_IPOPT)
 
   ## Specify targets for the linkage
   target_link_libraries(${PROJECT_NAME} "${PROJECT_NAME}-data"
-                                        inverse-kinematics
+                                        human-ik
                                         YARP::yarp_experimental
                                         YARP::YARP_OS
                                         YARP::YARP_init

@@ -13,10 +13,12 @@
 #include <IpIpoptApplication.hpp>
 #include <Eigen/Core>
 
-class InverseKinematics;
+namespace human {
+    class InverseKinematics;
+}
 
 class InverseKinematicsIPOPT : public Ipopt::TNLP {
-    friend class InverseKinematics;
+    friend class human::InverseKinematics;
     iDynTree::Model model;
     bool modelLoaded;
     bool gainsLoaded;

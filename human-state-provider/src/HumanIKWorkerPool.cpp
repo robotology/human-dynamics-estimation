@@ -10,7 +10,7 @@
 #include "HumanStateProviderPrivate.h"
 
 #include <iDynTree/Core/EigenHelpers.h>
-#include <inversekinematics/InverseKinematics.h>
+#include <human-ik/InverseKinematics.h>
 
 #include <thread>
 
@@ -50,6 +50,7 @@ namespace human {
 
         std::unique_lock<std::mutex> lock(m_inputMutex);
         m_shouldTerminate = true;
+        m_inputSynchronizer.notify_all();
         m_inputSynchronizer.wait(lock, [&]() { return m_terminateCounter.empty(); });
 
     }
@@ -69,15 +70,12 @@ namespace human {
                     std::distance(&*(m_linkPairs.begin()), &linkPair) //this is not properly clear with the range-based iterators
                 };
                 m_tasks.push(taskData);
-//                ++index;
-//                if (index == 1) break;
             }
             m_inputSynchronizer.notify_all();
         }
 
         //as this call is blocking I have to wait for all the results
         std::unique_lock<std::mutex> outputGuard(m_outputMutex);
-//        m_outputSynchronizer.wait(outputGuard, [&]() { return m_results.size() >= 1; });//m_linkPairs.size(); });
         m_outputSynchronizer.wait(outputGuard, [&]() { return m_results.size() >= m_linkPairs.size(); });
 
         m_results.clear();
