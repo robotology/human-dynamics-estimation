@@ -1,108 +1,17 @@
-#include <inversekinematics/InverseKinematics.h>
+
+#include <human-ik/InverseKinematics.h>
+
 #include "URDFdir.h"
-#include "iDynTree/Model/Traversal.h"
+#include <iDynTree/KinDynComputations.h>
 #include <iDynTree/Core/TestUtils.h>
 #include <iDynTree/Core/EigenHelpers.h>
 #include <iDynTree/Core/VectorDynSize.h>
+#include <iDynTree/Model/Traversal.h>
+#include <iDynTree/ModelIO/ModelLoader.h>
 #include <ctime>
 #include <cstdlib>
 
 int main(int argc, char **argv) {
-    srand(time(NULL));
-
-    using namespace iDynTree;
-
-    iDynTree::ModelLoader modelLoader;
-    iDynTree::Model model;
-    std::string parentFrameName = "RightShoulder", targetFrameName = "RightUpperArm";
-//    std::string parentFrameName = "RightUpperLeg", targetFrameName = "RightLowerLeg";
-    modelLoader.loadModelFromFile("/Users/makaveli/Downloads/XSensURDF_subj1.urdf");
-
-    InverseKinematics solver("ma57");
-    solver.setVerbosityLevel(5);
-    solver.setModel(modelLoader.model(), parentFrameName, targetFrameName);
-    std::vector<std::string> jointList;
-    solver.getConsideredJoints(jointList);
-
-    modelLoader.loadReducedModelFromFullModel(modelLoader.model(), jointList);
-    KinDynComputations computations;
-    computations.loadRobotModel(modelLoader.model());
-
-    VectorDynSize joints(jointList.size());
-    std::vector<std::pair<double, double> > limits;
-    limits.resize(joints.size());
-
-    for (JointIndex index = 0; index < modelLoader.model().getNrOfJoints(); ++index) {
-        iDynTree::IJointPtr joint = const_cast<iDynTree::IJointPtr>(modelLoader.model().getJoint(index));
-
-        double min = -M_PI;
-        double max = M_PI;
-        if (joint->hasPosLimits()){
-            joint->getPosLimits(0, min, max);
-        }
-        limits[joint->getDOFsOffset()].first = min;
-        limits[joint->getDOFsOffset()].second = max;
-    }
-
-    for (size_t index = 0; index < joints.size(); ++index) {
-        double range = limits[index].second - limits[index].first;
-        range *= .9;
-        joints(index) = limits[index].first + (((double)rand() / (double)RAND_MAX) * range);
-    }
-
-    //Get initial condition
-    computations.setJointPos(joints);
-    Transform S_H_UA = computations.getRelativeTransform(parentFrameName, targetFrameName);
-
-    VectorDynSize newJoints = joints;
-    for (size_t index = 0; index < joints.size(); ++index) {
-        double range = M_PI_4;
-        newJoints(index) += -range/2.0 + range * ((double)rand() / (double)RAND_MAX);
-    }
-
-    Vector3 weights;
-    weights(0) = 1e-0;
-    weights(1) = 1e-0;
-    weights(2) = 1e-6;
-    solver.setWeights(weights);
-    solver.initialize();
-    solver.setDesiredTransformation(S_H_UA);
-    solver.setGuess(joints);
-    VectorDynSize solution(joints.size());
-    solution.zero();
-    solver.setDesiredJointPositions(joints);
-    solver.runIK(solution);
-
-    std::cerr << "Expected solution:\n";
-    std::cerr << joints.toString() << "\n";
-    std::cerr << "Transform:\n" <<
-               S_H_UA.toString() << "\n\n";
-
-    std::cerr << "Actual solution:\n";
-    std::cerr << solution.toString() << "\n\n";
-    computations.setJointPos(solution);
-//    Vector3 grav; grav.zero(); grav(2) = -9.81;
-//    solution(0) = 1;
-//    computations.setRobotState(solution, velocities, grav);
-
-
-    std::cerr << "Transform:\n" <<
-    computations.getRelativeTransform(parentFrameName, targetFrameName).toString() << "\n\n";
-
-    //Second test: set gues
-
-
-
-
-
-
-
-
-
-
-    return 0;
-
-#ifdef FALSE
 
     iDynTree::ModelLoader modelLoader;
     iDynTree::Model model;
@@ -196,7 +105,7 @@ int main(int argc, char **argv) {
     /* Calling Inverse Kinematcs solver */
     //////////////////////////////////////
     
-    InverseKinematics solver;
+    human::InverseKinematics solver;
     
     std::cerr<<"Created solver object"<<std::endl;
     
@@ -316,5 +225,5 @@ int main(int argc, char **argv) {
         }while((attempts < 4)&&(angleError > (2*M_PI/180)));
         
     }
-#endif
+
 }

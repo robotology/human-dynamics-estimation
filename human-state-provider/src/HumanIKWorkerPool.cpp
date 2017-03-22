@@ -10,7 +10,7 @@
 #include "HumanStateProviderPrivate.h"
 
 #include <iDynTree/Core/EigenHelpers.h>
-#include <inversekinematics/InverseKinematics.h>
+#include <human-ik/InverseKinematics.h>
 
 #include <thread>
 

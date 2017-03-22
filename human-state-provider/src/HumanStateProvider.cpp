@@ -13,11 +13,12 @@
 #include <thrifts/HumanState.h>
 #include <thrifts/HumanStateProviderService.h>
 
-#include <inversekinematics/InverseKinematics.h>
+#include <human-ik/InverseKinematics.h>
 #include <iDynTree/Core/Transform.h>
 #include <iDynTree/Core/VectorFixSize.h>
 #include <iDynTree/Core/VectorDynSize.h>
 #include <iDynTree/Model/Model.h>
+#include <iDynTree/ModelIO/ModelLoader.h>
 #include <iDynTree/KinDynComputations.h>
 #include <iDynTree/Core/EigenHelpers.h>
 
@@ -202,7 +203,7 @@ namespace human {
 
         //get URDF model which will be needed for the IK
         if (!rf.check("urdf_model", "Checking subject URDF file")) {
-            yError("Could not find \"human_urdf\" parameter");
+            yError("Could not find \"urdf_model\" parameter");
             close();
             return false;
 
@@ -305,7 +306,7 @@ namespace human {
                 pairInfo.ikSolver = std::unique_ptr<InverseKinematics>(new InverseKinematics(solverName));
             }
             
-            pairInfo.ikSolver->setVerbosityLevel(5);
+            pairInfo.ikSolver->setVerbosityLevel(0);
 
             if (!pairInfo.ikSolver->setModel(humanModel, pairInfo.parentFrameName, pairInfo.childFrameName)) {
                 yWarning("Could not configure IK solver for frames %s,%s. Skipping pair", pairInfo.parentFrameName.c_str(), pairInfo.childFrameName.c_str());
