@@ -73,9 +73,25 @@ target_include_directories(human-jointstate-bridge PUBLIC ${YARP_INCLUDE_DIRS})
 
 list(APPEND conf config/human-jointstate-bridge.ini)
 
+# TF bridge
+
+add_executable(human-effort-bridge src/HumanEffortBridge.cpp)
+
+target_link_libraries(human-effort-bridge YARP::YARP_OS 
+                                          YARP::YARP_dev
+                                          iDynTree::idyntree-model
+                                          iDynTree::idyntree-modelio-urdf
+                                          human-viz-bridge-thrift
+                                          human-viz-bridge-rosmsgs
+                                          human-state-provider-data)
+
+target_include_directories(human-effort-bridge PUBLIC ${YARP_INCLUDE_DIRS})
+                                              
+list(APPEND conf config/human-effort-bridge.ini)
+
 yarp_install(FILES ${conf} DESTINATION ${YARP_CONTEXTS_INSTALL_DIR}/human-dynamic-estimation)
 
-install(TARGETS human-tf-bridge human-jointstate-bridge 
+install(TARGETS human-tf-bridge human-jointstate-bridge human-effort-bridge 
         RUNTIME DESTINATION ${CMAKE_INSTALL_FULL_BINDIR}
         ARCHIVE DESTINATION ${CMAKE_INSTALL_FULL_LIBDIR}
         LIBRARY DESTINATION ${CMAKE_INSTALL_FULL_LIBDIR})
