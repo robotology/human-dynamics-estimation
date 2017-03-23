@@ -10,6 +10,7 @@
 #include "HumanStateProviderPrivate.h"
 #include "HumanIKWorkerPool.h"
 
+
 #include <thrifts/HumanState.h>
 #include <thrifts/HumanStateProviderService.h>
 
@@ -301,8 +302,10 @@ namespace human {
 
             // Allocate the solver which provides also useful methods
             if (solverName.empty()) {
+                yInfo("Inverse Kinematics will use default IPOPT solver");
                 pairInfo.ikSolver = std::unique_ptr<InverseKinematics>(new InverseKinematics());
             } else {
+                yInfo("Inverse Kinematics will use the %s linear solver", solverName.c_str());
                 pairInfo.ikSolver = std::unique_ptr<InverseKinematics>(new InverseKinematics(solverName));
             }
             
