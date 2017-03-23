@@ -58,6 +58,15 @@ before_script:
   - cmake -G"${TRAVIS_CMAKE_GENERATOR}" -DCMAKE_BUILD_TYPE=${TRAVIS_BUILD_TYPE}  ..
   - cmake --build . --config ${TRAVIS_BUILD_TYPE}
   - sudo cmake --build . --config ${TRAVIS_BUILD_TYPE} --target install
+  # yarp experimental
+  - cd ../..
+  - git clone https://github.com/robotology-playground/xsens-mvn
+  - cd xsens-mvn
+  - mkdir build
+  - cd build
+  - cmake -G"${TRAVIS_CMAKE_GENERATOR}" -DCMAKE_BUILD_TYPE=${TRAVIS_BUILD_TYPE} -DENABLE_xsens_mvn=OFF -DENABLE_xsens_mvn_wrapper=OFF -DENABLE_xsens_mvn_remote=OFF  ..
+  - cmake --build . --config ${TRAVIS_BUILD_TYPE}
+  - sudo cmake --build . --config ${TRAVIS_BUILD_TYPE} --target install
   # Configure human-dynamics-estimation
   - cd ../../human-dynamics-estimation
   - cmake --version
@@ -70,10 +79,11 @@ script:
 
 after_success:
   - sudo cmake --build . --config ${TRAVIS_BUILD_TYPE} --target install
-  - if [ "$TRAVIS_BRANCH" == "master" -a "$TRAVIS_BUILD_DOCS" ]; then cd $TRAVIS_BUILD_DIR; fi
-  - if [ "$TRAVIS_BRANCH" == "master" -a "$TRAVIS_BUILD_DOCS" ]; then source .ci/setup-ssh.sh; fi
-  - if [ "$TRAVIS_BRANCH" == "master" -a "$TRAVIS_BUILD_DOCS" ]; then chmod +x .ci/generateDocumentation.sh; fi
-  - if [ "$TRAVIS_BRANCH" == "master" -a "$TRAVIS_BUILD_DOCS" ]; then .ci/generateDocumentation.sh; fi
+# generate the docs only if master, the travis_build_docs is true and we can use secure variables
+  - if [ "$TRAVIS_BRANCH" == "master" -a "$TRAVIS_BUILD_DOCS" -a "$TRAVIS_PULL_REQUEST" == "false" ]; then cd $TRAVIS_BUILD_DIR; fi
+  - if [ "$TRAVIS_BRANCH" == "master" -a "$TRAVIS_BUILD_DOCS" -a "$TRAVIS_PULL_REQUEST" == "false" ]; then source .ci/setup-ssh.sh; fi
+  - if [ "$TRAVIS_BRANCH" == "master" -a "$TRAVIS_BUILD_DOCS" -a "$TRAVIS_PULL_REQUEST" == "false" ]; then chmod +x .ci/generateDocumentation.sh; fi
+  - if [ "$TRAVIS_BRANCH" == "master" -a "$TRAVIS_BUILD_DOCS" -a "$TRAVIS_PULL_REQUEST" == "false" ]; then .ci/generateDocumentation.sh; fi
 
 # Enable when tests are added to the repo
 # - ctest --build . --config ${TRAVIS_BUILD_TYPE}

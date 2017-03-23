@@ -1,0 +1,64 @@
+<application>
+    <name>HumanDynamicsEstimation</name>
+    <description>Module to estimate human internal dynamics</description>
+    <version>1.0</version>
+
+    <var name="generic_node">node</var>
+    <var name="ipopt_node">node</var>
+
+    <module>
+        <name>human-state-provider</name>
+        <parameters>--playback true</parameters>
+        <node>${ipopt_node}</node>
+    </module>
+
+    <module>
+        <name>human-jointstate-bridge</name>
+        <parameters></parameters>
+        <node>${node}</node>
+    </module>
+
+    <module>
+        <name>human-tf-bridge</name>
+        <parameters></parameters>
+        <node>${node}</node>
+    </module>
+
+    <!-- <module>
+        <name>human-forces-provider</name>
+        <parameters></parameters>
+        <node>{node}</node>
+    </module>
+
+    <module>
+        <name>human-dynamics-estimator</name>
+        <parameters></parameters>
+        <node>{node}</node>
+    </module> -->
+
+
+    <connection>
+          <from>/xsens/frames:o</from>
+          <to>/human-state-provider/xsens/frames:i</to>
+          <protocol>udp</protocol>
+    </connection>
+
+    <connection>
+          <from>/human-state-provider/state:o</from>
+          <to>/human-jointstate-bridge/state:i</to>
+          <protocol>udp</protocol>
+    </connection>
+
+    <connection>
+          <from>/xsens/frames:o</from>
+          <to>/human-tf-bridge/frames:i</to>
+          <protocol>udp</protocol>
+    </connection>
+
+    <connection>
+          <from>/xsens/cmd:i</from>
+          <to>/human-tf-bridge/segmentsList:o</to>
+          <protocol>tcp</protocol>
+    </connection>
+
+</application>

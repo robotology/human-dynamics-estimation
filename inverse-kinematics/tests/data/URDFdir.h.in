@@ -1,0 +1,11 @@
+#ifndef URDFDIR_H
+#define URDFDIR_H
+
+#define URDF_TEST_MODEL_PATH "@CMAKE_CURRENT_SOURCE_DIR@"
+
+inline std::string getAbsModelPath(std::string modelName)
+{
+    return std::string(URDF_TEST_MODEL_PATH) + "/data/" + modelName;
+}
+
+#endif
