@@ -121,11 +121,6 @@ script:
     fi
 
 after_success:
-# generate the docs only if master, the travis_build_docs is true and we can use secure variables
-  - if [ "$TRAVIS_BRANCH" == "master" -a "$TRAVIS_BUILD_DOCS" -a "$TRAVIS_PULL_REQUEST" == "false" ]; then cd $TRAVIS_BUILD_DIR; fi
-  - if [ "$TRAVIS_BRANCH" == "master" -a "$TRAVIS_BUILD_DOCS" -a "$TRAVIS_PULL_REQUEST" == "false" ]; then source .ci/setup-ssh.sh; fi
-  - if [ "$TRAVIS_BRANCH" == "master" -a "$TRAVIS_BUILD_DOCS" -a "$TRAVIS_PULL_REQUEST" == "false" ]; then chmod +x .ci/generateDocumentation.sh; fi
-  - if [ "$TRAVIS_BRANCH" == "master" -a "$TRAVIS_BUILD_DOCS" -a "$TRAVIS_PULL_REQUEST" == "false" ]; then .ci/generateDocumentation.sh; fi
   # Install the project (just for logging)
   - >-
     if [[ "$TRAVIS_OS_NAME" = "osx" ]] ; then
@@ -140,6 +135,13 @@ after_success:
         imagewithalldeps \
         sh -c 'cd build && cmake --build . --config ${TRAVIS_BUILD_TYPE}  --target install' \
         || travis_terminate 1
+    fi
+  # Generate the docs only if master, the travis_build_docs is true and we can use secure variables
+  - >-
+    if [[ "$TRAVIS_BRANCH" = "master" && -n "$TRAVIS_BUILD_DOCS" && "$TRAVIS_PULL_REQUEST" = "false" ]] ; then
+      cd $PROJECT_DIR_ABS
+      source .ci/setup-ssh.sh || travis_terminate 1
+      .ci/generateDocumentation.sh || travis_terminate 1
     fi
 
 # Enable when tests are added to the repo
