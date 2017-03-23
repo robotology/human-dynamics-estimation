@@ -12,14 +12,14 @@ A ROS visualizer allows to visualize in real-time the interaction.
 
 ### Overview
 A general overview of HDE is described as follows: 
-- a [human-state-provider]() module;
-- a [human-forces-provider](https://github.com/claudia-lat/human-dynamics-estimation/blob/READMEimproving/human-forces-provider/README.md) module;
-- a [human-dynamics-estimator]() module;
-- a [xxxx]() module for the visualization.
+- a [human-state-provider](human-state-provider/README.md) module;
+- a [human-forces-provider](human-forces-provider/README.md) module;
+- a [human-dynamics-estimator](human-dynamics-estimator/README.md) module;
+- a [tool](human-viz-bridge/README.md) for the visualization.
 
 Except for the robot, raw data are typically coming from drivers.
 
-<img src="https://github.com/claudia-lat/human-dynamics-estimation/blob/READMEimproving/misc/hde_yarp_architecture.png">
+<img src="misc/hde_yarp_architecture.png">
 
 
 ### Dependencies
