@@ -14,7 +14,7 @@ set(PRIVATE_HEADERS include/private/InverseKinematicsIPOPT.h
 add_library(${PROJECT_NAME} SHARED ${SOURCES} ${HEADERS} ${PRIVATE_SOURCES} ${PRIVATE_HEADERS})
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE ${IPOPT_DEFINITIONS})
-target_compile_definitions(${PROJECT_NAME} PRIVATE "$<$<CONFIG:Debug>:EIGEN_RUNTIME_NO_MALLOC>")
+# target_compile_definitions(${PROJECT_NAME} PRIVATE "$<$<CONFIG:Debug>:EIGEN_RUNTIME_NO_MALLOC>")
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include/human-ik)
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include/private)
