@@ -16,7 +16,7 @@ case $TRAVIS_OS_NAME in
         cd ../..
     ;;
     linux) ;;
-    *) travis_terminate
+    *) travis_terminate 1
     ;;
 esac
 
