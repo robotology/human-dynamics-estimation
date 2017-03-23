@@ -15,7 +15,7 @@ A general overview of HDE is described as follows:
 - a [human-state-provider](human-state-provider/README.md) module;
 - a [human-forces-provider](human-forces-provider/README.md) module;
 - a [human-dynamics-estimator](human-dynamics-estimator/README.md) module;
-- a [tool](human-viz-bridge/README.md) for the visualization.
+- the [human-viz-bridge](human-viz-bridge/README.md) tool for the visualization.
 
 Except for the robot, raw data are typically coming from drivers.
 
