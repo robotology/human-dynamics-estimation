@@ -56,6 +56,8 @@ before_script:
       docker run -it \
         -v "$PROJECT_DIR_ABS:/app" \
         -w /app \
+        -e CC=$CC \
+        -e CXX=$CXX \
         -e TRAVIS_OS_NAME \
         -e TRAVIS_BUILD_TYPE \
         -e TRAVIS_CMAKE_GENERATOR \
@@ -80,6 +82,8 @@ before_script:
       docker run -it --rm \
         -v "$PROJECT_DIR_ABS:/app" \
         -w /app \
+        -e CC=$CC \
+        -e CXX=$CXX \
         imagewithalldeps \
         sh -c 'cd build && cmake -DCMAKE_BUILD_TYPE=${TRAVIS_BUILD_TYPE} ..' \
         || travis_terminate 1
@@ -94,6 +98,8 @@ script:
     elif [[ "$TRAVIS_OS_NAME" = "linux" ]] ; then
       docker run -it --rm \
         -v "$PROJECT_DIR_ABS:/app" -w /app \
+        -e CC=$CC \
+        -e CXX=$CXX \
         imagewithalldeps \
         sh -c 'cd build && cmake --build . --config ${TRAVIS_BUILD_TYPE}' \
         || travis_terminate 1
@@ -113,6 +119,8 @@ after_success:
     elif [[ "$TRAVIS_OS_NAME" = "linux" ]] ; then
       docker run -it --rm \
         -v "$PROJECT_DIR_ABS:/app" -w /app \
+        -e CC=$CC \
+        -e CXX=$CXX \
         imagewithalldeps \
         sh -c 'cd build && cmake --build . --config ${TRAVIS_BUILD_TYPE}  --target install' \
         || travis_terminate 1
