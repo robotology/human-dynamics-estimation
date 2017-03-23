@@ -116,8 +116,8 @@ namespace human {
         //Compute the QR decomposition
         task.pairInfo.jacobianDecomposition.compute(iDynTree::toEigen(relativeJacobian));
         //the solve method on the decomposition directly solves the associated least-squares problem
-        relativeVelocity = task.parentFrameInfo.velocities;
-        iDynTree::toEigen(relativeVelocity) -= iDynTree::toEigen(task.childFrameInfo.velocities);
+        relativeVelocity = task.childFrameInfo.velocities;
+        iDynTree::toEigen(relativeVelocity) -= iDynTree::toEigen(task.parentFrameInfo.velocities);
         iDynTree::toEigen(task.pairInfo.jointVelocities) = task.pairInfo.jacobianDecomposition.solve(iDynTree::toEigen(relativeVelocity));
     }
 
