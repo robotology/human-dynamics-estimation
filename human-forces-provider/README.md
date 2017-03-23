@@ -4,7 +4,7 @@ Module for reading the forces coming from the force plates and the robot and con
 
 The module is structured as follow:
 
-<img src="misc/human-forces-provider.png">
+<img src="/misc/human-forces-provider.png">
 
 where:
 - **ForceReader** is the interface in charge of reading forces coming into the module.
