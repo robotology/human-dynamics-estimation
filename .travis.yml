@@ -76,6 +76,8 @@ before_script:
   - mkdir build && cd build
   - >-
     if [[ "$TRAVIS_OS_NAME" = "osx" ]] ; then
+      export CFLAGS="-Wno-old-style-cast -Wno-documentation-unknown-command -Wno-documentation -Wno-deprecated"
+      export CXXFLAGS=$CFLAGS
       cmake -DCMAKE_BUILD_TYPE=${TRAVIS_BUILD_TYPE} \
             .. \
             || travis_terminate 1
