@@ -45,7 +45,10 @@ if (HUMAN_DYNAMICS_ESTIMATION_USE_IPOPT)
     target_link_libraries(${PROJECT_NAME} Threads::Threads)
   endif()
 
-  target_compile_definitions(${PROJECT_NAME} PRIVATE "$<$<CONFIG:Debug>:EIGEN_RUNTIME_NO_MALLOC>")
+  if (HUMAN_DYNAMICS_ESTIMATION_DEBUG_MALLOC)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE "$<$<CONFIG:Debug>:EIGEN_RUNTIME_NO_MALLOC>")
+  endif()
+
   target_compile_features(${PROJECT_NAME} PRIVATE cxx_auto_type
                                                   cxx_lambdas
                                                   cxx_range_for)

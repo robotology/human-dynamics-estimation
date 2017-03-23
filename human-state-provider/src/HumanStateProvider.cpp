@@ -10,6 +10,7 @@
 #include "HumanStateProviderPrivate.h"
 #include "HumanIKWorkerPool.h"
 
+
 #include <thrifts/HumanState.h>
 #include <thrifts/HumanStateProviderService.h>
 
@@ -290,6 +291,13 @@ namespace human {
         
         std::string solverName = rf.check("ik_linear_solver", yarp::os::Value(""), "Checking Linear solver name for IPOPT").asString();
 
+        if (solverName.empty()) {
+            yInfo("Inverse Kinematics will use default IPOPT solver");
+        } else {
+            yInfo("Inverse Kinematics will use the %s linear solver", solverName.c_str());
+        }
+
+
         for (unsigned index = 0; index < pairNames.size(); ++index) {
             LinkPairInfo pairInfo;
 
@@ -305,7 +313,7 @@ namespace human {
             } else {
                 pairInfo.ikSolver = std::unique_ptr<InverseKinematics>(new InverseKinematics(solverName));
             }
-            
+
             pairInfo.ikSolver->setVerbosityLevel(0);
 
             if (!pairInfo.ikSolver->setModel(humanModel, pairInfo.parentFrameName, pairInfo.childFrameName)) {

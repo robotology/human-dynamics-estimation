@@ -30,13 +30,14 @@ option(BUILD_SHARED_LIBS "Build libraries as shared as opposed to static" ON)
 
 include(AddInstallRPATHSupport)
 #check discussion in YARP
-option(ENABLE_RPATH "Enable rpath" TRUE)
+option(HUMAN_DYNAMICS_ESTIMATION_ENABLE_RPATH "Enable rpath" TRUE)
 mark_as_advanced(ENABLE_RPATH)
 add_install_rpath_support(BIN_DIRS "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}"
                           LIB_DIRS "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}"
-                          DEPENDS ENABLE_RPATH
+                          DEPENDS HUMAN_DYNAMICS_ESTIMATION_ENABLE_RPATH
                           USE_LINK_PATH)
 
+option(HUMAN_DYNAMICS_ESTIMATION_DEBUG_MALLOC "Enable Eigen assertions on malloc" OFF)
 
 #Add IK solver
 find_package(IPOPT)
