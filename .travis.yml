@@ -1,94 +1,127 @@
-sudo: required
+sudo: false
 dist: trusty
 osx_image: xcode7.3
 language: cpp
 cache: ccache 
 
+services:
+  - docker
+
+compiler:
+  - clang
+  - gcc
+
+os:
+  - linux
+  - osx
+
+env:
+  matrix:
+    - TRAVIS_CMAKE_GENERATOR="Unix Makefiles", TRAVIS_BUILD_TYPE="Release"
+    - TRAVIS_CMAKE_GENERATOR="Unix Makefiles", TRAVIS_BUILD_TYPE="Debug"
+  global:
+    - PROJECT_DIR_ABS=$TRAVIS_BUILD_DIR
+    - DOCKER_IMAGE=robotology/yarp-tdd:gazebo8master
+
 matrix:
   include:
-    - os: linux
-      compiler: clang
-      env: TRAVIS_CMAKE_GENERATOR="Unix Makefiles", TRAVIS_BUILD_TYPE="Debug"
-    - os: linux
-      compiler: clang
-      env: TRAVIS_CMAKE_GENERATOR="Unix Makefiles", TRAVIS_BUILD_TYPE="Release", TRAVIS_BUILD_DOCS=true
-    - os: linux
-      compiler: gcc
-      env: TRAVIS_CMAKE_GENERATOR="Unix Makefiles", TRAVIS_BUILD_TYPE="Debug"
-    - os: linux
-      compiler: gcc
-      env: TRAVIS_CMAKE_GENERATOR="Unix Makefiles", TRAVIS_BUILD_TYPE="Release"
     - os: osx
-      compiler: gcc
-      env: TRAVIS_CMAKE_GENERATOR="Unix Makefiles", TRAVIS_BUILD_TYPE="Debug"
-    - os: osx
-      compiler: clang
       env: TRAVIS_CMAKE_GENERATOR="Xcode", TRAVIS_BUILD_TYPE="Release"
+    - os: osx
+      env: TRAVIS_CMAKE_GENERATOR="Xcode", TRAVIS_BUILD_TYPE="Debug"
+
+before_install:
+  # Pull the docker image if this is a linux build and install the binary
+  # dependencies in the docker image or osx
+  - >-
+    if [[ "$TRAVIS_OS_NAME" = "linux" ]] ; then
+      docker pull $DOCKER_IMAGE || travis_terminate 1
+      docker run -it \
+        -v "$PROJECT_DIR_ABS:/app" \
+        -w /app \
+        -e TRAVIS_OS_NAME \
+        --name baseimage \
+        $DOCKER_IMAGE \
+        sh .ci/install_deps.sh \
+        || travis_terminate 1
+      docker commit baseimage imagewithbindeps || travis_terminate 1
+    elif [[ "$TRAVIS_OS_NAME" = "osx" ]] ; then
+      sh $PROJECT_DIR_ABS/.ci/install_deps.sh || travis_terminate 1
+    fi
 
 before_script:
-  # Install ccache on osx
-  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew install ccache; fi
-  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then export PATH="/usr/local/opt/ccache/libexec:$PATH"; fi
+  # Build the dependencies from sources
+  - >-
+    if [[ "$TRAVIS_OS_NAME" = "linux" ]] ; then
+      docker run -it \
+        -v "$PROJECT_DIR_ABS:/app" \
+        -w /app \
+        -e TRAVIS_OS_NAME \
+        -e TRAVIS_BUILD_TYPE \
+        -e TRAVIS_CMAKE_GENERATOR \
+        --name imagewithbindeps \
+        imagewithbindeps \
+        sh .ci/build_deps.sh \
+        || travis_terminate 1
+      docker commit imagewithbindeps imagewithalldeps || travis_terminate 1
+    elif [[ "$TRAVIS_OS_NAME" = "osx" ]] ; then
+      sh $PROJECT_DIR_ABS/.ci/build_deps.sh || travis_terminate 1
+    fi
 
-  # Use ccache also for clang and clang++ on linux
-  # See https://github.com/travis-ci/travis-ci/issues/5383#issuecomment-224630584
-  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then if [ "$CC" == "clang" ]; then sudo ln -s ../../bin/ccache /usr/lib/ccache/clang; fi; fi
-  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then if [ "$CC" == "clang" ]; then export CFLAGS="-Qunused-arguments"; fi; fi
-  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then if [ "$CXX" == "clang++" ]; then sudo ln -s ../../bin/ccache /usr/lib/ccache/clang++; fi; fi
-  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then if [ "$CXX" == "clang++" ]; then export CXXFLAGS="-Qunused-arguments"; fi; fi
-
-  # Install (system, i.e. apt-get and homebrew) deps
-  - sh .ci/travis-deps.sh
-  # Install dependencies from source code 
-  # iDynTree 
-  - cd ..
-  - git clone https://github.com/robotology/idyntree
-  - cd idyntree
-  - mkdir build
-  - cd build 
-  - cmake -G"${TRAVIS_CMAKE_GENERATOR}" -DCMAKE_BUILD_TYPE=${TRAVIS_BUILD_TYPE} -DIDYNTREE_USES_KDL=OFF -DIDYNTREE_USES_YARP=ON -DIDYNTREE_USES_ICUB_MAIN=OFF ..
-  - cmake --build . --config ${TRAVIS_BUILD_TYPE}
-  - sudo cmake --build . --config ${TRAVIS_BUILD_TYPE} --target install
-  # YCM 
-  - cd ../..
-  - git clone https://github.com/robotology/ycm
-  - cd ycm
-  - mkdir build
-  - cd build 
-  - cmake -G"${TRAVIS_CMAKE_GENERATOR}" -DCMAKE_BUILD_TYPE=${TRAVIS_BUILD_TYPE}  ..
-  - cmake --build . --config ${TRAVIS_BUILD_TYPE}
-  - sudo cmake --build . --config ${TRAVIS_BUILD_TYPE} --target install
-  # yarp experimental
-  - cd ../..
-  - git clone https://github.com/robotology-playground/xsens-mvn
-  - cd xsens-mvn
-  - mkdir build
-  - cd build
-  - cmake -G"${TRAVIS_CMAKE_GENERATOR}" -DCMAKE_BUILD_TYPE=${TRAVIS_BUILD_TYPE} -DENABLE_xsens_mvn=OFF -DENABLE_xsens_mvn_wrapper=OFF -DENABLE_xsens_mvn_remote=OFF  ..
-  - cmake --build . --config ${TRAVIS_BUILD_TYPE}
-  - sudo cmake --build . --config ${TRAVIS_BUILD_TYPE} --target install
-  # Configure human-dynamics-estimation
-  - cd ../../human-dynamics-estimation
-  - cmake --version
-  - mkdir build
-  - cd build
-  - cmake -G"${TRAVIS_CMAKE_GENERATOR}" -DCMAKE_BUILD_TYPE=${TRAVIS_BUILD_TYPE}  ..
+  # Run CMake into the persistent $PROJECT_DIR_ABS folder
+  - cd $PROJECT_DIR_ABS
+  - mkdir build && cd build
+  - >-
+    if [[ "$TRAVIS_OS_NAME" = "osx" ]] ; then
+      cmake -DCMAKE_BUILD_TYPE=${TRAVIS_BUILD_TYPE} \
+            .. \
+            || travis_terminate 1
+    elif [[ "$TRAVIS_OS_NAME" = "linux" ]] ; then
+      docker run -it --rm \
+        -v "$PROJECT_DIR_ABS:/app" \
+        -w /app \
+        imagewithalldeps \
+        sh -c 'cd build && cmake -DCMAKE_BUILD_TYPE=${TRAVIS_BUILD_TYPE} ..' \
+        || travis_terminate 1
+    fi
 
 script:
-  - cmake --build . --config ${TRAVIS_BUILD_TYPE}
+  # Build the project
+  - >-
+    if [[ "$TRAVIS_OS_NAME" = "osx" ]] ; then
+      cmake --build . --config ${TRAVIS_BUILD_TYPE} \
+      || travis_terminate 1
+    elif [[ "$TRAVIS_OS_NAME" = "linux" ]] ; then
+      docker run -it --rm \
+        -v "$PROJECT_DIR_ABS:/app" -w /app \
+        imagewithalldeps \
+        sh -c 'cd build && cmake --build . --config ${TRAVIS_BUILD_TYPE}' \
+        || travis_terminate 1
+    fi
 
 after_success:
-  - sudo cmake --build . --config ${TRAVIS_BUILD_TYPE} --target install
 # generate the docs only if master, the travis_build_docs is true and we can use secure variables
   - if [ "$TRAVIS_BRANCH" == "master" -a "$TRAVIS_BUILD_DOCS" -a "$TRAVIS_PULL_REQUEST" == "false" ]; then cd $TRAVIS_BUILD_DIR; fi
   - if [ "$TRAVIS_BRANCH" == "master" -a "$TRAVIS_BUILD_DOCS" -a "$TRAVIS_PULL_REQUEST" == "false" ]; then source .ci/setup-ssh.sh; fi
   - if [ "$TRAVIS_BRANCH" == "master" -a "$TRAVIS_BUILD_DOCS" -a "$TRAVIS_PULL_REQUEST" == "false" ]; then chmod +x .ci/generateDocumentation.sh; fi
   - if [ "$TRAVIS_BRANCH" == "master" -a "$TRAVIS_BUILD_DOCS" -a "$TRAVIS_PULL_REQUEST" == "false" ]; then .ci/generateDocumentation.sh; fi
+  # Install the project (just for logging)
+  - >-
+    if [[ "$TRAVIS_OS_NAME" = "osx" ]] ; then
+      cmake --build . --config ${TRAVIS_BUILD_TYPE} --target install \
+      || travis_terminate 1
+    elif [[ "$TRAVIS_OS_NAME" = "linux" ]] ; then
+      docker run -it --rm \
+        -v "$PROJECT_DIR_ABS:/app" -w /app \
+        imagewithalldeps \
+        sh -c 'cd build && cmake --build . --config ${TRAVIS_BUILD_TYPE}  --target install' \
+        || travis_terminate 1
+    fi
 
 # Enable when tests are added to the repo
 # - ctest --build . --config ${TRAVIS_BUILD_TYPE}
 
-# Fill with mantainer(s) emails 
+# Fill with mantainer(s) emails
 # notifications:
 #  email:
-#    - whowantstobemantainedr@email.com 
+#    - whowantstobemantainedr@email.com
