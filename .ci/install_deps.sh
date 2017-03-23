@@ -16,10 +16,8 @@ case $TRAVIS_OS_NAME in
     osx)
         brew install ccache
         export PATH="/usr/local/opt/ccache/libexec:$PATH"
-        gem install xcpretty
         brew update &> /dev/null
         brew tap robotology/cask
-        brew tap homebrew/x11
         brew tap homebrew/science
         brew install eigen ipopt yarp
     ;;
