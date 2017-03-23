@@ -2,7 +2,7 @@ sudo: false
 dist: trusty
 osx_image: xcode7.3
 language: cpp
-cache: ccache 
+cache: ccache
 
 services:
   - docker
@@ -55,6 +55,7 @@ before_script:
     if [[ "$TRAVIS_OS_NAME" = "linux" ]] ; then
       docker run -it \
         -v "$PROJECT_DIR_ABS:/app" \
+        -v "$HOME/.ccache:/root/.ccache" \
         -w /app \
         -e CC=$CC \
         -e CXX=$CXX \
@@ -80,6 +81,7 @@ before_script:
             || travis_terminate 1
     elif [[ "$TRAVIS_OS_NAME" = "linux" ]] ; then
       docker run -it --rm \
+        -v "$HOME/.ccache:/root/.ccache" \
         -v "$PROJECT_DIR_ABS:/app" \
         -w /app \
         -e CC=$CC \
@@ -97,6 +99,7 @@ script:
       || travis_terminate 1
     elif [[ "$TRAVIS_OS_NAME" = "linux" ]] ; then
       docker run -it --rm \
+        -v "$HOME/.ccache:/root/.ccache" \
         -v "$PROJECT_DIR_ABS:/app" -w /app \
         -e CC=$CC \
         -e CXX=$CXX \
@@ -118,6 +121,7 @@ after_success:
       || travis_terminate 1
     elif [[ "$TRAVIS_OS_NAME" = "linux" ]] ; then
       docker run -it --rm \
+        -v "$HOME/.ccache:/root/.ccache" \
         -v "$PROJECT_DIR_ABS:/app" -w /app \
         -e CC=$CC \
         -e CXX=$CXX \
