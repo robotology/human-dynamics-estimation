@@ -21,7 +21,12 @@ namespace human
     
     bool FTForceReader::lowLevelRead(yarp::sig::Vector& force)
     {
-        if (m_sensor.read(force) != yarp::dev::IAnalogSensor::AS_OK) return false;
+        int result = m_sensor.read(force);
+        if (result != yarp::dev::IAnalogSensor::AS_OK)
+        {
+            yWarning("AnalogSensor returned %d status", result);
+            return false;
+        }
         return true;
     }
 }

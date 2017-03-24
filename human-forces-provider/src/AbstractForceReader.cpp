@@ -21,7 +21,8 @@ namespace human
     : m_frameTransformer(0)
     , m_attachedLink(attachedLink)
     , m_referenceFrame(referenceFrame)
-    , m_packedForce(6, 0.0) {}
+    , m_packedForce(6, 0.0)
+    , m_forceBuffer(6, 0.0) {}
     
     
     void AbstractForceReader::setTransformer(FrameTransformer *frameTransformer)
@@ -44,15 +45,21 @@ namespace human
         if (!this->lowLevelRead(m_packedForce))
         {
             yError("Something wrong in the forces reading!");
+            packedForce.fx = 0;
+            packedForce.fy = 0;
+            packedForce.fz = 0;
+            packedForce.ux = 0;
+            packedForce.uy = 0;
+            packedForce.uz = 0;
             return false;
         }
 
         if (m_frameTransformer)
         {
-            //TODO: Check if the input and output variable can be the same
-            if (!m_frameTransformer->transformForceFrame(m_packedForce,
+            m_forceBuffer = m_packedForce;
+            if (!m_frameTransformer->transformForceFrame(m_forceBuffer,
                                                          m_packedForce,
-                                                         packedForce.appliedLink))
+                                                         packedForce.expressedFrame))
             {
                 yError("Something wrong in the forces transformation!");
                 return false;

@@ -19,20 +19,20 @@ namespace human
                                      std::string referenceFrame,
                                      yarp::os::BufferedPort<yarp::sig::Vector> &bufferedPort)
     : AbstractForceReader(attachedLink, referenceFrame)
-    , m_bufferedPort(bufferedPort){}
+    , m_bufferedPort(bufferedPort)
+    , m_internal_buffer(6, 0.0){}
    
     
     bool PortForceReader::lowLevelRead(yarp::sig::Vector &force)
     {
-        yarp::sig::Vector *tmp = m_bufferedPort.read();
+        yarp::sig::Vector *tmp = m_bufferedPort.read(false);
         
-        //check if the pointer is pointing to a null force OR the dimension is not 6
-        if (tmp == NULL || tmp->size() != 6)
+        if(tmp != NULL && tmp->size() == 6)
         {
-            yError("Something wrong in the read force: check it!!");
-            return false;
+            m_internal_buffer = *tmp;
         }
-        force = *tmp;
+        
+        force = m_internal_buffer;
         return true;
     }
 }
