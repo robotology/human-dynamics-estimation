@@ -41,23 +41,18 @@ private:
     //buffered port:i from the <human-state-provider> module
     //for the human configuration (together with the robot joint configuration
     //it will be useful for converting the forces from the robot to the human frames.)
-    yarp::os::BufferedPort<human::HumanState> m_humanJointConfiguration_port;
-    
-    //polydriver for forceplates handling
-    yarp::dev::PolyDriver m_forcePoly1;
-    yarp::dev::PolyDriver m_forcePoly2;
+    yarp::os::BufferedPort<human::HumanState> m_humanJointConfigurationPort;
     
     //polidriver for robot configuration handling
-    yarp::dev::PolyDriver m_PolyRobot;
-    
-    //buffered port:i from the robot forces estimated in the two arms
-    yarp::os::BufferedPort<yarp::sig::Vector> m_robotLeftArmForce_port;
-    yarp::os::BufferedPort<yarp::sig::Vector> m_robotRightArmForce_port;
+    yarp::dev::PolyDriver m_robot;
     
     //buffered port:o from <human-forces-provider> module
-    yarp::os::BufferedPort<human::HumanForces> m_output_port;
+    yarp::os::BufferedPort<human::HumanForces> m_outputPort;
+    
 
     std::vector<human::ForceReader*> m_readers;
+    std::vector<yarp::dev::PolyDriver*> m_drivers;
+    std::vector<yarp::os::BufferedPort<yarp::sig::Vector>*> m_ports;
     
 public:
     /*!

@@ -34,6 +34,7 @@ class human::PortForceReader : public human::AbstractForceReader
 {
 private:
     yarp::os::BufferedPort<yarp::sig::Vector> &m_bufferedPort;
+    yarp::sig::Vector m_internal_buffer;
     
 protected:
     virtual bool lowLevelRead(yarp::sig::Vector &force);
