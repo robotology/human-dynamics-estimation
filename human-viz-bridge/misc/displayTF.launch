@@ -1,0 +1,10 @@
+<launch>
+    <group ns="human">
+        <arg name="TFhumanModel" />
+        <arg name="gui" default="False" />
+        <arg name="vel" default="True" />
+        <arg name="eff" default="True" />
+        <param name="robot_description" textfile="$(find testbot_description)/urdf/XSensURDF.xml"  />
+        <param name="use_gui" value="$(arg gui)"/>
+    </group>
+</launch>
