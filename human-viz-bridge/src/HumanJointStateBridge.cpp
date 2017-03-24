@@ -115,7 +115,7 @@ public:
         tf.transforms[0].child_frame_id = rf.find("tfPrefix").asString() + "/" + rf.find("childLinkRFName").asString();
         
         vector<string> joints;
-        if (!parseFrameListOption(rf.find("jointlist"), joints)) {
+        if (!parseFrameListOption(rf.find("jointList"), joints)) {
             yError() << "Error while parsing joints list";
             return false;
         }
