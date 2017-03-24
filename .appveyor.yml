@@ -3,9 +3,10 @@ version: 1.0.{build}
 clone_folder: c:\dev\human-dynamics-estimation
 
 environment:
-  YARP_DIR:          c:/Program Files (x86)/robotology/yarp-2.3.68
-  EIGEN3_ROOT:       c:/Program Files (x86)/robotology/eigen-3.3.0
-  
+  YARP_DIR:              c:/Program Files (x86)/robotology/yarp-2.3.68
+  YARP_experimental_DIR: c:/Program Files (x86)/xsens-mvn
+  EIGEN3_ROOT:           c:/Program Files (x86)/robotology/eigen-3.3.0
+
 install:
   # to install unzipper do: "cinst 7zip.commandline -x86"
   # the format is: "7z x c:\path-to-archive\archive.zip -oc:\path-where-unzip -y > nul"
@@ -37,6 +38,13 @@ install:
   - cmd: md build
   - cmd: cd build
   - cmd: cmake -G"Visual Studio 12" -DIDYNTREE_USES_KDL=OFF -DIDYNTREE_USES_YARP=ON -DIDYNTREE_USES_ICUB_MAIN=OFF  ..
+  - cmd: msbuild /m /p:Configuration=Release /p:Platform="Win32" INSTALL.vcxproj
+
+  - cmd: git clone https://github.com/robotology-playground/xsens-mvn c:\dev\xsens-mvn
+  - cmd: cd c:\dev\xsens-mvn
+  - cmd: md build
+  - cmd: cd build
+  - cmd: cmake -G"Visual Studio 12" -DENABLE_xsens_mvn=OFF -DENABLE_xsens_mvn_wrapper=OFF -DENABLE_xsens_mvn_remote=OFF ..
   - cmd: msbuild /m /p:Configuration=Release /p:Platform="Win32" INSTALL.vcxproj
 
 build:
