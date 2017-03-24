@@ -17,7 +17,9 @@
 #include <Eigen/Dense>
 #include <Eigen/SparseCore>
 #include <Eigen/SparseCholesky>
+#include <Eigen/SparseLU>
 
+#include <functional>
 #include <unordered_map>
 
 namespace human
@@ -28,71 +30,120 @@ namespace human
 }
 
 
-class HumanDynamicsEstimator:public yarp::os::RFModule {
+class HumanDynamicsEstimator : public yarp::os::RFModule {
 
-private:
+    //TODO: decide if this map is ok
+    //For the time being access the measurements directly using the type-id
+    //If in the future we want to access serially to the measurements
+    //e.g. all forces, all accelerometers, etc
+    //change the map to be a map of map
+    struct SensorKey {
+        iDynTree::BerdySensorTypes type;
+        std::string id;
+
+        bool operator==(const SensorKey& other) const
+        {
+            return type == other.type && id == other.id;
+        }
+    };
+
+    struct SensorKeyHash
+    {
+        std::size_t operator()(const SensorKey& k) const
+        {
+            // Using the hash as suggested in http://stackoverflow.com/questions/1646807/quick-and-simple-hash-code-combinations/1646913#1646913
+            size_t result = 17;
+            result = result * 31 + std::hash<int>()(static_cast<int>(k.type));
+            result = result * 31 + std::hash<std::string>()(k.id);
+            return result;
+        }
+    };
+
+    struct BerdyDynamicVariablesTypesHash
+    {
+        std::size_t operator()(const iDynTree::BerdyDynamicVariablesTypes& k) const
+        {
+            return std::hash<int>()(static_cast<int>(k));
+        }
+    };
+
+
     double m_period;
-    bool m_firststep;
     
-    // buffered port:i for reading from <human-state-provider> module
-    yarp::os::BufferedPort<human::HumanState> m_humanJointConfiguration_port; 
-//        yarp::os::BufferedPort<yarp::os::Bottle> m_humanJointConfiguration_port; 
-    // buffered port:i for reading from <human-forces-provider> module
-    yarp::os::BufferedPort<human::HumanForces> m_humanForces_port;
-    // buffered port:o from <human-dynamics-estimator> module
+    // input buffered port for reading from <human-state-provider> module
+    yarp::os::BufferedPort<human::HumanState> m_humanJointConfigurationPort;
+    // inut buffered port for reading from <human-forces-provider> module
+    yarp::os::BufferedPort<human::HumanForces> m_humanForcesPort;
+    // output buffered port for <human-dynamics-estimator> module
     yarp::os::BufferedPort<human::HumanDynamics> m_outputPort;
     
     // Berdy
     iDynTree::BerdyHelper m_berdy;
-    
-    std::vector<std::string> m_linkName;
-    std::vector<std::string> m_jointName;
-    
-    std::unordered_map<std::string,iDynTree::IndexRange> m_y_map;
-    std::vector <iDynTree::BerdyDynamicVariable> m_berdyDynVariables; 
-    typedef std::unordered_map<int,iDynTree::IndexRange> BerdyOutputRangeMap;
-    typedef std::unordered_map<std::string, BerdyOutputRangeMap > BerdyOutputMap;
-    BerdyOutputMap m_link_map;  
-    BerdyOutputMap m_joint_map;
-    
-    // Dimensions
-    size_t m_dynV;          // number of dynamic variables
-    size_t m_eq;            // number of dynamic equations
-    size_t m_meas;          // number of sensors measurements
 
-    // Priors
-    iDynTree::SparseMatrix m_sigmaD_prior;
-    iDynTree::SparseMatrix m_sigmad_prior;
-    iDynTree::SparseMatrix m_sigmay_prior;
-    iDynTree::VectorDynSize m_mud_prior;            
-    
-    // Berdy matrices   
-    iDynTree::SparseMatrix m_D;
-    iDynTree::VectorDynSize m_bD; 
-    iDynTree::SparseMatrix m_Y;
-    iDynTree::VectorDynSize m_bY;
+    typedef std::unordered_map<SensorKey, iDynTree::IndexRange, SensorKeyHash> BerdySensorsInputMap;
+    //The int in the key is actually the iDynTree::BerdyDynamicVariablesTypes enumeration
+    typedef std::unordered_map<iDynTree::BerdyDynamicVariablesTypes, iDynTree::IndexRange, BerdyDynamicVariablesTypesHash> BerdyOutputRangeMap;
+    typedef std::unordered_map<std::string, BerdyOutputRangeMap> BerdyOutputMap;
 
-    // Measurements matrix
-    iDynTree::VectorDynSize m_y;
-    
+    struct {
+        BerdySensorsInputMap inputMeasurements;
+        
+        BerdyOutputMap outputLinks;
+        BerdyOutputMap outputJoints;
+    } m_inputOutputMapping;
+
+    // Priors on regularization, measurements and dynamics constraints
+    iDynTree::SparseMatrix m_priorDynamicsConstraintsCovarianceInverse; // Sigma_D
+    iDynTree::SparseMatrix m_priorDynamicsRegularizationCovarianceInverse; // Sigma_d
+    iDynTree::VectorDynSize m_priorDynamicsRegularizationExpectedValue; // mu_d
+    iDynTree::SparseMatrix m_priorMeasurementsCovarianceInverse; // Sigma_y
+
+    // Measurements vector
+    iDynTree::VectorDynSize m_measurements;
+
+    // Human state
+    iDynTree::JointPosDoubleArray m_jointsConfiguration;
+    iDynTree::JointDOFsDoubleArray m_jointsVelocity;
+
+    // E[p(d|y)]: Expected value of A posteriori probability.
+    iDynTree::VectorDynSize m_expectedDynamicsAPosteriori;
+//    iDynTree::SparseMatrix m_covarianceDynamicsAPosterioriInverse;
+    Eigen::SparseMatrix<double, Eigen::RowMajor> m_covarianceDynamicsAPosterioriInverse;
+
+    /*! Full linear system matrices and vectors
+     * \f[
+     * \begin{bmatrix} D \\ Y \end{bmatrix} d +
+     * \begin{bmatrix} bD \\ bY \end{bmatrix} =
+     * \begin{bmatrix} 0 \\ y \end{bmatrix}
+     * \f]
+     */
+    iDynTree::SparseMatrix m_dynamicsConstraintsMatrix;
+    iDynTree::VectorDynSize m_dynamicsConstraintsBias;
+    iDynTree::SparseMatrix m_measurementsMatrix;
+    iDynTree::VectorDynSize m_measurementsBias;
+
+    struct {
+        // Decompositions of covariance matrices
+//        Eigen::SimplicialLDLT<Eigen::SparseMatrix<double, Eigen::RowMajor> > covarianceDynamicsPriorInverseDecomposition;
+//        Eigen::SimplicialLDLT<Eigen::SparseMatrix<double, Eigen::RowMajor> > covarianceDynamicsAPosterioriInverseDecomposition;
+        Eigen::SparseLU<Eigen::SparseMatrix<double, Eigen::RowMajor> > covarianceDynamicsPriorInverseDecomposition;
+        Eigen::SparseLU<Eigen::SparseMatrix<double, Eigen::RowMajor> > covarianceDynamicsAPosterioriInverseDecomposition;
+
+        Eigen::SparseMatrix<double, Eigen::RowMajor> covarianceDynamicsPriorInverse;
+//        iDynTree::SparseMatrix covarianceDynamicsPriorInverse;
+
+        iDynTree::VectorDynSize expectedDynamicsPrior;
+
+        iDynTree::VectorDynSize expectedDynamicsPriorRHS;
+        iDynTree::VectorDynSize expectedDynamicsAPosterioriRHS;
+
+    } m_intermediateQuantities;
+
     // Gravity
     iDynTree::Vector3 m_gravity;
-    
-    // Human state
-    iDynTree::KinDynComputations m_humanComputations;    
-    iDynTree::JointPosDoubleArray m_q;
-    iDynTree::JointDOFsDoubleArray m_dq;
 
-    // MAP matrices
-    iDynTree::VectorDynSize m_rhs_BarD;
-    iDynTree::VectorDynSize m_mu_BarD;    
-    iDynTree::VectorDynSize m_rhs;    
-    iDynTree::VectorDynSize m_mu_dgiveny; 
-        
-    // Cholesky matrices
-    Eigen::SimplicialLLT<Eigen::SparseMatrix<double> > m_CholeskyLU_sigma_BarD_inv;
-    Eigen::SimplicialLLT<Eigen::SparseMatrix<double> > m_CholeskyLU_sigma_dgiveny_inv;
-        
+    void computeMaximumAPosteriori(bool computePermutation = false);
+
 public:
     /*!
      * Default constructor and destructor

@@ -44,8 +44,8 @@ struct JointDynamicsEstimation {
 }
 
 struct HumanDynamics {
-    1: map<string,LinkDynamicsEstimation> linkVariables;
-    2: map<string,JointDynamicsEstimation> jointVariables;
+    1: map<string, LinkDynamicsEstimation> linkVariables;
+    2: map<string, JointDynamicsEstimation> jointVariables;
 }
 
 

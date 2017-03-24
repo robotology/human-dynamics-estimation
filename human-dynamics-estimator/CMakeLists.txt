@@ -25,6 +25,9 @@ if (HUMAN_DYNAMICS_ESTIMATION_DEBUG_MALLOC)
   target_compile_definitions(${PROJECT_NAME} PRIVATE "$<$<CONFIG:Debug>:EIGEN_RUNTIME_NO_MALLOC>")
 endif()
 
+target_compile_features(${PROJECT_NAME} PRIVATE cxx_auto_type
+                                                cxx_range_for)
+
 ## Include directories
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIR} ${YARP_INCLUDE_DIRS})
