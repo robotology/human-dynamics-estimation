@@ -294,17 +294,17 @@ bool HumanDynamicsEstimator::configure(yarp::os::ResourceFinder &rf)
      * ------Creating map for the d dynamics variables vector
      */
 
-    std::vector<iDynTree::BerdyDynamicVariable> berdyDynVariables = m_berdy.getDynamicVariablesOrdering();
-    for (iDynTree::BerdyDynamicVariable& variable : berdyDynVariables) {
+    const std::vector<iDynTree::BerdyDynamicVariable>& berdyDynVariables = m_berdy.getDynamicVariablesOrdering();
+    for (const iDynTree::BerdyDynamicVariable& variable : berdyDynVariables) {
         BerdyOutputMap *outputMap = nullptr;
         switch(variable.type)
         {
             case iDynTree::LINK_BODY_PROPER_ACCELERATION:
             case iDynTree::NET_INT_AND_EXT_WRENCHES_ON_LINK_WITHOUT_GRAV:
-            case iDynTree::JOINT_WRENCH:
             case iDynTree::NET_EXT_WRENCH:
                 outputMap = &m_inputOutputMapping.outputLinks;
                 break;
+            case iDynTree::JOINT_WRENCH:
             case iDynTree::DOF_TORQUE:
             case iDynTree::DOF_ACCELERATION:
                 outputMap = &m_inputOutputMapping.outputJoints;
@@ -328,12 +328,31 @@ bool HumanDynamicsEstimator::configure(yarp::os::ResourceFinder &rf)
 
     // Allocate size for output map
     human::HumanDynamics& humanDynamics = m_outputPort.prepare();
+    humanDynamics.linkVariables.reserve(m_inputOutputMapping.outputLinks.size());
+    humanDynamics.jointVariables.reserve(m_inputOutputMapping.outputJoints.size());
+
     for (auto& linkElement : m_inputOutputMapping.outputLinks) {
-        humanDynamics.linkVariables[linkElement.first];
+        human::LinkDynamicsEstimation link;
+        link.spatialAcceleration.resize(6);
+        link.spatialAcceleration.zero();
+        link.externalWrench.resize(6);
+        link.externalWrench.zero();
+        link.netWrench.resize(6);
+        link.netWrench.zero();
+        humanDynamics.linkVariables.push_back(link);
     }
+
     for (auto& jointElement : m_inputOutputMapping.outputJoints) {
-        humanDynamics.jointVariables[jointElement.first];
+        human::JointDynamicsEstimation joint;
+        joint.acceleration.resize(1);
+        joint.acceleration.zero();
+        joint.torque.resize(1);
+        joint.torque.zero();
+        joint.transmittedWrench.resize(6);
+        joint.transmittedWrench.zero();
+        humanDynamics.jointVariables.push_back(joint);
     }
+
     m_outputPort.unprepare();
     
     return true;
@@ -403,40 +422,32 @@ bool HumanDynamicsEstimator::updateModule()
      * Output
      */
     human::HumanDynamics &output = m_outputPort.prepare();
+    output.linkVariables.resize(m_inputOutputMapping.outputLinks.size());
 
-    //TODO: check if this does not impact performances
-    const int linkVariablesSize = 4;
+    const int linkVariablesSize = 3;
     iDynTree::BerdyDynamicVariablesTypes linkDynamicsVariableTypes[linkVariablesSize] =
     {
         iDynTree::LINK_BODY_PROPER_ACCELERATION,
         iDynTree::NET_INT_AND_EXT_WRENCHES_ON_LINK_WITHOUT_GRAV,
-        iDynTree::JOINT_WRENCH,
         iDynTree::NET_EXT_WRENCH
     };
 
-
-
-    // Iterate on thrift data which are ordered map and thus slower for random access
-    for (auto &link : output.linkVariables) {
-        BerdyOutputMap::const_iterator linkDynamics = m_inputOutputMapping.outputLinks.find(link.first);
-        if (linkDynamics == m_inputOutputMapping.outputLinks.end()) {
-            yWarning("Link %s not found in the BERDY bodies", link.first.c_str());
-            continue;
-        }
-
+    size_t index = 0;
+    for (auto &link : m_inputOutputMapping.outputLinks) {
+        human::LinkDynamicsEstimation &linkEstimation = output.linkVariables[index];
+        linkEstimation.linkName = link.first;
         yarp::sig::Vector *dynamicsVariableOutput[linkVariablesSize] =
         {
-            &link.second.spatialAcceleration,
-            &link.second.netWrench,
-            &link.second.transmittedWrench,
-            &link.second.externalWrench
+            &linkEstimation.spatialAcceleration,
+            &linkEstimation.netWrench,
+            &linkEstimation.externalWrench
         };
 
         for (size_t variableIndex = 0; variableIndex < linkVariablesSize; ++variableIndex) {
-            BerdyOutputRangeMap::const_iterator found = linkDynamics->second.find(linkDynamicsVariableTypes[variableIndex]);
+            BerdyOutputRangeMap::const_iterator found = link.second.find(linkDynamicsVariableTypes[variableIndex]);
 
-            if (found == linkDynamics->second.end()) {
-                yWarning("Link %s not found in the BERDY body list", link.first.c_str());
+            if (found == link.second.end()) {
+                // Not needed to emit a warning here. Some variable can be absent
                 continue;
             }
             // Safety check: resize vector (hopefully noop)
@@ -446,38 +457,46 @@ bool HumanDynamicsEstimator::updateModule()
             yarpVector = toEigen(m_expectedDynamicsAPosteriori).segment(found->second.offset, found->second.size);
         }
 
+        index++;
     }
 
-    const int jointVariablesSize = 2;
+    // Joints
+    output.jointVariables.resize(m_inputOutputMapping.outputJoints.size());
+
+    const int jointVariablesSize = 3;
     iDynTree::BerdyDynamicVariablesTypes jointDynamicsVariableTypes[jointVariablesSize] =
     {
+        iDynTree::JOINT_WRENCH,
         iDynTree::DOF_TORQUE,
         iDynTree::DOF_ACCELERATION
     };
 
-    for (auto &joint : output.jointVariables) {
-        BerdyOutputMap::const_iterator jointDynamics = m_inputOutputMapping.outputJoints.find(joint.first);
-        if (jointDynamics == m_inputOutputMapping.outputJoints.end()) {
-            yWarning("Joint %s not found in the BERDY bodies", joint.first.c_str());
-            continue;
-        }
-
-        double *dynamicsVariableOutput[jointVariablesSize] =
+    index = 0;
+    for (auto &joint : m_inputOutputMapping.outputJoints) {
+        human::JointDynamicsEstimation &jointEstimation = output.jointVariables[index];
+        jointEstimation.jointName = joint.first;
+        yarp::sig::Vector *dynamicsVariableOutput[jointVariablesSize] =
         {
-            &joint.second.torque,
-            &joint.second.acceleration
+            &jointEstimation.acceleration,
+            &jointEstimation.torque,
+            &jointEstimation.transmittedWrench
         };
 
         for (size_t variableIndex = 0; variableIndex < jointVariablesSize; ++variableIndex) {
-            BerdyOutputRangeMap::const_iterator found = jointDynamics->second.find(jointDynamicsVariableTypes[variableIndex]);
+            BerdyOutputRangeMap::const_iterator found = joint.second.find(jointDynamicsVariableTypes[variableIndex]);
 
-            if (found == jointDynamics->second.end() || found->second.size != 1) {
-                yWarning("Joint sensor %s-%s not found in the BERDY body list", joint.first.c_str(), VAR_TO_STR(jointDynamicsVariableTypes[variableIndex]));
+            if (found == joint.second.end()) {
+                // Not needed to emit a warning here. Some variable can be absent
                 continue;
             }
+            // Safety check: resize vector (hopefully noop)
+            dynamicsVariableOutput[variableIndex]->resize(found->second.size);
 
-            *dynamicsVariableOutput[variableIndex] = m_expectedDynamicsAPosteriori(found->second.offset);
+            Eigen::Map<Eigen::VectorXd> yarpVector(dynamicsVariableOutput[variableIndex]->data(), dynamicsVariableOutput[variableIndex]->size());
+            yarpVector = toEigen(m_expectedDynamicsAPosteriori).segment(found->second.offset, found->second.size);
         }
+        
+        index++;
     }
 
     m_outputPort.write();

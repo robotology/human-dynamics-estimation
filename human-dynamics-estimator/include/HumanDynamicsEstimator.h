@@ -21,6 +21,7 @@
 
 #include <functional>
 #include <unordered_map>
+#include <map>
 
 namespace human
 {
@@ -83,7 +84,7 @@ class HumanDynamicsEstimator : public yarp::os::RFModule {
     typedef std::unordered_map<SensorKey, iDynTree::IndexRange, SensorKeyHash> BerdySensorsInputMap;
     //The int in the key is actually the iDynTree::BerdyDynamicVariablesTypes enumeration
     typedef std::unordered_map<iDynTree::BerdyDynamicVariablesTypes, iDynTree::IndexRange, BerdyDynamicVariablesTypesHash> BerdyOutputRangeMap;
-    typedef std::unordered_map<std::string, BerdyOutputRangeMap> BerdyOutputMap;
+    typedef std::map<std::string, BerdyOutputRangeMap> BerdyOutputMap;
 
     struct {
         BerdySensorsInputMap inputMeasurements;
