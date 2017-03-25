@@ -112,26 +112,19 @@ namespace dev {
             return false;
         }
 
-        Value &axes = config.find("numberOfAxes");
-        if (axes.isNull() || !axes.isInt() || axes.asInt() <= 0) {
-            yError("*** Option 'numberOfAxes' not found.");
-            m_extendedIntputStatePort.close();
-            return false;
-        }
-
-        m_numberOfJoints = axes.asInt();
-        m_extendedIntputStatePort.init(m_numberOfJoints);
-        m_axes.reserve(m_numberOfJoints);
         Value &axesDescription = config.find("axesDescription");
-        if (axesDescription.isNull() || !axesDescription.isList()
-            || axesDescription.asList()->size() != m_numberOfJoints) {
+        if (axesDescription.isNull() || !axesDescription.isList()) {
             yError("*** Option 'axesDescription' not found or malformed.");
             m_extendedIntputStatePort.close();
             return false;
         }
 
         Bottle *axesDescriptionList = axesDescription.asList();
-        for (int index = 0; index < axesDescriptionList->size(); ++index) {
+        m_numberOfJoints = axesDescriptionList->size();
+        m_extendedIntputStatePort.init(m_numberOfJoints);
+        m_axes.reserve(m_numberOfJoints);
+
+        for (int index = 0; index < m_numberOfJoints; ++index) {
             const Value& axis = axesDescriptionList->get(index);
             if (axis.isNull() || !axis.isList() || axis.asList()->size() != 2) {
                 yError("*** Option 'axesDescription' malformed at index %d.", index);

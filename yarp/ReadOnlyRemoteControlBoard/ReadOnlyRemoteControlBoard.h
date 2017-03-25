@@ -23,6 +23,22 @@ namespace yarp {
         }
 }
 
+/*!
+ * @brief Readonly version of the remote control board.
+ *
+ * It opens only interfaces though for providing data, not for commanding the robot.
+ * Information usually obtained though calls to the underlining device are expected to be
+ * provided by the configuration parameters
+ *
+ *  Parameters required by this device are:
+ * | Parameter name | SubParameter   | Type    | Units          | Default Value | Required                    | Description                                                       | Notes |
+ * |:--------------:|:--------------:|:-------:|:--------------:|:-------------:|:--------------------------: |:-----------------------------------------------------------------:|:-----:|
+ * | remote     |      -         | string  | -      |   -           | Yes     | Prefix of the remote port which this device will connect. The port opened will be "{remote}/stateExt:o" |  |
+ * | local     |      -         | string  | -      |   -           | Yes     | Prefix of the ports opened by this device |  |
+ * | carrier     |      -         | string  | -      |   udp           | No     | Protocol to be used during the connection. Default to udp |  |
+ * | axesDescription     |      -         | vector of pairs of string and vocab  | -      |   -           | Yes     | Description of the axes managed by this control board. Each element is a pair: a string denoting the axis name and a vocab denoting the axis type (rotational, prismatic, etc). |  |
+ *
+ */
 class yarp::dev::ReadOnlyRemoteControlBoard
 : public yarp::dev::IEncodersTimed
 , public yarp::dev::DeviceDriver

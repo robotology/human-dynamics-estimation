@@ -42,40 +42,11 @@ namespace dev {
 /**
  *  @ingroup dev_impl_wrapper
  *
- * \section ControlBoardRemapper
- * A device that takes a list of axes from multiple controlboards and
- *  expose them as a single controlboard.
- *
- *
- *  Parameters required by this device are:
- * | Parameter name | SubParameter   | Type    | Units          | Default Value | Required                    | Description                                                       | Notes |
- * |:--------------:|:--------------:|:-------:|:--------------:|:-------------:|:--------------------------: |:-----------------------------------------------------------------:|:-----:|
- * | axesNames     |      -         | vector of strings  | -      |   -           | Yes     | Ordered list of the axes that are part of the remapped device. |  |
- *
- * The axes are then mapped to the wrapped controlboard in the attachAll method, using the
- * values returned by the getAxisName method of the controlboard. If different axes
- * in two attached controlboard have the same name, the behaviour of this device is undefined.
- *
- * Configuration file using .ini format.
- *
- * \code{.unparsed}
- *  device controlboardremapper
- *  axesNames (joint1 joint2 joint3)
- *
- * ...
- * \endcode
- *
- * For compatibility with the controlboardwrapper2, the
- * networks keyword can also be used to select the desired joints.
- * For more information on the syntax of the networks, see the
- * yarp::dev::ControlBoardWrapper class.
- *
- * \code{.unparsed}
- *  networks (net_larm net_lhand)
- *  joints 16
- *  net_larm    0 3  0 3
- *  net_lhand   4 6  0 2
- * \endcode
+ * @section ReadOnlyControlBoardRemapper
+ * 
+ * @see ControlBoardRemapper
+ * This device exposes only a limited subset of interfaces with respect 
+ * to ControlBoardRemapper, but it fully inherit all the other behaviours.
  *
  */
 
