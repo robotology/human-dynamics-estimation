@@ -8,47 +8,37 @@ struct Vector {
 )
 
 struct LinkDynamicsEstimation {
-    
+
+    1: string linkName;
     // link spatial accelerations (vector 6D)
-    1: Vector spatialAcceleration;
-    
+    2: Vector spatialAcceleration;
+
     // net spatial wrench on body (vector 6D)
-    2: Vector netWrench;
-    
-    // spatial wrench transmitted to body from his father (vector 6D)
-    3: Vector transmittedWrench;
-     
+    3: Vector netWrench;
+
     // external wrench acting on body (vector 6D)
     4: Vector externalWrench;
-    
-    // TODO: decide if include or not the name
-    // link name
-    // 5: string internlinkName;
+
 }
 
 
 
 struct JointDynamicsEstimation {
 
-    // TODO: let's consider in the future to use a vector of double
+    1: string jointName;
+    // spatial wrench transmitted to body from his father (vector 6D)
+    2: Vector transmittedWrench;
+
     // joint torque
-    1: double torque;
-    
-    // TODO: let's consider in the future to use a vector of double
+    3: Vector torque;
+
     // joint acceleration
-    2: double acceleration;
-    
-    // TODO: decide if include or not the name
-    // joint name
-    // 3: string internjointName;
+    4: Vector acceleration;
+
 }
 
 struct HumanDynamics {
-    1: map<string,LinkDynamicsEstimation> linkVariables;
-    2: map<string,JointDynamicsEstimation> jointVariables;
+    1: list<LinkDynamicsEstimation> linkVariables;
+    2: list<JointDynamicsEstimation> jointVariables;
 }
-
-
-
-
 
