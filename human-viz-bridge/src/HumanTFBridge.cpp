@@ -68,7 +68,6 @@ class HumanTFBridge : public RFModule, public TypedReaderCallback<XsensSegmentsF
     XsensDriverService xsensDriver;
     
     Publisher<tf2_msgs_TFMessage> publisher_tf;
-    
     tf2_msgs_TFMessage tf;
     vector<string> segments;
     vector<string> fakeSegments;
@@ -157,7 +156,7 @@ public:
         yInfo() << "Fake Segments: " << fakeSegments;
         
         string worldRFName = rf.find("worldRFName").asString();
-	string tfPrefix = rf.find("tfPrefix").asString();
+        string tfPrefix = rf.find("tfPrefix").asString();
         for (size_t index = 0; index < segments.size(); ++index) {
             tf.transforms[index].child_frame_id = tfPrefix + "/" + segments[index];
             tf.transforms[index].header.frame_id = worldRFName;
