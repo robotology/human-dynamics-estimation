@@ -73,7 +73,7 @@ target_include_directories(human-jointstate-bridge PUBLIC ${YARP_INCLUDE_DIRS})
 
 list(APPEND conf config/human-jointstate-bridge.ini)
 
-# TF bridge
+# Effort bridge
 
 add_executable(human-effort-bridge src/HumanEffortBridge.cpp)
 

@@ -67,7 +67,6 @@ class xsensJointStatePublisherModule : public RFModule, public TypedReaderCallba
 
     Publisher<sensor_msgs_JointState> publisher;
     Publisher<tf2_msgs_TFMessage> publisher_tf;
-    
     sensor_msgs_JointState joint_state;
     tf2_msgs_TFMessage tf;
 
