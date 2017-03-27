@@ -609,23 +609,35 @@ static bool parseSensorsRemovalOptionAndRemoveSensors(const yarp::os::Bottle &op
         yarp::os::Value &sensorValue = option.find(sensor.second);
         if (sensorValue.isNull()) continue;
 
-        if (!sensorValue.isString()) {
+        if (!sensorValue.isString() && !sensorValue.isList()) {
             continue;
         }
-        std::string sensorName = sensorValue.asString();
-        if (sensorName == "*") {
-            if (!sensorList.removeAllSensorsOfType(static_cast<iDynTree::SensorType>(sensor.first))) {
-                yWarning("Error while removing all sensors of type %d", sensor.first);
+        if (sensorValue.isString()) {
+            std::string sensorName = sensorValue.asString();
+            if (sensorName == "*") {
+                if (!sensorList.removeAllSensorsOfType(static_cast<iDynTree::SensorType>(sensor.first))) {
+                    yWarning("Error while removing all sensors of type %d", sensor.first);
+                } else {
+                    yInfo("Removed all sensors of type %d", sensor.first);
+                }
             } else {
-                yInfo("Removed all sensors of type %d", sensor.first);
+                if (!sensorList.removeSensor(static_cast<iDynTree::SensorType>(sensor.first), sensorName)) {
+                    yWarning("Error while removing sensor %s of type %d", sensorName.c_str(), sensor.first);
+                } else {
+                    yInfo("Removed sensor %s of type %d", sensorName.c_str(), sensor.first);
+                }
             }
         } else {
-            if (!sensorList.removeSensor(static_cast<iDynTree::SensorType>(sensor.first), sensorName)) {
-                yWarning("Error while removing sensor %s of type %d", sensorName.c_str(), sensor.first);
-            } else {
-                yInfo("Removed sensor %s of type %d", sensorName.c_str(), sensor.first);
+            yarp::os::Bottle *list = sensorValue.asList();
+            for (int index = 0; index < list->size(); ++index) {
+                if (!sensorList.removeSensor(static_cast<iDynTree::SensorType>(sensor.first), list->get(index).asString())) {
+                    yWarning("Error while removing sensor %s of type %d", list->get(index).asString().c_str(), sensor.first);
+                } else {
+                    yInfo("Removed sensor %s of type %d", list->get(index).asString().c_str(), sensor.first);
+                }
             }
         }
+
     }
 
     return true;
@@ -802,7 +814,6 @@ static bool parseCovarianceMatrixOption(const yarp::os::Value &option,
                                         size_t expectedMatrixSize,
                                         iDynTree::Triplets &parsedMatrix)
 {
-    std::cerr << option.toString() << std::endl;
     parsedMatrix.reserve(expectedMatrixSize);
     //Two cases: single value (to be replicate on the diagonal, or full diagonal)
     //TODO implement third case: full matrix or, better, a list of Triplets
