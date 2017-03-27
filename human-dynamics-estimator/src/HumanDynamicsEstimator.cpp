@@ -8,6 +8,7 @@
 #include <iDynTree/yarp/YARPConversions.h>
 #include <yarp/os/LogStream.h> 
 
+#include <chrono>
 #include <iostream>
 #include <map>
 
@@ -16,6 +17,7 @@
 
 //---------------------------------------------------------------------------
 // Utility function for parsing INI file
+static bool parseSensorsRemovalOptionAndRemoveSensors(const yarp::os::Bottle &option, iDynTree::SensorsList& sensorList);
 static bool parseFrameListOption(const yarp::os::Value &option, std::vector<std::string> &parsedJoints);
 static bool parseMeasurementsPriorsOption(const yarp::os::Bottle& priorsGroup,
                                           const iDynTree::BerdyHelper& berdy,
@@ -141,6 +143,11 @@ bool HumanDynamicsEstimator::configure(yarp::os::ResourceFinder &rf)
     // Remove sensors that are placed on the base (not supported by Berdy)
     humanSensors.removeSensor(iDynTree::ACCELEROMETER, base + "_accelerometer");
     humanSensors.removeSensor(iDynTree::GYROSCOPE, base + "_gyro");
+
+    //Parse which sensor should be removed from the sensors list
+    if (!parseSensorsRemovalOptionAndRemoveSensors(rf.findGroup("SENSORS_REMOVAL"), humanSensors)) {
+        yWarning("Failed while parsing sensors removal option. All sensors will be considered");
+    }
 
      
     /*
@@ -579,6 +586,51 @@ void HumanDynamicsEstimator::computeMaximumAPosteriori(bool computePermutation)
 /*
  * Implementation of the utility function.
  */
+static bool parseSensorsRemovalOptionAndRemoveSensors(const yarp::os::Bottle &option, iDynTree::SensorsList& sensorList)
+{
+    // no actual parsing
+    if (option.isNull()) return true;
+    const size_t berdySensorNumber = 7;
+
+    using std::string;
+    using std::pair;
+
+    pair<iDynTree::BerdySensorTypes, string> sensorsInfo[berdySensorNumber] = {
+        pair<iDynTree::BerdySensorTypes, string>(iDynTree::SIX_AXIS_FORCE_TORQUE_SENSOR, "SIX_AXIS_FORCE_TORQUE_SENSOR"),
+        pair<iDynTree::BerdySensorTypes, string>(iDynTree::ACCELEROMETER_SENSOR, "ACCELEROMETER_SENSOR"),
+        pair<iDynTree::BerdySensorTypes, string>(iDynTree::GYROSCOPE_SENSOR, "GYROSCOPE_SENSOR"),
+        pair<iDynTree::BerdySensorTypes, string>(iDynTree::DOF_ACCELERATION_SENSOR, "DOF_ACCELERATION_SENSOR"),
+        pair<iDynTree::BerdySensorTypes, string>(iDynTree::DOF_TORQUE_SENSOR, "DOF_TORQUE_SENSOR"),
+        pair<iDynTree::BerdySensorTypes, string>(iDynTree::NET_EXT_WRENCH_SENSOR, "NET_EXT_WRENCH_SENSOR"),
+        pair<iDynTree::BerdySensorTypes, string>(iDynTree::JOINT_WRENCH_SENSOR, "JOINT_WRENCH_SENSOR"),
+    };
+
+    for (auto &sensor : sensorsInfo) {
+        yarp::os::Value &sensorValue = option.find(sensor.second);
+        if (sensorValue.isNull()) continue;
+
+        if (!sensorValue.isString()) {
+            continue;
+        }
+        std::string sensorName = sensorValue.asString();
+        if (sensorName == "*") {
+            if (!sensorList.removeAllSensorsOfType(static_cast<iDynTree::SensorType>(sensor.first))) {
+                yWarning("Error while removing all sensors of type %d", sensor.first);
+            } else {
+                yInfo("Removed all sensors of type %d", sensor.first);
+            }
+        } else {
+            if (!sensorList.removeSensor(static_cast<iDynTree::SensorType>(sensor.first), sensorName)) {
+                yWarning("Error while removing sensor %s of type %d", sensorName.c_str(), sensor.first);
+            } else {
+                yInfo("Removed sensor %s of type %d", sensorName.c_str(), sensor.first);
+            }
+        }
+    }
+
+    return true;
+}
+
 static bool parseFrameListOption(const yarp::os::Value &option, std::vector<std::string> &parsedJoints)
 {
     if (option.isNull() || !option.isList() || !option.asList()) return false;
@@ -598,6 +650,8 @@ static bool parseMeasurementsPriorsOption(const yarp::os::Bottle& priorsGroup,
                                           const std::string& optionPrefix,
                                           iDynTree::SparseMatrix& parsedMatrix)
 {
+    using std::pair;
+    using std::string;
     //While this method may be applied for all the priors, let's stay focused on the measurements part.
     /* cases are:
      * 1) constant (for all elements)
@@ -634,6 +688,13 @@ static bool parseMeasurementsPriorsOption(const yarp::os::Bottle& priorsGroup,
 
     //Option 2: for each measurments type, fill specific stuff.
     //This is where we lose genericity and we work only with measurements
+    /* This is the "tentative grammar" for the option
+     *
+     * option2: key value
+     * value: plain | constrained |  '(' plain? constrained* ')'
+     * constrained: '((' "specific_element" string) plain ')'
+     * plain: positive_double | '(' positive_double+ ')'
+     */
     const size_t berdySensorNumber = 7;
     iDynTree::BerdySensorTypes sensorTypes[berdySensorNumber] = {
         iDynTree::SIX_AXIS_FORCE_TORQUE_SENSOR,
@@ -645,52 +706,95 @@ static bool parseMeasurementsPriorsOption(const yarp::os::Bottle& priorsGroup,
         iDynTree::JOINT_WRENCH_SENSOR
     };
 
-    std::pair<size_t, std::string> sensorsInfo[berdySensorNumber] = {
-        std::pair<size_t, std::string>(6, "SIX_AXIS_FORCE_TORQUE_SENSOR"),
-        std::pair<size_t, std::string>(3, "ACCELEROMETER_SENSOR"),
-        std::pair<size_t, std::string>(3, "GYROSCOPE_SENSOR"),
-        std::pair<size_t, std::string>(1, "DOF_ACCELERATION_SENSOR"),
-        std::pair<size_t, std::string>(1, "DOF_TORQUE_SENSOR"),
-        std::pair<size_t, std::string>(6, "NET_EXT_WRENCH_SENSOR"),
-        std::pair<size_t, std::string>(6, "JOINT_WRENCH_SENSOR"),
+    pair<size_t, string> sensorsInfo[berdySensorNumber] = {
+        pair<size_t, string>(6, "SIX_AXIS_FORCE_TORQUE_SENSOR"),
+        pair<size_t, string>(3, "ACCELEROMETER_SENSOR"),
+        pair<size_t, string>(3, "GYROSCOPE_SENSOR"),
+        pair<size_t, string>(1, "DOF_ACCELERATION_SENSOR"),
+        pair<size_t, string>(1, "DOF_TORQUE_SENSOR"),
+        pair<size_t, string>(6, "NET_EXT_WRENCH_SENSOR"),
+        pair<size_t, string>(6, "JOINT_WRENCH_SENSOR"),
     };
 
+
+
     for (size_t i = 0; i < berdySensorNumber; ++i) {
-        const std::pair<size_t, std::string>& sensorInfo = sensorsInfo[i];
+        const pair<size_t, string>& sensorInfo = sensorsInfo[i];
 
         if (priorsGroup.check(optionPrefix + "_" + sensorInfo.second, "Checking priors on " + optionPrefix)) {
             yarp::os::Bottle& option = priorsGroup.findGroup(optionPrefix + "_" + sensorInfo.second);
 
-            //Now, check option 3:
-            std::string specificElement = option.check("specific_element", yarp::os::Value(""), "").asString();
-            int valueIndex = specificElement.empty() ? 1 : 2;
+            //Get the value
+            std::vector<pair<string, iDynTree::Triplets> > partialElements;
+            iDynTree::Triplets currentTriplets;
 
-            //Now read the value from ini (it can either be a single value or a vector of size
-            //sensorInfo.first
-            iDynTree::Triplets partialElements;
-            if (!parseCovarianceMatrixOption(option.get(valueIndex), sensorInfo.first, partialElements)) {
-                yWarning("Malformed priors information for \"%s\"", (optionPrefix + "_" + sensorInfo.second).c_str());
+            //Try to parse it as if it were a plain type
+            if (!parseCovarianceMatrixOption(option.get(1), sensorInfo.first, currentTriplets)) {
+                // If not let's try more difficult parsing
+                yarp::os::Bottle *values = option.get(1).asList();
+                if (!values) {
+                    //Empty value
+                    continue;
+                }
+                for (int valueIndex = 0; valueIndex < values->size(); ++valueIndex) {
+                    yarp::os::Value& currentValue = values->get(valueIndex);
+                    if (valueIndex == 0) {
+                        // This should parse the "plain" value which if present is always (and only) the first
+                        currentTriplets.clear();
+                        if (parseCovarianceMatrixOption(currentValue, sensorInfo.first, currentTriplets)) {
+                            // plain value found. Go to next
+                            partialElements.push_back(pair<string, iDynTree::Triplets>("", currentTriplets));
+                            continue;
+                        }
+                    }
+                    //If here we expect two elements
+                    if (!currentValue.isList() || currentValue.asList()->size() != 2) {
+                        continue;
+                    }
+                    yarp::os::Bottle *specificList = currentValue.asList();
+                    //First element MUST be the name of the constrained link
+                    if (!specificList->get(0).isList() || specificList->get(0).asList()->size() != 2
+                        || specificList->get(0).asList()->get(0).asString() != "specific_element") {
+                        continue;
+                    }
+                    std::string consideredFrame = specificList->get(0).asList()->get(1).asString();
+                    //Second element can be a list or value. So parse it using the usual method
+                    currentTriplets.clear();
+                    if (!parseCovarianceMatrixOption(specificList->get(1), sensorInfo.first, currentTriplets)) {
+                        continue;
+                    }
+                    partialElements.push_back(pair<string, iDynTree::Triplets>(consideredFrame, currentTriplets));
+                }
+
+            } else {
+                partialElements.push_back(pair<string, iDynTree::Triplets>("", currentTriplets));
             }
+
+            if (partialElements.empty()) {
+                yWarning("Malformed priors information for \"%s\"", (optionPrefix + "_" + sensorInfo.second).c_str());
+                continue;
+            }
+
             //Now I have to set this triplets in the global one
             for (auto &sensor : berdy.getSensorsOrdering()) {
-                if (sensor.type != sensorTypes[i]) continue;
-                if (!specificElement.empty() && sensor.id != specificElement) continue;
-                for (const auto &triplet : partialElements) {
-                    iDynTree::Triplet modifiedTriplet = triplet;
-                    modifiedTriplet.row += sensor.range.offset;
-                    modifiedTriplet.column += sensor.range.offset;
-                    triplets.setTriplet(modifiedTriplet);
+                for (pair<string, iDynTree::Triplets> element : partialElements) {
+                    if (sensor.type != sensorTypes[i]) continue;
+                    if (!element.first.empty() && sensor.id != element.first) continue;
+
+                    for (const auto &triplet : element.second) {
+                        iDynTree::Triplet modifiedTriplet = triplet;
+                        modifiedTriplet.row += sensor.range.offset;
+                        modifiedTriplet.column += sensor.range.offset;
+                        triplets.setTriplet(modifiedTriplet);
+                    }
                 }
             }
-
         }
     }
 
-    //TODO: add isEmpty method to triplets, also a description method
-    if (triplets.size() != 0) {
+    if (!triplets.isEmpty()) {
         parsedMatrix.setFromTriplets(triplets);
     }
-
     return true;
 }
 
@@ -698,6 +802,7 @@ static bool parseCovarianceMatrixOption(const yarp::os::Value &option,
                                         size_t expectedMatrixSize,
                                         iDynTree::Triplets &parsedMatrix)
 {
+    std::cerr << option.toString() << std::endl;
     parsedMatrix.reserve(expectedMatrixSize);
     //Two cases: single value (to be replicate on the diagonal, or full diagonal)
     //TODO implement third case: full matrix or, better, a list of Triplets
@@ -712,7 +817,7 @@ static bool parseCovarianceMatrixOption(const yarp::os::Value &option,
                 yWarning("Covariance element %d is not a positive double value", index);
                 return false;
             }
-            parsedMatrix.pushTriplet(iDynTree::Triplet(index, index, 1.0 / list->get(index).asDouble()));
+            parsedMatrix.setTriplet(iDynTree::Triplet(index, index, 1.0 / list->get(index).asDouble()));
         }
 
     } else {

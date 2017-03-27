@@ -94,10 +94,10 @@ class HumanDynamicsEstimator : public yarp::os::RFModule {
     } m_inputOutputMapping;
 
     // Priors on regularization, measurements and dynamics constraints
-    iDynTree::SparseMatrix m_priorDynamicsConstraintsCovarianceInverse; // Sigma_D
-    iDynTree::SparseMatrix m_priorDynamicsRegularizationCovarianceInverse; // Sigma_d
+    iDynTree::SparseMatrix m_priorDynamicsConstraintsCovarianceInverse; // Sigma_D^-1
+    iDynTree::SparseMatrix m_priorDynamicsRegularizationCovarianceInverse; // Sigma_d^-1
     iDynTree::VectorDynSize m_priorDynamicsRegularizationExpectedValue; // mu_d
-    iDynTree::SparseMatrix m_priorMeasurementsCovarianceInverse; // Sigma_y
+    iDynTree::SparseMatrix m_priorMeasurementsCovarianceInverse; // Sigma_y^-1
 
     // Measurements vector
     iDynTree::VectorDynSize m_measurements;
