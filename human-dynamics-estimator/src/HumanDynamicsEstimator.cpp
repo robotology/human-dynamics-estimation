@@ -17,6 +17,10 @@
 //---------------------------------------------------------------------------
 // Utility function for parsing INI file
 static bool parseFrameListOption(const yarp::os::Value &option, std::vector<std::string> &parsedJoints);
+static bool parseMeasurementsPriorsOption(const yarp::os::Bottle& priorsGroup,
+                                          const iDynTree::BerdyHelper& berdy,
+                                          const std::string& optionPrefix,
+                                          iDynTree::SparseMatrix& parseMatrix);
 static bool parseCovarianceMatrixOption(const yarp::os::Value &option, size_t expectedMatrixSize, iDynTree::Triplets &parsedMatrix);
 
 
@@ -51,13 +55,13 @@ bool HumanDynamicsEstimator::configure(yarp::os::ResourceFinder &rf)
      * ------Open a port:i for the human joint configuration and forces
      */
     if (!m_humanJointConfigurationPort.open("/" + getName() + "/humanState:i")) {
-        yError("Unable to open port ", ("/" + getName() + "/humanState:i").c_str());
+        yError("Unable to open port %s", ("/" + getName() + "/humanState:i").c_str());
         close();
         return false;
     }
 
     if (!m_humanForcesPort.open("/" + getName() + "/humanForces:i")) {
-        yError("Unable to open port ", ("/" + getName() + "/humanForces:i").c_str());
+        yError("Unable to open port %s", ("/" + getName() + "/humanForces:i").c_str());
         close();
         return false;
     }
@@ -66,7 +70,7 @@ bool HumanDynamicsEstimator::configure(yarp::os::ResourceFinder &rf)
      * ------Open and prepare a port:o for the output
      */
     if (!m_outputPort.open("/" + getName() + "/dynamicsEstimation:o")) {
-        yError("Unable to open port ", ("/" + getName() + "/dynamicsEstimation:o").c_str());
+        yError("Unable to open port %s", ("/" + getName() + "/dynamicsEstimation:o").c_str());
         close();
         return false;
     }
@@ -188,7 +192,7 @@ bool HumanDynamicsEstimator::configure(yarp::os::ResourceFinder &rf)
         //check for unexpected presence of this key in the map
         if (m_inputOutputMapping.inputMeasurements.find(key) != m_inputOutputMapping.inputMeasurements.end()) {
             //Key already present. This is not possible
-            yWarning("Duplicate sensor of type %s and id %s. Skipping insertion. This may lead to unexpected results", VAR_TO_STR(sensor.type), sensor.id.c_str());
+            yWarning("Duplicate sensor of id[type]: %s[%d]. Skipping insertion. This may lead to unexpected results", sensor.id.c_str(), sensor.type);
             continue;
         }
         m_inputOutputMapping.inputMeasurements.insert(BerdySensorsInputMap::value_type(key, sensor.range));
@@ -216,7 +220,6 @@ bool HumanDynamicsEstimator::configure(yarp::os::ResourceFinder &rf)
 
     m_priorDynamicsRegularizationExpectedValue.resize(numberOfDynVariables);
     m_priorDynamicsRegularizationExpectedValue.zero();
-
 
     // load priors from config file
     yarp::os::Bottle &priorsGroup = rf.findGroup("PRIORS");
@@ -264,18 +267,12 @@ bool HumanDynamicsEstimator::configure(yarp::os::ResourceFinder &rf)
         }
 
         //priors on measurement equations
-        //TODO: decide. This is not still perfect as the user has to know the measurements ordering. we should probably switch to single measurement type.
-        // Do it later
-        if (priorsGroup.check("cov_measurements", "Checking priors on measurements covariance: Sigma_Y")) {
-            yarp::os::Value& covMeas = priorsGroup.find("cov_measurements");
-            iDynTree::Triplets triplets;
-            if (!parseCovarianceMatrixOption(covMeas, numberOfMeasurements, triplets)) {
-                yWarning("Malformed priors information for \"measurements covariance: Sigma_Y\"");
-            } else {
-                m_priorMeasurementsCovarianceInverse.setFromTriplets(triplets);
-            }
+        if (!parseMeasurementsPriorsOption(priorsGroup,
+                                           m_berdy,
+                                           "cov_measurements",
+                                           m_priorDynamicsConstraintsCovarianceInverse)) {
+            yWarning("Problem parsing priors on measurements constraints. Default to 1");
         }
-
     }
 
     m_gravity.zero(); 
@@ -320,18 +317,18 @@ bool HumanDynamicsEstimator::configure(yarp::os::ResourceFinder &rf)
         BerdyOutputRangeMap &innerMap = (*outputMap)[variable.id];
 
         if (innerMap.find(variable.type) != innerMap.end()) {
-            yWarning("Duplicate variable of type %s and id %s. Skipping insertion. This may lead to unexpected results", VAR_TO_STR(variable.type), variable.id.c_str());
+            yWarning("Duplicate variable of id[type]: %s[%d]. Skipping insertion. This may lead to unexpected results", variable.id.c_str(), variable.type);
             continue;
         }
         innerMap.insert(BerdyOutputRangeMap::value_type(variable.type, variable.range));
     }
 
-    // Allocate size for output map
+    // Allocate size for output vectors
     human::HumanDynamics& humanDynamics = m_outputPort.prepare();
     humanDynamics.linkVariables.reserve(m_inputOutputMapping.outputLinks.size());
     humanDynamics.jointVariables.reserve(m_inputOutputMapping.outputJoints.size());
 
-    for (auto& linkElement : m_inputOutputMapping.outputLinks) {
+    for (size_t i = 0; i < m_inputOutputMapping.outputLinks.size(); ++i) {
         human::LinkDynamicsEstimation link;
         link.spatialAcceleration.resize(6);
         link.spatialAcceleration.zero();
@@ -342,7 +339,7 @@ bool HumanDynamicsEstimator::configure(yarp::os::ResourceFinder &rf)
         humanDynamics.linkVariables.push_back(link);
     }
 
-    for (auto& jointElement : m_inputOutputMapping.outputJoints) {
+    for (size_t i = 0; i < m_inputOutputMapping.outputJoints.size(); ++i) {
         human::JointDynamicsEstimation joint;
         joint.acceleration.resize(1);
         joint.acceleration.zero();
@@ -596,11 +593,111 @@ static bool parseFrameListOption(const yarp::os::Value &option, std::vector<std:
     return true;
 }
 
+static bool parseMeasurementsPriorsOption(const yarp::os::Bottle& priorsGroup,
+                                          const iDynTree::BerdyHelper& berdy,
+                                          const std::string& optionPrefix,
+                                          iDynTree::SparseMatrix& parsedMatrix)
+{
+    //While this method may be applied for all the priors, let's stay focused on the measurements part.
+    /* cases are:
+     * 1) constant (for all elements)
+     * 2) different depending on the type of variable (see measurements)
+     * 3) in case of forces, contact/not in contact
+     *
+     * as ini file we can do the following:
+     * 1) easy: key (optionPrefix) => value. This can be a single value or the whole vector
+     * 2) use optionPrefix as prefix. Append the string representation of the variable type
+     *    as before, this can be single value or whole (limited) vector
+     * 3) more complex. I would use the optionPrefix as before.
+     *
+     * example with measurements
+     * 1) cov_meas 1e-2 
+     * 2) cov_meas_ACCELEROMETER (1e+1, 2e+1, 5)
+     * 3) cov_meas_NET_EXT_WRENCH ((specific_element LeftFoot)(1e+1, 2e+1, 5, 0.1, 0.1, 0.3))
+     * 
+     * Option 1 needs to fill a simple Triplets with constant elements (of size - inputSize)
+     * Option 2 needs to know the type of considered variable and the corresponding offset-size in berdy
+     * Option 3 same as 2.
+     */
+
+    assert(optionPrefix == "cov_measurements");
+    iDynTree::Triplets triplets;
+
+    //Option 1
+    if (priorsGroup.check(optionPrefix, "Checking priors on " + optionPrefix)) {
+        yarp::os::Value& option = priorsGroup.find(optionPrefix);
+        if (!parseCovarianceMatrixOption(option, parsedMatrix.rows(), triplets)) {
+            yWarning("Malformed priors information for \"%s\"", optionPrefix.c_str());
+        } else {
+        }
+    }
+
+    //Option 2: for each measurments type, fill specific stuff.
+    //This is where we lose genericity and we work only with measurements
+    const size_t berdySensorNumber = 7;
+    iDynTree::BerdySensorTypes sensorTypes[berdySensorNumber] = {
+        iDynTree::SIX_AXIS_FORCE_TORQUE_SENSOR,
+        iDynTree::ACCELEROMETER_SENSOR,
+        iDynTree::GYROSCOPE_SENSOR,
+        iDynTree::DOF_ACCELERATION_SENSOR,
+        iDynTree::DOF_TORQUE_SENSOR,
+        iDynTree::NET_EXT_WRENCH_SENSOR,
+        iDynTree::JOINT_WRENCH_SENSOR
+    };
+
+    std::pair<size_t, std::string> sensorsInfo[berdySensorNumber] = {
+        std::pair<size_t, std::string>(6, "SIX_AXIS_FORCE_TORQUE_SENSOR"),
+        std::pair<size_t, std::string>(3, "ACCELEROMETER_SENSOR"),
+        std::pair<size_t, std::string>(3, "GYROSCOPE_SENSOR"),
+        std::pair<size_t, std::string>(1, "DOF_ACCELERATION_SENSOR"),
+        std::pair<size_t, std::string>(1, "DOF_TORQUE_SENSOR"),
+        std::pair<size_t, std::string>(6, "NET_EXT_WRENCH_SENSOR"),
+        std::pair<size_t, std::string>(6, "JOINT_WRENCH_SENSOR"),
+    };
+
+    for (size_t i = 0; i < berdySensorNumber; ++i) {
+        const std::pair<size_t, std::string>& sensorInfo = sensorsInfo[i];
+
+        if (priorsGroup.check(optionPrefix + "_" + sensorInfo.second, "Checking priors on " + optionPrefix)) {
+            yarp::os::Bottle& option = priorsGroup.findGroup(optionPrefix + "_" + sensorInfo.second);
+
+            //Now, check option 3:
+            std::string specificElement = option.check("specific_element", yarp::os::Value(""), "").asString();
+            int valueIndex = specificElement.empty() ? 1 : 2;
+
+            //Now read the value from ini (it can either be a single value or a vector of size
+            //sensorInfo.first
+            iDynTree::Triplets partialElements;
+            if (!parseCovarianceMatrixOption(option.get(valueIndex), sensorInfo.first, partialElements)) {
+                yWarning("Malformed priors information for \"%s\"", (optionPrefix + "_" + sensorInfo.second).c_str());
+            }
+            //Now I have to set this triplets in the global one
+            for (auto &sensor : berdy.getSensorsOrdering()) {
+                if (sensor.type != sensorTypes[i]) continue;
+                if (!specificElement.empty() && sensor.id != specificElement) continue;
+                for (const auto &triplet : partialElements) {
+                    iDynTree::Triplet modifiedTriplet = triplet;
+                    modifiedTriplet.row += sensor.range.offset;
+                    modifiedTriplet.column += sensor.range.offset;
+                    triplets.setTriplet(modifiedTriplet);
+                }
+            }
+
+        }
+    }
+
+    //TODO: add isEmpty method to triplets, also a description method
+    if (triplets.size() != 0) {
+        parsedMatrix.setFromTriplets(triplets);
+    }
+
+    return true;
+}
+
 static bool parseCovarianceMatrixOption(const yarp::os::Value &option,
                                         size_t expectedMatrixSize,
                                         iDynTree::Triplets &parsedMatrix)
 {
-    parsedMatrix.clear();
     parsedMatrix.reserve(expectedMatrixSize);
     //Two cases: single value (to be replicate on the diagonal, or full diagonal)
     //TODO implement third case: full matrix or, better, a list of Triplets

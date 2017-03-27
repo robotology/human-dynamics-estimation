@@ -18,8 +18,6 @@ struct LinkDynamicsEstimation {
 
     // external wrench acting on body (vector 6D)
     4: Vector externalWrench;
-    
-    
 
 }
 
