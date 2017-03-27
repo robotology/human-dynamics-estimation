@@ -9,7 +9,26 @@
     <module>
         <name>human-state-provider</name>
         <parameters>--playback true</parameters>
+        <dependencies>
+            <port timeout="10">/xsens/frames:o</port>
+        </dependencies>
         <node>${ipopt_node}</node>
+    </module>
+
+    <module>
+        <name>human-forces-provider</name>
+        <parameters></parameters>
+        <dependencies>
+            <port timeout="10">/amti/first/analog:o</port>
+            <port timeout="10">/amti/second/analog:o</port>
+        </dependencies>
+        <node>${node}</node>
+    </module>
+
+    <module>
+        <name>human-dynamics-estimator</name>
+        <parameters></parameters>
+        <node>${node}</node>
     </module>
 
     <module>
@@ -24,19 +43,6 @@
         <node>${node}</node>
     </module>
 
-    <!-- <module>
-        <name>human-forces-provider</name>
-        <parameters></parameters>
-        <node>{node}</node>
-    </module>
-
-    <module>
-        <name>human-dynamics-estimator</name>
-        <parameters></parameters>
-        <node>{node}</node>
-    </module> -->
-
-
     <connection>
           <from>/xsens/frames:o</from>
           <to>/human-state-provider/xsens/frames:i</to>
@@ -45,7 +51,37 @@
 
     <connection>
           <from>/human-state-provider/state:o</from>
+          <to>/human-forces-provider/humanState:i</to>
+          <protocol>udp</protocol>
+    </connection>
+
+    <connection>
+          <from>/human-state-provider/state:o</from>
+          <to>/human-dynamics-estimator/humanState:i</to>
+          <protocol>udp</protocol>
+    </connection>
+
+    <connection>
+          <from>/human-state-provider/state:o</from>
           <to>/human-jointstate-bridge/state:i</to>
+          <protocol>udp</protocol>
+    </connection>
+
+    <connection>
+          <from>/wholeBodyDynamics/left_arm/endEffectorWrench:o</from>
+          <to>/human-forces-provider/source_3/force:i</to>
+          <protocol>udp</protocol>
+    </connection>
+
+    <connection>
+          <from>/wholeBodyDynamics/right_arm/endEffectorWrench:o</from>
+          <to>/human-forces-provider/source_4/force:i</to>
+          <protocol>udp</protocol>
+    </connection>
+
+    <connection>
+          <from>/human-forces-provider/forces:o</from>
+          <to>/human-dynamics-estimator/humanForces:i</to>
           <protocol>udp</protocol>
     </connection>
 
@@ -60,5 +96,11 @@
           <to>/human-tf-bridge/segmentsList:o</to>
           <protocol>tcp</protocol>
     </connection>
+
+    <!-- <connection>
+          <from>/human-dynamics-estimator/dynamicsEstimation:o</from>
+          <to></to>
+          <protocol>udp</protocol>
+    </connection> -->
 
 </application>
