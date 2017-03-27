@@ -72,6 +72,20 @@ class xsensJointStatePublisherModule : public RFModule, public TypedReaderCallba
     Publisher<tf2_msgs_TFMessage> publisher_tf;
     vector< Publisher<sensor_msgs_Temperature> > publisher_vec;
     
+    Publisher<sensor_msgs_Temperature> tempL1_pub; 
+    Publisher<sensor_msgs_Temperature> tempL2_pub; 
+    Publisher<sensor_msgs_Temperature> tempL3_pub; 
+    Publisher<sensor_msgs_Temperature> tempL4_pub; 
+    Publisher<sensor_msgs_Temperature> tempL5_pub; 
+    Publisher<sensor_msgs_Temperature> tempL6_pub; 
+    
+    Publisher<sensor_msgs_Temperature> tempR1_pub; 
+    Publisher<sensor_msgs_Temperature> tempR2_pub; 
+    Publisher<sensor_msgs_Temperature> tempR3_pub; 
+    Publisher<sensor_msgs_Temperature> tempR4_pub; 
+    Publisher<sensor_msgs_Temperature> tempR5_pub; 
+    Publisher<sensor_msgs_Temperature> tempR6_pub;      
+    
     sensor_msgs_JointState joint_state;
     tf2_msgs_TFMessage tf;
     map<string,sensor_msgs_Temperature> sensorMsgsEffort_map;
@@ -124,16 +138,14 @@ public:
             return false;
         }
         
-        yInfo() << "Joints effort: " << jointsEffort;
+        yInfo() << "Joints effort:" << jointsEffort.size() << jointsEffort;
         
-        Publisher<sensor_msgs_Temperature> temp_pub = publisher_vec[0]; 
-        //temp_pub = publisher_vec[0];
-        yInfo() << "boo";
-        
-        if(!temp_pub.topic("/IKhuman/LeftAnkle")) {
-            yError() << "Failed to create publisher to" << jointsEffort[0];
-            return false;
-        }
+//         publisher_vec.resize(1);
+
+//         if(!publisher_vec[0].topic("/topic")) {
+//             yError() << "Failed to create publisher to" << jointsEffort[0];
+//             return false;
+//         }
         
 //         for (size_t index = 0; index < jointsEffort.size(); ++index) {
 //             if (!publisher_vec[index].topic(rf.find("topicPrefix").asString() + "/" + jointsEffort[index])) {
@@ -141,7 +153,20 @@ public:
 //                 return false;
 //             }
 //         }
-
+        
+        tempL1_pub.topic(rf.find("topicPrefix").asString() + "/" + jointsEffort[0]);
+        tempL2_pub.topic(rf.find("topicPrefix").asString() + "/" + jointsEffort[1]);
+        tempL3_pub.topic(rf.find("topicPrefix").asString() + "/" + jointsEffort[2]);
+        tempL4_pub.topic(rf.find("topicPrefix").asString() + "/" + jointsEffort[3]);
+        tempL5_pub.topic(rf.find("topicPrefix").asString() + "/" + jointsEffort[4]);
+        tempL6_pub.topic(rf.find("topicPrefix").asString() + "/" + jointsEffort[5]);
+        
+        tempR1_pub.topic(rf.find("topicPrefix").asString() + "/" + jointsEffort[6]);
+        tempR2_pub.topic(rf.find("topicPrefix").asString() + "/" + jointsEffort[7]);
+        tempR3_pub.topic(rf.find("topicPrefix").asString() + "/" + jointsEffort[8]);
+        tempR4_pub.topic(rf.find("topicPrefix").asString() + "/" + jointsEffort[9]);
+        tempR5_pub.topic(rf.find("topicPrefix").asString() + "/" + jointsEffort[10]);
+        tempR6_pub.topic(rf.find("topicPrefix").asString() + "/" + jointsEffort[11]);
         
         tf.transforms.resize(1);
         tf.transforms[0].header.frame_id = rf.find("worldRFName").asString();
@@ -249,7 +274,25 @@ public:
         
         for (size_t index = 0; index < jointsEffort.size(); ++index) {
             sensorMsgsEffort_map[jointsEffort[index]].header.stamp = currentTime;
+            sensorMsgsEffort_map[jointsEffort[index]].temperature = var;
         }
+        
+        tempL1_pub.write(sensorMsgsEffort_map[jointsEffort[0]]);
+        tempL2_pub.write(sensorMsgsEffort_map[jointsEffort[1]]);
+        tempL3_pub.write(sensorMsgsEffort_map[jointsEffort[2]]);
+        tempL4_pub.write(sensorMsgsEffort_map[jointsEffort[3]]);
+        tempL5_pub.write(sensorMsgsEffort_map[jointsEffort[4]]);
+        tempL6_pub.write(sensorMsgsEffort_map[jointsEffort[5]]);
+        
+        tempR1_pub.write(sensorMsgsEffort_map[jointsEffort[6]]);
+        tempR2_pub.write(sensorMsgsEffort_map[jointsEffort[7]]);
+        tempR3_pub.write(sensorMsgsEffort_map[jointsEffort[8]]);
+        tempR4_pub.write(sensorMsgsEffort_map[jointsEffort[9]]);
+        tempR5_pub.write(sensorMsgsEffort_map[jointsEffort[10]]);
+        tempR6_pub.write(sensorMsgsEffort_map[jointsEffort[11]]);
+
+        
+        //publisher_vec[0].write(temp);
         
 //         for (size_t index = 0; index < jointsEffort.size(); ++index) {
 //             publisher_vec[index].write(sensorMsgsEffort_map[jointsEffort[index]]);
