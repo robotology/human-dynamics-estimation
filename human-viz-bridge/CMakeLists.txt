@@ -83,7 +83,8 @@ target_link_libraries(human-effort-bridge YARP::YARP_OS
                                           iDynTree::idyntree-modelio-urdf
                                           human-viz-bridge-thrift
                                           human-viz-bridge-rosmsgs
-                                          human-state-provider-data)
+                                          human-state-provider-data
+                                          human-dynamics-estimator-data)
 
 target_include_directories(human-effort-bridge PUBLIC ${YARP_INCLUDE_DIRS})
                                               
