@@ -59,7 +59,6 @@ namespace human {
     {
         //Fill data for a thread
         {
-            unsigned index = 0;
             std::unique_lock<std::mutex> guard(m_inputMutex);
             for (auto& linkPair : m_linkPairs) {
                 // Create a new struct of type WorkerData and pass it to the pool
