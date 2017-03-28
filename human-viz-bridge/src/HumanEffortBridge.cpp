@@ -94,6 +94,8 @@ class xsensJointStatePublisherModule : public RFModule, public TypedReaderCallba
     vector<string> jointsFrameEffort;
     vector<string> jointEffort;
     
+    Value defaultReducedModel;
+    
     int var, inc;
     
 public:
@@ -142,10 +144,15 @@ public:
         
         yInfo() << "Joints frame effort:" << jointsFrameEffort.size() << jointsFrameEffort;
         
-        Value defaultReducedModel; defaultReducedModel.fromString("true");
+        defaultReducedModel.fromString("true");
         bool redModel = rf.check("reducedModel", defaultReducedModel, "Checking reduced model mode").asBool();
-        if(redModel) 
+        if(!redModel) 
         {
+            if (!parseFrameListOption(rf.find("jointEffortList"), jointEffort)) {
+                yError() << "Error while parsing joints effort list";
+                return false;
+            }
+        } else {
             if (!parseFrameListOption(rf.find("jointRedEffortList"), jointEffort)) {
                 yError() << "Error while parsing joints effort list";
                 return false;
@@ -313,6 +320,8 @@ public:
         
         var += inc;
         if (var<0 || var>100) inc *= -1;
+        
+        
         
         for (size_t index = 0; index < jointsFrameEffort.size(); ++index) {
             sensorMsgsEffort_map[jointsFrameEffort[index]].header.stamp = currentTime;
