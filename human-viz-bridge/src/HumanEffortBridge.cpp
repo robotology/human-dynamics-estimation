@@ -91,11 +91,9 @@ class xsensJointStatePublisherModule : public RFModule, public TypedReaderCallba
 //     sensor_msgs_JointState joint_state;
 //     tf2_msgs_TFMessage tf;
     map<string,sensor_msgs_Temperature> sensorMsgsEffort_map;
-    vector<string> jointsFrameEffort;
-    vector<string> jointEffort;
-    
-    Value defaultReducedModel;
-    
+    vector<string> linksEffort;
+    vector<string> jointsEffort;
+
     int var, inc;
     
 public:
@@ -137,12 +135,12 @@ public:
 //             return false;
 //         }
         
-        if (!parseFrameListOption(rf.find("frameEffortList"), jointsFrameEffort)) {
-            yError() << "Error while parsing joints effort list";
+        if (!parseFrameListOption(rf.find("linkEffortList"), linksEffort)) {
+            yError() << "Error while parsing links effort list";
             return false;
         }
         
-        yInfo() << "Joints frame effort:" << jointsFrameEffort.size() << jointsFrameEffort;
+        yInfo() << "Joints frame effort:" << linksEffort.size() << linksEffort;
         
         vector<string> URDFjoints;
         URDFjoints.reserve(model.getNrOfJoints());
@@ -151,22 +149,13 @@ public:
             URDFjoints.push_back(jointName);
         }
         
-        defaultReducedModel.fromString("true");
-        bool redModel = rf.check("reducedModel", defaultReducedModel, "Checking reduced model mode").asBool();
-        if(!redModel) 
-        {
-            if (!parseFrameListOption(rf.find("jointEffortList"), jointEffort)) {
-                yError() << "Error while parsing joints effort list";
-                return false;
-            }
-        } else {
-            if (!parseFrameListOption(rf.find("jointRedEffortList"), jointEffort)) {
-                yError() << "Error while parsing joints effort list";
-                return false;
-            }
+        if (!parseFrameListOption(rf.find("jointEffortList"), jointsEffort)) {
+            yError() << "Error while parsing joints effort list";
+            return false;
         }
+
         
-        yInfo() << "Joints effort:" << jointEffort.size() << jointEffort;
+        yInfo() << "Joints effort:" << jointsEffort.size() << jointsEffort;
 
 //         publisher_vec.resize(1);
 
@@ -182,19 +171,19 @@ public:
 //             }
 //         }
         
-        tempL1_pub.topic(rf.find("topicPrefix").asString() + "/" + jointsFrameEffort[0]);
-        tempL2_pub.topic(rf.find("topicPrefix").asString() + "/" + jointsFrameEffort[1]);
-        tempL3_pub.topic(rf.find("topicPrefix").asString() + "/" + jointsFrameEffort[2]);
-        tempL4_pub.topic(rf.find("topicPrefix").asString() + "/" + jointsFrameEffort[3]);
-        tempL5_pub.topic(rf.find("topicPrefix").asString() + "/" + jointsFrameEffort[4]);
-        tempL6_pub.topic(rf.find("topicPrefix").asString() + "/" + jointsFrameEffort[5]);
-                                                                
-        tempR1_pub.topic(rf.find("topicPrefix").asString() + "/" + jointsFrameEffort[6]);
-        tempR2_pub.topic(rf.find("topicPrefix").asString() + "/" + jointsFrameEffort[7]);
-        tempR3_pub.topic(rf.find("topicPrefix").asString() + "/" + jointsFrameEffort[8]);
-        tempR4_pub.topic(rf.find("topicPrefix").asString() + "/" + jointsFrameEffort[9]);
-        tempR5_pub.topic(rf.find("topicPrefix").asString() + "/" + jointsFrameEffort[10]);
-        tempR6_pub.topic(rf.find("topicPrefix").asString() + "/" + jointsFrameEffort[11]);
+        tempL1_pub.topic(rf.find("topicPrefix").asString() + "/" + linksEffort[0]);
+        tempL2_pub.topic(rf.find("topicPrefix").asString() + "/" + linksEffort[1]);
+        tempL3_pub.topic(rf.find("topicPrefix").asString() + "/" + linksEffort[2]);
+        tempL4_pub.topic(rf.find("topicPrefix").asString() + "/" + linksEffort[3]);
+        tempL5_pub.topic(rf.find("topicPrefix").asString() + "/" + linksEffort[4]);
+        tempL6_pub.topic(rf.find("topicPrefix").asString() + "/" + linksEffort[5]);
+                                                                   
+        tempR1_pub.topic(rf.find("topicPrefix").asString() + "/" + linksEffort[6]);
+        tempR2_pub.topic(rf.find("topicPrefix").asString() + "/" + linksEffort[7]);
+        tempR3_pub.topic(rf.find("topicPrefix").asString() + "/" + linksEffort[8]);
+        tempR4_pub.topic(rf.find("topicPrefix").asString() + "/" + linksEffort[9]);
+        tempR5_pub.topic(rf.find("topicPrefix").asString() + "/" + linksEffort[10]);
+        tempR6_pub.topic(rf.find("topicPrefix").asString() + "/" + linksEffort[11]);
         
 //         tf.transforms.resize(1);
 //         tf.transforms[0].header.frame_id = rf.find("worldRFName").asString();
@@ -267,10 +256,10 @@ public:
         }
         
         
-        for (size_t index = 0; index < jointsFrameEffort.size(); ++index) {
-        sensorMsgsEffort_map[jointsFrameEffort[index]].header.frame_id = rf.find("tfPrefix").asString() + "/" + jointsFrameEffort[index];
-        sensorMsgsEffort_map[jointsFrameEffort[index]].header.seq = 1;
-        sensorMsgsEffort_map[jointsFrameEffort[index]].variance = 0;
+        for (size_t index = 0; index < linksEffort.size(); ++index) {
+        sensorMsgsEffort_map[linksEffort[index]].header.frame_id = rf.find("tfPrefix").asString() + "/" + linksEffort[index];
+        sensorMsgsEffort_map[linksEffort[index]].header.seq = 1;
+        sensorMsgsEffort_map[linksEffort[index]].variance = 0;
         }
         
         var = 0;
@@ -330,24 +319,24 @@ public:
         
         
         
-        for (size_t index = 0; index < jointsFrameEffort.size(); ++index) {
-            sensorMsgsEffort_map[jointsFrameEffort[index]].header.stamp = currentTime;
+        for (size_t index = 0; index < linksEffort.size(); ++index) {
+            sensorMsgsEffort_map[linksEffort[index]].header.stamp = currentTime;
             //sensorMsgsEffort_map[jointsFrameEffort[index]].temperature = var;          
         }
         
-        tempL1_pub.write(sensorMsgsEffort_map[jointsFrameEffort[0]]);
-        tempL2_pub.write(sensorMsgsEffort_map[jointsFrameEffort[1]]);
-        tempL3_pub.write(sensorMsgsEffort_map[jointsFrameEffort[2]]);
-        tempL4_pub.write(sensorMsgsEffort_map[jointsFrameEffort[3]]);
-        tempL5_pub.write(sensorMsgsEffort_map[jointsFrameEffort[4]]);
-        tempL6_pub.write(sensorMsgsEffort_map[jointsFrameEffort[5]]);
-                                            
-        tempR1_pub.write(sensorMsgsEffort_map[jointsFrameEffort[6]]);
-        tempR2_pub.write(sensorMsgsEffort_map[jointsFrameEffort[7]]);
-        tempR3_pub.write(sensorMsgsEffort_map[jointsFrameEffort[8]]);
-        tempR4_pub.write(sensorMsgsEffort_map[jointsFrameEffort[9]]);
-        tempR5_pub.write(sensorMsgsEffort_map[jointsFrameEffort[10]]);
-        tempR6_pub.write(sensorMsgsEffort_map[jointsFrameEffort[11]]);
+        tempL1_pub.write(sensorMsgsEffort_map[linksEffort[0]]);
+        tempL2_pub.write(sensorMsgsEffort_map[linksEffort[1]]);
+        tempL3_pub.write(sensorMsgsEffort_map[linksEffort[2]]);
+        tempL4_pub.write(sensorMsgsEffort_map[linksEffort[3]]);
+        tempL5_pub.write(sensorMsgsEffort_map[linksEffort[4]]);
+        tempL6_pub.write(sensorMsgsEffort_map[linksEffort[5]]);
+                                       
+        tempR1_pub.write(sensorMsgsEffort_map[linksEffort[6]]);
+        tempR2_pub.write(sensorMsgsEffort_map[linksEffort[7]]);
+        tempR3_pub.write(sensorMsgsEffort_map[linksEffort[8]]);
+        tempR4_pub.write(sensorMsgsEffort_map[linksEffort[9]]);
+        tempR5_pub.write(sensorMsgsEffort_map[linksEffort[10]]);
+        tempR6_pub.write(sensorMsgsEffort_map[linksEffort[11]]);
 
         
         //publisher_vec[0].write(temp);
