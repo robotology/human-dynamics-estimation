@@ -4,10 +4,10 @@
 	<!--Link base (1)-->
 	<link name="Pelvis">
         <inertial>
-            <mass value="4.9977"/>
+            <mass value="4.9968"/>
 			<!--COM origin wrt pHipOrigin-->
             <origin xyz="0           0    0.048589" rpy="0 0 0" />
-            <inertia ixx="0.027785" iyy="0.011362" izz="0.031399" ixy="0" ixz="0" iyz="0"/>
+            <inertia ixx="0.027779" iyy="0.01136" izz="0.031394" ixy="0" ixz="0" iyz="0"/>
         </inertial>
 
         <visual>
@@ -37,10 +37,10 @@
     </link>
 	<link name="L5">
         <inertial>
-            <mass value="6.3721"/>
+            <mass value="6.3709"/>
 			<!--COM origin wrt jL5S1-->
             <origin xyz="0           0    0.050322" rpy="0 0 0" />
-            <inertia ixx="0.045364" iyy="0.034022" izz="0.067685" ixy="0" ixz="0" iyz="0"/>
+            <inertia ixx="0.045355" iyy="0.034016" izz="0.067673" ixy="0" ixz="0" iyz="0"/>
         </inertial>
 
         <visual>
@@ -68,10 +68,10 @@
     </link>
 	<link name="L3">
         <inertial>
-            <mass value="6.3721"/>
+            <mass value="6.3709"/>
 			<!--COM origin wrt jL4L3-->
             <origin xyz="0           0    0.045465" rpy="0 0 0" />
-            <inertia ixx="0.044375" iyy="0.033034" izz="0.067685" ixy="0" ixz="0" iyz="0"/>
+            <inertia ixx="0.044367" iyy="0.033028" izz="0.067673" ixy="0" ixz="0" iyz="0"/>
         </inertial>
 
         <visual>
@@ -99,10 +99,10 @@
     </link>
 	<link name="T12">
         <inertial>
-            <mass value="6.3721"/>
+            <mass value="6.3709"/>
 			<!--COM origin wrt jL1T12-->
             <origin xyz="0           0    0.045465" rpy="0 0 0" />
-            <inertia ixx="0.044375" iyy="0.033034" izz="0.067685" ixy="0" ixz="0" iyz="0"/>
+            <inertia ixx="0.044367" iyy="0.033028" izz="0.067673" ixy="0" ixz="0" iyz="0"/>
         </inertial>
 
         <visual>
@@ -137,10 +137,10 @@
     </link>
 	<link name="T8">
         <inertial>
-            <mass value="2.4989"/>
+            <mass value="2.4984"/>
 			<!--COM origin wrt jT9T8-->
             <origin xyz="0           0    0.062885" rpy="0 0 0" />
-            <inertia ixx="0.0038682" iyy="0.0072774" izz="0.0045577" ixy="0" ixz="0" iyz="0"/>
+            <inertia ixx="0.0038675" iyy="0.0072761" izz="0.0045569" ixy="0" ixz="0" iyz="0"/>
         </inertial>
 
         <visual>
@@ -176,10 +176,10 @@
     </link>
 	<link name="Neck">
         <inertial>
-            <mass value="0.74966"/>
+            <mass value="0.74952"/>
 			<!--COM origin wrt jT1C7-->
             <origin xyz="0           0    0.042348" rpy="0 0 0" />
-            <inertia ixx="0.00058963" iyy="0.00058963" izz="0.00028299" ixy="0" ixz="0" iyz="0"/>
+            <inertia ixx="0.00058952" iyy="0.00058952" izz="0.00028294" ixy="0" ixz="0" iyz="0"/>
         </inertial>
 
         <visual>
@@ -207,10 +207,10 @@
     </link>
 	<link name="Head">
         <inertial>
-            <mass value="2.249"/>
+            <mass value="2.2486"/>
 			<!--COM origin wrt jC1Head-->
             <origin xyz="0           0    0.080693" rpy="0 0 0" />
-            <inertia ixx="0.0058575" iyy="0.0058575" izz="0.0058575" ixy="0" ixz="0" iyz="0"/>
+            <inertia ixx="0.0058564" iyy="0.0058564" izz="0.0058564" ixy="0" ixz="0" iyz="0"/>
         </inertial>
 
         <visual>
@@ -233,10 +233,10 @@
 	<!--Chain from (8) to (11)-->
 	<link name="RightShoulder">
         <inertial>
-            <mass value="1.9366"/>
+            <mass value="1.9363"/>
 			<!--COM origin wrt jRightC7Shoulder-->
             <origin xyz="0   -0.063159           0" rpy="0 0 0" />
-            <inertia ixx="0.0028285" iyy="0.00050664" izz="0.0028285" ixy="0" ixz="0" iyz="0"/>
+            <inertia ixx="0.0028279" iyy="0.00050654" izz="0.0028279" ixy="0" ixz="0" iyz="0"/>
         </inertial>
 
         <visual>
@@ -272,10 +272,10 @@
     </link>
     <link name="RightUpperArm">
         <inertial>
-            <mass value="1.8741"/>
+            <mass value="1.8738"/>
 			<!--COM origin wrt jRightShoulder-->
             <origin xyz="0    -0.14042           0" rpy="0 0 0" />
-            <inertia ixx="0.012753" iyy="0.012753" izz="0.00087191" ixy="0" ixz="0" iyz="0"/>
+            <inertia ixx="0.012751" iyy="0.012751" izz="0.00087175" ixy="0" ixz="0" iyz="0"/>
         </inertial>
 
         <visual>
@@ -304,10 +304,10 @@
     </link>
 	<link name="RightForeArm">
         <inertial>
-            <mass value="1.2494"/>
+            <mass value="1.2492"/>
 			<!--COM origin wrt jRightElbow-->
             <origin xyz="0    -0.11509           0" rpy="0 0 0" />
-            <inertia ixx="0.0056457" iyy="0.0056457" izz="0.00025834" ixy="0" ixz="0" iyz="0"/>
+            <inertia ixx="0.0056447" iyy="0.0056447" izz="0.0002583" ixy="0" ixz="0" iyz="0"/>
         </inertial>
 
         <visual>
@@ -336,10 +336,10 @@
     </link>
 	<link name="RightHand">
         <inertial>
-            <mass value="0.37483"/>
+            <mass value="0.37476"/>
 			<!--COM origin wrt jRightWrist-->
             <origin xyz="0   -0.086033           0" rpy="0 0 0" />
-            <inertia ixx="0.00097647" iyy="0.00046269" izz="0.0013358" ixy="0" ixz="0" iyz="0"/>
+            <inertia ixx="0.00097629" iyy="0.00046261" izz="0.0013356" ixy="0" ixz="0" iyz="0"/>
         </inertial>
 
         <visual>
@@ -362,10 +362,10 @@
 	<!--Chain from (12) to (15)-->
 	<link name="LeftShoulder">
         <inertial>
-            <mass value="1.9366"/>
+            <mass value="1.9363"/>
 			<!--COM origin wrt jLeftC7Shoulder-->
             <origin xyz="0    0.063159           0" rpy="0 0 0" />
-            <inertia ixx="0.0028285" iyy="0.00050664" izz="0.0028285" ixy="0" ixz="0" iyz="0"/>
+            <inertia ixx="0.0028279" iyy="0.00050654" izz="0.0028279" ixy="0" ixz="0" iyz="0"/>
         </inertial>
 
         <visual>
@@ -401,10 +401,10 @@
     </link>
 	<link name="LeftUpperArm">
         <inertial>
-            <mass value="1.8741"/>
+            <mass value="1.8738"/>
 			<!--COM origin wrt jLeftShoulder-->
             <origin xyz="0     0.14042           0" rpy="0 0 0" />
-            <inertia ixx="0.012753" iyy="0.012753" izz="0.00087191" ixy="0" ixz="0" iyz="0"/>
+            <inertia ixx="0.012751" iyy="0.012751" izz="0.00087175" ixy="0" ixz="0" iyz="0"/>
         </inertial>
 
         <visual>
@@ -433,10 +433,10 @@
     </link>
 	<link name="LeftForeArm">
         <inertial>
-            <mass value="1.2494"/>
+            <mass value="1.2492"/>
 			<!--COM origin wrt jLeftElbow-->
             <origin xyz="0     0.11509           0" rpy="0 0 0" />
-            <inertia ixx="0.0056457" iyy="0.0056457" izz="0.00025834" ixy="0" ixz="0" iyz="0"/>
+            <inertia ixx="0.0056447" iyy="0.0056447" izz="0.0002583" ixy="0" ixz="0" iyz="0"/>
         </inertial>
 
         <visual>
@@ -465,10 +465,10 @@
     </link>
 	<link name="LeftHand">
         <inertial>
-            <mass value="0.37483"/>
+            <mass value="0.37476"/>
 			<!--COM origin wrt jLeftWrist-->
             <origin xyz="0    0.086033           0" rpy="0 0 0" />
-            <inertia ixx="0.00097647" iyy="0.00046269" izz="0.0013358" ixy="0" ixz="0" iyz="0"/>
+            <inertia ixx="0.00097629" iyy="0.00046261" izz="0.0013356" ixy="0" ixz="0" iyz="0"/>
         </inertial>
 
         <visual>
@@ -505,10 +505,10 @@
     </link>
     <link name="RightUpperLeg">
         <inertial>
-            <mass value="7.8089"/>
+            <mass value="7.8075"/>
 			<!--COM origin wrt jRightHip-->
             <origin xyz="0           0    -0.20463" rpy="0 0 0" />
-            <inertia ixx="0.11419" iyy="0.11419" izz="0.010394" ixy="0" ixz="0" iyz="0"/>
+            <inertia ixx="0.11417" iyy="0.11417" izz="0.010392" ixy="0" ixz="0" iyz="0"/>
         </inertial>
 
         <visual>
@@ -537,10 +537,10 @@
     </link>
     <link name="RightLowerLeg">
         <inertial>
-            <mass value="2.2802"/>
+            <mass value="2.2798"/>
 			<!--COM origin wrt jRightKnee-->
             <origin xyz="0           0    -0.21406" rpy="0 0 0" />
-            <inertia ixx="0.035707" iyy="0.035707" izz="0.0017603" ixy="0" ixz="0" iyz="0"/>
+            <inertia ixx="0.0357" iyy="0.0357" izz="0.00176" ixy="0" ixz="0" iyz="0"/>
         </inertial>
 
         <visual>
@@ -576,10 +576,10 @@
     </link>
     <link name="RightFoot">
         <inertial>
-            <mass value="0.81213"/>
+            <mass value="0.81198"/>
 			<!--COM origin wrt jRightAnkle-->
             <origin xyz="0.047341           0   -0.045923" rpy="0 0 0" />
-            <inertia ixx="0.00098889" iyy="0.0026169" izz="0.002464" ixy="0" ixz="0" iyz="0"/>
+            <inertia ixx="0.00098871" iyy="0.0026164" izz="0.0024635" ixy="0" ixz="0" iyz="0"/>
         </inertial>
 
         <visual>
@@ -601,10 +601,10 @@
     </link>
     <link name="RightToe">
         <inertial>
-            <mass value="0.093707"/>
+            <mass value="0.09369"/>
 			<!--COM origin wrt jRightBallFoot-->
             <origin xyz="0.033062           0           0" rpy="0 0 0" />
-            <inertia ixx="4.9912e-05" iyy="3.5828e-05" izz="8.237e-05" ixy="0" ixz="0" iyz="0"/>
+            <inertia ixx="4.9903e-05" iyy="3.5821e-05" izz="8.2355e-05" ixy="0" ixz="0" iyz="0"/>
         </inertial>
 
         <visual>
@@ -640,10 +640,10 @@
     </link>
     <link name="LeftUpperLeg">
         <inertial>
-            <mass value="7.8089"/>
+            <mass value="7.8075"/>
 			<!--COM origin wrt jLeftHip-->
             <origin xyz="0           0    -0.20463" rpy="0 0 0" />
-            <inertia ixx="0.11419" iyy="0.11419" izz="0.010394" ixy="0" ixz="0" iyz="0"/>
+            <inertia ixx="0.11417" iyy="0.11417" izz="0.010392" ixy="0" ixz="0" iyz="0"/>
         </inertial>
 
         <visual>
@@ -672,10 +672,10 @@
     </link>
 	<link name="LeftLowerLeg">
         <inertial>
-            <mass value="2.2802"/>
+            <mass value="2.2798"/>
 			<!--COM origin wrt jLeftKnee-->
             <origin xyz="0           0    -0.21406" rpy="0 0 0" />
-            <inertia ixx="0.035707" iyy="0.035707" izz="0.0017603" ixy="0" ixz="0" iyz="0"/>
+            <inertia ixx="0.0357" iyy="0.0357" izz="0.00176" ixy="0" ixz="0" iyz="0"/>
         </inertial>
 
         <visual>
@@ -711,10 +711,10 @@
     </link>
     <link name="LeftFoot">
         <inertial>
-            <mass value="0.81213"/>
+            <mass value="0.81198"/>
 			<!--COM origin wrt jLeftAnkle-->
             <origin xyz="0.047341           0   -0.045923" rpy="0 0 0" />
-            <inertia ixx="0.00098889" iyy="0.0026169" izz="0.002464" ixy="0" ixz="0" iyz="0"/>
+            <inertia ixx="0.00098871" iyy="0.0026164" izz="0.0024635" ixy="0" ixz="0" iyz="0"/>
         </inertial>
 
         <visual>
@@ -736,10 +736,10 @@
     </link>
 	<link name="LeftToe">
         <inertial>
-            <mass value="0.093707"/>
+            <mass value="0.09369"/>
 			<!--COM origin wrt jLeftBallFoot-->
             <origin xyz="0.033062           0           0" rpy="0 0 0" />
-            <inertia ixx="4.9912e-05" iyy="3.5828e-05" izz="8.237e-05" ixy="0" ixz="0" iyz="0"/>
+            <inertia ixx="4.9903e-05" iyy="3.5821e-05" izz="8.2355e-05" ixy="0" ixz="0" iyz="0"/>
         </inertial>
 
         <visual>
@@ -1154,155 +1154,155 @@
 	<!-- Sensor  1-->
 <sensor name="Pelvis_gyro" type="gyroscope">
 <parent link="Pelvis"/>
-<origin xyz="-0.056413  0.00035913    0.093475" rpy="0.12075      1.0472      -3.004"/>
+<origin xyz="-0.055851 -0.00024794    0.093777" rpy="-0.025339      1.0817      3.1146"/>
 </sensor>
 <sensor name="Pelvis_accelerometer" type="accelerometer">
 <parent link="Pelvis"/>
-<origin xyz="-0.056413  0.00035913    0.093475" rpy="0.12075      1.0472      -3.004"/>
+<origin xyz="-0.055851 -0.00024794    0.093777" rpy="-0.025339      1.0817      3.1146"/>
 </sensor>
 <!-- Sensor  2-->
 <sensor name="T8_gyro" type="gyroscope">
 <parent link="T8"/>
-<origin xyz="0.12909  9.5625e-05    0.070993" rpy="-0.13395      1.0496    -0.17832"/>
+<origin xyz="0.12907 -1.1351e-05    0.071044" rpy="-0.0094209      1.0965     0.23977"/>
 </sensor>
 <sensor name="T8_accelerometer" type="accelerometer">
 <parent link="T8"/>
-<origin xyz="0.12909  9.5625e-05    0.070993" rpy="-0.13395      1.0496    -0.17832"/>
+<origin xyz="0.12907 -1.1351e-05    0.071044" rpy="-0.0094209      1.0965     0.23977"/>
 </sensor>
 <!-- Sensor  3-->
 <sensor name="Head_gyro" type="gyroscope">
 <parent link="Head"/>
-<origin xyz="-0.064582 -0.00015796    0.071065" rpy="2.564    -0.09408     -1.5942"/>
+<origin xyz="-0.064568 -4.2102e-05    0.071101" rpy="2.4696    -0.15126     -1.4222"/>
 </sensor>
 <sensor name="Head_accelerometer" type="accelerometer">
 <parent link="Head"/>
-<origin xyz="-0.064582 -0.00015796    0.071065" rpy="2.564    -0.09408     -1.5942"/>
+<origin xyz="-0.064568 -4.2102e-05    0.071101" rpy="2.4696    -0.15126     -1.4222"/>
 </sensor>
 <!-- Sensor  4-->
 <sensor name="RightShoulder_gyro" type="gyroscope">
 <parent link="RightShoulder"/>
-<origin xyz="-0.018298   -0.045712   -0.054845" rpy="0.86405    -0.14356    -0.96612"/>
+<origin xyz="-0.018321   -0.045717    -0.05485" rpy="1.0841    -0.33417     -1.0102"/>
 </sensor>
 <sensor name="RightShoulder_accelerometer" type="accelerometer">
 <parent link="RightShoulder"/>
-<origin xyz="-0.018298   -0.045712   -0.054845" rpy="0.86405    -0.14356    -0.96612"/>
+<origin xyz="-0.018321   -0.045717    -0.05485" rpy="1.0841    -0.33417     -1.0102"/>
 </sensor>
 <!-- Sensor  5-->
 <sensor name="RightUpperArm_gyro" type="gyroscope">
 <parent link="RightUpperArm"/>
-<origin xyz="-0.018782   -0.093814    0.018734" rpy="-0.35499   0.0065525     -1.4919"/>
+<origin xyz="-0.01881   -0.093846    0.018777" rpy="-0.19827    0.031521     -1.5457"/>
 </sensor>
 <sensor name="RightUpperArm_accelerometer" type="accelerometer">
 <parent link="RightUpperArm"/>
-<origin xyz="-0.018782   -0.093814    0.018734" rpy="-0.35499   0.0065525     -1.4919"/>
+<origin xyz="-0.01881   -0.093846    0.018777" rpy="-0.19827    0.031521     -1.5457"/>
 </sensor>
 <!-- Sensor  6-->
 <sensor name="RightForeArm_gyro" type="gyroscope">
 <parent link="RightForeArm"/>
-<origin xyz="0.0016831    -0.18854    0.018882" rpy="-0.86721   -0.036496     -1.4228"/>
+<origin xyz="0.0017215    -0.18852    0.018839" rpy="-0.11776  -0.0087126     -1.3711"/>
 </sensor>
 <sensor name="RightForeArm_accelerometer" type="accelerometer">
 <parent link="RightForeArm"/>
-<origin xyz="0.0016831    -0.18854    0.018882" rpy="-0.86721   -0.036496     -1.4228"/>
+<origin xyz="0.0017215    -0.18852    0.018839" rpy="-0.11776  -0.0087126     -1.3711"/>
 </sensor>
 <!-- Sensor  7-->
 <sensor name="RightHand_gyro" type="gyroscope">
 <parent link="RightHand"/>
-<origin xyz="1.3405e-05    -0.05189    0.018901" rpy="-0.22076   -0.079589     -1.7793"/>
+<origin xyz="1.5604e-06   -0.051917    0.018922" rpy="-0.25252    -0.33171      1.4578"/>
 </sensor>
 <sensor name="RightHand_accelerometer" type="accelerometer">
 <parent link="RightHand"/>
-<origin xyz="1.3405e-05    -0.05189    0.018901" rpy="-0.22076   -0.079589     -1.7793"/>
+<origin xyz="1.5604e-06   -0.051917    0.018922" rpy="-0.25252    -0.33171      1.4578"/>
 </sensor>
 <!-- Sensor  8-->
 <sensor name="LeftShoulder_gyro" type="gyroscope">
 <parent link="LeftShoulder"/>
-<origin xyz="-0.018333    0.045801   -0.054888" rpy="-0.99215    -0.17215      1.1717"/>
+<origin xyz="-0.01832    0.045769   -0.054849" rpy="-1.1924    -0.29051      1.4506"/>
 </sensor>
 <sensor name="LeftShoulder_accelerometer" type="accelerometer">
 <parent link="LeftShoulder"/>
-<origin xyz="-0.018333    0.045801   -0.054888" rpy="-0.99215    -0.17215      1.1717"/>
+<origin xyz="-0.01832    0.045769   -0.054849" rpy="-1.1924    -0.29051      1.4506"/>
 </sensor>
 <!-- Sensor  9-->
 <sensor name="LeftUpperArm_gyro" type="gyroscope">
 <parent link="LeftUpperArm"/>
-<origin xyz="-0.018809    0.093827    0.018737" rpy="0.11731   -0.096587      1.5622"/>
+<origin xyz="-0.018815    0.093851    0.018745" rpy="0.13574    0.014451      1.6021"/>
 </sensor>
 <sensor name="LeftUpperArm_accelerometer" type="accelerometer">
 <parent link="LeftUpperArm"/>
-<origin xyz="-0.018809    0.093827    0.018737" rpy="0.11731   -0.096587      1.5622"/>
+<origin xyz="-0.018815    0.093851    0.018745" rpy="0.13574    0.014451      1.6021"/>
 </sensor>
 <!-- Sensor  10-->
 <sensor name="LeftForeArm_gyro" type="gyroscope">
 <parent link="LeftForeArm"/>
-<origin xyz="0.001667     0.18853    0.018842" rpy="0.14484   -0.057021      1.3172"/>
+<origin xyz="0.0017185     0.18851    0.018832" rpy="-0.15931   -0.068329      1.3188"/>
 </sensor>
 <sensor name="LeftForeArm_accelerometer" type="accelerometer">
 <parent link="LeftForeArm"/>
-<origin xyz="0.001667     0.18853    0.018842" rpy="0.14484   -0.057021      1.3172"/>
+<origin xyz="0.0017185     0.18851    0.018832" rpy="-0.15931   -0.068329      1.3188"/>
 </sensor>
 <!-- Sensor  11-->
 <sensor name="LeftHand_gyro" type="gyroscope">
 <parent link="LeftHand"/>
-<origin xyz="0.00015884    0.051839    0.018943" rpy="-0.32298     0.31766      2.0779"/>
+<origin xyz="-9.0101e-06    0.051898    0.018908" rpy="0.04954    -0.12803     -1.8088"/>
 </sensor>
 <sensor name="LeftHand_accelerometer" type="accelerometer">
 <parent link="LeftHand"/>
-<origin xyz="0.00015884    0.051839    0.018943" rpy="-0.32298     0.31766      2.0779"/>
+<origin xyz="-9.0101e-06    0.051898    0.018908" rpy="0.04954    -0.12803     -1.8088"/>
 </sensor>
 <!-- Sensor  12-->
 <sensor name="RightUpperLeg_gyro" type="gyroscope">
 <parent link="RightUpperLeg"/>
-<origin xyz="0.011771   -0.035456    -0.24709" rpy="2.9681      1.3016      1.6973"/>
+<origin xyz="0.011352   -0.041863    -0.24639" rpy="2.918      1.3456      1.3207"/>
 </sensor>
 <sensor name="RightUpperLeg_accelerometer" type="accelerometer">
 <parent link="RightUpperLeg"/>
-<origin xyz="0.011771   -0.035456    -0.24709" rpy="2.9681      1.3016      1.6973"/>
+<origin xyz="0.011352   -0.041863    -0.24639" rpy="2.918      1.3456      1.3207"/>
 </sensor>
 <!-- Sensor  13-->
 <sensor name="RightLowerLeg_gyro" type="gyroscope">
 <parent link="RightLowerLeg"/>
-<origin xyz="0.03243   0.0071239    -0.13919" rpy="-1.0656      1.4974    -0.36534"/>
+<origin xyz="0.032321   0.0075803    -0.13925" rpy="1.3088      1.5181      1.5259"/>
 </sensor>
 <sensor name="RightLowerLeg_accelerometer" type="accelerometer">
 <parent link="RightLowerLeg"/>
-<origin xyz="0.03243   0.0071239    -0.13919" rpy="-1.0656      1.4974    -0.36534"/>
+<origin xyz="0.032321   0.0075803    -0.13925" rpy="1.3088      1.5181      1.5259"/>
 </sensor>
 <!-- Sensor  14-->
 <sensor name="RightFoot_gyro" type="gyroscope">
 <parent link="RightFoot"/>
-<origin xyz="0.076573   0.0010386   -0.010818" rpy="0.20674     0.56982    -0.08221"/>
+<origin xyz="0.076635    0.001269   -0.010812" rpy="0.39462     0.99357     0.12059"/>
 </sensor>
 <sensor name="RightFoot_accelerometer" type="accelerometer">
 <parent link="RightFoot"/>
-<origin xyz="0.076573   0.0010386   -0.010818" rpy="0.20674     0.56982    -0.08221"/>
+<origin xyz="0.076635    0.001269   -0.010812" rpy="0.39462     0.99357     0.12059"/>
 </sensor>
 <!-- Sensor  15-->
 <sensor name="LeftUpperLeg_gyro" type="gyroscope">
 <parent link="LeftUpperLeg"/>
-<origin xyz="0.01184    0.043533    -0.24573" rpy="0.78026      1.3256    -0.76828"/>
+<origin xyz="0.011359    0.042682    -0.24608" rpy="2.8953      1.3358     -1.9171"/>
 </sensor>
 <sensor name="LeftUpperLeg_accelerometer" type="accelerometer">
 <parent link="LeftUpperLeg"/>
-<origin xyz="0.01184    0.043533    -0.24573" rpy="0.78026      1.3256    -0.76828"/>
+<origin xyz="0.011359    0.042682    -0.24608" rpy="2.8953      1.3358     -1.9171"/>
 </sensor>
 <!-- Sensor  16-->
 <sensor name="LeftLowerLeg_gyro" type="gyroscope">
 <parent link="LeftLowerLeg"/>
-<origin xyz="0.032437  -0.0075715    -0.13922" rpy="0.85495      1.4657     0.87174"/>
+<origin xyz="0.032311  -0.0076368    -0.13924" rpy="1.2847      1.4021     0.81762"/>
 </sensor>
 <sensor name="LeftLowerLeg_accelerometer" type="accelerometer">
 <parent link="LeftLowerLeg"/>
-<origin xyz="0.032437  -0.0075715    -0.13922" rpy="0.85495      1.4657     0.87174"/>
+<origin xyz="0.032311  -0.0076368    -0.13924" rpy="1.2847      1.4021     0.81762"/>
 </sensor>
 <!-- Sensor  17-->
 <sensor name="LeftFoot_gyro" type="gyroscope">
 <parent link="LeftFoot"/>
-<origin xyz="0.076547  -0.0011043    -0.01111" rpy="-0.13322     0.79952     0.17858"/>
+<origin xyz="0.076647  -0.0012887   -0.010792" rpy="-0.57153      1.0569      -0.187"/>
 </sensor>
 <sensor name="LeftFoot_accelerometer" type="accelerometer">
 <parent link="LeftFoot"/>
-<origin xyz="0.076547  -0.0011043    -0.01111" rpy="-0.13322     0.79952     0.17858"/>
+<origin xyz="0.076647  -0.0012887   -0.010792" rpy="-0.57153      1.0569      -0.187"/>
 </sensor>
 
 
