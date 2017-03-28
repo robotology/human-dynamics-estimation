@@ -144,6 +144,13 @@ public:
         
         yInfo() << "Joints frame effort:" << jointsFrameEffort.size() << jointsFrameEffort;
         
+        vector<string> URDFjoints;
+        URDFjoints.reserve(model.getNrOfJoints());
+        for (iDynTree::JointIndex jointIndex = 0; jointIndex < model.getNrOfJoints(); ++jointIndex) {
+            string jointName = model.getJointName(jointIndex);
+            URDFjoints.push_back(jointName);
+        }
+        
         defaultReducedModel.fromString("true");
         bool redModel = rf.check("reducedModel", defaultReducedModel, "Checking reduced model mode").asBool();
         if(!redModel) 
