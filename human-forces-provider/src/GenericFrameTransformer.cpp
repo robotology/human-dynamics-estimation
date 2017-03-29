@@ -1,5 +1,5 @@
 /*!
- * @file GenericFrameTransformer.h
+ * @file GenericFrameTransformer.cpp
  * @author Claudia Latella
  * @date 2017
  * @copyright iCub Facility - Istituto Italiano di Tecnologia
@@ -58,7 +58,7 @@ namespace human
         //Eigen Map types on Vector of YARP
         Map<const VectorXd> inputForceEigen(inputForce.data(), 6);
         Map<VectorXd> outputForceEigen(transformedForce.data(), 6);
-        
+
         //multiplied by -1 (as the force applied on the human is exactly the
         //opposite of the one excerted on the robot)
         outputForceEigen = -1 * toEigen(m_matrixTransform.asAdjointTransformWrench()) * inputForceEigen;

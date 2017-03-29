@@ -38,6 +38,7 @@ private:
     std::string m_attachedLink;
     std::string m_referenceFrame;
     yarp::sig::Vector m_packedForce;
+    yarp::sig::Vector m_forceBuffer;
     
 protected:
     /*!

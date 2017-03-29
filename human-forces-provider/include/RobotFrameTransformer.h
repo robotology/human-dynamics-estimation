@@ -56,8 +56,14 @@ class human::RobotFrameTransformer : public human::GenericFrameTransformer
 private:
     iDynTree::Transform m_matrixTransform;
     iDynTree::Transform m_constTransformFromFixture;
-    std::string m_robotSole;
-    std::string m_humanFoot;
+    std::string m_robotLinkingFrame;
+    std::string m_humanLinkingFrame;
+    //mandatory indeces for on-line getRelativeTransform()
+    iDynTree::FrameIndex m_originFrameIndex;
+    iDynTree::FrameIndex m_robotLinkingFrameIndex;
+    iDynTree::FrameIndex m_humanLinkingFrameIndex;
+    iDynTree::FrameIndex m_transformedFrameIndex;
+    
     
     iDynTree::KinDynComputations m_humanComputations;
     iDynTree::VectorDynSize m_humanConfiguration;
@@ -68,8 +74,8 @@ private:
     iDynTree::VectorDynSize m_robotVelocity;
     
     yarp::dev::IEncoders &m_robotJointConfiguration_encoder;
-    yarp::os::BufferedPort<HumanState> &m_humanJointConfiguration_port;
-    
+    yarp::os::BufferedPort<HumanState> &m_humanJointConfigurationPort;
+        
 public:
     /*!
      * Constructor from a constant iDynTree Transform object,
@@ -78,12 +84,12 @@ public:
      * YARP port for the human configuration.
      */
     RobotFrameTransformer(const iDynTree::Transform &constTransformFromFixture,
-                          const std::string &robotArm,
-                          const std::string &robotSole,
-                          const std::string &humanFoot,
-                          const std::string &humanHand,
+                          const std::string &inputFrame,
+                          const std::string &robotLinkingFrame,
+                          const std::string &humanLinkingFrame,
+                          const std::string &outputFrame,
                           yarp::dev::IEncoders &robotJointConfiguration_encoder,
-                          yarp::os::BufferedPort<HumanState> &humanJointConfiguration_port);
+                          yarp::os::BufferedPort<HumanState> &humanJointConfigurationPort);
     /*!
      * Initialize the human and robot models.
      * @param[in] humanModel iDynTree model for the human
