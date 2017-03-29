@@ -17,6 +17,8 @@
 #include <thrifts/HumanForces.h>
 #include <thrifts/HumanState.h>
 
+#include <geometry_msgs/WrenchStamped.h>
+
 
 namespace human
 {
@@ -26,6 +28,13 @@ namespace human
 
 namespace yarp
 {
+    namespace os
+    {
+        class Node;
+
+        template<typename T>
+        class Publisher;
+    }
     namespace dev
     {
         class IAnalogSensor;
@@ -53,6 +62,11 @@ private:
     std::vector<human::ForceReader*> m_readers;
     std::vector<yarp::dev::PolyDriver*> m_drivers;
     std::vector<yarp::os::BufferedPort<yarp::sig::Vector>*> m_ports;
+
+    yarp::os::Node *m_rosNode;
+    std::string m_tfPrefix;
+    std::vector<yarp::os::Publisher<geometry_msgs::WrenchStamped>*> m_topics;
+    unsigned m_rosSequence;
     
 public:
     /*!

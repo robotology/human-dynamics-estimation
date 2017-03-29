@@ -17,6 +17,9 @@
 
 #include <yarp/os/LogStream.h> 
 #include <yarp/os/Network.h>
+#include <yarp/os/Node.h>
+#include <yarp/os/Publisher.h>
+#include <yarp/os/Time.h>
 #include <yarp/dev/IAnalogSensor.h>
 #include <yarp/dev/IEncoders.h>
 #include <yarp/dev/ControlBoardInterfaces.h>
@@ -28,8 +31,8 @@
 
 #include <iDynTree/Core/EigenHelpers.h>
 
-#include <iostream>
-#include <cassert> //for using M_PI
+#include <TickTime.h>
+#include <iterator>
 
 
 //---------------------------------------------------------------------------
@@ -39,6 +42,23 @@ static bool parsePositionVector(const yarp::os::Value&, iDynTree::Position&);
 static bool parseStringListOption(const yarp::os::Value &option, std::vector<std::string> &parsedList);
 //---------------------------------------------------------------------------
 
+static inline TickTime normalizeSecNSec(double yarpTimeStamp)
+{
+    uint64_t time = static_cast<uint64_t>(yarpTimeStamp * 1000000000UL);
+    uint64_t nsec_part = (time % 1000000000UL);
+    uint64_t sec_part = (time / 1000000000UL);
+    TickTime ret;
+
+    if (sec_part > UINT_MAX)
+    {
+        yWarning() << "Timestamp exceeded the 64 bit representation, resetting it to 0";
+        sec_part = 0;
+    }
+
+    ret.sec  = sec_part;
+    ret.nsec = nsec_part;
+    return ret;
+}
 
 
 HumanForcesProvider::HumanForcesProvider()
@@ -184,6 +204,19 @@ bool HumanForcesProvider::configure(yarp::os::ResourceFinder &rf)
         return false;
     }
 
+    if (rf.check("rosTopic", falseValue, "Checking support for ROS topics").asBool())
+    {
+        m_rosNode = new yarp::os::Node("/" + getName());
+        if (!m_rosNode)
+        {
+            yError("Could not create ROS node %s", ("/" + getName()).c_str());
+            close();
+            return false;
+        }
+
+        m_tfPrefix = rf.check("rosTFPrefix", yarp::os::Value(""), "Checking TF prefix").asString();
+    }
+
     /*
      * ------Reading the specified sources (in file .ini)
      */
@@ -192,7 +225,13 @@ bool HumanForcesProvider::configure(yarp::os::ResourceFinder &rf)
     {
         yWarning("No source specified.  This module will do nothing.");
     }
-    
+
+    if (m_rosNode)
+    {
+        m_topics.resize(sources.size());
+        m_rosSequence = 1;
+    }
+
     for(std::vector<std::string>::const_iterator it = sources.begin(); it != sources.end(); ++it)
     {
         yarp::os::Bottle sourceGroup = rf.findGroup("FORCE_SOURCE_" + *it);
@@ -293,6 +332,7 @@ bool HumanForcesProvider::configure(yarp::os::ResourceFinder &rf)
             forceReader = new human::PortForceReader(appliedLink,
                                                      inputFrame,
                                                      *port);
+
         }
 
         if (!forceReader)
@@ -302,6 +342,19 @@ bool HumanForcesProvider::configure(yarp::os::ResourceFinder &rf)
             return false;
         }
         m_readers.push_back(forceReader);
+
+        if (m_rosNode)
+        {
+            //create also topic
+            std::vector<std::string>::difference_type index = std::distance<std::vector<std::string>::const_iterator>(sources.begin(), it);
+            if (index >= 0) {
+                m_topics[static_cast<size_t>(index)] = new yarp::os::Publisher<geometry_msgs::WrenchStamped>();
+                if (m_topics[static_cast<size_t>(index)]) {
+                    m_topics[static_cast<size_t>(index)]->topic("/" + getName() + "/" + appliedLink);
+                }
+            }
+
+        }
         
         yarp::os::Bottle transformationGroup = rf.findGroup("TRANSFORMATION_" + *it);
         if (transformationGroup.isNull())
@@ -419,13 +472,30 @@ bool HumanForcesProvider::updateModule()
     std::vector<human::Force6D> &forcesVector = allForces.forces;
     
     forcesVector.resize(m_readers.size());
-    for (std::vector<human::ForceReader*>::iterator it(m_readers.begin());
-         it != m_readers.end(); ++it) {
-        std::vector<human::ForceReader*>::difference_type index = std::distance(m_readers.begin(), it);
-        assert(index >= 0);
-        (*it)->readForce(forcesVector[static_cast<size_t>(index)]);
+    for (size_t index = 0; index < m_readers.size(); ++index) {
+        human::Force6D &currentForce = forcesVector[index];
+        m_readers[index]->readForce(currentForce);
+
+        if (m_rosNode && m_topics[index])
+        {
+            geometry_msgs::WrenchStamped &wrench = m_topics[index]->prepare();
+
+            wrench.header.seq = m_rosSequence;
+            wrench.header.stamp = normalizeSecNSec(yarp::os::Time::now());
+            wrench.header.frame_id = m_tfPrefix + currentForce.appliedLink;
+
+            wrench.wrench.force.x = currentForce.fx;
+            wrench.wrench.force.y = currentForce.fy;
+            wrench.wrench.force.z = currentForce.fz;
+            wrench.wrench.torque.x = currentForce.ux;
+            wrench.wrench.torque.y = currentForce.uy;
+            wrench.wrench.torque.z = currentForce.uz;
+
+            m_topics[index]->write();
+        }
     }
 
+    m_rosSequence++;
     /*
      * ------Write data on port:o
      */
@@ -462,10 +532,27 @@ bool HumanForcesProvider::close()
     for(std::vector<yarp::os::BufferedPort<yarp::sig::Vector>*>::const_iterator it = m_ports.begin();
         it != m_ports.end(); ++it)
     {
+        if (!(*it)) {
+            continue;
+        }
         (*it)->close();
         delete *it;
     }
     m_ports.clear();
+
+    /*
+     * ------Releasing allocated memory for m_topics
+     */
+    for (std::vector<yarp::os::Publisher<geometry_msgs::WrenchStamped>*>::iterator it(m_topics.begin());
+         it != m_topics.end(); ++it)
+    {
+        if (!(*it)) {
+            continue;
+        }
+        (*it)->close();
+        delete *it;
+    }
+    m_topics.clear();
     
     /*
      * ------Close the m_humanJointConfigurationPort
@@ -487,6 +574,10 @@ bool HumanForcesProvider::close()
         delete *it;
     }
     m_drivers.clear();
+
+    delete m_rosNode;
+    m_rosNode = 0;
+
     return true;
 }
 
