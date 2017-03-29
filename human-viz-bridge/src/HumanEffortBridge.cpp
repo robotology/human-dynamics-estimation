@@ -32,11 +32,14 @@ using namespace yarp::os;
 using namespace yarp::sig;
 using namespace human;
 
-struct effort_info {
+struct effortPublisher {
     string linkEffort;
     string jointEffort;
     vector<int> indices;
-} effort;
+    vector<string> realJointsNames;
+    Publisher<sensor_msgs_Temperature> publisher;
+    sensor_msgs_Temperature effortMsg;
+};
 
 inline TickTime normalizeSecNSec(double yarpTimeStamp)
 {
@@ -73,34 +76,10 @@ static bool parseFrameListOption(const Value &option, vector<string> &parsedSegm
 class xsensJointStatePublisherModule : public RFModule, public TypedReaderCallback<HumanDynamics> 
 {
     Port client_port;
-//     BufferedPort<HumanState> humanStateDataPort;
     BufferedPort<HumanDynamics> humanDynamicsDataPort;
+    
+    vector<effortPublisher> effortsList;
 
-//     Publisher<sensor_msgs_JointState> publisher;
-//     Publisher<tf2_msgs_TFMessage> publisher_tf;
-    vector< Publisher<sensor_msgs_Temperature> > publisher_vec;
-    
-    Publisher<sensor_msgs_Temperature> tempL1_pub; 
-    Publisher<sensor_msgs_Temperature> tempL2_pub; 
-    Publisher<sensor_msgs_Temperature> tempL3_pub; 
-    Publisher<sensor_msgs_Temperature> tempL4_pub; 
-    Publisher<sensor_msgs_Temperature> tempL5_pub; 
-    Publisher<sensor_msgs_Temperature> tempL6_pub; 
-    
-    Publisher<sensor_msgs_Temperature> tempR1_pub; 
-    Publisher<sensor_msgs_Temperature> tempR2_pub; 
-    Publisher<sensor_msgs_Temperature> tempR3_pub; 
-    Publisher<sensor_msgs_Temperature> tempR4_pub; 
-    Publisher<sensor_msgs_Temperature> tempR5_pub; 
-    Publisher<sensor_msgs_Temperature> tempR6_pub;      
-    
-//     sensor_msgs_JointState joint_state;
-//     tf2_msgs_TFMessage tf;
-    map<string,sensor_msgs_Temperature> sensorMsgsEffort_map;
-    vector<effort_info> effortsList;
-
-    int var, inc;
-    
 public:
     double getPeriod()
     {
@@ -129,16 +108,6 @@ public:
         }
         
         model = modelLoader.model();
-
-//         if (!publisher.topic(rf.find("topicPrefix").asString() + rf.find("jointStateTopicName").asString())) {
-//             yError() << "Failed to create publisher to /joint_states";
-//             return false;
-//         }
-//         
-//         if (!publisher_tf.topic(rf.find("tfTopicName").asString())) {
-//             yError() << "Failed to create publisher to /tf";
-//             return false;
-//         }
         
         vector<string> linksEffortList;
         if (!parseFrameListOption(rf.find("linkEffortList"), linksEffortList)) {
@@ -146,7 +115,7 @@ public:
             return false;
         }
         
-        yInfo() << "Joints frame effort:" << linksEffortList.size() << linksEffortList;
+        yInfo() << "efforts links list:" << linksEffortList.size() << linksEffortList;
         
         vector<string> URDFjoints;
         URDFjoints.reserve(model.getNrOfJoints());
@@ -154,14 +123,15 @@ public:
             string jointName = model.getJointName(jointIndex);
             URDFjoints.push_back(jointName);
         }
+        sort(URDFjoints.begin(), URDFjoints.end());
         
         vector<string> jointsEffortList;
-        if (!parseFrameListOption(rf.find("frameEffortList"), jointsEffortList)) {
+        if (!parseFrameListOption(rf.find("jointEffortList"), jointsEffortList)) {
             yError() << "Error while parsing joints effort list";
             return false;
         }
 
-        yInfo() << "Joints effort:" << jointsEffortList.size() << jointsEffortList;
+        yInfo() << "efforts joints list:" << jointsEffortList.size() << jointsEffortList;
         
         if (linksEffortList.size() != jointsEffortList.size()) {
             yError() << "links list and joints list have different lengths";
@@ -179,35 +149,13 @@ public:
             }
         }
 
-//         publisher_vec.resize(1);
+        for (size_t index = 0; index < effortsList.size(); ++index) {
+            if (!effortsList[index].publisher.topic(rf.find("topicPrefix").asString() + "/" + effortsList[index].jointEffort)) {
+                yError() << "Failed to create publisher to" << effortsList[index].linkEffort;
+                return false;
+            }
+        }
 
-//         if(!publisher_vec[0].topic("/topic")) {
-//             yError() << "Failed to create publisher to" << jointsEffort[0];
-//             return false;
-//         }
-        
-//         for (size_t index = 0; index < jointsEffort.size(); ++index) {
-//             if (!publisher_vec[index].topic(rf.find("topicPrefix").asString() + "/" + jointsEffort[index])) {
-//                 yError() << "Failed to create publisher to" << jointsEffort[index];
-//                 return false;
-//             }
-//         }
-
-        tempL1_pub.topic(rf.find("topicPrefix").asString() + "/" + linksEffort[0]);
-        tempL2_pub.topic(rf.find("topicPrefix").asString() + "/" + linksEffort[1]);
-        tempL3_pub.topic(rf.find("topicPrefix").asString() + "/" + linksEffort[2]);
-        tempL4_pub.topic(rf.find("topicPrefix").asString() + "/" + linksEffort[3]);
-        tempL5_pub.topic(rf.find("topicPrefix").asString() + "/" + linksEffort[4]);
-        tempL6_pub.topic(rf.find("topicPrefix").asString() + "/" + linksEffort[5]);
-                                                                   
-        tempR1_pub.topic(rf.find("topicPrefix").asString() + "/" + linksEffort[6]);
-        tempR2_pub.topic(rf.find("topicPrefix").asString() + "/" + linksEffort[7]);
-        tempR3_pub.topic(rf.find("topicPrefix").asString() + "/" + linksEffort[8]);
-        tempR4_pub.topic(rf.find("topicPrefix").asString() + "/" + linksEffort[9]);
-        tempR5_pub.topic(rf.find("topicPrefix").asString() + "/" + linksEffort[10]);
-        tempR6_pub.topic(rf.find("topicPrefix").asString() + "/" + linksEffort[11]);
-        
-        
         humanDynamicsDataPort.useCallback(*this);
         string dynamicsEstimatorServerName = "/" + rf.find("serverName").asString() + "/dynamicsEstimation:o";
         string dynamicsReaderPortName = "/" + getName() + "/state:i";
@@ -223,13 +171,11 @@ public:
         }
         
         for (size_t index = 0; index < effortsList.size(); ++index) {
-        sensorMsgsEffort_map[effortsList[index].linkEffort].header.frame_id = rf.find("tfPrefix").asString() + "/" + effortsList[index].linkEffort;
-        sensorMsgsEffort_map[effortsList[index].linkEffort].header.seq = 1;
-        sensorMsgsEffort_map[effortsList[index].linkEffort].variance = 0;
+            effortPublisher &effort = effortsList[index];
+            effort.effortMsg.header.frame_id = rf.find("tfPrefix").asString() + "/" + effortsList[index].linkEffort;
+            effort.effortMsg.header.seq = 1;
+            effort.effortMsg.variance = 0;
         }
-        
-        var = 0;
-        inc = 1;
         
         return true;
     }
@@ -237,18 +183,11 @@ public:
     bool close()
     {
         humanDynamicsDataPort.close();
-        tempL1_pub.close(); tempL1_pub.interrupt();
-        tempL2_pub.close(); tempL2_pub.interrupt();
-        tempL3_pub.close(); tempL3_pub.interrupt();
-        tempL4_pub.close(); tempL4_pub.interrupt();
-        tempL5_pub.close(); tempL5_pub.interrupt();
-        tempL6_pub.close(); tempL6_pub.interrupt();
-        tempR1_pub.close(); tempR1_pub.interrupt();
-        tempR2_pub.close(); tempR2_pub.interrupt();
-        tempR3_pub.close(); tempR3_pub.interrupt();
-        tempR4_pub.close(); tempR4_pub.interrupt();
-        tempR5_pub.close(); tempR5_pub.interrupt();
-        tempR6_pub.close(); tempR6_pub.interrupt();
+        for (size_t index = 0; index < effortsList.size(); ++index) {
+            effortPublisher &effort = effortsList[index];
+            effort.publisher.close();
+            effort.publisher.interrupt();
+        }
         return true;
     }
     
@@ -256,38 +195,20 @@ public:
     
         TickTime currentTime = normalizeSecNSec(yarp::os::Time::now());
         
-        int effort_temp = 0;
-        if (var<0 || var>100) inc *= -1;
         for (size_t index = 0; index < effortsList.size(); ++index) {
-            sensorMsgsEffort_map[effortsList[index].linkEffort].header.stamp = currentTime;
+            effortPublisher &effort = effortsList[index];
+            sensor_msgs_Temperature &effortMsg = effort.publisher.prepare();
+            effort.effortMsg.header.stamp = currentTime;
+            
+            int effort_temp = 0;
             for (size_t indexJoint = 0; indexJoint < effortsList[index].indices.size(); ++indexJoint) {
-                effort_temp += humanDynamicsData.linkVariables[indexJoint].torque[0];
+                effort_temp += humanDynamicsData.jointVariables[indexJoint].torque[0];
             }
-            sensorMsgsEffort_map[effortsList[index].linkEffort].temperature = effort_temp;
-            effort_temp = 0;
+            effort.effortMsg.temperature = effort_temp;
+            effortMsg = effort.effortMsg; 
+            effort.publisher.write();
         }
         
-        tempL1_pub.write(sensorMsgsEffort_map[effortsList[0].linkEffort]);
-        tempL2_pub.write(sensorMsgsEffort_map[effortsList[1].linkEffort]);
-        tempL3_pub.write(sensorMsgsEffort_map[effortsList[2].linkEffort]);
-        tempL4_pub.write(sensorMsgsEffort_map[effortsList[3].linkEffort]);
-        tempL5_pub.write(sensorMsgsEffort_map[effortsList[4].linkEffort]);
-        tempL6_pub.write(sensorMsgsEffort_map[effortsList[5].linkEffort]);
-                                           
-        tempR1_pub.write(sensorMsgsEffort_map[effortsList[6].linkEffort]);
-        tempR2_pub.write(sensorMsgsEffort_map[effortsList[7].linkEffort]);
-        tempR3_pub.write(sensorMsgsEffort_map[effortsList[8].linkEffort]);
-        tempR4_pub.write(sensorMsgsEffort_map[effortsList[9].linkEffort]);
-        tempR5_pub.write(sensorMsgsEffort_map[effortsList[10].linkEffort]);
-        tempR6_pub.write(sensorMsgsEffort_map[effortsList[11].linkEffort]);
-
-        
-        //publisher_vec[0].write(temp);
-        
-//         for (size_t index = 0; index < jointsEffort.size(); ++index) {
-//             publisher_vec[index].write(sensorMsgsEffort_map[jointsEffort[index]]);
-//         }
-
     }
 };
 
