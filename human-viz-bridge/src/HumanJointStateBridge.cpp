@@ -155,7 +155,7 @@ public:
         
         humanStateDataPort.useCallback(*this);
         string serverName = rf.check("stateprovider_name", Value("human-state-provider"), "Checking server name").asString();
-        string stateProviderServerName = "/" + rf.find("serverName").asString() + "/state:o";
+        string stateProviderServerName = "/" + rf.find("stateprovider_name").asString() + "/state:o";
         string stateReaderPortName = "/" + getName() + "/state:i";
         humanStateDataPort.open(stateReaderPortName);
 
