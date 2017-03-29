@@ -1,12 +1,5 @@
-#include "geometry_msgs_Quaternion.h"
-#include "geometry_msgs_TransformStamped.h"
-#include "geometry_msgs_Vector3.h"
-#include "msgs/String.h"
-#include "sensor_msgs_JointState.h"
 #include "sensor_msgs_Temperature.h"
 #include "std_msgs_Header.h"
-#include "tf2_msgs_TFMessage.h"
-#include "thrifts/HumanState.h"
 #include "thrifts/HumanDynamics.h"
 
 #include <iDynTree/ModelIO/ModelLoader.h>
@@ -21,7 +14,6 @@
 #include <yarp/sig/Vector.h>
 
 #include <algorithm>
-#include <cmath>
 #include <iostream>
 #include <limits.h>
 #include <string>
@@ -37,7 +29,7 @@ struct effortPublisher {
     string jointEffort;
     vector<int> indices;
     vector<string> realJointsNames;
-    Publisher<sensor_msgs_Temperature> publisher;
+    Publisher<sensor_msgs_Temperature> *publisher;
     sensor_msgs_Temperature effortMsg;
 };
 
@@ -144,13 +136,21 @@ public:
             effortsList[index].jointEffort = jointsEffortList[index];
             for (size_t indexURDF = 0; indexURDF < URDFjoints.size(); ++indexURDF) {
                 if(URDFjoints[indexURDF].find(jointsEffortList[index])!=string::npos) {
+                    effortsList[index].realJointsNames.push_back(URDFjoints[indexURDF]);
                     effortsList[index].indices.push_back(indexURDF);    
                 }
             }
         }
+        
 
         for (size_t index = 0; index < effortsList.size(); ++index) {
-            if (!effortsList[index].publisher.topic(rf.find("topicPrefix").asString() + "/" + effortsList[index].jointEffort)) {
+            std::string topicName = rf.find("topicPrefix").asString() + "/" + effortsList[index].jointEffort;
+            effortsList[index].publisher = new Publisher<sensor_msgs_Temperature>();
+            if (!effortsList[index].publisher) {
+                yError() << "Failed to create publisher to" << effortsList[index].linkEffort;
+                return false;
+            }
+            if (!effortsList[index].publisher->topic(topicName)) {
                 yError() << "Failed to create publisher to" << effortsList[index].linkEffort;
                 return false;
             }
@@ -185,30 +185,35 @@ public:
         humanDynamicsDataPort.close();
         for (size_t index = 0; index < effortsList.size(); ++index) {
             effortPublisher &effort = effortsList[index];
-            effort.publisher.close();
-            effort.publisher.interrupt();
+            if (effort.publisher) {        
+                effort.publisher->interrupt();
+                effort.publisher->close();
+                delete effort.publisher;
+                effort.publisher = 0;
+            }
         }
         return true;
     }
     
     virtual void onRead(HumanDynamics& humanDynamicsData) {
-    
+        
         TickTime currentTime = normalizeSecNSec(yarp::os::Time::now());
         
         for (size_t index = 0; index < effortsList.size(); ++index) {
             effortPublisher &effort = effortsList[index];
-            sensor_msgs_Temperature &effortMsg = effort.publisher.prepare();
+            if (!effort.publisher) return;
+            sensor_msgs_Temperature &effortMsg = effort.publisher->prepare();
             effort.effortMsg.header.stamp = currentTime;
             
-            int effort_temp = 0;
+            double effort_temp = 0;
             for (size_t indexJoint = 0; indexJoint < effortsList[index].indices.size(); ++indexJoint) {
-                effort_temp += humanDynamicsData.jointVariables[indexJoint].torque[0];
+                effort_temp += humanDynamicsData.jointVariables[effortsList[index].indices[indexJoint]].torque[0];
             }
             effort.effortMsg.temperature = effort_temp;
             effortMsg = effort.effortMsg; 
-            effort.publisher.write();
+            effort.publisher->write();
         }
-        
+
     }
 };
 
