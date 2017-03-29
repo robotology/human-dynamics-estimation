@@ -24,7 +24,7 @@ using namespace yarp::os;
 using namespace yarp::sig;
 using namespace human;
 
-struct effortPublisher {
+struct EffortPublisher {
     string linkEffort;
     string jointEffort;
     vector<int> indices;
@@ -70,7 +70,7 @@ class xsensJointStatePublisherModule : public RFModule, public TypedReaderCallba
     Port client_port;
     BufferedPort<HumanDynamics> humanDynamicsDataPort;
     
-    vector<effortPublisher> effortsList;
+    vector<EffortPublisher> effortsList;
 
 public:
     double getPeriod()
@@ -171,7 +171,7 @@ public:
         }
         
         for (size_t index = 0; index < effortsList.size(); ++index) {
-            effortPublisher &effort = effortsList[index];
+            EffortPublisher &effort = effortsList[index];
             effort.effortMsg.header.frame_id = rf.find("tfPrefix").asString() + "/" + effortsList[index].linkEffort;
             effort.effortMsg.header.seq = 1;
             effort.effortMsg.variance = 0;
@@ -184,7 +184,7 @@ public:
     {
         humanDynamicsDataPort.close();
         for (size_t index = 0; index < effortsList.size(); ++index) {
-            effortPublisher &effort = effortsList[index];
+            EffortPublisher &effort = effortsList[index];
             if (effort.publisher) {        
                 effort.publisher->interrupt();
                 effort.publisher->close();
@@ -200,7 +200,7 @@ public:
         TickTime currentTime = normalizeSecNSec(yarp::os::Time::now());
         
         for (size_t index = 0; index < effortsList.size(); ++index) {
-            effortPublisher &effort = effortsList[index];
+            EffortPublisher &effort = effortsList[index];
             if (!effort.publisher) return;
             sensor_msgs_Temperature &effortMsg = effort.publisher->prepare();
             effort.effortMsg.header.stamp = currentTime;
