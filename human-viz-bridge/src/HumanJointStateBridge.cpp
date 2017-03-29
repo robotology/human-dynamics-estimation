@@ -68,10 +68,9 @@ class xsensJointStatePublisherModule : public RFModule, public TypedReaderCallba
     Publisher<sensor_msgs_JointState> publisher;
     Publisher<tf2_msgs_TFMessage> publisher_tf;
     
-    //variables declaration
     sensor_msgs_JointState joint_state;
     tf2_msgs_TFMessage tf;
-    
+
 public:
     double getPeriod()
     {
@@ -204,7 +203,6 @@ public:
         tf.transforms[0].transform.rotation.w = humanStateData.baseOrientationWRTGlobal.w;
 
         publisher_tf.write(tf);
-
     }
 };
 

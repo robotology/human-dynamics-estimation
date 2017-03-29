@@ -69,7 +69,6 @@ class HumanTFBridge : public RFModule, public TypedReaderCallback<XsensSegmentsF
     
     Publisher<tf2_msgs_TFMessage> publisher_tf;
     
-    //variables declaration
     tf2_msgs_TFMessage tf;
     vector<string> segments;
     vector<string> fakeSegments;
