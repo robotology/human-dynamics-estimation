@@ -43,6 +43,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/i
 ## Specify targets for the linkage
 target_link_libraries(${PROJECT_NAME} human-forces-provider-data 
                                       human-state-provider-data
+                                      human-rosmsgs
                                       YARP::YARP_OS
                                       YARP::YARP_init
                                       YARP::YARP_sig
