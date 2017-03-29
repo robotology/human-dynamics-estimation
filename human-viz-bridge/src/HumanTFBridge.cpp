@@ -204,6 +204,7 @@ public:
     virtual void onRead(XsensSegmentsFrame& xsensData) {
     
         TickTime currentTime = normalizeSecNSec(yarp::os::Time::now());
+        tf2_msgs_TFMessage &tfMsg = publisher_tf.prepare();
         // Send the transforms
         for (size_t index = 0; index < segments.size(); ++index){
             tf.transforms[index].header.seq   = index;
@@ -217,10 +218,11 @@ public:
             tf.transforms[index].transform.rotation.w = xsensData.segmentsData[index].orientation.w;
         }
           
-         for (size_t index = 0; index < fakeSegments.size(); ++index) {
+        for (size_t index = 0; index < fakeSegments.size(); ++index) {
             tf.transforms[segments.size() + index].header.stamp = currentTime;
         }
-        publisher_tf.write(tf); 
+        tfMsg = tf;
+        publisher_tf.write(); 
     }
 };
 

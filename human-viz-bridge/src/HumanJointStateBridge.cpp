@@ -183,13 +183,16 @@ public:
     virtual void onRead(HumanState& humanStateData) {
     
         TickTime currentTime = normalizeSecNSec(yarp::os::Time::now());
+        tf2_msgs_TFMessage &tfMsg = publisher_tf.prepare();
+        sensor_msgs_JointState &jointStateMsg = publisher.prepare();
         joint_state.header.stamp = currentTime;
         
         for (size_t index = 0; index < joint_state.position.size(); ++index){
             joint_state.position[index] = humanStateData.positions[index];
         }
+        jointStateMsg = joint_state;
         
-        publisher.write(joint_state);
+        publisher.write();
 
         tf.transforms[0].header.seq   = 1;
         tf.transforms[0].header.stamp = currentTime;
@@ -200,8 +203,9 @@ public:
         tf.transforms[0].transform.rotation.y = humanStateData.baseOrientationWRTGlobal.imaginary.y;
         tf.transforms[0].transform.rotation.z = humanStateData.baseOrientationWRTGlobal.imaginary.z;
         tf.transforms[0].transform.rotation.w = humanStateData.baseOrientationWRTGlobal.w;
-
-        publisher_tf.write(tf);
+        tfMsg = tf;
+        
+        publisher_tf.write();
     }
 };
 
