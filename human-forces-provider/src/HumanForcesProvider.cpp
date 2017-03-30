@@ -214,7 +214,7 @@ bool HumanForcesProvider::configure(yarp::os::ResourceFinder &rf)
             return false;
         }
 
-        m_tfPrefix = rf.check("rosTFPrefix", yarp::os::Value(""), "Checking TF prefix").asString();
+        m_tfPrefix = rf.check("rosTFPrefix", yarp::os::Value("humanJointStateBridge/"), "Checking TF prefix").asString();
     }
 
     /*
@@ -350,7 +350,7 @@ bool HumanForcesProvider::configure(yarp::os::ResourceFinder &rf)
             if (index >= 0) {
                 m_topics[static_cast<size_t>(index)] = new yarp::os::Publisher<geometry_msgs::WrenchStamped>();
                 if (m_topics[static_cast<size_t>(index)]) {
-                    m_topics[static_cast<size_t>(index)]->topic("/" + getName() + "/" + appliedLink);
+                    m_topics[static_cast<size_t>(index)]->topic("/" + rf.find("ROSname").asString() + "/" + appliedLink);
                 }
             }
 
