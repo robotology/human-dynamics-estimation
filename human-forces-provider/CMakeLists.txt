@@ -56,5 +56,5 @@ add_warnings_configuration_to_target(TARGETS ${PROJECT_NAME} PRIVATE)
 
 target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIR})
 
-yarp_install(FILES app/conf/human-force-provider.ini DESTINATION ${YARP_CONTEXTS_INSTALL_DIR}/human-dynamic-estimation)
+yarp_install(FILES app/conf/human-forces-provider.ini DESTINATION ${YARP_CONTEXTS_INSTALL_DIR}/human-dynamic-estimation)
 
