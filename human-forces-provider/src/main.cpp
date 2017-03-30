@@ -25,8 +25,8 @@ int main(int argc, char * argv[])
     // Configure ResourceFinder
     yarp::os::ResourceFinder &rf = yarp::os::ResourceFinder::getResourceFinderSingleton();
     rf.setVerbose(true);
-    rf.setDefaultContext("HumanForcesProvider"); //when no parameters are given to the module this is the default context
-    rf.setDefaultConfigFile("HumanForcesProvider.ini"); //default config file.ini
+    rf.setDefaultContext("human-dynamic-estimation"); //when no parameters are given to the module this is the default context
+    rf.setDefaultConfigFile("human-forces-provider.ini"); //default config file.ini
     rf.configure(argc, argv);
     
     // Configure the module
