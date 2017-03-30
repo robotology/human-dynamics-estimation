@@ -350,7 +350,11 @@ bool HumanForcesProvider::configure(yarp::os::ResourceFinder &rf)
             if (index >= 0) {
                 m_topics[static_cast<size_t>(index)] = new yarp::os::Publisher<geometry_msgs::WrenchStamped>();
                 if (m_topics[static_cast<size_t>(index)]) {
-                    m_topics[static_cast<size_t>(index)]->topic("/" + getName() + "/" + appliedLink);
+                    std::string ROSname = getName();
+                    while(ROSname.find("-")!=std::string::npos) {
+                        ROSname.replace(ROSname.find("-"),1,"_");
+                    }
+                    m_topics[static_cast<size_t>(index)]->topic("/" + ROSname + "/" + appliedLink);
                 }
             }
 
