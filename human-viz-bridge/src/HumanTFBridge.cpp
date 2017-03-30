@@ -144,7 +144,6 @@ public:
             }
         }   
         
-        vector<string> fakeSegments;
         fakeSegments.reserve(model.getNrOfLinks() - segments.size());
         for (iDynTree::LinkIndex linkIndex = 0; linkIndex < model.getNrOfLinks(); ++linkIndex) {
             string linkName = model.getLinkName(linkIndex);
@@ -203,6 +202,8 @@ public:
     }
     
     virtual void onRead(XsensSegmentsFrame& xsensData) {
+
+        if (xsensData.status != xsens::OK) return;
     
         TickTime currentTime = normalizeSecNSec(yarp::os::Time::now());
         tf2_msgs_TFMessage &tfMsg = publisher_tf.prepare();
