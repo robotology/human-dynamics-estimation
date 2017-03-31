@@ -61,8 +61,105 @@ static inline TickTime normalizeSecNSec(double yarpTimeStamp)
 }
 
 
+yarp::os::BufferedPort<human::HumanState>* HumanForcesProvider::getHumanStatePort(const yarp::os::Searchable& config)
+{
+    if (!m_humanConfigured) {
+
+        yarp::os::Value falseValue;
+        falseValue.fromString("false");
+        bool autoconnect = config.check("autoconnect",
+                                        falseValue,
+                                        "Checking the autoconnect option").asBool();
+
+        const std::string humanStateRemoteName = config.find("humanRemoteName").asString();
+
+        if (!m_humanJointConfigurationPort.open("/" + getName() + "/humanState:i"))
+        {
+            yError("Unable to open the input port [%s]", ("/" + getName() + "/humanState:i").c_str());
+            close();
+            return 0;
+        }
+        if (autoconnect)
+        {
+            if (!yarp::os::Network::connect(humanStateRemoteName, m_humanJointConfigurationPort.getName()))  //to connect remote and local port
+            {
+                yError("Unable to connect port [%s] to [%s]", humanStateRemoteName.c_str(), m_humanJointConfigurationPort.getName().c_str());
+                close();
+                return 0;
+            }
+        }
+        m_humanConfigured = true;
+    }
+    return &m_humanJointConfigurationPort;
+
+}
+
+bool HumanForcesProvider::getRobotEncodersInterface(const yarp::os::Searchable& config,
+                                                    const std::vector<std::string>& robot_jointList,
+                                                    yarp::dev::IEncoders *& encoders)
+{
+    if (!m_robotConfigured) {
+        /*
+         * ------Configure the autoconnect option
+         */
+        yarp::os::Value falseValue;
+        falseValue.fromString("false");
+        bool autoconnect = config.check("autoconnect",
+                                    falseValue,
+                                    "Checking the autoconnect option").asBool();
+
+        /*
+         * ------Robot configuration for the RemoteControlBoardRemapper
+         */
+        yarp::os::Bottle controlBoardGroup = config.findGroup("CONTROLBOARD_REMAPPER");
+        if(controlBoardGroup.isNull())
+        {
+            yError("Cannot find the CONTROLBOARD_REMAPPER group");
+            close();
+            return false;
+        }
+
+        yarp::os::Property options_robot;
+        options_robot.fromString(controlBoardGroup.toString());
+
+        yarp::os::Bottle axesNames;
+        yarp::os::Bottle &axesList = axesNames.addList();
+        for (std::vector<std::string>::const_iterator it = robot_jointList.begin(); it != robot_jointList.end(); ++it)
+        {
+            axesList.addString(*it);
+        }
+        options_robot.put("axesNames", axesNames.get(0));
+        options_robot.put("localPortPrefix", "/" + getName() + "/robot");
+
+        //TODO: find a better way to express VOCAB
+        //1987212385 is the int cast for VOCAB REVOLUTE JOINT TYPE
+
+        // Open the polydriver for the joints configuration
+        if (!m_robot.open(options_robot))
+        {
+            yError("Error in opening the device for the robot!");
+            close();
+            return false;
+        }
+
+        m_robotConfigured = true;
+    }
+
+    if (!m_robot.view(encoders) || !encoders)
+    {
+        yError("ControlBoard does not support IEncoders interface");
+        close();
+        return false;
+    }
+    return true;
+}
+
+
+
 HumanForcesProvider::HumanForcesProvider()
-: m_period(0.1){}
+: m_period(0.1)
+, m_humanConfigured(false)
+, m_robotConfigured(false) {}
 
 //---------------------------------------------------------------------
 HumanForcesProvider::~HumanForcesProvider() {}
@@ -76,6 +173,9 @@ double HumanForcesProvider::getPeriod()
 //---------------------------------------------------------------------
 bool HumanForcesProvider::configure(yarp::os::ResourceFinder &rf)
 {
+    m_humanConfigured = false;
+    m_robotConfigured = false;
+
     /*
      * ------Configure module name
      */
@@ -113,8 +213,7 @@ bool HumanForcesProvider::configure(yarp::os::ResourceFinder &rf)
         return false;
     }
     iDynTree::Model humanModel = modelLoader.model();
-    
-    
+
     //Robot model
     const std::string robotModelFilename = rf.findFile("robotModelFilename");
     std::vector<std::string> robot_jointList;
@@ -131,78 +230,12 @@ bool HumanForcesProvider::configure(yarp::os::ResourceFinder &rf)
         return false;
     }
     iDynTree::Model robotModel = modelLoader.model();
-    
-    /*
-     * ------Configure the autoconnect option
-     */
+
     yarp::os::Value falseValue;
     falseValue.fromString("false");
     bool autoconnect = rf.check("autoconnect",
                                 falseValue,
                                 "Checking the autoconnect option").asBool();
-
-    /*
-     * ------Open a port for the human joint configuration and connect it to the human-state-provider-module
-     */
-    const std::string humanStateRemoteName = rf.find("humanRemoteName").asString();
-    
-    if (!m_humanJointConfigurationPort.open("/" + getName() + "/humanState:i"))
-    {
-        yError("Unable to open the input port [%s]", ("/" + getName() + "/humanState:i").c_str());
-        close();
-        return false;
-    }
-    if (autoconnect)
-    {
-        if (!yarp::os::Network::connect(humanStateRemoteName, m_humanJointConfigurationPort.getName()))  //to connect remote and local port
-        {
-            yError("Unable to connect port [%s] to [%s]", humanStateRemoteName.c_str(), m_humanJointConfigurationPort.getName().c_str());
-            close();
-            return false;
-        }
-    }
-    
-    /*
-     * ------Robot configuration for the RemoteControlBoardRemapper
-     */
-    yarp::os::Bottle controlBoardGroup =  rf.findGroup("CONTROLBOARD_REMAPPER");
-    if(controlBoardGroup.isNull())
-    {
-        yError("Cannot find the CONTROLBOARD_REMAPPER group");
-        close();
-        return false;
-    }
-    
-    yarp::os::Property options_robot;
-    options_robot.fromString(controlBoardGroup.toString());
-    
-    yarp::os::Bottle axesNames;
-    yarp::os::Bottle &axesList = axesNames.addList();
-    for (std::vector<std::string>::const_iterator it = robot_jointList.begin(); it != robot_jointList.end(); ++it)
-    {
-        axesList.addString(*it);
-    }
-    options_robot.put("axesNames", axesNames.get(0));
-    options_robot.put("localPortPrefix", "/" + getName() + "/robot");
-    
-    //TODO: find a better way to express VOCAB
-    //1987212385 is the int cast for VOCAB REVOLUTE JOINT TYPE
- 
-    // Open the polydriver for the joints configuration
-    if (!m_robot.open(options_robot))
-    {
-        yError("Error in opening the device for the robot!");
-        close();
-        return false;
-    }
-    
-    yarp::dev::IEncoders *robotEncoder = 0;
-    if (!m_robot.view(robotEncoder) || !robotEncoder)
-    {
-        yError("ControlBoard does not support IEncoders interface");
-        close();
-        return false;
-    }
 
     if (rf.check("rosTopic", falseValue, "Checking support for ROS topics").asBool())
     {
@@ -432,14 +465,29 @@ bool HumanForcesProvider::configure(yarp::os::ResourceFinder &rf)
             iDynTree::Transform l_sole_H_LeftSole = iDynTree::Transform(rotationMatrix, originPosition);
             iDynTree::Transform LeftSole_H_LeftFoot = iDynTree::Transform(iDynTree::Rotation::Identity(), humanFootPosition);
             iDynTree::Transform fixtureTransform = l_sole_H_LeftSole * LeftSole_H_LeftFoot;
-            
+
+            yarp::os::BufferedPort<human::HumanState>* humanPort = getHumanStatePort(rf);
+            if (!humanPort)
+            {
+                yError("Failed to obtain connection to human state port");
+                return false;
+            }
+
+            yarp::dev::IEncoders *robotEncoders = 0;
+
+            if (!getRobotEncodersInterface(rf, robot_jointList, robotEncoders) || !robotEncoders)
+            {
+                yError("Failed to open robot IEncoders interface");
+                return false;
+            }
+
             human::RobotFrameTransformer *robotFrameTransform = new human::RobotFrameTransformer(fixtureTransform,
                                                                                                  inputFrame,
                                                                                                  robotLinkingFrame,
                                                                                                  humanLinkingFrame,
                                                                                                  outputFrame,
-                                                                                                 *robotEncoder,
-                                                                                                 m_humanJointConfigurationPort);
+                                                                                                 *robotEncoders,
+                                                                                                 *humanPort);
             if (!robotFrameTransform)
             {
                 close();
