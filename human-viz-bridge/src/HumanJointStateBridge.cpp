@@ -8,6 +8,8 @@
 #include "thrifts/HumanState.h"
 
 #include <iDynTree/ModelIO/ModelLoader.h>
+#include <iDynTree/Core/Transform.h>
+
 #include <TickTime.h>
 #include <yarp/os/BufferedPort.h>
 #include <yarp/os/LogStream.h>
@@ -61,6 +63,57 @@ static bool parseFrameListOption(const Value &option, vector<string> &parsedSegm
     return true;
 }
 
+static bool parseRotationMatrix(const yarp::os::Value& ini, iDynTree::Rotation& rotation)
+{
+    if (ini.isNull() || !ini.isList())
+    {
+        return false;
+    }
+    yarp::os::Bottle *outerList = ini.asList();
+    if (!outerList || outerList->size() != 3)
+    {
+        return false;
+    }
+    for (int row = 0; row < outerList->size(); ++row)
+    {
+        yarp::os::Value& innerValue = outerList->get(row);
+        if (innerValue.isNull() || !innerValue.isList())
+        {
+            return false;
+        }
+        yarp::os::Bottle *innerList = innerValue.asList();
+        if (!innerList || innerList->size() != 3)
+        {
+            return false;
+        }
+        for (int column = 0; column < innerList->size(); ++column)
+        {
+            rotation.setVal(row, column, innerList->get(column).asDouble());
+        }
+    }
+    return true;
+}
+
+
+static bool parsePositionVector(const yarp::os::Value& ini, iDynTree::Position& position)
+{
+    if (ini.isNull() || !ini.isList())
+    {
+        return false;
+    }
+    yarp::os::Bottle *list = ini.asList();
+    if (!list || list->size() != 3)
+    {
+        return false;
+    }
+    for (int i = 0; i < list->size(); ++i)
+    {
+        position.setVal(i, list->get(i).asDouble());
+    }
+    return true;
+}
+
+
 class xsensJointStatePublisherModule : public RFModule, public TypedReaderCallback<HumanState> 
 {
     Port client_port;
@@ -71,7 +124,8 @@ class xsensJointStatePublisherModule : public RFModule, public TypedReaderCallba
     sensor_msgs_JointState joint_state;
     tf2_msgs_TFMessage tf;
     
-    bool robotFrame;
+    bool hasRobotFrame;
+    iDynTree::Transform robotTransform;
 
 public:
     double getPeriod()
@@ -103,29 +157,50 @@ public:
 
         if (!publisher.topic(rf.find("jointStateTopicName").asString())) {
             yError() << "Failed to create publisher to /joint_states";
+            close();
             return false;
         }
         
         if (!publisher_tf.topic(rf.find("tfTopicName").asString())) {
             yError() << "Failed to create publisher to /tf";
+            close();
             return false;
         }
 
-        Value defaultRobotFrame; defaultRobotFrame.fromString("true");
-        robotFrame = rf.check("robotFrame", defaultRobotFrame, "Checking robot frame mode").asBool();
-        
-        if(robotFrame) {
-           tf.transforms.resize(2);
-           tf.transforms[0].header.frame_id = rf.find("worldRFName").asString();
-           tf.transforms[0].child_frame_id = rf.find("tfPrefix").asString() + "/" + rf.find("human_childLinkRFName").asString();
-           tf.transforms[1].header.frame_id = rf.find("worldRFName").asString();
-           tf.transforms[1].child_frame_id = rf.find("robot_childLinkRFName").asString();
-        } else {
-           tf.transforms.resize(1);
-           tf.transforms[0].header.frame_id = rf.find("worldRFName").asString();
-           tf.transforms[0].child_frame_id = rf.find("tfPrefix").asString() + "/" + rf.find("human_childLinkRFName").asString();
+        hasRobotFrame = false;
+        std::string robotChildFrame;
+        Bottle& robotGroup = rf.findGroup("ROBOT_FRAME");
+        if (!robotGroup.isNull()) {
+            hasRobotFrame = true;
+            robotChildFrame = robotGroup.find("robot_childLinkRFName").asString();
+
+            iDynTree::Rotation rotation;
+            iDynTree::Position position;
+            if (!parseRotationMatrix(robotGroup.find("transformOrientation"), rotation)) {
+                yError() << "Failed to parse robot \"transformationOrientation\"";
+                close();
+                return false;
+            }
+            if (!parsePositionVector(robotGroup.find("transformOrigin"), position)) {
+                yError() << "Failed to parse robot \"transformOrigin\"";
+                close();
+                return false;
+            }
+            robotTransform.setPosition(position);
+            robotTransform.setRotation(rotation);
+
         }
-        
+
+        tf.transforms.resize(1);
+
+        if(hasRobotFrame) {
+           tf.transforms.resize(2);
+           tf.transforms[1].header.frame_id = rf.find("worldRFName").asString();
+           tf.transforms[1].child_frame_id = robotChildFrame;
+        }
+        tf.transforms[0].header.frame_id = rf.find("worldRFName").asString();
+        tf.transforms[0].child_frame_id = rf.find("tfPrefix").asString() + "/" + rf.find("human_childLinkRFName").asString();
+
         vector<string> joints;
         Value jointListValue = rf.find("jointList");
         if (jointListValue.isString()) {
@@ -134,20 +209,24 @@ public:
             if (config.fromConfigFile(configJointFile, true)) {
                 if (!parseFrameListOption(config.find("jointList"), joints)) {
                     yError() << "Error while parsing joints list";
+                    close();
                     return false;
                 }
             } else {
                 yError() << "Could not parse " << configJointFile;
+                close();
                 return false;
             }
         }
         else if (jointListValue.isList()) {
             if (!parseFrameListOption(jointListValue, joints)) {
                 yError() << "Error while parsing joints list";
+                close();
                 return false;
             }
         } else {
             yError() << "\"jointList\" parameter malformed";
+            close();
             return false;
         }
 
@@ -164,12 +243,14 @@ public:
             URDFjoints.push_back(jointName);
                 if ((URDFjoints[jointIndex].compare(joints[jointIndex]))) {
                     yError() << "URDF joints is different from the order of the received joints";
+                    close();
                     return false;
                 }
             }
             else 
             {
                 yError() << "URDF joints and received joints do not match";
+                close();
                 return false;   
             }
         }
@@ -196,6 +277,7 @@ public:
             if (!Network::connect(stateProviderServerName.c_str(), stateReaderPortName))
             {
                 yError() << "Error! Could not connect to server " << stateProviderServerName;
+                close();close();
                 return false;
             }
         }
@@ -227,37 +309,30 @@ public:
         
         publisher.write();
 
-        if(robotFrame) {
-           tf.transforms[0].header.seq   = 1;
-           tf.transforms[0].header.stamp = currentTime;
-           tf.transforms[0].transform.translation.x = humanStateData.baseOriginWRTGlobal.x;
-           tf.transforms[0].transform.translation.y = humanStateData.baseOriginWRTGlobal.y;
-           tf.transforms[0].transform.translation.z = humanStateData.baseOriginWRTGlobal.z;
-           tf.transforms[0].transform.rotation.x = humanStateData.baseOrientationWRTGlobal.imaginary.x;
-           tf.transforms[0].transform.rotation.y = humanStateData.baseOrientationWRTGlobal.imaginary.y;
-           tf.transforms[0].transform.rotation.z = humanStateData.baseOrientationWRTGlobal.imaginary.z;
-           tf.transforms[0].transform.rotation.w = humanStateData.baseOrientationWRTGlobal.w;
-           tf.transforms[1].header.seq   = 1;
-           tf.transforms[1].header.stamp = currentTime;
-           tf.transforms[1].transform.translation.x = 0;
-           tf.transforms[1].transform.translation.y = 0;
-           tf.transforms[1].transform.translation.z = 0.63;
-           tf.transforms[1].transform.rotation.x = 0; 
-           tf.transforms[1].transform.rotation.y = 0;
-           tf.transforms[1].transform.rotation.z = 0;
-           tf.transforms[1].transform.rotation.w = 1;
-        } else {
-           tf.transforms[0].header.seq   = 1;
-           tf.transforms[0].header.stamp = currentTime;
-           tf.transforms[0].transform.translation.x = humanStateData.baseOriginWRTGlobal.x;
-           tf.transforms[0].transform.translation.y = humanStateData.baseOriginWRTGlobal.y;
-           tf.transforms[0].transform.translation.z = humanStateData.baseOriginWRTGlobal.z;
-           tf.transforms[0].transform.rotation.x = humanStateData.baseOrientationWRTGlobal.imaginary.x;
-           tf.transforms[0].transform.rotation.y = humanStateData.baseOrientationWRTGlobal.imaginary.y;
-           tf.transforms[0].transform.rotation.z = humanStateData.baseOrientationWRTGlobal.imaginary.z;
-           tf.transforms[0].transform.rotation.w = humanStateData.baseOrientationWRTGlobal.w;
+        tf.transforms[0].header.seq   = 1;
+        tf.transforms[0].header.stamp = currentTime;
+        tf.transforms[0].transform.translation.x = humanStateData.baseOriginWRTGlobal.x;
+        tf.transforms[0].transform.translation.y = humanStateData.baseOriginWRTGlobal.y;
+        tf.transforms[0].transform.translation.z = humanStateData.baseOriginWRTGlobal.z;
+        tf.transforms[0].transform.rotation.x = humanStateData.baseOrientationWRTGlobal.imaginary.x;
+        tf.transforms[0].transform.rotation.y = humanStateData.baseOrientationWRTGlobal.imaginary.y;
+        tf.transforms[0].transform.rotation.z = humanStateData.baseOrientationWRTGlobal.imaginary.z;
+        tf.transforms[0].transform.rotation.w = humanStateData.baseOrientationWRTGlobal.w;
+
+        if (hasRobotFrame) {
+            const iDynTree::Position& position = robotTransform.getPosition();
+            const iDynTree::Vector4& orientation = robotTransform.getRotation().asQuaternion();
+            tf.transforms[1].header.seq   = 1;
+            tf.transforms[1].header.stamp = currentTime;
+            tf.transforms[1].transform.translation.x = position(0);
+            tf.transforms[1].transform.translation.y = position(1);
+            tf.transforms[1].transform.translation.z = position(2);
+            tf.transforms[1].transform.rotation.x = orientation(1);
+            tf.transforms[1].transform.rotation.y = orientation(2);
+            tf.transforms[1].transform.rotation.z = orientation(3);
+            tf.transforms[1].transform.rotation.w = orientation(0);
         }
-        
+
         tfMsg = tf;
         
         publisher_tf.write();

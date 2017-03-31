@@ -38,6 +38,7 @@ add_warnings_configuration_to_target(TARGETS human-jointstate-bridge PRIVATE)
 
 target_link_libraries(human-jointstate-bridge YARP::YARP_OS 
                                               YARP::YARP_dev
+                                              iDynTree::idyntree-core
                                               iDynTree::idyntree-model
                                               iDynTree::idyntree-modelio-urdf
                                               human-viz-bridge-thrift
