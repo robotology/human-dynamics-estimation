@@ -367,6 +367,7 @@ namespace human {
         }
 
         //Thread pool
+        yInfo("Available logical threads is %u", std::thread::hardware_concurrency());
         int poolSize = -1;
         yarp::os::Value poolOption = rf.check("ikpool", yarp::os::Value(-1), "Checking size of pool");
         if (poolOption.isString()) {
@@ -380,8 +381,8 @@ namespace human {
             poolSize = poolOption.asInt();
         }
         m_pimpl->m_ikPool = std::unique_ptr<human::HumanIKWorkerPool>(new human::HumanIKWorkerPool(poolSize,
-                                                         m_pimpl->m_linkPairs,
-                                                         m_pimpl->m_segments));
+                                                                                                   m_pimpl->m_linkPairs,
+                                                                                                   m_pimpl->m_segments));
 
         if (!m_pimpl->m_ikPool) {
             yError("Could not create IK thread pool");
