@@ -28,6 +28,8 @@ namespace human {
         } else if (size == 0) {
             size = 1;
         }
+
+        yInfo("IK Thread pool created with %d threads", size);
         m_poolSize = static_cast<unsigned>(size);
         m_terminateCounter.reserve(m_poolSize);
         //TODO: queue reserve memory
