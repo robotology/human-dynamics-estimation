@@ -13,6 +13,7 @@
 #include <yarp/os/LogStream.h>
 #include <yarp/os/Network.h>
 #include <yarp/os/Node.h>
+#include <yarp/os/Property.h>
 #include <yarp/os/Publisher.h>
 #include <yarp/os/RFModule.h>
 #include <yarp/os/Time.h>
@@ -113,8 +114,27 @@ public:
         tf.transforms[0].child_frame_id = rf.find("tfPrefix").asString() + "/" + rf.find("childLinkRFName").asString();
         
         vector<string> joints;
-        if (!parseFrameListOption(rf.find("jointList"), joints)) {
-            yError() << "Error while parsing joints list";
+        Value jointListValue = rf.find("jointList");
+        if (jointListValue.isString()) {
+            string configJointFile = rf.findFileByName(jointListValue.asString());
+            Property config;
+            if (config.fromConfigFile(configJointFile, true)) {
+                if (!parseFrameListOption(config.find("jointList"), joints)) {
+                    yError() << "Error while parsing joints list";
+                    return false;
+                }
+            } else {
+                yError() << "Could not parse " << configJointFile;
+                return false;
+            }
+        }
+        else if (jointListValue.isList()) {
+            if (!parseFrameListOption(jointListValue, joints)) {
+                yError() << "Error while parsing joints list";
+                return false;
+            }
+        } else {
+            yError() << "\"jointList\" parameter malformed";
             return false;
         }
 
@@ -141,7 +161,7 @@ public:
             }
         }
         
-        yInfo() << "Joints from URDf: " << URDFjoints[0].compare(joints[0]) << URDFjoints;
+        yInfo() << "Joints from URDF: " << URDFjoints.size() << URDFjoints;
         
         joint_state.name.resize(model.getNrOfJoints());
         
