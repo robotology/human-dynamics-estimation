@@ -77,7 +77,6 @@ bool HumanDynamicsEstimator::configure(yarp::os::ResourceFinder &rf)
         return false;
     }
 
-
     if (autoconnect) {
         if (!rf.check("humanstateprovider_portname", "Checking state provider output port name")) {
             yError("Name of output port of human state provider has not been specified");
@@ -97,7 +96,7 @@ bool HumanDynamicsEstimator::configure(yarp::os::ResourceFinder &rf)
             close();
             return false;
         }
-        std::string forcesRemote = rf.find("humanstateprovider_portname").asString();
+        std::string forcesRemote = rf.find("humanforcesprovider_portname").asString();
         if (!yarp::os::Network::connect(forcesRemote, m_humanForcesPort.getName())) {
             yError("Cannot connect %s port to %s", forcesRemote.c_str(), m_humanForcesPort.getName().c_str());
             close();
@@ -110,11 +109,12 @@ bool HumanDynamicsEstimator::configure(yarp::os::ResourceFinder &rf)
      */  
     yarp::os::Value defaultOffline; defaultOffline.fromString("true");
     bool offline = rf.check("playback", defaultOffline, "Checking playback mode").asBool();
-    
-    std::vector<std::string> joints;
 
-    if (offline && !parseFrameListOption(rf.find("jointsList"), joints)) {
-        yError("Error while parsing 'jointsList' parameter");
+    std::vector<std::string> joints;
+    
+    if (offline && !parseFrameListOption(rf.find("jointList"), joints)) {
+        yError("Error while parsing 'jointList' parameter");
+
         return false;
     } else {
         //TODO: read from RPC
@@ -127,9 +127,8 @@ bool HumanDynamicsEstimator::configure(yarp::os::ResourceFinder &rf)
         close();
         return false;
     }
-        
+
     const iDynTree::Model& humanModel = modelLoader.model();
-    
 
     m_jointsConfiguration.resize(humanModel);
     m_jointsVelocity.resize(humanModel);
@@ -149,7 +148,7 @@ bool HumanDynamicsEstimator::configure(yarp::os::ResourceFinder &rf)
         yWarning("Failed while parsing sensors removal option. All sensors will be considered");
     }
 
-     
+
     /*
      * ------Setting options and inizialization for Berdy obj
      */
@@ -242,6 +241,7 @@ bool HumanDynamicsEstimator::configure(yarp::os::ResourceFinder &rf)
             }
         }
 
+
         //priors on dynamics variables
         if (priorsGroup.check("cov_dyn_variables", "Checking priors on dynamics variables regularization covariance: Sigma_d")) {
             yarp::os::Value& covDyn = priorsGroup.find("cov_dyn_variables");
@@ -277,11 +277,11 @@ bool HumanDynamicsEstimator::configure(yarp::os::ResourceFinder &rf)
         if (!parseMeasurementsPriorsOption(priorsGroup,
                                            m_berdy,
                                            "cov_measurements",
-                                           m_priorDynamicsConstraintsCovarianceInverse)) {
+                                           m_priorMeasurementsCovarianceInverse)) {
             yWarning("Problem parsing priors on measurements constraints. Default to 1");
         }
     }
-
+        
     m_gravity.zero(); 
     m_gravity(2) = -9.81;    
 
@@ -358,7 +358,7 @@ bool HumanDynamicsEstimator::configure(yarp::os::ResourceFinder &rf)
     }
 
     m_outputPort.unprepare();
-    
+
     return true;
 }
 
@@ -375,10 +375,13 @@ bool HumanDynamicsEstimator::updateModule()
     // - Human state
     // - External forces
     human::HumanState *stateReading = m_humanJointConfigurationPort.read(false);
+
+    
     if (stateReading && !iDynTree::toiDynTree(stateReading->positions, m_jointsConfiguration)) {
         yError("Error while reading human configuration");
         return false;
     }
+
     if (stateReading && !iDynTree::toiDynTree(stateReading->velocities, m_jointsVelocity)) {
         yError("Error while reading human velocity");
         return false;
@@ -386,7 +389,7 @@ bool HumanDynamicsEstimator::updateModule()
 
     // Read human state
     // Read forces
-
+    m_measurements.zero();
     human::HumanForces *forcesReading = m_humanForcesPort.read(false);
     if (forcesReading) {
         for (auto &force6D : forcesReading->forces) {
@@ -407,7 +410,6 @@ bool HumanDynamicsEstimator::updateModule()
         }
     }
 
-
     //TODO: fill y with measurements from ACCELEROMETER, GYROSCOPE and DOF_ACCELERATION.
     // At this stage they are 0!
 
@@ -420,7 +422,7 @@ bool HumanDynamicsEstimator::updateModule()
      * Set the kinematic information necessary for the dynamics estimation
      */
     m_berdy.updateKinematicsFromTraversalFixedBase(m_jointsConfiguration, m_jointsVelocity, m_gravity);
-    
+
     computeMaximumAPosteriori();
 
     /*
@@ -460,6 +462,8 @@ bool HumanDynamicsEstimator::updateModule()
 
             Eigen::Map<Eigen::VectorXd> yarpVector(dynamicsVariableOutput[variableIndex]->data(), dynamicsVariableOutput[variableIndex]->size());
             yarpVector = toEigen(m_expectedDynamicsAPosteriori).segment(found->second.offset, found->second.size);
+//             std::cerr << linkEstimation.linkName << std::endl << yarpVector << std::endl;
+//             std::cerr << "Index is " << std::endl << variableIndex << std::endl;
         }
 
         index++;
@@ -482,9 +486,9 @@ bool HumanDynamicsEstimator::updateModule()
         jointEstimation.jointName = joint.first;
         yarp::sig::Vector *dynamicsVariableOutput[jointVariablesSize] =
         {
-            &jointEstimation.acceleration,
+            &jointEstimation.transmittedWrench,
             &jointEstimation.torque,
-            &jointEstimation.transmittedWrench
+            &jointEstimation.acceleration
         };
 
         for (size_t variableIndex = 0; variableIndex < jointVariablesSize; ++variableIndex) {
@@ -500,13 +504,12 @@ bool HumanDynamicsEstimator::updateModule()
             Eigen::Map<Eigen::VectorXd> yarpVector(dynamicsVariableOutput[variableIndex]->data(), dynamicsVariableOutput[variableIndex]->size());
             yarpVector = toEigen(m_expectedDynamicsAPosteriori).segment(found->second.offset, found->second.size);
         }
-        
+
         index++;
     }
 
     m_outputPort.write();
     std::cerr << "Map took " <<std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - t1).count() << "ms" << std::endl;
-
 
 #ifdef EIGEN_RUNTIME_NO_MALLOC
     Eigen::internal::set_is_malloc_allowed(true);
@@ -520,7 +523,7 @@ bool HumanDynamicsEstimator::close()
     m_outputPort.close();
     m_humanForcesPort.close();
     m_humanJointConfigurationPort.close();
-    
+
     return true;
 }
 
