@@ -463,6 +463,8 @@ bool HumanDynamicsEstimator::updateModule()
 
             Eigen::Map<Eigen::VectorXd> yarpVector(dynamicsVariableOutput[variableIndex]->data(), dynamicsVariableOutput[variableIndex]->size());
             yarpVector = toEigen(m_expectedDynamicsAPosteriori).segment(found->second.offset, found->second.size);
+//             std::cerr << linkEstimation.linkName << std::endl << yarpVector << std::endl;
+//             std::cerr << "Index is " << std::endl << variableIndex << std::endl;
         }
 
         index++;
@@ -582,7 +584,7 @@ void HumanDynamicsEstimator::computeMaximumAPosteriori(bool computePermutation)
     toEigen(m_intermediateQuantities.expectedDynamicsAPosterioriRHS) = (toEigen(m_measurementsMatrix).transpose() * toEigen(m_priorMeasurementsCovarianceInverse) * (toEigen(m_measurements) - toEigen(m_measurementsBias)) + m_intermediateQuantities.covarianceDynamicsPriorInverse * toEigen(m_intermediateQuantities.expectedDynamicsPrior));
     toEigen(m_expectedDynamicsAPosteriori) =
     m_intermediateQuantities.covarianceDynamicsAPosterioriInverseDecomposition.solve(toEigen(m_intermediateQuantities.expectedDynamicsAPosterioriRHS));
-
+    std::cerr << std::endl << "m_expectedDynamicsAPosteriori" << std::endl << toEigen(m_expectedDynamicsAPosteriori) << std::endl << std::endl;
 }
 
 //---------------------------------------------------------------------------
