@@ -111,7 +111,7 @@ bool HumanDynamicsEstimator::configure(yarp::os::ResourceFinder &rf)
     bool offline = rf.check("playback", defaultOffline, "Checking playback mode").asBool();
     
     std::vector<std::string> joints;
-    
+
     if (offline && !parseFrameListOption(rf.find("jointList"), joints)) {
         yError("Error while parsing 'jointList' parameter");
         return false;
@@ -271,7 +271,7 @@ bool HumanDynamicsEstimator::configure(yarp::os::ResourceFinder &rf)
                 }
             }
         }
-        
+
         //priors on measurement equations
         if (!parseMeasurementsPriorsOption(priorsGroup,
                                            m_berdy,
@@ -279,8 +279,8 @@ bool HumanDynamicsEstimator::configure(yarp::os::ResourceFinder &rf)
                                            m_priorMeasurementsCovarianceInverse)) {
             yWarning("Problem parsing priors on measurements constraints. Default to 1");
         }
-    }       
-        
+    }
+
     m_gravity.zero(); 
     m_gravity(2) = -9.81;    
 
@@ -375,13 +375,9 @@ bool HumanDynamicsEstimator::updateModule()
     // - External forces
     human::HumanState *stateReading = m_humanJointConfigurationPort.read(false);
 
-    
     if (stateReading && !iDynTree::toiDynTree(stateReading->positions, m_jointsConfiguration)) {
         yError("Error while reading human configuration");
         return false;
-    }
-    if (stateReading == NULL) {
-        yError("PUNTATORE NULLO");        
     }
     if (stateReading && !iDynTree::toiDynTree(stateReading->velocities, m_jointsVelocity)) {
         yError("Error while reading human velocity");
@@ -423,7 +419,7 @@ bool HumanDynamicsEstimator::updateModule()
      * Set the kinematic information necessary for the dynamics estimation
      */
     m_berdy.updateKinematicsFromTraversalFixedBase(m_jointsConfiguration, m_jointsVelocity, m_gravity);
-    
+
     computeMaximumAPosteriori();
 
     /*
@@ -463,10 +459,7 @@ bool HumanDynamicsEstimator::updateModule()
 
             Eigen::Map<Eigen::VectorXd> yarpVector(dynamicsVariableOutput[variableIndex]->data(), dynamicsVariableOutput[variableIndex]->size());
             yarpVector = toEigen(m_expectedDynamicsAPosteriori).segment(found->second.offset, found->second.size);
-//             std::cerr << linkEstimation.linkName << std::endl << yarpVector << std::endl;
-//             std::cerr << "Index is " << std::endl << variableIndex << std::endl;
         }
-
         index++;
     }
 
@@ -584,7 +577,6 @@ void HumanDynamicsEstimator::computeMaximumAPosteriori(bool computePermutation)
     toEigen(m_intermediateQuantities.expectedDynamicsAPosterioriRHS) = (toEigen(m_measurementsMatrix).transpose() * toEigen(m_priorMeasurementsCovarianceInverse) * (toEigen(m_measurements) - toEigen(m_measurementsBias)) + m_intermediateQuantities.covarianceDynamicsPriorInverse * toEigen(m_intermediateQuantities.expectedDynamicsPrior));
     toEigen(m_expectedDynamicsAPosteriori) =
     m_intermediateQuantities.covarianceDynamicsAPosterioriInverseDecomposition.solve(toEigen(m_intermediateQuantities.expectedDynamicsAPosterioriRHS));
-    std::cerr << std::endl << "m_expectedDynamicsAPosteriori" << std::endl << toEigen(m_expectedDynamicsAPosteriori) << std::endl << std::endl;
 }
 
 //---------------------------------------------------------------------------
