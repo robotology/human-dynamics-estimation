@@ -109,11 +109,11 @@ bool HumanDynamicsEstimator::configure(yarp::os::ResourceFinder &rf)
      */  
     yarp::os::Value defaultOffline; defaultOffline.fromString("true");
     bool offline = rf.check("playback", defaultOffline, "Checking playback mode").asBool();
-    
+
     std::vector<std::string> joints;
 
-    if (offline && !parseFrameListOption(rf.find("jointList"), joints)) {
-        yError("Error while parsing 'jointList' parameter");
+    if (offline && !parseFrameListOption(rf.find("jointsList"), joints)) {
+        yError("Error while parsing 'jointsList' parameter");
         return false;
     } else {
         //TODO: read from RPC
@@ -126,9 +126,9 @@ bool HumanDynamicsEstimator::configure(yarp::os::ResourceFinder &rf)
         close();
         return false;
     }
-        
+
     const iDynTree::Model& humanModel = modelLoader.model();
-    
+
     m_jointsConfiguration.resize(humanModel);
     m_jointsVelocity.resize(humanModel);
 
@@ -147,7 +147,7 @@ bool HumanDynamicsEstimator::configure(yarp::os::ResourceFinder &rf)
         yWarning("Failed while parsing sensors removal option. All sensors will be considered");
     }
 
-     
+
     /*
      * ------Setting options and inizialization for Berdy obj
      */
@@ -239,8 +239,8 @@ bool HumanDynamicsEstimator::configure(yarp::os::ResourceFinder &rf)
                 m_priorDynamicsConstraintsCovarianceInverse.setFromTriplets(triplets);
             }
         }
-       
-        
+
+
         //priors on dynamics variables
         if (priorsGroup.check("cov_dyn_variables", "Checking priors on dynamics variables regularization covariance: Sigma_d")) {
             yarp::os::Value& covDyn = priorsGroup.find("cov_dyn_variables");
@@ -280,7 +280,7 @@ bool HumanDynamicsEstimator::configure(yarp::os::ResourceFinder &rf)
             yWarning("Problem parsing priors on measurements constraints. Default to 1");
         }
     }
-
+        
     m_gravity.zero(); 
     m_gravity(2) = -9.81;    
 
@@ -357,7 +357,7 @@ bool HumanDynamicsEstimator::configure(yarp::os::ResourceFinder &rf)
     }
 
     m_outputPort.unprepare();
-    
+
     return true;
 }
 
@@ -375,10 +375,12 @@ bool HumanDynamicsEstimator::updateModule()
     // - External forces
     human::HumanState *stateReading = m_humanJointConfigurationPort.read(false);
 
+    
     if (stateReading && !iDynTree::toiDynTree(stateReading->positions, m_jointsConfiguration)) {
         yError("Error while reading human configuration");
         return false;
     }
+
     if (stateReading && !iDynTree::toiDynTree(stateReading->velocities, m_jointsVelocity)) {
         yError("Error while reading human velocity");
         return false;
@@ -460,6 +462,7 @@ bool HumanDynamicsEstimator::updateModule()
             Eigen::Map<Eigen::VectorXd> yarpVector(dynamicsVariableOutput[variableIndex]->data(), dynamicsVariableOutput[variableIndex]->size());
             yarpVector = toEigen(m_expectedDynamicsAPosteriori).segment(found->second.offset, found->second.size);
         }
+
         index++;
     }
 
@@ -498,7 +501,7 @@ bool HumanDynamicsEstimator::updateModule()
             Eigen::Map<Eigen::VectorXd> yarpVector(dynamicsVariableOutput[variableIndex]->data(), dynamicsVariableOutput[variableIndex]->size());
             yarpVector = toEigen(m_expectedDynamicsAPosteriori).segment(found->second.offset, found->second.size);
         }
-        
+
         index++;
     }
 
@@ -517,7 +520,7 @@ bool HumanDynamicsEstimator::close()
     m_outputPort.close();
     m_humanForcesPort.close();
     m_humanJointConfigurationPort.close();
-    
+
     return true;
 }
 
@@ -577,6 +580,7 @@ void HumanDynamicsEstimator::computeMaximumAPosteriori(bool computePermutation)
     toEigen(m_intermediateQuantities.expectedDynamicsAPosterioriRHS) = (toEigen(m_measurementsMatrix).transpose() * toEigen(m_priorMeasurementsCovarianceInverse) * (toEigen(m_measurements) - toEigen(m_measurementsBias)) + m_intermediateQuantities.covarianceDynamicsPriorInverse * toEigen(m_intermediateQuantities.expectedDynamicsPrior));
     toEigen(m_expectedDynamicsAPosteriori) =
     m_intermediateQuantities.covarianceDynamicsAPosterioriInverseDecomposition.solve(toEigen(m_intermediateQuantities.expectedDynamicsAPosterioriRHS));
+
 }
 
 //---------------------------------------------------------------------------
