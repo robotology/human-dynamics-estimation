@@ -111,9 +111,10 @@ bool HumanDynamicsEstimator::configure(yarp::os::ResourceFinder &rf)
     bool offline = rf.check("playback", defaultOffline, "Checking playback mode").asBool();
 
     std::vector<std::string> joints;
+    
+    if (offline && !parseFrameListOption(rf.find("jointList"), joints)) {
+        yError("Error while parsing 'jointList' parameter");
 
-    if (offline && !parseFrameListOption(rf.find("jointsList"), joints)) {
-        yError("Error while parsing 'jointsList' parameter");
         return false;
     } else {
         //TODO: read from RPC
@@ -461,6 +462,8 @@ bool HumanDynamicsEstimator::updateModule()
 
             Eigen::Map<Eigen::VectorXd> yarpVector(dynamicsVariableOutput[variableIndex]->data(), dynamicsVariableOutput[variableIndex]->size());
             yarpVector = toEigen(m_expectedDynamicsAPosteriori).segment(found->second.offset, found->second.size);
+//             std::cerr << linkEstimation.linkName << std::endl << yarpVector << std::endl;
+//             std::cerr << "Index is " << std::endl << variableIndex << std::endl;
         }
 
         index++;
@@ -580,7 +583,6 @@ void HumanDynamicsEstimator::computeMaximumAPosteriori(bool computePermutation)
     toEigen(m_intermediateQuantities.expectedDynamicsAPosterioriRHS) = (toEigen(m_measurementsMatrix).transpose() * toEigen(m_priorMeasurementsCovarianceInverse) * (toEigen(m_measurements) - toEigen(m_measurementsBias)) + m_intermediateQuantities.covarianceDynamicsPriorInverse * toEigen(m_intermediateQuantities.expectedDynamicsPrior));
     toEigen(m_expectedDynamicsAPosteriori) =
     m_intermediateQuantities.covarianceDynamicsAPosterioriInverseDecomposition.solve(toEigen(m_intermediateQuantities.expectedDynamicsAPosterioriRHS));
-
 }
 
 //---------------------------------------------------------------------------
