@@ -141,7 +141,7 @@ public:
         Value defaultAutoconn; defaultAutoconn.fromString("false");
         bool autoconnect = rf.check("autoconnect", defaultAutoconn, "Checking autoconnection mode").asBool();
 
-        yInfo() << "Joints from config file: " << model.getNrOfJoints() << joints;
+        yInfo() << "Joints from config file: " << joints.size() << joints;
 
         vector<string> URDFjoints;
         URDFjoints.reserve(model.getNrOfJoints());
