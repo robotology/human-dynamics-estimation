@@ -18,6 +18,7 @@
 #include <yarp/os/LogStream.h> 
 #include <yarp/os/Network.h>
 #include <yarp/os/Node.h>
+#include <yarp/os/Property.h>
 #include <yarp/os/Publisher.h>
 #include <yarp/os/Time.h>
 #include <yarp/dev/IAnalogSensor.h>
@@ -198,13 +199,34 @@ bool HumanForcesProvider::configure(yarp::os::ResourceFinder &rf)
     
     // Human model
     const std::string humanModelFilename = rf.findFile("humanModelFilename");
-    std::vector<std::string> human_jointList;
     
-    if (!parseStringListOption(rf.find("human_JointList"), human_jointList))
-    {
-        yError("Error while parsing the robot joint list");
+    std::vector<std::string> human_jointList;
+    yarp::os::Value jointListValue = rf.find("human_JointList");
+    if (jointListValue.isString()) {
+        std::string configJointFile = rf.findFileByName(jointListValue.asString());
+        yarp::os::Property config;
+        if (config.fromConfigFile(configJointFile, true)) {
+            if (!parseStringListOption(config.find("jointList"), human_jointList)) {
+                yError() << "Error while parsing joints list";
+                return false;
+            }
+        } else {
+            yError() << "Could not parse " << configJointFile;
+            return false;
+        }
+    }
+    else if (jointListValue.isList()) {
+        if (!parseStringListOption(jointListValue, human_jointList)) {
+            yError() << "Error while parsing joints list";
+            return false;
+        }
+    } else {
+        yError() << "\"jointList\" parameter malformed";
         return false;
     }
+    
+    yInfo() << "Joints from config file: " << human_jointList.size() << human_jointList;
+        
     iDynTree::ModelLoader modelLoader;
     
     if(!modelLoader.loadReducedModelFromFile(humanModelFilename, human_jointList))
@@ -212,6 +234,7 @@ bool HumanForcesProvider::configure(yarp::os::ResourceFinder &rf)
         yError("Something wrong with the human model loading!");
         return false;
     }
+    
     iDynTree::Model humanModel = modelLoader.model();
 
     //Robot model
