@@ -23,7 +23,7 @@ int main(int argc, char * argv[])
     // Configure ResourceFinder
     yarp::os::ResourceFinder &rf = yarp::os::ResourceFinder::getResourceFinderSingleton();
     rf.setVerbose(true);
-    rf.setDefaultContext("human-dynamics-estimation");
+    rf.setDefaultContext("human-dynamic-estimation");
     rf.setDefaultConfigFile("human-dynamics-estimator.ini");
     rf.configure(argc, argv);
     

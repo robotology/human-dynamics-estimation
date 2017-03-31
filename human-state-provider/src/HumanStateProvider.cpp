@@ -102,9 +102,9 @@ namespace human {
                 segmentInfo.velocities(i) = m_pimpl->m_buffers.velocities[index](i);
             }
         }
-        std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
+        //std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
         m_pimpl->m_ikPool->runAndWait();
-        std::cerr << "Data process took " <<std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - t1).count() << "ms" << std::endl;
+       // std::cerr << "Data process took " <<std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - t1).count() << "ms" << std::endl;
 
         // Now reconstruct everything
         //Data saved in jointsConfiguration and jointsVelocity of the various pairInfo

@@ -160,7 +160,8 @@ bool HumanForcesProvider::getRobotEncodersInterface(const yarp::os::Searchable& 
 HumanForcesProvider::HumanForcesProvider()
 : m_period(0.1)
 , m_humanConfigured(false)
-, m_robotConfigured(false) {}
+, m_robotConfigured(false)
+, m_rosForcesScale(1) {}
 
 //---------------------------------------------------------------------
 HumanForcesProvider::~HumanForcesProvider() {}
@@ -271,6 +272,8 @@ bool HumanForcesProvider::configure(yarp::os::ResourceFinder &rf)
         }
 
         m_tfPrefix = rf.check("rosTFPrefix", yarp::os::Value(""), "Checking TF prefix").asString();
+	
+	m_rosForcesScale = rf.check("rosForceScale", yarp::os::Value(1), "Checking output scale").asDouble();
     }
 
     /*
@@ -546,6 +549,8 @@ bool HumanForcesProvider::updateModule()
     human::HumanForces &allForces = m_outputPort.prepare();
     std::vector<human::Force6D> &forcesVector = allForces.forces;
     
+    TickTime rosTime = normalizeSecNSec(yarp::os::Time::now());
+    
     forcesVector.resize(m_readers.size());
     for (size_t index = 0; index < m_readers.size(); ++index) {
         human::Force6D &currentForce = forcesVector[index];
@@ -556,15 +561,15 @@ bool HumanForcesProvider::updateModule()
             geometry_msgs::WrenchStamped &wrench = m_topics[index]->prepare();
 
             wrench.header.seq = m_rosSequence;
-            wrench.header.stamp = normalizeSecNSec(yarp::os::Time::now());
+            wrench.header.stamp = rosTime;
             wrench.header.frame_id = m_tfPrefix + currentForce.appliedLink;
 
-            wrench.wrench.force.x = currentForce.fx;
-            wrench.wrench.force.y = currentForce.fy;
-            wrench.wrench.force.z = currentForce.fz;
-            wrench.wrench.torque.x = currentForce.ux;
-            wrench.wrench.torque.y = currentForce.uy;
-            wrench.wrench.torque.z = currentForce.uz;
+            wrench.wrench.force.x = m_rosForcesScale * currentForce.fx;
+            wrench.wrench.force.y = m_rosForcesScale * currentForce.fy;
+            wrench.wrench.force.z = m_rosForcesScale * currentForce.fz;
+            wrench.wrench.torque.x = m_rosForcesScale * currentForce.ux;
+            wrench.wrench.torque.y = m_rosForcesScale * currentForce.uy;
+            wrench.wrench.torque.z = m_rosForcesScale * currentForce.uz;
 
             m_topics[index]->write();
         }

@@ -70,6 +70,7 @@ private:
     std::string m_tfPrefix;
     std::vector<yarp::os::Publisher<geometry_msgs::WrenchStamped>*> m_topics;
     unsigned m_rosSequence;
+    double m_rosForcesScale;
 
     yarp::os::BufferedPort<human::HumanState>* getHumanStatePort(const yarp::os::Searchable& config);
     bool getRobotEncodersInterface(const yarp::os::Searchable& config,
