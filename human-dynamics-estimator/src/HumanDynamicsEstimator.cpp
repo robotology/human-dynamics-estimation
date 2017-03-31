@@ -112,8 +112,8 @@ bool HumanDynamicsEstimator::configure(yarp::os::ResourceFinder &rf)
     
     std::vector<std::string> joints;
     
-    if (offline && !parseFrameListOption(rf.find("jointsList"), joints)) {
-        yError("Error while parsing 'jointsList' parameter");
+    if (offline && !parseFrameListOption(rf.find("jointList"), joints)) {
+        yError("Error while parsing 'jointList' parameter");
         return false;
     } else {
         //TODO: read from RPC
