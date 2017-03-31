@@ -172,7 +172,7 @@ public:
         Bottle& robotGroup = rf.findGroup("ROBOT_FRAME");
         if (!robotGroup.isNull()) {
             hasRobotFrame = true;
-            robotChildFrame = robotGroup.find("robot_childLinkRFName").asString();
+            robotChildFrame = robotGroup.find("childLinkRefFrameName").asString();
 
             iDynTree::Rotation rotation;
             iDynTree::Position position;
@@ -200,6 +200,7 @@ public:
         }
         tf.transforms[0].header.frame_id = rf.find("worldRFName").asString();
         tf.transforms[0].child_frame_id = rf.find("tfPrefix").asString() + "/" + rf.find("human_childLinkRFName").asString();
+       
 
         vector<string> joints;
         Value jointListValue = rf.find("jointList");
