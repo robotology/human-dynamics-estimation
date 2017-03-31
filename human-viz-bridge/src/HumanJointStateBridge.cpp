@@ -70,6 +70,8 @@ class xsensJointStatePublisherModule : public RFModule, public TypedReaderCallba
     Publisher<tf2_msgs_TFMessage> publisher_tf;
     sensor_msgs_JointState joint_state;
     tf2_msgs_TFMessage tf;
+    
+    bool robotFrame;
 
 public:
     double getPeriod()
@@ -109,9 +111,20 @@ public:
             return false;
         }
 
-        tf.transforms.resize(1);
-        tf.transforms[0].header.frame_id = rf.find("worldRFName").asString();
-        tf.transforms[0].child_frame_id = rf.find("tfPrefix").asString() + "/" + rf.find("childLinkRFName").asString();
+        Value defaultRobotFrame; defaultRobotFrame.fromString("true");
+        robotFrame = rf.check("robotFrame", defaultRobotFrame, "Checking robot frame mode").asBool();
+        
+        if(robotFrame) {
+           tf.transforms.resize(2);
+           tf.transforms[0].header.frame_id = rf.find("worldRFName").asString();
+           tf.transforms[0].child_frame_id = rf.find("tfPrefix").asString() + "/" + rf.find("human_childLinkRFName").asString();
+           tf.transforms[1].header.frame_id = rf.find("worldRFName").asString();
+           tf.transforms[1].child_frame_id = rf.find("robot_childLinkRFName").asString();
+        } else {
+           tf.transforms.resize(1);
+           tf.transforms[0].header.frame_id = rf.find("worldRFName").asString();
+           tf.transforms[0].child_frame_id = rf.find("tfPrefix").asString() + "/" + rf.find("human_childLinkRFName").asString();
+        }
         
         vector<string> joints;
         Value jointListValue = rf.find("jointList");
@@ -214,15 +227,37 @@ public:
         
         publisher.write();
 
-        tf.transforms[0].header.seq   = 1;
-        tf.transforms[0].header.stamp = currentTime;
-        tf.transforms[0].transform.translation.x = humanStateData.baseOriginWRTGlobal.x;
-        tf.transforms[0].transform.translation.y = humanStateData.baseOriginWRTGlobal.y;
-        tf.transforms[0].transform.translation.z = humanStateData.baseOriginWRTGlobal.z;
-        tf.transforms[0].transform.rotation.x = humanStateData.baseOrientationWRTGlobal.imaginary.x;
-        tf.transforms[0].transform.rotation.y = humanStateData.baseOrientationWRTGlobal.imaginary.y;
-        tf.transforms[0].transform.rotation.z = humanStateData.baseOrientationWRTGlobal.imaginary.z;
-        tf.transforms[0].transform.rotation.w = humanStateData.baseOrientationWRTGlobal.w;
+        if(robotFrame) {
+           tf.transforms[0].header.seq   = 1;
+           tf.transforms[0].header.stamp = currentTime;
+           tf.transforms[0].transform.translation.x = humanStateData.baseOriginWRTGlobal.x;
+           tf.transforms[0].transform.translation.y = humanStateData.baseOriginWRTGlobal.y;
+           tf.transforms[0].transform.translation.z = humanStateData.baseOriginWRTGlobal.z;
+           tf.transforms[0].transform.rotation.x = humanStateData.baseOrientationWRTGlobal.imaginary.x;
+           tf.transforms[0].transform.rotation.y = humanStateData.baseOrientationWRTGlobal.imaginary.y;
+           tf.transforms[0].transform.rotation.z = humanStateData.baseOrientationWRTGlobal.imaginary.z;
+           tf.transforms[0].transform.rotation.w = humanStateData.baseOrientationWRTGlobal.w;
+           tf.transforms[1].header.seq   = 1;
+           tf.transforms[1].header.stamp = currentTime;
+           tf.transforms[1].transform.translation.x = 0;
+           tf.transforms[1].transform.translation.y = 0;
+           tf.transforms[1].transform.translation.z = 0.63;
+           tf.transforms[1].transform.rotation.x = 0; 
+           tf.transforms[1].transform.rotation.y = 0;
+           tf.transforms[1].transform.rotation.z = 0;
+           tf.transforms[1].transform.rotation.w = 1;
+        } else {
+           tf.transforms[0].header.seq   = 1;
+           tf.transforms[0].header.stamp = currentTime;
+           tf.transforms[0].transform.translation.x = humanStateData.baseOriginWRTGlobal.x;
+           tf.transforms[0].transform.translation.y = humanStateData.baseOriginWRTGlobal.y;
+           tf.transforms[0].transform.translation.z = humanStateData.baseOriginWRTGlobal.z;
+           tf.transforms[0].transform.rotation.x = humanStateData.baseOrientationWRTGlobal.imaginary.x;
+           tf.transforms[0].transform.rotation.y = humanStateData.baseOrientationWRTGlobal.imaginary.y;
+           tf.transforms[0].transform.rotation.z = humanStateData.baseOrientationWRTGlobal.imaginary.z;
+           tf.transforms[0].transform.rotation.w = humanStateData.baseOrientationWRTGlobal.w;
+        }
+        
         tfMsg = tf;
         
         publisher_tf.write();
