@@ -68,7 +68,6 @@ static bool parseFrameListOption(const Value &option, vector<string> &parsedSegm
 
 class xsensJointStatePublisherModule : public RFModule, public TypedReaderCallback<HumanDynamics> 
 {
-    Port client_port;
     BufferedPort<HumanDynamics> humanDynamicsDataPort;
     
     vector<EffortPublisher> effortsList;
@@ -184,6 +183,7 @@ public:
     bool close()
     {
         humanDynamicsDataPort.close();
+
         for (size_t index = 0; index < effortsList.size(); ++index) {
             EffortPublisher &effort = effortsList[index];
             if (effort.publisher) {        
@@ -193,6 +193,7 @@ public:
                 effort.publisher = 0;
             }
         }
+        effortsList.clear();
         return true;
     }
     
@@ -235,6 +236,8 @@ int main(int argc, char * argv[])
     rf.configure(argc, argv);
     rf.setVerbose(true);
     Node node(rf.find("nodeName").asString());
-    module.runModule(rf);                                   // This calls configure(rf) and, upon success, the module execution begins with a call to updateModule()
+    module.runModule(rf);
+    node.interrupt();
+    // This calls configure(rf) and, upon success, the module execution begins with a call to updateModule()
     return 0;
 }
