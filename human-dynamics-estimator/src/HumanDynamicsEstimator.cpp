@@ -97,7 +97,7 @@ bool HumanDynamicsEstimator::configure(yarp::os::ResourceFinder &rf)
             close();
             return false;
         }
-        std::string forcesRemote = rf.find("humanstateprovider_portname").asString();
+        std::string forcesRemote = rf.find("humanforcesprovider_portname").asString();
         if (!yarp::os::Network::connect(forcesRemote, m_humanForcesPort.getName())) {
             yError("Cannot connect %s port to %s", forcesRemote.c_str(), m_humanForcesPort.getName().c_str());
             close();
@@ -113,12 +113,24 @@ bool HumanDynamicsEstimator::configure(yarp::os::ResourceFinder &rf)
     
     std::vector<std::string> joints;
 
-    if (offline && !parseFrameListOption(rf.find("jointsList"), joints)) {
-        yError("Error while parsing 'jointsList' parameter");
-        return false;
+    yarp::os::Value jointList = rf.find("jointList");
+    if (jointList.isString()) {
+        std::string jointListIniFile = rf.findFile(jointList.asString());
+        yarp::os::Property jointListIni;
+        jointListIni.fromConfigFile(jointListIniFile);
+        if (!parseFrameListOption(jointListIni.find("jointList"), joints)) {
+            yError("Error while parsing 'jointList' parameter");
+            return false;
+        }
     } else {
-        //TODO: read from RPC
+        if (!parseFrameListOption(rf.find("jointList"), joints)) {
+            yError("Error while parsing 'jointList' parameter");
+            return false;
+        }
     }
+
+    //TODO: read from RPC when offline is false
+
 
     std::string modelFilename = rf.findFile("urdf_model");
     iDynTree::ModelLoader modelLoader;
@@ -277,7 +289,7 @@ bool HumanDynamicsEstimator::configure(yarp::os::ResourceFinder &rf)
         if (!parseMeasurementsPriorsOption(priorsGroup,
                                            m_berdy,
                                            "cov_measurements",
-                                           m_priorDynamicsConstraintsCovarianceInverse)) {
+                                           m_priorMeasurementsCovarianceInverse)) {
             yWarning("Problem parsing priors on measurements constraints. Default to 1");
         }
     }
@@ -385,6 +397,7 @@ bool HumanDynamicsEstimator::updateModule()
     }
 
     // Read human state
+    m_measurements.zero();
     // Read forces
 
     human::HumanForces *forcesReading = m_humanForcesPort.read(false);
@@ -482,9 +495,9 @@ bool HumanDynamicsEstimator::updateModule()
         jointEstimation.jointName = joint.first;
         yarp::sig::Vector *dynamicsVariableOutput[jointVariablesSize] =
         {
-            &jointEstimation.acceleration,
+            &jointEstimation.transmittedWrench,
             &jointEstimation.torque,
-            &jointEstimation.transmittedWrench
+            &jointEstimation.acceleration
         };
 
         for (size_t variableIndex = 0; variableIndex < jointVariablesSize; ++variableIndex) {
