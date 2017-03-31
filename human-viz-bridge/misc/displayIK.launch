@@ -4,20 +4,19 @@
         <arg name="gui" default="False" />
         <arg name="vel" default="True" />
         <arg name="eff" default="True" />
-        <param name="robot_description" textfile="$(find human_viz_model)/urdf/Marta48DoF.xml"  />
+        <param name="robot_description" textfile="$(find human_viz_model)/urdf/Meri66DoF.urdf"  />
         <param name="use_gui" value="$(arg gui)"/>
         <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
         <param name="tf_prefix" value="humanJointStateBridge" type="str"/>
         <node name="rviz" pkg="rviz" type="rviz" args="-d $(find human_viz_model)/human-viz-bridge.rviz" required="true" />
     </group>
-    <group ns="robot">
+    <group ns="icub02">
         <arg name="robotModel" />
         <arg name="gui" default="False" />
         <arg name="vel" default="True" />
         <arg name="eff" default="True" />
-        <param name="robot_description" textfile="$(find human_viz_model)/urdf/iCubGenova04.urdf"  />
+        <param name="robot_description" textfile="$(find human_viz_model)/urdf/iCubGenova02.urdf"  />
         <param name="use_gui" value="$(arg gui)"/>
         <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
-        <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
     </group>
 </launch>

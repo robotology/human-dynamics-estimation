@@ -4,7 +4,7 @@
         <arg name="gui" default="False" />
         <arg name="vel" default="True" />
         <arg name="eff" default="True" />
-        <param name="robot_description" textfile="$(human_viz_model)/urdf/Marta48DoF.urdf"  />
+        <param name="robot_description" textfile="$(find human_viz_model)/urdf/Meri66DoF.urdf"  />
         <param name="use_gui" value="$(arg gui)"/>
     </group>
 </launch>

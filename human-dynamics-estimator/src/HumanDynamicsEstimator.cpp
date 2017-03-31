@@ -382,7 +382,7 @@ bool HumanDynamicsEstimator::updateModule()
     Eigen::internal::set_is_malloc_allowed(false);
 #endif
 
-    std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
+    //std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
     // Read inputs
     // - Human state
     // - External forces
@@ -518,7 +518,7 @@ bool HumanDynamicsEstimator::updateModule()
     }
 
     m_outputPort.write();
-    std::cerr << "Map took " <<std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - t1).count() << "ms" << std::endl;
+    //std::cerr << "Map took " <<std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - t1).count() << "ms" << std::endl;
 
 
 #ifdef EIGEN_RUNTIME_NO_MALLOC

@@ -18,6 +18,7 @@
 #include <limits.h>
 #include <string>
 #include <vector>
+#include <cmath>
 
 using namespace std;
 using namespace yarp::os;
@@ -157,11 +158,11 @@ public:
         }
 
         humanDynamicsDataPort.useCallback(*this);
-        string dynamicsEstimatorServerName = "/" + rf.find("serverName").asString() + "/dynamicsEstimation:o";
-        string dynamicsReaderPortName = "/" + getName() + "/state:i";
+        string dynamicsEstimatorServerName = rf.find("serverName").asString();
+        string dynamicsReaderPortName = "/" + getName() + "/dynamicsEstimation:i";
         humanDynamicsDataPort.open(dynamicsReaderPortName);
-        Value defaultAutoconn; defaultAutoconn.fromString("true");
-        bool autoconn = rf.check("automaticConnection", defaultAutoconn, "Checking autoconnection mode").asBool();
+        Value defaultAutoconn; defaultAutoconn.fromString("false");
+        bool autoconn = rf.check("autoconnect", defaultAutoconn, "Checking autoconnection mode").asBool();
         if(autoconn){
             if (!Network::connect(dynamicsEstimatorServerName.c_str(),dynamicsReaderPortName))
             {
@@ -207,7 +208,7 @@ public:
             
             double effort_temp = 0;
             for (size_t indexJoint = 0; indexJoint < effortsList[index].indices.size(); ++indexJoint) {
-                effort_temp += humanDynamicsData.jointVariables[effortsList[index].indices[indexJoint]].torque[0];
+                effort_temp += std::abs(humanDynamicsData.jointVariables[effortsList[index].indices[indexJoint]].torque[0]);
             }
             effort.effortMsg.temperature = effort_temp;
             effortMsg = effort.effortMsg; 

@@ -364,17 +364,18 @@ bool HumanForcesProvider::configure(yarp::os::ResourceFinder &rf)
         else if (type == "port")
         {
             yarp::os::BufferedPort<yarp::sig::Vector> *port = new yarp::os::BufferedPort<yarp::sig::Vector>;
+	    std::string portName = "/" + getName() + "/source_" + *it + "/force:i";
             if(!port)
             {
-                yError("Unable to create input port [%s]", ("/" + getName() + "/source_" + *it + "/force:i").c_str());
+                yError("Unable to create input port [%s]", portName.c_str());
                 close();
                 return false;
             }
             m_ports.push_back(port);
             
-            if (!port->open("/" + getName() + "/source_" + *it + "/force:i"))
+            if (!port->open(portName))
             {
-                yError("Unable to open input port [%s]", ("/" + getName() + "/source_" + *it + "/force:i").c_str());
+                yError("Unable to open input port [%s]", portName.c_str());
                 close();
                 return false;
             }
