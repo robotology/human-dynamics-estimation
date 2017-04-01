@@ -9,6 +9,8 @@
 
 #include <iDynTree/ModelIO/ModelLoader.h>
 #include <iDynTree/Core/Transform.h>
+#include <iDynTree/Core/Position.h>
+#include <iDynTree/Core/Rotation.h>
 
 #include <TickTime.h>
 #include <yarp/os/BufferedPort.h>
@@ -19,6 +21,8 @@
 #include <yarp/os/Publisher.h>
 #include <yarp/os/RFModule.h>
 #include <yarp/os/Time.h>
+#include <yarp/os/Mutex.h>
+#include <yarp/os/LockGuard.h>
 
 #include <algorithm>
 #include <cmath>
@@ -116,16 +120,19 @@ static bool parsePositionVector(const yarp::os::Value& ini, iDynTree::Position& 
 
 class xsensJointStatePublisherModule : public RFModule, public TypedReaderCallback<HumanState> 
 {
-    Port client_port;
+    Port rpcPort;
     BufferedPort<HumanState> humanStateDataPort;
 
     Publisher<sensor_msgs_JointState> publisher;
     Publisher<tf2_msgs_TFMessage> publisher_tf;
     sensor_msgs_JointState joint_state;
     tf2_msgs_TFMessage tf;
-    
+    Mutex mutex;
+
     bool hasRobotFrame;
-    iDynTree::Transform robotTransform;
+    iDynTree::Transform robotBaseLinkWRTGround;
+    iDynTree::Transform robotBaseLinkWRTPelvis;
+    iDynTree::Transform humanPelvisWRTGround;
 
 public:
     double getPeriod()
@@ -186,9 +193,10 @@ public:
                 close();
                 return false;
             }
-            robotTransform.setPosition(position);
-            robotTransform.setRotation(rotation);
-
+            robotBaseLinkWRTPelvis.setPosition(position);
+            robotBaseLinkWRTPelvis.setRotation(rotation);
+            humanPelvisWRTGround.Identity();
+            setRobotPose();
         }
 
         tf.transforms.resize(1);
@@ -278,10 +286,18 @@ public:
             if (!Network::connect(stateProviderServerName.c_str(), stateReaderPortName))
             {
                 yError() << "Error! Could not connect to server " << stateProviderServerName;
-                close();close();
+                close();
                 return false;
             }
         }
+
+        std::string rpcPortName = "/" + getName() + "/rpc";
+        if (!rpcPort.open(rpcPortName) || ! attach(rpcPort)) {
+            yError("Failed to open RPC port %s", rpcPortName.c_str());
+            close();
+            return false;
+        }
+
         
         return true;
     }
@@ -293,6 +309,8 @@ public:
         publisher.close();
         publisher_tf.interrupt();
         publisher_tf.close();
+        rpcPort.interrupt();
+        rpcPort.close();
         return true;
     }
     
@@ -310,6 +328,22 @@ public:
         
         publisher.write();
 
+        LockGuard lock(mutex);
+
+        iDynTree::Position pelvisOrigin(humanStateData.baseOriginWRTGlobal.x,
+                                        humanStateData.baseOriginWRTGlobal.y,
+                                        humanStateData.baseOriginWRTGlobal.z);
+
+        iDynTree::Vector4 pelvisQuaternion;
+        pelvisQuaternion(0) = humanStateData.baseOrientationWRTGlobal.w;
+        pelvisQuaternion(1) = humanStateData.baseOrientationWRTGlobal.imaginary.x;
+        pelvisQuaternion(2) = humanStateData.baseOrientationWRTGlobal.imaginary.y;
+        pelvisQuaternion(3) = humanStateData.baseOrientationWRTGlobal.imaginary.z;
+        iDynTree::Rotation pelvisOrientation = iDynTree::Rotation::RotationFromQuaternion(pelvisQuaternion);
+        humanPelvisWRTGround.setPosition(pelvisOrigin);
+        humanPelvisWRTGround.setRotation(pelvisOrientation);
+
+
         tf.transforms[0].header.seq   = 1;
         tf.transforms[0].header.stamp = currentTime;
         tf.transforms[0].transform.translation.x = humanStateData.baseOriginWRTGlobal.x;
@@ -321,8 +355,8 @@ public:
         tf.transforms[0].transform.rotation.w = humanStateData.baseOrientationWRTGlobal.w;
 
         if (hasRobotFrame) {
-            const iDynTree::Position& position = robotTransform.getPosition();
-            const iDynTree::Vector4& orientation = robotTransform.getRotation().asQuaternion();
+            const iDynTree::Position& position = robotBaseLinkWRTGround.getPosition();
+            const iDynTree::Vector4& orientation = robotBaseLinkWRTGround.getRotation().asQuaternion();
             tf.transforms[1].header.seq   = 1;
             tf.transforms[1].header.stamp = currentTime;
             tf.transforms[1].transform.translation.x = position(0);
@@ -337,6 +371,36 @@ public:
         tfMsg = tf;
         
         publisher_tf.write();
+    }
+
+    void setRobotPose() {
+        LockGuard lock(mutex);
+        robotBaseLinkWRTGround = robotBaseLinkWRTPelvis * humanPelvisWRTGround;
+
+    }
+
+    virtual bool respond (const Bottle &command, Bottle &reply)
+    {
+        reply.clear();
+        if (command.size() == 1 && command.get(0).isString()) {
+            //setRobotPose
+            std::string cmd = command.get(0).asString();
+            if (cmd == "help") {
+                reply.addString("commands: setRobotPose");
+            } else if (cmd == "setRobotPose") {
+                //
+                setRobotPose();
+                reply.addString("ok");
+            } else {
+                reply.addString("Fail");
+                return true;
+            }
+            return true;
+        }
+
+
+        reply.addString("Fail");
+        return true;
     }
 };
 
