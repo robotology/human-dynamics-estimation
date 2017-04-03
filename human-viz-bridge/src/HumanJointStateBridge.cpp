@@ -193,6 +193,12 @@ public:
                 close();
                 return false;
             }
+
+            std::string robotKinematicSourceFrame = robotChildFrame;
+            if (robotGroup.check("kinematicSourceFrame")) {
+                robotKinematicSourceFrame = robotGroup.find("kinematicSourceFrame").asString();
+            }
+
             robotBaseLinkWRTPelvis.setPosition(position);
             robotBaseLinkWRTPelvis.setRotation(rotation);
             humanPelvisWRTGround.Identity();
@@ -201,7 +207,7 @@ public:
 
         tf.transforms.resize(1);
 
-        if(hasRobotFrame) {
+        if (hasRobotFrame) {
            tf.transforms.resize(2);
            tf.transforms[1].header.frame_id = rf.find("worldRFName").asString();
            tf.transforms[1].child_frame_id = robotChildFrame;
