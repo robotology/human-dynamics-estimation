@@ -57,6 +57,12 @@
         <node>${generic_node}</node>
     </module>
 
+    <module>
+        <name>robot-basepose-publisher</name>
+        <parameters></parameters>
+        <node>${generic_node}</node>
+    </module>
+
     <connection>
           <from>/xsens/frames:o</from>
           <to>/human-state-provider/xsens/frames:i</to>
@@ -78,6 +84,12 @@
     <connection>
           <from>/human-state-provider/state:o</from>
           <to>/human-jointstate-bridge/state:i</to>
+          <protocol>udp</protocol>
+    </connection>
+
+    <connection>
+          <from>/human-state-provider/state:o</from>
+          <to>/robot-basepose-publisher/state:i</to>
           <protocol>udp</protocol>
     </connection>
 
