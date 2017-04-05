@@ -16,5 +16,4 @@ a set of redundant sensor measurements. It needs as input the human state (q and
   of a multibody model assuming the knowledge of measurements of an arbitrary set of sensors and of the kinematics and inertial characteristics of the model. 
   Berdy initialization needs as input the human model along with the information of the related sensors and berdy options.
   
-berdy initialization is done only for the first step.
-y measurements is filled and MAP computation is done at each timestamp.
+**NB**: **berdy initialization** is done only for the first step. At each timestamp **y measurements** vector is filled and **MAP computation** is done.
