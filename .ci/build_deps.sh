@@ -14,6 +14,7 @@ case $TRAVIS_OS_NAME in
         cmake --build . --config ${TRAVIS_BUILD_TYPE}
         sudo cmake --build . --config ${TRAVIS_BUILD_TYPE} --target install
         cd ../..
+        rm -r ycm
     ;;
     linux) ;;
     *) travis_terminate 1
@@ -34,6 +35,7 @@ cmake --build . --config ${TRAVIS_BUILD_TYPE}
 cmake --build . --config ${TRAVIS_BUILD_TYPE} --target install
 
 cd ../..
+rm -r idyntree
 
 # Build and install xsense-mvn
 git clone https://github.com/robotology-playground/xsens-mvn
@@ -47,3 +49,6 @@ cmake -G"${TRAVIS_CMAKE_GENERATOR}" \
       ..
 cmake --build . --config ${TRAVIS_BUILD_TYPE}
 cmake --build . --config ${TRAVIS_BUILD_TYPE} --target install
+
+cd ../..
+rm -r xsens-mvn
