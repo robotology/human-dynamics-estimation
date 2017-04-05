@@ -1,6 +1,6 @@
 ## YARP module for the Human Dynamics Estimation (HDE).
 
-[![Build Status](https://travis-ci.org/robotology-playground/human-dynamics-estimation.svg?branch=master)](https://travis-ci.org/robotology-playground/human-dynamics-estimation)
+[![Build Status](https://travis-ci.org/robotology-playground/human-dynamics-estimation.svg?branch=master)](https://travis-ci.org/robotology-playground/human-dynamics-estimation) [![Build status](https://ci.appveyor.com/api/projects/status/w5rhsreg2fcmqud2/branch/master?svg=true)](https://ci.appveyor.com/project/claudia-lat/human-dynamics-estimation/branch/master)
 
 Human Dynamics Estimation (HDE) is a YARP module architecture for the estimation of the dynamics in humans while are physically interacting with a robot.
 
@@ -8,7 +8,10 @@ Human Dynamics Estimation (HDE) is a YARP module architecture for the estimation
 ###  Contents
 * **[Rationale](#rationale)**
 * **[Overview](#overview)**
+* **[How to install](#how-to-install)**
 * **[Dependencies](#dependencies)**
+* **[Documentation](#documentation)**
+* **[Reference paper](#Reference-paper)**
 * **[Acknowledgments](#acknowledgments)**
 
 
@@ -29,22 +32,39 @@ Except for the robot, raw data are typically coming from drivers.
 <img src="misc/hde_yarp_architecture.png">
 
 
+### How to install
+On Linux:
+```
+git clone https://github.com/robotology-playground/human-dynamics-estimation.git
+mkdir build
+cd build
+ccmake ..
+make install
+```
+
+
 ### Dependencies
 #### Build dependencies
 - [CMake](https://cmake.org)
 - [YCM](http://robotology.github.io/ycm/gh-pages/master/index.html)
 
-#### Core 
-- [Eigen](http://eigen.tuxfamily.org/index.php?title=Main_Page)
-
 #### Libraries
 - [YARP](https://github.com/robotology/yarp)
 - [iDynTree](https://github.com/robotology/idyntree)
-- [ROS]()
+- [Eigen](http://eigen.tuxfamily.org/index.php?title=Main_Page)
+
+#### Optional dependencies
+- [IPOPT](https://projects.coin-or.org/Ipopt) is needed for using the inverse kinematics code in the [human-state-provider](human-state-provider/README.md) module
+- ROS dependencies are needed if you want to visualize the human in Rviz tool.  More details [here](human-viz-bridge/README.md).
+
+
+## Documentation
+The documentation for HDE is automatically extracted from the C++ code using [Doxygen](www.doxygen.org),
+and it is available [here](https://robotology-playground.github.io/human-dynamics-estimation/).
 
 
 ## Reference paper
-The HDE theoretical background is described [here](http://www.mdpi.com/1424-8220/16/5/727).
+The HDE theoretical background is described in the following [paper](http://www.mdpi.com/1424-8220/16/5/727).
 ~~~
 Latella, C.; Kuppuswamy, N.; Romano, F.; Traversaro, S.; Nori, F.	
 Whole-Body Human Inverse Dynamics with Distributed Micro-Accelerometers, Gyros and Force Sensing. 
@@ -68,7 +88,7 @@ pages={727}}
 
 
 ### Acknowledgments
-The development of HDE is supported by the FP7 EU projects [CoDyCo (No. 600716 ICT 2011.2.1 Cognitiv
+The development of HDE is supported by the FP7 EU projects [CoDyCo (No. 600716 ICT 2011.2.1 Cognitive
 Systems and Robotics)](http://www.codyco.eu/) and by H2020 EU projects [An.Dy (No. 731540 H2020-ICT-2016-1)](http://andy-project.eu).
 The development is also supported by the [Istituto Italiano di Tecnologia](http://www.iit.it).
 
