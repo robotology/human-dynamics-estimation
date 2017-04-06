@@ -1,7 +1,6 @@
 ## YARP module for the Human Dynamics Estimation (HDE).
 
-[![Build Status](https://travis-ci.org/robotology-playground/human-dynamics-estimation.svg?branch=master)](https://travis-ci.org/robotology-playground/human-dynamics-estimation) [![Build status](https://ci.appveyor.com/api/projects/status/w5rhsreg2fcmqud2/branch/master?svg=true)](https://ci.appveyor.com/project/claudia-lat/human-dynamics-estimation/branch/master)
-
+[![Build Status](https://travis-ci.org/robotology-playground/human-dynamics-estimation.svg?branch=master)](https://travis-ci.org/robotology-playground/human-dynamics-estimation) [![Build status](https://ci.appveyor.com/api/projects/status/w5rhsreg2fcmqud2/branch/master?svg=true)](https://ci.appveyor.com/project/claudia-lat/human-dynamics-estimation/branch/master)\
 Human Dynamics Estimation (HDE) is a YARP module architecture for the estimation of the dynamics in humans while are physically interacting with a robot.
 
 
@@ -27,9 +26,11 @@ A general overview of HDE is described as follows:
 - a [human-dynamics-estimator](human-dynamics-estimator/README.md) module;
 - the [human-viz-bridge](human-viz-bridge/README.md) module for the visualization.
 
-Except for the robot, raw data are typically coming from drivers.
-
 <img src="misc/hde_yarp_architecture.png">
+
+The data about the human kinematics are provided to the *human-state-provider* module by the YARP interface `yarp::dev::IFrameProvider`.  [Here](https://github.com/robotology-playground/xsens-mvn) there is the implementation of the YARP driver for acquiring data if the motion capture is obtained through a Xsens MVN system. 
+The data related to the external forces are provided to the  *human-forces-provider* module whether the forces are coming from a YARP port (e.g.,in the case of the robot wrenches) or in the form of a AnalogSensor -by using the `yarp::dev::IAnalogSensor` interface- when they are coming from a force-torque device (see [here](https://github.com/robotology-playground/forcetorque-yarp-devices) the implementation of YARP Device Drivers for various commercial Six Axis Force Torque sensors).
+The human model is a URDF model with its non standard extended version (see [here](https://github.com/robotology/idyntree/blob/master/doc/model_loading.md) for more details). 
 
 
 ### How to install
