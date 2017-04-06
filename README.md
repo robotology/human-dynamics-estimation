@@ -11,13 +11,13 @@ Human Dynamics Estimation (HDE) is a YARP module architecture for the estimation
 * **[How to install](#how-to-install)**
 * **[Dependencies](#dependencies)**
 * **[Documentation](#documentation)**
-* **[Reference paper](#Reference-paper)**
+* **[Reference paper](#reference-paper)**
 * **[Acknowledgments](#acknowledgments)**
 
 
 ### Rationale
 HDE is the *on-line* evolution of the Matlab code present in [MAPest](https://github.com/claudia-lat/MAPest) repository.  The general idea is to be able in real-time to estimate the forces acting on the human body during a physical interaction with a robot. 
-A ROS-based visualizer allows to visualize in real-time the interaction.
+A ROS-based visualizer allows to visualize in real-time this interaction.
 
 
 ### Overview
