@@ -10,7 +10,8 @@ The module is structured as follow:
 
 where:
 - **MAP computation** is the function that solves the inverse dynamics problem with a maximum-a-posteriori estimation by using the Newton-Euler algorithm and 
-a set of redundant sensor measurements. It needs as input the human state (q and $$\dot{q}$$), the berdy iDynTree object and the vector (y) of measurements
+a set of redundant sensor measurements. It needs as input the human state (joints configuration and joints velocity), the berdy iDynTree object 
+and the vector (y) of measurements.
   - **y measurements**: vector of sensor measurements that includes external forces (forces6D) and data coming from accelerometres, 
   gyroscopes and DOF acceleration sensors (human kinematics data).
   - **berdy**: iDynTree object of [BerdyHelper](http://wiki.icub.org/codyco/dox/html/idyntree/html/classiDynTree_1_1BerdyHelper.html) class, that is a class for algorithms to compute the maximum-a-posteriori estimation of the dynamic variables 
