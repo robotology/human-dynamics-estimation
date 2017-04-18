@@ -21,10 +21,10 @@ A ROS-based visualizer allows to visualize in real-time this interaction.
 
 ### Overview
 A general overview of HDE is described as follows: 
-- a [human-state-provider](human-state-provider/README.md) module;
-- a [human-forces-provider](human-forces-provider/README.md) module;
-- a [human-dynamics-estimator](human-dynamics-estimator/README.md) module;
-- the [human-viz-bridge](human-viz-bridge/README.md) module for the visualization.
+- a [human-state-provider](human-state-provider) module;
+- a [human-forces-provider](human-forces-provider) module;
+- a [human-dynamics-estimator](human-dynamics-estimator) module;
+- the [human-viz-bridge](human-viz-bridge) module for the visualization.
 
 <img src="misc/hde_yarp_architecture.png">
 
@@ -55,8 +55,8 @@ make install
 - [Eigen](http://eigen.tuxfamily.org/index.php?title=Main_Page)
 
 #### Optional dependencies
-- [IPOPT](https://projects.coin-or.org/Ipopt) is needed for using the inverse kinematics code in the [human-state-provider](human-state-provider/README.md) module
-- ROS dependencies are needed if you want to visualize the human in Rviz tool.  More details [here](human-viz-bridge/README.md).
+- [IPOPT](https://projects.coin-or.org/Ipopt) is needed for using the inverse kinematics code in the [human-state-provider](human-state-provider) module
+- ROS dependencies are needed if you want to visualize the human in Rviz tool.  More details [here](human-viz-bridge).
 
 
 ## Documentation
