@@ -24,7 +24,7 @@ and the vector (y) of measurements.
 
 The Cholesky decomposition is a decomposition of a Hermitian, positive-definite matrix into the product of a lower triangular matrix and its conjugate transpose:
 
-	**A** = **L L'**
+**A** = **L L'**
 
 where **L** is a lower triangular matrix with real and positive diagonal entries, and **L'** denotes the conjugate transpose of **L**.
 The Cholesky decomposition is mainly used for the numerical solution of linear equations **A x** = **b**. If **A** is symmetric and positive definite, then we can solve **A x** = **b**  by first computing the Cholesky decomposition **A** = **L L'**, then solving **L y** = **b** for **y** by forward substitution, and finally solving **L' x** = **y** for **x** by back substitution.
