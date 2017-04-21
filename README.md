@@ -1,25 +1,43 @@
-## YARP module for the Human Dynamics Estimation (HDE).
+# YARP module for the Human Dynamics Estimation (HDE)
 
-[![Build Status](https://travis-ci.org/robotology-playground/human-dynamics-estimation.svg?branch=master)](https://travis-ci.org/robotology-playground/human-dynamics-estimation) [![Build status](https://ci.appveyor.com/api/projects/status/w5rhsreg2fcmqud2/branch/master?svg=true)](https://ci.appveyor.com/project/claudia-lat/human-dynamics-estimation/branch/master)\
+| Linux/macOS | Windows |
+|:----------:|:--------:|
+| [![Build Status](https://travis-ci.org/robotology-playground/human-dynamics-estimation.svg?branch=master)](https://travis-ci.org/robotology-playground/human-dynamics-estimation) | [![Build status](https://ci.appveyor.com/api/projects/status/w5rhsreg2fcmqud2/branch/master?svg=true)](https://ci.appveyor.com/project/claudia-lat/human-dynamics-estimation/branch/master)|
+
 Human Dynamics Estimation (HDE) is a YARP module architecture for the estimation of the dynamics in humans while are physically interacting with a robot.
 
 
-###  Contents
+##  Contents
 * **[Rationale](#rationale)**
 * **[Overview](#overview)**
-* **[How to install](#how-to-install)**
+* **[How to use it](#how-to-use-it)**
 * **[Dependencies](#dependencies)**
+* **[How to install](#how-to-install)**
+    * [Linux or macOs](#linux-or-macos)
+    * [Windows](#windows)
 * **[Documentation](#documentation)**
 * **[Reference paper](#reference-paper)**
 * **[Acknowledgments](#acknowledgments)**
 
 
-### Rationale
+## Rationale
 HDE is the *on-line* evolution of the Matlab code present in [MAPest](https://github.com/claudia-lat/MAPest) repository.  The general idea is to be able in real-time to estimate the forces acting on the human body during a physical interaction with a robot. 
 A ROS-based visualizer allows to visualize in real-time this interaction.
 
 
-### Overview
+## How to use it
+The best way to use this repository is to exploit all the available suggested tools that allow you to have the real-time forces and motion estimation. 
+
+<img src="misc/real_time_estimation.png" width=450 height=300>
+
+For reproducing the same experimental set-up as in figure, you would need the following dependencies:
+- the iCub robot
+- the Rviz visualizer
+
+If you are using them, you don't have to modify this code.
+Clearly, they are not dependencies in terms of software but in terms of tools for which the code is tailored.  If you want to use another visualizer or another robot, keep in mind that the code requires minor modifications.
+
+## Overview
 A general overview of HDE is described as follows: 
 - a [human-state-provider](human-state-provider) module;
 - a [human-forces-provider](human-forces-provider) module;
@@ -28,35 +46,53 @@ A general overview of HDE is described as follows:
 
 <img src="misc/hde_yarp_architecture.png">
 
+*What about the raw data?*
+
 The data about the human kinematics are provided to the *human-state-provider* module by the YARP interface `yarp::dev::IFrameProvider`.  [Here](https://github.com/robotology-playground/xsens-mvn) there is the implementation of the YARP driver for acquiring data if the motion capture is obtained through a Xsens MVN system. 
 The data related to the external forces are provided to the  *human-forces-provider* module whether the forces are coming from a YARP port (e.g.,in the case of the robot wrenches) or in the form of a AnalogSensor -by using the `yarp::dev::IAnalogSensor` interface- when they are coming from a force-torque device (see [here](https://github.com/robotology-playground/forcetorque-yarp-devices) the implementation of YARP Device Drivers for various commercial Six Axis Force Torque sensors).
-The human model is a URDF model with its non standard extended version (see [here](https://github.com/robotology/idyntree/blob/master/doc/model_loading.md) for more details). 
+The human model is a URDF model with its non standard extension (see [here](https://github.com/robotology/idyntree/blob/master/doc/model_loading.md) for more details). 
 
 
-### How to install
-On Linux:
-```
+## Dependencies
+Here following there is a list of dependencies you need for using this repository.  It is worth to notice that the *build* ones and the *libraries* are mandatory to install your project. Instead, the *optional dependencies* are defined optional in the sense that the project is built even if they are not included.  The installation of the all dependencies  is strongly suggested if you want to have a visual feedback of how much your estimation is good.
+
+For installing the dependencies you can decide to install them individually or to use the [codyco-superbuild](https://github.com/robotology/codyco-superbuild) that automatically is in charge of installing all the dependencies you need (except for the optional ones).  Keep in mind that the `codyco-superbuild` is surely the fastest way to install them but it is contains many more things than you need!
+
+#### Build dependencies
+- [**CMake**](https://cmake.org): an open-source, cross-platform family of tools designed to build, test and package software. ([Install me!](https://cmake.org/download/))
+- [**YCM**](http://robotology.github.io/ycm/gh-pages/master/index.html): a CMake project whose only goal is to download and build several other projects. ([Install me!](http://robotology.github.io/ycm/gh-pages/master/manual/ycm-installing.7.html))
+
+#### Libraries
+- [**YARP**](http://www.yarp.it): a library and toolkit for communication and device interfaces. ([Install me!](https://github.com/robotology/yarp))
+- [**iDynTree**](http://wiki.icub.org/codyco/dox/html/idyntree/html/): a library of robots dynamics algorithms for control, estimation and simulation. ([Install me!](https://github.com/robotology/idyntree))
+- Eigen: a C++ template library for linear algebra. ([Install me!](http://eigen.tuxfamily.org/index.php?title=Main_Page))
+
+#### Optional dependencies
+- [**IPOPT**](https://projects.coin-or.org/Ipopt): a software package for large-scale nonlinear optimization.  e the inverse kinematics code in the [human-state-provider](human-state-provider) module. ([Install me!](http://wiki.icub.org/wiki/Installing_IPOPT))
+- [**ROS**](http://wiki.ros.org): an open-source provider of libraries and tools for creating robot applications.  More details for the installation [here](human-viz-bridge).
+
+
+## How to install
+### Linux or macOS:
+Finally, after having installed the dependencies, you can install the HDE project:
+```bash
 git clone https://github.com/robotology-playground/human-dynamics-estimation.git
 mkdir build
 cd build
-ccmake ..
-make install
+```
+To use GNU Makefile generators:
+```bash
+cmake ../
+make
+```
+To use Xcode project generators
+```bash
+cmake ../ -G Xcode
+xcodebuild -configuration Release
 ```
 
-
-### Dependencies
-#### Build dependencies
-- [CMake](https://cmake.org)
-- [YCM](http://robotology.github.io/ycm/gh-pages/master/index.html)
-
-#### Libraries
-- [YARP](https://github.com/robotology/yarp)
-- [iDynTree](https://github.com/robotology/idyntree)
-- [Eigen](http://eigen.tuxfamily.org/index.php?title=Main_Page)
-
-#### Optional dependencies
-- [IPOPT](https://projects.coin-or.org/Ipopt) is needed for using the inverse kinematics code in the [human-state-provider](human-state-provider) module
-- ROS dependencies are needed if you want to visualize the human in Rviz tool.  More details [here](human-viz-bridge).
+### Windows
+to be written
 
 
 ## Documentation
@@ -88,7 +124,7 @@ pages={727}}
 ~~~
 
 
-### Acknowledgments
+## Acknowledgments
 The development of HDE is supported by the FP7 EU projects [CoDyCo (No. 600716 ICT 2011.2.1 Cognitive
 Systems and Robotics)](http://www.codyco.eu/) and by H2020 EU projects [An.Dy (No. 731540 H2020-ICT-2016-1)](http://andy-project.eu).
 The development is also supported by the [Istituto Italiano di Tecnologia](http://www.iit.it).
