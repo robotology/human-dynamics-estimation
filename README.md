@@ -65,7 +65,7 @@ For installing the dependencies you can decide to install them individually or t
 #### Libraries
 - [**YARP**](http://www.yarp.it): a library and toolkit for communication and device interfaces. ([Install me!](https://github.com/robotology/yarp))
 - [**iDynTree**](http://wiki.icub.org/codyco/dox/html/idyntree/html/): a library of robots dynamics algorithms for control, estimation and simulation. ([Install me!](https://github.com/robotology/idyntree))
-- Eigen: a C++ template library for linear algebra. ([Install me!](http://eigen.tuxfamily.org/index.php?title=Main_Page))
+- **Eigen**: a C++ template library for linear algebra. ([Install me!](http://eigen.tuxfamily.org/index.php?title=Main_Page))
 
 #### Optional dependencies
 - [**IPOPT**](https://projects.coin-or.org/Ipopt): a software package for large-scale nonlinear optimization.  e the inverse kinematics code in the [human-state-provider](human-state-provider) module. ([Install me!](http://wiki.icub.org/wiki/Installing_IPOPT))
