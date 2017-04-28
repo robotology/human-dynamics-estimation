@@ -72,14 +72,14 @@ list(APPEND conf config/human-effort-bridge.ini)
 add_executable(robot-basepose-publisher src/RobotBasePosePublisher.cpp)
 
 target_link_libraries(robot-basepose-publisher  YARP::YARP_OS 
-                                               YARP::YARP_dev
-                                               iDynTree::idyntree-high-level
-                                               iDynTree::idyntree-model
-                                               iDynTree::idyntree-modelio-urdf
-                                               human-viz-bridge-thrift
-                                               human-rosmsgs
-                                               human-state-provider-data
-                                               human-dynamics-estimator-data)
+                                                YARP::YARP_dev
+                                                iDynTree::idyntree-high-level
+                                                iDynTree::idyntree-model
+                                                iDynTree::idyntree-modelio-urdf
+                                                human-viz-bridge-thrift
+                                                human-rosmsgs
+                                                human-state-provider-data
+                                                human-dynamics-estimator-data)
 
 target_include_directories(robot-basepose-publisher PUBLIC ${YARP_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIR})
                                               
@@ -90,14 +90,12 @@ list(APPEND conf config/robot-basepose-publisher.ini)
 add_executable(icub-effort-bridge src/iCubEffortBridge.cpp)
 
 target_link_libraries(icub-effort-bridge YARP::YARP_OS 
-                                               YARP::YARP_dev
-                                               iDynTree::idyntree-high-level
-                                               iDynTree::idyntree-model
-                                               iDynTree::idyntree-modelio-urdf
-                                               human-viz-bridge-thrift
-                                               human-rosmsgs
-                                               human-state-provider-data
-                                               human-dynamics-estimator-data)
+                                         YARP::YARP_dev
+                                         YARP::YARP_sig
+                                         iDynTree::idyntree-model
+                                         iDynTree::idyntree-modelio-urdf
+                                         human-viz-bridge-thrift
+                                         human-rosmsgs)
 
 target_include_directories(icub-effort-bridge PUBLIC ${YARP_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIR})
                                               
