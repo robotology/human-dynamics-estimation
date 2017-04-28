@@ -49,7 +49,7 @@ target_include_directories(human-jointstate-bridge PUBLIC ${YARP_INCLUDE_DIRS})
 
 list(APPEND conf config/human-jointstate-bridge.ini)
 
-# Effort bridge
+# Human Effort bridge
 
 add_executable(human-effort-bridge src/HumanEffortBridge.cpp)
 
@@ -85,12 +85,31 @@ target_include_directories(robot-basepose-publisher PUBLIC ${YARP_INCLUDE_DIRS} 
                                               
 list(APPEND conf config/robot-basepose-publisher.ini)
 
+# iCub Effort Bridge
+
+add_executable(icub-effort-bridge src/iCubEffortBridge.cpp)
+
+target_link_libraries(icub-effort-bridge YARP::YARP_OS 
+                                               YARP::YARP_dev
+                                               iDynTree::idyntree-high-level
+                                               iDynTree::idyntree-model
+                                               iDynTree::idyntree-modelio-urdf
+                                               human-viz-bridge-thrift
+                                               human-rosmsgs
+                                               human-state-provider-data
+                                               human-dynamics-estimator-data)
+
+target_include_directories(icub-effort-bridge PUBLIC ${YARP_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIR})
+                                              
+list(APPEND conf config/icub-effort-bridge.ini)
+
 yarp_install(FILES ${conf} DESTINATION ${YARP_CONTEXTS_INSTALL_DIR}/human-dynamic-estimation)
 
 install(TARGETS human-tf-bridge 
                 human-jointstate-bridge
                 human-effort-bridge
                 robot-basepose-publisher
+                icub-effort-bridge
         RUNTIME DESTINATION ${CMAKE_INSTALL_FULL_BINDIR}
         ARCHIVE DESTINATION ${CMAKE_INSTALL_FULL_LIBDIR}
         LIBRARY DESTINATION ${CMAKE_INSTALL_FULL_LIBDIR})
