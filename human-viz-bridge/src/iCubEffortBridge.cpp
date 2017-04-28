@@ -35,7 +35,7 @@ using namespace yarp::dev;
 static bool parseStringListOption(const Value &option, vector<string> &parsedList);
 //---------------------------------------------------------------------------
 
-struct joint {
+struct Joint {
     string jointName;
     int nrDoFs;
     vector<string> jointDoFs;
@@ -43,7 +43,7 @@ struct joint {
 
 struct EffortPublisher {
     string linkEffort;
-    joint jointEffort;
+    Joint jointEffort;
     Publisher<sensor_msgs_Temperature> *publisher;
     sensor_msgs_Temperature effortMsg;
 };
@@ -68,38 +68,38 @@ inline TickTime normalizeSecNSec(double yarpTimeStamp)
 
 class iCubEffortPublisherModule : public RFModule 
 {
-    BufferedPort<Vector> iCubEffortDataPort; 
-    bool m_robotConfigured;
-    iDynTree::VectorDynSize m_robotConfiguration;
+    iDynTree::VectorDynSize robotTorques;
     PolyDriver m_robot;
-    ITorqueControl *robotTorques;
+    ITorqueControl *robotITorqueControl;
     vector<EffortPublisher> effortsList;
+    int period;
 
 public:
     double getPeriod()
     {
         // module periodicity (seconds).
-        return 0.1;
+        return period;
     }
     // Main function. Will be called periodically every getPeriod() seconds
     bool updateModule()
     {
         TickTime currentTime = normalizeSecNSec(yarp::os::Time::now());
         
-        robotTorques->getTorques(m_robotConfiguration.data());
+        robotITorqueControl->getTorques(robotTorques.data());
         
         for (size_t index = 0; index < effortsList.size(); ++index) {
             EffortPublisher &effort = effortsList[index];
             if (!effort.publisher) return false;
-            sensor_msgs_Temperature &effortMsg = effort.publisher->prepare();
+            //sensor_msgs_Temperature &effortMsg = effort.publisher->prepare();
+            effort.publisher->prepare();
             effort.effortMsg.header.stamp = currentTime;
             
             double effort_temp = 0;
             for (size_t indexJoint = 0; indexJoint < effortsList[index].jointEffort.nrDoFs; ++indexJoint) {
-                effort_temp += std::abs(m_robotConfiguration.getVal(index+indexJoint));
+                effort_temp += std::abs(robotTorques.getVal(index+indexJoint));
             }
             effort.effortMsg.temperature = effort_temp;
-            effortMsg = effort.effortMsg; 
+            //effortMsg = effort.effortMsg; 
             effort.publisher->write();
         }
         
@@ -108,8 +108,8 @@ public:
     // Configure function. 
     bool configure(ResourceFinder &rf)
     {
-        m_robotConfigured = false;
         
+        period = rf.check("period", Value(0.1), "Checking period value").asInt();
         string moduleName = rf.check("name", Value("icub-effort-bridge"), "Checking module name").asString();
         string urdfModelFile = rf.findFile("robotModelFilename");
         setName(moduleName.c_str());
@@ -135,8 +135,8 @@ public:
         iDynTree::Model robotModel = modelLoader.model(); 
         iDynTree::Traversal traversal;
         robotModel.computeFullTreeTraversal(traversal, robotModel.getDefaultBaseLink());
-        m_robotConfiguration.resize(robot_jointList.size());
-        m_robotConfiguration.zero();
+        robotTorques.resize(robot_jointList.size());
+        robotTorques.zero();
 
         size_t effortIndex = 0;
         size_t DoFiterator = 1;
@@ -148,7 +148,7 @@ public:
             effortsList[effortIndex].jointEffort.nrDoFs = 0;
             DoFiterator = 0;
             
-            if (!(robot_jointList[jointIndex].find(robotJoint)!=string::npos)) {
+            if (robot_jointList[jointIndex].find(robotJoint)==string::npos) {
                if(robot_jointList[jointIndex].find(jointDegrees[0])!=string::npos || robot_jointList[jointIndex].find(jointDegrees[1])!=string::npos || robot_jointList[jointIndex].find(jointDegrees[2])!=string::npos ) 
                {
                    robotJoint = robot_jointList[jointIndex];
@@ -210,8 +210,8 @@ public:
             effort.effortMsg.variance = 0;
         }
             
-        robotTorques = 0;
-        if (!getRobotTorquesInterface(rf, robot_jointList, robotTorques) || !robotTorques)
+        robotITorqueControl = 0;
+        if (!getRobotTorquesInterface(rf, robot_jointList, robotITorqueControl) || !robotITorqueControl)
         {
             yError("Failed to open robot ITorqueControl interface");
             return false;
@@ -223,8 +223,6 @@ public:
     // Close function, to perform cleanup.
     bool close()
     {
-        iCubEffortDataPort.close();
-
         for (size_t index = 0; index < effortsList.size(); ++index) {
             EffortPublisher &effort = effortsList[index];
             if (effort.publisher) {        
@@ -235,6 +233,7 @@ public:
             }
         }
         effortsList.clear();
+        m_robot.close();
         return true;
     }
     
@@ -242,52 +241,49 @@ public:
                                   const std::vector<std::string>& robot_jointList,
                                   yarp::dev::ITorqueControl *& torques)
     {
-        if (!m_robotConfigured) {
-            /*
-             * ------Configure the autoconnect option
-             */
-            yarp::os::Value falseValue;
-            falseValue.fromString("false");
-            bool autoconnect = config.check("autoconnect",
-                                        falseValue,
-                                        "Checking the autoconnect option").asBool();
-    
-            /*
-             * ------Robot configuration for the RemoteControlBoardRemapper
-             */
-            yarp::os::Bottle controlBoardGroup = config.findGroup("CONTROLBOARD_REMAPPER");
-            if(controlBoardGroup.isNull())
-            {
-                yError("Cannot find the CONTROLBOARD_REMAPPER group");
-                close();
-                return false;
-            }
-    
-            yarp::os::Property options_robot;
-            options_robot.fromString(controlBoardGroup.toString());
-    
-            yarp::os::Bottle axesNames;
-            yarp::os::Bottle &axesList = axesNames.addList();
-            for (std::vector<std::string>::const_iterator it = robot_jointList.begin(); it != robot_jointList.end(); ++it)
-            {
-                axesList.addString(*it);
-            }
-            options_robot.put("axesNames", axesNames.get(0));
-            options_robot.put("localPortPrefix", "/" + getName() + "/robot");
-    
-            //TODO: find a better way to express VOCAB
-            //1987212385 is the int cast for VOCAB REVOLUTE JOINT TYPE
-    
-            // Open the polydriver for the joints configuration
-            if (!m_robot.open(options_robot))
-            {
-                yError("Error in opening the device for the robot!");
-                close();
-                return false;
-            }
-    
-            m_robotConfigured = true;
+        /*
+         * ------Configure the autoconnect option
+         */
+        yarp::os::Value falseValue;
+        falseValue.fromString("false");
+        bool autoconnect = config.check("autoconnect",
+                                    falseValue,
+                                    "Checking the autoconnect option").asBool();
+        
+        /*
+         * ------Robot configuration for the RemoteControlBoardRemapper
+         */
+        yarp::os::Bottle controlBoardGroup = config.findGroup("CONTROLBOARD_REMAPPER");
+        if(controlBoardGroup.isNull())
+        {
+            yError("Cannot find the CONTROLBOARD_REMAPPER group");
+            close();
+            return false;
         }
+        
+        yarp::os::Property options_robot;
+        options_robot.fromString(controlBoardGroup.toString());
+        
+        yarp::os::Bottle axesNames;
+        yarp::os::Bottle &axesList = axesNames.addList();
+        for (std::vector<std::string>::const_iterator it = robot_jointList.begin(); it != robot_jointList.end(); ++it)
+        {
+            axesList.addString(*it);
+        }
+        options_robot.put("axesNames", axesNames.get(0));
+        options_robot.put("localPortPrefix", "/" + getName() + "/robot");
+        
+        //TODO: find a better way to express VOCAB
+        //1987212385 is the int cast for VOCAB REVOLUTE JOINT TYPE
+        
+        // Open the polydriver for the joints configuration
+        if (!m_robot.open(options_robot))
+        {
+            yError("Error in opening the device for the robot!");
+            close();
+            return false;
+        }
+        
         
         if (!m_robot.view(torques) || !torques)
         {
