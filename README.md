@@ -13,7 +13,6 @@ Human Dynamics Estimation (HDE) is a collection of YARP module for the estimatio
 * **[How to use it](#how-to-use-it)**
 * **[Dependencies](#dependencies)**
 * **[How to install](#how-to-install)**
-    * [Linux or macOs](#linux-or-macos)
 * **[Documentation](#documentation)**
 * **[Reference paper](#reference-paper)**
 * **[Acknowledgments](#acknowledgments)**
@@ -58,38 +57,39 @@ Here following there is a list of dependencies you need for using this repositor
 For installing the dependencies you can decide to install them individually or to use the [codyco-superbuild](https://github.com/robotology/codyco-superbuild) that automatically is in charge of installing all the dependencies you need (except for the optional ones).  Keep in mind that the `codyco-superbuild` is surely the fastest way to install them but it contains many more things than you need!
 
 #### Build dependencies
-- [**CMake**](https://cmake.org): an open-source, cross-platform family of tools designed to build, test and package software. (How to install [here](https://cmake.org/download/))
-- [**YCM**](http://robotology.github.io/ycm/gh-pages/master/index.html): a CMake project whose only goal is to download and build several other projects. (How to install [here](http://robotology.github.io/ycm/gh-pages/master/manual/ycm-installing.7.html))
+- [**CMake**](https://cmake.org/download/): an open-source, cross-platform family of tools designed to build, test and package software.
+- [**YCM**](http://robotology.github.io/ycm/gh-pages/master/manual/ycm-installing.7.html): a CMake project whose only goal is to download and build several other projects.
 
 #### Libraries
-- [**YARP**](http://www.yarp.it): a library and toolkit for communication and device interfaces. (How to install [here](https://github.com/robotology/yarp))
-- [**iDynTree**](http://wiki.icub.org/codyco/dox/html/idyntree/html/): a library of robots dynamics algorithms for control, estimation and simulation. (How to install [here](https://github.com/robotology/idyntree))
-- **Eigen**: a C++ template library for linear algebra. (How to install [here](http://eigen.tuxfamily.org/index.php?title=Main_Page))
+- [**YARP**](https://github.com/robotology/yarp): a library and toolkit for communication and device interfaces.
+- [**iDynTree**](https://github.com/robotology/idyntree): a library of robots dynamics algorithms for control, estimation and simulation.
+- [**Eigen**](http://eigen.tuxfamily.org/index.php?title=Main_Page): a C++ template library for linear algebra.
 
 #### Optional dependencies
-- [**IPOPT**](https://projects.coin-or.org/Ipopt): a software package for large-scale nonlinear optimization.  e the inverse kinematics code in the [human-state-provider](human-state-provider) module. (How to install [here](http://wiki.icub.org/wiki/Installing_IPOPT))
+- [**IPOPT**](http://wiki.icub.org/wiki/Installing_IPOPT): a software package for large-scale nonlinear optimization for the inverse kinematics code in the [human-state-provider](human-state-provider) module.
 - [**ROS**](http://wiki.ros.org): an open-source provider of libraries and tools for creating robot applications.  More details for the installation [here](human-viz-bridge).
 
 
 ## How to install
-### Linux or macOS:
 Finally, after having installed the dependencies, you can install the HDE project:
 ```bash
 git clone https://github.com/robotology-playground/human-dynamics-estimation.git
 mkdir build
 cd build
 ```
-To use GNU Makefile generators:
+
 ```bash
-cmake ../
-make
-make install
+cmake -DCMAKE_INSTALL_PREFIX=/path/to/your/installation/folder -G "name-of-your-cmake-generator" ..
 ```
-To use Xcode project generators
-```bash
-cmake ../ -G Xcode
-xcodebuild -configuration Release
-xcodebuild -target install -configuration Release
+where the `name-of-your-cmake-generator` is your project generator, see [Cmake-Generators](https://cmake.org/cmake/help/latest/manual/cmake-generators.7.html). For example, on macOS you may choose `Xcode`, or on Unix `Unix Makefiles`.
+
+Then, for compiling
+```
+cmake --build . --config Release
+```
+and installing
+```
+cmake --build . --config Release --target install
 ```
 
 
