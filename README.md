@@ -4,7 +4,7 @@
 |:----------:|:--------:|
 | [![Build Status](https://travis-ci.org/robotology-playground/human-dynamics-estimation.svg?branch=master)](https://travis-ci.org/robotology-playground/human-dynamics-estimation) | [![Build status](https://ci.appveyor.com/api/projects/status/w5rhsreg2fcmqud2/branch/master?svg=true)](https://ci.appveyor.com/project/claudia-lat/human-dynamics-estimation/branch/master)|
 
-Human Dynamics Estimation (HDE) is a YARP module architecture for the estimation of the dynamics in humans while are physically interacting with a robot.
+Human Dynamics Estimation (HDE) is a collection of YARP module for the estimation of the dynamics in humans while physically interacting with a robot.
 
 
 ##  Contents
@@ -14,7 +14,6 @@ Human Dynamics Estimation (HDE) is a YARP module architecture for the estimation
 * **[Dependencies](#dependencies)**
 * **[How to install](#how-to-install)**
     * [Linux or macOs](#linux-or-macos)
-    * [Windows](#windows)
 * **[Documentation](#documentation)**
 * **[Reference paper](#reference-paper)**
 * **[Acknowledgments](#acknowledgments)**
@@ -56,19 +55,19 @@ The human model is a URDF model with its non standard extension (see [here](http
 ## Dependencies
 Here following there is a list of dependencies you need for using this repository.  It is worth to notice that the *build* ones and the *libraries* are mandatory to install your project. Instead, the *optional dependencies* are defined optional in the sense that the project is built even if they are not included.  The installation of the all dependencies  is strongly suggested if you want to have a visual feedback of how much your estimation is good.
 
-For installing the dependencies you can decide to install them individually or to use the [codyco-superbuild](https://github.com/robotology/codyco-superbuild) that automatically is in charge of installing all the dependencies you need (except for the optional ones).  Keep in mind that the `codyco-superbuild` is surely the fastest way to install them but it is contains many more things than you need!
+For installing the dependencies you can decide to install them individually or to use the [codyco-superbuild](https://github.com/robotology/codyco-superbuild) that automatically is in charge of installing all the dependencies you need (except for the optional ones).  Keep in mind that the `codyco-superbuild` is surely the fastest way to install them but it contains many more things than you need!
 
 #### Build dependencies
-- [**CMake**](https://cmake.org): an open-source, cross-platform family of tools designed to build, test and package software. ([Install me!](https://cmake.org/download/))
-- [**YCM**](http://robotology.github.io/ycm/gh-pages/master/index.html): a CMake project whose only goal is to download and build several other projects. ([Install me!](http://robotology.github.io/ycm/gh-pages/master/manual/ycm-installing.7.html))
+- [**CMake**](https://cmake.org): an open-source, cross-platform family of tools designed to build, test and package software. (How to install [here](https://cmake.org/download/))
+- [**YCM**](http://robotology.github.io/ycm/gh-pages/master/index.html): a CMake project whose only goal is to download and build several other projects. (How to install [here](http://robotology.github.io/ycm/gh-pages/master/manual/ycm-installing.7.html))
 
 #### Libraries
-- [**YARP**](http://www.yarp.it): a library and toolkit for communication and device interfaces. ([Install me!](https://github.com/robotology/yarp))
-- [**iDynTree**](http://wiki.icub.org/codyco/dox/html/idyntree/html/): a library of robots dynamics algorithms for control, estimation and simulation. ([Install me!](https://github.com/robotology/idyntree))
-- **Eigen**: a C++ template library for linear algebra. ([Install me!](http://eigen.tuxfamily.org/index.php?title=Main_Page))
+- [**YARP**](http://www.yarp.it): a library and toolkit for communication and device interfaces. (How to install [here](https://github.com/robotology/yarp))
+- [**iDynTree**](http://wiki.icub.org/codyco/dox/html/idyntree/html/): a library of robots dynamics algorithms for control, estimation and simulation. (How to install [here](https://github.com/robotology/idyntree))
+- **Eigen**: a C++ template library for linear algebra. (How to install [here](http://eigen.tuxfamily.org/index.php?title=Main_Page))
 
 #### Optional dependencies
-- [**IPOPT**](https://projects.coin-or.org/Ipopt): a software package for large-scale nonlinear optimization.  e the inverse kinematics code in the [human-state-provider](human-state-provider) module. ([Install me!](http://wiki.icub.org/wiki/Installing_IPOPT))
+- [**IPOPT**](https://projects.coin-or.org/Ipopt): a software package for large-scale nonlinear optimization.  e the inverse kinematics code in the [human-state-provider](human-state-provider) module. (How to install [here](http://wiki.icub.org/wiki/Installing_IPOPT))
 - [**ROS**](http://wiki.ros.org): an open-source provider of libraries and tools for creating robot applications.  More details for the installation [here](human-viz-bridge).
 
 
@@ -84,15 +83,14 @@ To use GNU Makefile generators:
 ```bash
 cmake ../
 make
+make install
 ```
 To use Xcode project generators
 ```bash
 cmake ../ -G Xcode
 xcodebuild -configuration Release
+xcodebuild -target install -configuration Release
 ```
-
-### Windows
-to be written
 
 
 ## Documentation
