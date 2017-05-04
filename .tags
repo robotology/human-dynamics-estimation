@@ -1,0 +1,965 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+AbstractForceReader	human-forces-provider/include/AbstractForceReader.h	/^class human::AbstractForceReader : public human::ForceReader$/;"	c	class:human
+AbstractForceReader	human-forces-provider/src/AbstractForceReader.cpp	/^    AbstractForceReader::AbstractForceReader(std::string attachedLink,$/;"	f	class:human::AbstractForceReader
+BerdyDynamicVariablesTypesHash	human-dynamics-estimator/include/HumanDynamicsEstimator.h	/^    struct BerdyDynamicVariablesTypesHash$/;"	s	class:HumanDynamicsEstimator
+BerdyOutputMap	human-dynamics-estimator/include/HumanDynamicsEstimator.h	/^    typedef std::map<std::string, BerdyOutputRangeMap> BerdyOutputMap;$/;"	t	class:HumanDynamicsEstimator
+BerdyOutputRangeMap	human-dynamics-estimator/include/HumanDynamicsEstimator.h	/^    typedef std::unordered_map<iDynTree::BerdyDynamicVariablesTypes, iDynTree::IndexRange, BerdyDynamicVariablesTypesHash> BerdyOutputRangeMap;$/;"	t	class:HumanDynamicsEstimator
+BerdySensorsInputMap	human-dynamics-estimator/include/HumanDynamicsEstimator.h	/^    typedef std::unordered_map<SensorKey, iDynTree::IndexRange, SensorKeyHash> BerdySensorsInputMap;$/;"	t	class:HumanDynamicsEstimator
+ControlBoardArbitraryAxesDecomposition	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^class ControlBoardArbitraryAxesDecomposition$/;"	c	namespace:yarp::dev
+ControlBoardRemapperBuffers	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^class ControlBoardRemapperBuffers$/;"	c	namespace:yarp::dev
+ControlBoardSubControlBoardAxesDecomposition	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^class ControlBoardSubControlBoardAxesDecomposition$/;"	c	namespace:yarp::dev
+Editor	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    Editor() {$/;"	f	class:jointData::Editor
+Editor	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    Editor(jointData& obj) {$/;"	f	class:jointData::Editor
+Editor	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^  class Editor : public yarp::os::Wire, public yarp::os::PortWriter {$/;"	c	class:jointData
+Edof	inverse-kinematics/include/private/InverseKinematicsIPOPT.h	/^    iDynTree::MatrixDynSize Ep, Eq, Edof; \/\/extractors from the total variable vector$/;"	m	class:InverseKinematicsIPOPT
+EffortPublisher	human-viz-bridge/src/HumanEffortBridge.cpp	/^struct EffortPublisher {$/;"	s	file:
+Ep	inverse-kinematics/include/private/InverseKinematicsIPOPT.h	/^    iDynTree::MatrixDynSize Ep, Eq, Edof; \/\/extractors from the total variable vector$/;"	m	class:InverseKinematicsIPOPT
+Eq	inverse-kinematics/include/private/InverseKinematicsIPOPT.h	/^    iDynTree::MatrixDynSize Ep, Eq, Edof; \/\/extractors from the total variable vector$/;"	m	class:InverseKinematicsIPOPT
+FTForceReader	human-forces-provider/include/FTForceReader.h	/^class human::FTForceReader : public human::AbstractForceReader$/;"	c	class:human
+FTForceReader	human-forces-provider/src/FTForceReader.cpp	/^    FTForceReader::FTForceReader(std::string attachedLink,$/;"	f	class:human::FTForceReader
+ForceReader	human-forces-provider/include/ForceReader.h	/^class human::ForceReader$/;"	c	class:human
+FrameTransformer	human-forces-provider/include/FrameTransformer.h	/^class human::FrameTransformer$/;"	c	class:human
+GenericFrameTransformer	human-forces-provider/include/GenericFrameTransformer.h	/^class human::GenericFrameTransformer : public human::FrameTransformer$/;"	c	class:human
+GenericFrameTransformer	human-forces-provider/src/GenericFrameTransformer.cpp	/^    GenericFrameTransformer::GenericFrameTransformer (const std::string &originExpressedFrame,$/;"	f	class:human::GenericFrameTransformer
+HUMANDYNAMICSESTIMATOR_H	human-dynamics-estimator/include/HumanDynamicsEstimator.h	2;"	d
+HUMANFORCESPROVIDER_H	human-forces-provider/include/HumanForcesProvider.h	10;"	d
+HUMANIKWORKER_H	human-state-provider/include/private/HumanIKWorkerPool.h	10;"	d
+HUMANSTATEPROVIDERPRIVATE_H	human-state-provider/include/private/HumanStateProviderPrivate.h	10;"	d
+HUMANSTATEPROVIDER_H	human-state-provider/include/HumanStateProvider.h	10;"	d
+HUMAN_ABSTRACTFORCEREADER_H	human-forces-provider/include/AbstractForceReader.h	10;"	d
+HUMAN_FORCEREADER_H	human-forces-provider/include/ForceReader.h	10;"	d
+HUMAN_FRAMETRANSFORMER_H	human-forces-provider/include/FrameTransformer.h	10;"	d
+HUMAN_FTFORCEREADER_H	human-forces-provider/include/FTForceReader.h	10;"	d
+HUMAN_GENERICFORCETRANSFORMER_H	human-forces-provider/include/GenericFrameTransformer.h	10;"	d
+HUMAN_HUMAN_INVERSEKINEMATICS_H	inverse-kinematics/include/human-ik/InverseKinematics.h	2;"	d
+HUMAN_PORTFORCEREADER_H	human-forces-provider/include/PortForceReader.h	10;"	d
+HUMAN_ROBOTFRAMETRANSFORMER_H	human-forces-provider/include/RobotFrameTransformer.h	18;"	d
+HumanDynamicsEstimator	human-dynamics-estimator/include/HumanDynamicsEstimator.h	/^class HumanDynamicsEstimator : public yarp::os::RFModule {$/;"	c
+HumanDynamicsEstimator	human-dynamics-estimator/src/HumanDynamicsEstimator.cpp	/^HumanDynamicsEstimator::HumanDynamicsEstimator()$/;"	f	class:HumanDynamicsEstimator
+HumanForcesProvider	human-forces-provider/include/HumanForcesProvider.h	/^class HumanForcesProvider : public yarp::os::RFModule$/;"	c
+HumanForcesProvider	human-forces-provider/src/HumanForcesProvider.cpp	/^HumanForcesProvider::HumanForcesProvider()$/;"	f	class:HumanForcesProvider
+HumanIKWorkerPool	human-state-provider/include/private/HumanIKWorkerPool.h	/^class human::HumanIKWorkerPool {$/;"	c	class:human
+HumanIKWorkerPool	human-state-provider/src/HumanIKWorkerPool.cpp	/^    HumanIKWorkerPool::HumanIKWorkerPool(int size,$/;"	f	class:human::HumanIKWorkerPool
+HumanStateProvider	human-state-provider/include/HumanStateProvider.h	/^class human::HumanStateProvider : public yarp::os::RFModule$/;"	c	class:human
+HumanStateProvider	human-state-provider/src/HumanStateProvider.cpp	/^    HumanStateProvider::HumanStateProvider()$/;"	f	class:human::HumanStateProvider
+HumanStateProviderPrivate	human-state-provider/include/private/HumanStateProviderPrivate.h	/^class human::HumanStateProvider::HumanStateProviderPrivate$/;"	c	class:human::HumanStateProvider
+HumanStateProviderPrivate	human-state-provider/src/HumanStateProviderPrivate.cpp	/^    HumanStateProvider::HumanStateProviderPrivate::HumanStateProviderPrivate()$/;"	f	class:human::HumanStateProvider::HumanStateProviderPrivate
+HumanTFBridge	human-viz-bridge/src/HumanTFBridge.cpp	/^class HumanTFBridge : public RFModule, public TypedReaderCallback<XsensSegmentsFrame> $/;"	c	file:
+IKErrorLog	inverse-kinematics/tests/testSuit.cpp	/^struct IKErrorLog{$/;"	s	file:
+IKSolverLog	inverse-kinematics/tests/testSuit.cpp	/^struct IKSolverLog{$/;"	s	file:
+INVERSEKINEMATICSIPOPT_H	inverse-kinematics/include/private/InverseKinematicsIPOPT.h	2;"	d
+INVERSEKINEMATICSV2IPOPT_H	inverse-kinematics/include/private/InverseKinematicsV2IPOPT.h	2;"	d
+InverseKinematics	inverse-kinematics/include/human-ik/InverseKinematics.h	/^class human::InverseKinematics {$/;"	c	class:human
+InverseKinematics	inverse-kinematics/src/InverseKinematics.cpp	/^InverseKinematics::InverseKinematics()$/;"	f	class:human::InverseKinematics
+InverseKinematics	inverse-kinematics/src/InverseKinematics.cpp	/^InverseKinematics::InverseKinematics(const InverseKinematics&) { assert(false); }$/;"	f	class:human::InverseKinematics
+InverseKinematics	inverse-kinematics/src/InverseKinematics.cpp	/^InverseKinematics::InverseKinematics(const std::string& solverName)$/;"	f	class:human::InverseKinematics
+InverseKinematicsIPOPT	inverse-kinematics/include/private/InverseKinematicsIPOPT.h	/^class InverseKinematicsIPOPT : public Ipopt::TNLP {$/;"	c
+InverseKinematicsIPOPT	inverse-kinematics/src/InverseKinematicsIPOPT.cpp	/^InverseKinematicsIPOPT::InverseKinematicsIPOPT()$/;"	f	class:InverseKinematicsIPOPT
+InverseKinematicsPrivate	inverse-kinematics/src/InverseKinematics.cpp	/^        InverseKinematicsPrivate()$/;"	f	class:human::InverseKinematics::InverseKinematicsPrivate
+InverseKinematicsPrivate	inverse-kinematics/src/InverseKinematics.cpp	/^    class InverseKinematics::InverseKinematicsPrivate {$/;"	c	class:human::InverseKinematics	file:
+InverseKinematicsV2IPOPT	inverse-kinematics/include/private/InverseKinematicsV2IPOPT.h	/^class InverseKinematicsV2IPOPT : public Ipopt::TNLP {$/;"	c
+InverseKinematicsV2IPOPT	inverse-kinematics/src/InverseKinematicsV2IPOPT.cpp	/^InverseKinematicsV2IPOPT::InverseKinematicsV2IPOPT()$/;"	f	class:InverseKinematicsV2IPOPT
+LinkPairInfo	human-state-provider/include/private/HumanStateProviderPrivate.h	/^struct human::LinkPairInfo {$/;"	s	class:human
+PortForceReader	human-forces-provider/include/PortForceReader.h	/^class human::PortForceReader : public human::AbstractForceReader$/;"	c	class:human
+PortForceReader	human-forces-provider/src/PortForceReader.cpp	/^    PortForceReader::PortForceReader(std::string attachedLink,$/;"	f	class:human::PortForceReader
+ReadOnlyControlBoardRemapper	yarp/ReadOnlyControlBoardRemapper/ReadOnlyControlBoardRemapper.cpp	/^ReadOnlyControlBoardRemapper::ReadOnlyControlBoardRemapper()$/;"	f	class:yarp::dev::ReadOnlyControlBoardRemapper
+ReadOnlyControlBoardRemapper	yarp/ReadOnlyControlBoardRemapper/ReadOnlyControlBoardRemapper.h	/^class yarp::dev::ReadOnlyControlBoardRemapper$/;"	c	class:yarp::dev
+ReadOnlyRemoteControlBoard	yarp/ReadOnlyRemoteControlBoard/ReadOnlyRemoteControlBoard.cpp	/^    ReadOnlyRemoteControlBoard::ReadOnlyRemoteControlBoard()$/;"	f	class:yarp::dev::ReadOnlyRemoteControlBoard
+ReadOnlyRemoteControlBoard	yarp/ReadOnlyRemoteControlBoard/ReadOnlyRemoteControlBoard.h	/^class yarp::dev::ReadOnlyRemoteControlBoard$/;"	c	class:yarp::dev
+ReadOnlyRemoteControlBoardRemapper	yarp/ReadOnlyControlBoardRemapper/ReadOnlyRemoteControlBoardRemapper.cpp	/^ReadOnlyRemoteControlBoardRemapper::ReadOnlyRemoteControlBoardRemapper()$/;"	f	class:ReadOnlyRemoteControlBoardRemapper
+ReadOnlyRemoteControlBoardRemapper	yarp/ReadOnlyControlBoardRemapper/ReadOnlyRemoteControlBoardRemapper.h	/^class yarp::dev::ReadOnlyRemoteControlBoardRemapper : public yarp::dev::ReadOnlyControlBoardRemapper$/;"	c	class:yarp::dev
+RemappedAxis	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^class RemappedAxis$/;"	c	namespace:yarp::dev
+RemappedControlBoards	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^class RemappedControlBoards$/;"	c	namespace:yarp::dev
+RemappedSubControlBoard	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.cpp	/^RemappedSubControlBoard::RemappedSubControlBoard()$/;"	f	class:RemappedSubControlBoard
+RemappedSubControlBoard	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^class RemappedSubControlBoard$/;"	c	namespace:yarp::dev
+RobotBasePosePublisher	human-viz-bridge/src/RobotBasePosePublisher.cpp	/^    RobotBasePosePublisher()$/;"	f	class:RobotBasePosePublisher
+RobotBasePosePublisher	human-viz-bridge/src/RobotBasePosePublisher.cpp	/^class RobotBasePosePublisher : public RFModule$/;"	c	file:
+RobotFrameTransformer	human-forces-provider/include/RobotFrameTransformer.h	/^class human::RobotFrameTransformer : public human::GenericFrameTransformer$/;"	c	class:human
+RobotFrameTransformer	human-forces-provider/src/RobotFrameTransformer.cpp	/^    RobotFrameTransformer::RobotFrameTransformer(const iDynTree::Transform &constTransformFromFixture,$/;"	f	class:human::RobotFrameTransformer
+SegmentInfo	human-state-provider/include/private/HumanStateProviderPrivate.h	/^struct human::SegmentInfo {$/;"	s	class:human
+SensorKey	human-dynamics-estimator/include/HumanDynamicsEstimator.h	/^    struct SensorKey {$/;"	s	class:HumanDynamicsEstimator
+SensorKeyHash	human-dynamics-estimator/include/HumanDynamicsEstimator.h	/^    struct SensorKeyHash$/;"	s	class:HumanDynamicsEstimator
+StateExtendedInputPort	yarp/ReadOnlyRemoteControlBoard/stateExtendedReader.cpp	/^StateExtendedInputPort::StateExtendedInputPort()$/;"	f	class:StateExtendedInputPort
+StateExtendedInputPort	yarp/ReadOnlyRemoteControlBoard/stateExtendedReader.hpp	/^class StateExtendedInputPort:public yarp::os::BufferedPort<jointData>$/;"	c
+TIMEOUT	yarp/ReadOnlyRemoteControlBoard/ReadOnlyRemoteControlBoard.cpp	/^const double TIMEOUT=0.5;$/;"	v
+TIMEOUT_EXT	yarp/ReadOnlyRemoteControlBoard/stateExtendedReader.hpp	/^const double TIMEOUT_EXT=0.5;$/;"	v
+VAR_TO_STR	human-dynamics-estimator/src/HumanDynamicsEstimator.cpp	16;"	d	file:
+WorkerTaskData	human-state-provider/include/private/HumanIKWorkerPool.h	/^    struct WorkerTaskData {$/;"	s	class:human::HumanIKWorkerPool
+YARP_DEV_CONTROLBOARDREMAPPER_CONTROLBOARDREMAPPERHELPERS_H	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	8;"	d
+YARP_DEV_CONTROLBOARDREMAPPER_CONTROLBOARDREMAPPER_H	yarp/ReadOnlyControlBoardRemapper/ReadOnlyControlBoardRemapper.h	8;"	d
+YARP_DEV_READONLYCONTROLBOARDREMAPPER_READONLYREMOTECONTROLBOARDREMAPPER_H	yarp/ReadOnlyControlBoardRemapper/ReadOnlyRemoteControlBoardRemapper.h	8;"	d
+YARP_DEV_READONLYREMOTECONTROLBOARD_READONLYREMOTECONTROLBOARD_H	yarp/ReadOnlyRemoteControlBoard/ReadOnlyRemoteControlBoard.h	8;"	d
+YARP_DEV_REMOTECONTROLBOARD_STATEEXTENDEDREADER_H	yarp/ReadOnlyRemoteControlBoard/stateExtendedReader.hpp	8;"	d
+YARP_THRIFT_GENERATOR_STRUCT_jointData	yarp/ReadOnlyRemoteControlBoard/jointData.h	5;"	d
+_parentFrame	inverse-kinematics/src/InverseKinematics.cpp	/^        std::string _parentFrame;$/;"	m	class:human::InverseKinematics::InverseKinematicsPrivate	file:
+_subDevVerbose	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^    bool _subDevVerbose;$/;"	m	class:yarp::dev::RemappedSubControlBoard
+_targetFrame	inverse-kinematics/src/InverseKinematics.cpp	/^        std::string _targetFrame;$/;"	m	class:human::InverseKinematics::InverseKinematicsPrivate	file:
+_verb	yarp/ReadOnlyControlBoardRemapper/ReadOnlyControlBoardRemapper.h	/^    bool _verb;$/;"	m	class:yarp::dev::ReadOnlyControlBoardRemapper
+accelerations	human-state-provider/include/private/HumanStateProviderPrivate.h	/^        std::vector<yarp::sig::Vector> accelerations;$/;"	m	struct:human::HumanStateProvider::HumanStateProviderPrivate::__anon1
+accelerations	human-state-provider/include/private/HumanStateProviderPrivate.h	/^    yarp::sig::Vector accelerations;$/;"	m	struct:human::SegmentInfo
+allJointsBuffers	yarp/ReadOnlyControlBoardRemapper/ReadOnlyControlBoardRemapper.h	/^    yarp::dev::ControlBoardSubControlBoardAxesDecomposition allJointsBuffers;$/;"	m	class:yarp::dev::ReadOnlyControlBoardRemapper
+alreadyOptimized	inverse-kinematics/src/InverseKinematics.cpp	/^        bool alreadyOptimized;$/;"	m	class:human::InverseKinematics::InverseKinematicsPrivate	file:
+amp	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^    yarp::dev::IAmplifierControl     *amp;$/;"	m	class:yarp::dev::RemappedSubControlBoard
+angleError	inverse-kinematics/tests/testSuit.cpp	/^    std::vector< double > angleError;$/;"	m	struct:IKSolverLog	file:
+attach	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.cpp	/^bool RemappedSubControlBoard::attach(yarp::dev::PolyDriver *d, const std::string &k)$/;"	f	class:RemappedSubControlBoard
+attachAll	yarp/ReadOnlyControlBoardRemapper/ReadOnlyControlBoardRemapper.cpp	/^bool ReadOnlyControlBoardRemapper::attachAll(const PolyDriverList &polylist)$/;"	f	class:yarp::dev::ReadOnlyControlBoardRemapper
+attachAllUsingAxesNames	yarp/ReadOnlyControlBoardRemapper/ReadOnlyControlBoardRemapper.cpp	/^bool ReadOnlyControlBoardRemapper::attachAllUsingAxesNames(const PolyDriverList& polylist)$/;"	f	class:yarp::dev::ReadOnlyControlBoardRemapper
+attachAllUsingNetworks	yarp/ReadOnlyControlBoardRemapper/ReadOnlyControlBoardRemapper.cpp	/^bool ReadOnlyControlBoardRemapper::attachAllUsingNetworks(const PolyDriverList &polylist)$/;"	f	class:yarp::dev::ReadOnlyControlBoardRemapper
+attachedF	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^    bool attachedF;$/;"	m	class:yarp::dev::RemappedSubControlBoard
+autoSelectJointsFromTraversal	inverse-kinematics/src/InverseKinematics.cpp	/^    bool InverseKinematics::InverseKinematicsPrivate::autoSelectJointsFromTraversal(const iDynTree::Model& modelInput, const std::string& parentFrame, const std::string& endEffectorFrame, iDynTree::Model& modelOutput)$/;"	f	class:human::InverseKinematics::InverseKinematicsPrivate
+axesNames	yarp/ReadOnlyControlBoardRemapper/ReadOnlyControlBoardRemapper.h	/^    std::vector<std::string> axesNames;$/;"	m	class:yarp::dev::ReadOnlyControlBoardRemapper
+axisIndexInSubControlBoard	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^    size_t axisIndexInSubControlBoard;$/;"	m	class:yarp::dev::RemappedAxis
+axisLocation	yarp/ReadOnlyControlBoardRemapper/ReadOnlyControlBoardRemapper.cpp	/^struct axisLocation$/;"	s	namespace:yarp::dev	file:
+baseLink	human-state-provider/src/HumanStateProviderPrivate.cpp	/^    std::string HumanStateProvider::HumanStateProviderPrivate::baseLink()$/;"	f	class:human::HumanStateProvider::HumanStateProviderPrivate
+begin	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    void begin() { group++; }$/;"	f	class:jointData::Editor
+buffers	yarp/ReadOnlyControlBoardRemapper/ReadOnlyControlBoardRemapper.h	/^    yarp::dev::ControlBoardRemapperBuffers buffers;$/;"	m	class:yarp::dev::ReadOnlyControlBoardRemapper
+calib	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^    yarp::dev::IControlCalibration   *calib;$/;"	m	class:yarp::dev::RemappedSubControlBoard
+calib2	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^    yarp::dev::IControlCalibration2  *calib2;$/;"	m	class:yarp::dev::RemappedSubControlBoard
+childFrameInfo	human-state-provider/include/private/HumanIKWorkerPool.h	/^        human::SegmentInfo& childFrameInfo;$/;"	m	struct:human::HumanIKWorkerPool::WorkerTaskData
+childFrameModelIndex	human-state-provider/include/private/HumanStateProviderPrivate.h	/^    iDynTree::FrameIndex childFrameModelIndex; \/\/index of the frame in the iDynTree Model$/;"	m	struct:human::LinkPairInfo
+childFrameName	human-state-provider/include/private/HumanStateProviderPrivate.h	/^    std::string childFrameName; \/\/name of the child frame$/;"	m	struct:human::LinkPairInfo
+childFrameSegmentsIndex	human-state-provider/include/private/HumanStateProviderPrivate.h	/^    iDynTree::FrameIndex childFrameSegmentsIndex; \/\/index of the child frame in the segment list$/;"	m	struct:human::LinkPairInfo
+childJacobian	human-state-provider/include/private/HumanStateProviderPrivate.h	/^    iDynTree::MatrixDynSize childJacobian;$/;"	m	struct:human::LinkPairInfo
+clean	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    void clean() {$/;"	f	class:jointData::Editor
+client_port	human-viz-bridge/src/HumanTFBridge.cpp	/^    Port client_port;$/;"	m	class:HumanTFBridge	file:
+close	human-dynamics-estimator/src/HumanDynamicsEstimator.cpp	/^bool HumanDynamicsEstimator::close()$/;"	f	class:HumanDynamicsEstimator
+close	human-forces-provider/src/HumanForcesProvider.cpp	/^bool HumanForcesProvider::close()$/;"	f	class:HumanForcesProvider
+close	human-state-provider/src/HumanStateProvider.cpp	/^    bool HumanStateProvider::close()$/;"	f	class:human::HumanStateProvider
+close	human-viz-bridge/src/HumanEffortBridge.cpp	/^    bool close()$/;"	f	class:xsensJointStatePublisherModule
+close	human-viz-bridge/src/HumanJointStateBridge.cpp	/^    bool close()$/;"	f	class:xsensJointStatePublisherModule
+close	human-viz-bridge/src/HumanTFBridge.cpp	/^    bool close()$/;"	f	class:HumanTFBridge
+close	human-viz-bridge/src/RobotBasePosePublisher.cpp	/^    bool close()$/;"	f	class:RobotBasePosePublisher
+close	yarp/ReadOnlyControlBoardRemapper/ReadOnlyControlBoardRemapper.cpp	/^bool ReadOnlyControlBoardRemapper::close()$/;"	f	class:yarp::dev::ReadOnlyControlBoardRemapper
+close	yarp/ReadOnlyControlBoardRemapper/ReadOnlyRemoteControlBoardRemapper.cpp	/^bool ReadOnlyRemoteControlBoardRemapper::close()$/;"	f	class:ReadOnlyRemoteControlBoardRemapper
+close	yarp/ReadOnlyRemoteControlBoard/ReadOnlyRemoteControlBoard.cpp	/^     bool ReadOnlyRemoteControlBoard::close() {$/;"	f	class:yarp::dev::ReadOnlyRemoteControlBoard
+closeAllRemoteControlBoards	yarp/ReadOnlyControlBoardRemapper/ReadOnlyRemoteControlBoardRemapper.cpp	/^void ReadOnlyRemoteControlBoardRemapper::closeAllRemoteControlBoards()$/;"	f	class:ReadOnlyRemoteControlBoardRemapper
+communicate	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    void communicate() {$/;"	f	class:jointData::Editor
+computeErrors	inverse-kinematics/src/InverseKinematicsIPOPT.cpp	/^void InverseKinematicsIPOPT::computeErrors(Position& positionError, Rotation& rotationError, double* angleError)$/;"	f	class:InverseKinematicsIPOPT
+computeErrors	inverse-kinematics/src/InverseKinematicsV2IPOPT.cpp	/^void InverseKinematicsV2IPOPT::computeErrors(Position& positionError, Rotation& rotationError, double* angleError)$/;"	f	class:InverseKinematicsV2IPOPT
+computeIK	human-state-provider/src/HumanIKWorkerPool.cpp	/^    int HumanIKWorkerPool::computeIK(WorkerTaskData& task)$/;"	f	class:human::HumanIKWorkerPool
+computeJointVelocities	human-state-provider/src/HumanIKWorkerPool.cpp	/^    void HumanIKWorkerPool::computeJointVelocities(WorkerTaskData& task, iDynTree::VectorDynSize& relativeVelocity)$/;"	f	class:human::HumanIKWorkerPool
+computeMaximumAPosteriori	human-dynamics-estimator/src/HumanDynamicsEstimator.cpp	/^void HumanDynamicsEstimator::computeMaximumAPosteriori(bool computePermutation)$/;"	f	class:HumanDynamicsEstimator
+configure	human-dynamics-estimator/src/HumanDynamicsEstimator.cpp	/^bool HumanDynamicsEstimator::configure(yarp::os::ResourceFinder &rf)$/;"	f	class:HumanDynamicsEstimator
+configure	human-forces-provider/src/HumanForcesProvider.cpp	/^bool HumanForcesProvider::configure(yarp::os::ResourceFinder &rf)$/;"	f	class:HumanForcesProvider
+configure	human-state-provider/src/HumanStateProvider.cpp	/^    bool HumanStateProvider::configure(yarp::os::ResourceFinder &rf)$/;"	f	class:human::HumanStateProvider
+configure	human-viz-bridge/src/HumanEffortBridge.cpp	/^    bool configure(ResourceFinder &rf)$/;"	f	class:xsensJointStatePublisherModule
+configure	human-viz-bridge/src/HumanJointStateBridge.cpp	/^    bool configure(ResourceFinder &rf)$/;"	f	class:xsensJointStatePublisherModule
+configure	human-viz-bridge/src/HumanTFBridge.cpp	/^    bool configure(ResourceFinder &rf)$/;"	f	class:HumanTFBridge
+configure	human-viz-bridge/src/RobotBasePosePublisher.cpp	/^    bool configure(ResourceFinder &rf)$/;"	f	class:RobotBasePosePublisher
+configure	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.cpp	/^bool ControlBoardArbitraryAxesDecomposition::configure(const RemappedControlBoards& remappedControlBoards)$/;"	f	class:ControlBoardArbitraryAxesDecomposition
+configure	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.cpp	/^bool ControlBoardSubControlBoardAxesDecomposition::configure(const RemappedControlBoards& remappedControlBoards)$/;"	f	class:ControlBoardSubControlBoardAxesDecomposition
+configureBuffers	yarp/ReadOnlyControlBoardRemapper/ReadOnlyControlBoardRemapper.cpp	/^void ReadOnlyControlBoardRemapper::configureBuffers()$/;"	f	class:yarp::dev::ReadOnlyControlBoardRemapper
+consideredJointLocations	human-state-provider/include/private/HumanStateProviderPrivate.h	/^    std::vector<std::pair<size_t, size_t> > consideredJointLocations; \/*!< For each joint connecting the pair: first = offset in the full model , second = dofs of joint *\/$/;"	m	struct:human::LinkPairInfo
+controlBoardModes	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^    std::vector<int> controlBoardModes;$/;"	m	class:yarp::dev::ControlBoardRemapperBuffers
+controlMode	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^  yarp::sig::VectorOf<int> controlMode;$/;"	m	class:jointData
+controlMode_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^  bool controlMode_isValid;$/;"	m	class:jointData
+controlledJoints	yarp/ReadOnlyControlBoardRemapper/ReadOnlyControlBoardRemapper.h	/^    int controlledJoints;$/;"	m	class:yarp::dev::ReadOnlyControlBoardRemapper
+count	yarp/ReadOnlyRemoteControlBoard/stateExtendedReader.hpp	/^    int count;$/;"	m	class:StateExtendedInputPort
+covarianceDynamicsAPosterioriInverseDecomposition	human-dynamics-estimator/include/HumanDynamicsEstimator.h	/^        Eigen::SparseLU<Eigen::SparseMatrix<double, Eigen::RowMajor> > covarianceDynamicsAPosterioriInverseDecomposition;$/;"	m	struct:HumanDynamicsEstimator::__anon3
+covarianceDynamicsPriorInverse	human-dynamics-estimator/include/HumanDynamicsEstimator.h	/^        Eigen::SparseMatrix<double, Eigen::RowMajor> covarianceDynamicsPriorInverse;$/;"	m	struct:HumanDynamicsEstimator::__anon3
+covarianceDynamicsPriorInverseDecomposition	human-dynamics-estimator/include/HumanDynamicsEstimator.h	/^        Eigen::SparseLU<Eigen::SparseMatrix<double, Eigen::RowMajor> > covarianceDynamicsPriorInverseDecomposition;$/;"	m	struct:HumanDynamicsEstimator::__anon3
+createEndEffectorsPairs	human-state-provider/src/HumanStateProvider.cpp	/^    static void createEndEffectorsPairs(const iDynTree::Model& model,$/;"	f	namespace:human
+createListOfJointsDecomposition	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.cpp	/^void ControlBoardArbitraryAxesDecomposition::createListOfJointsDecomposition(const int n_joints, const int* joints, const RemappedControlBoards & remappedControlBoards)$/;"	f	class:ControlBoardArbitraryAxesDecomposition
+deltaT	yarp/ReadOnlyRemoteControlBoard/stateExtendedReader.hpp	/^    double deltaT;$/;"	m	class:StateExtendedInputPort
+deltaTMax	yarp/ReadOnlyRemoteControlBoard/stateExtendedReader.hpp	/^    double deltaTMax;$/;"	m	class:StateExtendedInputPort
+deltaTMin	yarp/ReadOnlyRemoteControlBoard/stateExtendedReader.hpp	/^    double deltaTMin;$/;"	m	class:StateExtendedInputPort
+denseJac	inverse-kinematics/include/private/InverseKinematicsIPOPT.h	/^    Eigen::Matrix< double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor > denseJac;$/;"	m	class:InverseKinematicsIPOPT
+desiredJoints	inverse-kinematics/include/private/InverseKinematicsIPOPT.h	/^    iDynTree::VectorDynSize desiredJoints;$/;"	m	class:InverseKinematicsIPOPT
+desiredJoints	inverse-kinematics/include/private/InverseKinematicsV2IPOPT.h	/^    iDynTree::VectorDynSize desiredJoints;$/;"	m	class:InverseKinematicsV2IPOPT
+desiredPosition	inverse-kinematics/include/private/InverseKinematicsIPOPT.h	/^    iDynTree::Position desiredPosition;$/;"	m	class:InverseKinematicsIPOPT
+desiredPosition	inverse-kinematics/include/private/InverseKinematicsV2IPOPT.h	/^    iDynTree::Position desiredPosition;$/;"	m	class:InverseKinematicsV2IPOPT
+desiredQuaternion	inverse-kinematics/include/private/InverseKinematicsIPOPT.h	/^    iDynTree::Vector4 desiredQuaternion; $/;"	m	class:InverseKinematicsIPOPT
+desiredQuaternion	inverse-kinematics/include/private/InverseKinematicsV2IPOPT.h	/^    iDynTree::Vector4 desiredQuaternion;$/;"	m	class:InverseKinematicsV2IPOPT
+detach	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.cpp	/^void RemappedSubControlBoard::detach()$/;"	f	class:RemappedSubControlBoard
+detachAll	yarp/ReadOnlyControlBoardRemapper/ReadOnlyControlBoardRemapper.cpp	/^bool ReadOnlyControlBoardRemapper::detachAll()$/;"	f	class:yarp::dev::ReadOnlyControlBoardRemapper
+dev	human-forces-provider/include/FTForceReader.h	/^    namespace dev$/;"	n	namespace:yarp
+dev	human-forces-provider/include/HumanForcesProvider.h	/^    namespace dev$/;"	n	namespace:yarp
+dev	human-forces-provider/include/RobotFrameTransformer.h	/^    namespace dev$/;"	n	namespace:yarp
+dev	human-state-provider/include/private/HumanStateProviderPrivate.h	/^        namespace dev {$/;"	n	namespace:yarp::experimental
+dev	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^namespace dev$/;"	n	namespace:yarp
+dev	yarp/ReadOnlyControlBoardRemapper/ReadOnlyControlBoardRemapper.cpp	/^namespace dev {$/;"	n	namespace:yarp	file:
+dev	yarp/ReadOnlyControlBoardRemapper/ReadOnlyControlBoardRemapper.h	/^namespace dev {$/;"	n	namespace:yarp
+dev	yarp/ReadOnlyControlBoardRemapper/ReadOnlyRemoteControlBoardRemapper.h	/^namespace dev {$/;"	n	namespace:yarp
+dev	yarp/ReadOnlyRemoteControlBoard/ReadOnlyRemoteControlBoard.cpp	/^namespace dev {$/;"	n	namespace:yarp	file:
+dev	yarp/ReadOnlyRemoteControlBoard/ReadOnlyRemoteControlBoard.h	/^        namespace dev {$/;"	n	namespace:yarp
+did_set_controlMode	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    virtual bool did_set_controlMode() { return true; }$/;"	f	class:jointData::Editor
+did_set_controlMode_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    virtual bool did_set_controlMode_isValid() { return true; }$/;"	f	class:jointData::Editor
+did_set_interactionMode	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    virtual bool did_set_interactionMode() { return true; }$/;"	f	class:jointData::Editor
+did_set_interactionMode_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    virtual bool did_set_interactionMode_isValid() { return true; }$/;"	f	class:jointData::Editor
+did_set_jointAcceleration	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    virtual bool did_set_jointAcceleration() { return true; }$/;"	f	class:jointData::Editor
+did_set_jointAcceleration_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    virtual bool did_set_jointAcceleration_isValid() { return true; }$/;"	f	class:jointData::Editor
+did_set_jointPosition	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    virtual bool did_set_jointPosition() { return true; }$/;"	f	class:jointData::Editor
+did_set_jointPosition_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    virtual bool did_set_jointPosition_isValid() { return true; }$/;"	f	class:jointData::Editor
+did_set_jointVelocity	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    virtual bool did_set_jointVelocity() { return true; }$/;"	f	class:jointData::Editor
+did_set_jointVelocity_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    virtual bool did_set_jointVelocity_isValid() { return true; }$/;"	f	class:jointData::Editor
+did_set_motorAcceleration	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    virtual bool did_set_motorAcceleration() { return true; }$/;"	f	class:jointData::Editor
+did_set_motorAcceleration_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    virtual bool did_set_motorAcceleration_isValid() { return true; }$/;"	f	class:jointData::Editor
+did_set_motorPosition	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    virtual bool did_set_motorPosition() { return true; }$/;"	f	class:jointData::Editor
+did_set_motorPosition_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    virtual bool did_set_motorPosition_isValid() { return true; }$/;"	f	class:jointData::Editor
+did_set_motorVelocity	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    virtual bool did_set_motorVelocity() { return true; }$/;"	f	class:jointData::Editor
+did_set_motorVelocity_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    virtual bool did_set_motorVelocity_isValid() { return true; }$/;"	f	class:jointData::Editor
+did_set_pidOutput	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    virtual bool did_set_pidOutput() { return true; }$/;"	f	class:jointData::Editor
+did_set_pidOutput_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    virtual bool did_set_pidOutput_isValid() { return true; }$/;"	f	class:jointData::Editor
+did_set_torque	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    virtual bool did_set_torque() { return true; }$/;"	f	class:jointData::Editor
+did_set_torque_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    virtual bool did_set_torque_isValid() { return true; }$/;"	f	class:jointData::Editor
+dirty_count	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    int dirty_count;$/;"	m	class:jointData::Editor
+dirty_flags	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    void dirty_flags(bool flag) {$/;"	f	class:jointData::Editor
+dummyBuffer	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^    std::vector<double> dummyBuffer;$/;"	m	class:yarp::dev::ControlBoardRemapperBuffers
+e_J_we	inverse-kinematics/include/private/InverseKinematicsIPOPT.h	/^    iDynTree::FrameFreeFloatingJacobian e_J_we, p_J_wp;$/;"	m	class:InverseKinematicsIPOPT
+e_J_we	inverse-kinematics/include/private/InverseKinematicsV2IPOPT.h	/^    iDynTree::FrameFreeFloatingJacobian e_J_we, p_J_wp;$/;"	m	class:InverseKinematicsV2IPOPT
+edit	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    bool edit(jointData& obj, bool dirty = true) {$/;"	f	class:jointData::Editor
+effortMsg	human-viz-bridge/src/HumanEffortBridge.cpp	/^    sensor_msgs_Temperature effortMsg;$/;"	m	struct:EffortPublisher	file:
+effortsList	human-viz-bridge/src/HumanEffortBridge.cpp	/^    vector<EffortPublisher> effortsList;$/;"	m	class:xsensJointStatePublisherModule	file:
+elapsedTime	inverse-kinematics/tests/testSuit.cpp	/^    std::vector<double> elapsedTime;$/;"	m	struct:IKSolverLog	file:
+end	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    void end() {$/;"	f	class:jointData::Editor
+endEffectorFrame	inverse-kinematics/include/private/InverseKinematicsIPOPT.h	/^    iDynTree::FrameIndex parentFrame, endEffectorFrame;$/;"	m	class:InverseKinematicsIPOPT
+endEffectorFrame	inverse-kinematics/include/private/InverseKinematicsV2IPOPT.h	/^    iDynTree::FrameIndex parentFrame, endEffectorFrame;$/;"	m	class:InverseKinematicsV2IPOPT
+eval_f	inverse-kinematics/src/InverseKinematicsIPOPT.cpp	/^bool InverseKinematicsIPOPT::eval_f(Ipopt::Index n, const Number* x, bool new_x, Number& obj_value)$/;"	f	class:InverseKinematicsIPOPT
+eval_f	inverse-kinematics/src/InverseKinematicsV2IPOPT.cpp	/^bool InverseKinematicsV2IPOPT::eval_f(Ipopt::Index n, const Number* x, bool new_x, Number& obj_value)$/;"	f	class:InverseKinematicsV2IPOPT
+eval_g	inverse-kinematics/src/InverseKinematicsIPOPT.cpp	/^bool InverseKinematicsIPOPT::eval_g(Ipopt::Index n, const Number* x, bool new_x, Ipopt::Index m, Number* g)$/;"	f	class:InverseKinematicsIPOPT
+eval_g	inverse-kinematics/src/InverseKinematicsV2IPOPT.cpp	/^bool InverseKinematicsV2IPOPT::eval_g(Ipopt::Index n, const Number* x, bool new_x, Ipopt::Index m, Number* g)$/;"	f	class:InverseKinematicsV2IPOPT
+eval_grad_f	inverse-kinematics/src/InverseKinematicsIPOPT.cpp	/^bool InverseKinematicsIPOPT::eval_grad_f(Ipopt::Index n, const Number* x, bool new_x, Number* grad_f)$/;"	f	class:InverseKinematicsIPOPT
+eval_grad_f	inverse-kinematics/src/InverseKinematicsV2IPOPT.cpp	/^bool InverseKinematicsV2IPOPT::eval_grad_f(Ipopt::Index n, const Number* x, bool new_x, Number* grad_f)$/;"	f	class:InverseKinematicsV2IPOPT
+eval_h	inverse-kinematics/src/InverseKinematicsIPOPT.cpp	/^bool InverseKinematicsIPOPT::eval_h(Ipopt::Index n, const Number* x, bool new_x, Number obj_factor, Ipopt::Index m, const Number* lambda, bool new_lambda, Ipopt::Index nele_hess, Ipopt::Index* iRow, Ipopt::Index* jCol, Number* values)$/;"	f	class:InverseKinematicsIPOPT
+eval_h	inverse-kinematics/src/InverseKinematicsV2IPOPT.cpp	/^bool InverseKinematicsV2IPOPT::eval_h(Ipopt::Index n, const Number* x, bool new_x, Number obj_factor, Ipopt::Index m, const Number* lambda, bool new_lambda, Ipopt::Index nele_hess, Ipopt::Index* iRow, Ipopt::Index* jCol, Number* values)$/;"	f	class:InverseKinematicsV2IPOPT
+eval_jac_g	inverse-kinematics/src/InverseKinematicsIPOPT.cpp	/^bool InverseKinematicsIPOPT::eval_jac_g(Ipopt::Index n, const Number* x, bool new_x, Ipopt::Index m, Ipopt::Index nele_jac, Ipopt::Index* iRow, Ipopt::Index* jCol, Number* values)$/;"	f	class:InverseKinematicsIPOPT
+eval_jac_g	inverse-kinematics/src/InverseKinematicsV2IPOPT.cpp	/^bool InverseKinematicsV2IPOPT::eval_jac_g(Ipopt::Index n, const Number* x, bool new_x, Ipopt::Index m, Ipopt::Index nele_jac, Ipopt::Index* iRow, Ipopt::Index* jCol, Number* values)$/;"	f	class:InverseKinematicsV2IPOPT
+exitCode	inverse-kinematics/include/private/InverseKinematicsIPOPT.h	/^    signed int exitCode;$/;"	m	class:InverseKinematicsIPOPT
+exitCode	inverse-kinematics/include/private/InverseKinematicsV2IPOPT.h	/^    signed int exitCode;$/;"	m	class:InverseKinematicsV2IPOPT
+expectedDynamicsAPosterioriRHS	human-dynamics-estimator/include/HumanDynamicsEstimator.h	/^        iDynTree::VectorDynSize expectedDynamicsAPosterioriRHS;$/;"	m	struct:HumanDynamicsEstimator::__anon3
+expectedDynamicsPrior	human-dynamics-estimator/include/HumanDynamicsEstimator.h	/^        iDynTree::VectorDynSize expectedDynamicsPrior;$/;"	m	struct:HumanDynamicsEstimator::__anon3
+expectedDynamicsPriorRHS	human-dynamics-estimator/include/HumanDynamicsEstimator.h	/^        iDynTree::VectorDynSize expectedDynamicsPriorRHS;$/;"	m	struct:HumanDynamicsEstimator::__anon3
+experimental	human-state-provider/include/private/HumanStateProviderPrivate.h	/^    namespace experimental {$/;"	n	namespace:yarp
+fakeSegments	human-viz-bridge/src/HumanTFBridge.cpp	/^    vector<string> fakeSegments;$/;"	m	class:HumanTFBridge	file:
+fillArbitraryJointVectorFromSubControlBoardBuffers	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.cpp	/^void ControlBoardArbitraryAxesDecomposition::fillArbitraryJointVectorFromSubControlBoardBuffers(InteractionModeEnum* arbitraryVec,$/;"	f	class:ControlBoardArbitraryAxesDecomposition
+fillArbitraryJointVectorFromSubControlBoardBuffers	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.cpp	/^void ControlBoardArbitraryAxesDecomposition::fillArbitraryJointVectorFromSubControlBoardBuffers(double* arbitraryVec,$/;"	f	class:ControlBoardArbitraryAxesDecomposition
+fillArbitraryJointVectorFromSubControlBoardBuffers	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.cpp	/^void ControlBoardArbitraryAxesDecomposition::fillArbitraryJointVectorFromSubControlBoardBuffers(int* arbitraryVec,$/;"	f	class:ControlBoardArbitraryAxesDecomposition
+fillCompleteJointVectorFromSubControlBoardBuffers	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.cpp	/^void ControlBoardSubControlBoardAxesDecomposition::fillCompleteJointVectorFromSubControlBoardBuffers(InteractionModeEnum* full, const RemappedControlBoards& remappedControlBoards)$/;"	f	class:ControlBoardSubControlBoardAxesDecomposition
+fillCompleteJointVectorFromSubControlBoardBuffers	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.cpp	/^void ControlBoardSubControlBoardAxesDecomposition::fillCompleteJointVectorFromSubControlBoardBuffers(double* full, const RemappedControlBoards& remappedControlBoards)$/;"	f	class:ControlBoardSubControlBoardAxesDecomposition
+fillCompleteJointVectorFromSubControlBoardBuffers	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.cpp	/^void ControlBoardSubControlBoardAxesDecomposition::fillCompleteJointVectorFromSubControlBoardBuffers(int* full, const RemappedControlBoards& remappedControlBoards)$/;"	f	class:ControlBoardSubControlBoardAxesDecomposition
+fillSubControlBoardBuffersFromArbitraryJointVector	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.cpp	/^void ControlBoardArbitraryAxesDecomposition::fillSubControlBoardBuffersFromArbitraryJointVector(const InteractionModeEnum* arbitraryVec,$/;"	f	class:ControlBoardArbitraryAxesDecomposition
+fillSubControlBoardBuffersFromArbitraryJointVector	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.cpp	/^void ControlBoardArbitraryAxesDecomposition::fillSubControlBoardBuffersFromArbitraryJointVector(const double* arbitraryVec,$/;"	f	class:ControlBoardArbitraryAxesDecomposition
+fillSubControlBoardBuffersFromArbitraryJointVector	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.cpp	/^void ControlBoardArbitraryAxesDecomposition::fillSubControlBoardBuffersFromArbitraryJointVector(const int* arbitraryVec,$/;"	f	class:ControlBoardArbitraryAxesDecomposition
+fillSubControlBoardBuffersFromCompleteJointVector	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.cpp	/^void ControlBoardSubControlBoardAxesDecomposition::fillSubControlBoardBuffersFromCompleteJointVector(const InteractionModeEnum* full, const RemappedControlBoards & remappedControlBoards)$/;"	f	class:ControlBoardSubControlBoardAxesDecomposition
+fillSubControlBoardBuffersFromCompleteJointVector	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.cpp	/^void ControlBoardSubControlBoardAxesDecomposition::fillSubControlBoardBuffersFromCompleteJointVector(const double* full, const RemappedControlBoards & remappedControlBoards)$/;"	f	class:ControlBoardSubControlBoardAxesDecomposition
+fillSubControlBoardBuffersFromCompleteJointVector	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.cpp	/^void ControlBoardSubControlBoardAxesDecomposition::fillSubControlBoardBuffersFromCompleteJointVector(const int* full, const RemappedControlBoards & remappedControlBoards)$/;"	f	class:ControlBoardSubControlBoardAxesDecomposition
+finalize_solution	inverse-kinematics/src/InverseKinematicsIPOPT.cpp	/^void InverseKinematicsIPOPT::finalize_solution(SolverReturn status, Ipopt::Index n, const Number* x, const Number* z_L, const Number* z_U, Ipopt::Index m, const Number* g, const Number* lambda, Number obj_value, const IpoptData* ip_data, IpoptCalculatedQuantities* ip_cq)$/;"	f	class:InverseKinematicsIPOPT
+finalize_solution	inverse-kinematics/src/InverseKinematicsV2IPOPT.cpp	/^void InverseKinematicsV2IPOPT::finalize_solution(SolverReturn status, Ipopt::Index n, const Number* x, const Number* z_L, const Number* z_U, Ipopt::Index m, const Number* g, const Number* lambda, Number obj_value, const IpoptData* ip_data, IpoptCalculatedQuantities* ip_cq)$/;"	f	class:InverseKinematicsV2IPOPT
+gains	inverse-kinematics/include/private/InverseKinematicsIPOPT.h	/^    iDynTree::Vector3 gains;$/;"	m	class:InverseKinematicsIPOPT
+gains	inverse-kinematics/include/private/InverseKinematicsV2IPOPT.h	/^    iDynTree::Vector3 gains;$/;"	m	class:InverseKinematicsV2IPOPT
+gainsLoaded	inverse-kinematics/include/private/InverseKinematicsIPOPT.h	/^    bool gainsLoaded;$/;"	m	class:InverseKinematicsIPOPT
+gainsLoaded	inverse-kinematics/include/private/InverseKinematicsV2IPOPT.h	/^    bool gainsLoaded;$/;"	m	class:InverseKinematicsV2IPOPT
+getAxes	yarp/ReadOnlyControlBoardRemapper/ReadOnlyControlBoardRemapper.cpp	/^bool ReadOnlyControlBoardRemapper::getAxes(int *ax)$/;"	f	class:yarp::dev::ReadOnlyControlBoardRemapper
+getAxes	yarp/ReadOnlyRemoteControlBoard/ReadOnlyRemoteControlBoard.cpp	/^    bool ReadOnlyRemoteControlBoard::getAxes(int *ax)$/;"	f	class:yarp::dev::ReadOnlyRemoteControlBoard
+getAxisName	yarp/ReadOnlyControlBoardRemapper/ReadOnlyControlBoardRemapper.cpp	/^bool ReadOnlyControlBoardRemapper::getAxisName(int j, yarp::os::ConstString& name)$/;"	f	class:yarp::dev::ReadOnlyControlBoardRemapper
+getAxisName	yarp/ReadOnlyRemoteControlBoard/ReadOnlyRemoteControlBoard.cpp	/^    bool ReadOnlyRemoteControlBoard::getAxisName(int j, yarp::os::ConstString& name) {$/;"	f	class:yarp::dev::ReadOnlyRemoteControlBoard
+getConsideredJoints	inverse-kinematics/src/InverseKinematics.cpp	/^bool InverseKinematics::getConsideredJoints(std::vector< std::string >& consideredJoints)$/;"	f	class:human::InverseKinematics
+getEncoder	yarp/ReadOnlyControlBoardRemapper/ReadOnlyControlBoardRemapper.cpp	/^bool ReadOnlyControlBoardRemapper::getEncoder(int j, double *v)$/;"	f	class:yarp::dev::ReadOnlyControlBoardRemapper
+getEncoder	yarp/ReadOnlyRemoteControlBoard/ReadOnlyRemoteControlBoard.cpp	/^     bool ReadOnlyRemoteControlBoard::getEncoder(int j, double *v)$/;"	f	class:yarp::dev::ReadOnlyRemoteControlBoard
+getEncoderAcceleration	yarp/ReadOnlyControlBoardRemapper/ReadOnlyControlBoardRemapper.cpp	/^bool ReadOnlyControlBoardRemapper::getEncoderAcceleration(int j, double *acc)$/;"	f	class:yarp::dev::ReadOnlyControlBoardRemapper
+getEncoderAcceleration	yarp/ReadOnlyRemoteControlBoard/ReadOnlyRemoteControlBoard.cpp	/^     bool ReadOnlyRemoteControlBoard::getEncoderAcceleration(int j, double *acc)$/;"	f	class:yarp::dev::ReadOnlyRemoteControlBoard
+getEncoderAccelerations	yarp/ReadOnlyControlBoardRemapper/ReadOnlyControlBoardRemapper.cpp	/^bool ReadOnlyControlBoardRemapper::getEncoderAccelerations(double *accs)$/;"	f	class:yarp::dev::ReadOnlyControlBoardRemapper
+getEncoderAccelerations	yarp/ReadOnlyRemoteControlBoard/ReadOnlyRemoteControlBoard.cpp	/^     bool ReadOnlyRemoteControlBoard::getEncoderAccelerations(double *accs)$/;"	f	class:yarp::dev::ReadOnlyRemoteControlBoard
+getEncoderSpeed	yarp/ReadOnlyControlBoardRemapper/ReadOnlyControlBoardRemapper.cpp	/^bool ReadOnlyControlBoardRemapper::getEncoderSpeed(int j, double *sp)$/;"	f	class:yarp::dev::ReadOnlyControlBoardRemapper
+getEncoderSpeed	yarp/ReadOnlyRemoteControlBoard/ReadOnlyRemoteControlBoard.cpp	/^     bool ReadOnlyRemoteControlBoard::getEncoderSpeed(int j, double *sp)$/;"	f	class:yarp::dev::ReadOnlyRemoteControlBoard
+getEncoderSpeeds	yarp/ReadOnlyControlBoardRemapper/ReadOnlyControlBoardRemapper.cpp	/^bool ReadOnlyControlBoardRemapper::getEncoderSpeeds(double *spds)$/;"	f	class:yarp::dev::ReadOnlyControlBoardRemapper
+getEncoderSpeeds	yarp/ReadOnlyRemoteControlBoard/ReadOnlyRemoteControlBoard.cpp	/^     bool ReadOnlyRemoteControlBoard::getEncoderSpeeds(double *spds)$/;"	f	class:yarp::dev::ReadOnlyRemoteControlBoard
+getEncoderTimed	yarp/ReadOnlyControlBoardRemapper/ReadOnlyControlBoardRemapper.cpp	/^bool ReadOnlyControlBoardRemapper::getEncoderTimed(int j, double *v, double *t)$/;"	f	class:yarp::dev::ReadOnlyControlBoardRemapper
+getEncoderTimed	yarp/ReadOnlyRemoteControlBoard/ReadOnlyRemoteControlBoard.cpp	/^     bool ReadOnlyRemoteControlBoard::getEncoderTimed(int j, double *v, double *t)$/;"	f	class:yarp::dev::ReadOnlyRemoteControlBoard
+getEncoders	yarp/ReadOnlyControlBoardRemapper/ReadOnlyControlBoardRemapper.cpp	/^bool ReadOnlyControlBoardRemapper::getEncoders(double *encs)$/;"	f	class:yarp::dev::ReadOnlyControlBoardRemapper
+getEncoders	yarp/ReadOnlyRemoteControlBoard/ReadOnlyRemoteControlBoard.cpp	/^     bool ReadOnlyRemoteControlBoard::getEncoders(double *encs) {$/;"	f	class:yarp::dev::ReadOnlyRemoteControlBoard
+getEncodersTimed	yarp/ReadOnlyControlBoardRemapper/ReadOnlyControlBoardRemapper.cpp	/^bool ReadOnlyControlBoardRemapper::getEncodersTimed(double *encs, double *t)$/;"	f	class:yarp::dev::ReadOnlyControlBoardRemapper
+getEncodersTimed	yarp/ReadOnlyRemoteControlBoard/ReadOnlyRemoteControlBoard.cpp	/^     bool ReadOnlyRemoteControlBoard::getEncodersTimed(double *encs, double *ts) {$/;"	f	class:yarp::dev::ReadOnlyRemoteControlBoard
+getErrors	inverse-kinematics/src/InverseKinematics.cpp	/^bool InverseKinematics::getErrors(iDynTree::Position& positionError, iDynTree::Rotation& rotationError, double* angleError)$/;"	f	class:human::InverseKinematics
+getEstFrequency	yarp/ReadOnlyRemoteControlBoard/stateExtendedReader.cpp	/^void StateExtendedInputPort::getEstFrequency(int &ite, double &av, double &min, double &max)$/;"	f	class:StateExtendedInputPort
+getFrameIndeces	inverse-kinematics/src/InverseKinematics.cpp	/^    bool InverseKinematics::InverseKinematicsPrivate::getFrameIndeces(const std::string& parentFrame, const std::string& endEffectorFrame, const iDynTree::Model model, iDynTree::FrameIndex& parentFrameIndex, iDynTree::FrameIndex& endEffectorFrameIndex)$/;"	f	class:human::InverseKinematics::InverseKinematicsPrivate
+getFrames	inverse-kinematics/src/InverseKinematics.cpp	/^void InverseKinematics::getFrames(std::string& parentFrame, std::string& endEffectorFrame)$/;"	f	class:human::InverseKinematics
+getHumanStatePort	human-forces-provider/src/HumanForcesProvider.cpp	/^yarp::os::BufferedPort<human::HumanState>* HumanForcesProvider::getHumanStatePort(const yarp::os::Searchable& config)$/;"	f	class:HumanForcesProvider
+getIterations	yarp/ReadOnlyRemoteControlBoard/stateExtendedReader.cpp	/^int StateExtendedInputPort::getIterations()$/;"	f	class:StateExtendedInputPort
+getJointType	yarp/ReadOnlyControlBoardRemapper/ReadOnlyControlBoardRemapper.cpp	/^bool ReadOnlyControlBoardRemapper::getJointType(int j, yarp::dev::JointTypeEnum& type)$/;"	f	class:yarp::dev::ReadOnlyControlBoardRemapper
+getJointType	yarp/ReadOnlyRemoteControlBoard/ReadOnlyRemoteControlBoard.cpp	/^    bool ReadOnlyRemoteControlBoard::getJointType(int j, yarp::dev::JointTypeEnum& type) {$/;"	f	class:yarp::dev::ReadOnlyRemoteControlBoard
+getLastInputStamp	yarp/ReadOnlyControlBoardRemapper/ReadOnlyControlBoardRemapper.cpp	/^yarp::os::Stamp ReadOnlyControlBoardRemapper::getLastInputStamp()$/;"	f	class:yarp::dev::ReadOnlyControlBoardRemapper
+getLastSingle	yarp/ReadOnlyRemoteControlBoard/stateExtendedReader.cpp	/^bool StateExtendedInputPort::getLastSingle(int j, int field, double *data, Stamp &stamp, double &localArrivalTime)$/;"	f	class:StateExtendedInputPort
+getLastSingle	yarp/ReadOnlyRemoteControlBoard/stateExtendedReader.cpp	/^bool StateExtendedInputPort::getLastSingle(int j, int field, int *data, Stamp &stamp, double &localArrivalTime)$/;"	f	class:StateExtendedInputPort
+getLastSolution	inverse-kinematics/src/InverseKinematics.cpp	/^iDynTree::VectorDynSize& InverseKinematics::getLastSolution()$/;"	f	class:human::InverseKinematics
+getLastVector	yarp/ReadOnlyRemoteControlBoard/stateExtendedReader.cpp	/^bool StateExtendedInputPort::getLastVector(int field, double* data, Stamp& stamp, double& localArrivalTime)$/;"	f	class:StateExtendedInputPort
+getLastVector	yarp/ReadOnlyRemoteControlBoard/stateExtendedReader.cpp	/^bool StateExtendedInputPort::getLastVector(int field, int* data, Stamp& stamp, double& localArrivalTime)$/;"	f	class:StateExtendedInputPort
+getModel	inverse-kinematics/src/InverseKinematicsIPOPT.cpp	/^bool InverseKinematicsIPOPT::getModel(Model& modelOuput)$/;"	f	class:InverseKinematicsIPOPT
+getModel	inverse-kinematics/src/InverseKinematicsV2IPOPT.cpp	/^bool InverseKinematicsV2IPOPT::getModel(Model& modelOuput)$/;"	f	class:InverseKinematicsV2IPOPT
+getNrOfRemappedAxes	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^    size_t getNrOfRemappedAxes() const$/;"	f	class:yarp::dev::RemappedControlBoards
+getNrOfSubControlBoards	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^    size_t getNrOfSubControlBoards() const$/;"	f	class:yarp::dev::RemappedControlBoards
+getOriginFrame	human-forces-provider/src/GenericFrameTransformer.cpp	/^    const std::string& GenericFrameTransformer::getOriginFrame()$/;"	f	class:human::GenericFrameTransformer
+getPeriod	human-dynamics-estimator/src/HumanDynamicsEstimator.cpp	/^double HumanDynamicsEstimator::getPeriod()$/;"	f	class:HumanDynamicsEstimator
+getPeriod	human-forces-provider/src/HumanForcesProvider.cpp	/^double HumanForcesProvider::getPeriod()$/;"	f	class:HumanForcesProvider
+getPeriod	human-state-provider/src/HumanStateProvider.cpp	/^    double HumanStateProvider::getPeriod()$/;"	f	class:human::HumanStateProvider
+getPeriod	human-viz-bridge/src/HumanEffortBridge.cpp	/^    double getPeriod()$/;"	f	class:xsensJointStatePublisherModule
+getPeriod	human-viz-bridge/src/HumanJointStateBridge.cpp	/^    double getPeriod()$/;"	f	class:xsensJointStatePublisherModule
+getPeriod	human-viz-bridge/src/HumanTFBridge.cpp	/^    double getPeriod()$/;"	f	class:HumanTFBridge
+getPeriod	human-viz-bridge/src/RobotBasePosePublisher.cpp	/^    double getPeriod()$/;"	f	class:RobotBasePosePublisher
+getReducedModel	inverse-kinematics/src/InverseKinematics.cpp	/^    bool InverseKinematics::InverseKinematicsPrivate::getReducedModel(const iDynTree::Model& fullModel, const std::vector< std::string >& consideredJoints, iDynTree::Model& modelOutput)$/;"	f	class:human::InverseKinematics::InverseKinematicsPrivate
+getRobotEncodersInterface	human-forces-provider/src/HumanForcesProvider.cpp	/^bool HumanForcesProvider::getRobotEncodersInterface(const yarp::os::Searchable& config,$/;"	f	class:HumanForcesProvider
+getSubControlBoard	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^    inline yarp::dev::RemappedSubControlBoard* getSubControlBoard(size_t i)$/;"	f	class:yarp::dev::RemappedControlBoards
+getTransform	human-forces-provider/src/GenericFrameTransformer.cpp	/^    const iDynTree::Transform& GenericFrameTransformer::getTransform()$/;"	f	class:human::GenericFrameTransformer
+getTransformedFrame	human-forces-provider/src/GenericFrameTransformer.cpp	/^    const std::string& GenericFrameTransformer::getTransformedFrame()$/;"	f	class:human::GenericFrameTransformer
+getTransformer	human-forces-provider/src/AbstractForceReader.cpp	/^    FrameTransformer* AbstractForceReader::getTransformer()$/;"	f	class:human::AbstractForceReader
+get_bounds_info	inverse-kinematics/src/InverseKinematicsIPOPT.cpp	/^bool InverseKinematicsIPOPT::get_bounds_info(Ipopt::Index n, Number* x_l, Number* x_u, Ipopt::Index m, Number* g_l, Number* g_u)$/;"	f	class:InverseKinematicsIPOPT
+get_bounds_info	inverse-kinematics/src/InverseKinematicsV2IPOPT.cpp	/^bool InverseKinematicsV2IPOPT::get_bounds_info(Ipopt::Index n, Number* x_l, Number* x_u, Ipopt::Index m, Number* g_l, Number* g_u)$/;"	f	class:InverseKinematicsV2IPOPT
+get_controlMode	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    const yarp::sig::VectorOf<int>& get_controlMode() {$/;"	f	class:jointData::Editor
+get_controlMode_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    bool get_controlMode_isValid() {$/;"	f	class:jointData::Editor
+get_interactionMode	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    const yarp::sig::VectorOf<int>& get_interactionMode() {$/;"	f	class:jointData::Editor
+get_interactionMode_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    bool get_interactionMode_isValid() {$/;"	f	class:jointData::Editor
+get_jointAcceleration	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    const yarp::sig::VectorOf<double>& get_jointAcceleration() {$/;"	f	class:jointData::Editor
+get_jointAcceleration_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    bool get_jointAcceleration_isValid() {$/;"	f	class:jointData::Editor
+get_jointPosition	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    const yarp::sig::VectorOf<double>& get_jointPosition() {$/;"	f	class:jointData::Editor
+get_jointPosition_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    bool get_jointPosition_isValid() {$/;"	f	class:jointData::Editor
+get_jointVelocity	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    const yarp::sig::VectorOf<double>& get_jointVelocity() {$/;"	f	class:jointData::Editor
+get_jointVelocity_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    bool get_jointVelocity_isValid() {$/;"	f	class:jointData::Editor
+get_motorAcceleration	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    const yarp::sig::VectorOf<double>& get_motorAcceleration() {$/;"	f	class:jointData::Editor
+get_motorAcceleration_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    bool get_motorAcceleration_isValid() {$/;"	f	class:jointData::Editor
+get_motorPosition	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    const yarp::sig::VectorOf<double>& get_motorPosition() {$/;"	f	class:jointData::Editor
+get_motorPosition_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    bool get_motorPosition_isValid() {$/;"	f	class:jointData::Editor
+get_motorVelocity	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    const yarp::sig::VectorOf<double>& get_motorVelocity() {$/;"	f	class:jointData::Editor
+get_motorVelocity_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    bool get_motorVelocity_isValid() {$/;"	f	class:jointData::Editor
+get_nlp_info	inverse-kinematics/src/InverseKinematicsIPOPT.cpp	/^bool InverseKinematicsIPOPT::get_nlp_info(Ipopt::Index& n, Ipopt::Index& m, Ipopt::Index& nnz_jac_g,$/;"	f	class:InverseKinematicsIPOPT
+get_nlp_info	inverse-kinematics/src/InverseKinematicsV2IPOPT.cpp	/^bool InverseKinematicsV2IPOPT::get_nlp_info(Ipopt::Index& n, Ipopt::Index& m, Ipopt::Index& nnz_jac_g,$/;"	f	class:InverseKinematicsV2IPOPT
+get_pidOutput	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    const yarp::sig::VectorOf<double>& get_pidOutput() {$/;"	f	class:jointData::Editor
+get_pidOutput_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    bool get_pidOutput_isValid() {$/;"	f	class:jointData::Editor
+get_starting_point	inverse-kinematics/src/InverseKinematicsIPOPT.cpp	/^bool InverseKinematicsIPOPT::get_starting_point(Ipopt::Index n, bool init_x, Number* x, bool init_z, Number* z_L, Number* z_U, Ipopt::Index m, bool init_lambda, Number* lambda)$/;"	f	class:InverseKinematicsIPOPT
+get_starting_point	inverse-kinematics/src/InverseKinematicsV2IPOPT.cpp	/^bool InverseKinematicsV2IPOPT::get_starting_point(Ipopt::Index n, bool init_x, Number* x, bool init_z, Number* z_L, Number* z_U, Ipopt::Index m, bool init_lambda, Number* lambda)$/;"	f	class:InverseKinematicsV2IPOPT
+get_torque	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    const yarp::sig::VectorOf<double>& get_torque() {$/;"	f	class:jointData::Editor
+get_torque_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    bool get_torque_isValid() {$/;"	f	class:jointData::Editor
+gradient	inverse-kinematics/include/private/InverseKinematicsIPOPT.h	/^    iDynTree::VectorDynSize gradient;$/;"	m	class:InverseKinematicsIPOPT
+ground_H_humanFrame	human-viz-bridge/src/RobotBasePosePublisher.cpp	/^    iDynTree::Transform ground_H_humanFrame;$/;"	m	class:RobotBasePosePublisher	file:
+group	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    int group;$/;"	m	class:jointData::Editor
+guess	inverse-kinematics/include/private/InverseKinematicsIPOPT.h	/^    iDynTree::VectorDynSize guess;$/;"	m	class:InverseKinematicsIPOPT
+guess	inverse-kinematics/include/private/InverseKinematicsV2IPOPT.h	/^    iDynTree::VectorDynSize guess;$/;"	m	class:InverseKinematicsV2IPOPT
+hasRobotFrame	human-viz-bridge/src/HumanJointStateBridge.cpp	/^    bool hasRobotFrame;$/;"	m	class:xsensJointStatePublisherModule	file:
+hessian	inverse-kinematics/include/private/InverseKinematicsIPOPT.h	/^    iDynTree::MatrixDynSize hessian;$/;"	m	class:InverseKinematicsIPOPT
+human	human-dynamics-estimator/include/HumanDynamicsEstimator.h	/^namespace human$/;"	n
+human	human-forces-provider/include/AbstractForceReader.h	/^namespace human$/;"	n
+human	human-forces-provider/include/FTForceReader.h	/^namespace human$/;"	n
+human	human-forces-provider/include/ForceReader.h	/^namespace human$/;"	n
+human	human-forces-provider/include/FrameTransformer.h	/^namespace human$/;"	n
+human	human-forces-provider/include/GenericFrameTransformer.h	/^namespace human$/;"	n
+human	human-forces-provider/include/HumanForcesProvider.h	/^namespace human$/;"	n
+human	human-forces-provider/include/PortForceReader.h	/^namespace human$/;"	n
+human	human-forces-provider/include/RobotFrameTransformer.h	/^namespace human$/;"	n
+human	human-forces-provider/src/AbstractForceReader.cpp	/^namespace human$/;"	n	file:
+human	human-forces-provider/src/FTForceReader.cpp	/^namespace human$/;"	n	file:
+human	human-forces-provider/src/GenericFrameTransformer.cpp	/^namespace human$/;"	n	file:
+human	human-forces-provider/src/PortForceReader.cpp	/^namespace human$/;"	n	file:
+human	human-forces-provider/src/RobotFrameTransformer.cpp	/^namespace human$/;"	n	file:
+human	human-state-provider/include/HumanStateProvider.h	/^namespace human {$/;"	n
+human	human-state-provider/include/private/HumanIKWorkerPool.h	/^namespace human {$/;"	n
+human	human-state-provider/include/private/HumanStateProviderPrivate.h	/^namespace human {$/;"	n
+human	human-state-provider/src/HumanIKWorkerPool.cpp	/^namespace human {$/;"	n	file:
+human	human-state-provider/src/HumanStateProvider.cpp	/^namespace human {$/;"	n	file:
+human	human-state-provider/src/HumanStateProviderPrivate.cpp	/^namespace human {$/;"	n	file:
+human	inverse-kinematics/include/human-ik/InverseKinematics.h	/^namespace human {$/;"	n
+human	inverse-kinematics/include/private/InverseKinematicsIPOPT.h	/^namespace human {$/;"	n
+human	inverse-kinematics/include/private/InverseKinematicsV2IPOPT.h	/^namespace human {$/;"	n
+human	inverse-kinematics/src/InverseKinematics.cpp	/^namespace human {$/;"	n	file:
+humanDynamicsDataPort	human-viz-bridge/src/HumanEffortBridge.cpp	/^    BufferedPort<HumanDynamics> humanDynamicsDataPort;$/;"	m	class:xsensJointStatePublisherModule	file:
+humanFrame_H_robotKinematicFrame	human-viz-bridge/src/RobotBasePosePublisher.cpp	/^    iDynTree::Transform humanFrame_H_robotKinematicFrame;$/;"	m	class:RobotBasePosePublisher	file:
+humanPelvisWRTGround	human-viz-bridge/src/HumanJointStateBridge.cpp	/^    iDynTree::Transform humanPelvisWRTGround;$/;"	m	class:xsensJointStatePublisherModule	file:
+humanStateDataPort	human-viz-bridge/src/HumanJointStateBridge.cpp	/^    BufferedPort<HumanState> humanStateDataPort;$/;"	m	class:xsensJointStatePublisherModule	file:
+humanStateDataPort	human-viz-bridge/src/RobotBasePosePublisher.cpp	/^    BufferedPort<HumanState> humanStateDataPort;$/;"	m	class:RobotBasePosePublisher	file:
+iDynTree	human-state-provider/include/private/HumanIKWorkerPool.h	/^namespace iDynTree {$/;"	n
+iDynTree	human-state-provider/include/private/HumanStateProviderPrivate.h	/^namespace iDynTree {$/;"	n
+iDynTree	inverse-kinematics/include/human-ik/InverseKinematics.h	/^namespace iDynTree {$/;"	n
+iImpedance	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^    yarp::dev::IImpedanceControl     *iImpedance;$/;"	m	class:yarp::dev::RemappedSubControlBoard
+iInteract	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^    yarp::dev::IInteractionMode      *iInteract;$/;"	m	class:yarp::dev::RemappedSubControlBoard
+iJntEnc	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^    yarp::dev::IEncodersTimed        *iJntEnc;$/;"	m	class:yarp::dev::RemappedSubControlBoard
+iKDC	inverse-kinematics/include/private/InverseKinematicsIPOPT.h	/^    iDynTree::KinDynComputations iKDC;$/;"	m	class:InverseKinematicsIPOPT
+iKDC	inverse-kinematics/include/private/InverseKinematicsV2IPOPT.h	/^    iDynTree::KinDynComputations iKDC;$/;"	m	class:InverseKinematicsV2IPOPT
+iMode2	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^    yarp::dev::IControlMode2         *iMode2;$/;"	m	class:yarp::dev::RemappedSubControlBoard
+iMotEnc	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^    yarp::dev::IMotorEncoders        *iMotEnc;$/;"	m	class:yarp::dev::RemappedSubControlBoard
+iOpenLoop	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^    yarp::dev::IOpenLoopControl      *iOpenLoop;$/;"	m	class:yarp::dev::RemappedSubControlBoard
+iTimed	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^    yarp::dev::IPreciselyTimed       *iTimed;$/;"	m	class:yarp::dev::RemappedSubControlBoard
+iTorque	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^    yarp::dev::ITorqueControl        *iTorque;$/;"	m	class:yarp::dev::RemappedSubControlBoard
+iVar	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^    yarp::dev::IRemoteVariables      *iVar;$/;"	m	class:yarp::dev::RemappedSubControlBoard
+id	human-dynamics-estimator/include/HumanDynamicsEstimator.h	/^        std::string id;$/;"	m	struct:HumanDynamicsEstimator::SensorKey
+id	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^    std::string id;$/;"	m	class:yarp::dev::RemappedSubControlBoard
+identifier	human-state-provider/include/private/HumanIKWorkerPool.h	/^        long identifier;$/;"	m	struct:human::HumanIKWorkerPool::WorkerTaskData
+ikSolver	human-state-provider/include/private/HumanStateProviderPrivate.h	/^    std::unique_ptr<human::InverseKinematics> ikSolver;$/;"	m	struct:human::LinkPairInfo
+ik_minus_opensim	inverse-kinematics/tests/testSuit.cpp	/^    std::vector< double > ik_minus_opensim;$/;"	m	struct:IKErrorLog	file:
+imotor	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^    yarp::dev::IMotor                *imotor;$/;"	m	class:yarp::dev::RemappedSubControlBoard
+indexInSubDevice	yarp/ReadOnlyControlBoardRemapper/ReadOnlyControlBoardRemapper.cpp	/^    int indexInSubDevice;$/;"	m	struct:yarp::dev::axisLocation	file:
+indexOfSubDeviceInPolyDriverList	yarp/ReadOnlyControlBoardRemapper/ReadOnlyControlBoardRemapper.cpp	/^    size_t indexOfSubDeviceInPolyDriverList;$/;"	m	struct:yarp::dev::axisLocation	file:
+indices	human-viz-bridge/src/HumanEffortBridge.cpp	/^    vector<int> indices;$/;"	m	struct:EffortPublisher	file:
+info	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^    yarp::dev::IAxisInfo             *info;$/;"	m	class:yarp::dev::RemappedSubControlBoard
+init	human-forces-provider/src/RobotFrameTransformer.cpp	/^    bool RobotFrameTransformer::init(const iDynTree::Model &humanModel,$/;"	f	class:human::RobotFrameTransformer
+init	yarp/ReadOnlyRemoteControlBoard/stateExtendedReader.cpp	/^void StateExtendedInputPort::init(int numberOfJoints)$/;"	f	class:StateExtendedInputPort
+initialize	inverse-kinematics/src/InverseKinematics.cpp	/^bool InverseKinematics::initialize()$/;"	f	class:human::InverseKinematics
+initialized	inverse-kinematics/src/InverseKinematics.cpp	/^        bool initialized;$/;"	m	class:human::InverseKinematics::InverseKinematicsPrivate	file:
+inputMeasurements	human-dynamics-estimator/include/HumanDynamicsEstimator.h	/^        BerdySensorsInputMap inputMeasurements;$/;"	m	struct:HumanDynamicsEstimator::__anon2
+interactionMode	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^  yarp::sig::VectorOf<int> interactionMode;$/;"	m	class:jointData
+interactionMode_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^  bool interactionMode_isValid;$/;"	m	class:jointData
+isAttached	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^    bool isAttached()$/;"	f	class:yarp::dev::RemappedSubControlBoard
+isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    bool isValid() const {$/;"	f	class:jointData::Editor
+is_dirty	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    bool is_dirty;$/;"	m	class:jointData::Editor
+is_dirty_controlMode	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    bool is_dirty_controlMode;$/;"	m	class:jointData::Editor
+is_dirty_controlMode_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    bool is_dirty_controlMode_isValid;$/;"	m	class:jointData::Editor
+is_dirty_interactionMode	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    bool is_dirty_interactionMode;$/;"	m	class:jointData::Editor
+is_dirty_interactionMode_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    bool is_dirty_interactionMode_isValid;$/;"	m	class:jointData::Editor
+is_dirty_jointAcceleration	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    bool is_dirty_jointAcceleration;$/;"	m	class:jointData::Editor
+is_dirty_jointAcceleration_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    bool is_dirty_jointAcceleration_isValid;$/;"	m	class:jointData::Editor
+is_dirty_jointPosition	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    bool is_dirty_jointPosition;$/;"	m	class:jointData::Editor
+is_dirty_jointPosition_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    bool is_dirty_jointPosition_isValid;$/;"	m	class:jointData::Editor
+is_dirty_jointVelocity	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    bool is_dirty_jointVelocity;$/;"	m	class:jointData::Editor
+is_dirty_jointVelocity_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    bool is_dirty_jointVelocity_isValid;$/;"	m	class:jointData::Editor
+is_dirty_motorAcceleration	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    bool is_dirty_motorAcceleration;$/;"	m	class:jointData::Editor
+is_dirty_motorAcceleration_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    bool is_dirty_motorAcceleration_isValid;$/;"	m	class:jointData::Editor
+is_dirty_motorPosition	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    bool is_dirty_motorPosition;$/;"	m	class:jointData::Editor
+is_dirty_motorPosition_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    bool is_dirty_motorPosition_isValid;$/;"	m	class:jointData::Editor
+is_dirty_motorVelocity	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    bool is_dirty_motorVelocity;$/;"	m	class:jointData::Editor
+is_dirty_motorVelocity_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    bool is_dirty_motorVelocity_isValid;$/;"	m	class:jointData::Editor
+is_dirty_pidOutput	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    bool is_dirty_pidOutput;$/;"	m	class:jointData::Editor
+is_dirty_pidOutput_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    bool is_dirty_pidOutput_isValid;$/;"	m	class:jointData::Editor
+is_dirty_torque	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    bool is_dirty_torque;$/;"	m	class:jointData::Editor
+is_dirty_torque_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    bool is_dirty_torque_isValid;$/;"	m	class:jointData::Editor
+jacobian	inverse-kinematics/include/private/InverseKinematicsIPOPT.h	/^    iDynTree::MatrixDynSize jacobian;$/;"	m	class:InverseKinematicsIPOPT
+jacobian	inverse-kinematics/include/private/InverseKinematicsV2IPOPT.h	/^    iDynTree::MatrixDynSize jacobian;$/;"	m	class:InverseKinematicsV2IPOPT
+jacobianDecomposition	human-state-provider/include/private/HumanStateProviderPrivate.h	/^    Eigen::ColPivHouseholderQR<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> > jacobianDecomposition;$/;"	m	struct:human::LinkPairInfo
+jointAcceleration	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^  yarp::sig::VectorOf<double> jointAcceleration;$/;"	m	class:jointData
+jointAcceleration_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^  bool jointAcceleration_isValid;$/;"	m	class:jointData
+jointConfigurations	human-state-provider/include/private/HumanStateProviderPrivate.h	/^    iDynTree::VectorDynSize jointConfigurations;$/;"	m	struct:human::LinkPairInfo
+jointData	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^  jointData() : jointPosition_isValid(0), jointVelocity_isValid(0), jointAcceleration_isValid(0), motorPosition_isValid(0), motorVelocity_isValid(0), motorAcceleration_isValid(0), torque_isValid(0), pidOutput_isValid(0), controlMode_isValid(0), interactionMode_isValid(0) {$/;"	f	class:jointData
+jointData	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^  jointData(const jointData& __alt) : WirePortable(__alt)  {$/;"	f	class:jointData
+jointData	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^  jointData(const yarp::sig::VectorOf<double>& jointPosition,const bool jointPosition_isValid,const yarp::sig::VectorOf<double>& jointVelocity,const bool jointVelocity_isValid,const yarp::sig::VectorOf<double>& jointAcceleration,const bool jointAcceleration_isValid,const yarp::sig::VectorOf<double>& motorPosition,const bool motorPosition_isValid,const yarp::sig::VectorOf<double>& motorVelocity,const bool motorVelocity_isValid,const yarp::sig::VectorOf<double>& motorAcceleration,const bool motorAcceleration_isValid,const yarp::sig::VectorOf<double>& torque,const bool torque_isValid,const yarp::sig::VectorOf<double>& pidOutput,const bool pidOutput_isValid,const yarp::sig::VectorOf<int>& controlMode,const bool controlMode_isValid,const yarp::sig::VectorOf<int>& interactionMode,const bool interactionMode_isValid) : jointPosition(jointPosition), jointPosition_isValid(jointPosition_isValid), jointVelocity(jointVelocity), jointVelocity_isValid(jointVelocity_isValid), jointAcceleration(jointAcceleration), jointAcceleration_isValid(jointAcceleration_isValid), motorPosition(motorPosition), motorPosition_isValid(motorPosition_isValid), motorVelocity(motorVelocity), motorVelocity_isValid(motorVelocity_isValid), motorAcceleration(motorAcceleration), motorAcceleration_isValid(motorAcceleration_isValid), torque(torque), torque_isValid(torque_isValid), pidOutput(pidOutput), pidOutput_isValid(pidOutput_isValid), controlMode(controlMode), controlMode_isValid(controlMode_isValid), interactionMode(interactionMode), interactionMode_isValid(interactionMode_isValid) {$/;"	f	class:jointData
+jointData	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^class jointData : public yarp::os::idl::WirePortable {$/;"	c
+jointEffort	human-viz-bridge/src/HumanEffortBridge.cpp	/^    string jointEffort;$/;"	m	struct:EffortPublisher	file:
+jointPosition	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^  yarp::sig::VectorOf<double> jointPosition;$/;"	m	class:jointData
+jointPosition_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^  bool jointPosition_isValid;$/;"	m	class:jointData
+jointResult	inverse-kinematics/include/private/InverseKinematicsIPOPT.h	/^    iDynTree::VectorDynSize jointResult;$/;"	m	class:InverseKinematicsIPOPT
+jointResult	inverse-kinematics/include/private/InverseKinematicsV2IPOPT.h	/^    iDynTree::VectorDynSize jointResult;$/;"	m	class:InverseKinematicsV2IPOPT
+jointVelocities	human-state-provider/include/private/HumanStateProviderPrivate.h	/^    iDynTree::VectorDynSize jointVelocities;$/;"	m	struct:human::LinkPairInfo
+jointVelocity	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^  yarp::sig::VectorOf<double> jointVelocity;$/;"	m	class:jointData
+jointVelocity_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^  bool jointVelocity_isValid;$/;"	m	class:jointData
+joint_state	human-viz-bridge/src/HumanJointStateBridge.cpp	/^    sensor_msgs_JointState joint_state;$/;"	m	class:xsensJointStatePublisherModule	file:
+joints	human-state-provider/src/HumanStateProviderPrivate.cpp	/^    std::vector<std::string> HumanStateProvider::HumanStateProviderPrivate::joints()$/;"	f	class:human::HumanStateProvider::HumanStateProviderPrivate
+jointsConfiguration	human-state-provider/include/private/HumanStateProviderPrivate.h	/^        yarp::sig::Vector jointsConfiguration;$/;"	m	struct:human::HumanStateProvider::HumanStateProviderPrivate::__anon1
+jointsIK	inverse-kinematics/tests/testSuit.cpp	/^    std::vector< double > jointsIK;$/;"	m	struct:IKErrorLog	file:
+jointsLimits	inverse-kinematics/include/private/InverseKinematicsIPOPT.h	/^    std::vector< std::pair< double,double > > jointsLimits; \/\/joints upper and lower limits$/;"	m	class:InverseKinematicsIPOPT
+jointsLimits	inverse-kinematics/include/private/InverseKinematicsV2IPOPT.h	/^    std::vector< std::pair< double,double > > jointsLimits; \/\/joints upper and lower limits$/;"	m	class:InverseKinematicsV2IPOPT
+jointsTemp	inverse-kinematics/include/private/InverseKinematicsIPOPT.h	/^    iDynTree::VectorDynSize jointsTemp;$/;"	m	class:InverseKinematicsIPOPT
+jointsTemp	inverse-kinematics/include/private/InverseKinematicsV2IPOPT.h	/^    iDynTree::VectorDynSize jointsTemp;$/;"	m	class:InverseKinematicsV2IPOPT
+jointsVelocity	human-state-provider/include/private/HumanStateProviderPrivate.h	/^        yarp::sig::Vector jointsVelocity;$/;"	m	struct:human::HumanStateProvider::HumanStateProviderPrivate::__anon1
+kF	inverse-kinematics/include/private/InverseKinematicsV2IPOPT.h	/^    iDynTree::Vector3 kF;$/;"	m	class:InverseKinematicsV2IPOPT
+kinDynComputations	human-state-provider/include/private/HumanStateProviderPrivate.h	/^    std::unique_ptr<iDynTree::KinDynComputations> kinDynComputations;$/;"	m	struct:human::LinkPairInfo
+kinDynComputations	human-viz-bridge/src/RobotBasePosePublisher.cpp	/^    iDynTree::KinDynComputations kinDynComputations;$/;"	m	class:RobotBasePosePublisher	file:
+last	yarp/ReadOnlyRemoteControlBoard/stateExtendedReader.hpp	/^    jointData last;$/;"	m	class:StateExtendedInputPort
+lastSolution	inverse-kinematics/src/InverseKinematics.cpp	/^        iDynTree::VectorDynSize lastSolution;$/;"	m	class:human::InverseKinematics::InverseKinematicsPrivate	file:
+lastStamp	yarp/ReadOnlyRemoteControlBoard/stateExtendedReader.hpp	/^    Stamp lastStamp;$/;"	m	class:StateExtendedInputPort
+lim2	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^    yarp::dev::IControlLimits2       *lim2;$/;"	m	class:yarp::dev::RemappedSubControlBoard
+linkEffort	human-viz-bridge/src/HumanEffortBridge.cpp	/^    string linkEffort;$/;"	m	struct:EffortPublisher	file:
+loadFromModel	inverse-kinematics/src/InverseKinematicsIPOPT.cpp	/^bool InverseKinematicsIPOPT::loadFromModel(const Model& modelInput, FrameIndex& parentFrameIn, FrameIndex& targetFrame)$/;"	f	class:InverseKinematicsIPOPT
+loadFromModel	inverse-kinematics/src/InverseKinematicsV2IPOPT.cpp	/^bool InverseKinematicsV2IPOPT::loadFromModel(const Model& modelInput, FrameIndex& parentFrameIn, FrameIndex& targetFrame)$/;"	f	class:InverseKinematicsV2IPOPT
+loader	inverse-kinematics/src/InverseKinematics.cpp	/^        Ipopt::SmartPtr< Ipopt::IpoptApplication > loader;$/;"	m	class:human::InverseKinematics::InverseKinematicsPrivate	file:
+lowLevelRead	human-forces-provider/src/FTForceReader.cpp	/^    bool FTForceReader::lowLevelRead(yarp::sig::Vector& force)$/;"	f	class:human::FTForceReader
+lowLevelRead	human-forces-provider/src/PortForceReader.cpp	/^    bool PortForceReader::lowLevelRead(yarp::sig::Vector &force)$/;"	f	class:human::PortForceReader
+lut	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^    std::vector<RemappedAxis> lut;$/;"	m	class:yarp::dev::RemappedControlBoards
+m_attachedLink	human-forces-provider/include/AbstractForceReader.h	/^    std::string m_attachedLink;$/;"	m	class:human::AbstractForceReader
+m_axes	yarp/ReadOnlyRemoteControlBoard/ReadOnlyRemoteControlBoard.h	/^    std::vector<std::pair<yarp::os::ConstString, yarp::dev::JointTypeEnum> > m_axes;$/;"	m	class:yarp::dev::ReadOnlyRemoteControlBoard
+m_baseLink	human-state-provider/include/private/HumanStateProviderPrivate.h	/^    size_t m_baseLink;$/;"	m	class:human::HumanStateProvider::HumanStateProviderPrivate
+m_berdy	human-dynamics-estimator/include/HumanDynamicsEstimator.h	/^    iDynTree::BerdyHelper m_berdy;$/;"	m	class:HumanDynamicsEstimator
+m_bufferForSubControlBoard	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^    std::vector< std::vector<double> > m_bufferForSubControlBoard;$/;"	m	class:yarp::dev::ControlBoardArbitraryAxesDecomposition
+m_bufferForSubControlBoard	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^    std::vector< std::vector<double> > m_bufferForSubControlBoard;$/;"	m	class:yarp::dev::ControlBoardSubControlBoardAxesDecomposition
+m_bufferForSubControlBoardControlModes	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^    std::vector< std::vector<int>    > m_bufferForSubControlBoardControlModes;$/;"	m	class:yarp::dev::ControlBoardArbitraryAxesDecomposition
+m_bufferForSubControlBoardControlModes	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^    std::vector< std::vector<int>    > m_bufferForSubControlBoardControlModes;$/;"	m	class:yarp::dev::ControlBoardSubControlBoardAxesDecomposition
+m_bufferForSubControlBoardInteractionModes	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^    std::vector< std::vector<InteractionModeEnum>  > m_bufferForSubControlBoardInteractionModes;$/;"	m	class:yarp::dev::ControlBoardArbitraryAxesDecomposition
+m_bufferForSubControlBoardInteractionModes	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^    std::vector< std::vector<InteractionModeEnum>  > m_bufferForSubControlBoardInteractionModes;$/;"	m	class:yarp::dev::ControlBoardSubControlBoardAxesDecomposition
+m_bufferedPort	human-forces-provider/include/PortForceReader.h	/^    yarp::os::BufferedPort<yarp::sig::Vector> &m_bufferedPort;$/;"	m	class:human::PortForceReader
+m_buffers	human-state-provider/include/private/HumanStateProviderPrivate.h	/^    } m_buffers;$/;"	m	class:human::HumanStateProvider::HumanStateProviderPrivate	typeref:struct:human::HumanStateProvider::HumanStateProviderPrivate::__anon1
+m_constTransformFromFixture	human-forces-provider/include/RobotFrameTransformer.h	/^    iDynTree::Transform m_constTransformFromFixture;$/;"	m	class:human::RobotFrameTransformer
+m_counterForControlBoard	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^    std::vector<int> m_counterForControlBoard;$/;"	m	class:yarp::dev::ControlBoardArbitraryAxesDecomposition
+m_counterForControlBoard	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^    std::vector<int> m_counterForControlBoard;$/;"	m	class:yarp::dev::ControlBoardSubControlBoardAxesDecomposition
+m_covarianceDynamicsAPosterioriInverse	human-dynamics-estimator/include/HumanDynamicsEstimator.h	/^    Eigen::SparseMatrix<double, Eigen::RowMajor> m_covarianceDynamicsAPosterioriInverse;$/;"	m	class:HumanDynamicsEstimator
+m_drivers	human-forces-provider/include/HumanForcesProvider.h	/^    std::vector<yarp::dev::PolyDriver*> m_drivers;$/;"	m	class:HumanForcesProvider
+m_dynamicsConstraintsBias	human-dynamics-estimator/include/HumanDynamicsEstimator.h	/^    iDynTree::VectorDynSize m_dynamicsConstraintsBias;$/;"	m	class:HumanDynamicsEstimator
+m_dynamicsConstraintsMatrix	human-dynamics-estimator/include/HumanDynamicsEstimator.h	/^    iDynTree::SparseMatrix m_dynamicsConstraintsMatrix;$/;"	m	class:HumanDynamicsEstimator
+m_expectedDynamicsAPosteriori	human-dynamics-estimator/include/HumanDynamicsEstimator.h	/^    iDynTree::VectorDynSize m_expectedDynamicsAPosteriori;$/;"	m	class:HumanDynamicsEstimator
+m_extendedIntputStatePort	yarp/ReadOnlyRemoteControlBoard/ReadOnlyRemoteControlBoard.h	/^    StateExtendedInputPort m_extendedIntputStatePort;  \/\/ Buffered port storing new data$/;"	m	class:yarp::dev::ReadOnlyRemoteControlBoard
+m_extendedPortMutex	yarp/ReadOnlyRemoteControlBoard/ReadOnlyRemoteControlBoard.h	/^    yarp::os::Semaphore m_extendedPortMutex;$/;"	m	class:yarp::dev::ReadOnlyRemoteControlBoard
+m_forceBuffer	human-forces-provider/include/AbstractForceReader.h	/^    yarp::sig::Vector m_forceBuffer;$/;"	m	class:human::AbstractForceReader
+m_frameProvider	human-state-provider/include/private/HumanStateProviderPrivate.h	/^    yarp::experimental::dev::IFrameProvider* m_frameProvider;$/;"	m	class:human::HumanStateProvider::HumanStateProviderPrivate
+m_frameProviderTimed	human-state-provider/include/private/HumanStateProviderPrivate.h	/^    yarp::dev::IPreciselyTimed* m_frameProviderTimed;$/;"	m	class:human::HumanStateProvider::HumanStateProviderPrivate
+m_frameTransformer	human-forces-provider/include/AbstractForceReader.h	/^    FrameTransformer *m_frameTransformer;$/;"	m	class:human::AbstractForceReader
+m_gravity	human-dynamics-estimator/include/HumanDynamicsEstimator.h	/^    iDynTree::Vector3 m_gravity;$/;"	m	class:HumanDynamicsEstimator
+m_humanComputations	human-forces-provider/include/RobotFrameTransformer.h	/^    iDynTree::KinDynComputations m_humanComputations;$/;"	m	class:human::RobotFrameTransformer
+m_humanConfiguration	human-forces-provider/include/RobotFrameTransformer.h	/^    iDynTree::VectorDynSize m_humanConfiguration;$/;"	m	class:human::RobotFrameTransformer
+m_humanConfigured	human-forces-provider/include/HumanForcesProvider.h	/^    bool m_humanConfigured;$/;"	m	class:HumanForcesProvider
+m_humanDriver	human-state-provider/include/private/HumanStateProviderPrivate.h	/^    yarp::dev::PolyDriver m_humanDriver;$/;"	m	class:human::HumanStateProvider::HumanStateProviderPrivate
+m_humanForcesPort	human-dynamics-estimator/include/HumanDynamicsEstimator.h	/^    yarp::os::BufferedPort<human::HumanForces> m_humanForcesPort;$/;"	m	class:HumanDynamicsEstimator
+m_humanJointConfigurationPort	human-dynamics-estimator/include/HumanDynamicsEstimator.h	/^    yarp::os::BufferedPort<human::HumanState> m_humanJointConfigurationPort;$/;"	m	class:HumanDynamicsEstimator
+m_humanJointConfigurationPort	human-forces-provider/include/HumanForcesProvider.h	/^    yarp::os::BufferedPort<human::HumanState> m_humanJointConfigurationPort;$/;"	m	class:HumanForcesProvider
+m_humanJointConfigurationPort	human-forces-provider/include/RobotFrameTransformer.h	/^    yarp::os::BufferedPort<HumanState> &m_humanJointConfigurationPort;$/;"	m	class:human::RobotFrameTransformer
+m_humanJointNames	human-state-provider/include/private/HumanStateProviderPrivate.h	/^    std::vector<std::string> m_humanJointNames; \/\/cached list of joint names$/;"	m	class:human::HumanStateProvider::HumanStateProviderPrivate
+m_humanLinkingFrame	human-forces-provider/include/RobotFrameTransformer.h	/^    std::string m_humanLinkingFrame;$/;"	m	class:human::RobotFrameTransformer
+m_humanLinkingFrameIndex	human-forces-provider/include/RobotFrameTransformer.h	/^    iDynTree::FrameIndex m_humanLinkingFrameIndex;$/;"	m	class:human::RobotFrameTransformer
+m_humanVelocity	human-forces-provider/include/RobotFrameTransformer.h	/^    iDynTree::VectorDynSize m_humanVelocity;$/;"	m	class:human::RobotFrameTransformer
+m_ikPool	human-state-provider/include/private/HumanStateProviderPrivate.h	/^    std::unique_ptr<human::HumanIKWorkerPool> m_ikPool; \/\/this should be transformed into unique_ptr, but it needs the include. Check if this creates a look or not$/;"	m	class:human::HumanStateProvider::HumanStateProviderPrivate
+m_inputMutex	human-state-provider/include/private/HumanIKWorkerPool.h	/^    std::mutex m_inputMutex;$/;"	m	class:human::HumanIKWorkerPool
+m_inputOutputMapping	human-dynamics-estimator/include/HumanDynamicsEstimator.h	/^    } m_inputOutputMapping;$/;"	m	class:HumanDynamicsEstimator	typeref:struct:HumanDynamicsEstimator::__anon2
+m_inputSynchronizer	human-state-provider/include/private/HumanIKWorkerPool.h	/^    std::condition_variable m_inputSynchronizer;$/;"	m	class:human::HumanIKWorkerPool
+m_intermediateQuantities	human-dynamics-estimator/include/HumanDynamicsEstimator.h	/^    } m_intermediateQuantities;$/;"	m	class:HumanDynamicsEstimator	typeref:struct:HumanDynamicsEstimator::__anon3
+m_internal_buffer	human-forces-provider/include/PortForceReader.h	/^    yarp::sig::Vector m_internal_buffer;$/;"	m	class:human::PortForceReader
+m_jointsConfiguration	human-dynamics-estimator/include/HumanDynamicsEstimator.h	/^    iDynTree::JointPosDoubleArray m_jointsConfiguration;$/;"	m	class:HumanDynamicsEstimator
+m_jointsInSubControlBoard	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^    std::vector< std::vector<int> > m_jointsInSubControlBoard;$/;"	m	class:yarp::dev::ControlBoardArbitraryAxesDecomposition
+m_jointsInSubControlBoard	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^    std::vector< std::vector<int> > m_jointsInSubControlBoard;$/;"	m	class:yarp::dev::ControlBoardSubControlBoardAxesDecomposition
+m_jointsVelocity	human-dynamics-estimator/include/HumanDynamicsEstimator.h	/^    iDynTree::JointDOFsDoubleArray m_jointsVelocity;$/;"	m	class:HumanDynamicsEstimator
+m_lastStamp	yarp/ReadOnlyRemoteControlBoard/ReadOnlyRemoteControlBoard.h	/^    mutable Stamp m_lastStamp;  \/\/this is shared among all calls that read encoders$/;"	m	class:yarp::dev::ReadOnlyRemoteControlBoard
+m_linkPairs	human-state-provider/include/private/HumanIKWorkerPool.h	/^    std::vector<human::LinkPairInfo> &m_linkPairs;$/;"	m	class:human::HumanIKWorkerPool
+m_linkPairs	human-state-provider/include/private/HumanStateProviderPrivate.h	/^    std::vector<human::LinkPairInfo> m_linkPairs;$/;"	m	class:human::HumanStateProvider::HumanStateProviderPrivate
+m_matrixTransform	human-forces-provider/include/GenericFrameTransformer.h	/^    iDynTree::Transform m_matrixTransform;$/;"	m	class:human::GenericFrameTransformer
+m_matrixTransform	human-forces-provider/include/RobotFrameTransformer.h	/^    iDynTree::Transform m_matrixTransform;$/;"	m	class:human::RobotFrameTransformer
+m_measurements	human-dynamics-estimator/include/HumanDynamicsEstimator.h	/^    iDynTree::VectorDynSize m_measurements;$/;"	m	class:HumanDynamicsEstimator
+m_measurementsBias	human-dynamics-estimator/include/HumanDynamicsEstimator.h	/^    iDynTree::VectorDynSize m_measurementsBias;$/;"	m	class:HumanDynamicsEstimator
+m_measurementsMatrix	human-dynamics-estimator/include/HumanDynamicsEstimator.h	/^    iDynTree::SparseMatrix m_measurementsMatrix;$/;"	m	class:HumanDynamicsEstimator
+m_nJointsInSubControlBoard	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^    std::vector<int> m_nJointsInSubControlBoard;$/;"	m	class:yarp::dev::ControlBoardArbitraryAxesDecomposition
+m_nJointsInSubControlBoard	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^    std::vector<int> m_nJointsInSubControlBoard;$/;"	m	class:yarp::dev::ControlBoardSubControlBoardAxesDecomposition
+m_nrOfControlledAxesInRemappedCtrlBrd	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^    int m_nrOfControlledAxesInRemappedCtrlBrd;$/;"	m	class:yarp::dev::ControlBoardArbitraryAxesDecomposition
+m_nrOfControlledAxesInRemappedCtrlBrd	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^    int m_nrOfControlledAxesInRemappedCtrlBrd;$/;"	m	class:yarp::dev::ControlBoardSubControlBoardAxesDecomposition
+m_numberOfJoints	yarp/ReadOnlyRemoteControlBoard/ReadOnlyRemoteControlBoard.h	/^    int m_numberOfJoints;$/;"	m	class:yarp::dev::ReadOnlyRemoteControlBoard
+m_objectMutex	human-state-provider/include/private/HumanStateProviderPrivate.h	/^    std::mutex m_objectMutex;$/;"	m	class:human::HumanStateProvider::HumanStateProviderPrivate
+m_originExpressedFrame	human-forces-provider/include/GenericFrameTransformer.h	/^    std::string m_originExpressedFrame;$/;"	m	class:human::GenericFrameTransformer
+m_originFrameIndex	human-forces-provider/include/RobotFrameTransformer.h	/^    iDynTree::FrameIndex m_originFrameIndex;$/;"	m	class:human::RobotFrameTransformer
+m_outputMutex	human-state-provider/include/private/HumanIKWorkerPool.h	/^    std::mutex m_outputMutex;$/;"	m	class:human::HumanIKWorkerPool
+m_outputPort	human-dynamics-estimator/include/HumanDynamicsEstimator.h	/^    yarp::os::BufferedPort<human::HumanDynamics> m_outputPort;$/;"	m	class:HumanDynamicsEstimator
+m_outputPort	human-forces-provider/include/HumanForcesProvider.h	/^    yarp::os::BufferedPort<human::HumanForces> m_outputPort;$/;"	m	class:HumanForcesProvider
+m_outputPort	human-state-provider/include/private/HumanStateProviderPrivate.h	/^    yarp::os::BufferedPort<human::HumanState> m_outputPort;$/;"	m	class:human::HumanStateProvider::HumanStateProviderPrivate
+m_outputSynchronizer	human-state-provider/include/private/HumanIKWorkerPool.h	/^    std::condition_variable m_outputSynchronizer;$/;"	m	class:human::HumanIKWorkerPool
+m_packedForce	human-forces-provider/include/AbstractForceReader.h	/^    yarp::sig::Vector m_packedForce;$/;"	m	class:human::AbstractForceReader
+m_period	human-dynamics-estimator/include/HumanDynamicsEstimator.h	/^    double m_period;$/;"	m	class:HumanDynamicsEstimator
+m_period	human-forces-provider/include/HumanForcesProvider.h	/^    double m_period;$/;"	m	class:HumanForcesProvider
+m_period	human-state-provider/include/private/HumanStateProviderPrivate.h	/^    double m_period;$/;"	m	class:human::HumanStateProvider::HumanStateProviderPrivate
+m_pimpl	human-state-provider/include/HumanStateProvider.h	/^    HumanStateProviderPrivate* m_pimpl;$/;"	m	class:human::HumanStateProvider
+m_pimpl	inverse-kinematics/include/human-ik/InverseKinematics.h	/^    InverseKinematicsPrivate *m_pimpl;$/;"	m	class:human::InverseKinematics
+m_poolSize	human-state-provider/include/private/HumanIKWorkerPool.h	/^    unsigned m_poolSize;$/;"	m	class:human::HumanIKWorkerPool
+m_ports	human-forces-provider/include/HumanForcesProvider.h	/^    std::vector<yarp::os::BufferedPort<yarp::sig::Vector>*> m_ports;$/;"	m	class:HumanForcesProvider
+m_priorDynamicsConstraintsCovarianceInverse	human-dynamics-estimator/include/HumanDynamicsEstimator.h	/^    iDynTree::SparseMatrix m_priorDynamicsConstraintsCovarianceInverse; \/\/ Sigma_D^-1$/;"	m	class:HumanDynamicsEstimator
+m_priorDynamicsRegularizationCovarianceInverse	human-dynamics-estimator/include/HumanDynamicsEstimator.h	/^    iDynTree::SparseMatrix m_priorDynamicsRegularizationCovarianceInverse; \/\/ Sigma_d^-1$/;"	m	class:HumanDynamicsEstimator
+m_priorDynamicsRegularizationExpectedValue	human-dynamics-estimator/include/HumanDynamicsEstimator.h	/^    iDynTree::VectorDynSize m_priorDynamicsRegularizationExpectedValue; \/\/ mu_d$/;"	m	class:HumanDynamicsEstimator
+m_priorMeasurementsCovarianceInverse	human-dynamics-estimator/include/HumanDynamicsEstimator.h	/^    iDynTree::SparseMatrix m_priorMeasurementsCovarianceInverse; \/\/ Sigma_y^-1$/;"	m	class:HumanDynamicsEstimator
+m_readers	human-forces-provider/include/HumanForcesProvider.h	/^    std::vector<human::ForceReader*> m_readers;$/;"	m	class:HumanForcesProvider
+m_referenceFrame	human-forces-provider/include/AbstractForceReader.h	/^    std::string m_referenceFrame;$/;"	m	class:human::AbstractForceReader
+m_remoteControlBoardDevices	yarp/ReadOnlyControlBoardRemapper/ReadOnlyRemoteControlBoardRemapper.h	/^    std::vector<PolyDriver*> m_remoteControlBoardDevices;$/;"	m	class:yarp::dev::ReadOnlyRemoteControlBoardRemapper
+m_results	human-state-provider/include/private/HumanIKWorkerPool.h	/^    std::unordered_map<long, bool> m_results;$/;"	m	class:human::HumanIKWorkerPool
+m_robot	human-forces-provider/include/HumanForcesProvider.h	/^    yarp::dev::PolyDriver m_robot;$/;"	m	class:HumanForcesProvider
+m_robotComputations	human-forces-provider/include/RobotFrameTransformer.h	/^    iDynTree::KinDynComputations m_robotComputations;$/;"	m	class:human::RobotFrameTransformer
+m_robotConfiguration	human-forces-provider/include/RobotFrameTransformer.h	/^    iDynTree::VectorDynSize m_robotConfiguration;$/;"	m	class:human::RobotFrameTransformer
+m_robotConfigured	human-forces-provider/include/HumanForcesProvider.h	/^    bool m_robotConfigured;$/;"	m	class:HumanForcesProvider
+m_robotJointConfiguration_encoder	human-forces-provider/include/RobotFrameTransformer.h	/^    yarp::dev::IEncoders &m_robotJointConfiguration_encoder;$/;"	m	class:human::RobotFrameTransformer
+m_robotLinkingFrame	human-forces-provider/include/RobotFrameTransformer.h	/^    std::string m_robotLinkingFrame;$/;"	m	class:human::RobotFrameTransformer
+m_robotLinkingFrameIndex	human-forces-provider/include/RobotFrameTransformer.h	/^    iDynTree::FrameIndex m_robotLinkingFrameIndex;$/;"	m	class:human::RobotFrameTransformer
+m_robotVelocity	human-forces-provider/include/RobotFrameTransformer.h	/^    iDynTree::VectorDynSize m_robotVelocity;$/;"	m	class:human::RobotFrameTransformer
+m_rosForcesScale	human-forces-provider/include/HumanForcesProvider.h	/^    double m_rosForcesScale;$/;"	m	class:HumanForcesProvider
+m_rosNode	human-forces-provider/include/HumanForcesProvider.h	/^    yarp::os::Node *m_rosNode;$/;"	m	class:HumanForcesProvider
+m_rosSequence	human-forces-provider/include/HumanForcesProvider.h	/^    unsigned m_rosSequence;$/;"	m	class:HumanForcesProvider
+m_rpcPort	human-state-provider/include/private/HumanStateProviderPrivate.h	/^    yarp::os::Port m_rpcPort;$/;"	m	class:human::HumanStateProvider::HumanStateProviderPrivate
+m_segments	human-state-provider/include/private/HumanIKWorkerPool.h	/^    std::vector<human::SegmentInfo> &m_segments;$/;"	m	class:human::HumanIKWorkerPool
+m_segments	human-state-provider/include/private/HumanStateProviderPrivate.h	/^    std::vector<human::SegmentInfo> m_segments;$/;"	m	class:human::HumanStateProvider::HumanStateProviderPrivate
+m_sensor	human-forces-provider/include/FTForceReader.h	/^    yarp::dev::IAnalogSensor &m_sensor;$/;"	m	class:human::FTForceReader
+m_shouldTerminate	human-state-provider/include/private/HumanIKWorkerPool.h	/^    bool m_shouldTerminate;$/;"	m	class:human::HumanIKWorkerPool
+m_solverName	inverse-kinematics/src/InverseKinematics.cpp	/^        std::string m_solverName;$/;"	m	class:human::InverseKinematics::InverseKinematicsPrivate	file:
+m_tasks	human-state-provider/include/private/HumanIKWorkerPool.h	/^    std::queue<WorkerTaskData> m_tasks;$/;"	m	class:human::HumanIKWorkerPool
+m_terminateCounter	human-state-provider/include/private/HumanIKWorkerPool.h	/^    std::vector<bool> m_terminateCounter;$/;"	m	class:human::HumanIKWorkerPool
+m_tfPrefix	human-forces-provider/include/HumanForcesProvider.h	/^    std::string m_tfPrefix;$/;"	m	class:HumanForcesProvider
+m_topics	human-forces-provider/include/HumanForcesProvider.h	/^    std::vector<yarp::os::Publisher<geometry_msgs::WrenchStamped>*> m_topics;$/;"	m	class:HumanForcesProvider
+m_transformedExpressedFrame	human-forces-provider/include/GenericFrameTransformer.h	/^    std::string m_transformedExpressedFrame;$/;"	m	class:human::GenericFrameTransformer
+m_transformedFrameIndex	human-forces-provider/include/RobotFrameTransformer.h	/^    iDynTree::FrameIndex m_transformedFrameIndex;$/;"	m	class:human::RobotFrameTransformer
+main	human-dynamics-estimator/src/main.cpp	/^int main(int argc, char * argv[])$/;"	f
+main	human-forces-provider/src/main.cpp	/^int main(int argc, char * argv[])$/;"	f
+main	human-state-provider/src/main.cpp	/^int main(int argc, char * argv[])$/;"	f
+main	human-viz-bridge/src/HumanEffortBridge.cpp	/^int main(int argc, char * argv[])$/;"	f
+main	human-viz-bridge/src/HumanJointStateBridge.cpp	/^int main(int argc, char * argv[])$/;"	f
+main	human-viz-bridge/src/HumanTFBridge.cpp	/^int main(int argc, char * argv[])$/;"	f
+main	human-viz-bridge/src/RobotBasePosePublisher.cpp	/^int main(int argc, char * argv[])$/;"	f
+main	inverse-kinematics/tests/testIK.cpp	/^int main(int argc, char **argv) {$/;"	f
+main	inverse-kinematics/tests/testSuit.cpp	/^int main(int argc, char **argv) {$/;"	f
+mark_dirty	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    void mark_dirty() {$/;"	f	class:jointData::Editor
+mark_dirty_controlMode	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    void mark_dirty_controlMode() {$/;"	f	class:jointData::Editor
+mark_dirty_controlMode_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    void mark_dirty_controlMode_isValid() {$/;"	f	class:jointData::Editor
+mark_dirty_interactionMode	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    void mark_dirty_interactionMode() {$/;"	f	class:jointData::Editor
+mark_dirty_interactionMode_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    void mark_dirty_interactionMode_isValid() {$/;"	f	class:jointData::Editor
+mark_dirty_jointAcceleration	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    void mark_dirty_jointAcceleration() {$/;"	f	class:jointData::Editor
+mark_dirty_jointAcceleration_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    void mark_dirty_jointAcceleration_isValid() {$/;"	f	class:jointData::Editor
+mark_dirty_jointPosition	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    void mark_dirty_jointPosition() {$/;"	f	class:jointData::Editor
+mark_dirty_jointPosition_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    void mark_dirty_jointPosition_isValid() {$/;"	f	class:jointData::Editor
+mark_dirty_jointVelocity	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    void mark_dirty_jointVelocity() {$/;"	f	class:jointData::Editor
+mark_dirty_jointVelocity_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    void mark_dirty_jointVelocity_isValid() {$/;"	f	class:jointData::Editor
+mark_dirty_motorAcceleration	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    void mark_dirty_motorAcceleration() {$/;"	f	class:jointData::Editor
+mark_dirty_motorAcceleration_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    void mark_dirty_motorAcceleration_isValid() {$/;"	f	class:jointData::Editor
+mark_dirty_motorPosition	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    void mark_dirty_motorPosition() {$/;"	f	class:jointData::Editor
+mark_dirty_motorPosition_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    void mark_dirty_motorPosition_isValid() {$/;"	f	class:jointData::Editor
+mark_dirty_motorVelocity	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    void mark_dirty_motorVelocity() {$/;"	f	class:jointData::Editor
+mark_dirty_motorVelocity_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    void mark_dirty_motorVelocity_isValid() {$/;"	f	class:jointData::Editor
+mark_dirty_pidOutput	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    void mark_dirty_pidOutput() {$/;"	f	class:jointData::Editor
+mark_dirty_pidOutput_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    void mark_dirty_pidOutput_isValid() {$/;"	f	class:jointData::Editor
+mark_dirty_torque	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    void mark_dirty_torque() {$/;"	f	class:jointData::Editor
+mark_dirty_torque_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    void mark_dirty_torque_isValid() {$/;"	f	class:jointData::Editor
+maxIterations	inverse-kinematics/src/InverseKinematics.cpp	/^        unsigned maxIterations;$/;"	m	class:human::InverseKinematics::InverseKinematicsPrivate	file:
+model	inverse-kinematics/include/private/InverseKinematicsIPOPT.h	/^    iDynTree::Model model;$/;"	m	class:InverseKinematicsIPOPT
+model	inverse-kinematics/include/private/InverseKinematicsV2IPOPT.h	/^    iDynTree::Model model;$/;"	m	class:InverseKinematicsV2IPOPT
+modelLoaded	inverse-kinematics/include/private/InverseKinematicsIPOPT.h	/^    bool modelLoaded;$/;"	m	class:InverseKinematicsIPOPT
+modelLoaded	inverse-kinematics/include/private/InverseKinematicsV2IPOPT.h	/^    bool modelLoaded;$/;"	m	class:InverseKinematicsV2IPOPT
+motorAcceleration	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^  yarp::sig::VectorOf<double> motorAcceleration;$/;"	m	class:jointData
+motorAcceleration_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^  bool motorAcceleration_isValid;$/;"	m	class:jointData
+motorPosition	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^  yarp::sig::VectorOf<double> motorPosition;$/;"	m	class:jointData
+motorPosition_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^  bool motorPosition_isValid;$/;"	m	class:jointData
+motorVelocity	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^  yarp::sig::VectorOf<double> motorVelocity;$/;"	m	class:jointData
+motorVelocity_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^  bool motorVelocity_isValid;$/;"	m	class:jointData
+mutex	human-viz-bridge/src/HumanJointStateBridge.cpp	/^    Mutex mutex;$/;"	m	class:xsensJointStatePublisherModule	file:
+mutex	human-viz-bridge/src/RobotBasePosePublisher.cpp	/^    Mutex mutex;$/;"	m	class:RobotBasePosePublisher	file:
+mutex	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^    yarp::os::Mutex mutex;$/;"	m	class:yarp::dev::ControlBoardArbitraryAxesDecomposition
+mutex	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^    yarp::os::Mutex mutex;$/;"	m	class:yarp::dev::ControlBoardRemapperBuffers
+mutex	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^    yarp::os::Mutex mutex;$/;"	m	class:yarp::dev::ControlBoardSubControlBoardAxesDecomposition
+mutex	yarp/ReadOnlyRemoteControlBoard/stateExtendedReader.hpp	/^    Semaphore mutex;$/;"	m	class:StateExtendedInputPort
+nested_read_controlMode	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::nested_read_controlMode(yarp::os::idl::WireReader& reader) {$/;"	f	class:jointData
+nested_read_controlMode_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::nested_read_controlMode_isValid(yarp::os::idl::WireReader& reader) {$/;"	f	class:jointData
+nested_read_interactionMode	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::nested_read_interactionMode(yarp::os::idl::WireReader& reader) {$/;"	f	class:jointData
+nested_read_interactionMode_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::nested_read_interactionMode_isValid(yarp::os::idl::WireReader& reader) {$/;"	f	class:jointData
+nested_read_jointAcceleration	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::nested_read_jointAcceleration(yarp::os::idl::WireReader& reader) {$/;"	f	class:jointData
+nested_read_jointAcceleration_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::nested_read_jointAcceleration_isValid(yarp::os::idl::WireReader& reader) {$/;"	f	class:jointData
+nested_read_jointPosition	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::nested_read_jointPosition(yarp::os::idl::WireReader& reader) {$/;"	f	class:jointData
+nested_read_jointPosition_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::nested_read_jointPosition_isValid(yarp::os::idl::WireReader& reader) {$/;"	f	class:jointData
+nested_read_jointVelocity	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::nested_read_jointVelocity(yarp::os::idl::WireReader& reader) {$/;"	f	class:jointData
+nested_read_jointVelocity_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::nested_read_jointVelocity_isValid(yarp::os::idl::WireReader& reader) {$/;"	f	class:jointData
+nested_read_motorAcceleration	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::nested_read_motorAcceleration(yarp::os::idl::WireReader& reader) {$/;"	f	class:jointData
+nested_read_motorAcceleration_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::nested_read_motorAcceleration_isValid(yarp::os::idl::WireReader& reader) {$/;"	f	class:jointData
+nested_read_motorPosition	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::nested_read_motorPosition(yarp::os::idl::WireReader& reader) {$/;"	f	class:jointData
+nested_read_motorPosition_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::nested_read_motorPosition_isValid(yarp::os::idl::WireReader& reader) {$/;"	f	class:jointData
+nested_read_motorVelocity	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::nested_read_motorVelocity(yarp::os::idl::WireReader& reader) {$/;"	f	class:jointData
+nested_read_motorVelocity_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::nested_read_motorVelocity_isValid(yarp::os::idl::WireReader& reader) {$/;"	f	class:jointData
+nested_read_pidOutput	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::nested_read_pidOutput(yarp::os::idl::WireReader& reader) {$/;"	f	class:jointData
+nested_read_pidOutput_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::nested_read_pidOutput_isValid(yarp::os::idl::WireReader& reader) {$/;"	f	class:jointData
+nested_read_torque	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::nested_read_torque(yarp::os::idl::WireReader& reader) {$/;"	f	class:jointData
+nested_read_torque_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::nested_read_torque_isValid(yarp::os::idl::WireReader& reader) {$/;"	f	class:jointData
+nested_write_controlMode	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::nested_write_controlMode(yarp::os::idl::WireWriter& writer) {$/;"	f	class:jointData
+nested_write_controlMode_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::nested_write_controlMode_isValid(yarp::os::idl::WireWriter& writer) {$/;"	f	class:jointData
+nested_write_interactionMode	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::nested_write_interactionMode(yarp::os::idl::WireWriter& writer) {$/;"	f	class:jointData
+nested_write_interactionMode_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::nested_write_interactionMode_isValid(yarp::os::idl::WireWriter& writer) {$/;"	f	class:jointData
+nested_write_jointAcceleration	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::nested_write_jointAcceleration(yarp::os::idl::WireWriter& writer) {$/;"	f	class:jointData
+nested_write_jointAcceleration_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::nested_write_jointAcceleration_isValid(yarp::os::idl::WireWriter& writer) {$/;"	f	class:jointData
+nested_write_jointPosition	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::nested_write_jointPosition(yarp::os::idl::WireWriter& writer) {$/;"	f	class:jointData
+nested_write_jointPosition_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::nested_write_jointPosition_isValid(yarp::os::idl::WireWriter& writer) {$/;"	f	class:jointData
+nested_write_jointVelocity	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::nested_write_jointVelocity(yarp::os::idl::WireWriter& writer) {$/;"	f	class:jointData
+nested_write_jointVelocity_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::nested_write_jointVelocity_isValid(yarp::os::idl::WireWriter& writer) {$/;"	f	class:jointData
+nested_write_motorAcceleration	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::nested_write_motorAcceleration(yarp::os::idl::WireWriter& writer) {$/;"	f	class:jointData
+nested_write_motorAcceleration_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::nested_write_motorAcceleration_isValid(yarp::os::idl::WireWriter& writer) {$/;"	f	class:jointData
+nested_write_motorPosition	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::nested_write_motorPosition(yarp::os::idl::WireWriter& writer) {$/;"	f	class:jointData
+nested_write_motorPosition_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::nested_write_motorPosition_isValid(yarp::os::idl::WireWriter& writer) {$/;"	f	class:jointData
+nested_write_motorVelocity	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::nested_write_motorVelocity(yarp::os::idl::WireWriter& writer) {$/;"	f	class:jointData
+nested_write_motorVelocity_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::nested_write_motorVelocity_isValid(yarp::os::idl::WireWriter& writer) {$/;"	f	class:jointData
+nested_write_pidOutput	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::nested_write_pidOutput(yarp::os::idl::WireWriter& writer) {$/;"	f	class:jointData
+nested_write_pidOutput_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::nested_write_pidOutput_isValid(yarp::os::idl::WireWriter& writer) {$/;"	f	class:jointData
+nested_write_torque	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::nested_write_torque(yarp::os::idl::WireWriter& writer) {$/;"	f	class:jointData
+nested_write_torque_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::nested_write_torque_isValid(yarp::os::idl::WireWriter& writer) {$/;"	f	class:jointData
+normalizeSecNSec	human-forces-provider/src/HumanForcesProvider.cpp	/^static inline TickTime normalizeSecNSec(double yarpTimeStamp)$/;"	f	file:
+normalizeSecNSec	human-viz-bridge/src/HumanEffortBridge.cpp	/^inline TickTime normalizeSecNSec(double yarpTimeStamp)$/;"	f
+normalizeSecNSec	human-viz-bridge/src/HumanJointStateBridge.cpp	/^inline TickTime normalizeSecNSec(double yarpTimeStamp)$/;"	f
+normalizeSecNSec	human-viz-bridge/src/HumanTFBridge.cpp	/^inline TickTime normalizeSecNSec(double yarpTimeStamp)$/;"	f
+normalizeSecNSec	human-viz-bridge/src/RobotBasePosePublisher.cpp	/^inline TickTime normalizeSecNSec(double yarpTimeStamp)$/;"	f
+now	yarp/ReadOnlyRemoteControlBoard/stateExtendedReader.hpp	/^    double now;$/;"	m	class:StateExtendedInputPort
+obj	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    jointData *obj;$/;"	m	class:jointData::Editor
+obj_owned	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    bool obj_owned;$/;"	m	class:jointData::Editor
+onRead	human-viz-bridge/src/HumanEffortBridge.cpp	/^    virtual void onRead(HumanDynamics& humanDynamicsData) {$/;"	f	class:xsensJointStatePublisherModule
+onRead	human-viz-bridge/src/HumanJointStateBridge.cpp	/^    virtual void onRead(HumanState& humanStateData) {$/;"	f	class:xsensJointStatePublisherModule
+onRead	human-viz-bridge/src/HumanTFBridge.cpp	/^    virtual void onRead(XsensSegmentsFrame& xsensData) {$/;"	f	class:HumanTFBridge
+onRead	yarp/ReadOnlyRemoteControlBoard/stateExtendedReader.cpp	/^void StateExtendedInputPort::onRead(jointData &v)$/;"	f	class:StateExtendedInputPort
+open	yarp/ReadOnlyControlBoardRemapper/ReadOnlyControlBoardRemapper.cpp	/^bool ReadOnlyControlBoardRemapper::open(Searchable& config)$/;"	f	class:yarp::dev::ReadOnlyControlBoardRemapper
+open	yarp/ReadOnlyControlBoardRemapper/ReadOnlyControlBoardRemapper.h	/^    virtual bool open() { return false; }$/;"	f	class:yarp::dev::ReadOnlyControlBoardRemapper
+open	yarp/ReadOnlyControlBoardRemapper/ReadOnlyRemoteControlBoardRemapper.cpp	/^bool ReadOnlyRemoteControlBoardRemapper::open(Searchable& config)$/;"	f	class:ReadOnlyRemoteControlBoardRemapper
+open	yarp/ReadOnlyControlBoardRemapper/ReadOnlyRemoteControlBoardRemapper.h	/^    virtual bool open() { return false; }$/;"	f	class:yarp::dev::ReadOnlyRemoteControlBoardRemapper
+open	yarp/ReadOnlyRemoteControlBoard/ReadOnlyRemoteControlBoard.cpp	/^    bool ReadOnlyRemoteControlBoard::open() {$/;"	f	class:yarp::dev::ReadOnlyRemoteControlBoard
+open	yarp/ReadOnlyRemoteControlBoard/ReadOnlyRemoteControlBoard.cpp	/^    bool ReadOnlyRemoteControlBoard::open(Searchable& config) {$/;"	f	class:yarp::dev::ReadOnlyRemoteControlBoard
+operator ()	human-dynamics-estimator/include/HumanDynamicsEstimator.h	/^        std::size_t operator()(const SensorKey& k) const$/;"	f	struct:HumanDynamicsEstimator::SensorKeyHash
+operator ()	human-dynamics-estimator/include/HumanDynamicsEstimator.h	/^        std::size_t operator()(const iDynTree::BerdyDynamicVariablesTypes& k) const$/;"	f	struct:HumanDynamicsEstimator::BerdyDynamicVariablesTypesHash
+operator =	inverse-kinematics/src/InverseKinematics.cpp	/^InverseKinematics& InverseKinematics::operator=(const InverseKinematics&) { assert(false); return *this;}$/;"	f	class:human::InverseKinematics
+operator =	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^  const jointData& operator = (const jointData& __alt) {$/;"	f	class:jointData
+operator ==	human-dynamics-estimator/include/HumanDynamicsEstimator.h	/^        bool operator==(const SensorKey& other) const$/;"	f	struct:HumanDynamicsEstimator::SensorKey
+os	human-forces-provider/include/HumanForcesProvider.h	/^    namespace os$/;"	n	namespace:yarp
+os	human-forces-provider/include/PortForceReader.h	/^    namespace os$/;"	n	namespace:yarp
+os	yarp/ReadOnlyControlBoardRemapper/ReadOnlyControlBoardRemapper.h	/^namespace os {$/;"	n	namespace:yarp
+outputJoints	human-dynamics-estimator/include/HumanDynamicsEstimator.h	/^        BerdyOutputMap outputJoints;$/;"	m	struct:HumanDynamicsEstimator::__anon2
+outputLinks	human-dynamics-estimator/include/HumanDynamicsEstimator.h	/^        BerdyOutputMap outputLinks;$/;"	m	struct:HumanDynamicsEstimator::__anon2
+pDesired	inverse-kinematics/include/private/InverseKinematicsV2IPOPT.h	/^    iDynTree::VectorFixSize<7> pDesired;$/;"	m	class:InverseKinematicsV2IPOPT
+p_H_e	inverse-kinematics/include/private/InverseKinematicsV2IPOPT.h	/^    iDynTree::Transform p_H_e;$/;"	m	class:InverseKinematicsV2IPOPT
+p_J_wp	inverse-kinematics/include/private/InverseKinematicsIPOPT.h	/^    iDynTree::FrameFreeFloatingJacobian e_J_we, p_J_wp;$/;"	m	class:InverseKinematicsIPOPT
+p_J_wp	inverse-kinematics/include/private/InverseKinematicsV2IPOPT.h	/^    iDynTree::FrameFreeFloatingJacobian e_J_we, p_J_wp;$/;"	m	class:InverseKinematicsV2IPOPT
+pairInfo	human-state-provider/include/private/HumanIKWorkerPool.h	/^        human::LinkPairInfo& pairInfo;$/;"	m	struct:human::HumanIKWorkerPool::WorkerTaskData
+parentFrame	inverse-kinematics/include/private/InverseKinematicsIPOPT.h	/^    iDynTree::FrameIndex parentFrame, endEffectorFrame;$/;"	m	class:InverseKinematicsIPOPT
+parentFrame	inverse-kinematics/include/private/InverseKinematicsV2IPOPT.h	/^    iDynTree::FrameIndex parentFrame, endEffectorFrame;$/;"	m	class:InverseKinematicsV2IPOPT
+parentFrameInfo	human-state-provider/include/private/HumanIKWorkerPool.h	/^        human::SegmentInfo& parentFrameInfo;$/;"	m	struct:human::HumanIKWorkerPool::WorkerTaskData
+parentFrameModelIndex	human-state-provider/include/private/HumanStateProviderPrivate.h	/^    iDynTree::FrameIndex parentFrameModelIndex; \/\/index of the frame in the iDynTree Model$/;"	m	struct:human::LinkPairInfo
+parentFrameName	human-state-provider/include/private/HumanStateProviderPrivate.h	/^    std::string parentFrameName; \/\/name of the parent frame$/;"	m	struct:human::LinkPairInfo
+parentFrameSegmentsIndex	human-state-provider/include/private/HumanStateProviderPrivate.h	/^    iDynTree::FrameIndex parentFrameSegmentsIndex; \/\/index of the parent frame in the segment list$/;"	m	struct:human::LinkPairInfo
+parentJacobian	human-state-provider/include/private/HumanStateProviderPrivate.h	/^    iDynTree::MatrixDynSize parentJacobian;$/;"	m	struct:human::LinkPairInfo
+parseAxesNames	yarp/ReadOnlyControlBoardRemapper/ReadOnlyControlBoardRemapper.cpp	/^bool ReadOnlyControlBoardRemapper::parseAxesNames(const Property& prop)$/;"	f	class:yarp::dev::ReadOnlyControlBoardRemapper
+parseCovarianceMatrixOption	human-dynamics-estimator/src/HumanDynamicsEstimator.cpp	/^static bool parseCovarianceMatrixOption(const yarp::os::Value &option,$/;"	f	file:
+parseFrameListOption	human-dynamics-estimator/src/HumanDynamicsEstimator.cpp	/^static bool parseFrameListOption(const yarp::os::Value &option, std::vector<std::string> &parsedJoints)$/;"	f	file:
+parseFrameListOption	human-viz-bridge/src/HumanEffortBridge.cpp	/^static bool parseFrameListOption(const Value &option, vector<string> &parsedSegments)$/;"	f	file:
+parseFrameListOption	human-viz-bridge/src/HumanJointStateBridge.cpp	/^static bool parseFrameListOption(const Value &option, vector<string> &parsedSegments)$/;"	f	file:
+parseFrameListOption	human-viz-bridge/src/HumanTFBridge.cpp	/^static bool parseFrameListOption(const Value &option, vector<string> &parsedSegments)$/;"	f	file:
+parseFrameListOption	human-viz-bridge/src/RobotBasePosePublisher.cpp	/^static bool parseFrameListOption(const Value &option, vector<string> &parsedSegments)$/;"	f	file:
+parseMeasurementsPriorsOption	human-dynamics-estimator/src/HumanDynamicsEstimator.cpp	/^static bool parseMeasurementsPriorsOption(const yarp::os::Bottle& priorsGroup,$/;"	f	file:
+parseNetworks	yarp/ReadOnlyControlBoardRemapper/ReadOnlyControlBoardRemapper.cpp	/^bool ReadOnlyControlBoardRemapper::parseNetworks(const Property& prop)$/;"	f	class:yarp::dev::ReadOnlyControlBoardRemapper
+parseOptions	yarp/ReadOnlyControlBoardRemapper/ReadOnlyControlBoardRemapper.cpp	/^bool ReadOnlyControlBoardRemapper::parseOptions(Property& prop)$/;"	f	class:yarp::dev::ReadOnlyControlBoardRemapper
+parsePositionVector	human-forces-provider/src/HumanForcesProvider.cpp	/^static bool parsePositionVector(const yarp::os::Value& ini, iDynTree::Position& position)$/;"	f	file:
+parsePositionVector	human-viz-bridge/src/HumanJointStateBridge.cpp	/^static bool parsePositionVector(const yarp::os::Value& ini, iDynTree::Position& position)$/;"	f	file:
+parsePositionVector	human-viz-bridge/src/RobotBasePosePublisher.cpp	/^static bool parsePositionVector(const yarp::os::Value& ini, iDynTree::Position& position)$/;"	f	file:
+parseRotationMatrix	human-forces-provider/src/HumanForcesProvider.cpp	/^static bool parseRotationMatrix(const yarp::os::Value& ini, iDynTree::Rotation& rotation)$/;"	f	file:
+parseRotationMatrix	human-viz-bridge/src/HumanJointStateBridge.cpp	/^static bool parseRotationMatrix(const yarp::os::Value& ini, iDynTree::Rotation& rotation)$/;"	f	file:
+parseRotationMatrix	human-viz-bridge/src/RobotBasePosePublisher.cpp	/^static bool parseRotationMatrix(const yarp::os::Value& ini, iDynTree::Rotation& rotation)$/;"	f	file:
+parseSensorsRemovalOptionAndRemoveSensors	human-dynamics-estimator/src/HumanDynamicsEstimator.cpp	/^static bool parseSensorsRemovalOptionAndRemoveSensors(const yarp::os::Bottle &option, iDynTree::SensorsList& sensorList)$/;"	f	file:
+parseStringListOption	human-forces-provider/src/HumanForcesProvider.cpp	/^static bool parseStringListOption(const yarp::os::Value &option, std::vector<std::string> &parsedList)$/;"	f	file:
+partName	yarp/ReadOnlyControlBoardRemapper/ReadOnlyControlBoardRemapper.h	/^    std::string partName;$/;"	m	class:yarp::dev::ReadOnlyControlBoardRemapper
+period	human-viz-bridge/src/RobotBasePosePublisher.cpp	/^    double period;$/;"	m	class:RobotBasePosePublisher	file:
+pid	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^    yarp::dev::IPidControl           *pid;$/;"	m	class:yarp::dev::RemappedSubControlBoard
+pidOutput	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^  yarp::sig::VectorOf<double> pidOutput;$/;"	m	class:jointData
+pidOutput_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^  bool pidOutput_isValid;$/;"	m	class:jointData
+pos2	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^    yarp::dev::IPositionControl2     *pos2;$/;"	m	class:yarp::dev::RemappedSubControlBoard
+posDir	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^    yarp::dev::IPositionDirect       *posDir;$/;"	m	class:yarp::dev::RemappedSubControlBoard
+poseWRTWorld	human-state-provider/include/private/HumanStateProviderPrivate.h	/^    iDynTree::Transform poseWRTWorld;$/;"	m	struct:human::SegmentInfo
+poses	human-state-provider/include/private/HumanStateProviderPrivate.h	/^        std::vector<yarp::sig::Vector> poses;$/;"	m	struct:human::HumanStateProvider::HumanStateProviderPrivate::__anon1
+positionResult	inverse-kinematics/include/private/InverseKinematicsIPOPT.h	/^    iDynTree::Position positionResult;$/;"	m	class:InverseKinematicsIPOPT
+positionResult	inverse-kinematics/include/private/InverseKinematicsV2IPOPT.h	/^    iDynTree::Position positionResult;$/;"	m	class:InverseKinematicsV2IPOPT
+prev	yarp/ReadOnlyRemoteControlBoard/stateExtendedReader.hpp	/^    double prev;$/;"	m	class:StateExtendedInputPort
+publisher	human-viz-bridge/src/HumanEffortBridge.cpp	/^    Publisher<sensor_msgs_Temperature> *publisher;$/;"	m	struct:EffortPublisher	file:
+publisher	human-viz-bridge/src/HumanJointStateBridge.cpp	/^    Publisher<sensor_msgs_JointState> publisher;$/;"	m	class:xsensJointStatePublisherModule	file:
+publisher_tf	human-viz-bridge/src/HumanJointStateBridge.cpp	/^    Publisher<tf2_msgs_TFMessage> publisher_tf;$/;"	m	class:xsensJointStatePublisherModule	file:
+publisher_tf	human-viz-bridge/src/HumanTFBridge.cpp	/^    Publisher<tf2_msgs_TFMessage> publisher_tf;$/;"	m	class:HumanTFBridge	file:
+quaternionResult	inverse-kinematics/include/private/InverseKinematicsIPOPT.h	/^    iDynTree::Vector4 quaternionResult;$/;"	m	class:InverseKinematicsIPOPT
+quaternionResult	inverse-kinematics/include/private/InverseKinematicsV2IPOPT.h	/^    iDynTree::Vector4 quaternionResult;$/;"	m	class:InverseKinematicsV2IPOPT
+randomInitialization	inverse-kinematics/src/InverseKinematicsIPOPT.cpp	/^bool InverseKinematicsIPOPT::randomInitialization(const double feed, VectorDynSize& guessOut)$/;"	f	class:InverseKinematicsIPOPT
+randomInitialization	inverse-kinematics/src/InverseKinematicsV2IPOPT.cpp	/^bool InverseKinematicsV2IPOPT::randomInitialization(const double feed, VectorDynSize& guessOut)$/;"	f	class:InverseKinematicsV2IPOPT
+read	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::Editor::read(yarp::os::ConnectionReader& connection) {$/;"	f	class:jointData::Editor
+read	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::read(yarp::os::ConnectionReader& connection) {$/;"	f	class:jointData
+read	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::read(yarp::os::idl::WireReader& reader) {$/;"	f	class:jointData
+readForce	human-forces-provider/src/AbstractForceReader.cpp	/^    bool AbstractForceReader::readForce(Force6D &packedForce)$/;"	f	class:human::AbstractForceReader
+read_controlMode	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::read_controlMode(yarp::os::idl::WireReader& reader) {$/;"	f	class:jointData
+read_controlMode_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::read_controlMode_isValid(yarp::os::idl::WireReader& reader) {$/;"	f	class:jointData
+read_interactionMode	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::read_interactionMode(yarp::os::idl::WireReader& reader) {$/;"	f	class:jointData
+read_interactionMode_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::read_interactionMode_isValid(yarp::os::idl::WireReader& reader) {$/;"	f	class:jointData
+read_jointAcceleration	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::read_jointAcceleration(yarp::os::idl::WireReader& reader) {$/;"	f	class:jointData
+read_jointAcceleration_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::read_jointAcceleration_isValid(yarp::os::idl::WireReader& reader) {$/;"	f	class:jointData
+read_jointPosition	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::read_jointPosition(yarp::os::idl::WireReader& reader) {$/;"	f	class:jointData
+read_jointPosition_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::read_jointPosition_isValid(yarp::os::idl::WireReader& reader) {$/;"	f	class:jointData
+read_jointVelocity	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::read_jointVelocity(yarp::os::idl::WireReader& reader) {$/;"	f	class:jointData
+read_jointVelocity_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::read_jointVelocity_isValid(yarp::os::idl::WireReader& reader) {$/;"	f	class:jointData
+read_motorAcceleration	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::read_motorAcceleration(yarp::os::idl::WireReader& reader) {$/;"	f	class:jointData
+read_motorAcceleration_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::read_motorAcceleration_isValid(yarp::os::idl::WireReader& reader) {$/;"	f	class:jointData
+read_motorPosition	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::read_motorPosition(yarp::os::idl::WireReader& reader) {$/;"	f	class:jointData
+read_motorPosition_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::read_motorPosition_isValid(yarp::os::idl::WireReader& reader) {$/;"	f	class:jointData
+read_motorVelocity	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::read_motorVelocity(yarp::os::idl::WireReader& reader) {$/;"	f	class:jointData
+read_motorVelocity_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::read_motorVelocity_isValid(yarp::os::idl::WireReader& reader) {$/;"	f	class:jointData
+read_pidOutput	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::read_pidOutput(yarp::os::idl::WireReader& reader) {$/;"	f	class:jointData
+read_pidOutput_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::read_pidOutput_isValid(yarp::os::idl::WireReader& reader) {$/;"	f	class:jointData
+read_torque	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::read_torque(yarp::os::idl::WireReader& reader) {$/;"	f	class:jointData
+read_torque_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::read_torque_isValid(yarp::os::idl::WireReader& reader) {$/;"	f	class:jointData
+realJointsNames	human-viz-bridge/src/HumanEffortBridge.cpp	/^    vector<string> realJointsNames;$/;"	m	struct:EffortPublisher	file:
+relativeJacobian	human-state-provider/include/private/HumanStateProviderPrivate.h	/^    iDynTree::MatrixDynSize relativeJacobian;$/;"	m	struct:human::LinkPairInfo
+relativeJacobian	inverse-kinematics/src/InverseKinematicsIPOPT.cpp	/^void InverseKinematicsIPOPT::relativeJacobian(const VectorDynSize& configuration, MatrixDynSize& jacobianOut)$/;"	f	class:InverseKinematicsIPOPT
+relativeJacobian	inverse-kinematics/src/InverseKinematicsV2IPOPT.cpp	/^void InverseKinematicsV2IPOPT::relativeJacobian(MatrixDynSize& jacobianOut)$/;"	f	class:InverseKinematicsV2IPOPT
+remappedControlBoards	yarp/ReadOnlyControlBoardRemapper/ReadOnlyControlBoardRemapper.h	/^    yarp::dev::RemappedControlBoards remappedControlBoards;$/;"	m	class:yarp::dev::ReadOnlyControlBoardRemapper
+remcalib	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^    yarp::dev::IRemoteCalibrator     *remcalib;$/;"	m	class:yarp::dev::RemappedSubControlBoard
+removeUnsupportedJoints	inverse-kinematics/src/InverseKinematics.cpp	/^    void InverseKinematics::InverseKinematicsPrivate::removeUnsupportedJoints(const iDynTree::Model& modelInput, iDynTree::Model& modelOutput)$/;"	f	class:human::InverseKinematics::InverseKinematicsPrivate
+resetEncoder	yarp/ReadOnlyControlBoardRemapper/ReadOnlyControlBoardRemapper.cpp	/^bool ReadOnlyControlBoardRemapper::resetEncoder(int j)$/;"	f	class:yarp::dev::ReadOnlyControlBoardRemapper
+resetEncoder	yarp/ReadOnlyRemoteControlBoard/ReadOnlyRemoteControlBoard.cpp	/^     bool ReadOnlyRemoteControlBoard::resetEncoder(int j) {$/;"	f	class:yarp::dev::ReadOnlyRemoteControlBoard
+resetEncoders	yarp/ReadOnlyControlBoardRemapper/ReadOnlyControlBoardRemapper.cpp	/^bool ReadOnlyControlBoardRemapper::resetEncoders()$/;"	f	class:yarp::dev::ReadOnlyControlBoardRemapper
+resetEncoders	yarp/ReadOnlyRemoteControlBoard/ReadOnlyRemoteControlBoard.cpp	/^     bool ReadOnlyRemoteControlBoard::resetEncoders() {$/;"	f	class:yarp::dev::ReadOnlyRemoteControlBoard
+resetStat	yarp/ReadOnlyRemoteControlBoard/stateExtendedReader.cpp	/^void StateExtendedInputPort::resetStat()$/;"	f	class:StateExtendedInputPort
+resizeSubControlBoardBuffers	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.cpp	/^void ControlBoardArbitraryAxesDecomposition::resizeSubControlBoardBuffers(const int n_joints, const int *joints, const RemappedControlBoards & remappedControlBoards)$/;"	f	class:ControlBoardArbitraryAxesDecomposition
+respond	human-viz-bridge/src/HumanJointStateBridge.cpp	/^    virtual bool respond (const Bottle &command, Bottle &reply)$/;"	f	class:xsensJointStatePublisherModule
+respond	human-viz-bridge/src/RobotBasePosePublisher.cpp	/^    virtual bool respond (const Bottle &command, Bottle &reply)$/;"	f	class:RobotBasePosePublisher
+robotBaseLinkIndex	human-viz-bridge/src/RobotBasePosePublisher.cpp	/^    iDynTree::FrameIndex robotBaseLinkIndex;$/;"	m	class:RobotBasePosePublisher	file:
+robotBaseLinkWRTGround	human-viz-bridge/src/HumanJointStateBridge.cpp	/^    iDynTree::Transform robotBaseLinkWRTGround;$/;"	m	class:xsensJointStatePublisherModule	file:
+robotBaseLinkWRTPelvis	human-viz-bridge/src/HumanJointStateBridge.cpp	/^    iDynTree::Transform robotBaseLinkWRTPelvis;$/;"	m	class:xsensJointStatePublisherModule	file:
+robotConfiguration	human-viz-bridge/src/RobotBasePosePublisher.cpp	/^    iDynTree::VectorDynSize robotConfiguration;$/;"	m	class:RobotBasePosePublisher	file:
+robotDriver	human-viz-bridge/src/RobotBasePosePublisher.cpp	/^    yarp::dev::PolyDriver robotDriver;$/;"	m	class:RobotBasePosePublisher	file:
+robotEncoders	human-viz-bridge/src/RobotBasePosePublisher.cpp	/^    yarp::dev::IEncoders *robotEncoders;$/;"	m	class:RobotBasePosePublisher	file:
+robotKinematicFrameIndex	human-viz-bridge/src/RobotBasePosePublisher.cpp	/^    iDynTree::FrameIndex robotKinematicFrameIndex;$/;"	m	class:RobotBasePosePublisher	file:
+rosSequenceCounter	human-viz-bridge/src/RobotBasePosePublisher.cpp	/^    unsigned rosSequenceCounter;$/;"	m	class:RobotBasePosePublisher	file:
+rpcPort	human-viz-bridge/src/HumanJointStateBridge.cpp	/^    Port rpcPort;$/;"	m	class:xsensJointStatePublisherModule	file:
+rpcPort	human-viz-bridge/src/RobotBasePosePublisher.cpp	/^    Port rpcPort;$/;"	m	class:RobotBasePosePublisher	file:
+runAndWait	human-state-provider/src/HumanIKWorkerPool.cpp	/^    void HumanIKWorkerPool::runAndWait()$/;"	f	class:human::HumanIKWorkerPool
+runIK	inverse-kinematics/src/InverseKinematics.cpp	/^signed int InverseKinematics::runIK()$/;"	f	class:human::InverseKinematics
+runIK	inverse-kinematics/src/InverseKinematics.cpp	/^signed int InverseKinematics::runIK(iDynTree::VectorDynSize& jointsOut)$/;"	f	class:human::InverseKinematics
+segmentName	human-state-provider/include/private/HumanStateProviderPrivate.h	/^    std::string segmentName;$/;"	m	struct:human::SegmentInfo
+segments	human-viz-bridge/src/HumanTFBridge.cpp	/^    vector<string> segments;$/;"	m	class:HumanTFBridge	file:
+selectedJointsBuffers	yarp/ReadOnlyControlBoardRemapper/ReadOnlyControlBoardRemapper.h	/^    yarp::dev::ControlBoardArbitraryAxesDecomposition selectedJointsBuffers;$/;"	m	class:yarp::dev::ReadOnlyControlBoardRemapper
+setBaseLink	human-state-provider/src/HumanStateProviderPrivate.cpp	/^    bool HumanStateProvider::HumanStateProviderPrivate::setBaseLink(const std::string &baseLink)$/;"	f	class:human::HumanStateProvider::HumanStateProviderPrivate
+setDesiredJointPositions	inverse-kinematics/src/InverseKinematics.cpp	/^void InverseKinematics::setDesiredJointPositions(const iDynTree::VectorDynSize& desiredJoints)$/;"	f	class:human::InverseKinematics
+setDesiredParentFrameAndEndEffectorTransformations	inverse-kinematics/src/InverseKinematics.cpp	/^void InverseKinematics::setDesiredParentFrameAndEndEffectorTransformations(const iDynTree::Transform& w_H_p, const iDynTree::Transform& w_H_t)$/;"	f	class:human::InverseKinematics
+setDesiredPosition	inverse-kinematics/src/InverseKinematics.cpp	/^void InverseKinematics::setDesiredPosition(const iDynTree::Position& desiredPosition)$/;"	f	class:human::InverseKinematics
+setDesiredQuaternion	inverse-kinematics/src/InverseKinematics.cpp	/^void InverseKinematics::setDesiredQuaternion(const iDynTree::Vector4& desiredQuaternion)$/;"	f	class:human::InverseKinematics
+setDesiredTransformation	inverse-kinematics/src/InverseKinematics.cpp	/^void InverseKinematics::setDesiredTransformation(const iDynTree::Transform& p_H_t)$/;"	f	class:human::InverseKinematics
+setEncoder	yarp/ReadOnlyControlBoardRemapper/ReadOnlyControlBoardRemapper.cpp	/^bool ReadOnlyControlBoardRemapper::setEncoder(int j, double val)$/;"	f	class:yarp::dev::ReadOnlyControlBoardRemapper
+setEncoder	yarp/ReadOnlyRemoteControlBoard/ReadOnlyRemoteControlBoard.cpp	/^     bool ReadOnlyRemoteControlBoard::setEncoder(int j, double val) {$/;"	f	class:yarp::dev::ReadOnlyRemoteControlBoard
+setEncoders	yarp/ReadOnlyControlBoardRemapper/ReadOnlyControlBoardRemapper.cpp	/^bool ReadOnlyControlBoardRemapper::setEncoders(const double *vals)$/;"	f	class:yarp::dev::ReadOnlyControlBoardRemapper
+setEncoders	yarp/ReadOnlyRemoteControlBoard/ReadOnlyRemoteControlBoard.cpp	/^     bool ReadOnlyRemoteControlBoard::setEncoders(const double *vals) {$/;"	f	class:yarp::dev::ReadOnlyRemoteControlBoard
+setGuess	inverse-kinematics/src/InverseKinematics.cpp	/^void InverseKinematics::setGuess(const iDynTree::VectorDynSize& guess)$/;"	f	class:human::InverseKinematics
+setModel	inverse-kinematics/src/InverseKinematics.cpp	/^bool InverseKinematics::setModel(const iDynTree::Model& modelInput, const std::string& parentFrame, const std::string& endEffectorFrame, const bool autoSelectJoints)$/;"	f	class:human::InverseKinematics
+setModelfromURDF	inverse-kinematics/src/InverseKinematics.cpp	/^bool InverseKinematics::setModelfromURDF(const std::string& URDFfilename, const std::string& parentFrame, const std::string& endEffectorFrame)$/;"	f	class:human::InverseKinematics
+setModelfromURDF	inverse-kinematics/src/InverseKinematics.cpp	/^bool InverseKinematics::setModelfromURDF(const std::string& URDFfilename, const std::string& parentFrame, const std::string& endEffectorFrame, const std::vector< std::string >& consideredJoints)$/;"	f	class:human::InverseKinematics
+setNrOfControlledAxes	yarp/ReadOnlyControlBoardRemapper/ReadOnlyControlBoardRemapper.cpp	/^void ReadOnlyControlBoardRemapper::setNrOfControlledAxes(const size_t nrOfControlledAxes)$/;"	f	class:yarp::dev::ReadOnlyControlBoardRemapper
+setRandomGuess	inverse-kinematics/src/InverseKinematics.cpp	/^bool InverseKinematics::setRandomGuess(const double feed, iDynTree::VectorDynSize& guess)$/;"	f	class:human::InverseKinematics
+setRandomGuess	inverse-kinematics/src/InverseKinematics.cpp	/^bool InverseKinematics::setRandomGuess(const double feed, iDynTree::VectorDynSize& guess, const iDynTree::VectorDynSize& oldGuess, double minDistance, const int maxIter)$/;"	f	class:human::InverseKinematics
+setRobotPose	human-viz-bridge/src/HumanJointStateBridge.cpp	/^    void setRobotPose() {$/;"	f	class:xsensJointStatePublisherModule
+setRobotPose	human-viz-bridge/src/RobotBasePosePublisher.cpp	/^    bool setRobotPose(std::string newKinematicFrame = "") {$/;"	f	class:RobotBasePosePublisher
+setTransform	human-forces-provider/src/GenericFrameTransformer.cpp	/^    void GenericFrameTransformer::setTransform(const iDynTree::Transform &matrixTransform)$/;"	f	class:human::GenericFrameTransformer
+setTransformer	human-forces-provider/src/AbstractForceReader.cpp	/^    void AbstractForceReader::setTransformer(FrameTransformer *frameTransformer)$/;"	f	class:human::AbstractForceReader
+setVerbose	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^    inline void setVerbose(bool _verbose) {_subDevVerbose = _verbose; }$/;"	f	class:yarp::dev::RemappedSubControlBoard
+setVerbosityLevel	inverse-kinematics/src/InverseKinematics.cpp	/^void InverseKinematics::setVerbosityLevel(unsigned int level) { m_pimpl->verbosityLevel = level; }$/;"	f	class:human::InverseKinematics
+setWeights	inverse-kinematics/src/InverseKinematics.cpp	/^void InverseKinematics::setWeights(const iDynTree::Vector3& weights)$/;"	f	class:human::InverseKinematics
+set_controlMode	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    void set_controlMode(const yarp::sig::VectorOf<int>& controlMode) {$/;"	f	class:jointData::Editor
+set_controlMode_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    void set_controlMode_isValid(const bool controlMode_isValid) {$/;"	f	class:jointData::Editor
+set_interactionMode	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    void set_interactionMode(const yarp::sig::VectorOf<int>& interactionMode) {$/;"	f	class:jointData::Editor
+set_interactionMode_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    void set_interactionMode_isValid(const bool interactionMode_isValid) {$/;"	f	class:jointData::Editor
+set_jointAcceleration	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    void set_jointAcceleration(const yarp::sig::VectorOf<double>& jointAcceleration) {$/;"	f	class:jointData::Editor
+set_jointAcceleration_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    void set_jointAcceleration_isValid(const bool jointAcceleration_isValid) {$/;"	f	class:jointData::Editor
+set_jointPosition	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    void set_jointPosition(const yarp::sig::VectorOf<double>& jointPosition) {$/;"	f	class:jointData::Editor
+set_jointPosition_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    void set_jointPosition_isValid(const bool jointPosition_isValid) {$/;"	f	class:jointData::Editor
+set_jointVelocity	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    void set_jointVelocity(const yarp::sig::VectorOf<double>& jointVelocity) {$/;"	f	class:jointData::Editor
+set_jointVelocity_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    void set_jointVelocity_isValid(const bool jointVelocity_isValid) {$/;"	f	class:jointData::Editor
+set_motorAcceleration	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    void set_motorAcceleration(const yarp::sig::VectorOf<double>& motorAcceleration) {$/;"	f	class:jointData::Editor
+set_motorAcceleration_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    void set_motorAcceleration_isValid(const bool motorAcceleration_isValid) {$/;"	f	class:jointData::Editor
+set_motorPosition	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    void set_motorPosition(const yarp::sig::VectorOf<double>& motorPosition) {$/;"	f	class:jointData::Editor
+set_motorPosition_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    void set_motorPosition_isValid(const bool motorPosition_isValid) {$/;"	f	class:jointData::Editor
+set_motorVelocity	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    void set_motorVelocity(const yarp::sig::VectorOf<double>& motorVelocity) {$/;"	f	class:jointData::Editor
+set_motorVelocity_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    void set_motorVelocity_isValid(const bool motorVelocity_isValid) {$/;"	f	class:jointData::Editor
+set_pidOutput	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    void set_pidOutput(const yarp::sig::VectorOf<double>& pidOutput) {$/;"	f	class:jointData::Editor
+set_pidOutput_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    void set_pidOutput_isValid(const bool pidOutput_isValid) {$/;"	f	class:jointData::Editor
+set_torque	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    void set_torque(const yarp::sig::VectorOf<double>& torque) {$/;"	f	class:jointData::Editor
+set_torque_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    void set_torque_isValid(const bool torque_isValid) {$/;"	f	class:jointData::Editor
+sig	human-forces-provider/include/AbstractForceReader.h	/^    namespace sig$/;"	n	namespace:yarp
+sig	human-forces-provider/include/FrameTransformer.h	/^    namespace sig$/;"	n	namespace:yarp
+solverPointer	inverse-kinematics/src/InverseKinematics.cpp	/^        Ipopt::SmartPtr< InverseKinematicsV2IPOPT > solverPointer;$/;"	m	class:human::InverseKinematics::InverseKinematicsPrivate	file:
+stamp	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^    yarp::os::Stamp stamp;$/;"	m	class:yarp::dev::ControlBoardRemapperBuffers
+state	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    jointData& state() { return *obj; }$/;"	f	class:jointData::Editor
+subControlBoardIndex	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^    size_t subControlBoardIndex;$/;"	m	class:yarp::dev::RemappedAxis
+subDeviceKey	yarp/ReadOnlyControlBoardRemapper/ReadOnlyControlBoardRemapper.cpp	/^    ConstString subDeviceKey;$/;"	m	struct:yarp::dev::axisLocation	file:
+subdevice	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^    yarp::dev::PolyDriver            *subdevice;$/;"	m	class:yarp::dev::RemappedSubControlBoard
+subdevices	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^    std::vector<RemappedSubControlBoard> subdevices;$/;"	m	class:yarp::dev::RemappedControlBoards
+tempGuess	inverse-kinematics/src/InverseKinematics.cpp	/^        iDynTree::VectorDynSize tempGuess; \/\/auxiliary variable for random initialization$/;"	m	class:human::InverseKinematics::InverseKinematicsPrivate	file:
+tf	human-viz-bridge/src/HumanJointStateBridge.cpp	/^    tf2_msgs_TFMessage tf;$/;"	m	class:xsensJointStatePublisherModule	file:
+tf	human-viz-bridge/src/HumanTFBridge.cpp	/^    tf2_msgs_TFMessage tf;$/;"	m	class:HumanTFBridge	file:
+tfPublisher	human-viz-bridge/src/RobotBasePosePublisher.cpp	/^    Publisher<tf2_msgs_TFMessage> tfPublisher;$/;"	m	class:RobotBasePosePublisher	file:
+timeInstants	inverse-kinematics/tests/testSuit.cpp	/^    std::vector< int > timeInstants;$/;"	m	struct:IKErrorLog	file:
+timeInstants	inverse-kinematics/tests/testSuit.cpp	/^    std::vector< int > timeInstants;$/;"	m	struct:IKSolverLog	file:
+toString	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^yarp::os::ConstString jointData::toString() {$/;"	f	class:jointData
+torque	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^  yarp::sig::VectorOf<double> torque;$/;"	m	class:jointData
+torque_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^  bool torque_isValid;$/;"	m	class:jointData
+totalDOF	inverse-kinematics/include/private/InverseKinematicsIPOPT.h	/^    int totalDOF;$/;"	m	class:InverseKinematicsIPOPT
+totalDOF	inverse-kinematics/include/private/InverseKinematicsV2IPOPT.h	/^    int totalDOF;$/;"	m	class:InverseKinematicsV2IPOPT
+transformForceFrame	human-forces-provider/src/GenericFrameTransformer.cpp	/^    bool GenericFrameTransformer::transformForceFrame(const yarp::sig::Vector &inputForce,$/;"	f	class:human::GenericFrameTransformer
+transformForceFrame	human-forces-provider/src/RobotFrameTransformer.cpp	/^    bool RobotFrameTransformer::transformForceFrame(const yarp::sig::Vector &inputForce,$/;"	f	class:human::RobotFrameTransformer
+twistToQuaternionTwist	inverse-kinematics/src/InverseKinematicsIPOPT.cpp	/^void InverseKinematicsIPOPT::twistToQuaternionTwist(Vector4& quaternion, MatrixFixSize< 7, 6 >& mapOut)$/;"	f	class:InverseKinematicsIPOPT
+twistToQuaternionTwist	inverse-kinematics/src/InverseKinematicsV2IPOPT.cpp	/^void InverseKinematicsV2IPOPT::twistToQuaternionTwist(Vector4& quaternion, MatrixFixSize< 7, 6 >& mapOut)$/;"	f	class:InverseKinematicsV2IPOPT
+type	human-dynamics-estimator/include/HumanDynamicsEstimator.h	/^        iDynTree::BerdySensorTypes type;$/;"	m	struct:HumanDynamicsEstimator::SensorKey
+unwrapped	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^  typedef yarp::os::idl::Unwrapped<jointData > unwrapped;$/;"	t	class:jointData
+update	inverse-kinematics/src/InverseKinematics.cpp	/^    bool InverseKinematics::InverseKinematicsPrivate::update()$/;"	f	class:human::InverseKinematics::InverseKinematicsPrivate
+update	inverse-kinematics/src/InverseKinematics.cpp	/^bool InverseKinematics::update(const iDynTree::Vector3& weights, const iDynTree::Position& desiredPosition, const iDynTree::Vector4& desiredQuaternion, const iDynTree::VectorDynSize& desiredJoints)$/;"	f	class:human::InverseKinematics
+update	inverse-kinematics/src/InverseKinematicsIPOPT.cpp	/^bool InverseKinematicsIPOPT::update()$/;"	f	class:InverseKinematicsIPOPT
+update	inverse-kinematics/src/InverseKinematicsIPOPT.cpp	/^bool InverseKinematicsIPOPT::update(const Vector3& gainsIn, const Position& desiredPositionIn, const Vector4& desiredQuaternionIn, const VectorDynSize& desiredJointsIn)$/;"	f	class:InverseKinematicsIPOPT
+update	inverse-kinematics/src/InverseKinematicsV2IPOPT.cpp	/^bool InverseKinematicsV2IPOPT::update()$/;"	f	class:InverseKinematicsV2IPOPT
+update	inverse-kinematics/src/InverseKinematicsV2IPOPT.cpp	/^bool InverseKinematicsV2IPOPT::update(const Vector3& gainsIn, const Position& desiredPositionIn, const Vector4& desiredQuaternionIn, const VectorDynSize& desiredJointsIn)$/;"	f	class:InverseKinematicsV2IPOPT
+updateAfterOptimizationStep	inverse-kinematics/src/InverseKinematicsV2IPOPT.cpp	/^void InverseKinematicsV2IPOPT::updateAfterOptimizationStep(const Number* x)$/;"	f	class:InverseKinematicsV2IPOPT
+updateAxesName	yarp/ReadOnlyControlBoardRemapper/ReadOnlyControlBoardRemapper.cpp	/^bool ReadOnlyControlBoardRemapper::updateAxesName()$/;"	f	class:yarp::dev::ReadOnlyControlBoardRemapper
+updateHumanPose	human-viz-bridge/src/RobotBasePosePublisher.cpp	/^    bool updateHumanPose;$/;"	m	class:RobotBasePosePublisher	file:
+updateModule	human-dynamics-estimator/src/HumanDynamicsEstimator.cpp	/^bool HumanDynamicsEstimator::updateModule()$/;"	f	class:HumanDynamicsEstimator
+updateModule	human-forces-provider/src/HumanForcesProvider.cpp	/^bool HumanForcesProvider::updateModule()$/;"	f	class:HumanForcesProvider
+updateModule	human-state-provider/src/HumanStateProvider.cpp	/^    bool HumanStateProvider::updateModule()$/;"	f	class:human::HumanStateProvider
+updateModule	human-viz-bridge/src/HumanEffortBridge.cpp	/^    bool updateModule()$/;"	f	class:xsensJointStatePublisherModule
+updateModule	human-viz-bridge/src/HumanJointStateBridge.cpp	/^    bool updateModule()$/;"	f	class:xsensJointStatePublisherModule
+updateModule	human-viz-bridge/src/HumanTFBridge.cpp	/^    bool updateModule()$/;"	f	class:HumanTFBridge
+updateModule	human-viz-bridge/src/RobotBasePosePublisher.cpp	/^    bool updateModule()$/;"	f	class:RobotBasePosePublisher
+updated	inverse-kinematics/src/InverseKinematics.cpp	/^        bool updated;$/;"	m	class:human::InverseKinematics::InverseKinematicsPrivate	file:
+usingAxesNamesForAttachAll	yarp/ReadOnlyControlBoardRemapper/ReadOnlyControlBoardRemapper.h	/^    bool usingAxesNamesForAttachAll;$/;"	m	class:yarp::dev::ReadOnlyControlBoardRemapper
+usingNetworksForAttachAll	yarp/ReadOnlyControlBoardRemapper/ReadOnlyControlBoardRemapper.h	/^    bool usingNetworksForAttachAll;$/;"	m	class:yarp::dev::ReadOnlyControlBoardRemapper
+valid	yarp/ReadOnlyRemoteControlBoard/stateExtendedReader.hpp	/^    bool valid;$/;"	m	class:StateExtendedInputPort
+vel2	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^    yarp::dev::IVelocityControl2     *vel2;$/;"	m	class:yarp::dev::RemappedSubControlBoard
+velocities	human-state-provider/include/private/HumanStateProviderPrivate.h	/^        std::vector<yarp::sig::Vector> velocities;$/;"	m	struct:human::HumanStateProvider::HumanStateProviderPrivate::__anon1
+velocities	human-state-provider/include/private/HumanStateProviderPrivate.h	/^    iDynTree::VectorDynSize velocities;$/;"	m	struct:human::SegmentInfo
+verbose	yarp/ReadOnlyControlBoardRemapper/ReadOnlyControlBoardRemapper.h	/^    bool verbose() const { return _verb; }$/;"	f	class:yarp::dev::ReadOnlyControlBoardRemapper
+verbosityLevel	inverse-kinematics/src/InverseKinematics.cpp	/^        unsigned verbosityLevel;$/;"	m	class:human::InverseKinematics::InverseKinematicsPrivate	file:
+will_set_controlMode	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    virtual bool will_set_controlMode() { return true; }$/;"	f	class:jointData::Editor
+will_set_controlMode_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    virtual bool will_set_controlMode_isValid() { return true; }$/;"	f	class:jointData::Editor
+will_set_interactionMode	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    virtual bool will_set_interactionMode() { return true; }$/;"	f	class:jointData::Editor
+will_set_interactionMode_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    virtual bool will_set_interactionMode_isValid() { return true; }$/;"	f	class:jointData::Editor
+will_set_jointAcceleration	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    virtual bool will_set_jointAcceleration() { return true; }$/;"	f	class:jointData::Editor
+will_set_jointAcceleration_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    virtual bool will_set_jointAcceleration_isValid() { return true; }$/;"	f	class:jointData::Editor
+will_set_jointPosition	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    virtual bool will_set_jointPosition() { return true; }$/;"	f	class:jointData::Editor
+will_set_jointPosition_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    virtual bool will_set_jointPosition_isValid() { return true; }$/;"	f	class:jointData::Editor
+will_set_jointVelocity	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    virtual bool will_set_jointVelocity() { return true; }$/;"	f	class:jointData::Editor
+will_set_jointVelocity_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    virtual bool will_set_jointVelocity_isValid() { return true; }$/;"	f	class:jointData::Editor
+will_set_motorAcceleration	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    virtual bool will_set_motorAcceleration() { return true; }$/;"	f	class:jointData::Editor
+will_set_motorAcceleration_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    virtual bool will_set_motorAcceleration_isValid() { return true; }$/;"	f	class:jointData::Editor
+will_set_motorPosition	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    virtual bool will_set_motorPosition() { return true; }$/;"	f	class:jointData::Editor
+will_set_motorPosition_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    virtual bool will_set_motorPosition_isValid() { return true; }$/;"	f	class:jointData::Editor
+will_set_motorVelocity	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    virtual bool will_set_motorVelocity() { return true; }$/;"	f	class:jointData::Editor
+will_set_motorVelocity_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    virtual bool will_set_motorVelocity_isValid() { return true; }$/;"	f	class:jointData::Editor
+will_set_pidOutput	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    virtual bool will_set_pidOutput() { return true; }$/;"	f	class:jointData::Editor
+will_set_pidOutput_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    virtual bool will_set_pidOutput_isValid() { return true; }$/;"	f	class:jointData::Editor
+will_set_torque	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    virtual bool will_set_torque() { return true; }$/;"	f	class:jointData::Editor
+will_set_torque_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    virtual bool will_set_torque_isValid() { return true; }$/;"	f	class:jointData::Editor
+worker	human-state-provider/src/HumanIKWorkerPool.cpp	/^    void HumanIKWorkerPool::worker() {$/;"	f	class:human::HumanIKWorkerPool
+write	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::Editor::write(yarp::os::ConnectionWriter& connection) {$/;"	f	class:jointData::Editor
+write	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::write(yarp::os::ConnectionWriter& connection) {$/;"	f	class:jointData
+write	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::write(yarp::os::idl::WireWriter& writer) {$/;"	f	class:jointData
+write_controlMode	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::write_controlMode(yarp::os::idl::WireWriter& writer) {$/;"	f	class:jointData
+write_controlMode_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::write_controlMode_isValid(yarp::os::idl::WireWriter& writer) {$/;"	f	class:jointData
+write_interactionMode	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::write_interactionMode(yarp::os::idl::WireWriter& writer) {$/;"	f	class:jointData
+write_interactionMode_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::write_interactionMode_isValid(yarp::os::idl::WireWriter& writer) {$/;"	f	class:jointData
+write_jointAcceleration	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::write_jointAcceleration(yarp::os::idl::WireWriter& writer) {$/;"	f	class:jointData
+write_jointAcceleration_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::write_jointAcceleration_isValid(yarp::os::idl::WireWriter& writer) {$/;"	f	class:jointData
+write_jointPosition	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::write_jointPosition(yarp::os::idl::WireWriter& writer) {$/;"	f	class:jointData
+write_jointPosition_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::write_jointPosition_isValid(yarp::os::idl::WireWriter& writer) {$/;"	f	class:jointData
+write_jointVelocity	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::write_jointVelocity(yarp::os::idl::WireWriter& writer) {$/;"	f	class:jointData
+write_jointVelocity_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::write_jointVelocity_isValid(yarp::os::idl::WireWriter& writer) {$/;"	f	class:jointData
+write_motorAcceleration	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::write_motorAcceleration(yarp::os::idl::WireWriter& writer) {$/;"	f	class:jointData
+write_motorAcceleration_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::write_motorAcceleration_isValid(yarp::os::idl::WireWriter& writer) {$/;"	f	class:jointData
+write_motorPosition	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::write_motorPosition(yarp::os::idl::WireWriter& writer) {$/;"	f	class:jointData
+write_motorPosition_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::write_motorPosition_isValid(yarp::os::idl::WireWriter& writer) {$/;"	f	class:jointData
+write_motorVelocity	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::write_motorVelocity(yarp::os::idl::WireWriter& writer) {$/;"	f	class:jointData
+write_motorVelocity_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::write_motorVelocity_isValid(yarp::os::idl::WireWriter& writer) {$/;"	f	class:jointData
+write_pidOutput	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::write_pidOutput(yarp::os::idl::WireWriter& writer) {$/;"	f	class:jointData
+write_pidOutput_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::write_pidOutput_isValid(yarp::os::idl::WireWriter& writer) {$/;"	f	class:jointData
+write_torque	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::write_torque(yarp::os::idl::WireWriter& writer) {$/;"	f	class:jointData
+write_torque_isValid	yarp/ReadOnlyRemoteControlBoard/jointData.cpp	/^bool jointData::write_torque_isValid(yarp::os::idl::WireWriter& writer) {$/;"	f	class:jointData
+xsensDataPort	human-viz-bridge/src/HumanTFBridge.cpp	/^    BufferedPort<XsensSegmentsFrame> xsensDataPort;$/;"	m	class:HumanTFBridge	file:
+xsensDriver	human-viz-bridge/src/HumanTFBridge.cpp	/^    XsensDriverService xsensDriver;$/;"	m	class:HumanTFBridge	file:
+xsensJointStatePublisherModule	human-viz-bridge/src/HumanEffortBridge.cpp	/^class xsensJointStatePublisherModule : public RFModule, public TypedReaderCallback<HumanDynamics> $/;"	c	file:
+xsensJointStatePublisherModule	human-viz-bridge/src/HumanJointStateBridge.cpp	/^class xsensJointStatePublisherModule : public RFModule, public TypedReaderCallback<HumanState> $/;"	c	file:
+yarp	human-forces-provider/include/AbstractForceReader.h	/^namespace yarp$/;"	n
+yarp	human-forces-provider/include/FTForceReader.h	/^namespace yarp$/;"	n
+yarp	human-forces-provider/include/FrameTransformer.h	/^namespace yarp$/;"	n
+yarp	human-forces-provider/include/HumanForcesProvider.h	/^namespace yarp$/;"	n
+yarp	human-forces-provider/include/PortForceReader.h	/^namespace yarp$/;"	n
+yarp	human-forces-provider/include/RobotFrameTransformer.h	/^namespace yarp$/;"	n
+yarp	human-state-provider/include/private/HumanStateProviderPrivate.h	/^namespace yarp {$/;"	n
+yarp	yarp/ReadOnlyControlBoardRemapper/ControlBoardRemapperHelpers.h	/^namespace yarp$/;"	n
+yarp	yarp/ReadOnlyControlBoardRemapper/ReadOnlyControlBoardRemapper.cpp	/^namespace yarp {$/;"	n	file:
+yarp	yarp/ReadOnlyControlBoardRemapper/ReadOnlyControlBoardRemapper.h	/^namespace yarp {$/;"	n
+yarp	yarp/ReadOnlyControlBoardRemapper/ReadOnlyRemoteControlBoardRemapper.h	/^namespace yarp {$/;"	n
+yarp	yarp/ReadOnlyRemoteControlBoard/ReadOnlyRemoteControlBoard.cpp	/^namespace yarp {$/;"	n	file:
+yarp	yarp/ReadOnlyRemoteControlBoard/ReadOnlyRemoteControlBoard.h	/^namespace yarp {$/;"	n
+~Editor	yarp/ReadOnlyRemoteControlBoard/jointData.h	/^    virtual ~Editor() {$/;"	f	class:jointData::Editor
+~ForceReader	human-forces-provider/src/ForceReader.cpp	/^human::ForceReader::~ForceReader() {}$/;"	f	class:human::ForceReader
+~FrameTransformer	human-forces-provider/src/FrameTransformer.cpp	/^human::FrameTransformer::~FrameTransformer() {}$/;"	f	class:human::FrameTransformer
+~HumanDynamicsEstimator	human-dynamics-estimator/src/HumanDynamicsEstimator.cpp	/^HumanDynamicsEstimator::~HumanDynamicsEstimator() {}$/;"	f	class:HumanDynamicsEstimator
+~HumanForcesProvider	human-forces-provider/src/HumanForcesProvider.cpp	/^HumanForcesProvider::~HumanForcesProvider() {}$/;"	f	class:HumanForcesProvider
+~HumanIKWorkerPool	human-state-provider/src/HumanIKWorkerPool.cpp	/^    HumanIKWorkerPool::~HumanIKWorkerPool()$/;"	f	class:human::HumanIKWorkerPool
+~HumanStateProvider	human-state-provider/src/HumanStateProvider.cpp	/^    HumanStateProvider::~HumanStateProvider()$/;"	f	class:human::HumanStateProvider
+~HumanStateProviderPrivate	human-state-provider/src/HumanStateProviderPrivate.cpp	/^    HumanStateProvider::HumanStateProviderPrivate::~HumanStateProviderPrivate() {}$/;"	f	class:human::HumanStateProvider::HumanStateProviderPrivate
+~InverseKinematics	inverse-kinematics/src/InverseKinematics.cpp	/^InverseKinematics::~InverseKinematics()$/;"	f	class:human::InverseKinematics
+~InverseKinematicsIPOPT	inverse-kinematics/src/InverseKinematicsIPOPT.cpp	/^InverseKinematicsIPOPT::~InverseKinematicsIPOPT()$/;"	f	class:InverseKinematicsIPOPT
+~InverseKinematicsV2IPOPT	inverse-kinematics/src/InverseKinematicsV2IPOPT.cpp	/^InverseKinematicsV2IPOPT::~InverseKinematicsV2IPOPT()$/;"	f	class:InverseKinematicsV2IPOPT
+~ReadOnlyControlBoardRemapper	yarp/ReadOnlyControlBoardRemapper/ReadOnlyControlBoardRemapper.cpp	/^ReadOnlyControlBoardRemapper::~ReadOnlyControlBoardRemapper()$/;"	f	class:yarp::dev::ReadOnlyControlBoardRemapper
+~ReadOnlyRemoteControlBoard	yarp/ReadOnlyRemoteControlBoard/ReadOnlyRemoteControlBoard.cpp	/^    ReadOnlyRemoteControlBoard::~ReadOnlyRemoteControlBoard() {}$/;"	f	class:yarp::dev::ReadOnlyRemoteControlBoard
+~ReadOnlyRemoteControlBoardRemapper	yarp/ReadOnlyControlBoardRemapper/ReadOnlyRemoteControlBoardRemapper.cpp	/^ReadOnlyRemoteControlBoardRemapper::~ReadOnlyRemoteControlBoardRemapper()$/;"	f	class:ReadOnlyRemoteControlBoardRemapper

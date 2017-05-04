@@ -10,7 +10,9 @@ case $TRAVIS_OS_NAME in
             coinor-libipopt1v5 \
             coinor-libipopt-dev \
             libmatio2 \
-            libmatio-dev
+            libmatio-dev \
+            qtbase5-dev \
+            libqt5xmlpatterns5-dev
         rm -rf /var/lib/apt/lists/*
     ;;
     osx)
@@ -19,7 +21,7 @@ case $TRAVIS_OS_NAME in
         brew update &> /dev/null
         brew tap robotology/cask
         brew tap homebrew/science
-        brew install eigen ipopt yarp
+        brew install eigen ipopt yarp qt
     ;;
     *) exit 1
     ;;
