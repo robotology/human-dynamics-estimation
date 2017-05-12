@@ -35,15 +35,9 @@ using namespace yarp::dev;
 static bool parseStringListOption(const Value &option, vector<string> &parsedList);
 //---------------------------------------------------------------------------
 
-struct Joint {
-    string jointName;
-    int nrDoFs;
-    vector<string> jointDoFs;
-};
-
 struct EffortPublisher {
     string linkEffort;
-    Joint jointEffort;
+    vector<size_t> jointDoFs;
     Publisher<sensor_msgs_Temperature> *publisher;
     sensor_msgs_Temperature effortMsg;
 };
@@ -72,6 +66,7 @@ class iCubEffortPublisherModule : public RFModule
     PolyDriver m_robot;
     ITorqueControl *robotITorqueControl;
     vector<EffortPublisher> effortsList;
+    map<std::string, EffortPublisher> effortMap;
     int period;
 
 public:
@@ -87,20 +82,16 @@ public:
         
         robotITorqueControl->getTorques(robotTorques.data());
         
-        for (size_t index = 0; index < effortsList.size(); ++index) {
-            EffortPublisher &effort = effortsList[index];
+        for (auto& effortList : effortMap) {
+            EffortPublisher &effort = effortList.second;
             if (!effort.publisher) return false;
-            //sensor_msgs_Temperature &effortMsg = effort.publisher->prepare();
             effort.publisher->prepare();
-            effort.effortMsg.header.stamp = currentTime;
-            
-            double effort_temp = 0;
-            for (size_t indexJoint = 0; indexJoint < effortsList[index].jointEffort.nrDoFs; ++indexJoint) {
-                effort_temp += std::abs(robotTorques.getVal(index+indexJoint));
+            double effort_temp;
+            for (size_t& effortIdx : effort.jointDoFs) {
+                effort_temp += std::abs(robotTorques.getVal(effortIdx));
             }
             effort.effortMsg.temperature = effort_temp;
-            //effortMsg = effort.effortMsg; 
-            effort.publisher->write();
+            effort.publisher->write();  
         }
         
         return true;
@@ -137,75 +128,68 @@ public:
         robotModel.computeFullTreeTraversal(traversal, robotModel.getDefaultBaseLink());
         robotTorques.resize(robot_jointList.size());
         robotTorques.zero();
-
-        size_t effortIndex = 0;
-        size_t DoFiterator = 1;
-        string robotJoint = "*";
-        vector<string> jointDegrees = {"_pitch", "_roll", "_yaw"};
+        
+        vector<string> jointSuffixes = {"_pitch", "_roll", "_yaw"};
         for (size_t jointIndex = 0; jointIndex < robot_jointList.size(); jointIndex++) {
             
-            effortsList.resize(effortIndex+1);
-            effortsList[effortIndex].jointEffort.nrDoFs = 0;
-            DoFiterator = 0;
+            string robotJoint = robot_jointList[jointIndex];
             
-            if (robot_jointList[jointIndex].find(robotJoint)==string::npos) {
-               if(robot_jointList[jointIndex].find(jointDegrees[0])!=string::npos || robot_jointList[jointIndex].find(jointDegrees[1])!=string::npos || robot_jointList[jointIndex].find(jointDegrees[2])!=string::npos ) 
-               {
-                   robotJoint = robot_jointList[jointIndex];
-                   size_t found = robotJoint.find("_");
-                   size_t erasePos = robotJoint.find("_",(found+1));
-                   cout << robotJoint << endl;
-                   if (erasePos < 100) {
-                       effortsList[effortIndex].jointEffort.jointName = robotJoint.erase(erasePos);
-                   } else {
-                       effortsList[effortIndex].jointEffort.jointName = robotJoint.erase(found);
-                   }
-                   effortsList[effortIndex].linkEffort = robotModel.getLinkName(traversal.getChildLinkIndexFromJointIndex(robotModel, robotModel.getJointIndex(robot_jointList[jointIndex])));
-                   bool sameJoint = robot_jointList[(jointIndex+(DoFiterator))].find(effortsList[effortIndex].jointEffort.jointName)!=string::npos; 
-                   while(sameJoint){
-                       effortsList[effortIndex].jointEffort.jointDoFs.resize(DoFiterator+1);
-                       effortsList[effortIndex].jointEffort.jointDoFs[(DoFiterator)] = robot_jointList[(jointIndex+(DoFiterator))];
-                       effortsList[effortIndex].jointEffort.nrDoFs++;
-                       DoFiterator++;
-                       if((jointIndex+(DoFiterator))>=robot_jointList.size()) {
-                           sameJoint = 0;
-                       } else {
-                       sameJoint = robot_jointList[(jointIndex+(DoFiterator))].find(effortsList[effortIndex].jointEffort.jointName)!=string::npos;
-                       }
-                   }
-                   ++effortIndex;
-               }
-               else 
-               {
-                   robotJoint = robot_jointList[jointIndex];
-                   cout << robotJoint << endl;
-                   effortsList[effortIndex].jointEffort.jointName = robot_jointList[jointIndex];
-                   effortsList[effortIndex].linkEffort = robotModel.getLinkName(traversal.getChildLinkIndexFromJointIndex(robotModel, robotModel.getJointIndex(robot_jointList[jointIndex])));
-                   effortsList[effortIndex].jointEffort.nrDoFs++;
-                   effortsList[effortIndex].jointEffort.jointDoFs.resize(effortsList[effortIndex].jointEffort.nrDoFs);
-                   effortsList[effortIndex].jointEffort.jointDoFs[0] = robot_jointList[jointIndex];
-                   ++effortIndex;
-               }
+            size_t suffixStartingIndex = std::string::npos;
+            for (const std::string& suffix : jointSuffixes) {
+                suffixStartingIndex = robotJoint.find(suffix);
+                if (suffixStartingIndex != std::string::npos) {
+                    break;
+                }
             }
-        }
-
-        for (size_t index = 0; index < effortsList.size(); ++index) {
-            std::string topicName = rf.find("topicPrefix").asString() + "/" + effortsList[index].jointEffort.jointName;
-            effortsList[index].publisher = new Publisher<sensor_msgs_Temperature>();
-            if (!effortsList[index].publisher) {
-                yError() << "Failed to create publisher to" << effortsList[index].linkEffort;
-                return false;
+            
+            //two possible cases:
+            // - suffixStartingIndex != std::string::npos
+            // - suffixStartingIndex == std::string::npos
+            std::string mapKey = robotJoint;
+            if (suffixStartingIndex != std::string::npos) {
+                mapKey = mapKey.erase(suffixStartingIndex);
             }
-            if (!effortsList[index].publisher->topic(topicName)) {
-                yError() << "Failed to create publisher to" << effortsList[index].linkEffort;
-                return false;
+            
+            map<std::string, EffortPublisher>::iterator effortPublisherFound = effortMap.find(mapKey);
+            if (effortPublisherFound == effortMap.end()) {
+                // create a new EffortPub
+                EffortPublisher newEffortPublisher;
+                // populate it with the correct fields
+                newEffortPublisher.linkEffort = robotModel.getLinkName(traversal.getChildLinkIndexFromJointIndex(robotModel, robotModel.getJointIndex(robotJoint)));
+                
+                // move here the new Publisher....
+                // insert it into the map,
+                std::pair<map<std::string, EffortPublisher>::iterator, bool> inserted = effortMap.insert(map<std::string, EffortPublisher>::value_type(mapKey, newEffortPublisher));
+                
+                //get back the iterator to this element
+                effortPublisherFound = inserted.first;
+                
             }
+            
+            // do the "common" stuff
+            effortPublisherFound->second.jointDoFs.push_back(jointIndex);
+            cout << effortMap.find(mapKey)->first << " in the reference frame: " << effortMap.find(mapKey)->second.linkEffort << endl;
+             
         }
         
-        for (size_t index = 0; index < effortsList.size(); ++index) {
-            EffortPublisher &effort = effortsList[index];
-//             effort.effortMsg.header.frame_id = rf.find("tfPrefix").asString() + "/" + effortsList[index].linkEffort;
-            effort.effortMsg.header.frame_id = effortsList[index].linkEffort;
+        for (auto& effortList : effortMap) {
+            std::string topicName = rf.find("topicPrefix").asString() + "/" + effortList.first;
+            effortList.second.publisher = new Publisher<sensor_msgs_Temperature>();
+            if (!effortList.second.publisher) {
+                yError() << "Failed to create publisher to" << effortList.second.linkEffort;
+                return false;
+            }
+            if (!effortList.second.publisher->topic(topicName)) {
+                yError() << "Failed to create publisher to" << effortList.second.linkEffort;
+                return false;
+            }
+            
+        }
+        
+        for (auto& effortList : effortMap) {
+            cout << effortMap.find(effortList.first)->first << " in the reference frame: " << effortMap.find(effortList.first)->second.linkEffort << endl;
+            EffortPublisher &effort = effortList.second;
+            effort.effortMsg.header.frame_id = effortList.second.linkEffort;
             effort.effortMsg.header.seq = 1;
             effort.effortMsg.variance = 0;
         }
