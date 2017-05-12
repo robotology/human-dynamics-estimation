@@ -65,7 +65,6 @@ class iCubEffortPublisherModule : public RFModule
     iDynTree::VectorDynSize robotTorques;
     PolyDriver m_robot;
     ITorqueControl *robotITorqueControl;
-    vector<EffortPublisher> effortsList;
     map<std::string, EffortPublisher> effortMap;
     int period;
 
@@ -207,8 +206,8 @@ public:
     // Close function, to perform cleanup.
     bool close()
     {
-        for (size_t index = 0; index < effortsList.size(); ++index) {
-            EffortPublisher &effort = effortsList[index];
+        for (auto& effortList : effortMap) {
+            EffortPublisher &effort = effortList.second;
             if (effort.publisher) {        
                 effort.publisher->interrupt();
                 effort.publisher->close();
@@ -216,7 +215,8 @@ public:
                 effort.publisher = 0;
             }
         }
-        effortsList.clear();
+        effortMap.clear();
+        
         m_robot.close();
         return true;
     }
