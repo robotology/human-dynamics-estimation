@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -ev
-
 case $TRAVIS_OS_NAME in
     linux)
         apt-get update
@@ -22,6 +20,7 @@ case $TRAVIS_OS_NAME in
         brew tap robotology/cask
         brew tap homebrew/science
         brew install eigen ipopt yarp qt
+        export PATH="/usr/local/opt/qt/bin/:$PATH"
     ;;
     *) exit 1
     ;;

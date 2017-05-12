@@ -56,7 +56,7 @@ before_install:
         || travis_terminate 1
       docker commit baseimage imagewithbindeps || travis_terminate 1
     elif [[ "$TRAVIS_OS_NAME" = "osx" ]] ; then
-      sh $PROJECT_DIR_ABS/.ci/install_deps.sh || travis_terminate 1
+      source $PROJECT_DIR_ABS/.ci/install_deps.sh
     fi
 
 before_script:
@@ -78,7 +78,7 @@ before_script:
         || travis_terminate 1
       docker commit imagewithbindeps imagewithalldeps || travis_terminate 1
     elif [[ "$TRAVIS_OS_NAME" = "osx" ]] ; then
-      sh $PROJECT_DIR_ABS/.ci/build_deps.sh || travis_terminate 1
+      source $PROJECT_DIR_ABS/.ci/build_deps.sh
     fi
 
   # Run CMake into the persistent $PROJECT_DIR_ABS folder

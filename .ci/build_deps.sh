@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -ev
-
 case $TRAVIS_OS_NAME in
     osx)
         # Build and install YCM
