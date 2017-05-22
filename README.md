@@ -4,7 +4,7 @@
 |:----------:|:--------:|
 | [![Build Status](https://travis-ci.org/robotology-playground/human-dynamics-estimation.svg?branch=master)](https://travis-ci.org/robotology-playground/human-dynamics-estimation) | [![Build status](https://ci.appveyor.com/api/projects/status/w5rhsreg2fcmqud2/branch/master?svg=true)](https://ci.appveyor.com/project/claudia-lat/human-dynamics-estimation/branch/master)|
 
-Human Dynamics Estimation (HDE) is a collection of YARP module for the estimation of the dynamics in humans while physically interacting with a robot.
+Human Dynamics Estimation (HDE) is a collection of YARP modules for the estimation of the dynamics in humans while physically interacting with a robot.
 
 
 ##  Contents
@@ -94,8 +94,7 @@ cmake --build . --config Release --target install
 
 
 ## Documentation
-The documentation for HDE is automatically extracted from the C++ code using [Doxygen](www.doxygen.org),
-and it is available [here](https://robotology-playground.github.io/human-dynamics-estimation/).
+The documentation for HDE is automatically extracted from the C++ code using Doxygen, and it is available [here](https://robotology.github.io/human-dynamics-estimation/html/annotated.html) .
 
 
 ## Reference paper
