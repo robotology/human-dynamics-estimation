@@ -864,6 +864,177 @@ bool ReadOnlyControlBoardRemapper::getJointType(int j, yarp::dev::JointTypeEnum&
     return false;
 }
 
+    /* ITorqueControl */
+    
+    bool ReadOnlyControlBoardRemapper::getRefTorques(double *t)
+    {    
+        return false;
+    }
+     
+    bool ReadOnlyControlBoardRemapper::getRefTorque(int j, double *t)
+    {    
+        return false;
+    }
+    
+    bool ReadOnlyControlBoardRemapper::setRefTorques(const double *t)
+    {    
+        return false;
+    }
+    
+    bool ReadOnlyControlBoardRemapper::setRefTorque(int j, double t)
+    {    
+        return false;
+    }
+    
+    bool ReadOnlyControlBoardRemapper::getBemfParam(int j, double *bemf)
+    {    
+        return false;
+    }
+    
+    bool ReadOnlyControlBoardRemapper::setBemfParam(int j, double bemf)
+    {    
+        return false;
+    }
+    
+    bool ReadOnlyControlBoardRemapper::setTorquePid(int j, const Pid &pid)
+    {    
+        return false;
+    }
+         
+    bool ReadOnlyControlBoardRemapper::getTorque(int j, double *t)
+    {    
+        int off=(int)remappedControlBoards.lut[j].axisIndexInSubControlBoard;
+        size_t subIndex=remappedControlBoards.lut[j].subControlBoardIndex;
+       
+        yarp::dev::RemappedSubControlBoard *p=remappedControlBoards.getSubControlBoard(subIndex);
+       
+        if (!p)
+        {
+            return false;
+        }
+       
+        if (p->iTorque)
+        {
+            return p->iTorque->getTorque(off, t);
+        }
+        return false;
+
+    }
+         
+    bool ReadOnlyControlBoardRemapper::getTorques(double *t)
+    {    
+    bool ret=true;
+
+    for(int l=0;l<controlledJoints;l++)
+    {
+        int off=(int)remappedControlBoards.lut[l].axisIndexInSubControlBoard;
+        size_t subIndex=remappedControlBoards.lut[l].subControlBoardIndex;
+
+        yarp::dev::RemappedSubControlBoard *p=remappedControlBoards.getSubControlBoard(subIndex);
+
+        if (!p)
+        {
+            return false;
+        }
+
+        if (p->iTorque)
+        {
+            bool ok = p->iTorque->getTorque(off, t+l);
+            ret = ret && ok;
+        }
+        else
+        {
+            ret = false;
+        }
+    }
+    return ret;
+    
+    }
+        
+    bool ReadOnlyControlBoardRemapper::getTorqueRange(int j, double *min, double *max)
+    {    
+        return false;
+    }
+    
+    bool ReadOnlyControlBoardRemapper::getTorqueRanges(double *min, double *max)
+    {    
+        return false;
+    }
+        
+    bool ReadOnlyControlBoardRemapper::setTorquePids(const Pid *pids)
+    {    
+        return false;
+    }
+    
+    bool ReadOnlyControlBoardRemapper::setTorqueErrorLimit(int j, double limit)
+    {    
+        return false;
+    }
+    
+    bool ReadOnlyControlBoardRemapper::setTorqueErrorLimits(const double *limits)
+    {    
+        return false;
+    }
+      
+    bool ReadOnlyControlBoardRemapper::getTorqueError(int j, double *err)
+    {    
+        return false;
+    }
+       
+    bool ReadOnlyControlBoardRemapper::getTorqueErrors(double *errs)
+    {    
+        return false;
+    }
+        
+    bool ReadOnlyControlBoardRemapper::getTorquePidOutput(int j, double *out)
+    {    
+        return false;
+    }
+      
+    bool ReadOnlyControlBoardRemapper::getTorquePidOutputs(double *outs)
+    {    
+        return false;
+    }
+        
+    bool ReadOnlyControlBoardRemapper::getTorquePid(int j, Pid *pid)
+    {    
+        return false;
+    }
+       
+    bool ReadOnlyControlBoardRemapper::getTorquePids(Pid *pids)
+    {    
+        return false;
+    }
+    
+    bool ReadOnlyControlBoardRemapper::getTorqueErrorLimit(int j, double *limit)
+    {    
+        return false;
+    }
+     
+    bool ReadOnlyControlBoardRemapper::getTorqueErrorLimits(double *limits)
+    {    
+        return false;
+    }
+      
+    bool ReadOnlyControlBoardRemapper::resetTorquePid(int j)
+    {    
+        return false;
+    }
+        
+    bool ReadOnlyControlBoardRemapper::disableTorquePid(int j)
+    {    
+        return false;
+    }
+       
+    bool ReadOnlyControlBoardRemapper::enableTorquePid(int j)
+    {    
+        return false;
+    }
+       
+    bool ReadOnlyControlBoardRemapper::setTorqueOffset(int j, double v)
+    {    
+        return false;
+    }
 
 
 }

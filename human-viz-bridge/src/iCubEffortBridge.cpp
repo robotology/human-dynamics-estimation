@@ -18,6 +18,8 @@
 #include <yarp/os/Time.h>
 #include <yarp/sig/Vector.h>
 
+#include <iDynTree/Core/EigenHelpers.h>
+
 #include <algorithm>
 #include <iostream>
 #include <limits.h>
@@ -80,16 +82,21 @@ public:
         TickTime currentTime = normalizeSecNSec(yarp::os::Time::now());
         
         robotITorqueControl->getTorques(robotTorques.data());
-        
+                
         for (auto& effortList : effortMap) {
             EffortPublisher &effort = effortList.second;
             if (!effort.publisher) return false;
-            effort.publisher->prepare();
-            double effort_temp;
+            sensor_msgs_Temperature &effortMsg = effort.publisher->prepare();
+            effort.effortMsg.header.stamp = currentTime;
+            
+            double effort_temp = 0;
             for (size_t& effortIdx : effort.jointDoFs) {
                 effort_temp += std::abs(robotTorques.getVal(effortIdx));
             }
             effort.effortMsg.temperature = effort_temp;
+            
+            //cout << effortList.first << " in the reference frame: " << effort.effortMsg.header.frame_id << " with variance: " << effortList.second.effortMsg.variance << " and torque: " << effort.effortMsg.temperature << endl;            
+            effortMsg = effort.effortMsg;
             effort.publisher->write();  
         }
         
@@ -101,7 +108,6 @@ public:
         
         period = rf.check("period", Value(0.1), "Checking period value").asInt();
         string moduleName = rf.check("name", Value("icub-effort-bridge"), "Checking module name").asString();
-        string urdfModelFile = rf.findFile("robotModelFilename");
         setName(moduleName.c_str());
         
         //Robot model
@@ -125,7 +131,7 @@ public:
         iDynTree::Model robotModel = modelLoader.model(); 
         iDynTree::Traversal traversal;
         robotModel.computeFullTreeTraversal(traversal, robotModel.getDefaultBaseLink());
-        robotTorques.resize(robot_jointList.size());
+        robotTorques.resize(robotModel.getNrOfDOFs());
         robotTorques.zero();
         
         vector<string> jointSuffixes = {"_pitch", "_roll", "_yaw"};
@@ -186,11 +192,13 @@ public:
         }
         
         for (auto& effortList : effortMap) {
-            cout << effortMap.find(effortList.first)->first << " in the reference frame: " << effortMap.find(effortList.first)->second.linkEffort << endl;
+            string linkEffort; 
+            linkEffort = effortList.second.linkEffort;
             EffortPublisher &effort = effortList.second;
-            effort.effortMsg.header.frame_id = effortList.second.linkEffort;
+            effort.effortMsg.header.frame_id = linkEffort;
             effort.effortMsg.header.seq = 1;
             effort.effortMsg.variance = 0;
+            cout << effortMap.find(effortList.first)->first << " in the reference frame: " << effort.effortMsg.header.frame_id << endl;
         }
             
         robotITorqueControl = 0;
@@ -200,6 +208,7 @@ public:
             return false;
         }
         
+        yInfo("%s started", getName().c_str());
         
         return true;
     }
@@ -275,6 +284,7 @@ public:
             close();
             return false;
         }
+                
         return true;
     }
     

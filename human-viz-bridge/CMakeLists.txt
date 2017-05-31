@@ -92,10 +92,12 @@ add_executable(icub-effort-bridge src/iCubEffortBridge.cpp)
 target_link_libraries(icub-effort-bridge YARP::YARP_OS 
                                          YARP::YARP_dev
                                          YARP::YARP_sig
+                                         iDynTree::idyntree-core
                                          iDynTree::idyntree-model
                                          iDynTree::idyntree-modelio-urdf
                                          human-viz-bridge-thrift
-                                         human-rosmsgs)
+                                         human-rosmsgs
+                                         iDynTree::idyntree-yarp)
 
 target_include_directories(icub-effort-bridge PUBLIC ${YARP_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIR})
                                               

@@ -12,6 +12,7 @@
 #include <yarp/dev/ControlBoardInterfaces.h>
 #include <yarp/dev/IEncodersTimed.h>
 #include <yarp/dev/PreciselyTimed.h>
+#include <yarp/dev/ITorqueControl.h>
 #include <yarp/os/Semaphore.h>
 #include <yarp/dev/Wrapper.h>
 
@@ -54,6 +55,7 @@ class yarp::dev::ReadOnlyControlBoardRemapper
 : public yarp::dev::DeviceDriver
 , public yarp::dev::IEncodersTimed
 , public yarp::dev::IPreciselyTimed
+, public yarp::dev::ITorqueControl
 , public yarp::dev::IAxisInfo
 , public yarp::dev::IMultipleWrapper
 {
@@ -203,8 +205,64 @@ public:
     /* IPreciselyTimed */
 
     virtual yarp::os::Stamp getLastInputStamp();
+    
+    
+    /* ITorqueControl */
+    
+    virtual bool getRefTorques(double *t);
+     
+    virtual bool getRefTorque(int j, double *t);
 
-    /* IAxisInfo */
+    virtual bool setRefTorques(const double *t);
+
+    virtual bool setRefTorque(int j, double t);
+    
+    virtual bool getBemfParam(int j, double *bemf);
+
+    virtual bool setBemfParam(int j, double bemf);
+    
+    virtual bool setTorquePid(int j, const Pid &pid);
+
+    virtual bool getTorque(int j, double *t);
+
+    virtual bool getTorques(double *t);
+
+    virtual bool getTorqueRange(int j, double *min, double *max);
+
+    virtual bool getTorqueRanges(double *min, double *max);
+
+    virtual bool setTorquePids(const Pid *pids);
+
+    virtual bool setTorqueErrorLimit(int j, double limit);
+
+    virtual bool setTorqueErrorLimits(const double *limits);
+
+    virtual bool getTorqueError(int j, double *err);
+
+    virtual bool getTorqueErrors(double *errs);
+
+    virtual bool getTorquePidOutput(int j, double *out);
+
+    virtual bool getTorquePidOutputs(double *outs);
+
+    virtual bool getTorquePid(int j, Pid *pid);
+
+    virtual bool getTorquePids(Pid *pids);
+
+    virtual bool getTorqueErrorLimit(int j, double *limit);
+
+    virtual bool getTorqueErrorLimits(double *limits);
+
+    virtual bool resetTorquePid(int j);
+
+    virtual bool disableTorquePid(int j);
+
+    virtual bool enableTorquePid(int j);
+
+    virtual bool setTorqueOffset(int j, double v);
+    
+    
+        
     virtual bool getAxisName(int j, yarp::os::ConstString &name);
 
     virtual bool getJointType(int j, yarp::dev::JointTypeEnum &type);
