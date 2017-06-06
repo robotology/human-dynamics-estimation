@@ -22,7 +22,7 @@
 
 #include <algorithm>
 #include <iostream>
-#include <limits.h>
+#include <climits>
 #include <string>
 #include <vector>
 #include <cmath>
@@ -64,26 +64,26 @@ inline TickTime normalizeSecNSec(double yarpTimeStamp)
 
 class iCubEffortPublisherModule : public RFModule 
 {
-    iDynTree::VectorDynSize robotTorques;
+    iDynTree::VectorDynSize m_robotTorques;
     PolyDriver m_robot;
-    ITorqueControl *robotITorqueControl;
-    map<std::string, EffortPublisher> effortMap;
-    int period;
+    ITorqueControl *m_robotITorqueControl;
+    map<std::string, EffortPublisher> m_effortMap;
+    double m_period;
 
 public:
     double getPeriod()
     {
         // module periodicity (seconds).
-        return period;
+        return m_period;
     }
     // Main function. Will be called periodically every getPeriod() seconds
     bool updateModule()
     {
         TickTime currentTime = normalizeSecNSec(yarp::os::Time::now());
         
-        robotITorqueControl->getTorques(robotTorques.data());
+        m_robotITorqueControl->getTorques(m_robotTorques.data());
                 
-        for (auto& effortList : effortMap) {
+        for (auto& effortList : m_effortMap) {
             EffortPublisher &effort = effortList.second;
             if (!effort.publisher) return false;
             sensor_msgs_Temperature &effortMsg = effort.publisher->prepare();
@@ -91,11 +91,10 @@ public:
             
             double effort_temp = 0;
             for (size_t& effortIdx : effort.jointDoFs) {
-                effort_temp += std::abs(robotTorques.getVal(effortIdx));
+                effort_temp += std::abs(m_robotTorques.getVal(effortIdx));
             }
             effort.effortMsg.temperature = effort_temp;
             
-            //cout << effortList.first << " in the reference frame: " << effort.effortMsg.header.frame_id << " with variance: " << effortList.second.effortMsg.variance << " and torque: " << effort.effortMsg.temperature << endl;            
             effortMsg = effort.effortMsg;
             effort.publisher->write();  
         }
@@ -106,7 +105,7 @@ public:
     bool configure(ResourceFinder &rf)
     {
         
-        period = rf.check("period", Value(0.1), "Checking period value").asInt();
+        m_period = rf.check("period", Value(0.1), "Checking period value").asInt();
         string moduleName = rf.check("name", Value("icub-effort-bridge"), "Checking module name").asString();
         setName(moduleName.c_str());
         
@@ -131,8 +130,8 @@ public:
         iDynTree::Model robotModel = modelLoader.model(); 
         iDynTree::Traversal traversal;
         robotModel.computeFullTreeTraversal(traversal, robotModel.getDefaultBaseLink());
-        robotTorques.resize(robotModel.getNrOfDOFs());
-        robotTorques.zero();
+        m_robotTorques.resize(robotModel.getNrOfDOFs());
+        m_robotTorques.zero();
         
         vector<string> jointSuffixes = {"_pitch", "_roll", "_yaw"};
         for (size_t jointIndex = 0; jointIndex < robot_jointList.size(); jointIndex++) {
@@ -155,8 +154,8 @@ public:
                 mapKey = mapKey.erase(suffixStartingIndex);
             }
             
-            map<std::string, EffortPublisher>::iterator effortPublisherFound = effortMap.find(mapKey);
-            if (effortPublisherFound == effortMap.end()) {
+            map<std::string, EffortPublisher>::iterator effortPublisherFound = m_effortMap.find(mapKey);
+            if (effortPublisherFound == m_effortMap.end()) {
                 // create a new EffortPub
                 EffortPublisher newEffortPublisher;
                 // populate it with the correct fields
@@ -164,7 +163,7 @@ public:
                 
                 // move here the new Publisher....
                 // insert it into the map,
-                std::pair<map<std::string, EffortPublisher>::iterator, bool> inserted = effortMap.insert(map<std::string, EffortPublisher>::value_type(mapKey, newEffortPublisher));
+                std::pair<map<std::string, EffortPublisher>::iterator, bool> inserted = m_effortMap.insert(map<std::string, EffortPublisher>::value_type(mapKey, newEffortPublisher));
                 
                 //get back the iterator to this element
                 effortPublisherFound = inserted.first;
@@ -173,11 +172,11 @@ public:
             
             // do the "common" stuff
             effortPublisherFound->second.jointDoFs.push_back(jointIndex);
-            cout << effortMap.find(mapKey)->first << " in the reference frame: " << effortMap.find(mapKey)->second.linkEffort << endl;
+            cout << m_effortMap.find(mapKey)->first << " in the reference frame: " << m_effortMap.find(mapKey)->second.linkEffort << endl;
              
         }
         
-        for (auto& effortList : effortMap) {
+        for (auto& effortList : m_effortMap) {
             std::string topicName = rf.find("topicPrefix").asString() + "/" + effortList.first;
             effortList.second.publisher = new Publisher<sensor_msgs_Temperature>();
             if (!effortList.second.publisher) {
@@ -188,21 +187,17 @@ public:
                 yError() << "Failed to create publisher to" << effortList.second.linkEffort;
                 return false;
             }
-            
-        }
-        
-        for (auto& effortList : effortMap) {
             string linkEffort; 
             linkEffort = effortList.second.linkEffort;
             EffortPublisher &effort = effortList.second;
             effort.effortMsg.header.frame_id = linkEffort;
             effort.effortMsg.header.seq = 1;
             effort.effortMsg.variance = 0;
-            cout << effortMap.find(effortList.first)->first << " in the reference frame: " << effort.effortMsg.header.frame_id << endl;
+            cout << m_effortMap.find(effortList.first)->first << " in the reference frame: " << effort.effortMsg.header.frame_id << endl;    
         }
             
-        robotITorqueControl = 0;
-        if (!getRobotTorquesInterface(rf, robot_jointList, robotITorqueControl) || !robotITorqueControl)
+        m_robotITorqueControl = 0;
+        if (!getRobotTorquesInterface(rf, robot_jointList, m_robotITorqueControl) || !m_robotITorqueControl)
         {
             yError("Failed to open robot ITorqueControl interface");
             return false;
@@ -215,7 +210,7 @@ public:
     // Close function, to perform cleanup.
     bool close()
     {
-        for (auto& effortList : effortMap) {
+        for (auto& effortList : m_effortMap) {
             EffortPublisher &effort = effortList.second;
             if (effort.publisher) {        
                 effort.publisher->interrupt();
@@ -224,9 +219,10 @@ public:
                 effort.publisher = 0;
             }
         }
-        effortMap.clear();
+        m_effortMap.clear();
         
         m_robot.close();
+        m_robotITorqueControl=0;
         return true;
     }
     
