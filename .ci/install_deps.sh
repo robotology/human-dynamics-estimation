@@ -17,9 +17,8 @@ case $TRAVIS_OS_NAME in
         brew install ccache
         export PATH="/usr/local/opt/ccache/libexec:$PATH"
         brew update &> /dev/null
-        brew tap robotology/cask
         brew tap homebrew/science
-        brew install eigen ipopt yarp qt
+        brew install eigen ipopt robotology/formulae/yarp qt
         export PATH="/usr/local/opt/qt/bin/:$PATH"
     ;;
     *) exit 1
