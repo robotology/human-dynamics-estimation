@@ -64,9 +64,9 @@ For installing the dependencies you can decide to install them individually or t
 - [**YARP**](https://github.com/robotology/yarp): a library and toolkit for communication and device interfaces.
 - [**iDynTree**](https://github.com/robotology/idyntree): a library of robots dynamics algorithms for control, estimation and simulation.
 - [**Eigen**](http://eigen.tuxfamily.org/index.php?title=Main_Page): a C++ template library for linear algebra.
+- [**IPOPT**](http://wiki.icub.org/wiki/Installing_IPOPT): a software package for large-scale nonlinear optimization for the inverse kinematics code in the [human-state-provider](human-state-provider) module.
 
 #### Optional dependencies
-- [**IPOPT**](http://wiki.icub.org/wiki/Installing_IPOPT): a software package for large-scale nonlinear optimization for the inverse kinematics code in the [human-state-provider](human-state-provider) module.
 - [**ROS**](http://wiki.ros.org): an open-source provider of libraries and tools for creating robot applications.  More details for the installation [here](human-viz-bridge).
 
 
