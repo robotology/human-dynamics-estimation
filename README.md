@@ -2,7 +2,7 @@
 
 | Linux/macOS | Windows |
 |:----------:|:--------:|
-| [![Build Status](https://travis-ci.org/robotology-playground/human-dynamics-estimation.svg?branch=master)](https://travis-ci.org/robotology-playground/human-dynamics-estimation) | [![Build status](https://ci.appveyor.com/api/projects/status/w5rhsreg2fcmqud2/branch/master?svg=true)](https://ci.appveyor.com/project/claudia-lat/human-dynamics-estimation/branch/master)|
+[![Build Status](https://travis-ci.org/robotology/human-dynamics-estimation.svg?branch=master)](https://travis-ci.org/robotology/human-dynamics-estimation) | [![Build status](https://ci.appveyor.com/api/projects/status/w5rhsreg2fcmqud2/branch/master?svg=true)](https://ci.appveyor.com/project/claudia-lat/human-dynamics-estimation/branch/master)|
 
 Human Dynamics Estimation (HDE) is a collection of YARP modules for the estimation of the dynamics in humans while physically interacting with a robot.
 
