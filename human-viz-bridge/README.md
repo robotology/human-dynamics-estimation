@@ -50,7 +50,7 @@ NB: In the **HumanTFBridge** and in the **HumanJointStateBridge** modules when t
 
 - Make sure you have ROS installed on your computer.
 - if you do not have a workspace for catkin, create one following the [tutorial] (http://wiki.ros.org/catkin/Tutorials/create_a_workspace) in ros documentation;
-- move to the src folder in the catkin workspace you have created and create a ros package with the following dependencies: 
+- [on Terminal 1] move to the src folder in the catkin workspace you have created and create a ros package with the following dependencies: 
 ```
 catkin_create_pkg <package_name> catkin roscpp rospy message_generation std_msgs geometry_msgs sensor_msgs tf urdf 
 ```
@@ -59,7 +59,9 @@ catkin_create_pkg <package_name> catkin roscpp rospy message_generation std_msgs
 cd ~/catkin_ws
 catkin_make
 ```
-- In a new terminal launch rviz:
+- [on Terminal 2] launch `roscore`
+
+- [on Terminal 3] launch rviz:
 ```
 rosrun rviz rviz
 ```
