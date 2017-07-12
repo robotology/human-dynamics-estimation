@@ -13,6 +13,10 @@ set(PRIVATE_HEADERS include/private/InverseKinematicsIPOPT.h
 
 add_library(${PROJECT_NAME} SHARED ${SOURCES} ${HEADERS} ${PRIVATE_SOURCES} ${PRIVATE_HEADERS})
 
+if (MSVC)
+  target_compile_definitions(${PROJECT_NAME} PRIVATE -D_USE_MATH_DEFINES)
+endif ()
+
 target_compile_definitions(${PROJECT_NAME} PRIVATE ${IPOPT_DEFINITIONS})
 
 if (HUMAN_DYNAMICS_ESTIMATION_DEBUG_MALLOC)

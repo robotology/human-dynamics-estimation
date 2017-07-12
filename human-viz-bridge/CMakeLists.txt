@@ -16,6 +16,10 @@ target_include_directories(human-viz-bridge-thrift SYSTEM PUBLIC ${YARP_INCLUDE_
 # TF bridge
 add_executable(human-tf-bridge src/HumanTFBridge.cpp)
 
+if (MSVC)
+  target_compile_definitions(human-tf-bridge PRIVATE -D_USE_MATH_DEFINES)
+endif ()
+
 add_warnings_configuration_to_target(TARGETS human-tf-bridge PRIVATE)
 
 target_link_libraries(human-tf-bridge YARP::YARP_OS 
@@ -33,6 +37,10 @@ list(APPEND conf config/human-tf-bridge.ini)
 # Joints bridge                                                
                                                 
 add_executable(human-jointstate-bridge src/HumanJointStateBridge.cpp)
+
+if (MSVC)
+  target_compile_definitions(human-jointstate-bridge PRIVATE -D_USE_MATH_DEFINES)
+endif ()
 
 add_warnings_configuration_to_target(TARGETS human-jointstate-bridge PRIVATE)
 
@@ -53,6 +61,10 @@ list(APPEND conf config/human-jointstate-bridge.ini)
 
 add_executable(human-effort-bridge src/HumanEffortBridge.cpp)
 
+if (MSVC)
+  target_compile_definitions(human-effort-bridge PRIVATE -D_USE_MATH_DEFINES)
+endif ()
+
 target_link_libraries(human-effort-bridge YARP::YARP_OS 
                                           YARP::YARP_dev
                                           iDynTree::idyntree-model
@@ -70,6 +82,10 @@ list(APPEND conf config/human-effort-bridge.ini)
 # Robot Base pose provider
 
 add_executable(robot-basepose-publisher src/RobotBasePosePublisher.cpp)
+
+if (MSVC)
+  target_compile_definitions(robot-basepose-publisher PRIVATE -D_USE_MATH_DEFINES)
+endif ()
 
 target_link_libraries(robot-basepose-publisher  YARP::YARP_OS 
                                                YARP::YARP_dev
