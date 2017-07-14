@@ -406,7 +406,7 @@ namespace human {
         tempOutput.baseOriginWRTGlobal.x = 0;
         tempOutput.baseOriginWRTGlobal.y = 0;
         tempOutput.baseOriginWRTGlobal.z = 0;
-        tempOutput.baseOrientationWRTGlobal.w = 0;
+        tempOutput.baseOrientationWRTGlobal.w = 1;
         tempOutput.baseOrientationWRTGlobal.imaginary.x = 0;
         tempOutput.baseOrientationWRTGlobal.imaginary.y = 0;
         tempOutput.baseOrientationWRTGlobal.imaginary.z = 0;
