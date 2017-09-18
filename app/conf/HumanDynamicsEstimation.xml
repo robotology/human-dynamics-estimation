@@ -16,7 +16,7 @@
 
     <module>
         <name>human-state-provider</name>
-        <parameters>--urdf_model urdfs/Meri66DoF.urdf --playback false --ik_linear_solver ma57 --ikpool 3</parameters>
+        <parameters>--urdf_model urdfs/Meri66DoF.urdf --playback false</parameters>
         <dependencies>
             <port timeout="10">/xsens/frames:o</port>
         </dependencies>

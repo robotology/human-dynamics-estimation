@@ -369,7 +369,7 @@ namespace human {
         //Thread pool
         yInfo("Available logical threads is %u", std::thread::hardware_concurrency());
         int poolSize = -1;
-        yarp::os::Value poolOption = rf.check("ikpool", yarp::os::Value(-1), "Checking size of pool");
+        yarp::os::Value poolOption = rf.check("ikpool", yarp::os::Value(1), "Checking size of pool");
         if (poolOption.isString()) {
             if (poolOption.asString() != "auto") {
                 yWarning("Pool option not recognized. Do not using pool");
