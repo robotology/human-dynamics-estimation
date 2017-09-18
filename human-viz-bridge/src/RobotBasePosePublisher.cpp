@@ -1,3 +1,5 @@
+#include <cmath>
+
 #include "geometry_msgs_Quaternion.h"
 #include "geometry_msgs_TransformStamped.h"
 #include "geometry_msgs_Vector3.h"
@@ -29,7 +31,6 @@
 #include <yarp/dev/IEncoders.h>
 
 #include <algorithm>
-#include <cmath>
 #include <iostream>
 #include <limits.h>
 #include <string>

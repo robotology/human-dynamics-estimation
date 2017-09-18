@@ -14,6 +14,10 @@ target_link_libraries(InverseKinematicsTest human-ik ${iDynTree_LIBRARIES})
 add_test(NAME testIK
         COMMAND ${PROJECT_NAME})
 
+if (MSVC)
+  target_compile_definitions(testIK PRIVATE -D_USE_MATH_DEFINES)
+endif ()
+
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 find_package (Matio)
