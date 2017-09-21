@@ -174,47 +174,48 @@ public:
             return false;
         }
 
+
         hasRobotFrame = false;
-        std::string robotChildFrame;
-        Bottle& robotGroup = rf.findGroup("ROBOT_FRAME");
-        if (!robotGroup.isNull()) {
-            hasRobotFrame = true;
-            robotChildFrame = robotGroup.find("childLinkRefFrameName").asString();
-
-            iDynTree::Rotation rotation;
-            iDynTree::Position position;
-            if (!parseRotationMatrix(robotGroup.find("transformOrientation"), rotation)) {
-                yError() << "Failed to parse robot \"transformationOrientation\"";
-                close();
-                return false;
-            }
-            if (!parsePositionVector(robotGroup.find("transformOrigin"), position)) {
-                yError() << "Failed to parse robot \"transformOrigin\"";
-                close();
-                return false;
-            }
-
-            std::string robotKinematicSourceFrame = robotChildFrame;
-            if (robotGroup.check("kinematicSourceFrame")) {
-                robotKinematicSourceFrame = robotGroup.find("kinematicSourceFrame").asString();
-            }
-
-            robotBaseLinkWRTPelvis.setPosition(position);
-            robotBaseLinkWRTPelvis.setRotation(rotation);
-            humanPelvisWRTGround.Identity();
-            setRobotPose();
-        }
-
         tf.transforms.resize(1);
-
-        if (hasRobotFrame) {
-           tf.transforms.resize(2);
-           tf.transforms[1].header.frame_id = rf.find("worldRFName").asString();
-           tf.transforms[1].child_frame_id = robotChildFrame;
-        }
         tf.transforms[0].header.frame_id = rf.find("worldRFName").asString();
         tf.transforms[0].child_frame_id = rf.find("tfPrefix").asString() + "/" + rf.find("human_childLinkRFName").asString();
-       
+
+        bool robotFrameDisabled = rf.check("disableRobotFrame", "Disable using the robot frame defined in the configuration");
+        if (!robotFrameDisabled) {
+            std::string robotChildFrame;
+            Bottle& robotGroup = rf.findGroup("ROBOT_FRAME");
+            if (!robotGroup.isNull()) {
+                hasRobotFrame = true;
+                robotChildFrame = robotGroup.find("childLinkRefFrameName").asString();
+
+                iDynTree::Rotation rotation;
+                iDynTree::Position position;
+                if (!parseRotationMatrix(robotGroup.find("transformOrientation"), rotation)) {
+                    yError() << "Failed to parse robot \"transformationOrientation\"";
+                    close();
+                    return false;
+                }
+                if (!parsePositionVector(robotGroup.find("transformOrigin"), position)) {
+                    yError() << "Failed to parse robot \"transformOrigin\"";
+                    close();
+                    return false;
+                }
+
+                std::string robotKinematicSourceFrame = robotChildFrame;
+                if (robotGroup.check("kinematicSourceFrame")) {
+                    robotKinematicSourceFrame = robotGroup.find("kinematicSourceFrame").asString();
+                }
+
+                robotBaseLinkWRTPelvis.setPosition(position);
+                robotBaseLinkWRTPelvis.setRotation(rotation);
+                humanPelvisWRTGround.Identity();
+                setRobotPose();
+
+                tf.transforms.resize(2);
+                tf.transforms[1].header.frame_id = rf.find("worldRFName").asString();
+                tf.transforms[1].child_frame_id = robotChildFrame;
+            }
+        }
 
         vector<string> joints;
         Value jointListValue = rf.find("jointList");
