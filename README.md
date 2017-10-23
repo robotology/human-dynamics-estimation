@@ -98,6 +98,10 @@ The documentation for HDE is automatically extracted from the C++ code using Dox
 
 
 ## Reference paper
+
+A new paper describing the software architecture has been accepted for publishing on IEEE RA-L.
+Link will follow soon.
+
 The HDE theoretical background is described in the following [paper](http://www.mdpi.com/1424-8220/16/5/727).
 ~~~
 Latella, C.; Kuppuswamy, N.; Romano, F.; Traversaro, S.; Nori, F.	
