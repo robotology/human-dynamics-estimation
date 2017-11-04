@@ -14,7 +14,7 @@ Human Dynamics Estimation (HDE) is a collection of YARP modules for the estimati
 * **[Dependencies](#dependencies)**
 * **[How to install](#how-to-install)**
 * **[Documentation](#documentation)**
-* **[Reference paper](#reference-paper)**
+* **[Citing this work](#citing-this-work)**
 * **[Acknowledgments](#acknowledgments)**
 
 
