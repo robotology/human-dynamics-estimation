@@ -97,33 +97,31 @@ cmake --build . --config Release --target install
 The documentation for HDE is automatically extracted from the C++ code using Doxygen, and it is available [here](https://robotology.github.io/human-dynamics-estimation/html/annotated.html) .
 
 
-## Reference paper
+## Citing this work
 
-A new paper describing the software architecture has been accepted for publishing on IEEE RA-L.
-Link will follow soon.
+Please cite the following publication if you are using the code contained in this repository for your own research and/or experiments
 
-The HDE theoretical background is described in the following [paper](http://www.mdpi.com/1424-8220/16/5/727).
+
 ~~~
-Latella, C.; Kuppuswamy, N.; Romano, F.; Traversaro, S.; Nori, F.	
-Whole-Body Human Inverse Dynamics with Distributed Micro-Accelerometers, Gyros and Force Sensing. 
-Sensors 2016, 16, 727.
+The CoDyCo Project achievements and beyond: Towards Human Aware Whole-body Controllers for Physical Human Robot Interaction
+Francesco Romano, Gabriele Nava, Morteza Azad, Jernej Camernik, Stefano Dafarra, Oriane Dermy, Claudia Latella, Maria Lazzaroni, Ryan Lober, Marta Lorenzini, Daniele Pucci, Olivier Sigaud, Silvio Traversaro, Jan Babic, Serena Ivaldi, Michael Mistry, Vincent Padois, Francesco Nori
+IEEE Robotics and Automation Letters
+DOI: 10.1109/LRA.2017.2768126
+http://ieeexplore.ieee.org/document/8093992
 ~~~
 
 The bibtex code for including this citation is provided:
 ~~~
-@article{Latella_2016, 
-title={Whole-Body Human Inverse Dynamics with Distributed Micro-Accelerometers, Gyros and Force Sensing}, 
-volume={16}, 
-ISSN={1424-8220}, 
-url={http://dx.doi.org/10.3390/s16050727}, 
-DOI={10.3390/s16050727}, number={5}, journal={Sensors}, 
-publisher={MDPI AG}, 
-author={Latella, Claudia and Kuppuswamy, Naveen and Romano, Francesco and Traversaro, Silvio and Nori, Francesco}, 
-year={2016}, 
-month={May}, 
-pages={727}}
+@article{romano2017codyco,
+  title={The CoDyCo Project achievements and beyond: Towards Human Aware Whole-body Controllers for Physical Human Robot Interaction},
+  author={Romano, Francesco and Nava, Gabriele and Azad, Morteza and Camernik, Jernej and Dafarra, Stefano and Dermy, Oriane and Latella, Claudia and Lazzaroni, Maria and Lober, Ryan and Lorenzini, Marta and others},
+  year={2017},
+  DOI={10.1109/LRA.2017.2768126},
+  publisher={IEEE}, 
+  journal={IEEE Robotics and Automation Letters}, 
+  url={http://ieeexplore.ieee.org/document/8093992}, 
+}
 ~~~
-
 
 ## Acknowledgments
 The development of HDE is supported by the FP7 EU projects [CoDyCo (No. 600716 ICT 2011.2.1 Cognitive
