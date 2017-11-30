@@ -22,7 +22,7 @@ static bool parseFrameListOption(const yarp::os::Value &option, std::vector<std:
 static bool parseMeasurementsPriorsOption(const yarp::os::Bottle& priorsGroup,
                                           const iDynTree::BerdyHelper& berdy,
                                           const std::string& optionPrefix,
-                                          iDynTree::SparseMatrix& parseMatrix);
+                                          iDynTree::SparseMatrix<iDynTree::ColumnMajor>& parseMatrix);
 static bool parseCovarianceMatrixOption(const yarp::os::Value &option, size_t expectedMatrixSize, iDynTree::Triplets &parsedMatrix);
 
 
@@ -673,7 +673,7 @@ static bool parseFrameListOption(const yarp::os::Value &option, std::vector<std:
 static bool parseMeasurementsPriorsOption(const yarp::os::Bottle& priorsGroup,
                                           const iDynTree::BerdyHelper& berdy,
                                           const std::string& optionPrefix,
-                                          iDynTree::SparseMatrix& parsedMatrix)
+                                          iDynTree::SparseMatrix<iDynTree::ColumnMajor>& parsedMatrix)
 {
     using std::pair;
     using std::string;
