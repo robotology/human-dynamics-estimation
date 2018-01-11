@@ -94,10 +94,10 @@ class HumanDynamicsEstimator : public yarp::os::RFModule {
     } m_inputOutputMapping;
 
     // Priors on regularization, measurements and dynamics constraints
-    iDynTree::SparseMatrix m_priorDynamicsConstraintsCovarianceInverse; // Sigma_D^-1
-    iDynTree::SparseMatrix m_priorDynamicsRegularizationCovarianceInverse; // Sigma_d^-1
+    iDynTree::SparseMatrix<iDynTree::ColumnMajor> m_priorDynamicsConstraintsCovarianceInverse; // Sigma_D^-1
+    iDynTree::SparseMatrix<iDynTree::ColumnMajor> m_priorDynamicsRegularizationCovarianceInverse; // Sigma_d^-1
     iDynTree::VectorDynSize m_priorDynamicsRegularizationExpectedValue; // mu_d
-    iDynTree::SparseMatrix m_priorMeasurementsCovarianceInverse; // Sigma_y^-1
+    iDynTree::SparseMatrix<iDynTree::ColumnMajor>  m_priorMeasurementsCovarianceInverse; // Sigma_y^-1
 
     // Measurements vector
     iDynTree::VectorDynSize m_measurements;
@@ -109,7 +109,7 @@ class HumanDynamicsEstimator : public yarp::os::RFModule {
     // E[p(d|y)]: Expected value of A posteriori probability.
     iDynTree::VectorDynSize m_expectedDynamicsAPosteriori;
 //    iDynTree::SparseMatrix m_covarianceDynamicsAPosterioriInverse;
-    Eigen::SparseMatrix<double, Eigen::RowMajor> m_covarianceDynamicsAPosterioriInverse;
+    Eigen::SparseMatrix<double, Eigen::ColMajor> m_covarianceDynamicsAPosterioriInverse;
 
     /*! Full linear system matrices and vectors
      * \f[
@@ -118,19 +118,19 @@ class HumanDynamicsEstimator : public yarp::os::RFModule {
      * \begin{bmatrix} 0 \\ y \end{bmatrix}
      * \f]
      */
-    iDynTree::SparseMatrix m_dynamicsConstraintsMatrix;
+    iDynTree::SparseMatrix<iDynTree::ColumnMajor> m_dynamicsConstraintsMatrix;
     iDynTree::VectorDynSize m_dynamicsConstraintsBias;
-    iDynTree::SparseMatrix m_measurementsMatrix;
+    iDynTree::SparseMatrix<iDynTree::ColumnMajor> m_measurementsMatrix;
     iDynTree::VectorDynSize m_measurementsBias;
 
     struct {
         // Decompositions of covariance matrices
 //        Eigen::SimplicialLDLT<Eigen::SparseMatrix<double, Eigen::RowMajor> > covarianceDynamicsPriorInverseDecomposition;
 //        Eigen::SimplicialLDLT<Eigen::SparseMatrix<double, Eigen::RowMajor> > covarianceDynamicsAPosterioriInverseDecomposition;
-        Eigen::SparseLU<Eigen::SparseMatrix<double, Eigen::RowMajor> > covarianceDynamicsPriorInverseDecomposition;
-        Eigen::SparseLU<Eigen::SparseMatrix<double, Eigen::RowMajor> > covarianceDynamicsAPosterioriInverseDecomposition;
+        Eigen::SparseLU<Eigen::SparseMatrix<double, Eigen::ColMajor> > covarianceDynamicsPriorInverseDecomposition;
+        Eigen::SparseLU<Eigen::SparseMatrix<double, Eigen::ColMajor> > covarianceDynamicsAPosterioriInverseDecomposition;
 
-        Eigen::SparseMatrix<double, Eigen::RowMajor> covarianceDynamicsPriorInverse;
+        Eigen::SparseMatrix<double, Eigen::ColMajor> covarianceDynamicsPriorInverse;
 //        iDynTree::SparseMatrix covarianceDynamicsPriorInverse;
 
         iDynTree::VectorDynSize expectedDynamicsPrior;
