@@ -4,7 +4,7 @@
     <version>1.0</version>
 
     <var name="generic_node">icub23</var>
-    <var name="ipopt_node">icub-blade</var>
+    <var name="ipopt_node">icub23</var>
 
     <module>
         <name>yarplogger</name>
@@ -16,7 +16,7 @@
 
     <module>
         <name>human-state-provider</name>
-        <parameters>--urdf_model urdfs/Meri66DoF.urdf --playback false</parameters>
+        <parameters>--urdf_model urdfs/Claudia66DoF_Dec2017.urdf --playback false</parameters>
         <dependencies>
             <port timeout="10">/xsens/frames:o</port>
         </dependencies>
@@ -25,7 +25,7 @@
 
     <module>
         <name>human-forces-provider</name>
-        <parameters>--humanModelFilename urdfs/Meri66DoF.urdf --sources "(FTSH_R, FTSH_L)" --human_JointList urdfs/config/66DoFModel.ini --rosForceScale 0.001</parameters>
+        <parameters>--humanModelFilename urdfs/Claudia66DoF_Dec2017.urdf --sources "(FTSH_R, FTSH_L, RRH, RLH)" --human_JointList urdfs/config/66DoFModel.ini --rosForceScale 0.001</parameters>
         <dependencies>
             <port timeout="10">/ft/ftShoe_Right/analog:o</port>
             <port timeout="10">/ft/ftShoe_Left/analog:o</port>
@@ -35,25 +35,25 @@
 
     <module>
         <name>human-dynamics-estimator</name>
-        <parameters>--urdf_model urdfs/Meri66DoF.urdf --jointList urdfs/config/66DoFModel.ini --period 50</parameters>
+        <parameters>--urdf_model urdfs/Claudia66DoF_Dec2017.urdf --jointList urdfs/config/66DoFModel.ini --period 50</parameters>
         <node>${ipopt_node}</node>
     </module>
 
     <module>
         <name>human-jointstate-bridge</name>
-        <parameters>--urdf_model urdfs/Meri66DoF.urdf --jointList urdfs/config/66DoFModel.ini </parameters>
+        <parameters>--urdf_model urdfs/Claudia66DoF_Dec2017.urdf --jointList urdfs/config/66DoFModel.ini </parameters>
         <node>${generic_node}</node>
     </module>
 
     <module>
         <name>human-tf-bridge</name>
-        <parameters>--urdf_model urdfs/Meri66DoF.urdf</parameters>
+        <parameters>--urdf_model urdfs/Claudia66DoF_Dec2017.urdf</parameters>
         <node>${generic_node}</node>
     </module>
 
     <module>
         <name>human-effort-bridge</name>
-        <parameters>--urdf_model urdfs/Meri66DoF.urdf</parameters>
+        <parameters>--urdf_model urdfs/Claudia66DoF_Dec2017.urdf</parameters>
         <node>${generic_node}</node>
     </module>
 
@@ -95,13 +95,13 @@
 
     <connection>
           <from>/wholeBodyDynamics/left_hand/endEffectorWrench:o</from>
-          <to>/human-forces-provider/source_3/force:i</to>
+          <to>/human-forces-provider/source_RRH/force:i</to>
           <protocol>udp</protocol>
     </connection>
 
     <connection>
           <from>/wholeBodyDynamics/right_hand/endEffectorWrench:o</from>
-          <to>/human-forces-provider/source_4/force:i</to>
+          <to>/human-forces-provider/source_RLH/force:i</to>
           <protocol>udp</protocol>
     </connection>
 
@@ -123,10 +123,10 @@
           <protocol>udp</protocol>
     </connection>
 
-    <connection>
+    <!--connection>
           <from>/xsens/cmd:i</from>
           <to>/human-tf-bridge/segmentsList:o</to>
           <protocol>tcp</protocol>
-    </connection>
+    </connection-->
 
 </application>
