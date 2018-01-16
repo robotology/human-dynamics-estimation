@@ -94,13 +94,13 @@
     </connection>
 
     <connection>
-          <from>/wholeBodyDynamics/left_hand/endEffectorWrench:o</from>
+          <from>/wholeBodyDynamics/right_hand/endEffectorWrench:o</from>
           <to>/human-forces-provider/source_RRH/force:i</to>
           <protocol>udp</protocol>
     </connection>
 
     <connection>
-          <from>/wholeBodyDynamics/right_hand/endEffectorWrench:o</from>
+          <from>/wholeBodyDynamics/left_hand/endEffectorWrench:o</from>
           <to>/human-forces-provider/source_RLH/force:i</to>
           <protocol>udp</protocol>
     </connection>
