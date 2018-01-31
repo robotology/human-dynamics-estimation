@@ -42,19 +42,19 @@
 
     <module>
         <name>human-jointstate-bridge</name>
-        <parameters>--urdf_model urdfs/${human_model} --jointList urdfs/config/66DoFModel.ini </parameters>
+        <parameters>--urdf_model urdfs/${human_model} --jointList urdfs/config/66DoFModel.ini</parameters>
         <node>${generic_node}</node>
     </module>
 
     <module>
         <name>human-tf-bridge</name>
-        <parameters>--urdf_model urdfs/${human_model} </parameters>
+        <parameters>--urdf_model urdfs/${human_model}</parameters>
         <node>${generic_node}</node>
     </module>
 
     <module>
         <name>human-effort-bridge</name>
-        <parameters>--urdf_model urdfs/${human_model} </parameters>
+        <parameters>--urdf_model urdfs/${human_model}</parameters>
         <node>${generic_node}</node>
     </module>
 
