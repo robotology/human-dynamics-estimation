@@ -29,6 +29,7 @@
 #ifndef HDEDRIVER_H
 #define HDEDRIVER_H
 
+#include <iostream>
 #include <string>
 #include <vector>
 #include <yarp/os/LogStream.h>
@@ -78,6 +79,9 @@ public:
     virtual int calibrateSensor();
     virtual int calibrateSensor(const yarp::sig::Vector& value);
     virtual int calibrateChannel(int channel);
+    
+    int getTotalSensorsSize(){ return number_of_sensors; };
+    std::string getFTFrameName(int& i) {return ft_frame_names.at(i); }; 
     
 };
 

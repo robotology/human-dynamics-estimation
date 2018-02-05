@@ -38,13 +38,16 @@
 #include <yarp/os/BufferedPort.h>
 
 #include <hdedriver.h>
+#include <human-forces-provider/thrifts/HumanForces.h>
 
 class HDEInterfaceModule:public yarp::os::RFModule
 {
     yarp::os::RpcServer hde_interface_rpc_port;
     yarp::os::BufferedPort<yarp::os::Bottle> state_port;
-    yarp::os::BufferedPort<yarp::os::Bottle> forces_port;
+    yarp::os::BufferedPort<human::HumanForces> forces_port;
     yarp::os::BufferedPort<yarp::os::Bottle> dynamics_port;
+    
+    yarp::dev::HDEDriver hde_driver;
     
 public:
     
@@ -97,6 +100,8 @@ public:
             yError() << "HDEInterfaceModule: Failed to open /hde-interface/dynamicsEstimation:i port";
             return false;
         }
+        
+        hde_driver.open(rf);
         
         return true;
     }

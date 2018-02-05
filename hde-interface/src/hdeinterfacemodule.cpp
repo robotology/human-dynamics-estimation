@@ -35,6 +35,30 @@ double HDEInterfaceModule::getPeriod()
 
 bool HDEInterfaceModule::updateModule()
 {
+
+    human::HumanForces *forces = forces_port.read();    
+    
+    if(forces != NULL)
+    {
+        yInfo() << "Forces " << forces->toString();
+    }
+    else yError() << "HDEInterfaceModule: Failed to read forces port";
+    /*if(forces->size() != hde_driver.getTotalSensorsSize())
+    {
+        yError() << "HDEInterfaceModule: Total number of FT data does not match as defined in the config file";
+        return false;
+    }
+    else
+    {
+        for(int i=0; i < forces->size(); i++)
+        {
+            if(forces->get(i+1).asString() == hde_driver.getFTFrameName(i))
+            {
+                yInfo() << forces->get(i+1).asString();
+            }
+        }
+    }*/
+    
     return true;
 }
 

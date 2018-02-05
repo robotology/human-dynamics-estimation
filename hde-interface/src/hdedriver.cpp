@@ -32,15 +32,22 @@ using namespace yarp::dev;
 
 const unsigned ForceTorqueChannelsNumber = 6;
 
+HDEDriver::HDEDriver()
+{
+}
+
 bool HDEDriver::open(yarp::os::Searchable& config)
 {
     number_of_sensors = config.find("number_of_sensors").asInt();
+    
+    std::cout << "Number of sensors: " << number_of_sensors << std::endl;
+    
     number_of_channels = number_of_sensors*ForceTorqueChannelsNumber;
     
     force_torque_vector.resize(number_of_channels);
     
-    yarp::os::Bottle frames = config.findGroup("FT FRAMES");
-    if(!frames.check("FT Frames"))
+    yarp::os::Bottle frames = config.findGroup("FT_FRAMES");
+    if(!frames.check("FT_FRAMES"))
     {
         yError() << "HDEDriver: Failed to get FT FRAMES";
         return false;
@@ -51,6 +58,7 @@ bool HDEDriver::open(yarp::os::Searchable& config)
         for(int i=0; i < number_of_sensors; i++)
         {
             ft_frame_names.at(i) = frames.get(i+1).asString();
+            std::cout << "FT Frame: " << ft_frame_names.at(i) << std::endl;
         }
     }
     
@@ -110,4 +118,8 @@ int HDEDriver::calibrateChannel(int)
 int HDEDriver::calibrateChannel(int, double)
 {
     return AS_OK;
+}
+
+HDEDriver::~HDEDriver()
+{
 }
