@@ -30,35 +30,63 @@
 
 using namespace yarp::dev;
 
-HDEDriver::HDEDriver()
+const unsigned ForceTorqueChannelsNumber = 6;
+
+int HDEDriver::read(yarp::sig::Vector& out)
 {
+    if(force_torque_vector.size() != number_of_channels)
+    {
+        yError() << "HDEDriver: ForceTorqueVector size is not the same as the total number of channels";
+        return AS_ERROR;
+    }
+    
+    if(out.size() != number_of_channels)
+    {
+        out.resize(number_of_channels);
+    }
+    
+    data_mutex.wait();
+    for(int n = 0; n < number_of_channels; n++)
+    {
+        out[n] = force_torque_vector[n];
+    }
+    data_mutex.post();
+    
+    return AS_OK;
 }
 
-bool HDEDriver::open(yarp::os::Searchable& config)
+bool HDEDriver::close()
 {
-    number_of_sensors = config.find("number_of_sensors").asInt();
-    number_of_channels = number_of_sensors*ForceTorqueChannelsNumber;
-    
-    force_torque_vector.resize(number_of_channels);
-    
-    yarp::os::Bottle frames = config.findGroup("FT_FRAMES");
-    if(!frames.check("FT_FRAMES"))
-    {
-        yError() << "HDEDriver: Failed to get FT FRAMES";
-        return false;
-    }
-    else
-    {
-        ft_frame_names.resize(number_of_sensors);
-        for(int i=0; i < number_of_sensors; i++)
-        {
-            ft_frame_names.at(i) = frames.get(i+1).asString();
-        }
-    }
-    
     return true;
 }
 
-HDEDriver::~HDEDriver()
+int HDEDriver::getChannels()
 {
+    return number_of_channels;
 }
+
+int HDEDriver::getState(int)
+{
+    return AS_OK;
+}
+
+int HDEDriver::calibrateSensor()
+{
+    return AS_OK;
+}
+
+int HDEDriver::calibrateSensor(const yarp::sig::Vector&)
+{
+    return AS_OK;
+}
+
+int HDEDriver::calibrateChannel(int)
+{
+    return AS_OK;
+}
+
+int HDEDriver::calibrateChannel(int, double)
+{
+    return AS_OK;
+}
+

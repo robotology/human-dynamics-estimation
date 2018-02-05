@@ -41,7 +41,7 @@ bool HDEInterfaceModule::updateModule()
     if(input_forces != NULL)
     {
         human::HumanForces::Editor input_forces_editor(*input_forces);
-    
+
         std::vector<human::Force6D> forces6d_vec = input_forces_editor.get_forces();
         
         for(int i = 0; i < forces6d_vec.size(); i++)
