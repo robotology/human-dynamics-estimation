@@ -35,10 +35,14 @@
 #include <yarp/os/LogStream.h>
 #include <yarp/os/Bottle.h>
 #include <yarp/os/ResourceFinder.h>
+#include <yarp/os/BufferedPort.h>
 
 class HDEInterfaceModule:public yarp::os::RFModule
 {
     yarp::os::RpcServer hde_interface_rpc_port;
+    yarp::os::BufferedPort<yarp::os::Bottle> state_port;
+    yarp::os::BufferedPort<yarp::os::Bottle> forces_port;
+    yarp::os::BufferedPort<yarp::os::Bottle> dynamics_port;
     
 public:
     
@@ -47,8 +51,50 @@ public:
         if(!yarp::os::Network::initialized())
             yarp::os::Network::init();
         
-        if(hde_interface_rpc_port.open("/hde_interface/rpc:i"))
+        if(hde_interface_rpc_port.open("/hde-interface/rpc:i"))
             attach(hde_interface_rpc_port);
+        
+        if(state_port.open("/hde-interface/state:i"))
+        {
+            if(!yarp::os::Network::connect("/human-state-provider/state:o",state_port.getName().c_str()))
+            {
+                yError() << "HDEInterfaceModule: Failed to connect /human-state-provider/state:o and /hde-interface/state:i ports";
+                return false;
+            }
+        }
+        else
+        {
+            yError() << "HDEInterfaceModule: Failed to open /hde-interface/state:i port";
+            return false;
+        }
+        
+        if(forces_port.open("/hde-interface/forces:i"))
+        {
+            if(!yarp::os::Network::connect("/human-forces-provider/forces:o",forces_port.getName().c_str()))
+            {
+                yError() << "HDEInterfaceModule: Failed to connect /human-forces-provider/forces:o and /hde-interface/forces:i ports";
+                return false;
+            }
+        }
+        else
+        {
+            yError() << "HDEInterfaceModule: Failed to open /hde-interface/forces:i port";
+            return false;
+        }
+        
+        if(dynamics_port.open("/hde-interface/dynamicsEstimation:i"))
+        {
+            if(!yarp::os::Network::connect("/human-dynamics-estimator/dynamicsEstimation:o",dynamics_port.getName().c_str()))
+            {
+                yError() << "HDEInterfaceModule: Failed to connect /human-dynamics-estimator/dynamicsEstimation:o and /hde-interface/dynamicsEstimation:i ports";
+                return false;
+            }
+        }
+        else
+        {
+            yError() << "HDEInterfaceModule: Failed to open /hde-interface/dynamicsEstimation:i port";
+            return false;
+        }
         
         return true;
     }
