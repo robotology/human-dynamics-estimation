@@ -37,6 +37,8 @@
 #include <yarp/os/ResourceFinder.h>
 #include <yarp/os/BufferedPort.h>
 
+#include <hdedriver.h>
+
 class HDEInterfaceModule:public yarp::os::RFModule
 {
     yarp::os::RpcServer hde_interface_rpc_port;
