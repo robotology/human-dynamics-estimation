@@ -46,10 +46,7 @@ int HDEDriver::read(yarp::sig::Vector& out)
     }
     
     data_mutex.wait();
-    for(int n = 0; n < number_of_channels; n++)
-    {
-        out[n] = force_torque_vector[n];
-    }
+    out = force_torque_vector;
     data_mutex.post();
     
     return AS_OK;
