@@ -39,9 +39,6 @@ HDEDriver::HDEDriver()
 bool HDEDriver::open(yarp::os::Searchable& config)
 {
     number_of_sensors = config.find("number_of_sensors").asInt();
-    
-    std::cout << "Number of sensors: " << number_of_sensors << std::endl;
-    
     number_of_channels = number_of_sensors*ForceTorqueChannelsNumber;
     
     force_torque_vector.resize(number_of_channels);
@@ -58,7 +55,6 @@ bool HDEDriver::open(yarp::os::Searchable& config)
         for(int i=0; i < number_of_sensors; i++)
         {
             ft_frame_names.at(i) = frames.get(i+1).asString();
-            std::cout << "FT Frame: " << ft_frame_names.at(i) << std::endl;
         }
     }
     
@@ -79,7 +75,10 @@ int HDEDriver::read(yarp::sig::Vector& out)
     }
     
     data_mutex.wait();
-    out = force_torque_vector;
+    for(int n = 0; n < number_of_channels; n++)
+    {
+        out[n] = force_torque_vector[n];
+    }
     data_mutex.post();
     
     return AS_OK;

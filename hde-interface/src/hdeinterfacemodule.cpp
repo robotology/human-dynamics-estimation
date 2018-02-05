@@ -36,28 +36,47 @@ double HDEInterfaceModule::getPeriod()
 bool HDEInterfaceModule::updateModule()
 {
 
-    human::HumanForces *forces = forces_port.read();    
+    human::HumanForces *input_forces = forces_port.read();
     
-    if(forces != NULL)
+    if(input_forces != NULL)
     {
-        yInfo() << "Forces " << forces->toString();
-    }
-    else yError() << "HDEInterfaceModule: Failed to read forces port";
-    /*if(forces->size() != hde_driver.getTotalSensorsSize())
-    {
-        yError() << "HDEInterfaceModule: Total number of FT data does not match as defined in the config file";
-        return false;
+        human::HumanForces::Editor input_forces_editor(*input_forces);
+    
+        std::vector<human::Force6D> forces6d_vec = input_forces_editor.get_forces();
+        
+        for(int i = 0; i < forces6d_vec.size(); i++)
+        {            
+            human::Force6D::Editor *force6d_editor;
+            force6d_editor = new human::Force6D::Editor(forces6d_vec.at(i));
+            
+            if(force6d_editor->get_expressedFrame() == hde_driver.getFTFrameName(i))
+            {   
+                int index = 6*(i+1);
+                
+                hde_driver.setFTValues(force6d_editor->get_fx(),index-6);
+                hde_driver.setFTValues(force6d_editor->get_fy(),index-5);
+                hde_driver.setFTValues(force6d_editor->get_fz(),index-4);
+            
+                hde_driver.setFTValues(force6d_editor->get_ux(),index-3);
+                hde_driver.setFTValues(force6d_editor->get_uy(),index-2);
+                hde_driver.setFTValues(force6d_editor->get_uz(),index-1);
+                
+            }
+            else
+            {
+                yError() << "HDEInterfaceModule: FT frames do not match";
+                return false;
+            }
+            delete force6d_editor;
+            
+        }
+        
     }
     else
     {
-        for(int i=0; i < forces->size(); i++)
-        {
-            if(forces->get(i+1).asString() == hde_driver.getFTFrameName(i))
-            {
-                yInfo() << forces->get(i+1).asString();
-            }
-        }
-    }*/
+        yError() << "HDEInterfaceModule: Failed to read forces port";
+        return false;
+    }
     
     return true;
 }
