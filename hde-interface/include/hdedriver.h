@@ -86,20 +86,9 @@ public:
     virtual int calibrateSensor(const yarp::sig::Vector& value);
     virtual int calibrateChannel(int channel);
     
-    int getTotalSensorsSize()
-    {
-        return number_of_sensors;
-    };
-    
-    std::string getFTFrameName(int& i)
-    { 
-        return ft_frame_names.at(i);
-    };
-    
-    void setFTValues(double u,int pos)
-    {
-        force_torque_vector[pos] = u;
-    };
+    int getTotalSensorsSize();
+    std::string getFTFrameName(int& i);
+    void setFTValues(double u,int pos);
     
     //Encoders
     virtual bool getAxes(int *ax);

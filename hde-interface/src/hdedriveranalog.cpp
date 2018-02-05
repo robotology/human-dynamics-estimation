@@ -87,3 +87,17 @@ int HDEDriver::calibrateChannel(int, double)
     return AS_OK;
 }
 
+int HDEDriver::getTotalSensorsSize()
+{
+    return number_of_sensors;
+};
+    
+std::string HDEDriver::getFTFrameName(int& i)
+{ 
+    return ft_frame_names.at(i);
+};
+    
+void HDEDriver::setFTValues(double u,int pos)
+{
+    force_torque_vector[pos] = u;
+};
