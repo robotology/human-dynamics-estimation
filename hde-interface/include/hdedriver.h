@@ -36,6 +36,7 @@
 #include <yarp/dev/DeviceDriver.h>
 #include <yarp/dev/IAnalogSensor.h>
 #include <yarp/os/Semaphore.h>
+#include <yarp/dev/IEncoders.h>
 
 namespace yarp
 {
@@ -49,7 +50,8 @@ extern const unsigned ForceTorqueChannelsNumber;
 
 class yarp::dev::HDEDriver:
     public yarp::dev::DeviceDriver,
-    public yarp::dev::IAnalogSensor
+    public yarp::dev::IAnalogSensor,
+    public yarp::dev::IEncoders
 {
     
 private:
@@ -61,6 +63,10 @@ private:
     std::vector<std::string> ft_frame_names;
 
     yarp::os::Semaphore data_mutex;
+    
+    yarp::sig::Vector joint_zero_positions;
+    yarp::sig::Vector joint_positions;
+    yarp::sig::Vector joint_velocities;
     
 public:
     
@@ -94,6 +100,20 @@ public:
     {
         force_torque_vector[pos] = u;
     };
+    
+    //Encoders
+    virtual bool getAxes(int *ax);
+    virtual bool getEncoder(int j, double* v);
+    virtual bool getEncoders(double* encs);
+    virtual bool resetEncoder(int j);
+    virtual bool resetEncoders();
+    virtual bool setEncoder(int j, double val);
+    virtual bool setEncoders(const double* vals);
+    virtual bool getEncoderSpeed(int j, double* sp);
+    virtual bool getEncoderSpeeds(double* spds);
+    virtual bool getEncoderAcceleration(int j, double* spds);
+    virtual bool getEncoderAccelerations(double* accs);
+
     
 };
 
