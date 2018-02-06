@@ -84,7 +84,7 @@ bool HDEInterfaceModule::updateModule()
     //hde_ft_driver.read(out);
     //yInfo() << out.toString();
     
-    //Human-state-provider and Human-dynamics-estimation
+    //Human-state-provider
     human::HumanState *input_state = state_port.read();
 
     if(input_state->positions.size() == hde_controlboard_driver.getNumberOfDofs())
@@ -95,6 +95,33 @@ bool HDEInterfaceModule::updateModule()
     else
     {
         yError() << "HDEInterfaceModule: DoFs mismatch between the config file and human state port";
+        return false;
+    }
+    
+    //Human-dynamics-estimation
+    human::HumanDynamics *input_dynamics = dynamics_port.read();
+    
+    std::vector<human::JointDynamicsEstimation> input_joint_dynamics = input_dynamics->jointVariables;
+    
+    if(input_joint_dynamics.size() == hde_controlboard_driver.getNumberOfDofs())
+    {
+        for(int j = 0; j < input_joint_dynamics.size(); j++)
+        {
+            if(input_joint_dynamics.at(j).jointName == hde_controlboard_driver.getJointName(j))
+            {
+                double joint_torque = input_joint_dynamics.at(j).torque[0];
+                hde_controlboard_driver.setJointTorque(j,joint_torque);
+            }
+            else
+            {
+                yError() << "HDEInterfaceModule: Joint name mismatch while getting jonit torques";
+                return false;
+            }
+        }
+    }
+    else
+    {
+        yError() << "HDEInterfaceModule: DoFs mismatch between config file and human joint dynamics";
         return false;
     }
         

@@ -109,3 +109,8 @@ bool HDEControlBoardDriver::checkIfTorqueIsValid(double torque) const
 {
     return true;
 }
+
+void HDEControlBoardDriver::setJointTorque(int& i,double tau)
+{
+    joint_torques[i] = tau;
+}

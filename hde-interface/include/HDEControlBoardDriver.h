@@ -56,7 +56,7 @@ class yarp::dev::HDEControlBoardDriver:
 private:
     
     unsigned number_of_dofs;
-    std::list<std::string> joint_list;
+    std::vector<std::string> joint_name_list;
     
     yarp::sig::Vector joint_zero_positions;
     yarp::sig::Vector joint_positions;
@@ -72,13 +72,41 @@ public:
     //Device Driver
     bool open(yarp::os::Searchable& config)
     {
-        number_of_dofs = 66; // config.find("number_of_dofs").asInt();
+        number_of_dofs = config.find("number_of_dofs").asInt();
+        
+        yarp::os::Bottle joints = config.findGroup("joint_name_list");
+        if(!joints.check("joint_name_list"))
+        {
+            yError() << "HDEControlBoardDriver: Failed to read joints name list";
+            return false;
+        }
+        else
+        {
+            joint_name_list.resize(number_of_dofs);
+            for(int i=0; i < number_of_dofs; i++)
+            {
+                joint_name_list.at(i) = joints.get(i+1).asString();
+            }
+            
+            joint_zero_positions.resize(number_of_dofs);
+            joint_positions.resize(number_of_dofs);
+            joint_velocities.resize(number_of_dofs);
+            joint_torques.resize(number_of_dofs);
+        
+            
+        }
+        
         return true;
     }
 
     bool close()
     {
         return yarp::dev::DeviceDriver::close();
+    }
+    
+    std::string getJointName(int& i)
+    {
+        return joint_name_list.at(i);
     }
     
     //Encoders
@@ -117,6 +145,8 @@ public:
     
     bool checkIfTorqueIsValid(const double* torques) const;
     bool checkIfTorqueIsValid(double torques) const;
+    
+    void setJointTorque(int& i,double tau);
     
 };
 

@@ -49,7 +49,7 @@ class HDEInterfaceModule:public yarp::os::RFModule
     yarp::os::RpcServer hde_interface_rpc_port;
     yarp::os::BufferedPort<human::HumanState> state_port;
     yarp::os::BufferedPort<human::HumanForces> forces_port;
-    yarp::os::BufferedPort<yarp::os::Bottle> dynamics_port;
+    yarp::os::BufferedPort<human::HumanDynamics> dynamics_port;
     
     yarp::dev::HDEForeceTorqueDriver hde_ft_driver;
     yarp::dev::HDEControlBoardDriver hde_controlboard_driver;
