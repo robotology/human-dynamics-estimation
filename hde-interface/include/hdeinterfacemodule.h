@@ -38,6 +38,7 @@
 #include <yarp/os/BufferedPort.h>
 
 #include <hdeftdriver.h>
+#include <hdecontrolboarddriver.h>
 #include <human-forces-provider/thrifts/HumanForces.h>
 
 class HDEInterfaceModule:public yarp::os::RFModule

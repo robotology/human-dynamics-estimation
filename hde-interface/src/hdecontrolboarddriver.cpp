@@ -26,60 +26,78 @@
  * 
  */
 
-#include "hdedriver.h"
+#include "hdecontrolboarddriver.h"
 
 using namespace yarp::dev;
 
-bool HDEDriver::getAxes(int *ax)
+HDEControlBoardDriver::HDEControlBoardDriver()
+{
+}
+
+bool HDEControlBoardDriver::open(yarp::os::Searchable& config)
+{
+
+}
+
+bool HDEControlBoardDriver::close()
+{
+    return yarp::dev::DeviceDriver::close();
+}
+
+HDEControlBoardDriver::~HDEControlBoardDriver()
+{
+}
+
+bool HDEControlBoardDriver::getAxes(int *ax)
 {
     return true;
 }
-bool HDEDriver::getEncoder(int j, double *v)
+bool HDEControlBoardDriver::getEncoder(int j, double *v)
 {
     return true;
 }
 
-bool HDEDriver::getEncoders(double *encs)
+bool HDEControlBoardDriver::getEncoders(double *encs)
 {
     return true;
 }
 
-bool HDEDriver::resetEncoder(int j)
+bool HDEControlBoardDriver::resetEncoder(int j)
 {
     return true;
 }
 
-bool HDEDriver::resetEncoders()
+bool HDEControlBoardDriver::resetEncoders()
 {
     return true;
 }
 
-bool HDEDriver::setEncoder(int j, double val)
+bool HDEControlBoardDriver::setEncoder(int j, double val)
 {
     return true;
 }
 
-bool HDEDriver::setEncoders(const  double *vals)
+bool HDEControlBoardDriver::setEncoders(const  double *vals)
 {
     return true;
 }
 
-bool HDEDriver::getEncoderSpeed(int j, double *sp)
+bool HDEControlBoardDriver::getEncoderSpeed(int j, double *sp)
 {
     return true;
 }
 
-bool HDEDriver::getEncoderSpeeds(double *spds)
+bool HDEControlBoardDriver::getEncoderSpeeds(double *spds)
 {
     return true;
 }
 
-bool HDEDriver::getEncoderAcceleration(int j, double *spds)
+bool HDEControlBoardDriver::getEncoderAcceleration(int j, double *spds)
 {
     return true;
 }
 
-bool HDEDriver::getEncoderAccelerations(double *accs)
+bool HDEControlBoardDriver::getEncoderAccelerations(double *accs)
 {
     return true;
 }

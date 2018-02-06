@@ -26,43 +26,33 @@
  * 
  */
 
-#ifndef HDEDRIVER_H
-#define HDEDRIVER_H
+#ifndef HDEDCONTROLBOARDDRIVER_H
+#define HDEDCONTROLBOARDDRIVER_H
 
 #include <iostream>
 #include <string>
 #include <vector>
+#include <yarp/sig/Vector.h>
 #include <yarp/os/LogStream.h>
 #include <yarp/dev/DeviceDriver.h>
-#include <yarp/dev/IAnalogSensor.h>
-#include <yarp/os/Semaphore.h>
 #include <yarp/dev/IEncoders.h>
 
 namespace yarp
 {
     namespace dev
     {
-        class HDEDriver;
+        class HDEControlBoardDriver;
     }
 }
 
-extern const unsigned ForceTorqueChannelsNumber;
+extern const unsigned number_of_dofs;
 
-class yarp::dev::HDEDriver:
+class yarp::dev::HDEControlBoardDriver:
     public yarp::dev::DeviceDriver,
-    public yarp::dev::IAnalogSensor,
     public yarp::dev::IEncoders
 {
     
 private:
-    
-    int number_of_sensors;
-    int number_of_channels;
-    
-    yarp::sig::Vector force_torque_vector;
-    std::vector<std::string> ft_frame_names;
-
-    yarp::os::Semaphore data_mutex;
     
     yarp::sig::Vector joint_zero_positions;
     yarp::sig::Vector joint_positions;
@@ -70,26 +60,13 @@ private:
     
 public:
     
-    HDEDriver();
-    virtual ~HDEDriver();
+    HDEControlBoardDriver();
+    virtual ~HDEControlBoardDriver();
         
     //Device Driver
     virtual bool open(yarp::os::Searchable& config);
     virtual bool close();
-    
-    //Analog Sensor
-    virtual int read(yarp::sig::Vector& out);
-    virtual int getState(int channel);
-    virtual int getChannels();
-    virtual int calibrateChannel(int channel,double v);
-    virtual int calibrateSensor();
-    virtual int calibrateSensor(const yarp::sig::Vector& value);
-    virtual int calibrateChannel(int channel);
-    
-    int getTotalSensorsSize();
-    std::string getFTFrameName(int& i);
-    void setFTValues(double u,int pos);
-    
+        
     //Encoders
     virtual bool getAxes(int *ax);
     virtual bool getEncoder(int j, double* v);
@@ -102,8 +79,7 @@ public:
     virtual bool getEncoderSpeeds(double* spds);
     virtual bool getEncoderAcceleration(int j, double* spds);
     virtual bool getEncoderAccelerations(double* accs);
-
     
 };
 
-#endif // HDEDRIVER_H
+#endif // HDEDCONTROLBOARDDRIVER_H

@@ -36,6 +36,7 @@ double HDEInterfaceModule::getPeriod()
 bool HDEInterfaceModule::updateModule()
 {
 
+    //Human-forces-provider 
     human::HumanForces *input_forces = forces_port.read();
     
     if(input_forces != NULL)
@@ -82,6 +83,9 @@ bool HDEInterfaceModule::updateModule()
     yarp::sig::Vector out;
     hde_ft_driver.read(out);
     yInfo() << out.toString();
+    
+    //Human-state-provider and Human-dynamics-estimation
+    
     
     return true;
 }
