@@ -136,6 +136,11 @@ bool HDEInterfaceModule::updateModule()
 bool HDEInterfaceModule::close()
 {
     yInfo() << "HDEInterfaceModule: Calling close function";
+    
+    yarp::os::Network::disconnect("/human-state-provider/state:o",state_port.getName().c_str());
+    yarp::os::Network::disconnect("/human-forces-provider/forces:o",forces_port.getName().c_str());
+    yarp::os::Network::disconnect("/human-dynamics-estimator/dynamicsEstimation:o",dynamics_port.getName().c_str());
+    
     hde_interface_rpc_port.close();
     return true;
 }
