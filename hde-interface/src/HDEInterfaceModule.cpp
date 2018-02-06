@@ -107,6 +107,9 @@ bool HDEInterfaceModule::updateModule()
         {
             if(input_joint_dynamics.at(j).jointName == hde_controlboard_driver.getJointName(j))
             {
+                double joint_acceleration = input_joint_dynamics.at(j).acceleration[0];
+                hde_controlboard_driver.setJointAcceleration(j,joint_acceleration);
+                
                 double joint_torque = input_joint_dynamics.at(j).torque[0];
                 hde_controlboard_driver.setJointTorque(j,joint_torque);
                 

@@ -109,4 +109,9 @@ void HDEControlBoardDriver::setJointVelocityVec(yarp::sig::Vector& vec)
     joint_velocities = vec;
 }
 
+void HDEControlBoardDriver::setJointAcceleration(int& i, double val)
+{
+    joint_accelerations[i] = val;
+}
+
 

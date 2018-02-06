@@ -36,6 +36,8 @@
 #include <yarp/os/Bottle.h>
 #include <yarp/os/ResourceFinder.h>
 #include <yarp/os/BufferedPort.h>
+#include <yarp/dev/Drivers.h>
+#include <yarp/dev/PolyDriver.h>
 
 #include <HDEForceTorqueDriver.h>
 #include <HDEControlBoardDriver.h>
@@ -108,6 +110,8 @@ public:
         
         hde_ft_driver.open(rf);
         hde_controlboard_driver.open(rf);
+        
+        yarp::dev::Drivers::factory().add(new yarp::dev::DriverCreatorOf<yarp::dev::HDEControlBoardDriver>("hde_controlboard", "controlboardwrapper2", "HDEControlBoardDriver"));
         
         return true;
     }

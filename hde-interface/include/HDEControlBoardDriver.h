@@ -61,6 +61,7 @@ private:
     yarp::sig::Vector joint_zero_positions;
     yarp::sig::Vector joint_positions;
     yarp::sig::Vector joint_velocities;
+    yarp::sig::Vector joint_accelerations;
     
     yarp::sig::Vector joint_torques;
     
@@ -91,8 +92,8 @@ public:
             joint_zero_positions.resize(number_of_dofs);
             joint_positions.resize(number_of_dofs);
             joint_velocities.resize(number_of_dofs);
+            joint_accelerations.resize(number_of_dofs);
             joint_torques.resize(number_of_dofs);
-        
             
         }
         
@@ -125,6 +126,7 @@ public:
     int getNumberOfDofs();
     void setJointPositionVec(yarp::sig::Vector& vec);
     void setJointVelocityVec(yarp::sig::Vector& vec);
+    void setJointAcceleration(int& i, double val);
     
     //Torque Control
     virtual bool setRefTorque(int j, double t);
