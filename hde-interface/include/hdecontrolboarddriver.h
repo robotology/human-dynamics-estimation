@@ -32,6 +32,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <list>
 #include <yarp/sig/Vector.h>
 #include <yarp/os/LogStream.h>
 #include <yarp/dev/DeviceDriver.h>
@@ -45,8 +46,6 @@ namespace yarp
     }
 }
 
-extern const unsigned number_of_dofs;
-
 class yarp::dev::HDEControlBoardDriver:
     public yarp::dev::DeviceDriver,
     public yarp::dev::IEncoders
@@ -54,9 +53,14 @@ class yarp::dev::HDEControlBoardDriver:
     
 private:
     
+    unsigned number_of_dofs;
+    std::list<std::string> joint_list;
+    
     yarp::sig::Vector joint_zero_positions;
     yarp::sig::Vector joint_positions;
     yarp::sig::Vector joint_velocities;
+    
+    yarp::sig::Vector joint_torques;
     
 public:
     
@@ -79,6 +83,10 @@ public:
     virtual bool getEncoderSpeeds(double* spds);
     virtual bool getEncoderAcceleration(int j, double* spds);
     virtual bool getEncoderAccelerations(double* accs);
+    
+    int getNumberOfDofs();
+    void setJointPositionVec(yarp::sig::Vector& vec);
+    void setJointVelocityVec(yarp::sig::Vector& vec);
     
 };
 

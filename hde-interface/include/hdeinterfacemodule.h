@@ -40,15 +40,19 @@
 #include <hdeftdriver.h>
 #include <hdecontrolboarddriver.h>
 #include <human-forces-provider/thrifts/HumanForces.h>
+#include <human-state-provider/thrifts/HumanState.h>
+#include <human-state-provider/thrifts/HumanStateProviderService.h>
+#include <human-dynamics-estimator/thrifts/HumanDynamics.h>
 
 class HDEInterfaceModule:public yarp::os::RFModule
 {
     yarp::os::RpcServer hde_interface_rpc_port;
-    yarp::os::BufferedPort<yarp::os::Bottle> state_port;
+    yarp::os::BufferedPort<human::HumanState> state_port;
     yarp::os::BufferedPort<human::HumanForces> forces_port;
     yarp::os::BufferedPort<yarp::os::Bottle> dynamics_port;
     
     yarp::dev::HDEFTDriver hde_ft_driver;
+    yarp::dev::HDEControlBoardDriver hde_controlboard_driver;
     
 public:
     

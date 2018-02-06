@@ -41,7 +41,7 @@ bool HDEInterfaceModule::updateModule()
     
     if(input_forces != NULL)
     {
-        yInfo() << input_forces->toString();
+        //yInfo() << input_forces->toString();
         human::HumanForces::Editor input_forces_editor(*input_forces);
 
         std::vector<human::Force6D> forces6d_vec = input_forces_editor.get_forces();
@@ -80,12 +80,26 @@ bool HDEInterfaceModule::updateModule()
         return false;
     }
     
-    yarp::sig::Vector out;
-    hde_ft_driver.read(out);
-    yInfo() << out.toString();
+    //yarp::sig::Vector out;
+    //hde_ft_driver.read(out);
+    //yInfo() << out.toString();
     
     //Human-state-provider and Human-dynamics-estimation
+    human::HumanState *input_state = state_port.read();
     
+    if(input_state->positions.size() == hde_controlboard_driver.getNumberOfDofs())
+    {
+        hde_controlboard_driver.setJointPositionVec(input_state->positions);
+        hde_controlboard_driver.setJointVelocityVec(input_state->velocities);
+    }
+    else
+    {
+        yError() << "HDEInterfaceModule: DoFs mismatch between the config file and human state port";
+        return false;
+    }
+    
+    //std::string dummy = input_state->get(1).asString();
+    //yInfo() << "Joint Positions: " << dummy;
     
     return true;
 }

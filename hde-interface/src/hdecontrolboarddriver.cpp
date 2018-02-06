@@ -36,6 +36,8 @@ HDEControlBoardDriver::HDEControlBoardDriver()
 
 bool HDEControlBoardDriver::open(yarp::os::Searchable& config)
 {
+    
+    number_of_dofs = 66; // config.find("number_of_dofs").asInt();
 
 }
 
@@ -54,11 +56,20 @@ bool HDEControlBoardDriver::getAxes(int *ax)
 }
 bool HDEControlBoardDriver::getEncoder(int j, double *v)
 {
+    if(v && j >= 0 && static_cast<std::size_t>(j) < number_of_dofs)
+    {
+        *v = joint_positions[j];
+    }
     return true;
 }
 
 bool HDEControlBoardDriver::getEncoders(double *encs)
 {
+    if(!encs) return false;
+    for(std::size_t i = 0; i < number_of_dofs; i++)
+    {
+        encs[i] = joint_positions[i];
+    }
     return true;
 }
 
@@ -101,3 +112,20 @@ bool HDEControlBoardDriver::getEncoderAccelerations(double *accs)
 {
     return true;
 }
+
+int HDEControlBoardDriver::getNumberOfDofs()
+{
+    return number_of_dofs;
+}
+
+void HDEControlBoardDriver::setJointPositionVec(yarp::sig::Vector& vec)
+{
+    joint_positions = vec;
+}
+
+void HDEControlBoardDriver::setJointVelocityVec(yarp::sig::Vector& vec)
+{
+    joint_velocities = vec;
+}
+
+
