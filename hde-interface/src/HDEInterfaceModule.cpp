@@ -36,6 +36,7 @@ double HDEInterfaceModule::getPeriod()
 bool HDEInterfaceModule::updateModule()
 {
 
+    /*
     //Human-forces-provider 
     human::HumanForces *input_forces = forces_port.read();
     
@@ -79,6 +80,8 @@ bool HDEInterfaceModule::updateModule()
         return false;
     }
 
+    */
+    
     //Human-state-provider
     human::HumanState *input_state = state_port.read();
 
@@ -106,6 +109,7 @@ bool HDEInterfaceModule::updateModule()
             {
                 double joint_torque = input_joint_dynamics.at(j).torque[0];
                 hde_controlboard_driver.setJointTorque(j,joint_torque);
+                
             }
             else
             {
