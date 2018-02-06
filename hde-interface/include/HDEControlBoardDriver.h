@@ -142,10 +142,7 @@ public:
     virtual bool getTorqueRanges(double *min, double *max);
     virtual bool getMotorTorqueParams(int j,  yarp::dev::MotorTorqueParameters *params);
     virtual bool setMotorTorqueParams(int j, const yarp::dev::MotorTorqueParameters params);
-    
-    bool checkIfTorqueIsValid(const double* torques) const;
-    bool checkIfTorqueIsValid(double torques) const;
-    
+       
     void setJointTorque(int& i,double tau);
     
 };

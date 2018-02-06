@@ -62,11 +62,19 @@ bool HDEControlBoardDriver::getRefTorques(double* t)
 
 bool HDEControlBoardDriver::getTorque(int j, double* t)
 {
-    return true;
+     if (t && j >= 0 && static_cast<size_t>(j) < number_of_dofs) {
+        *t = joint_torques[j];
+        return true;
+    }
+    else return false;
 }
 
 bool HDEControlBoardDriver::getTorques(double* t)
 {
+    if (!t) return false;
+    for (size_t j = 0; j < number_of_dofs; ++j) {
+        t[j] = joint_torques[j];
+    }
     return true;
 }
 
@@ -98,16 +106,6 @@ bool HDEControlBoardDriver::getMotorTorqueParams(int ,  yarp::dev::MotorTorquePa
 bool HDEControlBoardDriver::setMotorTorqueParams(int , const yarp::dev::MotorTorqueParameters)
 {
     return false;
-}
-
-bool HDEControlBoardDriver::checkIfTorqueIsValid(const double* torques) const
-{
-    return true;
-}
-
-bool HDEControlBoardDriver::checkIfTorqueIsValid(double torque) const
-{
-    return true;
 }
 
 void HDEControlBoardDriver::setJointTorque(int& i,double tau)
