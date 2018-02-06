@@ -86,7 +86,7 @@ bool HDEInterfaceModule::updateModule()
     
     //Human-state-provider and Human-dynamics-estimation
     human::HumanState *input_state = state_port.read();
-    
+
     if(input_state->positions.size() == hde_controlboard_driver.getNumberOfDofs())
     {
         hde_controlboard_driver.setJointPositionVec(input_state->positions);
@@ -97,10 +97,7 @@ bool HDEInterfaceModule::updateModule()
         yError() << "HDEInterfaceModule: DoFs mismatch between the config file and human state port";
         return false;
     }
-    
-    //std::string dummy = input_state->get(1).asString();
-    //yInfo() << "Joint Positions: " << dummy;
-    
+        
     return true;
 }
 

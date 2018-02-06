@@ -107,6 +107,7 @@ public:
         }
         
         hde_ft_driver.open(rf);
+        hde_controlboard_driver.open(rf);
         
         return true;
     }

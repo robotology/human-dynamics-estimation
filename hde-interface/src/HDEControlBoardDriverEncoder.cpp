@@ -36,9 +36,8 @@ HDEControlBoardDriver::HDEControlBoardDriver()
 
 bool HDEControlBoardDriver::open(yarp::os::Searchable& config)
 {
-    
     number_of_dofs = 66; // config.find("number_of_dofs").asInt();
-
+    return true;
 }
 
 bool HDEControlBoardDriver::close()
