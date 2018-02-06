@@ -37,6 +37,7 @@
 #include <yarp/os/LogStream.h>
 #include <yarp/dev/DeviceDriver.h>
 #include <yarp/dev/IEncoders.h>
+#include <yarp/dev/ITorqueControl.h>
 
 namespace yarp
 {
@@ -48,7 +49,8 @@ namespace yarp
 
 class yarp::dev::HDEControlBoardDriver:
     public yarp::dev::DeviceDriver,
-    public yarp::dev::IEncoders
+    public yarp::dev::IEncoders,
+    public yarp::dev::ITorqueControl
 {
     
 private:
@@ -64,13 +66,21 @@ private:
     
 public:
     
-    HDEControlBoardDriver();
-    virtual ~HDEControlBoardDriver();
-        
+    HDEControlBoardDriver() {};
+    ~HDEControlBoardDriver() {};
+
     //Device Driver
-    virtual bool open(yarp::os::Searchable& config);
-    virtual bool close();
-        
+    bool open(yarp::os::Searchable& config)
+    {
+        number_of_dofs = 66; // config.find("number_of_dofs").asInt();
+        return true;
+    }
+
+    bool close()
+    {
+        return yarp::dev::DeviceDriver::close();
+    }
+    
     //Encoders
     virtual bool getAxes(int *ax);
     virtual bool getEncoder(int j, double* v);
@@ -87,6 +97,26 @@ public:
     int getNumberOfDofs();
     void setJointPositionVec(yarp::sig::Vector& vec);
     void setJointVelocityVec(yarp::sig::Vector& vec);
+    
+    //Torque Control
+    virtual bool setRefTorque(int j, double t);
+    virtual bool setRefTorques(const double *t);
+    virtual bool setTorqueMode();
+    virtual bool getRefTorque(int j, double *t);
+    virtual bool getRefTorques(double *t);
+    virtual bool setRefTorques(const int n_joint, const int *joints, const double *t);
+    virtual bool getTorque(int j, double *t);
+    virtual bool getTorques(double *t);
+
+    virtual bool getBemfParam(int j, double *bemf);
+    virtual bool setBemfParam(int j, double bemf);
+    virtual bool getTorqueRange(int j, double *min, double *max);
+    virtual bool getTorqueRanges(double *min, double *max);
+    virtual bool getMotorTorqueParams(int j,  yarp::dev::MotorTorqueParameters *params);
+    virtual bool setMotorTorqueParams(int j, const yarp::dev::MotorTorqueParameters params);
+    
+    bool checkIfTorqueIsValid(const double* torques) const;
+    bool checkIfTorqueIsValid(double torques) const;
     
 };
 

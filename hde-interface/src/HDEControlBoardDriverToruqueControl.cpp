@@ -30,83 +30,82 @@
 
 using namespace yarp::dev;
 
-bool HDEControlBoardDriver::getAxes(int *ax)
+bool HDEControlBoardDriver::setRefTorque(int j, double t)
 {
     return true;
 }
 
-bool HDEControlBoardDriver::getEncoder(int j, double *v)
-{
-    if(v && j >= 0 && static_cast<std::size_t>(j) < number_of_dofs)
-    {
-        *v = joint_positions[j];
-    }
-    return true;
-}
-
-bool HDEControlBoardDriver::getEncoders(double *encs)
-{
-    if(!encs) return false;
-    for(std::size_t i = 0; i < number_of_dofs; i++)
-    {
-        encs[i] = joint_positions[i];
-    }
-    return true;
-}
-
-bool HDEControlBoardDriver::resetEncoder(int j)
+bool HDEControlBoardDriver::setRefTorques(const double* t)
 {
     return true;
 }
 
-bool HDEControlBoardDriver::resetEncoders()
+bool HDEControlBoardDriver::setRefTorques(const int n_joint, const int *joints, const double *t)
 {
     return true;
 }
 
-bool HDEControlBoardDriver::setEncoder(int j, double val)
+bool HDEControlBoardDriver::setTorqueMode()
 {
     return true;
 }
 
-bool HDEControlBoardDriver::setEncoders(const  double *vals)
+bool HDEControlBoardDriver::getRefTorque(int j, double* t)
 {
     return true;
 }
 
-bool HDEControlBoardDriver::getEncoderSpeed(int j, double *sp)
+bool HDEControlBoardDriver::getRefTorques(double* t)
 {
     return true;
 }
 
-bool HDEControlBoardDriver::getEncoderSpeeds(double *spds)
+bool HDEControlBoardDriver::getTorque(int j, double* t)
 {
     return true;
 }
 
-bool HDEControlBoardDriver::getEncoderAcceleration(int j, double *spds)
+bool HDEControlBoardDriver::getTorques(double* t)
 {
     return true;
 }
 
-bool HDEControlBoardDriver::getEncoderAccelerations(double *accs)
+bool HDEControlBoardDriver::getTorqueRange(int, double*, double *)
+{
+    return false;
+}
+
+bool HDEControlBoardDriver::getTorqueRanges(double *, double *)
+{
+    return false;
+}
+
+bool HDEControlBoardDriver::getBemfParam(int , double *)
+{
+    return false;
+}
+
+bool HDEControlBoardDriver::setBemfParam(int , double )
+{
+    return false;
+}
+
+bool HDEControlBoardDriver::getMotorTorqueParams(int ,  yarp::dev::MotorTorqueParameters *)
+{
+    return false;
+}
+
+bool HDEControlBoardDriver::setMotorTorqueParams(int , const yarp::dev::MotorTorqueParameters)
+{
+    return false;
+}
+
+bool HDEControlBoardDriver::checkIfTorqueIsValid(const double* torques) const
 {
     return true;
 }
 
-int HDEControlBoardDriver::getNumberOfDofs()
+bool HDEControlBoardDriver::checkIfTorqueIsValid(double torque) const
 {
-    return number_of_dofs;
+    return true;
 }
-
-void HDEControlBoardDriver::setJointPositionVec(yarp::sig::Vector& vec)
-{
-    joint_positions = vec;
-}
-
-void HDEControlBoardDriver::setJointVelocityVec(yarp::sig::Vector& vec)
-{
-    joint_velocities = vec;
-}
-
-
