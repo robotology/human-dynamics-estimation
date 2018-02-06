@@ -41,7 +41,6 @@ bool HDEInterfaceModule::updateModule()
     
     if(input_forces != NULL)
     {
-        //yInfo() << input_forces->toString();
         human::HumanForces::Editor input_forces_editor(*input_forces);
 
         std::vector<human::Force6D> forces6d_vec = input_forces_editor.get_forces();
@@ -79,11 +78,7 @@ bool HDEInterfaceModule::updateModule()
         yError() << "HDEInterfaceModule: Failed to read forces port";
         return false;
     }
-    
-    //yarp::sig::Vector out;
-    //hde_ft_driver.read(out);
-    //yInfo() << out.toString();
-    
+
     //Human-state-provider
     human::HumanState *input_state = state_port.read();
 
