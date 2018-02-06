@@ -26,18 +26,18 @@
  * 
  */
 
-#include "hdeftdriver.h"
+#include "HDEForceTorqueDriver.h"
 
 using namespace yarp::dev;
 
 const unsigned ForceTorqueChannelsNumber = 6;
 
-HDEFTDriver::HDEFTDriver()
+HDEForeceTorqueDriver::HDEForeceTorqueDriver()
 {
 
 }
 
-bool HDEFTDriver::open(yarp::os::Searchable& config)
+bool HDEForeceTorqueDriver::open(yarp::os::Searchable& config)
 {
     number_of_sensors = config.find("number_of_sensors").asInt();
     number_of_channels = number_of_sensors*ForceTorqueChannelsNumber;
@@ -62,7 +62,7 @@ bool HDEFTDriver::open(yarp::os::Searchable& config)
     return true;
 }
 
-int HDEFTDriver::read(yarp::sig::Vector& out)
+int HDEForeceTorqueDriver::read(yarp::sig::Vector& out)
 {
     if(force_torque_vector.size() != number_of_channels)
     {
@@ -82,57 +82,57 @@ int HDEFTDriver::read(yarp::sig::Vector& out)
     return AS_OK;
 }
 
-bool HDEFTDriver::close()
+bool HDEForeceTorqueDriver::close()
 {
     return yarp::dev::DeviceDriver::close();
 }
 
-int HDEFTDriver::getChannels()
+int HDEForeceTorqueDriver::getChannels()
 {
     return number_of_channels;
 }
 
-int HDEFTDriver::getState(int)
+int HDEForeceTorqueDriver::getState(int)
 {
     return AS_OK;
 }
 
-int HDEFTDriver::calibrateSensor()
+int HDEForeceTorqueDriver::calibrateSensor()
 {
     return AS_OK;
 }
 
-int HDEFTDriver::calibrateSensor(const yarp::sig::Vector&)
+int HDEForeceTorqueDriver::calibrateSensor(const yarp::sig::Vector&)
 {
     return AS_OK;
 }
 
-int HDEFTDriver::calibrateChannel(int)
+int HDEForeceTorqueDriver::calibrateChannel(int)
 {
     return AS_OK;
 }
 
-int HDEFTDriver::calibrateChannel(int, double)
+int HDEForeceTorqueDriver::calibrateChannel(int, double)
 {
     return AS_OK;
 }
 
-int HDEFTDriver::getTotalSensorsSize()
+int HDEForeceTorqueDriver::getTotalSensorsSize()
 {
     return number_of_sensors;
 };
     
-std::string HDEFTDriver::getFTFrameName(int& i)
+std::string HDEForeceTorqueDriver::getFTFrameName(int& i)
 { 
     return ft_frame_names.at(i);
 };
     
-void HDEFTDriver::setFTValues(double u,int pos)
+void HDEForeceTorqueDriver::setFTValues(double u,int pos)
 {
     force_torque_vector[pos] = u;
 };
 
-HDEFTDriver::~HDEFTDriver()
+HDEForeceTorqueDriver::~HDEForeceTorqueDriver()
 {
 
 }

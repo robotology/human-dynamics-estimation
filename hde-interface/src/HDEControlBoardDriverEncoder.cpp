@@ -26,7 +26,7 @@
  * 
  */
 
-#include "hdecontrolboarddriver.h"
+#include "HDEControlBoardDriver.h"
 
 using namespace yarp::dev;
 

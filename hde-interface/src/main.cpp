@@ -1,4 +1,4 @@
-#include <hdeinterfacemodule.h>
+#include <HDEInterfaceModule.h>
 
 int main(int argc, char **argv) {
     

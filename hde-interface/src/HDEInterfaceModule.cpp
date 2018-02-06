@@ -26,7 +26,7 @@
  * 
  */
 
-#include "hdeinterfacemodule.h"
+#include "HDEInterfaceModule.h"
 
 double HDEInterfaceModule::getPeriod()
 {

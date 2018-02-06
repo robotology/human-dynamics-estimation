@@ -26,8 +26,8 @@
  * 
  */
 
-#ifndef HDEFTDRIVER_H
-#define HDEFTDRIVER_H
+#ifndef HDEFORCETORQUEDRIVER_H
+#define HDEFORCETORQUEDRIVER_H
 
 #include <iostream>
 #include <string>
@@ -41,13 +41,13 @@ namespace yarp
 {
     namespace dev
     {
-        class HDEFTDriver;
+        class HDEForeceTorqueDriver;
     }
 }
 
 extern const unsigned ForceTorqueChannelsNumber;
 
-class yarp::dev::HDEFTDriver:
+class yarp::dev::HDEForeceTorqueDriver:
     public yarp::dev::DeviceDriver,
     public yarp::dev::IAnalogSensor
 {
@@ -64,8 +64,8 @@ private:
     
 public:
     
-    HDEFTDriver();
-    virtual ~HDEFTDriver();
+    HDEForeceTorqueDriver();
+    virtual ~HDEForeceTorqueDriver();
         
     //Device Driver
     virtual bool open(yarp::os::Searchable& config);
@@ -86,4 +86,4 @@ public:
         
 };
 
-#endif // HDEFTDRIVER_H
+#endif // HDEFORCETORQUEDRIVER_H

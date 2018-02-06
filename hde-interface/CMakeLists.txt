@@ -12,8 +12,8 @@ yarp_idl_to_dir("../human-dynamics-estimator/thrifts/HumanDynamics.thrift" "${CM
 
 
 
-set(hde_interface_headers include/hdeinterfacemodule.h include/hdeftdriver.h include/hdecontrolboarddriver.h)
-set(hde_interface_sources src/main.cpp src/hdeinterfacemodule.cpp src/hdeftdriver.cpp src/hdecontrolboarddriver.cpp)
+set(hde_interface_headers include/HDEInterfaceModule.h include/HDEForceTorqueDriver.h include/HDEControlBoardDriver.h)
+set(hde_interface_sources src/main.cpp src/HDEInterfaceModule.cpp src/HDEForceTorqueDriver.cpp src/HDEControlBoardDriverEncoder.cpp)
 
 include_directories(${YARP_INCLUDE_DIRS} 
                     ${THRIFT_FT_INCLUDE_DIRS} 
