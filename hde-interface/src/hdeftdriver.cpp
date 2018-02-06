@@ -84,7 +84,7 @@ int HDEFTDriver::read(yarp::sig::Vector& out)
 
 bool HDEFTDriver::close()
 {
-    return true;
+    return yarp::dev::DeviceDriver::close();
 }
 
 int HDEFTDriver::getChannels()
