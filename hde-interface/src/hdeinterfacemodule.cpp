@@ -40,6 +40,7 @@ bool HDEInterfaceModule::updateModule()
     
     if(input_forces != NULL)
     {
+        yInfo() << input_forces->toString();
         human::HumanForces::Editor input_forces_editor(*input_forces);
 
         std::vector<human::Force6D> forces6d_vec = input_forces_editor.get_forces();
@@ -49,17 +50,17 @@ bool HDEInterfaceModule::updateModule()
             human::Force6D::Editor *force6d_editor;
             force6d_editor = new human::Force6D::Editor(forces6d_vec.at(i));
             
-            if(force6d_editor->get_expressedFrame() == hde_driver.getFTFrameName(i))
+            if(force6d_editor->get_expressedFrame() == hde_ft_driver.getFTFrameName(i))
             {   
                 int index = 6*(i+1);
                 
-                hde_driver.setFTValues(force6d_editor->get_fx(),index-6);
-                hde_driver.setFTValues(force6d_editor->get_fy(),index-5);
-                hde_driver.setFTValues(force6d_editor->get_fz(),index-4);
+                hde_ft_driver.setFTValues(force6d_editor->get_fx(),index-6);
+                hde_ft_driver.setFTValues(force6d_editor->get_fy(),index-5);
+                hde_ft_driver.setFTValues(force6d_editor->get_fz(),index-4);
             
-                hde_driver.setFTValues(force6d_editor->get_ux(),index-3);
-                hde_driver.setFTValues(force6d_editor->get_uy(),index-2);
-                hde_driver.setFTValues(force6d_editor->get_uz(),index-1);
+                hde_ft_driver.setFTValues(force6d_editor->get_ux(),index-3);
+                hde_ft_driver.setFTValues(force6d_editor->get_uy(),index-2);
+                hde_ft_driver.setFTValues(force6d_editor->get_uz(),index-1);
                 
             }
             else
@@ -77,6 +78,10 @@ bool HDEInterfaceModule::updateModule()
         yError() << "HDEInterfaceModule: Failed to read forces port";
         return false;
     }
+    
+    yarp::sig::Vector out;
+    hde_ft_driver.read(out);
+    yInfo() << out.toString();
     
     return true;
 }

@@ -26,78 +26,64 @@
  * 
  */
 
-#include "hdedriver.h"
+#ifndef HDEFTDRIVER_H
+#define HDEFTDRIVER_H
 
-using namespace yarp::dev;
+#include <iostream>
+#include <string>
+#include <vector>
+#include <yarp/os/LogStream.h>
+#include <yarp/dev/DeviceDriver.h>
+#include <yarp/dev/IAnalogSensor.h>
+#include <yarp/os/Semaphore.h>
 
-const unsigned ForceTorqueChannelsNumber = 6;
-
-int HDEDriver::read(yarp::sig::Vector& out)
+namespace yarp
 {
-    if(force_torque_vector.size() != number_of_channels)
+    namespace dev
     {
-        yError() << "HDEDriver: ForceTorqueVector size is not the same as the total number of channels";
-        return AS_ERROR;
+        class HDEFTDriver;
     }
+}
+
+extern const unsigned ForceTorqueChannelsNumber;
+
+class yarp::dev::HDEFTDriver:
+    public yarp::dev::DeviceDriver,
+    public yarp::dev::IAnalogSensor
+{
     
-    if(out.size() != number_of_channels)
-    {
-        out.resize(number_of_channels);
-    }
+private:
     
-    data_mutex.wait();
-    out = force_torque_vector;
-    data_mutex.post();
+    int number_of_sensors;
+    int number_of_channels;
     
-    return AS_OK;
-}
+    yarp::sig::Vector force_torque_vector;
+    std::vector<std::string> ft_frame_names;
 
-bool HDEDriver::close()
-{
-    return true;
-}
-
-int HDEDriver::getChannels()
-{
-    return number_of_channels;
-}
-
-int HDEDriver::getState(int)
-{
-    return AS_OK;
-}
-
-int HDEDriver::calibrateSensor()
-{
-    return AS_OK;
-}
-
-int HDEDriver::calibrateSensor(const yarp::sig::Vector&)
-{
-    return AS_OK;
-}
-
-int HDEDriver::calibrateChannel(int)
-{
-    return AS_OK;
-}
-
-int HDEDriver::calibrateChannel(int, double)
-{
-    return AS_OK;
-}
-
-int HDEDriver::getTotalSensorsSize()
-{
-    return number_of_sensors;
+    yarp::os::Semaphore data_mutex;
+    
+public:
+    
+    HDEFTDriver();
+    virtual ~HDEFTDriver();
+        
+    //Device Driver
+    virtual bool open(yarp::os::Searchable& config);
+    virtual bool close();
+    
+    //Analog Sensor
+    virtual int read(yarp::sig::Vector& out);
+    virtual int getState(int channel);
+    virtual int getChannels();
+    virtual int calibrateChannel(int channel,double v);
+    virtual int calibrateSensor();
+    virtual int calibrateSensor(const yarp::sig::Vector& value);
+    virtual int calibrateChannel(int channel);
+    
+    int getTotalSensorsSize();
+    std::string getFTFrameName(int& i);
+    void setFTValues(double u,int pos);
+        
 };
-    
-std::string HDEDriver::getFTFrameName(int& i)
-{ 
-    return ft_frame_names.at(i);
-};
-    
-void HDEDriver::setFTValues(double u,int pos)
-{
-    force_torque_vector[pos] = u;
-};
+
+#endif // HDEDRIVER_H

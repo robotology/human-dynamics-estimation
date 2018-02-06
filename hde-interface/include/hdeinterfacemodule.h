@@ -37,7 +37,7 @@
 #include <yarp/os/ResourceFinder.h>
 #include <yarp/os/BufferedPort.h>
 
-#include <hdedriver.h>
+#include <hdeftdriver.h>
 #include <human-forces-provider/thrifts/HumanForces.h>
 
 class HDEInterfaceModule:public yarp::os::RFModule
@@ -47,7 +47,7 @@ class HDEInterfaceModule:public yarp::os::RFModule
     yarp::os::BufferedPort<human::HumanForces> forces_port;
     yarp::os::BufferedPort<yarp::os::Bottle> dynamics_port;
     
-    yarp::dev::HDEDriver hde_driver;
+    yarp::dev::HDEFTDriver hde_ft_driver;
     
 public:
     
@@ -101,7 +101,7 @@ public:
             return false;
         }
         
-        hde_driver.open(rf);
+        hde_ft_driver.open(rf);
         
         return true;
     }
