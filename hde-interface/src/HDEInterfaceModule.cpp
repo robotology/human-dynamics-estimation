@@ -85,10 +85,10 @@ bool HDEInterfaceModule::updateModule()
     //Human-state-provider
     human::HumanState *input_state = state_port.read();
 
-    if(input_state->positions.size() == hde_controlboard_driver.getNumberOfDofs())
+    if(input_state->positions.size() == hde_controlboard_driver.number_of_dofs)
     {
-        hde_controlboard_driver.setJointPositionVec(input_state->positions);
-        hde_controlboard_driver.setJointVelocityVec(input_state->velocities);
+        hde_controlboard_driver.joint_positions = input_state->positions;
+        hde_controlboard_driver.joint_velocities = input_state->velocities;
     }
     else
     {
@@ -101,17 +101,17 @@ bool HDEInterfaceModule::updateModule()
     
     std::vector<human::JointDynamicsEstimation> input_joint_dynamics = input_dynamics->jointVariables;
     
-    if(input_joint_dynamics.size() == hde_controlboard_driver.getNumberOfDofs())
+    if(input_joint_dynamics.size() == hde_controlboard_driver.number_of_dofs)
     {
         for(int j = 0; j < input_joint_dynamics.size(); j++)
         {
             if(input_joint_dynamics.at(j).jointName == hde_controlboard_driver.getJointName(j))
             {
                 double joint_acceleration = input_joint_dynamics.at(j).acceleration[0];
-                hde_controlboard_driver.setJointAcceleration(j,joint_acceleration);
+                hde_controlboard_driver.joint_accelerations[j] = joint_acceleration;
                 
                 double joint_torque = input_joint_dynamics.at(j).torque[0];
-                hde_controlboard_driver.setJointTorque(j,joint_torque);
+                hde_controlboard_driver.joint_torques[j] = joint_torque;
                 
             }
             else

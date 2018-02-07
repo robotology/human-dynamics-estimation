@@ -94,24 +94,3 @@ bool HDEControlBoardDriver::getEncoderAccelerations(double *accs)
     return true;
 }
 
-int HDEControlBoardDriver::getNumberOfDofs()
-{
-    return number_of_dofs;
-}
-
-void HDEControlBoardDriver::setJointPositionVec(yarp::sig::Vector& vec)
-{
-    joint_positions = vec;
-}
-
-void HDEControlBoardDriver::setJointVelocityVec(yarp::sig::Vector& vec)
-{
-    joint_velocities = vec;
-}
-
-void HDEControlBoardDriver::setJointAcceleration(int& i, double val)
-{
-    joint_accelerations[i] = val;
-}
-
-

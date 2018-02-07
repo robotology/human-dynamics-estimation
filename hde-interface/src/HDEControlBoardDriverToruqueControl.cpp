@@ -109,8 +109,3 @@ bool HDEControlBoardDriver::setMotorTorqueParams(int , const yarp::dev::MotorTor
 {
     return false;
 }
-
-void HDEControlBoardDriver::setJointTorque(int& i,double tau)
-{
-    joint_torques[i] = tau;
-}

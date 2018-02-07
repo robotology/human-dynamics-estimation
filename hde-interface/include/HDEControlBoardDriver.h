@@ -55,7 +55,9 @@ class yarp::dev::HDEControlBoardDriver:
     
 private:
     
-    unsigned number_of_dofs;
+public:
+    
+    int number_of_dofs;
     std::vector<std::string> joint_name_list;
     
     yarp::sig::Vector joint_zero_positions;
@@ -64,8 +66,6 @@ private:
     yarp::sig::Vector joint_accelerations;
     
     yarp::sig::Vector joint_torques;
-    
-public:
     
     HDEControlBoardDriver() {};
     ~HDEControlBoardDriver() {};
@@ -123,11 +123,6 @@ public:
     virtual bool getEncoderAcceleration(int j, double* spds);
     virtual bool getEncoderAccelerations(double* accs);
     
-    int getNumberOfDofs();
-    void setJointPositionVec(yarp::sig::Vector& vec);
-    void setJointVelocityVec(yarp::sig::Vector& vec);
-    void setJointAcceleration(int& i, double val);
-    
     //Torque Control
     virtual bool setRefTorque(int j, double t);
     virtual bool setRefTorques(const double *t);
@@ -144,8 +139,6 @@ public:
     virtual bool getTorqueRanges(double *min, double *max);
     virtual bool getMotorTorqueParams(int j,  yarp::dev::MotorTorqueParameters *params);
     virtual bool setMotorTorqueParams(int j, const yarp::dev::MotorTorqueParameters params);
-       
-    void setJointTorque(int& i,double tau);
     
 };
 
