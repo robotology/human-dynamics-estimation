@@ -36,7 +36,9 @@
 #include <yarp/sig/Vector.h>
 #include <yarp/os/LogStream.h>
 #include <yarp/dev/DeviceDriver.h>
-#include <yarp/dev/IEncoders.h>
+#include <yarp/dev/IPositionControl.h>
+#include <yarp/dev/IVelocityControl.h>
+#include <yarp/dev/IEncodersTimed.h>
 #include <yarp/dev/ITorqueControl.h>
 
 namespace yarp
@@ -50,7 +52,9 @@ namespace yarp
 
 class yarp::dev::HDEControlBoardDriver:
     public yarp::dev::DeviceDriver,
-    public yarp::dev::IEncoders,
+    public yarp::dev::IPositionControl,
+    public yarp::dev::IVelocityControl,
+    public yarp::dev::IEncodersTimed,
     public yarp::dev::ITorqueControl
 {
     
@@ -121,35 +125,61 @@ public:
         return yarp::dev::DeviceDriver::close();
     }
     
+    //Position Control
+    bool stop() override;
+    bool stop(int j) override;
+    bool getAxes(int *ax) override;
+    bool positionMove(int j, double ref) override;
+    bool positionMove(const double* refs) override;
+    bool setRefSpeed(int j, double sp) override;
+    bool setRefSpeeds(const double* spds) override;
+    bool getRefSpeed(int j, double* ref) override;
+    bool getRefSpeeds(double* spds) override;
+    bool relativeMove(int j, double delta) override;
+    bool relativeMove(const double* deltas) override;
+    bool checkMotionDone(int j, bool* flag) override;
+    bool checkMotionDone(bool* flag) override;
+    
+    //Velocity Control
+    bool velocityMove(int j, double sp) override;
+    bool velocityMove(const double* sp) override;
+    bool setRefAcceleration(int j, double acc) override;
+    bool setRefAccelerations(const double* accs) override;
+    bool getRefAcceleration(int j, double* acc) override;
+    bool getRefAccelerations(double* accs) override;
+    
     //Encoders
-    virtual bool getAxes(int *ax);
-    virtual bool getEncoder(int j, double* v);
-    virtual bool getEncoders(double* encs);
-    virtual bool resetEncoder(int j);
-    virtual bool resetEncoders();
-    virtual bool setEncoder(int j, double val);
-    virtual bool setEncoders(const double* vals);
-    virtual bool getEncoderSpeed(int j, double* sp);
-    virtual bool getEncoderSpeeds(double* spds);
-    virtual bool getEncoderAcceleration(int j, double* spds);
-    virtual bool getEncoderAccelerations(double* accs);
+    bool getEncoder(int j, double* v) override;
+    bool getEncoders(double* encs) override;
+    bool resetEncoder(int j) override;
+    bool resetEncoders() override;
+    bool setEncoder(int j, double val) override;
+    bool setEncoders(const double* vals) override;
+    bool getEncoderSpeed(int j, double* sp) override;
+    bool getEncoderSpeeds(double* spds) override;
+    bool getEncoderAcceleration(int j, double* spds) override;
+    bool getEncoderAccelerations(double* accs) override;
+    
+    //Encoders Timed
+    bool getEncoderTimed(int j, double* encs, double* time) override;
+    bool getEncodersTimed(double* encs, double* time) override;
     
     //Torque Control
-    virtual bool setRefTorque(int j, double t);
-    virtual bool setRefTorques(const double *t);
-    virtual bool setTorqueMode();
-    virtual bool getRefTorque(int j, double *t);
-    virtual bool getRefTorques(double *t);
-    virtual bool setRefTorques(const int n_joint, const int *joints, const double *t);
-    virtual bool getTorque(int j, double *t);
-    virtual bool getTorques(double *t);
+    bool setRefTorque(int j, double t) override;
+    bool setRefTorques(const double *t) override;
+    bool setTorqueMode();
+    bool getRefTorque(int j, double *t) override;
+    bool getRefTorques(double *t) override;
+    bool setRefTorques(const int n_joint, const int *joints, const double *t) override;
+    bool getTorque(int j, double *t) override;
+    bool getTorques(double *t) override;
 
-    virtual bool getBemfParam(int j, double *bemf);
-    virtual bool setBemfParam(int j, double bemf);
-    virtual bool getTorqueRange(int j, double *min, double *max);
-    virtual bool getTorqueRanges(double *min, double *max);
-    virtual bool getMotorTorqueParams(int j,  yarp::dev::MotorTorqueParameters *params);
-    virtual bool setMotorTorqueParams(int j, const yarp::dev::MotorTorqueParameters params);
+    bool getBemfParam(int j, double *bemf);
+    bool setBemfParam(int j, double bemf);
+    bool getTorqueRange(int j, double *min, double *max);
+    bool getTorqueRanges(double *min, double *max);
+    bool getMotorTorqueParams(int j,  yarp::dev::MotorTorqueParameters *params);
+    bool setMotorTorqueParams(int j, const yarp::dev::MotorTorqueParameters params);
     
 };
 

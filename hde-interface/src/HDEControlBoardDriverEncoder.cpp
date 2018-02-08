@@ -30,11 +30,6 @@
 
 using namespace yarp::dev;
 
-bool HDEControlBoardDriver::getAxes(int *ax)
-{
-    return true;
-}
-
 bool HDEControlBoardDriver::getEncoder(int j, double *v)
 {
     if(v && j >= 0 && static_cast<std::size_t>(j) < number_of_dofs)
@@ -56,41 +51,50 @@ bool HDEControlBoardDriver::getEncoders(double *encs)
 
 bool HDEControlBoardDriver::resetEncoder(int j)
 {
-    return true;
+    return false;
 }
 
 bool HDEControlBoardDriver::resetEncoders()
 {
-    return true;
+    return false;
 }
 
 bool HDEControlBoardDriver::setEncoder(int j, double val)
 {
-    return true;
+    return false;
 }
 
 bool HDEControlBoardDriver::setEncoders(const  double *vals)
 {
-    return true;
+    return false;
 }
 
 bool HDEControlBoardDriver::getEncoderSpeed(int j, double *sp)
 {
-    return true;
+    return false;
 }
 
 bool HDEControlBoardDriver::getEncoderSpeeds(double *spds)
 {
-    return true;
+    return false;
 }
 
 bool HDEControlBoardDriver::getEncoderAcceleration(int j, double *spds)
 {
-    return true;
+    return false;
 }
 
 bool HDEControlBoardDriver::getEncoderAccelerations(double *accs)
 {
-    return true;
+    return false;
 }
 
+bool HDEControlBoardDriver::getEncoderTimed(int j, double* encs, double* time)
+{
+    return false;
+}
+
+bool HDEControlBoardDriver::getEncodersTimed(double* encs, double* time)
+{
+    return false;
+}

@@ -30,7 +30,7 @@
 
 double HDEInterfaceModule::getPeriod()
 {
-    return 1;
+    return 0.01;
 }
 
 HDEInterfaceModule::HDEInterfaceModule(): iWrapper(0) {}
@@ -123,12 +123,12 @@ bool HDEInterfaceModule::configure(yarp::os::ResourceFinder& rf)
     wrapper_parameters.put("device","controlboardwrapper2");
     //wrapper_parameters.put("subdevice","hde_controlboard");
     
-    wrapper_parameters.put("joints",66);
+    wrapper_parameters.put("joints",3);
     
     yarp::os::Value dummy;
     dummy.fromString("(HDE)");
     wrapper_parameters.put("networks", dummy);
-    dummy.fromString("(0 65 0 65)");
+    dummy.fromString("(0 2 0 2)");
     wrapper_parameters.put("HDE",dummy);
     
     wrapper.open(wrapper_parameters);
