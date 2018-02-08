@@ -123,12 +123,12 @@ bool HDEInterfaceModule::configure(yarp::os::ResourceFinder& rf)
     wrapper_parameters.put("device","controlboardwrapper2");
     //wrapper_parameters.put("subdevice","hde_controlboard");
     
-    wrapper_parameters.put("joints",3);
+    wrapper_parameters.put("joints",66);
     
     yarp::os::Value dummy;
     dummy.fromString("(HDE)");
     wrapper_parameters.put("networks", dummy);
-    dummy.fromString("(0 2 0 2)");
+    dummy.fromString("(0 65 0 65)");
     wrapper_parameters.put("HDE",dummy);
     
     wrapper.open(wrapper_parameters);
@@ -217,6 +217,7 @@ bool HDEInterfaceModule::updateModule()
     if(input_state->positions.size() == hde_controlboard_driver_ptr->number_of_dofs)
     {
         //hde_cb_interface->setPosAndVel(input_state->positions, input_state->velocities);
+        yInfo() << "Joint Positions: " << input_state->positions.toString();
         hde_controlboard_driver_ptr->joint_positions = input_state->positions;
         yInfo() << "Actual Value: " << input_state->positions[9];
         hde_controlboard_driver_ptr->joint_velocities = input_state->velocities;
@@ -257,17 +258,6 @@ bool HDEInterfaceModule::updateModule()
         yError() << "HDEInterfaceModule: DoFs mismatch between config file and human joint dynamics";
         return false;
     }
-    
-    double v1;
-    hde_controlboard_driver_ptr->getEncoder(9,&v1);
-    yInfo() << "Stored Value: " << v1;
-    
-    
-    /*double v = 10;
-    yarp::dev::IEncoders *ienc;
-    hde_controlboard_driver_device.view(ienc);
-    ienc->getEncoder(9,&v);
-    yInfo() << "Value v:" << v;*/
     
     return true;
 }
