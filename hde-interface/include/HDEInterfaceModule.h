@@ -38,6 +38,8 @@
 #include <yarp/os/BufferedPort.h>
 #include <yarp/dev/Drivers.h>
 #include <yarp/dev/PolyDriver.h>
+#include <yarp/dev/PolyDriverList.h>
+#include <yarp/dev/Wrapper.h>
 
 #include <HDEForceTorqueDriver.h>
 #include <HDEControlBoardDriver.h>
@@ -45,6 +47,12 @@
 #include <human-state-provider/thrifts/HumanState.h>
 #include <human-state-provider/thrifts/HumanStateProviderService.h>
 #include <human-dynamics-estimator/thrifts/HumanDynamics.h>
+
+namespace yarp {
+    namespace dev {
+        class IMultipleWrapper;
+    }
+}
 
 class HDEInterfaceModule:public yarp::os::RFModule
 {
@@ -54,78 +62,26 @@ class HDEInterfaceModule:public yarp::os::RFModule
     yarp::os::BufferedPort<human::HumanDynamics> dynamics_port;
     
     yarp::dev::HDEForeceTorqueDriver hde_ft_driver;
-    yarp::dev::HDEControlBoardDriver hde_controlboard_driver;
+    //yarp::dev::HDEControlBoardDriver hde_controlboard_driver;
+    //yarp::dev::HDEControlBoardInterface* hde_cb_interface;
     
 public:
     
-    bool configure(yarp::os::ResourceFinder& rf)
-    {
-        if(!yarp::os::Network::initialized())
-            yarp::os::Network::init();
-        
-        if(hde_interface_rpc_port.open("/hde-interface/rpc:i"))
-            attach(hde_interface_rpc_port);
-        
-        if(state_port.open("/hde-interface/state:i"))
-        {
-            if(!yarp::os::Network::connect("/human-state-provider/state:o",state_port.getName().c_str()))
-            {
-                yError() << "HDEInterfaceModule: Failed to connect /human-state-provider/state:o and /hde-interface/state:i ports";
-                return false;
-            }
-        }
-        else
-        {
-            yError() << "HDEInterfaceModule: Failed to open /hde-interface/state:i port";
-            return false;
-        }
-        
-        if(forces_port.open("/hde-interface/forces:i"))
-        {
-            if(!yarp::os::Network::connect("/human-forces-provider/forces:o",forces_port.getName().c_str()))
-            {
-                yError() << "HDEInterfaceModule: Failed to connect /human-forces-provider/forces:o and /hde-interface/forces:i ports";
-                return false;
-            }
-        }
-        else
-        {
-            yError() << "HDEInterfaceModule: Failed to open /hde-interface/forces:i port";
-            return false;
-        }
-        
-        if(dynamics_port.open("/hde-interface/dynamicsEstimation:i"))
-        {
-            if(!yarp::os::Network::connect("/human-dynamics-estimator/dynamicsEstimation:o",dynamics_port.getName().c_str()))
-            {
-                yError() << "HDEInterfaceModule: Failed to connect /human-dynamics-estimator/dynamicsEstimation:o and /hde-interface/dynamicsEstimation:i ports";
-                return false;
-            }
-        }
-        else
-        {
-            yError() << "HDEInterfaceModule: Failed to open /hde-interface/dynamicsEstimation:i port";
-            return false;
-        }
-        
-        hde_ft_driver.open(rf);
-        hde_controlboard_driver.open(rf);
-        
-        yarp::dev::Drivers::factory().add(new yarp::dev::DriverCreatorOf<yarp::dev::HDEControlBoardDriver>("hde_controlboard", "controlboardwrapper2", "HDEControlBoardDriver"));
-        
-        return true;
-    }
+    yarp::dev::IMultipleWrapper* iWrapper;
     
-    bool respond(const yarp::os::Bottle& command, yarp::os::Bottle& reply)
-    {
-        if (command.get(0).asString()=="quit")
-            return false;     
-        else
-            reply=command;
-        
-        return true;
-    }
+    yarp::dev::PolyDriver wrapper;
+    yarp::os::Property wrapper_parameters;
     
+    yarp::dev::PolyDriver hde_controlboard_driver;
+    yarp::os::Property driver_parameters;
+    
+    yarp::dev::PolyDriverList driver_list;
+    
+    HDEInterfaceModule();
+    virtual ~HDEInterfaceModule();
+    
+    bool respond(const yarp::os::Bottle& command, yarp::os::Bottle& reply);
+    bool configure(yarp::os::ResourceFinder& rf);
     bool interruptModule();
     bool close();
     double getPeriod();

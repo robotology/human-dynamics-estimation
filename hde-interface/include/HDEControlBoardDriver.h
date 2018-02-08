@@ -47,6 +47,7 @@ namespace yarp
     }
 }
 
+
 class yarp::dev::HDEControlBoardDriver:
     public yarp::dev::DeviceDriver,
     public yarp::dev::IEncoders,
@@ -73,6 +74,7 @@ public:
     //Device Driver
     bool open(yarp::os::Searchable& config)
     {
+        /*
         number_of_dofs = config.find("number_of_dofs").asInt();
         
         yarp::os::Bottle joints = config.findGroup("joint_name_list");
@@ -95,19 +97,28 @@ public:
             joint_accelerations.resize(number_of_dofs);
             joint_torques.resize(number_of_dofs);
             
-        }
+        }*/
+        
+        number_of_dofs = 66;
+        
+        joint_name_list.resize(number_of_dofs);
+        joint_zero_positions.resize(number_of_dofs);
+        joint_positions.resize(number_of_dofs);
+        joint_velocities.resize(number_of_dofs);
+        joint_accelerations.resize(number_of_dofs);
+        joint_torques.resize(number_of_dofs);
         
         return true;
+    }
+    
+    int getNrOfDOFS()
+    {
+        return number_of_dofs;
     }
 
     bool close()
     {
         return yarp::dev::DeviceDriver::close();
-    }
-    
-    std::string getJointName(int& i)
-    {
-        return joint_name_list.at(i);
     }
     
     //Encoders

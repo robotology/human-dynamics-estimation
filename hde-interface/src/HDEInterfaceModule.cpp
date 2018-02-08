@@ -33,6 +33,133 @@ double HDEInterfaceModule::getPeriod()
     return 1;
 }
 
+HDEInterfaceModule::HDEInterfaceModule(): iWrapper(0) {}
+
+HDEInterfaceModule::~HDEInterfaceModule()
+{
+    if(iWrapper)
+    {
+        iWrapper->detachAll();
+        iWrapper = 0;
+    }
+    if(wrapper.isValid())
+    {
+        wrapper.close();
+    }
+    
+    if(hde_controlboard_driver.isValid())
+    {
+        hde_controlboard_driver.close();
+    }
+    
+    yarp::os::Network::fini();
+}
+    
+bool HDEInterfaceModule::configure(yarp::os::ResourceFinder& rf)
+{
+    if(!yarp::os::Network::initialized())
+    {
+        yarp::os::Network::init();
+    }
+    
+    if(hde_interface_rpc_port.open("/hde-interface/rpc:i"))
+    {
+        attach(hde_interface_rpc_port);
+    }
+    
+    if(state_port.open("/hde-interface/state:i"))
+    {
+        if(!yarp::os::Network::connect("/human-state-provider/state:o",state_port.getName().c_str()))
+        {
+            yError() << "HDEInterfaceModule: Failed to connect /human-state-provider/state:o and /hde-interface/state:i ports";
+            return false;
+        }
+    }
+    else
+    {
+        yError() << "HDEInterfaceModule: Failed to open /hde-interface/state:i port";
+        return false;
+    }
+    
+    if(forces_port.open("/hde-interface/forces:i"))
+    {
+        if(!yarp::os::Network::connect("/human-forces-provider/forces:o",forces_port.getName().c_str()))
+        {
+            yError() << "HDEInterfaceModule: Failed to connect /human-forces-provider/forces:o and /hde-interface/forces:i ports";
+            return false;
+        }
+    }
+    else
+    {
+        yError() << "HDEInterfaceModule: Failed to open /hde-interface/forces:i port";
+        return false;
+    }
+    
+    if(dynamics_port.open("/hde-interface/dynamicsEstimation:i"))
+    {
+        if(!yarp::os::Network::connect("/human-dynamics-estimator/dynamicsEstimation:o",dynamics_port.getName().c_str()))
+        {
+            yError() << "HDEInterfaceModule: Failed to connect /human-dynamics-estimator/dynamicsEstimation:o and /hde-interface/dynamicsEstimation:i ports";
+            return false;
+        }
+    }
+    else
+    {
+        yError() << "HDEInterfaceModule: Failed to open /hde-interface/dynamicsEstimation:i port";
+        return false;
+    }
+    
+    hde_ft_driver.open(rf);
+    //hde_controlboard_driver.open(rf);
+    
+    yarp::dev::Drivers::factory().add(new yarp::dev::DriverCreatorOf<yarp::dev::HDEControlBoardDriver>("hde_controlboard", "controlboardwrapper2", "HDEControlBoardDriver"));
+    
+    driver_parameters.put("device","hde_controlboard");
+    hde_controlboard_driver.open(driver_parameters);
+    //hde_controlboard_driver.view(hde_cb_interface);
+    
+    wrapper_parameters.put("name","/hde");
+    wrapper_parameters.put("period",10);
+    wrapper_parameters.put("device","controlboardwrapper2");
+    //wrapper_parameters.put("subdevice","hde_controlboard");
+    
+    wrapper_parameters.put("joints",66);
+    
+    yarp::os::Value dummy;
+    dummy.fromString("(HDE)");
+    wrapper_parameters.put("networks", dummy);
+    dummy.fromString("(0 65 0 65)");
+    wrapper_parameters.put("HDE",dummy);
+    
+    wrapper.open(wrapper_parameters);
+    
+    if(!wrapper.view(iWrapper))
+    {
+        yError() << "HDEInterfaceModule: Error while loading the wrapper";
+        return false;
+    }
+    
+    driver_list.push(&hde_controlboard_driver,"HDE");
+    
+    if(!iWrapper->attachAll(driver_list))
+    {
+        yError() << "HDEInterfaceModule: Error while attaching the device to the wrapper interface";
+        return false;
+    }
+    
+    return true;
+}
+    
+bool HDEInterfaceModule::respond(const yarp::os::Bottle& command, yarp::os::Bottle& reply)
+{
+    if (command.get(0).asString()=="quit")
+        return false;
+    else
+        reply=command;
+    
+    return true;
+}
+
 bool HDEInterfaceModule::updateModule()
 {
 
@@ -82,13 +209,17 @@ bool HDEInterfaceModule::updateModule()
 
     */
     
+    yarp::dev::HDEControlBoardDriver* hde_controlboard_driver_ptr = dynamic_cast<yarp::dev::HDEControlBoardDriver*>(hde_controlboard_driver.getImplementation());
+    
     //Human-state-provider
     human::HumanState *input_state = state_port.read();
-
-    if(input_state->positions.size() == hde_controlboard_driver.number_of_dofs)
+    
+    if(input_state->positions.size() == hde_controlboard_driver_ptr->number_of_dofs)
     {
-        hde_controlboard_driver.joint_positions = input_state->positions;
-        hde_controlboard_driver.joint_velocities = input_state->velocities;
+        //hde_cb_interface->setPosAndVel(input_state->positions, input_state->velocities);
+        hde_controlboard_driver_ptr->joint_positions = input_state->positions;
+        yInfo() << "Actual Value: " << input_state->positions[9];
+        hde_controlboard_driver_ptr->joint_velocities = input_state->velocities;
     }
     else
     {
@@ -101,24 +232,24 @@ bool HDEInterfaceModule::updateModule()
     
     std::vector<human::JointDynamicsEstimation> input_joint_dynamics = input_dynamics->jointVariables;
     
-    if(input_joint_dynamics.size() == hde_controlboard_driver.number_of_dofs)
+    if(input_joint_dynamics.size() == hde_controlboard_driver_ptr->number_of_dofs)
     {
         for(int j = 0; j < input_joint_dynamics.size(); j++)
         {
-            if(input_joint_dynamics.at(j).jointName == hde_controlboard_driver.getJointName(j))
-            {
+            //if(input_joint_dynamics.at(j).jointName == hde_controlboard_driver.joint_name_list.at(j))
+            //{
                 double joint_acceleration = input_joint_dynamics.at(j).acceleration[0];
-                hde_controlboard_driver.joint_accelerations[j] = joint_acceleration;
+                hde_controlboard_driver_ptr->joint_accelerations[j] = joint_acceleration;
                 
                 double joint_torque = input_joint_dynamics.at(j).torque[0];
-                hde_controlboard_driver.joint_torques[j] = joint_torque;
+                hde_controlboard_driver_ptr->joint_torques[j] = joint_torque;
                 
-            }
-            else
-            {
-                yError() << "HDEInterfaceModule: Joint name mismatch while getting jonit torques";
-                return false;
-            }
+            //}
+            //else
+            //{
+            //    yError() << "HDEInterfaceModule: Joint name mismatch while getting jonit torques";
+            //    return false;
+           // }
         }
     }
     else
@@ -126,7 +257,18 @@ bool HDEInterfaceModule::updateModule()
         yError() << "HDEInterfaceModule: DoFs mismatch between config file and human joint dynamics";
         return false;
     }
-        
+    
+    double v1;
+    hde_controlboard_driver_ptr->getEncoder(9,&v1);
+    yInfo() << "Stored Value: " << v1;
+    
+    
+    /*double v = 10;
+    yarp::dev::IEncoders *ienc;
+    hde_controlboard_driver_device.view(ienc);
+    ienc->getEncoder(9,&v);
+    yInfo() << "Value v:" << v;*/
+    
     return true;
 }
 
