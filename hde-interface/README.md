@@ -5,7 +5,7 @@ with the data coming from the output ports of `human-state-provider` and `human-
 
 The module is structured as follows
 
-
+<img src="/misc/hde-interface.png">
 
 The `HDEControlBoardDriver` is wrapped with `ControlBoardWrapper2` and implements the following interfaces
 *  `IEncoders`- giving access to joint positions, velocities and accelerations
