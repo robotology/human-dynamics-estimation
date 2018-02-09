@@ -71,22 +71,42 @@ bool HDEControlBoardDriver::setEncoders(const  double *vals)
 
 bool HDEControlBoardDriver::getEncoderSpeed(int j, double *sp)
 {
+    if (sp && j >= 0 && static_cast<size_t>(j) < number_of_dofs)
+    {
+        *sp = joint_velocities[j];
+        return true;
+    }
     return false;
 }
 
 bool HDEControlBoardDriver::getEncoderSpeeds(double *spds)
 {
-    return false;
+    if (!spds) return false;
+    for (size_t i = 0; i < number_of_dofs; ++i)
+    {
+        getEncoderSpeed(i, &spds[i]);
+    }
+    return true;
 }
 
 bool HDEControlBoardDriver::getEncoderAcceleration(int j, double *spds)
 {
+    if (spds && j >= 0 && static_cast<size_t>(j) < number_of_dofs)
+    {
+        *spds = joint_accelerations[j];
+        return true;
+    }
     return false;
 }
 
 bool HDEControlBoardDriver::getEncoderAccelerations(double *accs)
 {
-    return false;
+    if (!accs) return false;
+    for (size_t i = 0; i < number_of_dofs; ++i)
+    {
+        accs[i] = 0.0;
+    }
+    return true;
 }
 
 bool HDEControlBoardDriver::getEncoderTimed(int j, double* encs, double* time)
