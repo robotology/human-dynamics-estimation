@@ -82,9 +82,9 @@ bool HDEControlBoardDriver::getEncoderSpeed(int j, double *sp)
 bool HDEControlBoardDriver::getEncoderSpeeds(double *spds)
 {
     if (!spds) return false;
-    for (size_t i = 0; i < number_of_dofs; ++i)
+    for (size_t j = 0; j < number_of_dofs; ++j)
     {
-        getEncoderSpeed(i, &spds[i]);
+        spds[j] = joint_velocities[j];
     }
     return true;
 }
@@ -102,9 +102,9 @@ bool HDEControlBoardDriver::getEncoderAcceleration(int j, double *spds)
 bool HDEControlBoardDriver::getEncoderAccelerations(double *accs)
 {
     if (!accs) return false;
-    for (size_t i = 0; i < number_of_dofs; ++i)
+    for (size_t j = 0; j < number_of_dofs; ++j)
     {
-        accs[i] = 0.0;
+        accs[j] = joint_accelerations[j];
     }
     return true;
 }
