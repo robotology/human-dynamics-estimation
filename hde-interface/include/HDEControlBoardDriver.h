@@ -36,6 +36,7 @@
 #include <yarp/sig/Vector.h>
 #include <yarp/os/LogStream.h>
 #include <yarp/dev/DeviceDriver.h>
+#include <yarp/dev/ControlBoardInterfaces.h>
 #include <yarp/dev/IPositionControl.h>
 #include <yarp/dev/IVelocityControl.h>
 #include <yarp/dev/IEncodersTimed.h>
@@ -52,6 +53,7 @@ namespace yarp
 
 class yarp::dev::HDEControlBoardDriver:
     public yarp::dev::DeviceDriver,
+    public yarp::dev::IAxisInfo,
     public yarp::dev::IPositionControl,
     public yarp::dev::IVelocityControl,
     public yarp::dev::IEncodersTimed,
@@ -112,6 +114,73 @@ public:
         joint_accelerations.resize(number_of_dofs);
         joint_torques.resize(number_of_dofs);
         
+        joint_name_list.at(0) = "jC1Head_rotx";
+        joint_name_list.at(1) = "jC1Head_roty"; 
+        joint_name_list.at(2) = "jC1Head_rotz";
+        joint_name_list.at(3) = "jL1T12_rotx";
+        joint_name_list.at(4) = "jL1T12_roty";
+        joint_name_list.at(5) = "jL1T12_rotz";
+        joint_name_list.at(6) = "jL4L3_rotx";
+        joint_name_list.at(7) = "jL4L3_roty";
+        joint_name_list.at(8) = "jL4L3_rotz";
+        joint_name_list.at(9) = "jL5S1_rotx";
+        joint_name_list.at(10) = "jL5S1_roty";
+        joint_name_list.at(11) = "jL5S1_rotz";
+        joint_name_list.at(12) = "jLeftAnkle_rotx";
+        joint_name_list.at(13) = "jLeftAnkle_roty";
+        joint_name_list.at(14) = "jLeftAnkle_rotz";
+        joint_name_list.at(15) = "jLeftBallFoot_rotx";
+        joint_name_list.at(16) = "jLeftBallFoot_roty";
+        joint_name_list.at(17) = "jLeftBallFoot_rotz";
+        joint_name_list.at(18) = "jLeftC7Shoulder_rotx";
+        joint_name_list.at(19) = "jLeftC7Shoulder_roty";
+        joint_name_list.at(20) = "jLeftC7Shoulder_rotz";
+        joint_name_list.at(21) = "jLeftElbow_rotx";
+        joint_name_list.at(22) = "jLeftElbow_roty";
+        joint_name_list.at(23) = "jLeftElbow_rotz";
+        joint_name_list.at(24) = "jLeftHip_rotx";
+        joint_name_list.at(25) = "jLeftHip_roty";
+        joint_name_list.at(26) = "jLeftHip_rotz";
+        joint_name_list.at(27) = "jLeftKnee_rotx";
+        joint_name_list.at(28) = "jLeftKnee_roty";
+        joint_name_list.at(29) = "jLeftKnee_rotz";
+        joint_name_list.at(30) = "jLeftShoulder_rotx";
+        joint_name_list.at(31) = "jLeftShoulder_roty";
+        joint_name_list.at(32) = "jLeftShoulder_rotz";
+        joint_name_list.at(33) = "jLeftWrist_rotx";
+        joint_name_list.at(34) = "jLeftWrist_roty";
+        joint_name_list.at(35) = "jLeftWrist_rotz";
+        joint_name_list.at(36) = "jRightAnkle_rotx";
+        joint_name_list.at(37) = "jRightAnkle_roty";
+        joint_name_list.at(38) = "jRightAnkle_rotz";
+        joint_name_list.at(39) = "jRightBallFoot_rotx";
+        joint_name_list.at(40) = "jRightBallFoot_roty";
+        joint_name_list.at(41) = "jRightBallFoot_rotz";
+        joint_name_list.at(42) = "jRightC7Shoulder_rotx";
+        joint_name_list.at(43) = "jRightC7Shoulder_roty";
+        joint_name_list.at(44) = "jRightC7Shoulder_rotz";
+        joint_name_list.at(45) = "jRightElbow_rotx";
+        joint_name_list.at(46) = "jRightElbow_roty";
+        joint_name_list.at(47) = "jRightElbow_rotz";
+        joint_name_list.at(48) = "jRightHip_rotx";
+        joint_name_list.at(49) = "jRightHip_roty";
+        joint_name_list.at(50) = "jRightHip_rotz";
+        joint_name_list.at(51) = "jRightKnee_rotx";
+        joint_name_list.at(52) = "jRightKnee_roty";
+        joint_name_list.at(53) = "jRightKnee_rotz";
+        joint_name_list.at(54) = "jRightShoulder_rotx";
+        joint_name_list.at(55) = "jRightShoulder_roty";
+        joint_name_list.at(56) = "jRightShoulder_rotz";
+        joint_name_list.at(57) = "jRightWrist_rotx";
+        joint_name_list.at(58) = "jRightWrist_roty";
+        joint_name_list.at(59) = "jRightWrist_rotz";
+        joint_name_list.at(60) = "jT1C7_rotx";
+        joint_name_list.at(61) = "jT1C7_roty";
+        joint_name_list.at(62) = "jT1C7_rotz";
+        joint_name_list.at(63) = "jT9T8_rotx";
+        joint_name_list.at(64) = "jT9T8_roty";
+        joint_name_list.at(65) = "jT9T8_rotz";
+        
         return true;
     }
     
@@ -124,6 +193,10 @@ public:
     {
         return yarp::dev::DeviceDriver::close();
     }
+    
+    //Axis Info
+    virtual bool getAxisName(int axis, yarp::os::ConstString& name);
+    virtual bool getJointType(int axis, yarp::dev::JointTypeEnum& type);
     
     //Position Control
     bool stop() override;
