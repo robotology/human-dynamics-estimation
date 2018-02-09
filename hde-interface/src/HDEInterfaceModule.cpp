@@ -118,7 +118,7 @@ bool HDEInterfaceModule::configure(yarp::os::ResourceFinder& rf)
     hde_controlboard_driver.open(driver_parameters);
     //hde_controlboard_driver.view(hde_cb_interface);
     
-    wrapper_parameters.put("name","/hde");
+    wrapper_parameters.put("name","/human/hde");
     wrapper_parameters.put("period",10);
     wrapper_parameters.put("device","controlboardwrapper2");
     //wrapper_parameters.put("subdevice","hde_controlboard");
@@ -216,10 +216,7 @@ bool HDEInterfaceModule::updateModule()
     
     if(input_state->positions.size() == hde_controlboard_driver_ptr->number_of_dofs)
     {
-        //hde_cb_interface->setPosAndVel(input_state->positions, input_state->velocities);
-        yInfo() << "Joint Positions: " << input_state->positions.toString();
         hde_controlboard_driver_ptr->joint_positions = input_state->positions;
-        yInfo() << "Actual Value: " << input_state->positions[9];
         hde_controlboard_driver_ptr->joint_velocities = input_state->velocities;
     }
     else
