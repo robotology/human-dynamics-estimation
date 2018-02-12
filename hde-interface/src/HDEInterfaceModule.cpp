@@ -109,8 +109,6 @@ bool HDEInterfaceModule::configure(yarp::os::ResourceFinder& rf)
         return false;
     }
     
-    //hde_ft_driver.open(rf);
-    
     yarp::dev::Drivers::factory().add(new yarp::dev::DriverCreatorOf<yarp::dev::HDEControlBoardDriver>("hde_controlboard", "controlboardwrapper2", "HDEControlBoardDriver"));
     
     driver_parameters.put("device","hde_controlboard");
@@ -159,54 +157,7 @@ bool HDEInterfaceModule::respond(const yarp::os::Bottle& command, yarp::os::Bott
 }
 
 bool HDEInterfaceModule::updateModule()
-{
-
-    /*
-    //Human-forces-provider 
-    human::HumanForces *input_forces = forces_port.read();
-    
-    if(input_forces != NULL)
-    {
-        human::HumanForces::Editor input_forces_editor(*input_forces);
-
-        std::vector<human::Force6D> forces6d_vec = input_forces_editor.get_forces();
-        
-        for(int i = 0; i < forces6d_vec.size(); i++)
-        {            
-            human::Force6D::Editor *force6d_editor;
-            force6d_editor = new human::Force6D::Editor(forces6d_vec.at(i));
-            
-            if(force6d_editor->get_expressedFrame() == hde_ft_driver.getFTFrameName(i))
-            {   
-                int index = 6*(i+1);
-                
-                hde_ft_driver.setFTValues(force6d_editor->get_fx(),index-6);
-                hde_ft_driver.setFTValues(force6d_editor->get_fy(),index-5);
-                hde_ft_driver.setFTValues(force6d_editor->get_fz(),index-4);
-            
-                hde_ft_driver.setFTValues(force6d_editor->get_ux(),index-3);
-                hde_ft_driver.setFTValues(force6d_editor->get_uy(),index-2);
-                hde_ft_driver.setFTValues(force6d_editor->get_uz(),index-1);
-                
-            }
-            else
-            {
-                yError() << "HDEInterfaceModule: FT frames do not match";
-                return false;
-            }
-            delete force6d_editor;
-            
-        }
-        
-    }
-    else
-    {
-        yError() << "HDEInterfaceModule: Failed to read forces port";
-        return false;
-    }
-
-    */
-    
+{    
     yarp::dev::HDEControlBoardDriver* hde_controlboard_driver_ptr = dynamic_cast<yarp::dev::HDEControlBoardDriver*>(hde_controlboard_driver.getImplementation());
     
     //Human-state-provider
