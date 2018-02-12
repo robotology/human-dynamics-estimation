@@ -67,7 +67,6 @@ public:
     int number_of_dofs;
     std::vector<std::string> joint_name_list;
     
-    yarp::sig::Vector joint_zero_positions;
     yarp::sig::Vector joint_positions;
     yarp::sig::Vector joint_velocities;
     yarp::sig::Vector joint_accelerations;
@@ -83,11 +82,6 @@ public:
         return true;
     }
     
-    int getNrOfDOFS()
-    {
-        return number_of_dofs;
-    }
-
     bool close()
     {
         return yarp::dev::DeviceDriver::close();
