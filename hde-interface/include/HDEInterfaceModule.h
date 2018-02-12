@@ -41,7 +41,7 @@
 #include <yarp/dev/PolyDriverList.h>
 #include <yarp/dev/Wrapper.h>
 
-#include <HDEForceTorqueDriver.h>
+//#include <HDEForceTorqueDriver.h>
 #include <HDEControlBoardDriver.h>
 #include <human-forces-provider/thrifts/HumanForces.h>
 #include <human-state-provider/thrifts/HumanState.h>
@@ -61,9 +61,7 @@ class HDEInterfaceModule:public yarp::os::RFModule
     yarp::os::BufferedPort<human::HumanForces> forces_port;
     yarp::os::BufferedPort<human::HumanDynamics> dynamics_port;
     
-    yarp::dev::HDEForeceTorqueDriver hde_ft_driver;
-    //yarp::dev::HDEControlBoardDriver hde_controlboard_driver;
-    //yarp::dev::HDEControlBoardInterface* hde_cb_interface;
+    //yarp::dev::HDEForeceTorqueDriver hde_ft_driver;
     
 public:
     

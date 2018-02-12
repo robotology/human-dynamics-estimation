@@ -109,14 +109,12 @@ bool HDEInterfaceModule::configure(yarp::os::ResourceFinder& rf)
         return false;
     }
     
-    hde_ft_driver.open(rf);
-    //hde_controlboard_driver.open(rf);
+    //hde_ft_driver.open(rf);
     
     yarp::dev::Drivers::factory().add(new yarp::dev::DriverCreatorOf<yarp::dev::HDEControlBoardDriver>("hde_controlboard", "controlboardwrapper2", "HDEControlBoardDriver"));
     
     driver_parameters.put("device","hde_controlboard");
     hde_controlboard_driver.open(driver_parameters);
-    //hde_controlboard_driver.view(hde_cb_interface);
     
     wrapper_parameters.put("name","/human/hde");
     wrapper_parameters.put("period",10);
