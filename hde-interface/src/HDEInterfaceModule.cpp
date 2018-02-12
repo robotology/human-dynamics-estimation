@@ -62,12 +62,14 @@ bool HDEInterfaceModule::configure(yarp::os::ResourceFinder& rf)
         yarp::os::Network::init();
     }
     
-    if(hde_interface_rpc_port.open("/hde-interface/rpc:i"))
+    std::string rpc_port_name = rf.find("name").asString();
+    
+    if(hde_interface_rpc_port.open(rpc_port_name+"/rpc:i"))
     {
         attach(hde_interface_rpc_port);
     }
     
-    if(state_port.open("/hde-interface/state:i"))
+    if(state_port.open(rpc_port_name+"/state:i"))
     {
         if(!yarp::os::Network::connect("/human-state-provider/state:o",state_port.getName().c_str()))
         {
@@ -81,7 +83,7 @@ bool HDEInterfaceModule::configure(yarp::os::ResourceFinder& rf)
         return false;
     }
     
-    if(forces_port.open("/hde-interface/forces:i"))
+    if(forces_port.open(rpc_port_name+"/forces:i"))
     {
         if(!yarp::os::Network::connect("/human-forces-provider/forces:o",forces_port.getName().c_str()))
         {
@@ -95,7 +97,7 @@ bool HDEInterfaceModule::configure(yarp::os::ResourceFinder& rf)
         return false;
     }
     
-    if(dynamics_port.open("/hde-interface/dynamicsEstimation:i"))
+    if(dynamics_port.open(rpc_port_name+"/dynamicsEstimation:i"))
     {
         if(!yarp::os::Network::connect("/human-dynamics-estimator/dynamicsEstimation:o",dynamics_port.getName().c_str()))
         {
@@ -111,24 +113,13 @@ bool HDEInterfaceModule::configure(yarp::os::ResourceFinder& rf)
     
     yarp::dev::Drivers::factory().add(new yarp::dev::DriverCreatorOf<yarp::dev::HDEControlBoardDriver>("hde_controlboard", "controlboardwrapper2", "HDEControlBoardDriver"));
     
-    driver_parameters.put("device","hde_controlboard");
+    std::string device_name = rf.find("device").asString();
+    driver_parameters.put("device",device_name);
     hde_controlboard_driver.open(driver_parameters);
     
-    wrapper_parameters.put("name","/human/hde");
-    wrapper_parameters.put("period",10);
-    wrapper_parameters.put("device","controlboardwrapper2");
-    //wrapper_parameters.put("subdevice","hde_controlboard");
-    
-    wrapper_parameters.put("joints",66);
-    
-    yarp::os::Value dummy;
-    dummy.fromString("(HDE)");
-    wrapper_parameters.put("networks", dummy);
-    dummy.fromString("(0 65 0 65)");
-    wrapper_parameters.put("HDE",dummy);
-    
-    wrapper.open(wrapper_parameters);
-    
+    wrapper_properties = rf.findGroup("WRAPPER");    
+    wrapper.open(wrapper_properties);
+
     if(!wrapper.view(iWrapper))
     {
         yError() << "HDEInterfaceModule: Error while loading the wrapper";

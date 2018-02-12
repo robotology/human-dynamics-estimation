@@ -65,7 +65,7 @@ public:
     yarp::dev::IMultipleWrapper* iWrapper;
     
     yarp::dev::PolyDriver wrapper;
-    yarp::os::Property wrapper_parameters;
+    yarp::os::Bottle wrapper_properties;
     
     yarp::dev::PolyDriver hde_controlboard_driver;
     yarp::os::Property driver_parameters;
