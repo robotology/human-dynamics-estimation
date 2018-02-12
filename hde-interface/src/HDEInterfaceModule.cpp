@@ -117,6 +117,32 @@ bool HDEInterfaceModule::configure(yarp::os::ResourceFinder& rf)
     driver_parameters.put("device",device_name);
     hde_controlboard_driver.open(driver_parameters);
     
+    yarp::dev::HDEControlBoardDriver* hde_controlboard_driver_ptr = dynamic_cast<yarp::dev::HDEControlBoardDriver*>(hde_controlboard_driver.getImplementation());
+    
+    hde_controlboard_driver_ptr->number_of_dofs = rf.find("joints").asInt();
+    
+    hde_controlboard_driver_ptr->joint_positions.resize(hde_controlboard_driver_ptr->number_of_dofs);
+    hde_controlboard_driver_ptr->joint_velocities.resize(hde_controlboard_driver_ptr->number_of_dofs);
+    hde_controlboard_driver_ptr->joint_accelerations.resize(hde_controlboard_driver_ptr->number_of_dofs);
+    hde_controlboard_driver_ptr->joint_torques.resize(hde_controlboard_driver_ptr->number_of_dofs);
+    
+    
+    yarp::os::Bottle joints = rf.findGroup("joint_name_list");
+    
+    if(!joints.check("joint_name_list"))
+    {
+        yError() << "HDEControlBoardDriver: Failed to read joints name list";
+        return false;
+    }
+    else
+    {
+        hde_controlboard_driver_ptr->joint_name_list.resize(hde_controlboard_driver_ptr->number_of_dofs);
+        for(int i=0; i < hde_controlboard_driver_ptr->number_of_dofs; i++)
+        {
+            hde_controlboard_driver_ptr->joint_name_list.at(i) = joints.get(i+1).asString();
+        }
+    }
+    
     wrapper_properties = rf.findGroup("WRAPPER");    
     wrapper.open(wrapper_properties);
 
@@ -157,7 +183,10 @@ bool HDEInterfaceModule::updateModule()
     if(input_state->positions.size() == hde_controlboard_driver_ptr->number_of_dofs)
     {
         hde_controlboard_driver_ptr->joint_positions = input_state->positions;
+        yInfo() << "Joint Positions: " << hde_controlboard_driver_ptr->joint_positions.toString();
+        
         hde_controlboard_driver_ptr->joint_velocities = input_state->velocities;
+        yInfo() << "Joint Velocities:: " << hde_controlboard_driver_ptr->joint_velocities.toString();
     }
     else
     {
@@ -174,20 +203,20 @@ bool HDEInterfaceModule::updateModule()
     {
         for(int j = 0; j < input_joint_dynamics.size(); j++)
         {
-            //if(input_joint_dynamics.at(j).jointName == hde_controlboard_driver.joint_name_list.at(j))
-            //{
+            if(input_joint_dynamics.at(j).jointName == hde_controlboard_driver_ptr->joint_name_list.at(j))
+            {
                 double joint_acceleration = input_joint_dynamics.at(j).acceleration[0];
                 hde_controlboard_driver_ptr->joint_accelerations[j] = joint_acceleration;
                 
                 double joint_torque = input_joint_dynamics.at(j).torque[0];
                 hde_controlboard_driver_ptr->joint_torques[j] = joint_torque;
                 
-            //}
-            //else
-            //{
-            //    yError() << "HDEInterfaceModule: Joint name mismatch while getting jonit torques";
-            //    return false;
-           // }
+            }
+            else
+            {
+                yError() << "HDEInterfaceModule: Joint name mismatch while getting jonit torques";
+                return false;
+            }
         }
     }
     else
@@ -195,6 +224,9 @@ bool HDEInterfaceModule::updateModule()
         yError() << "HDEInterfaceModule: DoFs mismatch between config file and human joint dynamics";
         return false;
     }
+    
+    yInfo() << "Joint Accelerations: " << hde_controlboard_driver_ptr->joint_accelerations.toString();
+    yInfo() << "Joint Torques: " << hde_controlboard_driver_ptr->joint_torques.toString();
     
     return true;
 }
