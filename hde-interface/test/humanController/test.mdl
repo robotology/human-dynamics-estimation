@@ -7,7 +7,7 @@ Model {
     NumRootInports	    0
     NumRootOutports	    0
     ParameterArgumentNames  ""
-    ComputedModelVersion    "1.17"
+    ComputedModelVersion    "1.69"
     NumModelReferences	    0
     NumTestPointedSignals   0
     NumProvidedFunctions    0
@@ -32,7 +32,7 @@ Model {
       $ObjectID		      2
       $ClassName	      "Simulink.WindowInfo"
       IsActive		      [1]
-      Location		      [1963.0, 21.0, 1323.0, 747.0]
+      Location		      [1415.0, 24.0, 2511.0, 1416.0]
       Object {
 	$PropName		"ModelBrowserInfo"
 	$ObjectID		3
@@ -57,9 +57,9 @@ Model {
 	  IsActive		  [1]
 	  ViewObjType		  "SimulinkTopLevel"
 	  LoadSaveID		  "0"
-	  Extents		  [1289.0, 596.0]
-	  ZoomFactor		  [2.3568464730290457]
-	  Offset		  [74.041373239436609, 34.059859154929583]
+	  Extents		  [2477.0, 1265.0]
+	  ZoomFactor		  [2.5028054284191597]
+	  Offset		  [84.406277115659464, -92.216408881814]
 	}
 	Object {
 	  $ObjectID		  6
@@ -80,9 +80,9 @@ Model {
   ModifiedByFormat	  "%<Auto>"
   LastModifiedBy	  "yeshi"
   ModifiedDateFormat	  "%<Auto>"
-  LastModifiedDate	  "Mon Feb 12 19:55:11 2018"
-  RTWModifiedTimeStamp	  440364691
-  ModelVersionFormat	  "1.%<AutoIncrement:17>"
+  LastModifiedDate	  "Mon Feb 19 12:23:30 2018"
+  RTWModifiedTimeStamp	  440943809
+  ModelVersionFormat	  "1.%<AutoIncrement:69>"
   ConfigurationManager	  "none"
   SampleTimeColors	  off
   SampleTimeAnnotations	  off
@@ -812,6 +812,106 @@ Model {
   }
   BlockParameterDefaults {
     Block {
+      BlockType		      Constant
+      Value		      "1"
+      VectorParams1D	      on
+      SamplingMode	      "Sample based"
+      OutMin		      "[]"
+      OutMax		      "[]"
+      OutDataTypeStr	      "Inherit: Inherit from 'Constant value'"
+      LockScale		      off
+      SampleTime	      "inf"
+      FramePeriod	      "inf"
+      PreserveConstantTs      off
+    }
+    Block {
+      BlockType		      Demux
+      Outputs		      "4"
+      DisplayOption	      "none"
+      BusSelectionMode	      off
+    }
+    Block {
+      BlockType		      Inport
+      Port		      "1"
+      OutputFunctionCall      off
+      OutMin		      "[]"
+      OutMax		      "[]"
+      OutDataTypeStr	      "Inherit: auto"
+      LockScale		      off
+      BusOutputAsStruct	      off
+      Unit		      "inherit"
+      PortDimensions	      "-1"
+      VarSizeSig	      "Inherit"
+      SampleTime	      "-1"
+      SignalType	      "auto"
+      SamplingMode	      "auto"
+      LatchByDelayingOutsideSignal off
+      LatchInputForFeedbackSignals off
+      Interpolate	      on
+    }
+    Block {
+      BlockType		      Outport
+      Port		      "1"
+      OutMin		      "[]"
+      OutMax		      "[]"
+      OutDataTypeStr	      "Inherit: auto"
+      LockScale		      off
+      BusOutputAsStruct	      off
+      Unit		      "inherit"
+      PortDimensions	      "-1"
+      VarSizeSig	      "Inherit"
+      SampleTime	      "-1"
+      SignalType	      "auto"
+      SamplingMode	      "auto"
+      SourceOfInitialOutputValue "Dialog"
+      OutputWhenDisabled      "held"
+      InitialOutput	      "[]"
+    }
+    Block {
+      BlockType		      S-Function
+      FunctionName	      "system"
+      SFunctionModules	      "''"
+      PortCounts	      "[]"
+    }
+    Block {
+      BlockType		      Stop
+    }
+    Block {
+      BlockType		      SubSystem
+      ShowPortLabels	      "FromPortIcon"
+      Permissions	      "ReadWrite"
+      PermitHierarchicalResolution "All"
+      TreatAsAtomicUnit	      off
+      MinAlgLoopOccurrences   off
+      PropExecContextOutsideSubsystem off
+      CheckFcnCallInpInsideContextMsg off
+      SystemSampleTime	      "-1"
+      RTWSystemCode	      "Auto"
+      RTWFcnNameOpts	      "Auto"
+      RTWFileNameOpts	      "Auto"
+      FunctionInterfaceSpec   "void_void"
+      FunctionWithSeparateData off
+      RTWMemSecFuncInitTerm   "Inherit from model"
+      RTWMemSecFuncExecute    "Inherit from model"
+      RTWMemSecDataConstants  "Inherit from model"
+      RTWMemSecDataInternal   "Inherit from model"
+      RTWMemSecDataParameters "Inherit from model"
+      SimViewingDevice	      off
+      DataTypeOverride	      "UseLocalSettings"
+      DataTypeOverrideAppliesTo	"AllNumericTypes"
+      MinMaxOverflowLogging   "UseLocalSettings"
+      Opaque		      off
+      MaskHideContents	      off
+      SFBlockType	      "NONE"
+      GeneratePreprocessorConditionals off
+      TreatAsGroupedWhenPropagatingVariantConditions on
+      ContentPreviewEnabled   off
+      IsWebBlock	      off
+    }
+    Block {
+      BlockType		      Terminator
+    }
+    Block {
       BlockType		      ToWorkspace
       VariableName	      "simulink_output"
       MaxDataPoints	      "1000"
@@ -825,7 +925,7 @@ Model {
   }
   System {
     Name		    "test"
-    Location		    [1963, 21, 3286, 768]
+    Location		    [1415, 24, 3926, 1440]
     Open		    on
     ModelBrowserVisibility  off
     ModelBrowserWidth	    200
@@ -837,9 +937,9 @@ Model {
     TiledPaperMargins	    [0.500000, 0.500000, 0.500000, 0.500000]
     TiledPageScale	    1
     ShowPageBoundaries	    off
-    ZoomFactor		    "236"
+    ZoomFactor		    "250"
     ReportName		    "simulink-default.rpt"
-    SIDHighWatermark	    "13"
+    SIDHighWatermark	    "28"
     Block {
       BlockType		      Reference
       Name		      "Configuration"
@@ -912,6 +1012,131 @@ Model {
     }
     Block {
       BlockType		      Reference
+      Name		      "Mass Matrix"
+      SID		      "14"
+      Ports		      [2, 1]
+      Position		      [710, 44, 850, 111]
+      ZOrder		      109
+      LibraryVersion	      "1.480"
+      SourceBlock	      "WBToolboxLibrary/wholeBodyModel/Dynamics/Mass Matrix"
+      SourceType	      "Mass Matrix"
+      ContentPreviewEnabled   off
+    }
+    Block {
+      BlockType		      SubSystem
+      Name		      "Model Verification"
+      SID		      "21"
+      Ports		      [1, 1]
+      Position		      [890, 54, 980, 106]
+      ZOrder		      113
+      LibraryVersion	      "1.32"
+      ErrorFcn		      "Stateflow.Translate.translate"
+      PermitHierarchicalResolution "ExplicitOnly"
+      TreatAsAtomicUnit	      on
+      RequestExecContextInheritance off
+      SFBlockType	      "MATLAB Function"
+      Variant		      off
+      System {
+	Name			"Model Verification"
+	Location		[223, 338, 826, 833]
+	Open			off
+	ModelBrowserVisibility	off
+	ModelBrowserWidth	200
+	ScreenColor		"white"
+	PaperOrientation	"landscape"
+	PaperPositionMode	"auto"
+	PaperType		"usletter"
+	PaperUnits		"inches"
+	TiledPaperMargins	[0.500000, 0.500000, 0.500000, 0.500000]
+	TiledPageScale		1
+	ShowPageBoundaries	off
+	ZoomFactor		"100"
+	SIDHighWatermark	"23"
+	Block {
+	  BlockType		  Inport
+	  Name			  "M"
+	  SID			  "21::1"
+	  Position		  [20, 101, 40, 119]
+	  ZOrder		  -1
+	  IconDisplay		  "Port number"
+	}
+	Block {
+	  BlockType		  Demux
+	  Name			  " Demux "
+	  SID			  "21::17"
+	  Ports			  [1, 1]
+	  Position		  [270, 230, 320, 270]
+	  ZOrder		  8
+	  Outputs		  "1"
+	}
+	Block {
+	  BlockType		  S-Function
+	  Name			  " SFunction "
+	  SID			  "21::16"
+	  Tag			  "Stateflow S-Function test 2"
+	  Ports			  [1, 2]
+	  Position		  [180, 100, 230, 160]
+	  ZOrder		  7
+	  FunctionName		  "sf_sfun"
+	  PortCounts		  "[1 2]"
+	  SFunctionDeploymentMode off
+	  EnableBusSupport	  on
+	  Port {
+	    PortNumber		    2
+	    Name		    "check"
+	    RTWStorageClass	    "Auto"
+	    DataLoggingNameMode	    "SignalName"
+	  }
+	}
+	Block {
+	  BlockType		  Terminator
+	  Name			  " Terminator "
+	  SID			  "21::18"
+	  Position		  [460, 241, 480, 259]
+	  ZOrder		  9
+	}
+	Block {
+	  BlockType		  Outport
+	  Name			  "check"
+	  SID			  "21::19"
+	  Position		  [460, 101, 480, 119]
+	  ZOrder		  10
+	  IconDisplay		  "Port number"
+	}
+	Line {
+	  ZOrder		  54
+	  SrcBlock		  "M"
+	  SrcPort		  1
+	  DstBlock		  " SFunction "
+	  DstPort		  1
+	}
+	Line {
+	  Name			  "check"
+	  ZOrder		  55
+	  Labels		  [0, 0]
+	  SrcBlock		  " SFunction "
+	  SrcPort		  2
+	  DstBlock		  "check"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  56
+	  SrcBlock		  " Demux "
+	  SrcPort		  1
+	  DstBlock		  " Terminator "
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  57
+	  SrcBlock		  " SFunction "
+	  SrcPort		  1
+	  DstBlock		  " Demux "
+	  DstPort		  1
+	}
+      }
+    }
+    Block {
+      BlockType		      Reference
       Name		      "Real Time Synchronizer"
       SID		      "13"
       Ports		      []
@@ -924,6 +1149,21 @@ Model {
       SourceBlock	      "WBToolboxLibrary/Utilities/Real Time Synchronizer"
       SourceType	      "Real Time Synchronizer"
       period		      "0.01"
+    }
+    Block {
+      BlockType		      Stop
+      Name		      "Stop Simulation"
+      SID		      "22"
+      Position		      [1010, 62, 1045, 98]
+      ZOrder		      114
+    }
+    Block {
+      BlockType		      Constant
+      Name		      "base pose"
+      SID		      "15"
+      Position		      [645, 45, 675, 75]
+      ZOrder		      110
+      Value		      "eye(4,4)"
     }
     Block {
       BlockType		      ToWorkspace
@@ -985,8 +1225,18 @@ Model {
       ZOrder		      3
       SrcBlock		      "Joint Positions"
       SrcPort		      1
-      DstBlock		      "jPos"
-      DstPort		      1
+      Points		      [43, 0]
+      Branch {
+	ZOrder			8
+	Points			[0, 40]
+	DstBlock		"Mass Matrix"
+	DstPort			2
+      }
+      Branch {
+	ZOrder			7
+	DstBlock		"jPos"
+	DstPort			1
+      }
     }
     Line {
       ZOrder		      4
@@ -1009,5 +1259,178 @@ Model {
       DstBlock		      "jTau"
       DstPort		      1
     }
+    Line {
+      ZOrder		      9
+      SrcBlock		      "base pose"
+      SrcPort		      1
+      DstBlock		      "Mass Matrix"
+      DstPort		      1
+    }
+    Line {
+      ZOrder		      10
+      SrcBlock		      "Mass Matrix"
+      SrcPort		      1
+      DstBlock		      "Model Verification"
+      DstPort		      1
+    }
+    Line {
+      ZOrder		      11
+      SrcBlock		      "Model Verification"
+      SrcPort		      1
+      DstBlock		      "Stop Simulation"
+      DstPort		      1
+    }
+  }
+}
+#Finite State Machines
+#
+#   Stateflow 80000009
+#
+#
+Stateflow {
+  machine {
+    id			    1
+    name		    "test"
+    created		    "19-Feb-2018 10:50:15"
+    isLibrary		    0
+    firstTarget		    9
+    sfVersion		    80000009
+  }
+  chart {
+    id			    2
+    name		    "Model Verification"
+    windowPosition	    [422 539.941 189 413]
+    viewLimits		    [0 156.75 0 153.75]
+    screen		    [1 1 3600 1200 1.180555555555556]
+    treeNode		    [0 3 0 0]
+    firstTransition	    7
+    firstJunction	    6
+    viewObj		    2
+    visible		    1
+    machine		    1
+    subviewS {
+    }
+    ssIdHighWaterMark	    10
+    decomposition	    CLUSTER_CHART
+    type		    EML_CHART
+    firstData		    4
+    chartFileNumber	    2
+    disableImplicitCasting  1
+    eml {
+      name		      "verifyModel"
+    }
+  }
+  state {
+    id			    3
+    labelString		    "eML_blk_kernel()"
+    position		    [18 64.5 118 66]
+    fontSize		    12
+    chart		    2
+    treeNode		    [2 0 0 0]
+    superState		    SUBCHART
+    subviewer		    2
+    ssIdNumber		    1
+    type		    FUNC_STATE
+    decomposition	    CLUSTER_STATE
+    eml {
+      isEML		      1
+      script		      "function check  = verifyModel(M)\n\n    check = 0;\n    val = 0;\n    %% Mass matrix is symmetric"
+      " and positive definite\n    [s,v,d] = svd(M);\n    \n    if(min(v(:)) < 0)\n        check = 1;\n        fprintf("
+      "'Human model verification failed \\n');\n    end\n    \nend"
+      editorLayout	      "100 M4x1[10 5 700 500]"
+    }
+  }
+  data {
+    id			    4
+    ssIdNumber		    4
+    name		    "M"
+    linkNode		    [2 0 5]
+    scope		    INPUT_DATA
+    machine		    1
+    props {
+      array {
+	size			"-1"
+      }
+      type {
+	method			SF_INHERITED_TYPE
+	primitive		SF_DOUBLE_TYPE
+      }
+      complexity	      SF_COMPLEX_INHERITED
+      unit {
+	name			"inherit"
+      }
+    }
+    dataType		    "Inherit: Same as Simulink"
+  }
+  data {
+    id			    5
+    ssIdNumber		    6
+    name		    "check"
+    linkNode		    [2 4 0]
+    scope		    OUTPUT_DATA
+    machine		    1
+    props {
+      array {
+	size			"-1"
+      }
+      type {
+	method			SF_INHERITED_TYPE
+	primitive		SF_DOUBLE_TYPE
+	isSigned		1
+	wordLength		"16"
+      }
+      complexity	      SF_COMPLEX_INHERITED
+      frame		      SF_FRAME_NO
+      unit {
+	name			"inherit"
+      }
+    }
+    dataType		    "Inherit: Same as Simulink"
+  }
+  junction {
+    id			    6
+    position		    [23.5747 49.5747 7]
+    chart		    2
+    linkNode		    [2 0 0]
+    subviewer		    2
+    ssIdNumber		    3
+    type		    CONNECTIVE_JUNCTION
+  }
+  transition {
+    id			    7
+    labelString		    "{eML_blk_kernel();}"
+    labelPosition	    [28.125 13.875 102.544 14.964]
+    fontSize		    12
+    src {
+      intersection	      [0 0 1 0 23.5747 14.625 0 0]
+    }
+    dst {
+      id		      6
+      intersection	      [1 0 -1 0 23.5747 42.5747 0 0]
+    }
+    midPoint		    [23.5747 24.9468]
+    chart		    2
+    linkNode		    [2 0 0]
+    dataLimits		    [21.175 25.975 14.625 42.575]
+    subviewer		    2
+    drawStyle		    SMART
+    slide {
+      sticky		      BOTH_STICK
+    }
+    executionOrder	    1
+    ssIdNumber		    2
+  }
+  instance {
+    id			    8
+    name		    "Model Verification"
+    machine		    1
+    chart		    2
+  }
+  target {
+    id			    9
+    name		    "sfun"
+    description		    "Default Simulink S-Function Target."
+    machine		    1
+    linkNode		    [1 0 0]
   }
 }
