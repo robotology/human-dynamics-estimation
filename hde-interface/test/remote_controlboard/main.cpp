@@ -24,7 +24,7 @@ int main(int argc, const char **argv)
 
     PolyDriver device;
     device.open(options);
-    
+
     device.view(ipos);
     device.view(ienc);
     device.view(itau);
@@ -40,18 +40,18 @@ int main(int argc, const char **argv)
     while(true)
     {
         ienc->getEncoders(pos.data());
-        //yInfo() << "Read Position Values: " << pos.toString();
+        yInfo() << "Read Position Values: " << pos.toString();
 
         ienc->getEncoderSpeeds(vel.data());
-        //yInfo() << "Read Velocity Values: " << vel.toString();
+        yInfo() << "Read Velocity Values: " << vel.toString();
         //yInfo() << "Read Velocities Size: " << vel.size();
 
         ienc->getEncoderAccelerations(acc.data());
-        //yInfo() << "Read Acceleration Values: " << acc.toString();
+        yInfo() << "Read Acceleration Values: " << acc.toString();
         //yInfo() << "Read Accelerations Size: " << acc.size();
 
         itau->getTorques(tau.data());
-        //yInfo() << "Read Torque Values: " << tau.toString();
+        yInfo() << "Read Torque Values: " << tau.toString();
         //yInfo() << "Read Torques Size: " << tau.size();
     }
     device.close();
