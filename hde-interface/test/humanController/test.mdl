@@ -6,7 +6,7 @@ Model {
     NumRootInports	    0
     NumRootOutports	    0
     ParameterArgumentNames  ""
-    ComputedModelVersion    "1.104"
+    ComputedModelVersion    "1.105"
     NumModelReferences	    0
     NumTestPointedSignals   0
     NumProvidedFunctions    0
@@ -111,9 +111,9 @@ Model {
   ModifiedByFormat	  "%<Auto>"
   LastModifiedBy	  "yeshi"
   ModifiedDateFormat	  "%<Auto>"
-  LastModifiedDate	  "Mon Mar 19 10:55:13 2018"
-  RTWModifiedTimeStamp	  443357701
-  ModelVersionFormat	  "1.%<AutoIncrement:104>"
+  LastModifiedDate	  "Mon Mar 19 11:52:37 2018"
+  RTWModifiedTimeStamp	  443361155
+  ModelVersionFormat	  "1.%<AutoIncrement:105>"
   ConfigurationManager	  "none"
   SampleTimeColors	  off
   SampleTimeAnnotations	  off
@@ -1081,7 +1081,7 @@ Model {
     ShowPageBoundaries	    off
     ZoomFactor		    "123"
     ReportName		    "simulink-default.rpt"
-    SIDHighWatermark	    "51"
+    SIDHighWatermark	    "53"
     Block {
       BlockType		      Reference
       Name		      "Configuration"
@@ -1100,8 +1100,8 @@ Model {
       BlockType		      Gain
       Name		      "Gain"
       SID		      "49"
-      Position		      [625, 15, 655, 45]
-      ZOrder		      135
+      Position		      [465, 105, 495, 135]
+      ZOrder		      139
       Gain		      "180/pi"
       ParamDataTypeStr	      "Inherit: Inherit via internal rule"
       OutDataTypeStr	      "Inherit: Inherit via internal rule"
@@ -1110,9 +1110,9 @@ Model {
     Block {
       BlockType		      Gain
       Name		      "Gain1"
-      SID		      "50"
-      Position		      [625, 80, 655, 110]
-      ZOrder		      136
+      SID		      "53"
+      Position		      [465, 170, 495, 200]
+      ZOrder		      140
       Gain		      "180/pi"
       ParamDataTypeStr	      "Inherit: Inherit via internal rule"
       OutDataTypeStr	      "Inherit: Inherit via internal rule"
@@ -1120,10 +1120,10 @@ Model {
     }
     Block {
       BlockType		      Gain
-      Name		      "Gain2"
-      SID		      "51"
-      Position		      [625, 145, 655, 175]
-      ZOrder		      137
+      Name		      "Gain3"
+      SID		      "52"
+      Position		      [465, 40, 495, 70]
+      ZOrder		      138
       Gain		      "180/pi"
       ParamDataTypeStr	      "Inherit: Inherit via internal rule"
       OutDataTypeStr	      "Inherit: Inherit via internal rule"
@@ -1417,8 +1417,8 @@ Model {
       ScopeSpecificationString "Simulink.scopes.TimeScopeBlockCfg('CurrentConfiguration', extmgr.ConfigurationSet(extm"
       "gr.Configuration('Core','General UI',true),extmgr.Configuration('Core','Source UI',true),extmgr.Configuration('S"
       "ources','WiredSimulink',true,'DataLoggingVariableName','ScopeData3'),extmgr.Configuration('Visuals','Time Domain"
-      "',true,'SerializedDisplays',{struct('MinYLimReal','-5.08753','MaxYLimReal','4.96541','YLabelReal','','MinYLimMag"
-      "','0.00000','MaxYLimMag','5.08753','LegendVisibility','off','XGrid',true,'YGrid',true,'PlotMagPhase',false,'Axes"
+      "',true,'SerializedDisplays',{struct('MinYLimReal','-8.08855','MaxYLimReal','7.92285','YLabelReal','','MinYLimMag"
+      "','0.00000','MaxYLimMag','8.08855','LegendVisibility','off','XGrid',true,'YGrid',true,'PlotMagPhase',false,'Axes"
       "Color',[0 0 0],'AxesTickColor',[0.686274509803922 0.686274509803922 0.686274509803922],'ColorOrder',[1 1 0.06666"
       "66666666667;0.0745098039215686 0.623529411764706 1;1 0.411764705882353 0.16078431372549;0.392156862745098 0.8313"
       "72549019608 0.0745098039215686;0.717647058823529 0.274509803921569 1;0.0588235294117647 1 1;1 0.0745098039215686"
@@ -1429,14 +1429,13 @@ Model {
       "33','Gain:34','Gain:35','Gain:36','Gain:37','Gain:38','Gain:39','Gain:40','Gain:41','Gain:42','Gain:43','Gain:44"
       "','Gain:45','Gain:46','Gain:47','Gain:48','Gain:49','Gain:50','Gain:51','Gain:52','Gain:53','Gain:54','Gain:55',"
       "'Gain:56','Gain:57','Gain:58','Gain:59','Gain:60','Gain:61','Gain:62','Gain:63','Gain:64','Gain:65','Gain:66'}},"
-      "'ShowContent',true,'Placement',1)},'DisplayPropertyDefaults',struct('MinYLimReal','-5.08753','MaxYLimReal','4.96"
-      "541','YLabelReal','','MinYLimMag','0.00000','MaxYLimMag','5.08753','LegendVisibility','off','XGrid',true,'YGrid'"
+      "'ShowContent',true,'Placement',1)},'DisplayPropertyDefaults',struct('MinYLimReal','-8.08855','MaxYLimReal','7.92"
+      "285','YLabelReal','','MinYLimMag','0.00000','MaxYLimMag','8.08855','LegendVisibility','off','XGrid',true,'YGrid'"
       ",true,'PlotMagPhase',false,'AxesColor',[0 0 0],'AxesTickColor',[0.686274509803922 0.686274509803922 0.6862745098"
       "03922],'ColorOrder',[0.0745098039215686 0.623529411764706 1;1 0.411764705882353 0.16078431372549;1 1 0.066666666"
       "6666667;0.717647058823529 0.274509803921569 1;0.392156862745098 0.831372549019608 0.0745098039215686;0.058823529"
-      "4117647 1 1;1 0.0745098039215686 0.650980392156863])),extmgr.Configuration('Tools','Plot Navigation',true,'Previ"
-      "ousAutoscale','XY'),extmgr.Configuration('Tools','Measurements',true,'Version','2016b')),'Version','2016b','Posi"
-      "tion',[3536 443 570 450])"
+      "4117647 1 1;1 0.0745098039215686 0.650980392156863])),extmgr.Configuration('Tools','Plot Navigation',true),extmg"
+      "r.Configuration('Tools','Measurements',true,'Version','2016b')),'Version','2016b','Position',[3531 417 580 480])"
       NumInputPorts	      "1"
     }
     Block {
@@ -1491,61 +1490,15 @@ Model {
       ZOrder		      3
       SrcBlock		      "Joint Positions"
       SrcPort		      1
-      Points		      [59, 0]
-      Branch {
-	ZOrder			8
-	Points			[0, -25]
-	Branch {
-	  ZOrder		  51
-	  Points		  [0, -60]
-	  DstBlock		  "Mass Matrix"
-	  DstPort		  2
-	}
-	Branch {
-	  ZOrder		  48
-	  DstBlock		  "Gain"
-	  DstPort		  1
-	}
-      }
-      Branch {
-	ZOrder			7
-	DstBlock		"jPos"
-	DstPort			1
-      }
+      DstBlock		      "Gain3"
+      DstPort		      1
     }
     Line {
       ZOrder		      4
       SrcBlock		      "Joint Velocities"
       SrcPort		      1
-      Points		      [59, 0]
-      Branch {
-	ZOrder			46
-	Points			[0, -25]
-	DstBlock		"Gain1"
-	DstPort			1
-      }
-      Branch {
-	ZOrder			45
-	DstBlock		"jVel"
-	DstPort			1
-      }
-    }
-    Line {
-      ZOrder		      5
-      SrcBlock		      "Joint Accelerations"
-      SrcPort		      1
-      Points		      [57, 0]
-      Branch {
-	ZOrder			44
-	Points			[0, -25]
-	DstBlock		"Gain2"
-	DstPort			1
-      }
-      Branch {
-	ZOrder			43
-	DstBlock		"jAcc"
-	DstPort			1
-      }
+      DstBlock		      "Gain"
+      DstPort		      1
     }
     Line {
       ZOrder		      6
@@ -1590,33 +1543,79 @@ Model {
       FontSize		      9
       FontWeight	      "normal"
       FontAngle		      "normal"
-      ZOrder		      52
+      ZOrder		      78
+      SrcBlock		      "Gain3"
+      SrcPort		      1
+      Points		      [9, 0]
+      Branch {
+	ZOrder			8
+	Points			[0, -25]
+	Branch {
+	  ZOrder		  79
+	  DstBlock		  "pos"
+	  DstPort		  1
+	}
+	Branch {
+	  ZOrder		  51
+	  Points		  [0, -60]
+	  DstBlock		  "Mass Matrix"
+	  DstPort		  2
+	}
+      }
+      Branch {
+	ZOrder			7
+	DstBlock		"jPos"
+	DstPort			1
+      }
+    }
+    Line {
+      FontName		      "Helvetica"
+      FontSize		      9
+      FontWeight	      "normal"
+      FontAngle		      "normal"
+      ZOrder		      80
       SrcBlock		      "Gain"
       SrcPort		      1
-      DstBlock		      "pos"
-      DstPort		      1
+      Points		      [9, 0]
+      Branch {
+	ZOrder			81
+	Points			[0, -25]
+	DstBlock		"vel"
+	DstPort			1
+      }
+      Branch {
+	ZOrder			45
+	DstBlock		"jVel"
+	DstPort			1
+      }
     }
     Line {
       FontName		      "Helvetica"
       FontSize		      9
       FontWeight	      "normal"
       FontAngle		      "normal"
-      ZOrder		      53
+      ZOrder		      5
+      SrcBlock		      "Joint Accelerations"
+      SrcPort		      1
+      DstBlock		      "Gain1"
+      DstPort		      1
+    }
+    Line {
+      ZOrder		      83
       SrcBlock		      "Gain1"
       SrcPort		      1
-      DstBlock		      "vel"
-      DstPort		      1
-    }
-    Line {
-      FontName		      "Helvetica"
-      FontSize		      9
-      FontWeight	      "normal"
-      FontAngle		      "normal"
-      ZOrder		      54
-      SrcBlock		      "Gain2"
-      SrcPort		      1
-      DstBlock		      "acc"
-      DstPort		      1
+      Points		      [7, 0]
+      Branch {
+	ZOrder			82
+	Points			[0, -25]
+	DstBlock		"acc"
+	DstPort			1
+      }
+      Branch {
+	ZOrder			43
+	DstBlock		"jAcc"
+	DstPort			1
+      }
     }
   }
 }

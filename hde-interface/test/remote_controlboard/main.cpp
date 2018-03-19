@@ -37,22 +37,37 @@ int main(int argc, const char **argv)
     Vector acc(jnts);
     Vector tau(jnts);
 
+    bool zero_check = true;
+
     while(true)
     {
         ienc->getEncoders(pos.data());
-        yInfo() << "Read Position Values: " << pos.toString();
-
         ienc->getEncoderSpeeds(vel.data());
-        yInfo() << "Read Velocity Values: " << vel.toString();
-        //yInfo() << "Read Velocities Size: " << vel.size();
-
         ienc->getEncoderAccelerations(acc.data());
-        yInfo() << "Read Acceleration Values: " << acc.toString();
-        //yInfo() << "Read Accelerations Size: " << acc.size();
-
         itau->getTorques(tau.data());
-        yInfo() << "Read Torque Values: " << tau.toString();
-        //yInfo() << "Read Torques Size: " << tau.size();
+
+        for(int i = 1; i <= jnts; i++)
+        {
+            if(pos[i] > 1e-10)
+                zero_check = false;
+        }
+
+        if(zero_check == false)
+        {
+            yInfo() << "Read Position Values: " << pos.toString();
+
+
+            yInfo() << "Read Velocity Values: " << vel.toString();
+            //yInfo() << "Read Velocities Size: " << vel.size();
+
+
+            yInfo() << "Read Acceleration Values: " << acc.toString();
+            //yInfo() << "Read Accelerations Size: " << acc.size();
+
+
+            yInfo() << "Read Torque Values: " << tau.toString();
+            //yInfo() << "Read Torques Size: " << tau.size();
+        }
     }
     device.close();
 
