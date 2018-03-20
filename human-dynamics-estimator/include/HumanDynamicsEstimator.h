@@ -143,6 +143,11 @@ class HumanDynamicsEstimator : public yarp::os::RFModule {
     // Gravity
     iDynTree::Vector3 m_gravity;
 
+    // Base Link
+    std::string m_base;
+
+    iDynTree::Vector6 m_baseVelocity;
+
     void computeMaximumAPosteriori(bool computePermutation = false);
 
 public:

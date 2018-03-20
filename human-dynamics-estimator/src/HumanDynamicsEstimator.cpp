@@ -146,15 +146,15 @@ bool HumanDynamicsEstimator::configure(yarp::os::ResourceFinder &rf)
     m_jointsConfiguration.resize(humanModel);
     m_jointsVelocity.resize(humanModel);
 
-    std::string base = rf.find("baseLink").asString();      // base for the model
-
+    std::string m_base = rf.find("baseLink").asString();      // base for the model
+    //std::string m_base = "Pelvis";
     /*
      * ------Model sensors initialization
      */
     iDynTree::SensorsList humanSensors = modelLoader.sensors();
     // Remove sensors that are placed on the base (not supported by Berdy)
-    humanSensors.removeSensor(iDynTree::ACCELEROMETER, base + "_accelerometer");
-    humanSensors.removeSensor(iDynTree::GYROSCOPE, base + "_gyro");
+//    humanSensors.removeSensor(iDynTree::ACCELEROMETER, base + "_accelerometer");
+//    humanSensors.removeSensor(iDynTree::GYROSCOPE, base + "_gyro");
 
     //Parse which sensor should be removed from the sensors list
     if (!parseSensorsRemovalOptionAndRemoveSensors(rf.findGroup("SENSORS_REMOVAL"), humanSensors)) {
@@ -166,12 +166,13 @@ bool HumanDynamicsEstimator::configure(yarp::os::ResourceFinder &rf)
      * ------Setting options and inizialization for Berdy obj
      */
     iDynTree::BerdyOptions berdyOpts;
-    berdyOpts.baseLink = base;
+    berdyOpts.baseLink = "LeftFoot";//m_base;
+    berdyOpts.berdyVariant = iDynTree::BerdyVariants::BERDY_FLOATING_BASE;
     berdyOpts.includeAllNetExternalWrenchesAsSensors          = true;
     berdyOpts.includeAllNetExternalWrenchesAsDynamicVariables = true;
     berdyOpts.includeAllJointAccelerationsAsSensors           = true;
     berdyOpts.includeAllJointTorquesAsSensors                 = false;
-    berdyOpts.includeFixedBaseExternalWrench                  = true;
+    berdyOpts.includeFixedBaseExternalWrench                  = false;
     berdyOpts.checkConsistency();    
 
     m_berdy.init(humanModel, humanSensors, berdyOpts);
@@ -302,7 +303,14 @@ bool HumanDynamicsEstimator::configure(yarp::os::ResourceFinder &rf)
     m_jointsConfiguration.zero();
     m_jointsVelocity.zero();
 
-    m_berdy.updateKinematicsFromTraversalFixedBase(m_jointsConfiguration, m_jointsVelocity, m_gravity);
+    m_baseVelocity.zero();
+    iDynTree::Vector3 baseAngularVelocity;
+    baseAngularVelocity.zero();
+
+    auto baseIx = m_berdy.model().getFrameIndex(m_base);
+    m_berdy.updateKinematicsFromFloatingBase(m_jointsConfiguration, m_jointsVelocity, baseIx, baseAngularVelocity);
+
+    // m_berdy.updateKinematicsFromTraversalFixedBase(m_jointsConfiguration, m_jointsVelocity, m_gravity);
     computeMaximumAPosteriori(true);
 
 
@@ -315,7 +323,7 @@ bool HumanDynamicsEstimator::configure(yarp::os::ResourceFinder &rf)
         BerdyOutputMap *outputMap = nullptr;
         switch(variable.type)
         {
-            case iDynTree::LINK_BODY_PROPER_ACCELERATION:
+            case iDynTree::LINK_BODY_PROPER_CLASSICAL_ACCELERATION:
             case iDynTree::NET_INT_AND_EXT_WRENCHES_ON_LINK_WITHOUT_GRAV:
             case iDynTree::NET_EXT_WRENCH:
                 outputMap = &m_inputOutputMapping.outputLinks;
@@ -386,6 +394,8 @@ bool HumanDynamicsEstimator::updateModule()
     // Read inputs
     // - Human state
     // - External forces
+    yarp::sig::Vector baseVelocityWRTGlobal(6, 0.0);
+
     human::HumanState *stateReading = m_humanJointConfigurationPort.read(false);
     if (stateReading && !iDynTree::toiDynTree(stateReading->positions, m_jointsConfiguration)) {
         yError("Error while reading human configuration");
@@ -393,6 +403,10 @@ bool HumanDynamicsEstimator::updateModule()
     }
     if (stateReading && !iDynTree::toiDynTree(stateReading->velocities, m_jointsVelocity)) {
         yError("Error while reading human velocity");
+        return false;
+    }
+    if (stateReading && !iDynTree::toiDynTree(stateReading->baseVelocityWRTGlobal, m_baseVelocity)){
+        yError("Error while reading human base velocity");
         return false;
     }
 
@@ -432,7 +446,15 @@ bool HumanDynamicsEstimator::updateModule()
     /*
      * Set the kinematic information necessary for the dynamics estimation
      */
-    m_berdy.updateKinematicsFromTraversalFixedBase(m_jointsConfiguration, m_jointsVelocity, m_gravity);
+
+    auto baseIx = m_berdy.model().getLinkIndex(m_base);
+    iDynTree::Vector3 baseAngularVelocity;
+    baseAngularVelocity.setVal(0,m_baseVelocity.getVal(3));
+    baseAngularVelocity.setVal(1,m_baseVelocity.getVal(4));
+    baseAngularVelocity.setVal(2,m_baseVelocity.getVal(5));
+    m_berdy.updateKinematicsFromFloatingBase(m_jointsConfiguration, m_jointsVelocity, baseIx, baseAngularVelocity);
+
+//    m_berdy.updateKinematicsFromTraversalFixedBase(m_jointsConfiguration, m_jointsVelocity, m_gravity);
     
     computeMaximumAPosteriori();
 
@@ -445,7 +467,7 @@ bool HumanDynamicsEstimator::updateModule()
     const int linkVariablesSize = 3;
     iDynTree::BerdyDynamicVariablesTypes linkDynamicsVariableTypes[linkVariablesSize] =
     {
-        iDynTree::LINK_BODY_PROPER_ACCELERATION,
+        iDynTree::LINK_BODY_PROPER_CLASSICAL_ACCELERATION,
         iDynTree::NET_INT_AND_EXT_WRENCHES_ON_LINK_WITHOUT_GRAV,
         iDynTree::NET_EXT_WRENCH
     };
@@ -510,11 +532,25 @@ bool HumanDynamicsEstimator::updateModule()
             // Safety check: resize vector (hopefully noop)
             dynamicsVariableOutput[variableIndex]->resize(found->second.size);
 
-            Eigen::Map<Eigen::VectorXd> yarpVector(dynamicsVariableOutput[variableIndex]->data(), dynamicsVariableOutput[variableIndex]->size());
+            Eigen::Map<Eigen::VectorXd> yarpVector(dynamicsVariableOutput[variableIndex]->data(),
+                                                   dynamicsVariableOutput[variableIndex]->size());
             yarpVector = toEigen(m_expectedDynamicsAPosteriori).segment(found->second.offset, found->second.size);
         }
         
         index++;
+    }
+
+    if(m_berdy.getOptions().berdyVariant == iDynTree::BERDY_FLOATING_BASE){
+        iDynTree::VectorDynSize jointTorques(m_jointsConfiguration.size());
+        jointTorques.zero();
+        m_berdy.extractJointTorquesFromDynamicVariables(m_expectedDynamicsAPosteriori,
+                                                        m_jointsConfiguration,
+                                                        jointTorques);
+        for (int jointIdx = 0; jointIdx <m_inputOutputMapping.outputJoints.size(); ++jointIdx) {
+            human::JointDynamicsEstimation &jointEstimation = output.jointVariables[jointIdx];
+            jointEstimation.torque[0] = jointEstimation.transmittedWrench[3+jointIdx%3];// jointTorques.getVal(jointIdx);
+            //yInfo() << jointEstimation.jointName << " direct y wrench :" << jointEstimation.torque[0] << " helper torque : " << jointTorques.getVal(jointIdx);
+        }
     }
 
     m_outputPort.write();
