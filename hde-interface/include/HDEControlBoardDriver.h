@@ -33,6 +33,7 @@
 #include <string>
 #include <vector>
 #include <list>
+#include <cmath>
 #include <yarp/sig/Vector.h>
 #include <yarp/os/LogStream.h>
 #include <yarp/dev/DeviceDriver.h>
@@ -70,6 +71,10 @@ public:
     yarp::sig::Vector joint_positions;
     yarp::sig::Vector joint_velocities;
     yarp::sig::Vector joint_accelerations;
+
+    yarp::sig::Vector joint_positions_rad;
+    yarp::sig::Vector joint_velocities_rad;
+    yarp::sig::Vector joint_accelerations_rad;
     
     yarp::sig::Vector joint_torques;
     

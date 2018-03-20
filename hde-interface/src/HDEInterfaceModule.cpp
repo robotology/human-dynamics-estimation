@@ -120,7 +120,11 @@ bool HDEInterfaceModule::configure(yarp::os::ResourceFinder& rf)
     yarp::dev::HDEControlBoardDriver* hde_controlboard_driver_ptr = dynamic_cast<yarp::dev::HDEControlBoardDriver*>(hde_controlboard_driver.getImplementation());
     
     hde_controlboard_driver_ptr->number_of_dofs = rf.find("joints").asInt();
-    
+
+    hde_controlboard_driver_ptr->joint_positions_rad.resize(hde_controlboard_driver_ptr->number_of_dofs);
+    hde_controlboard_driver_ptr->joint_velocities_rad.resize(hde_controlboard_driver_ptr->number_of_dofs);
+    hde_controlboard_driver_ptr->joint_accelerations_rad.resize(hde_controlboard_driver_ptr->number_of_dofs);
+
     hde_controlboard_driver_ptr->joint_positions.resize(hde_controlboard_driver_ptr->number_of_dofs);
     hde_controlboard_driver_ptr->joint_velocities.resize(hde_controlboard_driver_ptr->number_of_dofs);
     hde_controlboard_driver_ptr->joint_accelerations.resize(hde_controlboard_driver_ptr->number_of_dofs);
@@ -191,10 +195,10 @@ bool HDEInterfaceModule::updateModule()
     
     if(input_state->positions.size() == hde_controlboard_driver_ptr->number_of_dofs)
     {
-        hde_controlboard_driver_ptr->joint_positions = input_state->positions;
+        hde_controlboard_driver_ptr->joint_positions_rad = input_state->positions;
         //yInfo() << "Joint Positions: " << hde_controlboard_driver_ptr->joint_positions.toString();
         
-        hde_controlboard_driver_ptr->joint_velocities = input_state->velocities;
+        hde_controlboard_driver_ptr->joint_velocities_rad = input_state->velocities;
         //yInfo() << "Joint Velocities:: " << hde_controlboard_driver_ptr->joint_velocities.toString();
     }
     else
@@ -215,7 +219,7 @@ bool HDEInterfaceModule::updateModule()
             if(input_joint_dynamics.at(j).jointName == hde_controlboard_driver_ptr->joint_name_list.at(j))
             {
                 double joint_acceleration = input_joint_dynamics.at(j).acceleration[0];
-                hde_controlboard_driver_ptr->joint_accelerations[j] = joint_acceleration;
+                hde_controlboard_driver_ptr->joint_accelerations_rad[j] = joint_acceleration;
                 
                 
                 double joint_torque = input_joint_dynamics.at(j).torque[0];
@@ -233,6 +237,13 @@ bool HDEInterfaceModule::updateModule()
     {
         yError() << "HDEInterfaceModule: DoFs mismatch between config file and human joint dynamics";
         return false;
+    }
+
+    for(int j=1; j <= hde_controlboard_driver_ptr->number_of_dofs; j++)
+    {
+        hde_controlboard_driver_ptr->joint_positions[j] = hde_controlboard_driver_ptr->joint_positions_rad[j]*(180/M_PI);
+        hde_controlboard_driver_ptr->joint_velocities[j] = hde_controlboard_driver_ptr->joint_velocities_rad[j]*(180/M_PI);
+        hde_controlboard_driver_ptr->joint_accelerations[j] = hde_controlboard_driver_ptr->joint_accelerations_rad[j]*(180/M_PI);
     }
     
     //yInfo() << "Joint Accelerations: " << hde_controlboard_driver_ptr->joint_accelerations.toString();
