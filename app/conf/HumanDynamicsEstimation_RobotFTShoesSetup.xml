@@ -64,6 +64,12 @@
         <node>${generic_node}</node>
     </module>
 
+    <module>
+        <name>human-robot-pose</name>
+        <parameters></parameters>
+        <node>${generic_node}</node>
+    </module>
+
     <connection>
           <from>/xsens/frames:o</from>
           <to>/human-state-provider/xsens/frames:i</to>
