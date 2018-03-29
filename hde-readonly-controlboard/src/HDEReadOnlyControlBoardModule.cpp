@@ -312,16 +312,16 @@ bool HDEReadOnlyControlBoardModule::respond(const yarp::os::Bottle& command, yar
      state_port.interrupt();
      dynamics_port.interrupt();
 
+     // Disconnect yarp ports
+     yarp::os::Network::disconnect(hde_state_port_name,state_port.getName().c_str());
+     yarp::os::Network::disconnect(hde_dynamics_port_name,dynamics_port.getName().c_str());
+
      return true;
 }
 
 bool HDEReadOnlyControlBoardModule::close()
 {
     yInfo() << LogPrefix << "Calling close function";
-
-    // Disconnect yarp ports
-    yarp::os::Network::disconnect(hde_state_port_name,state_port.getName().c_str());
-    yarp::os::Network::disconnect(hde_dynamics_port_name,dynamics_port.getName().c_str());
 
     // Close yarp ports
     rpc_port.close();
