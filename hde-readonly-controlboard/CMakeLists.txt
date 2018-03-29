@@ -12,15 +12,15 @@ yarp_idl_to_dir("../human-dynamics-estimator/thrifts/HumanDynamics.thrift" "${CM
 
 
 
-set(hde_interface_headers include/HDEReadOnlyControlBoardModule.h
-                          include/HDEReadOnlyDriver.h)
-set(hde_interface_sources src/main.cpp
-                          src/HDEReadOnlyControlBoardModule.cpp
-                          src/HDEReadOnlyDriverAxisInfo.cpp
-                          src/HDEReadOnlyDriverPositionControl.cpp
-                          src/HDEReadOnlyDriverVelocityControl.cpp
-                          src/HDEReadOnlyDriverEncoder.cpp
-                          src/HDEReadOnlyDriverTorqueControl.cpp)
+set(hde_readonly_controlboard_headers include/HDEReadOnlyControlBoardModule.h
+                                      include/HDEReadOnlyDriver.h)
+set(hde_readonly_controlboard_sources src/main.cpp
+                                      src/HDEReadOnlyControlBoardModule.cpp
+                                      src/HDEReadOnlyDriverAxisInfo.cpp
+                                      src/HDEReadOnlyDriverPositionControl.cpp
+                                      src/HDEReadOnlyDriverVelocityControl.cpp
+                                      src/HDEReadOnlyDriverEncoder.cpp
+                                      src/HDEReadOnlyDriverTorqueControl.cpp)
 
 include_directories(${YARP_INCLUDE_DIRS}
                     ${THRIFT_FT_INCLUDE_DIRS}
@@ -29,17 +29,17 @@ include_directories(${YARP_INCLUDE_DIRS}
                     ${THRIFT_DYNAMICS_INCLUDE_DIRS}
                     -I include/)
 
-add_executable(hde-interface ${hde_interface_headers}
-                             ${hde_interface_sources}
-                             ${THRIFT_FT_HEADERS}
-                             ${THRIFT_FT_SOURCES}
-                             ${THRIFT_STATE_HEADERS}
-                             ${THRIFT_STATE_SOURCES}
-                             ${THRIFT_SERVICE_HEADERS}
-                             ${THRIFT_SERVICE_SOURCES}
-                             ${THRIFT_DYNAMICS_HEADERS}
-                             ${THRIFT_DYNAMICS_SOURCES})
+add_executable(hde-readonly-controlboard ${hde_readonly_controlboard_headers}
+                                         ${hde_readonly_controlboard_sources}
+                                         ${THRIFT_FT_HEADERS}
+                                         ${THRIFT_FT_SOURCES}
+                                         ${THRIFT_STATE_HEADERS}
+                                         ${THRIFT_STATE_SOURCES}
+                                         ${THRIFT_SERVICE_HEADERS}
+                                         ${THRIFT_SERVICE_SOURCES}
+                                         ${THRIFT_DYNAMICS_HEADERS}
+                                         ${THRIFT_DYNAMICS_SOURCES})
 
-target_link_libraries(hde-interface ${YARP_LIBRARIES})
+target_link_libraries(hde-readonly-controlboard ${YARP_LIBRARIES})
 
-#install(TARGETS hde- interface RUNTIME DESTINATION bin)
+#install(TARGETS hde-readonly-controlboard RUNTIME DESTINATION bin)
