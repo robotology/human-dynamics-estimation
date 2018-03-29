@@ -27,6 +27,14 @@ namespace yarp {
 
 class HDEReadOnlyControlBoardModule:public yarp::os::RFModule
 {
+
+private:
+
+    std::string rpc_port_name;
+    std::string hde_state_port_name;
+    std::string hde_forces_port_name;
+    std::string hde_dynamics_port_name;
+
     yarp::os::RpcServer rpc_port;
     yarp::os::BufferedPort<human::HumanState> state_port;
     yarp::os::BufferedPort<human::HumanForces> forces_port;

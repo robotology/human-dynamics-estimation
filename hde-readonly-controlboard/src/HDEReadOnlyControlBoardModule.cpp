@@ -36,58 +36,58 @@ bool HDEReadOnlyControlBoardModule::configure(yarp::os::ResourceFinder& rf)
         yarp::os::Network::init();
     }
 
-    std::string rpc_port_name = rf.find("name").asString();
+    rpc_port_name = rf.find("name").asString();
 
     if(rpc_port.open(rpc_port_name+"/rpc:i"))
     {
         attach(rpc_port);
     }
 
-    std::string hde_state_port_name = rf.find("hde_state_port_name").asString();
+    hde_state_port_name = rf.find("hde_state_port_name").asString();
 
     if(state_port.open(rpc_port_name+"/state:i"))
     {
         if(!yarp::os::Network::connect(hde_state_port_name,state_port.getName().c_str()))
         {
-            yError() << LogPrefix << "Failed to connect /human-state-provider/state:o and /hde-interface/state:i ports";
+            yError() << LogPrefix << "Failed to connect " << hde_state_port_name << " and " << state_port.getName().c_str();
             return false;
         }
     }
     else
     {
-        yError() << LogPrefix << "Failed to open /hde-interface/state:i port";
+        yError() << LogPrefix << "Failed to open " << state_port.getName().c_str();
         return false;
     }
 
-    std::string hde_forces_port_name = rf.find("hde_forces_port_name").asString();
+    hde_forces_port_name = rf.find("hde_forces_port_name").asString();
 
     if(forces_port.open(rpc_port_name+"/forces:i"))
     {
         if(!yarp::os::Network::connect(hde_forces_port_name,forces_port.getName().c_str()))
         {
-            yError() << LogPrefix << "Failed to connect /human-forces-provider/forces:o and /hde-interface/forces:i ports";
+            yError() << LogPrefix << "Failed to connect " << hde_forces_port_name << " and " << forces_port.getName().c_str();
             return false;
         }
     }
     else
     {
-        yError() << LogPrefix << "Failed to open /hde-interface/forces:i port";
+        yError() << LogPrefix << "Failed to open " << forces_port.getName().c_str();
         return false;
     }
 
-    std::string hde_dynamics_port_name = rf.find("hde_dynamics_port_name").asString();
+    hde_dynamics_port_name = rf.find("hde_dynamics_port_name").asString();
 
     if(dynamics_port.open(rpc_port_name+"/dynamicsEstimation:i"))
     {
         if(!yarp::os::Network::connect(hde_dynamics_port_name,dynamics_port.getName().c_str()))
         {
-            yError() << LogPrefix << "Failed to connect /human-dynamics-estimator/dynamicsEstimation:o and /hde-interface/dynamicsEstimation:i ports";
+            yError() << LogPrefix << "Failed to connect " << hde_dynamics_port_name << " and " << dynamics_port.getName().c_str();
             return false;
         }
     }
     else
     {
-        yError() << LogPrefix << "Failed to open /hde-interface/dynamicsEstimation:i port";
+        yError() << LogPrefix << "Failed to open " << dynamics_port.getName().c_str();
         return false;
     }
 
@@ -243,9 +243,9 @@ bool HDEReadOnlyControlBoardModule::close()
 {
     yInfo() << LogPrefix << "Calling close function";
 
-    yarp::os::Network::disconnect("/human-state-provider/state:o",state_port.getName().c_str());
-    yarp::os::Network::disconnect("/human-forces-provider/forces:o",forces_port.getName().c_str());
-    yarp::os::Network::disconnect("/human-dynamics-estimator/dynamicsEstimation:o",dynamics_port.getName().c_str());
+    yarp::os::Network::disconnect(hde_state_port_name,state_port.getName().c_str());
+    yarp::os::Network::disconnect(hde_forces_port_name,forces_port.getName().c_str());
+    yarp::os::Network::disconnect(hde_dynamics_port_name,dynamics_port.getName().c_str());
 
     rpc_port.close();
     return true;
