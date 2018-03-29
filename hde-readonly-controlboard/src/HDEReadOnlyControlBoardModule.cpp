@@ -109,7 +109,7 @@ bool HDEReadOnlyControlBoardModule::configure(yarp::os::ResourceFinder& rf)
         attach(rpc_port);
     }
 
-    if(state_port.open(rpc_port_name+"/state:i"))
+    if(state_port.open("/"+moduleName+"/state:i"))
     {
         if(!yarp::os::Network::connect(hde_state_port_name,state_port.getName().c_str()))
         {
@@ -123,7 +123,7 @@ bool HDEReadOnlyControlBoardModule::configure(yarp::os::ResourceFinder& rf)
         return false;
     }
 
-    if(dynamics_port.open(rpc_port_name+"/dynamicsEstimation:i"))
+    if(dynamics_port.open("/"+moduleName+"/dynamicsEstimation:i"))
     {
         if(!yarp::os::Network::connect(hde_dynamics_port_name,dynamics_port.getName().c_str()))
         {
