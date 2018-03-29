@@ -1,5 +1,7 @@
 #include "HDEReadOnlyControlBoardModule.h"
 
+const std::string LogPrefix = "HDEReadOnlyControlBoardModule : ";
+
 double HDEReadOnlyControlBoardModule::getPeriod()
 {
     return 0.01;
@@ -47,13 +49,13 @@ bool HDEReadOnlyControlBoardModule::configure(yarp::os::ResourceFinder& rf)
     {
         if(!yarp::os::Network::connect(hde_state_port_name,state_port.getName().c_str()))
         {
-            yError() << "HDEReadOnlyControlBoardModule: Failed to connect /human-state-provider/state:o and /hde-interface/state:i ports";
+            yError() << LogPrefix << "Failed to connect /human-state-provider/state:o and /hde-interface/state:i ports";
             return false;
         }
     }
     else
     {
-        yError() << "HDEReadOnlyControlBoardModule: Failed to open /hde-interface/state:i port";
+        yError() << LogPrefix << "Failed to open /hde-interface/state:i port";
         return false;
     }
 
@@ -63,13 +65,13 @@ bool HDEReadOnlyControlBoardModule::configure(yarp::os::ResourceFinder& rf)
     {
         if(!yarp::os::Network::connect(hde_forces_port_name,forces_port.getName().c_str()))
         {
-            yError() << "HDEReadOnlyControlBoardModule: Failed to connect /human-forces-provider/forces:o and /hde-interface/forces:i ports";
+            yError() << LogPrefix << "Failed to connect /human-forces-provider/forces:o and /hde-interface/forces:i ports";
             return false;
         }
     }
     else
     {
-        yError() << "HDEReadOnlyControlBoardModule: Failed to open /hde-interface/forces:i port";
+        yError() << LogPrefix << "Failed to open /hde-interface/forces:i port";
         return false;
     }
 
@@ -79,13 +81,13 @@ bool HDEReadOnlyControlBoardModule::configure(yarp::os::ResourceFinder& rf)
     {
         if(!yarp::os::Network::connect(hde_dynamics_port_name,dynamics_port.getName().c_str()))
         {
-            yError() << "HDEReadOnlyControlBoardModule: Failed to connect /human-dynamics-estimator/dynamicsEstimation:o and /hde-interface/dynamicsEstimation:i ports";
+            yError() << LogPrefix << "Failed to connect /human-dynamics-estimator/dynamicsEstimation:o and /hde-interface/dynamicsEstimation:i ports";
             return false;
         }
     }
     else
     {
-        yError() << "HDEReadOnlyControlBoardModule: Failed to open /hde-interface/dynamicsEstimation:i port";
+        yError() << LogPrefix << "Failed to open /hde-interface/dynamicsEstimation:i port";
         return false;
     }
 
@@ -113,14 +115,14 @@ bool HDEReadOnlyControlBoardModule::configure(yarp::os::ResourceFinder& rf)
 
     if(!joints.check("joint_name_list"))
     {
-        yError() << "HDEReadOnlyControlBoardModule: Failed to read joints name list";
+        yError() << LogPrefix << "Failed to read joints name list";
         return false;
     }
     else
     {
         if(joints.size()-1 != hde_readonly_driver_ptr->number_of_dofs)
         {
-            yError() << "HDEReadOnlyControlBoardModule: mismatch between the joints number and joint name list size from the config file";
+            yError() << LogPrefix << "Mismatch between the joints number and joint name list size from the config file";
             return false;
 
         }
@@ -139,7 +141,7 @@ bool HDEReadOnlyControlBoardModule::configure(yarp::os::ResourceFinder& rf)
 
     if(!wrapper.view(iWrapper))
     {
-        yError() << "HDEReadOnlyControlBoardModule: Error while loading the wrapper";
+        yError() << LogPrefix << "Error while loading the wrapper";
         return false;
     }
 
@@ -147,7 +149,7 @@ bool HDEReadOnlyControlBoardModule::configure(yarp::os::ResourceFinder& rf)
 
     if(!iWrapper->attachAll(driver_list))
     {
-        yError() << "HDEReadOnlyControlBoardModule: Error while attaching the device to the wrapper interface";
+        yError() << LogPrefix << "Error while attaching the device to the wrapper interface";
         return false;
     }
 
@@ -179,7 +181,7 @@ bool HDEReadOnlyControlBoardModule::updateModule()
     }
     else
     {
-        yError() << "HDEReadOnlyControlBoardModule: DoFs mismatch between the config file and human state port";
+        yError() << LogPrefix << "DoFs mismatch between the config file and human state port";
         return false;
     }
 
@@ -204,14 +206,14 @@ bool HDEReadOnlyControlBoardModule::updateModule()
             }
             else
             {
-                yError() << "HDEReadOnlyControlBoardModule: Joint name mismatch while getting jonit torques";
+                yError() << LogPrefix << "Joint name mismatch while getting jonit torques";
                 return false;
             }
         }
     }
     else
     {
-        yError() << "HDEReadOnlyControlBoardModule: DoFs mismatch between config file and human joint dynamics";
+        yError() << LogPrefix << "DoFs mismatch between config file and human joint dynamics";
         return false;
     }
 
@@ -233,13 +235,13 @@ bool HDEReadOnlyControlBoardModule::updateModule()
 
  bool HDEReadOnlyControlBoardModule::interruptModule()
  {
-     yInfo() << "HDEReadOnlyControlBoardModule: Interrupting module for port cleanup";
+     yInfo() << LogPrefix << "Interrupting module for port cleanup";
      return true;
 }
 
 bool HDEReadOnlyControlBoardModule::close()
 {
-    yInfo() << "HDEReadOnlyControlBoardModule: Calling close function";
+    yInfo() << LogPrefix << "Calling close function";
 
     yarp::os::Network::disconnect("/human-state-provider/state:o",state_port.getName().c_str());
     yarp::os::Network::disconnect("/human-forces-provider/forces:o",forces_port.getName().c_str());
