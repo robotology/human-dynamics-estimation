@@ -1,33 +1,5 @@
-/*
- * Copyright (c) 2018, <copyright holder> <email>
- * All rights reserved.
- * 
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *     * Redistributions of source code must retain the above copyright
- *     notice, this list of conditions and the following disclaimer.
- *     * Redistributions in binary form must reproduce the above copyright
- *     notice, this list of conditions and the following disclaimer in the
- *     documentation and/or other materials provided with the distribution.
- *     * Neither the name of the <organization> nor the
- *     names of its contributors may be used to endorse or promote products
- *     derived from this software without specific prior written permission.
- * 
- * THIS SOFTWARE IS PROVIDED BY <copyright holder> <email> ''AS IS'' AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL <copyright holder> <email> BE LIABLE FOR ANY
- * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
- */
-
-#ifndef HDEDCONTROLBOARDDRIVER_H
-#define HDEDCONTROLBOARDDRIVER_H
+#ifndef HDEREADONLYDRIVER_H
+#define HDEREADONLYDRIVER_H
 
 #include <iostream>
 #include <string>
@@ -47,12 +19,11 @@ namespace yarp
 {
     namespace dev
     {
-        class HDEControlBoardDriver;
+        class HDEReadOnlyDriver;
     }
 }
 
-
-class yarp::dev::HDEControlBoardDriver:
+class yarp::dev::HDEReadOnlyDriver:
     public yarp::dev::DeviceDriver,
     public yarp::dev::IAxisInfo,
     public yarp::dev::IPositionControl,
@@ -60,14 +31,14 @@ class yarp::dev::HDEControlBoardDriver:
     public yarp::dev::IEncodersTimed,
     public yarp::dev::ITorqueControl
 {
-    
+
 private:
-    
+
 public:
-    
+
     int number_of_dofs;
     std::vector<std::string> joint_name_list;
-    
+
     yarp::sig::Vector joint_positions;
     yarp::sig::Vector joint_velocities;
     yarp::sig::Vector joint_accelerations;
@@ -75,27 +46,27 @@ public:
     yarp::sig::Vector joint_positions_rad;
     yarp::sig::Vector joint_velocities_rad;
     yarp::sig::Vector joint_accelerations_rad;
-    
+
     yarp::sig::Vector joint_torques;
-    
-    HDEControlBoardDriver() {};
-    ~HDEControlBoardDriver() {};
+
+    HDEReadOnlyDriver() {};
+    ~HDEReadOnlyDriver() {};
 
     //Device Driver
-    bool open(yarp::os::Searchable& config)
+    bool open(yarp::os::Searchable& config) override
     {
         return true;
     }
-    
-    bool close()
+
+    bool close() override
     {
         return yarp::dev::DeviceDriver::close();
     }
-    
+
     //Axis Info
-    virtual bool getAxisName(int axis, yarp::os::ConstString& name);
-    virtual bool getJointType(int axis, yarp::dev::JointTypeEnum& type);
-    
+    bool getAxisName(int axis, yarp::os::ConstString& name) override;
+    bool getJointType(int axis, yarp::dev::JointTypeEnum& type) override;
+
     //Position Control
     bool stop() override;
     bool stop(int j) override;
@@ -110,7 +81,7 @@ public:
     bool relativeMove(const double* deltas) override;
     bool checkMotionDone(int j, bool* flag) override;
     bool checkMotionDone(bool* flag) override;
-    
+
     //Velocity Control
     bool velocityMove(int j, double sp) override;
     bool velocityMove(const double* sp) override;
@@ -118,7 +89,7 @@ public:
     bool setRefAccelerations(const double* accs) override;
     bool getRefAcceleration(int j, double* acc) override;
     bool getRefAccelerations(double* accs) override;
-    
+
     //Encoders
     bool getEncoder(int j, double* v) override;
     bool getEncoders(double* encs) override;
@@ -130,11 +101,11 @@ public:
     bool getEncoderSpeeds(double* spds) override;
     bool getEncoderAcceleration(int j, double* spds) override;
     bool getEncoderAccelerations(double* accs) override;
-    
+
     //Encoders Timed
     bool getEncoderTimed(int j, double* encs, double* time) override;
     bool getEncodersTimed(double* encs, double* time) override;
-    
+
     //Torque Control
     bool setRefTorque(int j, double t) override;
     bool setRefTorques(const double *t) override;
@@ -145,13 +116,13 @@ public:
     bool getTorque(int j, double *t) override;
     bool getTorques(double *t) override;
 
-    bool getBemfParam(int j, double *bemf);
-    bool setBemfParam(int j, double bemf);
-    bool getTorqueRange(int j, double *min, double *max);
-    bool getTorqueRanges(double *min, double *max);
-    bool getMotorTorqueParams(int j,  yarp::dev::MotorTorqueParameters *params);
-    bool setMotorTorqueParams(int j, const yarp::dev::MotorTorqueParameters params);
-    
+    bool getBemfParam(int j, double *bemf) override;
+    bool setBemfParam(int j, double bemf) override;
+    bool getTorqueRange(int j, double *min, double *max) override;
+    bool getTorqueRanges(double *min, double *max) override;
+    bool getMotorTorqueParams(int j,  yarp::dev::MotorTorqueParameters *params) override;
+    bool setMotorTorqueParams(int j, const yarp::dev::MotorTorqueParameters params) override;
+
 };
 
-#endif // HDEDCONTROLBOARDDRIVER_H
+#endif // HDEREADONLYDRIVER_H

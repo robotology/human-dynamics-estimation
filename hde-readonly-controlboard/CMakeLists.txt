@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.6)
-project(hde-interface)
+project(hde-readonly-controlboard)
 
 find_package(YARP)
 
@@ -12,20 +12,27 @@ yarp_idl_to_dir("../human-dynamics-estimator/thrifts/HumanDynamics.thrift" "${CM
 
 
 
-set(hde_interface_headers include/HDEInterfaceModule.h include/HDEControlBoardDriver.h)
-set(hde_interface_sources src/main.cpp src/HDEInterfaceModule.cpp src/HDEControlBoardAxisInfo.cpp src/HDEControlBoardDriverPositionControl.cpp src/HDEControlBoardDriverVelocityControl.cpp src/HDEControlBoardDriverEncoder.cpp src/HDEControlBoardDriverTorqueControl.cpp)
+set(hde_interface_headers include/HDEReadOnlyControlBoardModule.h
+                          include/HDEReadOnlyDriver.h)
+set(hde_interface_sources src/main.cpp
+                          src/HDEReadOnlyControlBoardModule.cpp
+                          src/HDEReadOnlyDriverAxisInfo.cpp
+                          src/HDEReadOnlyDriverPositionControl.cpp
+                          src/HDEReadOnlyDriverVelocityControl.cpp
+                          src/HDEReadOnlyDriverEncoder.cpp
+                          src/HDEReadOnlyDriverTorqueControl.cpp)
 
-include_directories(${YARP_INCLUDE_DIRS} 
-                    ${THRIFT_FT_INCLUDE_DIRS} 
-                    ${THRIFT_STATE_INCLUDE_DIRS} 
+include_directories(${YARP_INCLUDE_DIRS}
+                    ${THRIFT_FT_INCLUDE_DIRS}
+                    ${THRIFT_STATE_INCLUDE_DIRS}
                     ${THRIFT_SERVICE_INCLUDE_DIRS}
                     ${THRIFT_DYNAMICS_INCLUDE_DIRS}
                     -I include/)
 
-add_executable(hde-interface ${hde_interface_headers} 
-                             ${hde_interface_sources} 
-                             ${THRIFT_FT_HEADERS} 
-                             ${THRIFT_FT_SOURCES} 
+add_executable(hde-interface ${hde_interface_headers}
+                             ${hde_interface_sources}
+                             ${THRIFT_FT_HEADERS}
+                             ${THRIFT_FT_SOURCES}
                              ${THRIFT_STATE_HEADERS}
                              ${THRIFT_STATE_SOURCES}
                              ${THRIFT_SERVICE_HEADERS}
