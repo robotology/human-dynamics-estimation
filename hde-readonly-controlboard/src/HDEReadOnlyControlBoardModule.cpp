@@ -41,9 +41,11 @@ bool HDEReadOnlyControlBoardModule::configure(yarp::os::ResourceFinder& rf)
         attach(rpc_port);
     }
 
+    std::string hde_state_port_name = rf.find("hde_state_port_name").asString();
+
     if(state_port.open(rpc_port_name+"/state:i"))
     {
-        if(!yarp::os::Network::connect("/human-state-provider/state:o",state_port.getName().c_str()))
+        if(!yarp::os::Network::connect(hde_state_port_name,state_port.getName().c_str()))
         {
             yError() << "HDEReadOnlyControlBoardModule: Failed to connect /human-state-provider/state:o and /hde-interface/state:i ports";
             return false;
@@ -55,9 +57,11 @@ bool HDEReadOnlyControlBoardModule::configure(yarp::os::ResourceFinder& rf)
         return false;
     }
 
+    std::string hde_forces_port_name = rf.find("hde_forces_port_name").asString();
+
     if(forces_port.open(rpc_port_name+"/forces:i"))
     {
-        if(!yarp::os::Network::connect("/human-forces-provider/forces:o",forces_port.getName().c_str()))
+        if(!yarp::os::Network::connect(hde_forces_port_name,forces_port.getName().c_str()))
         {
             yError() << "HDEReadOnlyControlBoardModule: Failed to connect /human-forces-provider/forces:o and /hde-interface/forces:i ports";
             return false;
@@ -69,9 +73,11 @@ bool HDEReadOnlyControlBoardModule::configure(yarp::os::ResourceFinder& rf)
         return false;
     }
 
+    std::string hde_dynamics_port_name = rf.find("hde_dynamics_port_name").asString();
+
     if(dynamics_port.open(rpc_port_name+"/dynamicsEstimation:i"))
     {
-        if(!yarp::os::Network::connect("/human-dynamics-estimator/dynamicsEstimation:o",dynamics_port.getName().c_str()))
+        if(!yarp::os::Network::connect(hde_dynamics_port_name,dynamics_port.getName().c_str()))
         {
             yError() << "HDEReadOnlyControlBoardModule: Failed to connect /human-dynamics-estimator/dynamicsEstimation:o and /hde-interface/dynamicsEstimation:i ports";
             return false;
