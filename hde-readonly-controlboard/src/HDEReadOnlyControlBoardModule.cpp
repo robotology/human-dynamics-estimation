@@ -168,10 +168,8 @@ bool HDEReadOnlyControlBoardModule::updateModule()
     if(input_state->positions.size() == hde_readonly_driver_ptr->number_of_dofs)
     {
         hde_readonly_driver_ptr->joint_positions_rad = input_state->positions;
-        //yInfo() << "Joint Positions: " << hde_readonly_driver_ptr->joint_positions.toString();
 
         hde_readonly_driver_ptr->joint_velocities_rad = input_state->velocities;
-        //yInfo() << "Joint Velocities:: " << hde_readonly_driver_ptr->joint_velocities.toString();
     }
     else
     {
@@ -218,6 +216,9 @@ bool HDEReadOnlyControlBoardModule::updateModule()
         hde_readonly_driver_ptr->joint_accelerations[j] = hde_readonly_driver_ptr->joint_accelerations_rad[j]*(180/M_PI);
     }
 
+    //Debug print
+    //yInfo() << "Joint Positions: " << hde_readonly_driver_ptr->joint_positions.toString();
+    //yInfo() << "Joint Velocities:: " << hde_readonly_driver_ptr->joint_velocities.toString();
     //yInfo() << "Joint Accelerations: " << hde_readonly_driver_ptr->joint_accelerations.toString();
     //yInfo() << "Joint Torques: " << hde_readonly_driver_ptr->joint_torques.toString();
 
