@@ -45,11 +45,6 @@ bool HDEReadOnlyControlBoardModule::configure(yarp::os::ResourceFinder& rf)
         return false;
     }
 
-    if (!(rf.check("hde_forces_port_name"))) {
-        yError() << LogPrefix << "Parameter 'hde_forces_port_name' missing or invalid";
-        return false;
-    }
-
     if (!(rf.check("hde_dynamics_port_name"))) {
         yError() << LogPrefix << "Parameter 'hde_dynamics_port_name' missing or invalid";
         return false;
@@ -93,7 +88,6 @@ bool HDEReadOnlyControlBoardModule::configure(yarp::os::ResourceFinder& rf)
 
     // HDE PARAMETERS
     hde_state_port_name = rf.find("hde_state_port_name").asString();
-    hde_forces_port_name = rf.find("hde_forces_port_name").asString();
     hde_dynamics_port_name = rf.find("hde_dynamics_port_name").asString();
 
     // HUMAN PARAMETERS
@@ -126,20 +120,6 @@ bool HDEReadOnlyControlBoardModule::configure(yarp::os::ResourceFinder& rf)
     else
     {
         yError() << LogPrefix << "Failed to open " << state_port.getName().c_str();
-        return false;
-    }
-
-    if(forces_port.open(rpc_port_name+"/forces:i"))
-    {
-        if(!yarp::os::Network::connect(hde_forces_port_name,forces_port.getName().c_str()))
-        {
-            yError() << LogPrefix << "Failed to connect " << hde_forces_port_name << " and " << forces_port.getName().c_str();
-            return false;
-        }
-    }
-    else
-    {
-        yError() << LogPrefix << "Failed to open " << forces_port.getName().c_str();
         return false;
     }
 
@@ -326,6 +306,12 @@ bool HDEReadOnlyControlBoardModule::respond(const yarp::os::Bottle& command, yar
  bool HDEReadOnlyControlBoardModule::interruptModule()
  {
      yInfo() << LogPrefix << "Interrupting module for port cleanup";
+
+     // Interrupt yarp ports
+     rpc_port.interrupt();
+     state_port.interrupt();
+     dynamics_port.interrupt();
+
      return true;
 }
 
@@ -333,12 +319,15 @@ bool HDEReadOnlyControlBoardModule::close()
 {
     yInfo() << LogPrefix << "Calling close function";
 
-    // DISCONNECT YARP PORTS
+    // Disconnect yarp ports
     yarp::os::Network::disconnect(hde_state_port_name,state_port.getName().c_str());
-    yarp::os::Network::disconnect(hde_forces_port_name,forces_port.getName().c_str());
     yarp::os::Network::disconnect(hde_dynamics_port_name,dynamics_port.getName().c_str());
 
+    // Close yarp ports
     rpc_port.close();
+    state_port.close();
+    dynamics_port.close();
+
     return true;
 }
 

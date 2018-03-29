@@ -35,7 +35,6 @@ private:
 
     std::string rpc_port_name;
     std::string hde_state_port_name;
-    std::string hde_forces_port_name;
     std::string hde_dynamics_port_name;
 
     int human_dofs;
@@ -44,7 +43,6 @@ private:
 
     yarp::os::RpcServer rpc_port;
     yarp::os::BufferedPort<human::HumanState> state_port;
-    yarp::os::BufferedPort<human::HumanForces> forces_port;
     yarp::os::BufferedPort<human::HumanDynamics> dynamics_port;
 
 public:
