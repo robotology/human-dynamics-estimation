@@ -2,32 +2,7 @@
 
 const std::string LogPrefix = "HDEReadOnlyControlBoardModule : ";
 
-double HDEReadOnlyControlBoardModule::getPeriod()
-{
-    return 0.01;
-}
-
 HDEReadOnlyControlBoardModule::HDEReadOnlyControlBoardModule(): iWrapper(0) {}
-
-HDEReadOnlyControlBoardModule::~HDEReadOnlyControlBoardModule()
-{
-    if(iWrapper)
-    {
-        iWrapper->detachAll();
-        iWrapper = 0;
-    }
-    if(wrapper.isValid())
-    {
-        wrapper.close();
-    }
-
-    if(hde_readonly_driver.isValid())
-    {
-        hde_readonly_driver.close();
-    }
-
-    yarp::os::Network::fini();
-}
 
 bool HDEReadOnlyControlBoardModule::configure(yarp::os::ResourceFinder& rf)
 {
@@ -36,14 +11,109 @@ bool HDEReadOnlyControlBoardModule::configure(yarp::os::ResourceFinder& rf)
         yarp::os::Network::init();
     }
 
-    rpc_port_name = rf.find("name").asString();
+    // ================
+    // CHECK PARAMETERS
+    // ================
 
-    if(rpc_port.open(rpc_port_name+"/rpc:i"))
+    if (!rf.check("name")) {
+        yError() << LogPrefix << "Module name is wrong or missing";
+    }
+    const std::string moduleName = rf.find("name").asString();
+    rpc_port_name = "/" + moduleName + "/rpc:i";
+    setName(moduleName.c_str());
+    // Check that the name matches the module name in order to avoid
+    // passing a wrong configuration file
+    if (moduleName != "hde-readonly-controlboard") {
+        yError() << LogPrefix
+                 << "The moduleName parameter of the passed configuration is not hde-readonly-controlboard";
+        return false;
+    }
+
+    // MODULE PARAMETERS
+    // =================
+
+    if (!(rf.check("period") && rf.find("period").isInt())) {
+        yError() << LogPrefix << "Parameter 'period' missing or invalid";
+        return false;
+    }
+
+    // HDE PARAMETERS
+    // =================
+
+    if (!(rf.check("hde_state_port_name"))) {
+        yError() << LogPrefix << "Parameter 'hde_state_port_name' missing or invalid";
+        return false;
+    }
+
+    if (!(rf.check("hde_forces_port_name"))) {
+        yError() << LogPrefix << "Parameter 'hde_forces_port_name' missing or invalid";
+        return false;
+    }
+
+    if (!(rf.check("hde_dynamics_port_name"))) {
+        yError() << LogPrefix << "Parameter 'hde_dynamics_port_name' missing or invalid";
+        return false;
+    }
+
+    // HUMAN PARAMETERS
+    // =================
+
+    if (!(rf.check("human_joints") && rf.find("human_joints").isInt())) {
+        yError() << LogPrefix << "Parameter 'joints' missing or invalid";
+        return false;
+    }
+
+    if (!(rf.check("human_joints_name_list"))) {
+        yError() << LogPrefix << "Parameter 'human_joints_name_list' missing or invalid";
+        return false;
+    }
+
+    // HDEReadOnlyDriver PARAMETERS
+    // =================
+
+    if (!(rf.check("device"))) {
+        yError() << LogPrefix << "Parameter 'device' missing or invalid";
+        return false;
+    }
+
+    // ControlBoard WRAPPER PARAMETERS
+    // =================
+    if (!(rf.check("WRAPPER"))) {
+        yError() << LogPrefix << "Parameter '[WRAPPER]' missing or invalid";
+        return false;
+    }
+
+    // ===============
+    // READ PARAMETERS
+    // ===============
+
+    // MODULE PARAMETERS
+    period = rf.find("period").asInt() / 1000.0;
+    autoconnect = rf.find("autoconnect").asBool();
+
+    // HDE PARAMETERS
+    hde_state_port_name = rf.find("hde_state_port_name").asString();
+    hde_forces_port_name = rf.find("hde_forces_port_name").asString();
+    hde_dynamics_port_name = rf.find("hde_dynamics_port_name").asString();
+
+    // HUMAN PARAMETERS
+    human_dofs = rf.find("human_joints").asInt();
+    joints = rf.findGroup("human_joints_name_list");
+
+    // HDEReadOnlyDriver PARAMETERS
+    device_name = rf.find("device").asString();
+
+    // ControlBoard WRAPPER PARAMETERS
+    wrapper_properties = rf.findGroup("WRAPPER");
+
+    // =================================
+    // INITIALIZE AND CONNECT YARP PORTS
+    // =================================
+
+    if(rpc_port.open(rpc_port_name))
     {
         attach(rpc_port);
     }
-
-    hde_state_port_name = rf.find("hde_state_port_name").asString();
 
     if(state_port.open(rpc_port_name+"/state:i"))
     {
@@ -59,8 +129,6 @@ bool HDEReadOnlyControlBoardModule::configure(yarp::os::ResourceFinder& rf)
         return false;
     }
 
-    hde_forces_port_name = rf.find("hde_forces_port_name").asString();
-
     if(forces_port.open(rpc_port_name+"/forces:i"))
     {
         if(!yarp::os::Network::connect(hde_forces_port_name,forces_port.getName().c_str()))
@@ -74,8 +142,6 @@ bool HDEReadOnlyControlBoardModule::configure(yarp::os::ResourceFinder& rf)
         yError() << LogPrefix << "Failed to open " << forces_port.getName().c_str();
         return false;
     }
-
-    hde_dynamics_port_name = rf.find("hde_dynamics_port_name").asString();
 
     if(dynamics_port.open(rpc_port_name+"/dynamicsEstimation:i"))
     {
@@ -91,15 +157,24 @@ bool HDEReadOnlyControlBoardModule::configure(yarp::os::ResourceFinder& rf)
         return false;
     }
 
+    // ============================
+    // OPEN HDEReadOnlyDriver
+    // ============================
+
+    // Add HDEReadOnlyDriver to drivers factory
     yarp::dev::Drivers::factory().add(new yarp::dev::DriverCreatorOf<yarp::dev::HDEReadOnlyDriver>("hde_readonly_driver", "controlboardwrapper2", "HDEReadOnlyDriver"));
 
-    std::string device_name = rf.find("device").asString();
+    // Open HDEReadOnlyDriver
     driver_parameters.put("device",device_name);
     hde_readonly_driver.open(driver_parameters);
 
+    // Create HDEReadOnlyDriver pointer
     yarp::dev::HDEReadOnlyDriver* hde_readonly_driver_ptr = dynamic_cast<yarp::dev::HDEReadOnlyDriver*>(hde_readonly_driver.getImplementation());
 
-    hde_readonly_driver_ptr->number_of_dofs = rf.find("joints").asInt();
+    // ==========================
+    // INITIALIZE JOINT VARIABLES
+    // ==========================
+    hde_readonly_driver_ptr->number_of_dofs = human_dofs;
 
     hde_readonly_driver_ptr->joint_positions_rad.resize(hde_readonly_driver_ptr->number_of_dofs);
     hde_readonly_driver_ptr->joint_velocities_rad.resize(hde_readonly_driver_ptr->number_of_dofs);
@@ -110,12 +185,12 @@ bool HDEReadOnlyControlBoardModule::configure(yarp::os::ResourceFinder& rf)
     hde_readonly_driver_ptr->joint_accelerations.resize(hde_readonly_driver_ptr->number_of_dofs);
     hde_readonly_driver_ptr->joint_torques.resize(hde_readonly_driver_ptr->number_of_dofs);
 
-
-    yarp::os::Bottle joints = rf.findGroup("joint_name_list");
-
-    if(!joints.check("joint_name_list"))
+    // ==========================
+    // READ HUMAN JOINT NAME LIST
+    // ==========================
+    if(!joints.check("human_joints_name_list"))
     {
-        yError() << LogPrefix << "Failed to read joints name list";
+        yError() << LogPrefix << "Failed to read human joints name list";
         return false;
     }
     else
@@ -136,7 +211,9 @@ bool HDEReadOnlyControlBoardModule::configure(yarp::os::ResourceFinder& rf)
         }
     }
 
-    wrapper_properties = rf.findGroup("WRAPPER");
+    // =========================
+    // OPEN CONTROLBOARD WRAPPER
+    // =========================
     wrapper.open(wrapper_properties);
 
     if(!wrapper.view(iWrapper))
@@ -145,6 +222,9 @@ bool HDEReadOnlyControlBoardModule::configure(yarp::os::ResourceFinder& rf)
         return false;
     }
 
+    // ================================================
+    // ATTACH HDEReadOnlyDriver TO CONTROLBOARD WRAPPER
+    // ================================================
     driver_list.push(&hde_readonly_driver,"HDE");
 
     if(!iWrapper->attachAll(driver_list))
@@ -156,27 +236,20 @@ bool HDEReadOnlyControlBoardModule::configure(yarp::os::ResourceFinder& rf)
     return true;
 }
 
-bool HDEReadOnlyControlBoardModule::respond(const yarp::os::Bottle& command, yarp::os::Bottle& reply)
-{
-    if (command.get(0).asString()=="quit")
-        return false;
-    else
-        reply=command;
-
-    return true;
-}
-
 bool HDEReadOnlyControlBoardModule::updateModule()
 {
+    // Create HDEReadOnlyDriver pointer
     yarp::dev::HDEReadOnlyDriver* hde_readonly_driver_ptr = dynamic_cast<yarp::dev::HDEReadOnlyDriver*>(hde_readonly_driver.getImplementation());
 
-    //Human-state-provider
+    //READ Human-state-provider
     human::HumanState *input_state = state_port.read();
 
     if(input_state->positions.size() == hde_readonly_driver_ptr->number_of_dofs)
     {
+        // Read human joint positions(radians) vector
         hde_readonly_driver_ptr->joint_positions_rad = input_state->positions;
 
+        // Read human joint velocities(radians) vector
         hde_readonly_driver_ptr->joint_velocities_rad = input_state->velocities;
     }
     else
@@ -185,7 +258,7 @@ bool HDEReadOnlyControlBoardModule::updateModule()
         return false;
     }
 
-    //Human-dynamics-estimation
+    //READ Human-dynamics-estimation
     human::HumanDynamics *input_dynamics = dynamics_port.read();
 
     std::vector<human::JointDynamicsEstimation> input_joint_dynamics = input_dynamics->jointVariables;
@@ -196,10 +269,11 @@ bool HDEReadOnlyControlBoardModule::updateModule()
         {
             if(input_joint_dynamics.at(j).jointName == hde_readonly_driver_ptr->joint_name_list.at(j))
             {
+                // Read single human joint acceleration(radians)
                 double joint_acceleration = input_joint_dynamics.at(j).acceleration[0];
                 hde_readonly_driver_ptr->joint_accelerations_rad[j] = joint_acceleration;
 
-
+                // Read single human joint torque
                 double joint_torque = input_joint_dynamics.at(j).torque[0];
                 hde_readonly_driver_ptr->joint_torques[j] = joint_torque;
 
@@ -217,6 +291,7 @@ bool HDEReadOnlyControlBoardModule::updateModule()
         return false;
     }
 
+    // JOINT ANGLES RAD2DEG CONVERSION
     for(int j=1; j <= hde_readonly_driver_ptr->number_of_dofs; j++)
     {
         hde_readonly_driver_ptr->joint_positions[j] = hde_readonly_driver_ptr->joint_positions_rad[j]*(180/M_PI);
@@ -224,11 +299,26 @@ bool HDEReadOnlyControlBoardModule::updateModule()
         hde_readonly_driver_ptr->joint_accelerations[j] = hde_readonly_driver_ptr->joint_accelerations_rad[j]*(180/M_PI);
     }
 
-    //Debug print
+    // DEBUG PRINTOUT
     //yInfo() << "Joint Positions: " << hde_readonly_driver_ptr->joint_positions.toString();
     //yInfo() << "Joint Velocities:: " << hde_readonly_driver_ptr->joint_velocities.toString();
     //yInfo() << "Joint Accelerations: " << hde_readonly_driver_ptr->joint_accelerations.toString();
     //yInfo() << "Joint Torques: " << hde_readonly_driver_ptr->joint_torques.toString();
+
+    return true;
+}
+
+double HDEReadOnlyControlBoardModule::getPeriod()
+{
+    return period;
+}
+
+bool HDEReadOnlyControlBoardModule::respond(const yarp::os::Bottle& command, yarp::os::Bottle& reply)
+{
+    if (command.get(0).asString()=="quit")
+        return false;
+    else
+        reply=command;
 
     return true;
 }
@@ -243,10 +333,31 @@ bool HDEReadOnlyControlBoardModule::close()
 {
     yInfo() << LogPrefix << "Calling close function";
 
+    // DISCONNECT YARP PORTS
     yarp::os::Network::disconnect(hde_state_port_name,state_port.getName().c_str());
     yarp::os::Network::disconnect(hde_forces_port_name,forces_port.getName().c_str());
     yarp::os::Network::disconnect(hde_dynamics_port_name,dynamics_port.getName().c_str());
 
     rpc_port.close();
     return true;
+}
+
+HDEReadOnlyControlBoardModule::~HDEReadOnlyControlBoardModule()
+{
+    if(iWrapper)
+    {
+        iWrapper->detachAll();
+        iWrapper = 0;
+    }
+    if(wrapper.isValid())
+    {
+        wrapper.close();
+    }
+
+    if(hde_readonly_driver.isValid())
+    {
+        hde_readonly_driver.close();
+    }
+
+    yarp::os::Network::fini();
 }

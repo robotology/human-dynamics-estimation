@@ -30,10 +30,17 @@ class HDEReadOnlyControlBoardModule:public yarp::os::RFModule
 
 private:
 
+    double period;
+    bool autoconnect;
+
     std::string rpc_port_name;
     std::string hde_state_port_name;
     std::string hde_forces_port_name;
     std::string hde_dynamics_port_name;
+
+    int human_dofs;
+    yarp::os::Bottle joints;
+    std::string device_name;
 
     yarp::os::RpcServer rpc_port;
     yarp::os::BufferedPort<human::HumanState> state_port;
@@ -55,12 +62,12 @@ public:
     HDEReadOnlyControlBoardModule();
     virtual ~HDEReadOnlyControlBoardModule();
 
-    bool respond(const yarp::os::Bottle& command, yarp::os::Bottle& reply);
     bool configure(yarp::os::ResourceFinder& rf);
+    bool updateModule();
+    double getPeriod();
+    bool respond(const yarp::os::Bottle& command, yarp::os::Bottle& reply);
     bool interruptModule();
     bool close();
-    double getPeriod();
-    bool updateModule();
 
 };
 

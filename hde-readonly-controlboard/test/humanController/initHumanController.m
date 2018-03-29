@@ -73,7 +73,7 @@ HUMAN.WBTConfigRobot.ControlledJoints         =  {...
                                                      torso_1{:},...
                                                  };
                                             
-HUMAN.WBTConfigRobot.ControlBoardsNames   = {'hde'};
+HUMAN.WBTConfigRobot.ControlBoardsNames   = {'hde-readonly-driver'};
 
 
 HUMAN.WBTConfigRobot.LocalName                = 'HUMAN_WBT';
