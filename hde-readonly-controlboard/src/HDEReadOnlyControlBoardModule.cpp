@@ -243,33 +243,43 @@ bool HDEReadOnlyControlBoardModule::updateModule()
 
     std::vector<human::JointDynamicsEstimation> input_joint_dynamics = input_dynamics->jointVariables;
 
-    if(input_joint_dynamics.size() == hde_readonly_driver_ptr->number_of_dofs)
-    {
-        for(int j = 0; j < input_joint_dynamics.size(); j++)
-        {
-            if(input_joint_dynamics.at(j).jointName == hde_readonly_driver_ptr->joint_name_list.at(j))
-            {
-                // Read single human joint acceleration(radians)
-                double joint_acceleration = input_joint_dynamics.at(j).acceleration[0];
-                hde_readonly_driver_ptr->joint_accelerations_rad[j] = joint_acceleration;
+    bool joint_present = false;
 
-                // Read single human joint torque
-                double joint_torque = input_joint_dynamics.at(j).torque[0];
-                hde_readonly_driver_ptr->joint_torques[j] = joint_torque;
+    if (input_joint_dynamics.size() == hde_readonly_driver_ptr->number_of_dofs)
+    {
+        for (int j = 0; j < input_joint_dynamics.size(); j++)
+        {
+            for (int joint_index = 0; joint_index < input_joint_dynamics.size(); joint_index++ )
+            {
+                if (input_joint_dynamics.at(joint_index).jointName == hde_readonly_driver_ptr->joint_name_list.at(j)) //TODO Update this logic
+                {
+
+                    joint_present = true;
+
+                    // Read single human joint acceleration(radians)
+                    double joint_acceleration = input_joint_dynamics.at(joint_index).acceleration[0];
+                    hde_readonly_driver_ptr->joint_accelerations_rad[j] = joint_acceleration;
+
+                    // Read single human joint torque
+                    double joint_torque = input_joint_dynamics.at(joint_index).torque[0];
+                    hde_readonly_driver_ptr->joint_torques[j] = joint_torque;
+
+                }
 
             }
-            else
+            if(!joint_present)
             {
-                yError() << LogPrefix << "Joint name mismatch while getting jonit torques";
+                yError() << LogPrefix << "Joint not found while getting jonit torques";
                 return false;
             }
+            else {joint_present =  false;}
         }
     }
-    else
-    {
+    else {
         yError() << LogPrefix << "DoFs mismatch between config file and human joint dynamics";
         return false;
     }
+
 
     // JOINT ANGLES RAD2DEG CONVERSION
     for(int j=1; j <= hde_readonly_driver_ptr->number_of_dofs; j++)
