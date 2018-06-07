@@ -1,0 +1,106 @@
+sudo: false
+dist: trusty
+language: cpp
+
+os:
+  - linux
+
+cache:
+  - ccache
+
+addons:
+  apt:
+    sources:
+      - sourceline: 'ppa:nschloe/eigen-backports'
+      - sourceline: 'deb http://www.icub.org/ubuntu trusty contrib/science'
+    packages:
+      - cmake3
+      - ninja-build
+      # YARP / iCub
+      - icub-common
+      - libqt5opengl5-dev
+      - libeigen3-dev
+
+compiler:
+  - gcc
+  - clang
+
+env:
+  global:
+    - TRAVIS_CMAKE_GENERATOR="Ninja"
+    - DEPS_BRANCH="master"
+    - DEPS_INSTALL_PREFIX=$HOME/deps
+  matrix:
+    - TRAVIS_BUILD_TYPE="Release"
+    - TRAVIS_BUILD_TYPE="Debug"
+
+matrix:
+  include:
+    - os: osx
+      osx_image: xcode9.3
+      env:
+        - TRAVIS_CMAKE_GENERATOR="Xcode"
+        - TRAVIS_BUILD_TYPE="Release"
+
+before_install:
+  - >-
+    if [ "$TRAVIS_OS_NAME" == "osx" ] ; then
+        brew install ccache
+        export PATH="/usr/local/opt/ccache/libexec:$PATH"
+        brew install eigen ace tinyxml gsl || travis_terminate 1
+    fi
+
+install:
+  # Install dependencies
+  # --------------------
+
+  # Limit concurrency for some project in order to avoid let the CI fail
+  - if [ "$TRAVIS_OS_NAME" == "linux" ] ; then CMAKE_BUILD_OPTIONS="-- -j4" ; fi
+  - if [ "$TRAVIS_OS_NAME" == "osx" ] ; then CMAKE_BUILD_OPTIONS="" ; fi
+
+  - mkdir $HOME/git
+  - export PATH=$PATH:$DEPS_INSTALL_PREFIX/bin
+  - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$DEPS_INSTALL_PREFIX/lib
+  - export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$DEPS_INSTALL_PREFIX
+
+  # Install Yarp
+  - cd $HOME/git
+  - git clone --depth 1 -b $DEPS_BRANCH https://github.com/robotology/yarp.git
+  - cd yarp
+  - mkdir build && cd build
+  - >-
+    cmake .. \
+      -G"$TRAVIS_CMAKE_GENERATOR" \
+      -DCMAKE_BUILD_TYPE=$TRAVIS_BUILD_TYPE \
+      -DCMAKE_INSTALL_PREFIX=$DEPS_INSTALL_PREFIX \
+      -DCREATE_LIB_MATH=ON
+  - cmake --build . --config $TRAVIS_BUILD_TYPE --target install
+
+  # Install icub-main
+  - cd $HOME/git
+  - git clone --depth 1 -b $DEPS_BRANCH https://github.com/robotology/icub-main.git
+  - cd icub-main
+  - mkdir build && cd build
+  - >-
+    cmake .. \
+      -G"$TRAVIS_CMAKE_GENERATOR" \
+      -DCMAKE_BUILD_TYPE=$TRAVIS_BUILD_TYPE \
+      -DCMAKE_INSTALL_PREFIX=$DEPS_INSTALL_PREFIX
+  - cmake --build . --config $TRAVIS_BUILD_TYPE --target install $CMAKE_BUILD_OPTIONS
+
+  # Install icub-firmware-shared
+  - cd $HOME/git
+  - git clone --depth 1 -b $DEPS_BRANCH https://github.com/robotology/icub-firmware-shared.git
+  - cd icub-firmware-shared
+  - mkdir build && cd build
+  - cmake ..
+
+script:
+  - cd $TRAVIS_BUILD_DIR
+  - mkdir build && cd build
+  - cmake -G"$TRAVIS_CMAKE_GENERATOR" -DCMAKE_BUILD_TYPE=$TRAVIS_BUILD_TYPE ..
+  - cmake --build . --config $TRAVIS_BUILD_TYPE
+
+after_script:
+  - cd $TRAVIS_BUILD_DIR/build
+  - cmake --build . --config $TRAVIS_BUILD_TYPE --target install
