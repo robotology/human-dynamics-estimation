@@ -6,21 +6,21 @@
  * GNU Lesser General Public License v2.1 or any later version.
  */
 
-#ifndef WEAR_IORIENTATION
-#define WEAR_IORIENTATION
+#ifndef WEAR_IFREEBODYACCELERATIONSENSOR
+#define WEAR_IFREEBODYACCELERATIONSENSOR
 
 #include "ISensor.h"
 
 namespace wear {
     namespace sensor {
-        class IOrientation;
+        class IFreeBodyAccelerationSensor;
     }
 } // namespace wear
 
-class wear::sensor::IOrientation : public wear::sensor::ISensor
+class wear::sensor::IFreeBodyAccelerationSensor : public wear::sensor::ISensor
 {
 public:
-    virtual ~IOrientation() = default;
+    virtual ~IFreeBodyAccelerationSensor() = default;
 };
 
-#endif // WEAR_IORIENTATION
+#endif // WEAR_IFREEBODYACCELERATIONSENSOR

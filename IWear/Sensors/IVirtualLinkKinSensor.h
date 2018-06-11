@@ -6,26 +6,22 @@
  * GNU Lesser General Public License v2.1 or any later version.
  */
 
-#ifndef WEAR_IVIRTUALLINKKIN
-#define WEAR_IVIRTUALLINKKIN
+#ifndef WEAR_IVIRTUALLINKKINSENSOR
+#define WEAR_IVIRTUALLINKKINSENSOR
 
 #include "ISensor.h"
 #include <string>
 
 namespace wear {
     namespace sensor {
-        class IVirtualLinkKin;
+        class IVirtualLinkKinSensor;
     }
 } // namespace wear
 
-class wear::sensor::IVirtualLinkKin : public wear::sensor::ISensor
+class wear::sensor::IVirtualLinkKinSensor : public wear::sensor::ISensor
 {
-protected:
-    using LinkName = std::string;
-    LinkName m_name;
-
 public:
-    virtual ~IVirtualLinkKin() = default;
+    virtual ~IVirtualLinkKinSensor() = default;
 
     virtual bool getPose(wear::Vector3& position, wear::Quaternion& orientation) const = 0;
     virtual bool getVelocity(wear::Vector3& linear, wear::Vector3& angular) const = 0;
@@ -36,13 +32,6 @@ public:
     virtual bool getLinearAcceleration(wear::Vector3& linear) const = 0;
     virtual bool getAngularVelocity(wear::Vector3& linear) const = 0;
     virtual bool getAngularAcceleration(wear::Vector3& linear) const = 0;
-
-    virtual LinkName getLinkName() const;
 };
 
-wear::sensor::IVirtualLinkKin::LinkName wear::sensor::IVirtualLinkKin::getLinkName() const
-{
-    return m_name;
-}
-
-#endif // WEAR_IVIRTUALLINKKIN
+#endif // WEAR_IVIRTUALLINKKINSENSOR

@@ -13,28 +13,56 @@
 #include <string>
 
 namespace wear {
-    using Type = std::string;
-    using FrameName = std::string;
-    using SensorName = std::string;
-
     using Vector3 = std::array<double, 3>;
     using Quaternion = std::array<double, 4>;
-    using SensorName = std::string;
 
     namespace sensor {
+        using SensorName = std::string;
+
+        enum class SensorType
+        {
+            Acclerometer,
+            EmgSensor,
+            Force3DSensor,
+            ForceTorque6DSensor,
+            FreeBodyAccelerationSensor,
+            Gyroscope,
+            Magnetometer,
+            OrientationSensor,
+            PoseSensor,
+            PositionSensor,
+            SkinSensor,
+            TemperatureSensor,
+            Torque3DSensor,
+            VirtualLinkKinSensor,
+            VirtualSphericalJointKinSensor
+        };
+
         class ISensor;
-    }
+    } // namespace sensor
 } // namespace wear
 
 class wear::sensor::ISensor
 {
 protected:
-    wear::Type m_type;
-    wear::FrameName m_frameName;
-    wear::SensorName m_sensorName;
+    wear::sensor::SensorType m_sensorType;
+    wear::sensor::SensorName m_sensorName;
 
 public:
     virtual ~ISensor() = default;
+
+    virtual wear::sensor::SensorType getSensorType() const;
+    virtual const wear::sensor::SensorName getSensorName() const;
 };
+
+const wear::sensor::SensorName wear::sensor::ISensor::getSensorName() const
+{
+    return m_sensorName;
+}
+
+wear::sensor::SensorType wear::sensor::ISensor::getSensorType() const
+{
+    return m_sensorType;
+}
 
 #endif // WEAR_ISENSOR

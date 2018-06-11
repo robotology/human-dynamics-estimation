@@ -6,20 +6,20 @@
  * GNU Lesser General Public License v2.1 or any later version.
  */
 
-#ifndef WEAR_I3DFORCE
-#define WEAR_I3DFORCE
+#ifndef WEAR_IFORCE3DSENSOR
+#define WEAR_IFORCE3DSENSOR
 
 #include "ISensor.h"
 
 namespace wear {
     namespace sensor {
-        class I3DForce;
+        class IForce3DSensor;
     }
 } // namespace wear
 
-class wear::sensor::I3DForce : public wear::sensor::ISensor
+class wear::sensor::IForce3DSensor : public wear::sensor::ISensor
 {
-    virtual ~I3DForce() = default;
+    virtual ~IForce3DSensor() = default;
 
     virtual bool getFx(double& fx) const = 0;
     virtual bool getFy(double& fy) const = 0;
@@ -27,7 +27,7 @@ class wear::sensor::I3DForce : public wear::sensor::ISensor
     virtual bool get3DForce(wear::Vector3& force) const;
 };
 
-bool wear::sensor::I3DForce::get3DForce(wear::Vector3& force) const
+bool wear::sensor::IForce3DSensor::get3DForce(wear::Vector3& force) const
 {
     double fx = 0, fy = 0, fz = 0;
     const bool ok = getFx(fx) && getFy(fy) && getFz(fz);
@@ -35,4 +35,4 @@ bool wear::sensor::I3DForce::get3DForce(wear::Vector3& force) const
     return ok;
 }
 
-#endif // WEAR_I3DFORCE
+#endif // WEAR_I3DFORCE3DSENSOR

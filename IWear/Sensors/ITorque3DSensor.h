@@ -6,20 +6,20 @@
  * GNU Lesser General Public License v2.1 or any later version.
  */
 
-#ifndef WEAR_I3DTORQUE
-#define WEAR_I3DTORQUE
+#ifndef WEAR_I3DTORQUESENSOR
+#define WEAR_I3DTORQUESENSOR
 
 #include "ISensor.h"
 
 namespace wear {
     namespace sensor {
-        class I3DTorque;
+        class ITorque3DSensor;
     }
 } // namespace wear
 
-class wear::sensor::I3DTorque : public wear::sensor::ISensor
+class wear::sensor::ITorque3DSensor : public wear::sensor::ISensor
 {
-    virtual ~I3DTorque() = default;
+    virtual ~ITorque3DSensor() = default;
 
     virtual bool getTx(double& tx) const = 0;
     virtual bool getTy(double& ty) const = 0;
@@ -27,7 +27,7 @@ class wear::sensor::I3DTorque : public wear::sensor::ISensor
     virtual bool get3DTorque(wear::Vector3& torque) const;
 };
 
-bool wear::sensor::I3DTorque::get3DTorque(wear::Vector3& torque) const
+bool wear::sensor::ITorque3DSensor::get3DTorque(wear::Vector3& torque) const
 {
     double tx = 0, ty = 0, tz = 0;
     const bool ok = getTx(tx) && getTy(ty) && getTz(tz);
@@ -35,4 +35,4 @@ bool wear::sensor::I3DTorque::get3DTorque(wear::Vector3& torque) const
     return ok;
 }
 
-#endif // WEAR_I3DTORQUE
+#endif // WEAR_I3DTORQUESENSOR

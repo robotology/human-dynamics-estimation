@@ -6,36 +6,30 @@
  * GNU Lesser General Public License v2.1 or any later version.
  */
 
-#ifndef WEAR_IVIRTUALSPHERICALJOINTKIN
-#define WEAR_IVIRTUALSPHERICALJOINTKIN
+#ifndef WEAR_IVIRTUALSPHERICALJOINTKINSENSOR
+#define WEAR_IVIRTUALSPHERICALJOINTKINSENSOR
 
 #include "ISensor.h"
 
 namespace wear {
     namespace sensor {
-        class IVirtualSphericalJointKin;
+        class IVirtualSphericalJointKinSensor;
     }
 } // namespace wear
 
-class wear::sensor::IVirtualSphericalJointKin : public wear::sensor::ISensor
+class wear::sensor::IVirtualSphericalJointKinSensor : public wear::sensor::ISensor
 {
 protected:
-    using JointName = std::string;
-    JointName m_name;
-    // TODO: parent / child links?
-
 public:
-    virtual ~IVirtualSphericalJointKin() = default;
+    virtual ~IVirtualSphericalJointKinSensor() = default;
 
     virtual bool getRoll(double& r) const = 0;
     virtual bool getPitch(double& p) const = 0;
     virtual bool getYaw(double& y) const = 0;
     virtual bool getRPY(wear::Vector3& rpy) const;
-
-    virtual JointName getJointName() const;
 };
 
-bool wear::sensor::IVirtualSphericalJointKin::getRPY(wear::Vector3& rpy) const
+bool wear::sensor::IVirtualSphericalJointKinSensor::getRPY(wear::Vector3& rpy) const
 {
     double r = 0, p = 0, y = 0;
     const bool ok = getRoll(r) && getPitch(p) && getYaw(y);
@@ -43,10 +37,4 @@ bool wear::sensor::IVirtualSphericalJointKin::getRPY(wear::Vector3& rpy) const
     return ok;
 }
 
-wear::sensor::IVirtualSphericalJointKin::JointName
-wear::sensor::IVirtualSphericalJointKin::getJointName() const
-{
-    return m_name;
-}
-
-#endif // WEAR_IVIRTUALSPHERICALJOINTKIN
+#endif // WEAR_IVIRTUALSPHERICALJOINTKINSENSOR

@@ -6,21 +6,21 @@
  * GNU Lesser General Public License v2.1 or any later version.
  */
 
-#ifndef WEAR_IFREEBODYACCELERATION
-#define WEAR_IFREEBODYACCELERATION
+#ifndef WEAR_ITEMPERATURESENSOR
+#define WEAR_ITEMPERATURESENSOR
 
 #include "ISensor.h"
 
 namespace wear {
     namespace sensor {
-        class IFreeBodyAcceleration;
+        class ITemperatureSensor;
     }
 } // namespace wear
 
-class wear::sensor::IFreeBodyAcceleration : public wear::sensor::ISensor
+class wear::sensor::ITemperatureSensor : public wear::sensor::ISensor
 {
 public:
-    virtual ~IFreeBodyAcceleration() = default;
+    virtual ~ITemperatureSensor() = default;
 };
 
-#endif // WEAR_IFREEBODYACCELERATION
+#endif // WEAR_ITEMPERATURESENSOR

@@ -6,21 +6,21 @@
  * GNU Lesser General Public License v2.1 or any later version.
  */
 
-#ifndef WEAR_ISKIN
-#define WEAR_ISKIN
+#ifndef WEAR_ISKINSENSOR
+#define WEAR_ISKINSENSOR
 
 #include "ISensor.h"
 
 namespace wear {
     namespace sensor {
-        class ISkin;
+        class ISkinSensor;
     }
 } // namespace wear
 
-class wear::sensor::ISkin : public wear::sensor::ISensor
+class wear::sensor::ISkinSensor : public wear::sensor::ISensor
 {
 public:
-    virtual ~ISkin() = default;
+    virtual ~ISkinSensor() = default;
 };
 
-#endif // WEAR_ISKIN
+#endif // WEAR_ISKINSENSOR
