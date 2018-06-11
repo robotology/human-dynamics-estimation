@@ -60,6 +60,11 @@ public:
     virtual wear::SensorPtr<wear::sensor::ISensor>
     getSensor(const wear::sensor::SensorName name) const = 0;
 
+    virtual const wear::VectorOfSensorPtr<wear::sensor::ISensor>
+    getSensors(wear::sensor::SensorType type) const = 0;
+
+    virtual const wear::VectorOfSensorNames& getSensorNames(wear::sensor::SensorType type) const;
+
     // ==============
     // SINGLE SENSORS
     // ==============
@@ -225,5 +230,16 @@ public:
         return {};
     }
 };
+
+const wear::VectorOfSensorNames& wear::IWear::getSensorNames(wear::sensor::SensorType type) const
+{
+    wear::VectorOfSensorPtr<wear::sensor::ISensor> sensors = getSensors(type);
+    wear::VectorOfSensorNames sensorNames{};
+    sensorNames.reserve(sensors.size());
+    for (const auto& s : sensors) {
+        sensorNames.push_back(s->getSensorName());
+    }
+    return sensorNames;
+}
 
 #endif // WEAR_IWEAR
