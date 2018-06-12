@@ -21,7 +21,7 @@ namespace wear {
 
         enum class SensorType
         {
-            Acclerometer,
+            Accelerometer,
             EmgSensor,
             Force3DSensor,
             ForceTorque6DSensor,
