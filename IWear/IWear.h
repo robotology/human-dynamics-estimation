@@ -62,7 +62,7 @@ public:
     // GENERIC
     // =======
 
-    virtual const wear::SensorPtr<const wear::sensor::ISensor>
+    virtual wear::SensorPtr<const wear::sensor::ISensor>
     getSensor(const wear::sensor::SensorName name) const = 0;
 
     virtual wear::VectorOfSensorPtr<const wear::sensor::ISensor>
