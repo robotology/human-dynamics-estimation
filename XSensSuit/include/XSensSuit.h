@@ -36,79 +36,36 @@ public:
     // GENERIC
     // =======
 
-    wear::SensorPtr<wear::sensor::ISensor> getSensor(const wear::SensorName name) const override;
+    wear::SensorPtr<const wear::sensor::ISensor>
+    getSensor(const wear::sensor::SensorName name) const override;
+
+    wear::VectorOfSensorPtr<const wear::sensor::ISensor>
+    getSensors(const wear::sensor::SensorType) const override;
 
     // ==============
     // SINGLE SENSORS
     // ==============
 
-    wear::SensorPtr<wear::sensor::I3DForce>
-    get3DForceSensor(const wear::SensorName name) const override;
+    wear::SensorPtr<const wear::sensor::IFreeBodyAccelerationSensor>
+    getFreeBodyAccelerationSensor(const wear::sensor::SensorName name) const override;
 
-    wear::SensorPtr<wear::sensor::I3DTorque>
-    get3DTorqueSensor(const wear::SensorName name) const override;
+    wear::SensorPtr<const wear::sensor::IMagnetometer>
+    getMagnetometer(const wear::sensor::SensorName name) const override;
 
-    wear::SensorPtr<wear::sensor::I6DForceTorque>
-    get6DForceTorqueSensor(const wear::SensorName name) const override;
+    wear::SensorPtr<const wear::sensor::IOrientationSensor>
+    getOrientationSensor(const wear::sensor::SensorName name) const override;
 
-    wear::SensorPtr<wear::sensor::IFreeBodyAcceleration>
-    getFreeBodyAccelerationSensor(const wear::SensorName name) const override;
+    wear::SensorPtr<const wear::sensor::IPoseSensor>
+    getPoseSensor(const wear::sensor::SensorName name) const override;
 
-    wear::SensorPtr<wear::sensor::IOrientation>
-    getOrientationSensor(const wear::SensorName name) const override;
+    wear::SensorPtr<const wear::sensor::IPositionSensor>
+    getPositionSensor(const wear::sensor::SensorName name) const override;
 
-    wear::SensorPtr<wear::sensor::ITemperature>
-    getTemperatureSensor(const wear::SensorName name) const override;
+    wear::SensorPtr<const wear::sensor::IVirtualLinkKinSensor>
+    getVirtualLinkKinSensor(const wear::sensor::SensorName name) const override;
 
-    wear::SensorPtr<wear::sensor::IVirtualSphericalJointKin>
-    getVirtualSphericalJointKinSensor(const wear::SensorName name) const override;
-
-    wear::SensorPtr<wear::sensor::IVirtualLinkKin>
-    getVirtualLinkKinSensor(const wear::SensorName name) const override;
-
-    wear::SensorPtr<wear::sensor::IAccelerometer>
-    getAccelerometerSensor(const wear::SensorName name) const override;
-
-    wear::SensorPtr<wear::sensor::IGyroscope>
-    getGyroscopeSensor(const wear::SensorName name) const override;
-
-    wear::SensorPtr<wear::sensor::IMagnetometer>
-    getMagnetometerSensor(const wear::SensorName name) const override;
-
-    wear::SensorPtr<wear::sensor::ISkin> getSkinSensor(const wear::SensorName name) const override;
-
-    wear::SensorPtr<wear::sensor::IEmg> getEmgSensor(const wear::SensorName name) const override;
-
-    // ================
-    // MULTIPLE SENSORS
-    // ================
-
-    wear::VectorOfSensorPtr<wear::sensor::I3DForce> getOrientationSensors() const override;
-
-    wear::VectorOfSensorPtr<wear::sensor::I3DTorque> get3DTorqueSensors() const override;
-
-    wear::VectorOfSensorPtr<wear::sensor::I6DForceTorque> get6DForceTorqueSensors() const override;
-
-    wear::VectorOfSensorPtr<wear::sensor::IFreeBodyAcceleration>
-    getFreeBodyAccelerationSensors() const override;
-
-    wear::VectorOfSensorPtr<wear::sensor::IVirtualSphericalJointKin>
-    getVirtualSphericalJointKinSensors() const override;
-
-    wear::VectorOfSensorPtr<wear::sensor::IVirtualLinkKin>
-    getVirtualLinkKinSensors() const override;
-
-    wear::VectorOfSensorPtr<wear::sensor::IAccelerometer> getAccelerometerSensors() const override;
-
-    wear::VectorOfSensorPtr<wear::sensor::IGyroscope> getGyroscopeSensors() const override;
-
-    wear::VectorOfSensorPtr<wear::sensor::IMagnetometer> getMagnetometerSensors() const override;
-
-    wear::VectorOfSensorPtr<wear::sensor::ISkin> getSkinSensors() const override;
-
-    wear::VectorOfSensorPtr<wear::sensor::IEmg> getEmgSensors() const override;
-
-    wear::VectorOfSensorPtr<wear::sensor::ITemperature> getTemperatureSensors() const override;
+    wear::SensorPtr<const wear::sensor::IVirtualSphericalJointKinSensor>
+    getVirtualSphericalJointKinSensor(const wear::sensor::SensorName name) const override;
 };
 
 #endif // WEAR_XSENSSUIT
