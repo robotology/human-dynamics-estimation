@@ -13,11 +13,25 @@
 #include <string>
 
 namespace wear {
+
     using Vector3 = std::array<double, 3>;
+    using Vector6 = std::array<double, 6>;
+    using Vector7 = std::array<double, 7>;
+    using Matrix3 = std::array<Vector3, 3>; // TODO: think about it, this force RowMajor
     using Quaternion = std::array<double, 4>;
 
     namespace sensor {
         using SensorName = std::string;
+
+        enum class SensorStatus
+        {
+            Error,
+            Ok,
+            Overflow,
+            Timeout,
+            Unknown,
+            WaitingForFirstRead,
+        };
 
         enum class SensorType
         {
@@ -35,7 +49,7 @@ namespace wear {
             TemperatureSensor,
             Torque3DSensor,
             VirtualLinkKinSensor,
-            VirtualSphericalJointKinSensor
+            VirtualSphericalJointKinSensor,
         };
 
         class ISensor;
@@ -44,25 +58,12 @@ namespace wear {
 
 class wear::sensor::ISensor
 {
-protected:
-    wear::sensor::SensorType m_sensorType;
-    wear::sensor::SensorName m_sensorName;
-
 public:
     virtual ~ISensor() = 0;
 
-    virtual wear::sensor::SensorType getSensorType() const;
-    virtual const wear::sensor::SensorName getSensorName() const;
+    virtual wear::sensor::SensorName getSensorName() const = 0;
+    virtual wear::sensor::SensorStatus getSensorStatus() const = 0;
+    virtual wear::sensor::SensorType getSensorType() const = 0;
 };
-
-const wear::sensor::SensorName wear::sensor::ISensor::getSensorName() const
-{
-    return m_sensorName;
-}
-
-wear::sensor::SensorType wear::sensor::ISensor::getSensorType() const
-{
-    return m_sensorType;
-}
 
 #endif // WEAR_ISENSOR
