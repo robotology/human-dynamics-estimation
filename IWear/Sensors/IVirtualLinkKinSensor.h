@@ -9,8 +9,7 @@
 #ifndef WEAR_IVIRTUALLINKKINSENSOR
 #define WEAR_IVIRTUALLINKKINSENSOR
 
-#include "ISensor.h"
-#include <string>
+#include "IWear/Sensors/ISensor.h"
 
 namespace wear {
     namespace sensor {
@@ -18,10 +17,10 @@ namespace wear {
     }
 } // namespace wear
 
-class wear::sensor::IVirtualLinkKinSensor : public wear::sensor::ISensor
+class wear::sensor::IVirtualLinkKinSensor
 {
 public:
-    virtual ~IVirtualLinkKinSensor() = default;
+    virtual ~IVirtualLinkKinSensor() = 0;
 
     virtual bool getPose(wear::Vector3& position, wear::Quaternion& orientation) const = 0;
     virtual bool getVelocity(wear::Vector3& linear, wear::Vector3& angular) const = 0;

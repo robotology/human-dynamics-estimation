@@ -9,7 +9,7 @@
 #ifndef WEAR_IFORCETORQUE6DSENSOR
 #define WEAR_IFORCETORQUE6DSENSOR
 
-#include "ISensor.h"
+#include "IWear/Sensors/ISensor.h"
 
 namespace wear {
     namespace sensor {
@@ -17,10 +17,11 @@ namespace wear {
     }
 } // namespace wear
 
-class wear::sensor::IForceTorque6DSensor : public wear::sensor::ISensor
+class wear::sensor::IForceTorque6DSensor
 {
 public:
-    virtual ~IForceTorque6DSensor() = default;
+    virtual ~IForceTorque6DSensor() = 0;
+
 };
 
 #endif // WEAR_IFORCETORQUE6DSENSOR

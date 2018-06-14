@@ -9,7 +9,7 @@
 #ifndef WEAR_IORIENTATIONSENSOR
 #define WEAR_IORIENTATIONSENSOR
 
-#include "ISensor.h"
+#include "IWear/Sensors/ISensor.h"
 
 namespace wear {
     namespace sensor {
@@ -17,10 +17,11 @@ namespace wear {
     }
 } // namespace wear
 
-class wear::sensor::IOrientationSensor : public wear::sensor::ISensor
+class wear::sensor::IOrientationSensor
 {
 public:
-    virtual ~IOrientationSensor() = default;
+    virtual ~IOrientationSensor() = 0;
+
 };
 
 #endif // WEAR_IORIENTATIONSENSOR

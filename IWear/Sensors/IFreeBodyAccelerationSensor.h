@@ -9,7 +9,7 @@
 #ifndef WEAR_IFREEBODYACCELERATIONSENSOR
 #define WEAR_IFREEBODYACCELERATIONSENSOR
 
-#include "ISensor.h"
+#include "IWear/Sensors/ISensor.h"
 
 namespace wear {
     namespace sensor {
@@ -17,10 +17,11 @@ namespace wear {
     }
 } // namespace wear
 
-class wear::sensor::IFreeBodyAccelerationSensor : public wear::sensor::ISensor
+class wear::sensor::IFreeBodyAccelerationSensor
 {
 public:
-    virtual ~IFreeBodyAccelerationSensor() = default;
+    virtual ~IFreeBodyAccelerationSensor() = 0;
+
 };
 
 #endif // WEAR_IFREEBODYACCELERATIONSENSOR

@@ -9,7 +9,7 @@
 #ifndef WEAR_IWEAR
 #define WEAR_IWEAR
 
-#include "IWear/IWear.h"
+#include "IWear/Sensors/ISensor.h"
 
 #include "IWear/Sensors/IAccelerometer.h"
 #include "IWear/Sensors/IEmgSensor.h"
@@ -56,7 +56,7 @@ private:
                           wear::VectorOfSensorPtr<const S> sensors);
 
 public:
-    virtual ~IWear() {}
+    virtual ~IWear() = 0;
 
     // =======
     // GENERIC
@@ -215,7 +215,7 @@ void wear::IWear::castVectorOfSensorPtr(
     wear::VectorOfSensorPtr<const S> sensors)
 {
     for (const auto& s : isensors) {
-        sensors.push_back(std::static_pointer_cast<const S>(s));
+        sensors.push_back(std::dynamic_pointer_cast<const S>(s));
     }
 }
 

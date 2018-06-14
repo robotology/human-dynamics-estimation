@@ -49,7 +49,7 @@ protected:
     wear::sensor::SensorName m_sensorName;
 
 public:
-    virtual ~ISensor() = default;
+    virtual ~ISensor() = 0;
 
     virtual wear::sensor::SensorType getSensorType() const;
     virtual const wear::sensor::SensorName getSensorName() const;

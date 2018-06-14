@@ -9,7 +9,7 @@
 #ifndef WEAR_IVIRTUALSPHERICALJOINTKINSENSOR
 #define WEAR_IVIRTUALSPHERICALJOINTKINSENSOR
 
-#include "ISensor.h"
+#include "IWear/Sensors/ISensor.h"
 
 namespace wear {
     namespace sensor {
@@ -17,11 +17,11 @@ namespace wear {
     }
 } // namespace wear
 
-class wear::sensor::IVirtualSphericalJointKinSensor : public wear::sensor::ISensor
+class wear::sensor::IVirtualSphericalJointKinSensor
 {
 protected:
 public:
-    virtual ~IVirtualSphericalJointKinSensor() = default;
+    virtual ~IVirtualSphericalJointKinSensor() = 0;
 
     virtual bool getRoll(double& r) const = 0;
     virtual bool getPitch(double& p) const = 0;

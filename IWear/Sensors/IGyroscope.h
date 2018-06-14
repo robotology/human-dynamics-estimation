@@ -9,7 +9,7 @@
 #ifndef WEAR_IGYROSCOPE
 #define WEAR_IGYROSCOPE
 
-#include "ISensor.h"
+#include "IWear/Sensors/ISensor.h"
 
 namespace wear {
     namespace sensor {
@@ -17,10 +17,11 @@ namespace wear {
     }
 } // namespace wear
 
-class wear::sensor::IGyroscope : public wear::sensor::ISensor
+class wear::sensor::IGyroscope
 {
 public:
-    virtual ~IGyroscope() = default;
+    virtual ~IGyroscope() = 0;
+
 };
 
 #endif // WEAR_IGYROSCOPE

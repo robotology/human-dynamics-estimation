@@ -9,7 +9,7 @@
 #ifndef WEAR_IMAGNETOMETER
 #define WEAR_IMAGNETOMETER
 
-#include "ISensor.h"
+#include "IWear/Sensors/ISensor.h"
 
 namespace wear {
     namespace sensor {
@@ -17,10 +17,11 @@ namespace wear {
     }
 } // namespace wear
 
-class wear::sensor::IMagnetometer : public wear::sensor::ISensor
+class wear::sensor::IMagnetometer
 {
 public:
-    virtual ~IMagnetometer() = default;
+    virtual ~IMagnetometer() = 0;
+
 };
 
 #endif // WEAR_IMAGNETOMETER

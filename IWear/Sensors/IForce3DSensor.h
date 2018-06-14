@@ -9,7 +9,7 @@
 #ifndef WEAR_IFORCE3DSENSOR
 #define WEAR_IFORCE3DSENSOR
 
-#include "ISensor.h"
+#include "IWear/Sensors/ISensor.h"
 
 namespace wear {
     namespace sensor {
@@ -17,9 +17,9 @@ namespace wear {
     }
 } // namespace wear
 
-class wear::sensor::IForce3DSensor : public wear::sensor::ISensor
+class wear::sensor::IForce3DSensor
 {
-    virtual ~IForce3DSensor() = default;
+    virtual ~IForce3DSensor() = 0;
 
     virtual bool getFx(double& fx) const = 0;
     virtual bool getFy(double& fy) const = 0;
