@@ -22,6 +22,7 @@ class wear::sensor::IFreeBodyAccelerationSensor
 public:
     virtual ~IFreeBodyAccelerationSensor() = 0;
 
+    virtual bool getFreeBodyAcceleration(wear::Vector3& freeBodyAcceleration) const = 0;
 };
 
 #endif // WEAR_IFREEBODYACCELERATIONSENSOR

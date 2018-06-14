@@ -21,6 +21,8 @@ class wear::sensor::IAccelerometer
 {
 public:
     virtual ~IAccelerometer() = 0;
+
+    virtual bool getLinearAcceleration(wear::Vector3& linearAcceleration) const = 0;
 };
 
 #endif // WEAR_IACCELEROMETER

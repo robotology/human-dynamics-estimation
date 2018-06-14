@@ -23,18 +23,10 @@ protected:
 public:
     virtual ~IVirtualSphericalJointKinSensor() = 0;
 
-    virtual bool getRoll(double& r) const = 0;
-    virtual bool getPitch(double& p) const = 0;
-    virtual bool getYaw(double& y) const = 0;
-    virtual bool getRPY(wear::Vector3& rpy) const;
+    // CONVENTION: RPY are defined as rotationa about X-Y-Z wrt fix frame
+    virtual bool getJointAnglesAsRPY(wear::Vector3 angleAsRPY) const = 0;
+    virtual bool getJointVelocities(wear::Vector3 velocities) const = 0;
+    virtual bool getJointAccelerations(wear::Vector3 accelerations) const = 0;
 };
-
-bool wear::sensor::IVirtualSphericalJointKinSensor::getRPY(wear::Vector3& rpy) const
-{
-    double r = 0, p = 0, y = 0;
-    const bool ok = getRoll(r) && getPitch(p) && getYaw(y);
-    rpy = {{r, p, y}};
-    return ok;
-}
 
 #endif // WEAR_IVIRTUALSPHERICALJOINTKINSENSOR

@@ -22,6 +22,7 @@ class wear::sensor::IMagnetometer
 public:
     virtual ~IMagnetometer() = 0;
 
+    virtual bool getMagneticField(wear::Vector3& magneticField) const = 0;
 };
 
 #endif // WEAR_IMAGNETOMETER

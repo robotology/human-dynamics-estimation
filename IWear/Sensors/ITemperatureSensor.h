@@ -22,6 +22,7 @@ class wear::sensor::ITemperatureSensor
 public:
     virtual ~ITemperatureSensor() = 0;
 
+    virtual bool getTemperature(double& temperature) const = 0;
 };
 
 #endif // WEAR_ITEMPERATURESENSOR

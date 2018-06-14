@@ -22,6 +22,10 @@ class wear::sensor::IPoseSensor
 public:
     virtual ~IPoseSensor() = 0;
 
+    virtual bool getPose(wear::Quaternion& orientation, wear::Vector3& position) const = 0;
+    virtual bool getPose(wear::Vector7& pose) const = 0;
+    virtual bool getPoseOrientation(wear::Quaternion& orientation) const = 0;
+    virtual bool getPosePosition(wear::Vector3& position) const = 0;
 };
 
 #endif // WEAR_IPOSITIONSENSOR

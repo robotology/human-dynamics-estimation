@@ -22,6 +22,7 @@ class wear::sensor::IGyroscope
 public:
     virtual ~IGyroscope() = 0;
 
+    virtual bool getAngularRate(wear::Vector3& angularRate) const = 0;
 };
 
 #endif // WEAR_IGYROSCOPE

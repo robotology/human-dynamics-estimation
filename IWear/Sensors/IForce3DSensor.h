@@ -21,18 +21,7 @@ class wear::sensor::IForce3DSensor
 {
     virtual ~IForce3DSensor() = 0;
 
-    virtual bool getFx(double& fx) const = 0;
-    virtual bool getFy(double& fy) const = 0;
-    virtual bool getFz(double& fz) const = 0;
-    virtual bool get3DForce(wear::Vector3& force) const;
+    virtual bool getForce3D(wear::Vector3& force) const = 0;
 };
-
-bool wear::sensor::IForce3DSensor::get3DForce(wear::Vector3& force) const
-{
-    double fx = 0, fy = 0, fz = 0;
-    const bool ok = getFx(fx) && getFy(fy) && getFz(fz);
-    force = {{fx, fy, fz}};
-    return ok;
-}
 
 #endif // WEAR_I3DFORCE3DSENSOR

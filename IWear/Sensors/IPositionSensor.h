@@ -22,6 +22,7 @@ class wear::sensor::IPositionSensor
 public:
     virtual ~IPositionSensor() = 0;
 
+    virtual bool getPosition(wear::Vector3& position) const = 0;
 };
 
 #endif // WEAR_IPOSITIONSENSOR

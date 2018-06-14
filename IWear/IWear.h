@@ -64,14 +64,11 @@ public:
 
     virtual wear::SensorPtr<const wear::sensor::ISensor>
     getSensor(const wear::sensor::SensorName name) const = 0;
-
     virtual wear::VectorOfSensorPtr<const wear::sensor::ISensor>
     getSensors(const wear::sensor::SensorType type) const = 0;
-
     virtual wear::VectorOfSensorPtr<const wear::sensor::ISensor> getAllSensors() const;
 
     virtual wear::VectorOfSensorNames getSensorNames(const wear::sensor::SensorType type) const;
-
     virtual wear::VectorOfSensorNames getAllSensorNames() const;
 
     // ==============
@@ -79,91 +76,91 @@ public:
     // ==============
 
     virtual wear::SensorPtr<const wear::sensor::IAccelerometer>
-    getAccelerometer(const wear::sensor::SensorName name) const
+    getAccelerometer(const wear::sensor::SensorName /*name*/) const
     {
         return nullptr;
     }
 
     virtual wear::SensorPtr<const wear::sensor::IEmgSensor>
-    getEmgSensor(const wear::sensor::SensorName name) const
+    getEmgSensor(const wear::sensor::SensorName /*name*/) const
     {
         return nullptr;
     }
 
     virtual wear::SensorPtr<const wear::sensor::IForce3DSensor>
-    getForce3DSensor(const wear::sensor::SensorName name) const
+    getForce3DSensor(const wear::sensor::SensorName /*name*/) const
     {
         return nullptr;
     }
 
     virtual wear::SensorPtr<const wear::sensor::IForceTorque6DSensor>
-    getForceTorque6DSensor(const wear::sensor::SensorName name) const
+    getForceTorque6DSensor(const wear::sensor::SensorName /*name*/) const
     {
         return nullptr;
     }
 
     virtual wear::SensorPtr<const wear::sensor::IFreeBodyAccelerationSensor>
-    getFreeBodyAccelerationSensor(const wear::sensor::SensorName name) const
+    getFreeBodyAccelerationSensor(const wear::sensor::SensorName /*name*/) const
     {
         return nullptr;
     }
 
     virtual wear::SensorPtr<const wear::sensor::IGyroscope>
-    getGyroscope(const wear::sensor::SensorName name) const
+    getGyroscope(const wear::sensor::SensorName /*name*/) const
     {
         return nullptr;
     }
 
     virtual wear::SensorPtr<const wear::sensor::IMagnetometer>
-    getMagnetometer(const wear::sensor::SensorName name) const
+    getMagnetometer(const wear::sensor::SensorName /*name*/) const
     {
         return nullptr;
     }
 
     virtual wear::SensorPtr<const wear::sensor::IOrientationSensor>
-    getOrientationSensor(const wear::sensor::SensorName name) const
+    getOrientationSensor(const wear::sensor::SensorName /*name*/) const
     {
         return nullptr;
     }
 
     virtual wear::SensorPtr<const wear::sensor::IPoseSensor>
-    getPoseSensor(const wear::sensor::SensorName name) const
+    getPoseSensor(const wear::sensor::SensorName /*name*/) const
     {
         return nullptr;
     }
 
     virtual wear::SensorPtr<const wear::sensor::IPositionSensor>
-    getPositionSensor(const wear::sensor::SensorName name) const
+    getPositionSensor(const wear::sensor::SensorName /*name*/) const
     {
         return nullptr;
     }
 
     virtual wear::SensorPtr<const wear::sensor::ISkinSensor>
-    getSkinSensor(const wear::sensor::SensorName name) const
+    getSkinSensor(const wear::sensor::SensorName /*name*/) const
     {
         return nullptr;
     }
 
     virtual wear::SensorPtr<const wear::sensor::ITemperatureSensor>
-    getTemperatureSensor(const wear::sensor::SensorName name) const
+    getTemperatureSensor(const wear::sensor::SensorName /*name*/) const
     {
         return nullptr;
     }
 
     virtual wear::SensorPtr<const wear::sensor::ITorque3DSensor>
-    getTorque3DSensor(const wear::sensor::SensorName name) const
+    getTorque3DSensor(const wear::sensor::SensorName /*name*/) const
     {
         return nullptr;
     }
 
     virtual wear::SensorPtr<const wear::sensor::IVirtualLinkKinSensor>
-    getVirtualLinkKinSensor(const wear::sensor::SensorName name) const
+    getVirtualLinkKinSensor(const wear::sensor::SensorName /*name*/) const
     {
         return nullptr;
     }
 
     virtual wear::SensorPtr<const wear::sensor::IVirtualSphericalJointKinSensor>
-    getVirtualSphericalJointKinSensor(const wear::sensor::SensorName name) const
+    getVirtualSphericalJointKinSensor(const wear::sensor::SensorName /*name*/) const
     {
         return nullptr;
     }

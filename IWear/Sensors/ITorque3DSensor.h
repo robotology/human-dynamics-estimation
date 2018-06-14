@@ -21,19 +21,7 @@ class wear::sensor::ITorque3DSensor
 {
     virtual ~ITorque3DSensor() = 0;
 
-    virtual bool getTx(double& tx) const = 0;
-    virtual bool getTy(double& ty) const = 0;
-    virtual bool getTz(double& tz) const = 0;
-    virtual bool get3DTorque(wear::Vector3& torque) const;
+    virtual bool getTorque3D(wear::Vector3& torque) const = 0;
 };
 
-bool wear::sensor::ITorque3DSensor::get3DTorque(wear::Vector3& torque) const
-{
-    double tx = 0, ty = 0, tz = 0;
-    const bool ok = getTx(tx) && getTy(ty) && getTz(tz);
-    torque = {{tx, ty, tz}};
-    return ok;
-}
-
-#endif // WEAR_I3DTORQUESENSOR
 #endif // WEAR_ITORQUE3DSENSOR

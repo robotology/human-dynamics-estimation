@@ -22,6 +22,7 @@ class wear::sensor::ISkinSensor
 public:
     virtual ~ISkinSensor() = 0;
 
+    // TODO: to be implemented
 };
 
 #endif // WEAR_ISKINSENSOR
