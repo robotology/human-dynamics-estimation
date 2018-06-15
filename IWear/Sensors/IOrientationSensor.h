@@ -23,8 +23,9 @@ public:
     virtual ~IOrientationSensor() = 0;
 
     virtual bool getOrientationAsQuaternion(wear::Quaternion& orientation) const = 0;
-    virtual bool getOrientationAsRPY(wear::Vector3& orientation) const = 0;
-    virtual bool getOrientationAsRotationMatrix(wear::Matrix3& orientation) const = 0;
+    virtual bool getOrientationAsRPY(wear::Vector3& orientation) const;
+    virtual bool getOrientationAsRotationMatrix(wear::Matrix3& orientation) const;
 };
 
+#include "IWear/Sensors/IOrientationSensor-defaultImpl.h"
 #endif // WEAR_IORIENTATIONSENSOR
