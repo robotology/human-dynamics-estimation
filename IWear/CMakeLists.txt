@@ -32,6 +32,11 @@ install(
     EXPORT IWear
 )
 
+if(MSVC)
+    # Import definitions from standard cmath
+    target_compile_definitions(${PROJECT_NAME} INTERFACE "_USE_MATH_DEFINES")
+endif()
+
 # Install all the directories preserving their structure
 install(
     FILES IWear.h
