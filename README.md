@@ -54,7 +54,7 @@ The human model is a URDF model with its non standard extension (see [here](http
 ## Dependencies
 Here following there is a list of dependencies you need for using this repository.  It is worth to notice that the *build* ones and the *libraries* are mandatory to install your project. Instead, the *optional dependencies* are defined optional in the sense that the project is built even if they are not included.  The installation of the all dependencies  is strongly suggested if you want to have a visual feedback of how much your estimation is good.
 
-For installing the dependencies you can decide to install them individually or to use the [codyco-superbuild](https://github.com/robotology/codyco-superbuild) that automatically is in charge of installing all the dependencies you need (except for the optional ones).  Keep in mind that the `codyco-superbuild` is surely the fastest way to install them but it contains many more things than you need!
+For installing the dependencies you can decide to install them individually or to use the [robotology-superbuild](https://github.com/robotology/robotology-superbuild) with the `ROBOTOLOGY_ENABLE_DYNAMICS` option that automatically is in charge of installing all the dependencies you need (except for the optional ones).  Keep in mind that the `robotology-superbuild` is surely the fastest way to install them but it contains many more things than you need!
 
 #### Build dependencies
 - [**CMake**](https://cmake.org/download/): an open-source, cross-platform family of tools designed to build, test and package software.
