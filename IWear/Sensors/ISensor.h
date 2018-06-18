@@ -25,7 +25,7 @@ namespace wear {
 
         enum class SensorStatus
         {
-            Error,
+            Error = 0,
             Ok,
             Overflow,
             Timeout,
@@ -35,7 +35,7 @@ namespace wear {
 
         enum class SensorType
         {
-            Accelerometer,
+            Accelerometer = 0,
             EmgSensor,
             Force3DSensor,
             ForceTorque6DSensor,
