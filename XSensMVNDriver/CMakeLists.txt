@@ -25,3 +25,5 @@ install(TARGETS XSensMVNDriver
 install(
     FILES ${XSENS_MVN_DRIVER_INCLUDES}
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/Wearable)
+
+add_subdirectory(test)
