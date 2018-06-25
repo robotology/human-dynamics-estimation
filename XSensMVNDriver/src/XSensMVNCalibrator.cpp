@@ -190,7 +190,7 @@ namespace xsens {
         }
 
         xsInfo << "Calibration data processing completed";
-        xsInfo << "Retrieving calibration results";
+        xsInfo << "Retrieving calibration results" << std::endl;
 
         XmeCalibrationResult calibrationResult =
             m_suitsConnector.calibrationResult(calibrationType);
@@ -199,24 +199,24 @@ namespace xsens {
         XsStringArray warnings = calibrationResult.m_warnings;
 
         // Notify the user about the calibration quality and the received hints / warnings
-        xsInfo << std::endl
-               << "Calibration Quality: "
-               << xsens::CalibrationQualityLabels.at(
-                      static_cast<xsens::CalibrationQuality>(quality));
+        xsInfo << "Calibration Quality: "
+               << xsens::CalibrationQualityLabels.at(CalibrationQualitiesMap.at(quality));
 
-        xsInfo << "Calibration result warnings:";
-        for (const auto& wrn : warnings) {
-            xsInfo << wrn;
+        if (!warnings.empty()) {
+            xsInfo << "Calibration result warnings:";
+            for (const auto& wrn : warnings) {
+                xsInfo << wrn;
+            }
         }
 
         if (CalibrationQualitiesMap.at(calibrationResult.m_quality) < m_minimumAccaptableQuality) {
             // Notify the user that the calibration quality is lower than the minimum required one
             xsInfo << "Minimum required quality: "
-                   << xsens::CalibrationQualityLabels.at(m_minimumAccaptableQuality)
-                   << " Achieved quality: "
+                   << xsens::CalibrationQualityLabels.at(m_minimumAccaptableQuality).c_str();
+            xsInfo << " Achieved quality: "
                    << xsens::CalibrationQualityLabels.at(
-                          CalibrationQualitiesMap.at(calibrationResult.m_quality))
-                   << ". Condition not met. Discarding. Please try again.";
+                          CalibrationQualitiesMap.at(calibrationResult.m_quality));
+            xsInfo << "Condition not met. Discarding. Please try again.";
 
             // Calibration cannot be considered acceptable. The fastest and safest way to discard it
             // is to manually trigger an abortCalibration event
@@ -233,7 +233,7 @@ namespace xsens {
                       "Applying in: ";
 
             // Wait three seconds to give the subject enough time to take position
-            for (int s = 3; s >= 0; --s) {
+            for (int s = 5; s >= 0; --s) {
                 xsInfo << s << " s";
                 std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             }
@@ -291,23 +291,14 @@ namespace xsens {
      * ------------------------------------------ */
 
     // Called by XSens MVN Engine after successfully abort the calibration
-    void XSensMVNCalibrator::onCalibrationAborted(XmeControl* dev)
-    {
-        xsInfo << "onCalibrationAborted";
-        m_calibrationAborted = true;
-    }
+    void XSensMVNCalibrator::onCalibrationAborted(XmeControl* dev) { m_calibrationAborted = true; }
 
     // Called by XSens MVN Engine after the completion of any request made to the device
-    void XSensMVNCalibrator::onCalibrationComplete(XmeControl* dev)
-    {
-        xsInfo << "onOperationCompleted";
-        m_operationCompleted = true;
-    }
+    void XSensMVNCalibrator::onCalibrationComplete(XmeControl* dev) { m_operationCompleted = true; }
 
     // Called by XSens MVN Engine after the completion of the calibration data processing
     void XSensMVNCalibrator::onCalibrationProcessed(XmeControl* dev)
     {
-        xsInfo << "onCalibrationProcessed";
         m_calibrationProcessed = true;
     }
 
@@ -318,7 +309,6 @@ namespace xsens {
     // Reset internal state machine atomic variables
     void XSensMVNCalibrator::cleanup()
     {
-        xsInfo << "Clean-up after aborting the calibration";
         m_calibrationProcessed = m_operationCompleted = m_calibrationInProgress = false;
         m_calibrationAborted = false;
     }
