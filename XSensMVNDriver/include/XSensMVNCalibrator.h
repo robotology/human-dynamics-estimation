@@ -55,9 +55,10 @@ public:
      *  Construtors / Destructors *
      * -------------------------- */
 
-    XSensMVNCalibrator(
-        XmeControl& connector,
-        xsens::CalibrationQuality minAcceptableQuality = xsens::CalibrationQuality::ACCEPTABLE);
+    XSensMVNCalibrator(XmeControl& connector,
+                       const std::map<std::string, double>& bodyDimensions = {},
+                       const xsens::CalibrationQuality minAcceptableQuality =
+                           xsens::CalibrationQuality::ACCEPTABLE);
     virtual ~XSensMVNCalibrator();
 
     /* ---------- *

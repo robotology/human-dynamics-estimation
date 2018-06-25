@@ -44,7 +44,8 @@ namespace xsens {
      * -------------------------- */
 
     XSensMVNCalibrator::XSensMVNCalibrator(XmeControl& connector,
-                                           xsens::CalibrationQuality minAcceptableQuality)
+                                           const std::map<std::string, double>& bodyDimensions,
+                                           const xsens::CalibrationQuality minAcceptableQuality)
         : m_suitsConnector(connector)
         , m_minimumAccaptableQuality(minAcceptableQuality)
         , m_calibrationAborted(false)
@@ -53,6 +54,10 @@ namespace xsens {
         , m_operationCompleted(true)
     {
         m_suitsConnector.addCallbackHandler(this);
+
+        if (!bodyDimensions.empty()) {
+            setBodyDimensions(bodyDimensions);
+        }
     }
 
     XSensMVNCalibrator::~XSensMVNCalibrator() { m_suitsConnector.removeCallbackHandler(this); }
@@ -70,14 +75,18 @@ namespace xsens {
             return false;
         }
 
+        XsStringArray bodyDimList = m_suitsConnector.bodyDimensionLabelList();
+
         // rise the flag to signal an operation is ongoing
         m_operationCompleted = false;
 
         // We do not cache the dimensions as we obtain always the most updated values from Xsens
-        for (std::map<std::string, double>::const_iterator it = bodyDimensions.begin();
-             it != bodyDimensions.end();
-             ++it) {
-            m_suitsConnector.setBodyDimension(it->first, it->second);
+        for (const auto& pair : bodyDimensions) {
+            if (bodyDimList.find(pair.first) == -1) {
+                xsWarning << "Body dimension: " << pair.first << " NOT found. Skipping.";
+                continue;
+            }
+            m_suitsConnector.setBodyDimension(pair.first, pair.second);
         }
 
         // wait for completion
