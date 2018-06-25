@@ -72,6 +72,10 @@ public:
     bool setBodyDimensions(const std::map<std::string, double>& bodyDimensions);
     bool getBodyDimensions(std::map<std::string, double>& dimensions) const;
 
+    // Minimum calibration quality considered to be satisfactory set/get
+    bool setMinimumAcceptableCalibrationQuality(const xsens::CalibrationQuality quality);
+    xsens::CalibrationQuality& getMinimumAcceptableCalibrationQuality();
+
     // Status get
     bool isCalibrationInProgress();
 

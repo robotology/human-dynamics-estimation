@@ -272,6 +272,20 @@ namespace xsens {
     // Check if there is a calibration currently in progress
     bool XSensMVNCalibrator::isCalibrationInProgress() { return m_calibrationInProgress; }
 
+    // Set the minimum calibration quality considered to be satisfactory
+    bool XSensMVNCalibrator::setMinimumAcceptableCalibrationQuality(
+        const xsens::CalibrationQuality quality)
+    {
+        m_minimumAccaptableQuality = quality;
+        return true;
+    }
+
+    // Get the minimum calibration quality considered to be satisfactory
+    xsens::CalibrationQuality& XSensMVNCalibrator::getMinimumAcceptableCalibrationQuality()
+    {
+        return m_minimumAccaptableQuality;
+    }
+
     /* ------------------------------------------ *
      *  Public XSens XME Callback Implementations *
      * ------------------------------------------ */
