@@ -17,7 +17,7 @@
 #include <map>
 #include <thread>
 
-namespace xsens {
+namespace xsensmvn {
 
     /* ---------- *
      *  Utilities *
@@ -25,19 +25,19 @@ namespace xsens {
 
     // Map from XSens XMECalibrationQuality to xsens::CalibrationQuality
     const std::map<XmeCalibrationQuality, CalibrationQuality> CalibrationQualitiesMap{
-        {XmeCalibrationQuality::XCalQ_Unknown, xsens::CalibrationQuality::UNKNOWN},
-        {XmeCalibrationQuality::XCalQ_Failed, xsens::CalibrationQuality::FAILED},
-        {XmeCalibrationQuality::XCalQ_Poor, xsens::CalibrationQuality::POOR},
-        {XmeCalibrationQuality::XCalQ_Acceptable, xsens::CalibrationQuality::ACCEPTABLE},
-        {XmeCalibrationQuality::XCalQ_Good, xsens::CalibrationQuality::GOOD}};
+        {XmeCalibrationQuality::XCalQ_Unknown, xsensmvn::CalibrationQuality::UNKNOWN},
+        {XmeCalibrationQuality::XCalQ_Failed, xsensmvn::CalibrationQuality::FAILED},
+        {XmeCalibrationQuality::XCalQ_Poor, xsensmvn::CalibrationQuality::POOR},
+        {XmeCalibrationQuality::XCalQ_Acceptable, xsensmvn::CalibrationQuality::ACCEPTABLE},
+        {XmeCalibrationQuality::XCalQ_Good, xsensmvn::CalibrationQuality::GOOD}};
 
     // Map from xsens::CalibrationQuality to std::string QualityLabel
     const std::map<CalibrationQuality, std::string> CalibrationQualityLabels{
-        {xsens::CalibrationQuality::UNKNOWN, "Unknown"},
-        {xsens::CalibrationQuality::GOOD, "Good"},
-        {xsens::CalibrationQuality::ACCEPTABLE, "Acceptable"},
-        {xsens::CalibrationQuality::POOR, "Poor"},
-        {xsens::CalibrationQuality::FAILED, "Failed"}};
+        {xsensmvn::CalibrationQuality::UNKNOWN, "Unknown"},
+        {xsensmvn::CalibrationQuality::GOOD, "Good"},
+        {xsensmvn::CalibrationQuality::ACCEPTABLE, "Acceptable"},
+        {xsensmvn::CalibrationQuality::POOR, "Poor"},
+        {xsensmvn::CalibrationQuality::FAILED, "Failed"}};
 
     /* -------------------------- *
      *  Construtors / Destructors *
@@ -45,7 +45,7 @@ namespace xsens {
 
     XSensMVNCalibrator::XSensMVNCalibrator(XmeControl& connector,
                                            const std::map<std::string, double>& bodyDimensions,
-                                           const xsens::CalibrationQuality minAcceptableQuality)
+                                           const xsensmvn::CalibrationQuality minAcceptableQuality)
         : m_suitsConnector(connector)
         , m_minimumAccaptableQuality(minAcceptableQuality)
         , m_calibrationAborted(false)
@@ -209,7 +209,7 @@ namespace xsens {
 
         // Notify the user about the calibration quality and the received hints / warnings
         xsInfo << "Calibration Quality: "
-               << xsens::CalibrationQualityLabels.at(CalibrationQualitiesMap.at(quality));
+               << xsensmvn::CalibrationQualityLabels.at(CalibrationQualitiesMap.at(quality));
 
         if (!warnings.empty()) {
             xsInfo << "Calibration result warnings:";
@@ -221,9 +221,9 @@ namespace xsens {
         if (CalibrationQualitiesMap.at(calibrationResult.m_quality) < m_minimumAccaptableQuality) {
             // Notify the user that the calibration quality is lower than the minimum required one
             xsInfo << "Minimum required quality: "
-                   << xsens::CalibrationQualityLabels.at(m_minimumAccaptableQuality).c_str();
+                   << xsensmvn::CalibrationQualityLabels.at(m_minimumAccaptableQuality).c_str();
             xsInfo << " Achieved quality: "
-                   << xsens::CalibrationQualityLabels.at(
+                   << xsensmvn::CalibrationQualityLabels.at(
                           CalibrationQualitiesMap.at(calibrationResult.m_quality));
             xsInfo << "Condition not met. Discarding. Please try again.";
 
@@ -283,14 +283,14 @@ namespace xsens {
 
     // Set the minimum calibration quality considered to be satisfactory
     bool XSensMVNCalibrator::setMinimumAcceptableCalibrationQuality(
-        const xsens::CalibrationQuality quality)
+        const xsensmvn::CalibrationQuality quality)
     {
         m_minimumAccaptableQuality = quality;
         return true;
     }
 
     // Get the minimum calibration quality considered to be satisfactory
-    xsens::CalibrationQuality& XSensMVNCalibrator::getMinimumAcceptableCalibrationQuality()
+    xsensmvn::CalibrationQuality& XSensMVNCalibrator::getMinimumAcceptableCalibrationQuality()
     {
         return m_minimumAccaptableQuality;
     }
@@ -321,4 +321,4 @@ namespace xsens {
         m_calibrationProcessed = m_operationCompleted = m_calibrationInProgress = false;
         m_calibrationAborted = false;
     }
-} // namespace xsens
+} // namespace xsensmvn

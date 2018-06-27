@@ -5,4 +5,4 @@
 # Build the test unit executable
 # ==============================
 add_executable(testCalibrator ${CMAKE_CURRENT_SOURCE_DIR}/testCalibrator.cpp)
-target_link_libraries(testCalibrator XSensMVNDriver)
+target_link_libraries(testCalibrator XSensMVN)

@@ -11,7 +11,7 @@
 
 #include <map>
 
-namespace xsens {
+namespace xsensmvn {
 
     enum CalibrationQuality
     {

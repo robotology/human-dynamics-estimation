@@ -7,7 +7,7 @@
  */
 
 #ifndef XSENS_MVN_CALIBRATOR_H
-#define XSENSMVNCALIBRATOR_H
+#define XSENS_MVN_CALIBRATOR_H
 
 #include "XSensCalibrationQualities.h"
 #include "XSensLogger.h"
@@ -21,11 +21,11 @@
 #include <mutex>
 #include <vector>
 
-namespace xsens {
+namespace xsensmvn {
     class XSensMVNCalibrator;
-} // namespace xsens
+} // namespace xsensmvn
 
-class xsens::XSensMVNCalibrator : public XmeCallback
+class xsensmvn::XSensMVNCalibrator : public XmeCallback
 {
 private:
     /* ---------- *
@@ -36,7 +36,7 @@ private:
     XmeControl& m_suitsConnector;
 
     // Minimum quality required for applying calibration
-    xsens::CalibrationQuality m_minimumAccaptableQuality;
+    xsensmvn::CalibrationQuality m_minimumAccaptableQuality;
 
     // Atomic variable for internal state machine
     std::atomic_bool m_calibrationAborted;
@@ -57,8 +57,8 @@ public:
 
     XSensMVNCalibrator(XmeControl& connector,
                        const std::map<std::string, double>& bodyDimensions = {},
-                       const xsens::CalibrationQuality minAcceptableQuality =
-                           xsens::CalibrationQuality::ACCEPTABLE);
+                       const xsensmvn::CalibrationQuality minAcceptableQuality =
+                           xsensmvn::CalibrationQuality::ACCEPTABLE);
     virtual ~XSensMVNCalibrator();
 
     /* ---------- *
@@ -74,13 +74,15 @@ public:
     bool getBodyDimensions(std::map<std::string, double>& dimensions) const;
 
     // Minimum calibration quality considered to be satisfactory set/get
-    bool setMinimumAcceptableCalibrationQuality(const xsens::CalibrationQuality quality);
-    xsens::CalibrationQuality& getMinimumAcceptableCalibrationQuality();
+    bool setMinimumAcceptableCalibrationQuality(const xsensmvn::CalibrationQuality quality);
+    xsensmvn::CalibrationQuality& getMinimumAcceptableCalibrationQuality();
 
     // Status get
     bool isCalibrationInProgress();
 
-    // XSens XME Callbacks
+    /* -------------------- *
+     *  XSens XME Callbacks *
+     * -------------------- */
     virtual void onCalibrationAborted(XmeControl* dev);
     virtual void onCalibrationComplete(XmeControl* dev);
     virtual void onCalibrationProcessed(XmeControl* dev);
