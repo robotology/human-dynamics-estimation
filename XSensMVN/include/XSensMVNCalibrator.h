@@ -56,7 +56,6 @@ public:
      * -------------------------- */
 
     XSensMVNCalibrator(XmeControl& connector,
-                       const std::map<std::string, double>& bodyDimensions = {},
                        const xsensmvn::CalibrationQuality minAcceptableQuality =
                            xsensmvn::CalibrationQuality::ACCEPTABLE);
     virtual ~XSensMVNCalibrator();

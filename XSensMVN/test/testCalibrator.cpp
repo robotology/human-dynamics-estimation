@@ -44,7 +44,7 @@ int main(int argc, const char* argv[])
         }
 
         // Create the calibrator
-        xsensmvn::XSensMVNCalibrator calib(*ctl, {}, xsensmvn::CalibrationQuality::ACCEPTABLE);
+        xsensmvn::XSensMVNCalibrator calib(*ctl, xsensmvn::CalibrationQuality::ACCEPTABLE);
 
         // Perform the calibration
         calib.calibrateWithType(std::string("Npose"));

@@ -44,7 +44,6 @@ namespace xsensmvn {
      * -------------------------- */
 
     XSensMVNCalibrator::XSensMVNCalibrator(XmeControl& connector,
-                                           const std::map<std::string, double>& bodyDimensions,
                                            const xsensmvn::CalibrationQuality minAcceptableQuality)
         : m_suitsConnector(connector)
         , m_minimumAccaptableQuality(minAcceptableQuality)
@@ -53,14 +52,13 @@ namespace xsensmvn {
         , m_calibrationProcessed(false)
         , m_operationCompleted(true)
     {
-        m_suitsConnector.addCallbackHandler(this);
-
-        if (!bodyDimensions.empty()) {
-            setBodyDimensions(bodyDimensions);
-        }
+        m_suitsConnector.addCallbackHandler(static_cast<XmeCallback*>(this));
     }
 
-    XSensMVNCalibrator::~XSensMVNCalibrator() { m_suitsConnector.removeCallbackHandler(this); }
+    XSensMVNCalibrator::~XSensMVNCalibrator()
+    {
+        m_suitsConnector.removeCallbackHandler(static_cast<XmeCallback*>(this));
+    }
 
     /* ----------------- *
      *  Public Functions *
@@ -77,6 +75,10 @@ namespace xsensmvn {
 
         XsStringArray bodyDimList = m_suitsConnector.bodyDimensionLabelList();
 
+        if (bodyDimensions.empty()) {
+            xsError << "Empty body dimension list";
+            return false;
+        }
         // rise the flag to signal an operation is ongoing
         m_operationCompleted = false;
 
