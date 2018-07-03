@@ -1,50 +1,55 @@
-namespace wear wear.data
+namespace yarp wear.msg
 
-/*
- * Possible sensor states
- */
+// ======================
+// Possible sensor states
+// ======================
+
 enum SensorStatus {
-  ERROR = 0,
-  OK = 1,
-  OVERFLOW = 2,
-  TIMEOUT = 3,
-  UNKNOWN = 4,
-  WAITING_FOR_FIRST_READ = 5
+  ERROR,
+  OK,
+  CALIBRATING,
+  OVERFLOW,
+  TIMEOUT,
+  UNKNOWN,
+  WAITING_FOR_FIRST_READ,
 }
 
-/*
- * Implemented sensor types
- */
+// ========================
+// Implemented sensor types
+// ========================
+
 enum SensorType{
-  ACCELEROMETER = 0,
-  EMG_SENSOR = 1,
-  FORCE_3D_SENSOR = 2,
-  FORCE_TORQUE_6D_SENSOR = 3,
-  FREE_BODY_ACCELERATION_SENSOR =4,
-  GYROSCOPE = 5,
-  MAGNETOMETER = 6,
-  ORIENTATION_SENSOR = 7,
-  POSE_SENSOR = 8,
-  POSITION_SENSOR = 9,
-  SKIN_SENSOR = 10,
-  TEMPERATURE_SENSOR = 11,
-  TORQUE_3D_SENSOR = 12,
-  VIRTUAL_LINK_KIN_SENSOR = 13,
-  VIRTUAL_SPHERICAL_JOINT_KIN_SENSOR = 14
+  ACCELEROMETER,
+  EMG_SENSOR,
+  FORCE_3D_SENSOR,
+  FORCE_TORQUE_6D_SENSOR,
+  FREE_BODY_ACCELERATION_SENSOR,
+  GYROSCOPE,
+  MAGNETOMETER,
+  ORIENTATION_SENSOR,
+  POSE_SENSOR,
+  POSITION_SENSOR,
+  SKIN_SENSOR,
+  TEMPERATURE_SENSOR,
+  TORQUE_3D_SENSOR,
+  VIRTUAL_LINK_KIN_SENSOR,
+  VIRTUAL_SPHERICAL_JOINT_KIN_SENSOR,
 }
 
-/*
- * Common sensor metadata
- */
+// ======================
+// Common sensor metadata
+// ======================
+
 struct SensorInfo{
   1: string name;
   2: SensorType type;
   3: SensorStatus status = SensorStatus.UNKNOWN;
 }
 
-/*
- * Elementary data types
- */
+// =====================
+// Elementary data types
+// =====================
+
 struct VectorXYZ {
   1: double x;
   2: double y;
@@ -62,9 +67,10 @@ struct Quaternion {
   2: VectorXYZ imaginary;
 }
 
-/*
- * Composed sensor data types
- */
+// ==========================
+// Composed sensor data types
+// ==========================
+
 struct ForceTorque6DSensorData {
   1: VectorXYZ force,
   2: VectorXYZ torque
@@ -90,9 +96,10 @@ struct VirtualSphericalJointKinSensorData {
   3: VectorXYZ acceleration
 }
 
-/*
- * Sensor structures
- */
+// =================
+// Sensor structures
+// =================
+
 struct Accelerometer {
   1: SensorInfo info,
   2: VectorXYZ data
@@ -168,10 +175,11 @@ struct VirtualSphericalJointKinSensor {
   2: VirtualSphericalJointKinSensorData data
 }
 
-/*
- * Complete wear data struct
- */
-struct wearData{
+// =========================
+// Complete wear data struct
+// =========================
+
+struct WearData{
     1: required string producerName;
     2: optional list<Accelerometer> accelerometers;
     3: optional list<EmgSensor> emgSensors;

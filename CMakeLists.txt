@@ -51,3 +51,4 @@ endif()
 
 #add_subdirectory(FTShoes)
 #add_subdirectory(XSensSuit)
+add_subdirectory(msgs)
