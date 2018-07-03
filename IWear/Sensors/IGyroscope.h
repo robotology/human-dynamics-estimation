@@ -17,7 +17,7 @@ namespace wear {
     }
 } // namespace wear
 
-class wear::sensor::IGyroscope
+class wear::sensor::IGyroscope : public wear::sensor::ISensor
 {
 public:
     virtual ~IGyroscope() = 0;

@@ -27,6 +27,7 @@ namespace wear {
         {
             Error = 0,
             Ok,
+            Calibrating,
             Overflow,
             Timeout,
             Unknown,
@@ -61,6 +62,7 @@ class wear::sensor::ISensor
 public:
     virtual ~ISensor() = 0;
 
+    // TODO: timestamp? sequence number?
     virtual wear::sensor::SensorName getSensorName() const = 0;
     virtual wear::sensor::SensorStatus getSensorStatus() const = 0;
     virtual wear::sensor::SensorType getSensorType() const = 0;

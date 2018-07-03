@@ -20,7 +20,7 @@ bool wear::sensor::IPoseSensor::getPose(wear::Vector7& pose) const
     wear::Quaternion orientation;
     wear::Vector3 position;
     if (!wear::sensor::IPoseSensor::getPose(orientation, position)) {
-        return false
+        return false;
     }
 
     pose[0] = orientation[0];

@@ -17,7 +17,7 @@ namespace wear {
     }
 } // namespace wear
 
-class wear::sensor::IVirtualSphericalJointKinSensor
+class wear::sensor::IVirtualSphericalJointKinSensor : public wear::sensor::ISensor
 {
 protected:
 public:

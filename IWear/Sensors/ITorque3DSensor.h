@@ -17,8 +17,9 @@ namespace wear {
     }
 } // namespace wear
 
-class wear::sensor::ITorque3DSensor
+class wear::sensor::ITorque3DSensor : public wear::sensor::ISensor
 {
+public:
     virtual ~ITorque3DSensor() = 0;
 
     virtual bool getTorque3D(wear::Vector3& torque) const = 0;

@@ -17,7 +17,7 @@ namespace wear {
     }
 } // namespace wear
 
-class wear::sensor::IPoseSensor
+class wear::sensor::IPoseSensor : public wear::sensor::ISensor
 {
 public:
     virtual ~IPoseSensor() = 0;

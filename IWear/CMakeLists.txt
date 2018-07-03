@@ -18,8 +18,7 @@ endforeach()
 
 set(IWEAR_HEADERS
     $<BUILD_INTERFACE:${IWEAR_HEADERS_BUILD}>
-    $<INSTALL_INTERFACE:${IWEAR_HEADERS_INSTALL}>
-)
+    $<INSTALL_INTERFACE:${IWEAR_HEADERS_INSTALL}>)
 
 add_library(${PROJECT_NAME} INTERFACE)
 target_sources(${PROJECT_NAME} INTERFACE ${IWEAR_HEADERS})
@@ -29,8 +28,7 @@ target_include_directories(${PROJECT_NAME} INTERFACE
 
 install(
     TARGETS ${PROJECT_NAME}
-    EXPORT IWear
-)
+    EXPORT IWear)
 
 if(MSVC)
     # Import definitions from standard cmath
@@ -50,5 +48,4 @@ install_basic_package_files(IWear
     VERSION ${PROJECT_VERSION}
     COMPATIBILITY AnyNewerVersion
     TARGETS ${PROJECT_NAME}
-    NO_CHECK_REQUIRED_COMPONENTS_MACRO
-)
+    NO_CHECK_REQUIRED_COMPONENTS_MACRO)
