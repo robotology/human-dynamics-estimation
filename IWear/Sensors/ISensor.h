@@ -27,6 +27,7 @@ namespace wear {
         {
             Error = 0,
             Ok,
+            Calibrating,
             Overflow,
             Timeout,
             Unknown,
