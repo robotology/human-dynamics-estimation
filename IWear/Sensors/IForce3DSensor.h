@@ -19,6 +19,7 @@ namespace wear {
 
 class wear::sensor::IForce3DSensor : public wear::sensor::ISensor
 {
+public:
     virtual ~IForce3DSensor() = 0;
 
     virtual bool getForce3D(wear::Vector3& force) const = 0;
