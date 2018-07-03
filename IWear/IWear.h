@@ -42,7 +42,14 @@ namespace wear {
     template <typename S>
     using VectorOfSensorPtr = wear::SensorVector<wear::SensorPtr<S>>;
 
+    using WearStatus = wear::sensor::SensorStatus;
     using VectorOfSensorNames = wear::SensorVector<wear::sensor::SensorName>;
+
+    using TimeStamp = struct
+    {
+        size_t time = 0;
+        size_t sequenceNumber = 0;
+    };
 
     class IWear;
 } // namespace wear
@@ -61,6 +68,9 @@ public:
     // =======
     // GENERIC
     // =======
+
+    virtual wear::WearStatus getStatus() const = 0;
+    virtual wear::TimeStamp getTimeStamp() const = 0;
 
     virtual wear::SensorPtr<const wear::sensor::ISensor>
     getSensor(const wear::sensor::SensorName name) const = 0;
