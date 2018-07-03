@@ -17,7 +17,7 @@ namespace wear {
     }
 } // namespace wear
 
-class wear::sensor::IMagnetometer
+class wear::sensor::IMagnetometer : public wear::sensor::ISensor
 {
 public:
     virtual ~IMagnetometer() = 0;
