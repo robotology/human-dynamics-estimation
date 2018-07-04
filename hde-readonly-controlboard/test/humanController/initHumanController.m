@@ -18,13 +18,13 @@ clear;
 clc;
 
 %% Human Configuration
+HUMAN_ON_GAZEBO          = true;
 
-%% Configuration Object
+% Human configuration for WBT3.0
 HUMAN.WBTConfigRobot                          = WBToolbox.Configuration;
-
-%% RobotConfiguration Data
 HUMAN.WBTConfigRobot.RobotName                = 'human';
 HUMAN.WBTConfigRobot.UrdfFile                 = 'Claudia66DoF.urdf';
+HUMAN.WBTConfigRobot.LocalName                = 'HUMAN_WBT';
 
 head                    =    {'jC1Head_rotx','jC1Head_roty','jC1Head_rotz'};
 neck                    =    {'jT1C7_rotx','jT1C7_roty','jT1C7_rotz'};
@@ -54,7 +54,19 @@ right_knee              =    {'jRightKnee_rotx','jRightKnee_roty','jRightKnee_ro
 right_ankle             =    {'jRightAnkle_rotx','jRightAnkle_roty','jRightAnkle_rotz'};
 right_ball_foot         =    {'jRightBallFoot_rotx','jRightBallFoot_roty','jRightBallFoot_rotz'};
 
-    
+if (~HUMAN_ON_GAZEBO)
+    HUMAN.WBTConfigRobot.RobotName          = 'human';
+    HUMAN.WBTConfigRobot.ControlBoardsNames = {'hde-readonly-controlboard-driver'};
+else
+    HUMAN.WBTConfigRobot.RobotName          = 'sub0';
+    HUMAN.WBTConfigRobot.ControlBoardsNames = {'head','neck','torso_1','torso_2','torso_3','torso_4',...
+                                               'left_hip','left_knee','left_ankle','left_ball_foot',...
+                                               'right_hip','right_knee','right_ankle','right_ball_foot',...
+                                               'left_shoulder_internal','left_shoulder','left_elbow','left_wrist',...
+                                               'right_shoulder_internal','right_shoulder','right_elbow','right_wrist',...
+                                               };
+end
+
 HUMAN.WBTConfigRobot.ControlledJoints         =  {   torso_4{:},...
                                                      torso_3{:},...
                                                      torso_2{:},...
@@ -78,11 +90,9 @@ HUMAN.WBTConfigRobot.ControlledJoints         =  {   torso_4{:},...
                                                      left_ankle{:},...
                                                      left_ball_foot{:},...
                                                  };
-                                            
-HUMAN.WBTConfigRobot.ControlBoardsNames   = {'hde-readonly-controlboard-driver'};
-
-
-HUMAN.WBTConfigRobot.LocalName                = 'HUMAN_WBT';
+                                             
+%% Controller period [s]
+Config.Ts              = 0.01; 
 
 %% Checking Configuration Success
 if ~HUMAN.WBTConfigRobot.ValidConfiguration
