@@ -22,7 +22,6 @@ HUMAN_ON_GAZEBO          = true;
 
 % Human configuration for WBT3.0
 HUMAN.WBTConfigRobot                          = WBToolbox.Configuration;
-HUMAN.WBTConfigRobot.RobotName                = 'human';
 HUMAN.WBTConfigRobot.UrdfFile                 = 'Claudia66DoF.urdf';
 HUMAN.WBTConfigRobot.LocalName                = 'HUMAN_WBT';
 
