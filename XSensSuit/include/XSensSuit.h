@@ -11,13 +11,13 @@
 
 #include "IWear/IWear.h"
 
-namespace wear {
+namespace wearable {
     namespace suit {
         class XSensSuit;
     }
-} // namespace wear
+} // namespace wearable
 
-class wear::suit::XSensSuit final : public wear::IWear
+class wearable::suit::XSensSuit final : public wearable::IWear
 {
 private:
     class Impl;
@@ -36,36 +36,36 @@ public:
     // GENERIC
     // =======
 
-    wear::SensorPtr<const wear::sensor::ISensor>
-    getSensor(const wear::sensor::SensorName name) const override;
+    wearable::SensorPtr<const wearable::sensor::ISensor>
+    getSensor(const wearable::sensor::SensorName name) const override;
 
-    wear::VectorOfSensorPtr<const wear::sensor::ISensor>
-    getSensors(const wear::sensor::SensorType) const override;
+    wearable::VectorOfSensorPtr<const wearable::sensor::ISensor>
+    getSensors(const wearable::sensor::SensorType) const override;
 
     // ==============
     // SINGLE SENSORS
     // ==============
 
-    wear::SensorPtr<const wear::sensor::IFreeBodyAccelerationSensor>
-    getFreeBodyAccelerationSensor(const wear::sensor::SensorName name) const override;
+    wearable::SensorPtr<const wearable::sensor::IFreeBodyAccelerationSensor>
+    getFreeBodyAccelerationSensor(const wearable::sensor::SensorName name) const override;
 
-    wear::SensorPtr<const wear::sensor::IMagnetometer>
-    getMagnetometer(const wear::sensor::SensorName name) const override;
+    wearable::SensorPtr<const wearable::sensor::IMagnetometer>
+    getMagnetometer(const wearable::sensor::SensorName name) const override;
 
-    wear::SensorPtr<const wear::sensor::IOrientationSensor>
-    getOrientationSensor(const wear::sensor::SensorName name) const override;
+    wearable::SensorPtr<const wearable::sensor::IOrientationSensor>
+    getOrientationSensor(const wearable::sensor::SensorName name) const override;
 
-    wear::SensorPtr<const wear::sensor::IPoseSensor>
-    getPoseSensor(const wear::sensor::SensorName name) const override;
+    wearable::SensorPtr<const wearable::sensor::IPoseSensor>
+    getPoseSensor(const wearable::sensor::SensorName name) const override;
 
-    wear::SensorPtr<const wear::sensor::IPositionSensor>
-    getPositionSensor(const wear::sensor::SensorName name) const override;
+    wearable::SensorPtr<const wearable::sensor::IPositionSensor>
+    getPositionSensor(const wearable::sensor::SensorName name) const override;
 
-    wear::SensorPtr<const wear::sensor::IVirtualLinkKinSensor>
-    getVirtualLinkKinSensor(const wear::sensor::SensorName name) const override;
+    wearable::SensorPtr<const wearable::sensor::IVirtualLinkKinSensor>
+    getVirtualLinkKinSensor(const wearable::sensor::SensorName name) const override;
 
-    wear::SensorPtr<const wear::sensor::IVirtualSphericalJointKinSensor>
-    getVirtualSphericalJointKinSensor(const wear::sensor::SensorName name) const override;
+    wearable::SensorPtr<const wearable::sensor::IVirtualSphericalJointKinSensor>
+    getVirtualSphericalJointKinSensor(const wearable::sensor::SensorName name) const override;
 };
 
 #endif // WEAR_XSENSSUIT

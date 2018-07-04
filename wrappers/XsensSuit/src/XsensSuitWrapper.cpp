@@ -11,7 +11,7 @@
 
 #include <mutex>
 
-using namespace iwear::wrappers;
+using namespace wearable::wrappers;
 
 const std::string logPrefix = "XsensSuitWrapper : ";
 

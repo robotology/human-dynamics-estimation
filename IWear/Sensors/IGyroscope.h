@@ -11,18 +11,18 @@
 
 #include "IWear/Sensors/ISensor.h"
 
-namespace wear {
+namespace wearable {
     namespace sensor {
         class IGyroscope;
     }
-} // namespace wear
+} // namespace wearable
 
-class wear::sensor::IGyroscope : public wear::sensor::ISensor
+class wearable::sensor::IGyroscope : public wearable::sensor::ISensor
 {
 public:
     virtual ~IGyroscope() = 0;
 
-    virtual bool getAngularRate(wear::Vector3& angularRate) const = 0;
+    virtual bool getAngularRate(wearable::Vector3& angularRate) const = 0;
 };
 
 #endif // WEAR_IGYROSCOPE

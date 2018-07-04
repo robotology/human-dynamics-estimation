@@ -3,7 +3,7 @@
 # GNU Lesser General Public License v2.1 or any later version.
 
 yarp_prepare_plugin(IWearWrapper
-    TYPE wear::wrappers::IWearWrapper
+    TYPE wearable::wrappers::IWearWrapper
     INCLUDE IWearWrapper.h
     CATEGORY device
     ADVANCED

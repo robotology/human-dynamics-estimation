@@ -11,18 +11,18 @@
 
 #include "IWear/Sensors/ISensor.h"
 
-namespace wear {
+namespace wearable {
     namespace sensor {
         class IMagnetometer;
     }
-} // namespace wear
+} // namespace wearable
 
-class wear::sensor::IMagnetometer : public wear::sensor::ISensor
+class wearable::sensor::IMagnetometer : public wearable::sensor::ISensor
 {
 public:
     virtual ~IMagnetometer() = 0;
 
-    virtual bool getMagneticField(wear::Vector3& magneticField) const = 0;
+    virtual bool getMagneticField(wearable::Vector3& magneticField) const = 0;
 };
 
 #endif // WEAR_IMAGNETOMETER

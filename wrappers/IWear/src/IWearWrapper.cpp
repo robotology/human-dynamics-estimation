@@ -7,7 +7,7 @@
  */
 
 #include "IWearWrapper.h"
-#include "IWear/IWear.h"
+#include "Wearable/IWear/IWear.h"
 #include "thrift/WearData.h"
 
 #include <yarp/dev/PreciselyTimed.h>
@@ -19,15 +19,15 @@ const std::string WrapperName = "IWearWrapper";
 const std::string logPrefix = WrapperName + " : ";
 constexpr double DefaultPeriod = 0.01;
 
-using namespace wear;
-using namespace wear::wrappers;
+using namespace wearable;
+using namespace wearable::wrappers;
 
 class IWearWrapper::impl
 {
 public:
     yarp::os::BufferedPort<msg::WearData> portWearData;
 
-    wear::IWear* iWear = nullptr;
+    wearable::IWear* iWear = nullptr;
     yarp::dev::IPreciselyTimed* iPreciselyTimed = nullptr;
 };
 
@@ -75,24 +75,24 @@ const std::map<sensor::SensorStatus, msg::SensorStatus> mapSensorStatus = {
     {sensor::SensorStatus::Unknown, msg::SensorStatus::UNKNOWN},
 };
 
-msg::SensorInfo generateSensorStatus(const wear::sensor::ISensor* sensor)
+msg::SensorInfo generateSensorStatus(const wearable::sensor::ISensor* sensor)
 {
     return {sensor->getSensorName(),
             mapSensorTypes.at(sensor->getSensorType()),
             mapSensorStatus.at(sensor->getSensorStatus())};
 }
 
-msg::VectorXYZ vector3ToVectorXYZ(const wear::Vector3& input)
+msg::VectorXYZ vector3ToVectorXYZ(const wearable::Vector3& input)
 {
     return {input[0], input[1], input[2]};
 }
 
-msg::VectorRPY vector3ToVectorRPY(const wear::Vector3& input)
+msg::VectorRPY vector3ToVectorRPY(const wearable::Vector3& input)
 {
     return {input[0], input[1], input[2]};
 }
 
-msg::Quaternion convertQuaternion(const wear::Quaternion& input)
+msg::Quaternion convertQuaternion(const wearable::Quaternion& input)
 {
     return {input[0], {input[1], input[2], input[3]}};
 }
@@ -131,7 +131,7 @@ void IWearWrapper::run()
     {
         const auto vectorOfSensors = pImpl->iWear->getAccelerometers();
         for (const auto& sensor : vectorOfSensors) {
-            wear::Vector3 vector3;
+            wearable::Vector3 vector3;
             if (!sensor->getLinearAcceleration(vector3)) {
                 askToStop();
                 return;
@@ -160,7 +160,7 @@ void IWearWrapper::run()
     {
         const auto vectorOfSensors = pImpl->iWear->getForce3DSensors();
         for (const auto& sensor : vectorOfSensors) {
-            wear::Vector3 vector3;
+            wearable::Vector3 vector3;
             if (!sensor->getForce3D(vector3)) {
                 askToStop();
                 return;
@@ -173,7 +173,7 @@ void IWearWrapper::run()
     {
         const auto vectorOfSensors = pImpl->iWear->getForceTorque6DSensors();
         for (const auto& sensor : vectorOfSensors) {
-            wear::Vector6 vector6;
+            wearable::Vector6 vector6;
             if (!sensor->getForceTorque6D(vector6)) {
                 askToStop();
                 return;
@@ -187,7 +187,7 @@ void IWearWrapper::run()
     {
         const auto vectorOfSensors = pImpl->iWear->getFreeBodyAccelerationSensors();
         for (const auto& sensor : vectorOfSensors) {
-            wear::Vector3 vector3;
+            wearable::Vector3 vector3;
             if (!sensor->getFreeBodyAcceleration(vector3)) {
                 askToStop();
                 return;
@@ -200,7 +200,7 @@ void IWearWrapper::run()
     {
         const auto vectorOfSensors = pImpl->iWear->getGyroscopes();
         for (const auto& sensor : vectorOfSensors) {
-            wear::Vector3 vector3;
+            wearable::Vector3 vector3;
             if (!sensor->getAngularRate(vector3)) {
                 askToStop();
                 return;
@@ -213,7 +213,7 @@ void IWearWrapper::run()
     {
         const auto vectorOfSensors = pImpl->iWear->getMagnetometers();
         for (const auto& sensor : vectorOfSensors) {
-            wear::Vector3 vector3;
+            wearable::Vector3 vector3;
             if (!sensor->getMagneticField(vector3)) {
                 askToStop();
                 return;
@@ -226,7 +226,7 @@ void IWearWrapper::run()
     {
         const auto vectorOfSensors = pImpl->iWear->getOrientationSensors();
         for (const auto& sensor : vectorOfSensors) {
-            wear::Quaternion quaternion;
+            wearable::Quaternion quaternion;
             if (!sensor->getOrientationAsQuaternion(quaternion)) {
                 askToStop();
                 return;
@@ -239,8 +239,8 @@ void IWearWrapper::run()
     {
         const auto vectorOfSensors = pImpl->iWear->getPoseSensors();
         for (const auto& sensor : vectorOfSensors) {
-            wear::Vector3 vector3;
-            wear::Quaternion quaternion;
+            wearable::Vector3 vector3;
+            wearable::Quaternion quaternion;
             if (!sensor->getPose(quaternion, vector3)) {
                 askToStop();
                 return;
@@ -254,7 +254,7 @@ void IWearWrapper::run()
     {
         const auto vectorOfSensors = pImpl->iWear->getPositionSensors();
         for (const auto& sensor : vectorOfSensors) {
-            wear::Vector3 vector3;
+            wearable::Vector3 vector3;
             if (!sensor->getPosition(vector3)) {
                 askToStop();
                 return;
@@ -280,7 +280,7 @@ void IWearWrapper::run()
     {
         const auto vectorOfSensors = pImpl->iWear->get3DTorqueSensors();
         for (const auto& sensor : vectorOfSensors) {
-            wear::Vector3 vector3;
+            wearable::Vector3 vector3;
             if (!sensor->getTorque3D(vector3)) {
                 askToStop();
                 return;
@@ -293,12 +293,12 @@ void IWearWrapper::run()
     {
         const auto vectorOfSensors = pImpl->iWear->getVirtualLinkKinSensors();
         for (const auto& sensor : vectorOfSensors) {
-            wear::Vector3 linearAcc;
-            wear::Vector3 angularAcc;
-            wear::Vector3 linearVel;
-            wear::Vector3 angularVel;
-            wear::Vector3 position;
-            wear::Quaternion orientation;
+            wearable::Vector3 linearAcc;
+            wearable::Vector3 angularAcc;
+            wearable::Vector3 linearVel;
+            wearable::Vector3 angularVel;
+            wearable::Vector3 position;
+            wearable::Quaternion orientation;
             if (!sensor->getLinkAcceleration(linearAcc, angularAcc)
                 || !sensor->getLinkPose(position, orientation)
                 || !sensor->getLinkVelocity(linearVel, angularVel)) {
@@ -318,9 +318,9 @@ void IWearWrapper::run()
     {
         const auto vectorOfSensors = pImpl->iWear->getVirtualSphericalJointKinSensors();
         for (const auto& sensor : vectorOfSensors) {
-            wear::Vector3 jointAngles;
-            wear::Vector3 jointVel;
-            wear::Vector3 jointAcc;
+            wearable::Vector3 jointAngles;
+            wearable::Vector3 jointVel;
+            wearable::Vector3 jointAcc;
             if (!sensor->getJointAnglesAsRPY(jointAngles) || !sensor->getJointVelocities(jointVel)
                 || !sensor->getJointAccelerations(jointAcc)) {
                 askToStop();

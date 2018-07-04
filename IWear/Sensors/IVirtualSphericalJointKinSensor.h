@@ -11,22 +11,22 @@
 
 #include "IWear/Sensors/ISensor.h"
 
-namespace wear {
+namespace wearable {
     namespace sensor {
         class IVirtualSphericalJointKinSensor;
     }
-} // namespace wear
+} // namespace wearable
 
-class wear::sensor::IVirtualSphericalJointKinSensor : public wear::sensor::ISensor
+class wearable::sensor::IVirtualSphericalJointKinSensor : public wearable::sensor::ISensor
 {
 protected:
 public:
     virtual ~IVirtualSphericalJointKinSensor() = 0;
 
     // CONVENTION: RPY are defined as rotationa about X-Y-Z wrt fix frame
-    virtual bool getJointAnglesAsRPY(wear::Vector3 angleAsRPY) const = 0;
-    virtual bool getJointVelocities(wear::Vector3 velocities) const = 0;
-    virtual bool getJointAccelerations(wear::Vector3 accelerations) const = 0;
+    virtual bool getJointAnglesAsRPY(wearable::Vector3 angleAsRPY) const = 0;
+    virtual bool getJointVelocities(wearable::Vector3 velocities) const = 0;
+    virtual bool getJointAccelerations(wearable::Vector3 accelerations) const = 0;
 };
 
 #endif // WEAR_IVIRTUALSPHERICALJOINTKINSENSOR

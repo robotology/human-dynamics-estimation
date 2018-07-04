@@ -11,29 +11,29 @@
 
 #include "IWear/Sensors/ISensor.h"
 
-namespace wear {
+namespace wearable {
     namespace sensor {
         class IVirtualLinkKinSensor;
     }
-} // namespace wear
+} // namespace wearable
 
-class wear::sensor::IVirtualLinkKinSensor : public wear::sensor::ISensor
+class wearable::sensor::IVirtualLinkKinSensor : public wearable::sensor::ISensor
 {
 public:
     virtual ~IVirtualLinkKinSensor() = 0;
 
     // 6D quantities
-    virtual bool getLinkAcceleration(wear::Vector3& linear, wear::Vector3& angular) const = 0;
-    virtual bool getLinkPose(wear::Vector3& position, wear::Quaternion& orientation) const = 0;
-    virtual bool getLinkVelocity(wear::Vector3& linear, wear::Vector3& angular) const = 0;
+    virtual bool getLinkAcceleration(wearable::Vector3& linear, wearable::Vector3& angular) const = 0;
+    virtual bool getLinkPose(wearable::Vector3& position, wearable::Quaternion& orientation) const = 0;
+    virtual bool getLinkVelocity(wearable::Vector3& linear, wearable::Vector3& angular) const = 0;
 
     // 3D quantities
-    virtual bool getLinkAngularAcceleration(wear::Vector3& linear) const = 0;
-    virtual bool getLinkAngularVelocity(wear::Vector3& linear) const = 0;
-    virtual bool getLinkLinearAcceleration(wear::Vector3& linear) const = 0;
-    virtual bool getLinkLinearVelocity(wear::Vector3& linear) const = 0;
-    virtual bool getLinkOrientation(wear::Quaternion& orientation) const = 0;
-    virtual bool getLinkPosition(wear::Vector3& position) const = 0;
+    virtual bool getLinkAngularAcceleration(wearable::Vector3& linear) const = 0;
+    virtual bool getLinkAngularVelocity(wearable::Vector3& linear) const = 0;
+    virtual bool getLinkLinearAcceleration(wearable::Vector3& linear) const = 0;
+    virtual bool getLinkLinearVelocity(wearable::Vector3& linear) const = 0;
+    virtual bool getLinkOrientation(wearable::Quaternion& orientation) const = 0;
+    virtual bool getLinkPosition(wearable::Vector3& position) const = 0;
 };
 
 #endif // WEAR_IVIRTUALLINKKINSENSOR

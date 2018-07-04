@@ -14,24 +14,24 @@
 
 #include "IWear/Utils.h"
 
-bool wear::sensor::IOrientationSensor::getOrientationAsRPY(wear::Vector3& orientation) const
+bool wearable::sensor::IOrientationSensor::getOrientationAsRPY(wearable::Vector3& orientation) const
 {
-    wear::Quaternion quat;
-    if (!wear::sensor::IOrientationSensor::getOrientationAsQuaternion(quat)) {
+    wearable::Quaternion quat;
+    if (!wearable::sensor::IOrientationSensor::getOrientationAsQuaternion(quat)) {
         return false;
     }
-    orientation = wear::utils::quaternionToRPY(quat);
+    orientation = wearable::utils::quaternionToRPY(quat);
     return true;
 };
 
-bool wear::sensor::IOrientationSensor::getOrientationAsRotationMatrix(
-    wear::Matrix3& orientation) const
+bool wearable::sensor::IOrientationSensor::getOrientationAsRotationMatrix(
+    wearable::Matrix3& orientation) const
 {
-    wear::Quaternion quat;
-    if (!wear::sensor::IOrientationSensor::getOrientationAsQuaternion(quat)) {
+    wearable::Quaternion quat;
+    if (!wearable::sensor::IOrientationSensor::getOrientationAsQuaternion(quat)) {
         return false;
     }
-    orientation = wear::utils::quaterionToRotationMatrix(quat);
+    orientation = wearable::utils::quaternionToRotationMatrix(quat);
     return true;
 };
 

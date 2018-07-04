@@ -3,7 +3,7 @@
 # GNU Lesser General Public License v2.1 or any later version.
 
 yarp_prepare_plugin(XsensSuitWrapper
-    TYPE iwear::wrappers::XsensSuitWrapper
+    TYPE wearable::wrappers::XsensSuitWrapper
     INCLUDE XsensSuitWrapper.h
     CATEGORY device
     ADVANCED

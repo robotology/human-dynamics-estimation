@@ -11,18 +11,18 @@
 
 #include "IWear/Sensors/ISensor.h"
 
-namespace wear {
+namespace wearable {
     namespace sensor {
         class IAccelerometer;
     }
-} // namespace wear
+} // namespace wearable
 
-class wear::sensor::IAccelerometer : public wear::sensor::ISensor
+class wearable::sensor::IAccelerometer : public wearable::sensor::ISensor
 {
 public:
     virtual ~IAccelerometer() = 0;
 
-    virtual bool getLinearAcceleration(wear::Vector3& linearAcceleration) const = 0;
+    virtual bool getLinearAcceleration(wearable::Vector3& linearAcceleration) const = 0;
 };
 
 #endif // WEAR_IACCELEROMETER

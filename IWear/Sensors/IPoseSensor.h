@@ -9,29 +9,29 @@
 #ifndef WEAR_IPOSESENSOR
 #define WEAR_IPOSESENSOR
 
-#include "IWear/Sensors/ISensor.h"
+#include "Wearable/IWear/Sensors/ISensor.h"
 
-namespace wear {
+namespace wearable {
     namespace sensor {
         class IPoseSensor;
     }
-} // namespace wear
+} // namespace wearable
 
-class wear::sensor::IPoseSensor : public wear::sensor::ISensor
+class wearable::sensor::IPoseSensor : public wearable::sensor::ISensor
 {
 public:
     virtual ~IPoseSensor() = 0;
 
-    virtual bool getPose(wear::Quaternion& orientation, wear::Vector3& position) const = 0;
-    virtual bool getPose(wear::Vector7& pose) const;
+    virtual bool getPose(wearable::Quaternion& orientation, wearable::Vector3& position) const = 0;
+    virtual bool getPose(wearable::Vector7& pose) const;
 
-    virtual bool getPoseOrientationAsQuaternion(wear::Quaternion& orientation) const = 0;
-    virtual bool getPosePosition(wear::Vector3& position) const = 0;
+    virtual bool getPoseOrientationAsQuaternion(wearable::Quaternion& orientation) const = 0;
+    virtual bool getPosePosition(wearable::Vector3& position) const = 0;
 
-    virtual bool getPoseOrientationAsRotationMatrix(wear::Matrix3& orientation) const;
-    virtual bool getPoseOrientationAsRPY(wear::Vector3& orientation) const;
+    virtual bool getPoseOrientationAsRotationMatrix(wearable::Matrix3& orientation) const;
+    virtual bool getPoseOrientationAsRPY(wearable::Vector3& orientation) const;
 };
 
-#include "IWear/Sensors/IPoseSensor-defaultImpl.h"
+#include "Wearable/IWear/Sensors/IPoseSensor-defaultImpl.h"
 
 #endif // WEAR_IPOSITIONSENSOR

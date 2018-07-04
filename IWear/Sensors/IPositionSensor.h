@@ -11,18 +11,18 @@
 
 #include "IWear/Sensors/ISensor.h"
 
-namespace wear {
+namespace wearable {
     namespace sensor {
         class IPositionSensor;
     }
-} // namespace wear
+} // namespace wearable
 
-class wear::sensor::IPositionSensor : public wear::sensor::ISensor
+class wearable::sensor::IPositionSensor : public wearable::sensor::ISensor
 {
 public:
     virtual ~IPositionSensor() = 0;
 
-    virtual bool getPosition(wear::Vector3& position) const = 0;
+    virtual bool getPosition(wearable::Vector3& position) const = 0;
 };
 
 #endif // WEAR_IPOSITIONSENSOR

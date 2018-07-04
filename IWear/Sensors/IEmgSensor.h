@@ -11,13 +11,13 @@
 
 #include "IWear/Sensors/ISensor.h"
 
-namespace wear {
+namespace wearable {
     namespace sensor {
         class IEmgSensor;
     }
-} // namespace wear
+} // namespace wearable
 
-class wear::sensor::IEmgSensor : public wear::sensor::ISensor
+class wearable::sensor::IEmgSensor : public wearable::sensor::ISensor
 {
 public:
     virtual ~IEmgSensor() = 0;

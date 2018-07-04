@@ -9,23 +9,24 @@
 #ifndef WEAR_IORIENTATIONSENSOR
 #define WEAR_IORIENTATIONSENSOR
 
-#include "IWear/Sensors/ISensor.h"
+#include "Wearable/IWear/Sensors/ISensor.h"
 
-namespace wear {
+namespace wearable {
     namespace sensor {
         class IOrientationSensor;
     }
-} // namespace wear
+} // namespace wearable
 
-class wear::sensor::IOrientationSensor : public wear::sensor::ISensor
+class wearable::sensor::IOrientationSensor : public wearable::sensor::ISensor
 {
 public:
     virtual ~IOrientationSensor() = 0;
 
-    virtual bool getOrientationAsQuaternion(wear::Quaternion& orientation) const = 0;
-    virtual bool getOrientationAsRPY(wear::Vector3& orientation) const;
-    virtual bool getOrientationAsRotationMatrix(wear::Matrix3& orientation) const;
+    virtual bool getOrientationAsQuaternion(wearable::Quaternion& orientation) const = 0;
+    virtual bool getOrientationAsRPY(wearable::Vector3& orientation) const;
+    virtual bool getOrientationAsRotationMatrix(wearable::Matrix3& orientation) const;
 };
 
-#include "IWear/Sensors/IOrientationSensor-defaultImpl.h"
+#include "Wearable/IWear/Sensors/IOrientationSensor-defaultImpl.h"
+
 #endif // WEAR_IORIENTATIONSENSOR

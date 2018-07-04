@@ -12,7 +12,7 @@
 #include <array>
 #include <string>
 
-namespace wear {
+namespace wearable {
 
     using Vector3 = std::array<double, 3>;
     using Vector6 = std::array<double, 6>;
@@ -55,17 +55,17 @@ namespace wear {
 
         class ISensor;
     } // namespace sensor
-} // namespace wear
+} // namespace wearable
 
-class wear::sensor::ISensor
+class wearable::sensor::ISensor
 {
 public:
     virtual ~ISensor() = 0;
 
     // TODO: timestamp? sequence number?
-    virtual wear::sensor::SensorName getSensorName() const = 0;
-    virtual wear::sensor::SensorStatus getSensorStatus() const = 0;
-    virtual wear::sensor::SensorType getSensorType() const = 0;
+    virtual wearable::sensor::SensorName getSensorName() const = 0;
+    virtual wearable::sensor::SensorStatus getSensorStatus() const = 0;
+    virtual wearable::sensor::SensorType getSensorType() const = 0;
 };
 
 #endif // WEAR_ISENSOR

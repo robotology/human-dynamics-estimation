@@ -14,13 +14,13 @@
 #include <yarp/dev/PreciselyTimed.h>
 #include <yarp/dev/Wrapper.h>
 
-namespace iwear {
+namespace wearable {
     namespace wrappers {
         class XsensSuitWrapper;
     }
-} // namespace iwear
+} // namespace wearable
 
-class iwear::wrappers::XsensSuitWrapper
+class wearable::wrappers::XsensSuitWrapper
     : public yarp::dev::DeviceDriver
     , public yarp::dev::IWrapper
     , public yarp::dev::IMultipleWrapper

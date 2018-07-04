@@ -14,12 +14,12 @@
 
 #include "IWear/Utils.h"
 
-bool wear::sensor::IPoseSensor::getPose(wear::Vector7& pose) const
+bool wearable::sensor::IPoseSensor::getPose(wearable::Vector7& pose) const
 {
 
-    wear::Quaternion orientation;
-    wear::Vector3 position;
-    if (!wear::sensor::IPoseSensor::getPose(orientation, position)) {
+    wearable::Quaternion orientation;
+    wearable::Vector3 position;
+    if (!wearable::sensor::IPoseSensor::getPose(orientation, position)) {
         return false;
     }
 
@@ -34,23 +34,24 @@ bool wear::sensor::IPoseSensor::getPose(wear::Vector7& pose) const
     return true;
 }
 
-bool wear::sensor::IPoseSensor::getPoseOrientationAsRotationMatrix(wear::Matrix3& orientation) const
+bool wearable::sensor::IPoseSensor::getPoseOrientationAsRotationMatrix(
+    wearable::Matrix3& orientation) const
 {
-    wear::Quaternion quat;
-    if (!wear::sensor::IPoseSensor::getPoseOrientationAsQuaternion(quat)) {
+    wearable::Quaternion quat;
+    if (!wearable::sensor::IPoseSensor::getPoseOrientationAsQuaternion(quat)) {
         return false;
     }
-    orientation = wear::utils::quaterionToRotationMatrix(quat);
+    orientation = wearable::utils::quaternionToRotationMatrix(quat);
     return true;
 };
 
-bool wear::sensor::IPoseSensor::getPoseOrientationAsRPY(wear::Vector3& orientation) const
+bool wearable::sensor::IPoseSensor::getPoseOrientationAsRPY(wearable::Vector3& orientation) const
 {
-    wear::Quaternion quat;
-    if (!wear::sensor::IPoseSensor::getPoseOrientationAsQuaternion(quat)) {
+    wearable::Quaternion quat;
+    if (!wearable::sensor::IPoseSensor::getPoseOrientationAsQuaternion(quat)) {
         return false;
     }
-    orientation = wear::utils::quaternionToRPY(quat);
+    orientation = wearable::utils::quaternionToRPY(quat);
     return true;
 };
 

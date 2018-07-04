@@ -11,13 +11,13 @@
 
 #include "IWear/IWear.h"
 
-namespace wear {
+namespace wearable {
     namespace suit {
         class FTShoes;
     }
-} // namespace wear
+} // namespace wearable
 
-class wear::suit::FTShoes final : public wear::IWear
+class wearable::suit::FTShoes final : public wearable::IWear
 {
 private:
     class Impl;
@@ -36,39 +36,39 @@ public:
     // GENERIC
     // =======
 
-    wear::SensorPtr<const wear::sensor::ISensor>
-    getSensor(const wear::sensor::SensorName name) const override;
+    wearable::SensorPtr<const wearable::sensor::ISensor>
+    getSensor(const wearable::sensor::SensorName name) const override;
 
-    wear::VectorOfSensorPtr<const wear::sensor::ISensor>
-    getSensors(const wear::sensor::SensorType) const override;
+    wearable::VectorOfSensorPtr<const wearable::sensor::ISensor>
+    getSensors(const wearable::sensor::SensorType) const override;
 
     // ==============
     // SINGLE SENSORS
     // ==============
 
-    virtual wear::SensorPtr<const wear::sensor::IAccelerometer>
-    getAccelerometer(const wear::sensor::SensorName name) const override;
+    virtual wearable::SensorPtr<const wearable::sensor::IAccelerometer>
+    getAccelerometer(const wearable::sensor::SensorName name) const override;
 
-    virtual wear::SensorPtr<const wear::sensor::IForce3DSensor>
-    getForce3DSensor(const wear::sensor::SensorName name) const override;
+    virtual wearable::SensorPtr<const wearable::sensor::IForce3DSensor>
+    getForce3DSensor(const wearable::sensor::SensorName name) const override;
 
-    virtual wear::SensorPtr<const wear::sensor::IForceTorque6DSensor>
-    getForceTorque6DSensor(const wear::sensor::SensorName name) const override;
+    virtual wearable::SensorPtr<const wearable::sensor::IForceTorque6DSensor>
+    getForceTorque6DSensor(const wearable::sensor::SensorName name) const override;
 
-    virtual wear::SensorPtr<const wear::sensor::IGyroscope>
-    getGyroscope(const wear::sensor::SensorName name) const override;
+    virtual wearable::SensorPtr<const wearable::sensor::IGyroscope>
+    getGyroscope(const wearable::sensor::SensorName name) const override;
 
-    virtual wear::SensorPtr<const wear::sensor::IMagnetometer>
-    getMagnetometer(const wear::sensor::SensorName name) const override;
+    virtual wearable::SensorPtr<const wearable::sensor::IMagnetometer>
+    getMagnetometer(const wearable::sensor::SensorName name) const override;
 
-    virtual wear::SensorPtr<const wear::sensor::IOrientationSensor>
-    getOrientationSensor(const wear::sensor::SensorName name) const override;
+    virtual wearable::SensorPtr<const wearable::sensor::IOrientationSensor>
+    getOrientationSensor(const wearable::sensor::SensorName name) const override;
 
-    virtual wear::SensorPtr<const wear::sensor::ITemperatureSensor>
-    getTemperatureSensor(const wear::sensor::SensorName name) const override;
+    virtual wearable::SensorPtr<const wearable::sensor::ITemperatureSensor>
+    getTemperatureSensor(const wearable::sensor::SensorName name) const override;
 
-    virtual wear::SensorPtr<const wear::sensor::ITorque3DSensor>
-    getTorque3DSensor(const wear::sensor::SensorName name) const override;
+    virtual wearable::SensorPtr<const wearable::sensor::ITorque3DSensor>
+    getTorque3DSensor(const wearable::sensor::SensorName name) const override;
 };
 
 #endif // WEAR_FTSHOES

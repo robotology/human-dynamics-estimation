@@ -14,13 +14,13 @@
 #include <yarp/dev/Wrapper.h>
 #include <yarp/os/PeriodicThread.h>
 
-namespace wear {
+namespace wearable {
     namespace wrappers {
         class IWearWrapper;
     }
-} // namespace wear
+} // namespace wearable
 
-class wear::wrappers::IWearWrapper
+class wearable::wrappers::IWearWrapper
     : public yarp::dev::DeviceDriver
     , public yarp::dev::IWrapper
     , public yarp::dev::IMultipleWrapper

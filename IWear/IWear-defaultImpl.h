@@ -17,9 +17,9 @@
 // =========
 
 template <typename S>
-void wear::IWear::castVectorOfSensorPtr(
-    const wear::VectorOfSensorPtr<const wear::sensor::ISensor> isensors,
-    wear::VectorOfSensorPtr<const S> sensors)
+void wearable::IWear::castVectorOfSensorPtr(
+    const wearable::VectorOfSensorPtr<const wearable::sensor::ISensor> isensors,
+    wearable::VectorOfSensorPtr<const S> sensors)
 {
     for (const auto& s : isensors) {
         sensors.push_back(std::dynamic_pointer_cast<const S>(s));
@@ -31,61 +31,61 @@ void wear::IWear::castVectorOfSensorPtr(
 // =======
 
 // Unqualified sensors retrieving
-wear::VectorOfSensorPtr<const wear::sensor::ISensor> wear::IWear::getAllSensors() const
+wearable::VectorOfSensorPtr<const wearable::sensor::ISensor> wearable::IWear::getAllSensors() const
 {
-    wear::VectorOfSensorPtr<const wear::sensor::ISensor> allSensors, tmp;
-    tmp = wear::IWear::getSensors(wear::sensor::SensorType::Accelerometer);
+    wearable::VectorOfSensorPtr<const wearable::sensor::ISensor> allSensors, tmp;
+    tmp = wearable::IWear::getSensors(wearable::sensor::SensorType::Accelerometer);
     allSensors.insert(allSensors.end(), tmp.begin(), tmp.end());
     tmp.clear();
-    tmp = wear::IWear::getSensors(wear::sensor::SensorType::EmgSensor);
+    tmp = wearable::IWear::getSensors(wearable::sensor::SensorType::EmgSensor);
     allSensors.insert(allSensors.end(), tmp.begin(), tmp.end());
     tmp.clear();
-    tmp = wear::IWear::getSensors(wear::sensor::SensorType::Force3DSensor);
+    tmp = wearable::IWear::getSensors(wearable::sensor::SensorType::Force3DSensor);
     allSensors.insert(allSensors.end(), tmp.begin(), tmp.end());
     tmp.clear();
-    tmp = wear::IWear::getSensors(wear::sensor::SensorType::ForceTorque6DSensor);
+    tmp = wearable::IWear::getSensors(wearable::sensor::SensorType::ForceTorque6DSensor);
     allSensors.insert(allSensors.end(), tmp.begin(), tmp.end());
     tmp.clear();
-    tmp = wear::IWear::getSensors(wear::sensor::SensorType::FreeBodyAccelerationSensor);
+    tmp = wearable::IWear::getSensors(wearable::sensor::SensorType::FreeBodyAccelerationSensor);
     allSensors.insert(allSensors.end(), tmp.begin(), tmp.end());
     tmp.clear();
-    tmp = wear::IWear::getSensors(wear::sensor::SensorType::Gyroscope);
+    tmp = wearable::IWear::getSensors(wearable::sensor::SensorType::Gyroscope);
     allSensors.insert(allSensors.end(), tmp.begin(), tmp.end());
     tmp.clear();
-    tmp = wear::IWear::getSensors(wear::sensor::SensorType::Magnetometer);
+    tmp = wearable::IWear::getSensors(wearable::sensor::SensorType::Magnetometer);
     allSensors.insert(allSensors.end(), tmp.begin(), tmp.end());
     tmp.clear();
-    tmp = wear::IWear::getSensors(wear::sensor::SensorType::OrientationSensor);
+    tmp = wearable::IWear::getSensors(wearable::sensor::SensorType::OrientationSensor);
     allSensors.insert(allSensors.end(), tmp.begin(), tmp.end());
     tmp.clear();
-    tmp = wear::IWear::getSensors(wear::sensor::SensorType::PoseSensor);
+    tmp = wearable::IWear::getSensors(wearable::sensor::SensorType::PoseSensor);
     allSensors.insert(allSensors.end(), tmp.begin(), tmp.end());
     tmp.clear();
-    tmp = wear::IWear::getSensors(wear::sensor::SensorType::PositionSensor);
+    tmp = wearable::IWear::getSensors(wearable::sensor::SensorType::PositionSensor);
     allSensors.insert(allSensors.end(), tmp.begin(), tmp.end());
     tmp.clear();
-    tmp = wear::IWear::getSensors(wear::sensor::SensorType::SkinSensor);
+    tmp = wearable::IWear::getSensors(wearable::sensor::SensorType::SkinSensor);
     allSensors.insert(allSensors.end(), tmp.begin(), tmp.end());
     tmp.clear();
-    tmp = wear::IWear::getSensors(wear::sensor::SensorType::TemperatureSensor);
+    tmp = wearable::IWear::getSensors(wearable::sensor::SensorType::TemperatureSensor);
     allSensors.insert(allSensors.end(), tmp.begin(), tmp.end());
     tmp.clear();
-    tmp = wear::IWear::getSensors(wear::sensor::SensorType::Torque3DSensor);
+    tmp = wearable::IWear::getSensors(wearable::sensor::SensorType::Torque3DSensor);
     allSensors.insert(allSensors.end(), tmp.begin(), tmp.end());
     tmp.clear();
-    tmp = wear::IWear::getSensors(wear::sensor::SensorType::VirtualLinkKinSensor);
+    tmp = wearable::IWear::getSensors(wearable::sensor::SensorType::VirtualLinkKinSensor);
     allSensors.insert(allSensors.end(), tmp.begin(), tmp.end());
     tmp.clear();
-    tmp = wear::IWear::getSensors(wear::sensor::SensorType::VirtualSphericalJointKinSensor);
+    tmp = wearable::IWear::getSensors(wearable::sensor::SensorType::VirtualSphericalJointKinSensor);
     allSensors.insert(allSensors.end(), tmp.begin(), tmp.end());
     return allSensors;
 }
 
 // Sensors name list retrieving
-wear::VectorOfSensorNames wear::IWear::getAllSensorNames() const
+wearable::VectorOfSensorNames wearable::IWear::getAllSensorNames() const
 {
-    const wear::VectorOfSensorPtr<const wear::sensor::ISensor> sensors = getAllSensors();
-    wear::VectorOfSensorNames sensorNames;
+    const wearable::VectorOfSensorPtr<const wearable::sensor::ISensor> sensors = getAllSensors();
+    wearable::VectorOfSensorNames sensorNames;
     sensorNames.reserve(sensors.size());
     for (const auto& s : sensors) {
         sensorNames.push_back(s->getSensorName());
@@ -97,92 +97,93 @@ wear::VectorOfSensorNames wear::IWear::getAllSensorNames() const
 // SINGLE SENSORS
 // ==============
 
-wear::SensorPtr<const wear::sensor::IAccelerometer>
-wear::IWear::getAccelerometer(const wear::sensor::SensorName /*name*/) const
+wearable::SensorPtr<const wearable::sensor::IAccelerometer>
+wearable::IWear::getAccelerometer(const wearable::sensor::SensorName /*name*/) const
 {
     return nullptr;
 }
 
-wear::SensorPtr<const wear::sensor::IEmgSensor>
-wear::IWear::getEmgSensor(const wear::sensor::SensorName /*name*/) const
+wearable::SensorPtr<const wearable::sensor::IEmgSensor>
+wearable::IWear::getEmgSensor(const wearable::sensor::SensorName /*name*/) const
 {
     return nullptr;
 }
 
-wear::SensorPtr<const wear::sensor::IForce3DSensor>
-wear::IWear::getForce3DSensor(const wear::sensor::SensorName /*name*/) const
+wearable::SensorPtr<const wearable::sensor::IForce3DSensor>
+wearable::IWear::getForce3DSensor(const wearable::sensor::SensorName /*name*/) const
 {
     return nullptr;
 }
 
-wear::SensorPtr<const wear::sensor::IForceTorque6DSensor>
-wear::IWear::getForceTorque6DSensor(const wear::sensor::SensorName /*name*/) const
+wearable::SensorPtr<const wearable::sensor::IForceTorque6DSensor>
+wearable::IWear::getForceTorque6DSensor(const wearable::sensor::SensorName /*name*/) const
 {
     return nullptr;
 }
 
-wear::SensorPtr<const wear::sensor::IFreeBodyAccelerationSensor>
-wear::IWear::getFreeBodyAccelerationSensor(const wear::sensor::SensorName /*name*/) const
+wearable::SensorPtr<const wearable::sensor::IFreeBodyAccelerationSensor>
+wearable::IWear::getFreeBodyAccelerationSensor(const wearable::sensor::SensorName /*name*/) const
 {
     return nullptr;
 }
 
-wear::SensorPtr<const wear::sensor::IGyroscope>
-wear::IWear::getGyroscope(const wear::sensor::SensorName /*name*/) const
+wearable::SensorPtr<const wearable::sensor::IGyroscope>
+wearable::IWear::getGyroscope(const wearable::sensor::SensorName /*name*/) const
 {
     return nullptr;
 }
 
-wear::SensorPtr<const wear::sensor::IMagnetometer>
-wear::IWear::getMagnetometer(const wear::sensor::SensorName /*name*/) const
+wearable::SensorPtr<const wearable::sensor::IMagnetometer>
+wearable::IWear::getMagnetometer(const wearable::sensor::SensorName /*name*/) const
 {
     return nullptr;
 }
 
-wear::SensorPtr<const wear::sensor::IOrientationSensor>
-wear::IWear::getOrientationSensor(const wear::sensor::SensorName /*name*/) const
+wearable::SensorPtr<const wearable::sensor::IOrientationSensor>
+wearable::IWear::getOrientationSensor(const wearable::sensor::SensorName /*name*/) const
 {
     return nullptr;
 }
 
-wear::SensorPtr<const wear::sensor::IPoseSensor>
-wear::IWear::getPoseSensor(const wear::sensor::SensorName /*name*/) const
+wearable::SensorPtr<const wearable::sensor::IPoseSensor>
+wearable::IWear::getPoseSensor(const wearable::sensor::SensorName /*name*/) const
 {
     return nullptr;
 }
 
-wear::SensorPtr<const wear::sensor::IPositionSensor>
-wear::IWear::getPositionSensor(const wear::sensor::SensorName /*name*/) const
+wearable::SensorPtr<const wearable::sensor::IPositionSensor>
+wearable::IWear::getPositionSensor(const wearable::sensor::SensorName /*name*/) const
 {
     return nullptr;
 }
 
-wear::SensorPtr<const wear::sensor::ISkinSensor>
-wear::IWear::getSkinSensor(const wear::sensor::SensorName /*name*/) const
+wearable::SensorPtr<const wearable::sensor::ISkinSensor>
+wearable::IWear::getSkinSensor(const wearable::sensor::SensorName /*name*/) const
 {
     return nullptr;
 }
 
-wear::SensorPtr<const wear::sensor::ITemperatureSensor>
-wear::IWear::getTemperatureSensor(const wear::sensor::SensorName /*name*/) const
+wearable::SensorPtr<const wearable::sensor::ITemperatureSensor>
+wearable::IWear::getTemperatureSensor(const wearable::sensor::SensorName /*name*/) const
 {
     return nullptr;
 }
 
-wear::SensorPtr<const wear::sensor::ITorque3DSensor>
-wear::IWear::getTorque3DSensor(const wear::sensor::SensorName /*name*/) const
+wearable::SensorPtr<const wearable::sensor::ITorque3DSensor>
+wearable::IWear::getTorque3DSensor(const wearable::sensor::SensorName /*name*/) const
 {
     return nullptr;
 }
 
-wear::SensorPtr<const wear::sensor::IVirtualLinkKinSensor>
-wear::IWear::getVirtualLinkKinSensor(const wear::sensor::SensorName /*name*/) const
+wearable::SensorPtr<const wearable::sensor::IVirtualLinkKinSensor>
+wearable::IWear::getVirtualLinkKinSensor(const wearable::sensor::SensorName /*name*/) const
 {
     return nullptr;
 }
 
-wear::SensorPtr<const wear::sensor::IVirtualSphericalJointKinSensor>
-wear::IWear::getVirtualSphericalJointKinSensor(const wear::sensor::SensorName /*name*/) const
+wearable::SensorPtr<const wearable::sensor::IVirtualSphericalJointKinSensor>
+wearable::IWear::getVirtualSphericalJointKinSensor(
+    const wearable::sensor::SensorName /*name*/) const
 {
     return nullptr;
 }
@@ -191,10 +192,11 @@ wear::IWear::getVirtualSphericalJointKinSensor(const wear::sensor::SensorName /*
 // MULTIPLE SENSORS
 // ================
 
-wear::VectorOfSensorNames wear::IWear::getSensorNames(const wear::sensor::SensorType type) const
+wearable::VectorOfSensorNames
+wearable::IWear::getSensorNames(const wearable::sensor::SensorType type) const
 {
-    const wear::VectorOfSensorPtr<const wear::sensor::ISensor> sensors = getSensors(type);
-    wear::VectorOfSensorNames sensorNames;
+    const wearable::VectorOfSensorPtr<const wearable::sensor::ISensor> sensors = getSensors(type);
+    wearable::VectorOfSensorNames sensorNames;
     sensorNames.reserve(sensors.size());
     for (const auto& s : sensors) {
         sensorNames.push_back(s->getSensorName());
@@ -203,134 +205,146 @@ wear::VectorOfSensorNames wear::IWear::getSensorNames(const wear::sensor::Sensor
 }
 
 // Qualified sensor retrieving
-wear::VectorOfSensorPtr<const wear::sensor::IAccelerometer> wear::IWear::getAccelerometers() const
+wearable::VectorOfSensorPtr<const wearable::sensor::IAccelerometer>
+wearable::IWear::getAccelerometers() const
 {
-    wear::VectorOfSensorPtr<const wear::sensor::IAccelerometer> accelerometers;
-    wear::IWear::castVectorOfSensorPtr(
-        wear::IWear::getSensors(wear::sensor::SensorType::Accelerometer), accelerometers);
+    wearable::VectorOfSensorPtr<const wearable::sensor::IAccelerometer> accelerometers;
+    wearable::IWear::castVectorOfSensorPtr(
+        wearable::IWear::getSensors(wearable::sensor::SensorType::Accelerometer), accelerometers);
     return accelerometers;
 }
 
-wear::VectorOfSensorPtr<const wear::sensor::IEmgSensor> wear::IWear::getEmgSensors() const
+wearable::VectorOfSensorPtr<const wearable::sensor::IEmgSensor>
+wearable::IWear::getEmgSensors() const
 {
-    wear::VectorOfSensorPtr<const wear::sensor::IEmgSensor> emgSensors;
-    wear::IWear::castVectorOfSensorPtr(wear::IWear::getSensors(wear::sensor::SensorType::EmgSensor),
-                                       emgSensors);
+    wearable::VectorOfSensorPtr<const wearable::sensor::IEmgSensor> emgSensors;
+    wearable::IWear::castVectorOfSensorPtr(
+        wearable::IWear::getSensors(wearable::sensor::SensorType::EmgSensor), emgSensors);
     return emgSensors;
 }
 
-wear::VectorOfSensorPtr<const wear::sensor::IForce3DSensor> wear::IWear::getForce3DSensors() const
+wearable::VectorOfSensorPtr<const wearable::sensor::IForce3DSensor>
+wearable::IWear::getForce3DSensors() const
 {
-    wear::VectorOfSensorPtr<const wear::sensor::IForce3DSensor> force3DSensors;
-    wear::IWear::castVectorOfSensorPtr(
-        wear::IWear::getSensors(wear::sensor::SensorType::Force3DSensor), force3DSensors);
+    wearable::VectorOfSensorPtr<const wearable::sensor::IForce3DSensor> force3DSensors;
+    wearable::IWear::castVectorOfSensorPtr(
+        wearable::IWear::getSensors(wearable::sensor::SensorType::Force3DSensor), force3DSensors);
     return force3DSensors;
 }
 
-wear::VectorOfSensorPtr<const wear::sensor::IForceTorque6DSensor>
-wear::IWear::getForceTorque6DSensors() const
+wearable::VectorOfSensorPtr<const wearable::sensor::IForceTorque6DSensor>
+wearable::IWear::getForceTorque6DSensors() const
 {
-    wear::VectorOfSensorPtr<const wear::sensor::IForceTorque6DSensor> forceTorque6DSensors;
-    wear::IWear::castVectorOfSensorPtr(
-        wear::IWear::getSensors(wear::sensor::SensorType::ForceTorque6DSensor),
+    wearable::VectorOfSensorPtr<const wearable::sensor::IForceTorque6DSensor> forceTorque6DSensors;
+    wearable::IWear::castVectorOfSensorPtr(
+        wearable::IWear::getSensors(wearable::sensor::SensorType::ForceTorque6DSensor),
         forceTorque6DSensors);
     return forceTorque6DSensors;
 }
 
-wear::VectorOfSensorPtr<const wear::sensor::IFreeBodyAccelerationSensor>
-wear::IWear::getFreeBodyAccelerationSensors() const
+wearable::VectorOfSensorPtr<const wearable::sensor::IFreeBodyAccelerationSensor>
+wearable::IWear::getFreeBodyAccelerationSensors() const
 {
-    wear::VectorOfSensorPtr<const wear::sensor::IFreeBodyAccelerationSensor>
+    wearable::VectorOfSensorPtr<const wearable::sensor::IFreeBodyAccelerationSensor>
         freeBodyAccelerationSensors;
-    wear::IWear::castVectorOfSensorPtr(
-        wear::IWear::getSensors(wear::sensor::SensorType::FreeBodyAccelerationSensor),
+    wearable::IWear::castVectorOfSensorPtr(
+        wearable::IWear::getSensors(wearable::sensor::SensorType::FreeBodyAccelerationSensor),
         freeBodyAccelerationSensors);
     return freeBodyAccelerationSensors;
 }
 
-wear::VectorOfSensorPtr<const wear::sensor::IGyroscope> wear::IWear::getGyroscopes() const
+wearable::VectorOfSensorPtr<const wearable::sensor::IGyroscope>
+wearable::IWear::getGyroscopes() const
 {
-    wear::VectorOfSensorPtr<const wear::sensor::IGyroscope> gyroscopes;
-    wear::IWear::castVectorOfSensorPtr(wear::IWear::getSensors(wear::sensor::SensorType::Gyroscope),
-                                       gyroscopes);
+    wearable::VectorOfSensorPtr<const wearable::sensor::IGyroscope> gyroscopes;
+    wearable::IWear::castVectorOfSensorPtr(
+        wearable::IWear::getSensors(wearable::sensor::SensorType::Gyroscope), gyroscopes);
     return gyroscopes;
 }
 
-wear::VectorOfSensorPtr<const wear::sensor::IMagnetometer> wear::IWear::getMagnetometers() const
+wearable::VectorOfSensorPtr<const wearable::sensor::IMagnetometer>
+wearable::IWear::getMagnetometers() const
 {
-    wear::VectorOfSensorPtr<const wear::sensor::IMagnetometer> magnetometers;
-    wear::IWear::castVectorOfSensorPtr(
-        wear::IWear::getSensors(wear::sensor::SensorType::Magnetometer), magnetometers);
+    wearable::VectorOfSensorPtr<const wearable::sensor::IMagnetometer> magnetometers;
+    wearable::IWear::castVectorOfSensorPtr(
+        wearable::IWear::getSensors(wearable::sensor::SensorType::Magnetometer), magnetometers);
     return magnetometers;
 }
 
-wear::VectorOfSensorPtr<const wear::sensor::IOrientationSensor>
-wear::IWear::getOrientationSensors() const
+wearable::VectorOfSensorPtr<const wearable::sensor::IOrientationSensor>
+wearable::IWear::getOrientationSensors() const
 {
-    wear::VectorOfSensorPtr<const wear::sensor::IOrientationSensor> orientationSensors;
-    wear::IWear::castVectorOfSensorPtr(
-        wear::IWear::getSensors(wear::sensor::SensorType::OrientationSensor), orientationSensors);
+    wearable::VectorOfSensorPtr<const wearable::sensor::IOrientationSensor> orientationSensors;
+    wearable::IWear::castVectorOfSensorPtr(
+        wearable::IWear::getSensors(wearable::sensor::SensorType::OrientationSensor),
+        orientationSensors);
     return orientationSensors;
 }
 
-wear::VectorOfSensorPtr<const wear::sensor::IPoseSensor> wear::IWear::getPoseSensors() const
+wearable::VectorOfSensorPtr<const wearable::sensor::IPoseSensor>
+wearable::IWear::getPoseSensors() const
 {
-    wear::VectorOfSensorPtr<const wear::sensor::IPoseSensor> poseSensors;
-    wear::IWear::castVectorOfSensorPtr(
-        wear::IWear::getSensors(wear::sensor::SensorType::PoseSensor), poseSensors);
+    wearable::VectorOfSensorPtr<const wearable::sensor::IPoseSensor> poseSensors;
+    wearable::IWear::castVectorOfSensorPtr(
+        wearable::IWear::getSensors(wearable::sensor::SensorType::PoseSensor), poseSensors);
     return poseSensors;
 }
 
-wear::VectorOfSensorPtr<const wear::sensor::IPositionSensor> wear::IWear::getPositionSensors() const
+wearable::VectorOfSensorPtr<const wearable::sensor::IPositionSensor>
+wearable::IWear::getPositionSensors() const
 {
-    wear::VectorOfSensorPtr<const wear::sensor::IPositionSensor> positionSensors;
-    wear::IWear::castVectorOfSensorPtr(
-        wear::IWear::getSensors(wear::sensor::SensorType::PositionSensor), positionSensors);
+    wearable::VectorOfSensorPtr<const wearable::sensor::IPositionSensor> positionSensors;
+    wearable::IWear::castVectorOfSensorPtr(
+        wearable::IWear::getSensors(wearable::sensor::SensorType::PositionSensor), positionSensors);
     return positionSensors;
 }
 
-wear::VectorOfSensorPtr<const wear::sensor::ISkinSensor> wear::IWear::getSkinSensors() const
+wearable::VectorOfSensorPtr<const wearable::sensor::ISkinSensor>
+wearable::IWear::getSkinSensors() const
 {
-    wear::VectorOfSensorPtr<const wear::sensor::ISkinSensor> skinSensors;
-    wear::IWear::castVectorOfSensorPtr(
-        wear::IWear::getSensors(wear::sensor::SensorType::SkinSensor), skinSensors);
+    wearable::VectorOfSensorPtr<const wearable::sensor::ISkinSensor> skinSensors;
+    wearable::IWear::castVectorOfSensorPtr(
+        wearable::IWear::getSensors(wearable::sensor::SensorType::SkinSensor), skinSensors);
     return skinSensors;
 }
 
-wear::VectorOfSensorPtr<const wear::sensor::ITemperatureSensor>
-wear::IWear::getTemperatureSensors() const
+wearable::VectorOfSensorPtr<const wearable::sensor::ITemperatureSensor>
+wearable::IWear::getTemperatureSensors() const
 {
-    wear::VectorOfSensorPtr<const wear::sensor::ITemperatureSensor> temperatureSensors;
-    wear::IWear::castVectorOfSensorPtr(
-        wear::IWear::getSensors(wear::sensor::SensorType::TemperatureSensor), temperatureSensors);
+    wearable::VectorOfSensorPtr<const wearable::sensor::ITemperatureSensor> temperatureSensors;
+    wearable::IWear::castVectorOfSensorPtr(
+        wearable::IWear::getSensors(wearable::sensor::SensorType::TemperatureSensor),
+        temperatureSensors);
     return temperatureSensors;
 }
 
-wear::VectorOfSensorPtr<const wear::sensor::ITorque3DSensor> wear::IWear::get3DTorqueSensors() const
+wearable::VectorOfSensorPtr<const wearable::sensor::ITorque3DSensor>
+wearable::IWear::get3DTorqueSensors() const
 {
-    wear::VectorOfSensorPtr<const wear::sensor::ITorque3DSensor> torque3DSensors;
-    wear::IWear::castVectorOfSensorPtr(
-        wear::IWear::getSensors(wear::sensor::SensorType::Torque3DSensor), torque3DSensors);
+    wearable::VectorOfSensorPtr<const wearable::sensor::ITorque3DSensor> torque3DSensors;
+    wearable::IWear::castVectorOfSensorPtr(
+        wearable::IWear::getSensors(wearable::sensor::SensorType::Torque3DSensor), torque3DSensors);
     return torque3DSensors;
 }
 
-wear::VectorOfSensorPtr<const wear::sensor::IVirtualLinkKinSensor>
-wear::IWear::getVirtualLinkKinSensors() const
+wearable::VectorOfSensorPtr<const wearable::sensor::IVirtualLinkKinSensor>
+wearable::IWear::getVirtualLinkKinSensors() const
 {
-    wear::VectorOfSensorPtr<const wear::sensor::IVirtualLinkKinSensor> virtualLinkKinSensors;
-    wear::IWear::castVectorOfSensorPtr(
-        wear::IWear::getSensors(wear::sensor::SensorType::VirtualLinkKinSensor),
+    wearable::VectorOfSensorPtr<const wearable::sensor::IVirtualLinkKinSensor>
+        virtualLinkKinSensors;
+    wearable::IWear::castVectorOfSensorPtr(
+        wearable::IWear::getSensors(wearable::sensor::SensorType::VirtualLinkKinSensor),
         virtualLinkKinSensors);
     return virtualLinkKinSensors;
 }
 
-wear::VectorOfSensorPtr<const wear::sensor::IVirtualSphericalJointKinSensor>
-wear::IWear::getVirtualSphericalJointKinSensors() const
+wearable::VectorOfSensorPtr<const wearable::sensor::IVirtualSphericalJointKinSensor>
+wearable::IWear::getVirtualSphericalJointKinSensors() const
 {
-    wear::VectorOfSensorPtr<const wear::sensor::IVirtualSphericalJointKinSensor>
+    wearable::VectorOfSensorPtr<const wearable::sensor::IVirtualSphericalJointKinSensor>
         virtualSphericalJointKinSensors;
-    wear::IWear::castVectorOfSensorPtr(
-        wear::IWear::getSensors(wear::sensor::SensorType::VirtualSphericalJointKinSensor),
+    wearable::IWear::castVectorOfSensorPtr(
+        wearable::IWear::getSensors(wearable::sensor::SensorType::VirtualSphericalJointKinSensor),
         virtualSphericalJointKinSensors);
     return virtualSphericalJointKinSensors;
 }

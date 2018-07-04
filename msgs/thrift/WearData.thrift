@@ -1,4 +1,4 @@
-namespace yarp wear.msg
+namespace yarp wearable.msg
 
 // ======================
 // Possible sensor states
