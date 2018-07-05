@@ -23,19 +23,17 @@ public:
     virtual ~IVirtualLinkKinSensor() = 0;
 
     // 6D quantities
-    virtual bool getLinkAcceleration(wearable::Vector3& linear,
-                                     wearable::Vector3& angular) const = 0;
-    virtual bool getLinkPose(wearable::Vector3& position,
-                             wearable::Quaternion& orientation) const = 0;
-    virtual bool getLinkVelocity(wearable::Vector3& linear, wearable::Vector3& angular) const = 0;
+    virtual bool getLinkAcceleration(Vector3& linear, Vector3& angular) const = 0;
+    virtual bool getLinkPose(Vector3& position, Quaternion& orientation) const = 0;
+    virtual bool getLinkVelocity(Vector3& linear, Vector3& angular) const = 0;
 
     // 3D quantities
-    virtual bool getLinkAngularAcceleration(wearable::Vector3& linear) const = 0;
-    virtual bool getLinkAngularVelocity(wearable::Vector3& linear) const = 0;
-    virtual bool getLinkLinearAcceleration(wearable::Vector3& linear) const = 0;
-    virtual bool getLinkLinearVelocity(wearable::Vector3& linear) const = 0;
-    virtual bool getLinkOrientation(wearable::Quaternion& orientation) const = 0;
-    virtual bool getLinkPosition(wearable::Vector3& position) const = 0;
+    virtual bool getLinkAngularAcceleration(Vector3& angularAcceleration) const = 0;
+    virtual bool getLinkAngularVelocity(Vector3& angularVelocity) const = 0;
+    virtual bool getLinkLinearAcceleration(Vector3& linearAcceleration) const = 0;
+    virtual bool getLinkLinearVelocity(Vector3& linearVelocity) const = 0;
+    virtual bool getLinkOrientation(Quaternion& orientation) const = 0;
+    virtual bool getLinkPosition(Vector3& position) const = 0;
 };
 
 #endif // WEARABLE_IVIRTUAL_LINK_KIN_SENSOR_H

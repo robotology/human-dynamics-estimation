@@ -24,9 +24,9 @@ public:
     virtual ~IVirtualSphericalJointKinSensor() = 0;
 
     // CONVENTION: RPY are defined as rotationa about X-Y-Z wrt fix frame
-    virtual bool getJointAnglesAsRPY(wearable::Vector3 angleAsRPY) const = 0;
-    virtual bool getJointVelocities(wearable::Vector3 velocities) const = 0;
-    virtual bool getJointAccelerations(wearable::Vector3 accelerations) const = 0;
+    virtual bool getJointAnglesAsRPY(Vector3 angleAsRPY) const = 0;
+    virtual bool getJointVelocities(Vector3 velocities) const = 0;
+    virtual bool getJointAccelerations(Vector3 accelerations) const = 0;
 };
 
 #endif // WEARABLE_IVIRTUAL_SPHERICAL_JOINT_KIN_SENSOR_H

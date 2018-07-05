@@ -22,7 +22,7 @@ class wearable::sensor::IPositionSensor : public wearable::sensor::ISensor
 public:
     virtual ~IPositionSensor() = 0;
 
-    virtual bool getPosition(wearable::Vector3& position) const = 0;
+    virtual bool getPosition(Vector3& position) const = 0;
 };
 
 #endif // WEARABLE_IPOSITION_SENSOR_H

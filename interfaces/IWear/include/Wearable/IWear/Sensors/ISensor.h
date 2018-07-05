@@ -63,9 +63,9 @@ public:
     virtual ~ISensor() = 0;
 
     // TODO: timestamp? sequence number?
-    virtual wearable::sensor::SensorName getSensorName() const = 0;
-    virtual wearable::sensor::SensorStatus getSensorStatus() const = 0;
-    virtual wearable::sensor::SensorType getSensorType() const = 0;
+    virtual SensorName getSensorName() const = 0;
+    virtual SensorStatus getSensorStatus() const = 0;
+    virtual SensorType getSensorType() const = 0;
 };
 
 #endif // WEARABLE_ISENSOR_H

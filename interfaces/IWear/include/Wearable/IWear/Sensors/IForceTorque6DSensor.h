@@ -22,13 +22,12 @@ class wearable::sensor::IForceTorque6DSensor : public wearable::sensor::ISensor
 public:
     virtual ~IForceTorque6DSensor() = 0;
 
-    virtual bool gerForceTorque6D(wearable::Vector3& force3D,
-                                  wearable::Vector3& torque3D) const = 0;
+    virtual bool gerForceTorque6D(Vector3& force3D, Vector3& torque3D) const = 0;
 
     // TODO: inline
-    virtual bool getForceTorque6D(wearable::Vector6& forceTorque6D) const = 0;
-    virtual bool getForceTorque3DForce(wearable::Vector3& force3D) const = 0;
-    virtual bool getForceTorque3DTorque(wearable::Vector3& torque3D) const = 0;
+    virtual bool getForceTorque6D(Vector6& forceTorque6D) const = 0;
+    virtual bool getForceTorque3DForce(Vector3& force3D) const = 0;
+    virtual bool getForceTorque3DTorque(Vector3& torque3D) const = 0;
 };
 
 #endif // WEARABLE_IFORCE_TORQUE_6D_SENSOR_H

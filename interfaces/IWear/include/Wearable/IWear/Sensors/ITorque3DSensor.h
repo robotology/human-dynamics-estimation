@@ -22,7 +22,7 @@ class wearable::sensor::ITorque3DSensor : public wearable::sensor::ISensor
 public:
     virtual ~ITorque3DSensor() = 0;
 
-    virtual bool getTorque3D(wearable::Vector3& torque) const = 0;
+    virtual bool getTorque3D(Vector3& torque) const = 0;
 };
 
 #endif // WEARABLE_ITORQUE_3D_SENSOR_H

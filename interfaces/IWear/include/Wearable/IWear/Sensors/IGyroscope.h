@@ -22,7 +22,7 @@ class wearable::sensor::IGyroscope : public wearable::sensor::ISensor
 public:
     virtual ~IGyroscope() = 0;
 
-    virtual bool getAngularRate(wearable::Vector3& angularRate) const = 0;
+    virtual bool getAngularRate(Vector3& angularRate) const = 0;
 };
 
 #endif // WEARABLE_IGYROSCOPE_H

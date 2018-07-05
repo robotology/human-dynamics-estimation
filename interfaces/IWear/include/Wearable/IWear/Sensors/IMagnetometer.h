@@ -22,7 +22,7 @@ class wearable::sensor::IMagnetometer : public wearable::sensor::ISensor
 public:
     virtual ~IMagnetometer() = 0;
 
-    virtual bool getMagneticField(wearable::Vector3& magneticField) const = 0;
+    virtual bool getMagneticField(Vector3& magneticField) const = 0;
 };
 
 #endif // WEARABLE_IMAGNETOMETER_H

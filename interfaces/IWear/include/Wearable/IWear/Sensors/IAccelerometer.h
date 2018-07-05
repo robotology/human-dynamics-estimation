@@ -22,7 +22,7 @@ class wearable::sensor::IAccelerometer : public wearable::sensor::ISensor
 public:
     virtual ~IAccelerometer() = 0;
 
-    virtual bool getLinearAcceleration(wearable::Vector3& linearAcceleration) const = 0;
+    virtual bool getLinearAcceleration(Vector3& linearAcceleration) const = 0;
 };
 
 #endif // WEARABLE_IACCELEROMETER_H

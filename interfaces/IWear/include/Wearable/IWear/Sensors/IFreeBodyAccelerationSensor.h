@@ -22,7 +22,7 @@ class wearable::sensor::IFreeBodyAccelerationSensor : public wearable::sensor::I
 public:
     virtual ~IFreeBodyAccelerationSensor() = 0;
 
-    virtual bool getFreeBodyAcceleration(wearable::Vector3& freeBodyAcceleration) const = 0;
+    virtual bool getFreeBodyAcceleration(Vector3& freeBodyAcceleration) const = 0;
 };
 
 #endif // WEARABLE_IFREE_BODY_ACCELERATION_SENSOR_H

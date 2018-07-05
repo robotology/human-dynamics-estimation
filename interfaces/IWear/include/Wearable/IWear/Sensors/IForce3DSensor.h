@@ -22,7 +22,7 @@ class wearable::sensor::IForce3DSensor : public wearable::sensor::ISensor
 public:
     virtual ~IForce3DSensor() = 0;
 
-    virtual bool getForce3D(wearable::Vector3& force) const = 0;
+    virtual bool getForce3D(Vector3& force) const = 0;
 };
 
 #endif // WEARABLE_IFORCE_3D_SENSOR_H

@@ -72,117 +72,106 @@ public:
     // GENERIC METHODS
     // ===============
 
-    virtual wearable::WearStatus getStatus() const = 0;
-    virtual wearable::TimeStamp getTimeStamp() const = 0;
+    virtual WearStatus getStatus() const = 0;
+    virtual TimeStamp getTimeStamp() const = 0;
 
-    virtual wearable::SensorPtr<const wearable::sensor::ISensor>
-    getSensor(const wearable::sensor::SensorName name) const = 0;
-    virtual wearable::VectorOfSensorPtr<const wearable::sensor::ISensor>
-    getSensors(const wearable::sensor::SensorType type) const = 0;
+    virtual SensorPtr<const sensor::ISensor> getSensor(const sensor::SensorName name) const = 0;
+    virtual VectorOfSensorPtr<const sensor::ISensor>
+    getSensors(const sensor::SensorType type) const = 0;
 
     // ==============
     // SINGLE SENSORS
     // ==============
 
-    virtual wearable::SensorPtr<const wearable::sensor::IAccelerometer>
-    getAccelerometer(const wearable::sensor::SensorName /*name*/) const = 0;
+    virtual SensorPtr<const sensor::IAccelerometer>
+    getAccelerometer(const sensor::SensorName /*name*/) const = 0;
 
-    virtual wearable::SensorPtr<const wearable::sensor::IEmgSensor>
-    getEmgSensor(const wearable::sensor::SensorName /*name*/) const = 0;
+    virtual SensorPtr<const sensor::IEmgSensor>
+    getEmgSensor(const sensor::SensorName /*name*/) const = 0;
 
-    virtual wearable::SensorPtr<const wearable::sensor::IForce3DSensor>
-    getForce3DSensor(const wearable::sensor::SensorName /*name*/) const = 0;
+    virtual SensorPtr<const sensor::IForce3DSensor>
+    getForce3DSensor(const sensor::SensorName /*name*/) const = 0;
 
-    virtual wearable::SensorPtr<const wearable::sensor::IForceTorque6DSensor>
-    getForceTorque6DSensor(const wearable::sensor::SensorName /*name*/) const = 0;
+    virtual SensorPtr<const sensor::IForceTorque6DSensor>
+    getForceTorque6DSensor(const sensor::SensorName /*name*/) const = 0;
 
-    virtual wearable::SensorPtr<const wearable::sensor::IFreeBodyAccelerationSensor>
-    getFreeBodyAccelerationSensor(const wearable::sensor::SensorName /*name*/) const = 0;
+    virtual SensorPtr<const sensor::IFreeBodyAccelerationSensor>
+    getFreeBodyAccelerationSensor(const sensor::SensorName /*name*/) const = 0;
 
-    virtual wearable::SensorPtr<const wearable::sensor::IGyroscope>
-    getGyroscope(const wearable::sensor::SensorName /*name*/) const = 0;
+    virtual SensorPtr<const sensor::IGyroscope>
+    getGyroscope(const sensor::SensorName /*name*/) const = 0;
 
-    virtual wearable::SensorPtr<const wearable::sensor::IMagnetometer>
-    getMagnetometer(const wearable::sensor::SensorName /*name*/) const = 0;
+    virtual SensorPtr<const sensor::IMagnetometer>
+    getMagnetometer(const sensor::SensorName /*name*/) const = 0;
 
-    virtual wearable::SensorPtr<const wearable::sensor::IOrientationSensor>
-    getOrientationSensor(const wearable::sensor::SensorName /*name*/) const = 0;
+    virtual SensorPtr<const sensor::IOrientationSensor>
+    getOrientationSensor(const sensor::SensorName /*name*/) const = 0;
 
-    virtual wearable::SensorPtr<const wearable::sensor::IPoseSensor>
-    getPoseSensor(const wearable::sensor::SensorName /*name*/) const = 0;
+    virtual SensorPtr<const sensor::IPoseSensor>
+    getPoseSensor(const sensor::SensorName /*name*/) const = 0;
 
-    virtual wearable::SensorPtr<const wearable::sensor::IPositionSensor>
-    getPositionSensor(const wearable::sensor::SensorName /*name*/) const = 0;
+    virtual SensorPtr<const sensor::IPositionSensor>
+    getPositionSensor(const sensor::SensorName /*name*/) const = 0;
 
-    virtual wearable::SensorPtr<const wearable::sensor::ISkinSensor>
-    getSkinSensor(const wearable::sensor::SensorName /*name*/) const = 0;
+    virtual SensorPtr<const sensor::ISkinSensor>
+    getSkinSensor(const sensor::SensorName /*name*/) const = 0;
 
-    virtual wearable::SensorPtr<const wearable::sensor::ITemperatureSensor>
-    getTemperatureSensor(const wearable::sensor::SensorName /*name*/) const = 0;
+    virtual SensorPtr<const sensor::ITemperatureSensor>
+    getTemperatureSensor(const sensor::SensorName /*name*/) const = 0;
 
-    virtual wearable::SensorPtr<const wearable::sensor::ITorque3DSensor>
-    getTorque3DSensor(const wearable::sensor::SensorName /*name*/) const = 0;
+    virtual SensorPtr<const sensor::ITorque3DSensor>
+    getTorque3DSensor(const sensor::SensorName /*name*/) const = 0;
 
-    virtual wearable::SensorPtr<const wearable::sensor::IVirtualLinkKinSensor>
-    getVirtualLinkKinSensor(const wearable::sensor::SensorName /*name*/) const = 0;
+    virtual SensorPtr<const sensor::IVirtualLinkKinSensor>
+    getVirtualLinkKinSensor(const sensor::SensorName /*name*/) const = 0;
 
-    virtual wearable::SensorPtr<const wearable::sensor::IVirtualSphericalJointKinSensor>
-    getVirtualSphericalJointKinSensor(const wearable::sensor::SensorName /*name*/) const = 0;
+    virtual SensorPtr<const sensor::IVirtualSphericalJointKinSensor>
+    getVirtualSphericalJointKinSensor(const sensor::SensorName /*name*/) const = 0;
 
     // =================
     // GENERIC UTILITIES
     // =================
 
-    inline wearable::VectorOfSensorPtr<const wearable::sensor::ISensor> getAllSensors() const;
+    inline VectorOfSensorPtr<const sensor::ISensor> getAllSensors() const;
 
-    inline wearable::VectorOfSensorNames
-    getSensorNames(const wearable::sensor::SensorType type) const;
+    inline VectorOfSensorNames getSensorNames(const sensor::SensorType type) const;
 
-    inline wearable::VectorOfSensorNames getAllSensorNames() const;
+    inline VectorOfSensorNames getAllSensorNames() const;
 
     // ================
     // SENSOR UTILITIES
     // ================
 
-    inline wearable::VectorOfSensorPtr<const wearable::sensor::IAccelerometer>
-    getAccelerometers() const;
+    inline VectorOfSensorPtr<const sensor::IAccelerometer> getAccelerometers() const;
 
-    inline wearable::VectorOfSensorPtr<const wearable::sensor::IEmgSensor> getEmgSensors() const;
+    inline VectorOfSensorPtr<const sensor::IEmgSensor> getEmgSensors() const;
 
-    inline wearable::VectorOfSensorPtr<const wearable::sensor::IForce3DSensor>
-    getForce3DSensors() const;
+    inline VectorOfSensorPtr<const sensor::IForce3DSensor> getForce3DSensors() const;
 
-    inline wearable::VectorOfSensorPtr<const wearable::sensor::IForceTorque6DSensor>
-    getForceTorque6DSensors() const;
+    inline VectorOfSensorPtr<const sensor::IForceTorque6DSensor> getForceTorque6DSensors() const;
 
-    inline wearable::VectorOfSensorPtr<const wearable::sensor::IFreeBodyAccelerationSensor>
+    inline VectorOfSensorPtr<const sensor::IFreeBodyAccelerationSensor>
     getFreeBodyAccelerationSensors() const;
 
-    inline wearable::VectorOfSensorPtr<const wearable::sensor::IGyroscope> getGyroscopes() const;
+    inline VectorOfSensorPtr<const sensor::IGyroscope> getGyroscopes() const;
 
-    inline wearable::VectorOfSensorPtr<const wearable::sensor::IMagnetometer>
-    getMagnetometers() const;
+    inline VectorOfSensorPtr<const sensor::IMagnetometer> getMagnetometers() const;
 
-    inline wearable::VectorOfSensorPtr<const wearable::sensor::IOrientationSensor>
-    getOrientationSensors() const;
+    inline VectorOfSensorPtr<const sensor::IOrientationSensor> getOrientationSensors() const;
 
-    inline wearable::VectorOfSensorPtr<const wearable::sensor::IPoseSensor> getPoseSensors() const;
+    inline VectorOfSensorPtr<const sensor::IPoseSensor> getPoseSensors() const;
 
-    inline wearable::VectorOfSensorPtr<const wearable::sensor::IPositionSensor>
-    getPositionSensors() const;
+    inline VectorOfSensorPtr<const sensor::IPositionSensor> getPositionSensors() const;
 
-    inline wearable::VectorOfSensorPtr<const wearable::sensor::ISkinSensor> getSkinSensors() const;
+    inline VectorOfSensorPtr<const sensor::ISkinSensor> getSkinSensors() const;
 
-    inline wearable::VectorOfSensorPtr<const wearable::sensor::ITemperatureSensor>
-    getTemperatureSensors() const;
+    inline VectorOfSensorPtr<const sensor::ITemperatureSensor> getTemperatureSensors() const;
 
-    inline wearable::VectorOfSensorPtr<const wearable::sensor::ITorque3DSensor>
-    get3DTorqueSensors() const;
+    inline VectorOfSensorPtr<const sensor::ITorque3DSensor> get3DTorqueSensors() const;
 
-    inline wearable::VectorOfSensorPtr<const wearable::sensor::IVirtualLinkKinSensor>
-    getVirtualLinkKinSensors() const;
+    inline VectorOfSensorPtr<const sensor::IVirtualLinkKinSensor> getVirtualLinkKinSensors() const;
 
-    inline wearable::VectorOfSensorPtr<const wearable::sensor::IVirtualSphericalJointKinSensor>
+    inline VectorOfSensorPtr<const sensor::IVirtualSphericalJointKinSensor>
     getVirtualSphericalJointKinSensors() const;
 };
 
@@ -191,10 +180,10 @@ public:
 // ============================================
 
 template <typename S>
-wearable::VectorOfSensorPtr<const S> wearable::IWear::castVectorOfSensorPtr(
-    const wearable::VectorOfSensorPtr<const wearable::sensor::ISensor> iSensors)
+wearable::VectorOfSensorPtr<const S>
+wearable::IWear::castVectorOfSensorPtr(const VectorOfSensorPtr<const sensor::ISensor> iSensors)
 {
-    wearable::VectorOfSensorPtr<const S> sensors;
+    VectorOfSensorPtr<const S> sensors;
     sensors.reserve(iSensors.size());
 
     for (const auto& s : iSensors) {
@@ -237,9 +226,9 @@ wearable::IWear::getAllSensors() const
 }
 
 inline wearable::VectorOfSensorNames
-wearable::IWear::getSensorNames(const wearable::sensor::SensorType type) const
+wearable::IWear::getSensorNames(const sensor::SensorType type) const
 {
-    const wearable::VectorOfSensorPtr<const wearable::sensor::ISensor> sensors = getSensors(type);
+    const wearable::VectorOfSensorPtr<const sensor::ISensor> sensors = getSensors(type);
 
     VectorOfSensorNames sensorNames;
     sensorNames.reserve(sensors.size());
