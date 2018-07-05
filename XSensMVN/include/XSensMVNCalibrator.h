@@ -38,6 +38,10 @@ private:
     // Minimum quality required for applying calibration
     xsensmvn::CalibrationQuality m_minimumAccaptableQuality;
 
+    // Last applied calibration infos
+    xsensmvn::CalibrationQuality m_achievedCalibrationQuality;
+    std::string m_usedCalibrationType;
+
     // Atomic variable for internal state machine
     std::atomic_bool m_calibrationAborted;
     std::atomic_bool m_calibrationInProgress;
@@ -71,10 +75,14 @@ public:
     // Body-dimensions set/get
     bool setBodyDimensions(const std::map<std::string, double>& bodyDimensions);
     bool getBodyDimensions(std::map<std::string, double>& dimensions) const;
+    bool getBodyDimension(const std::string bodyName, double& dim);
 
     // Minimum calibration quality considered to be satisfactory set/get
     bool setMinimumAcceptableCalibrationQuality(const xsensmvn::CalibrationQuality quality);
     xsensmvn::CalibrationQuality& getMinimumAcceptableCalibrationQuality();
+
+    // Last calibration info get
+    void getLastCalibrationInfo(std::string& type, CalibrationQuality quality);
 
     // Status get
     bool isCalibrationInProgress();

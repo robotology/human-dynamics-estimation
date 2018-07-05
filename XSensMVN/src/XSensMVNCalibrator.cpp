@@ -47,6 +47,8 @@ namespace xsensmvn {
                                            const xsensmvn::CalibrationQuality minAcceptableQuality)
         : m_suitsConnector(connector)
         , m_minimumAccaptableQuality(minAcceptableQuality)
+        , m_achievedCalibrationQuality(CalibrationQuality::UNKNOWN)
+        , m_usedCalibrationType("")
         , m_calibrationAborted(false)
         , m_calibrationInProgress(false)
         , m_calibrationProcessed(false)
@@ -57,6 +59,7 @@ namespace xsensmvn {
 
     XSensMVNCalibrator::~XSensMVNCalibrator()
     {
+        cleanup();
         m_suitsConnector.removeCallbackHandler(static_cast<XmeCallback*>(this));
     }
 
@@ -64,9 +67,21 @@ namespace xsensmvn {
      *  Public Functions *
      * ----------------- */
 
+    void XSensMVNCalibrator::getLastCalibrationInfo(std::string& type, CalibrationQuality quality)
+    {
+        type = m_usedCalibrationType;
+        quality = m_achievedCalibrationQuality;
+    }
+
     // Set user-specific body dimensions and apply them to the MVN engine
     bool XSensMVNCalibrator::setBodyDimensions(const std::map<std::string, double>& bodyDimensions)
     {
+        // Check if the suit is connected
+        if (!m_suitsConnector.status().isConnected()) {
+            xsError << "Device not connected. Unable to set body dimensions." << std::endl;
+            return false;
+        }
+
         // If a calibration is in progress it is not possible to set the body dimensions
         if (!m_operationCompleted) {
             xsError << "Calibration in progress. Unable to set body dimensions." << std::endl;
@@ -126,6 +141,19 @@ namespace xsensmvn {
         return true;
     }
 
+    bool XSensMVNCalibrator::getBodyDimension(const std::string bodyName, double& dim)
+    {
+        std::map<std::string, double> dimensions;
+        getBodyDimensions(dimensions);
+        const auto it = dimensions.find(bodyName);
+        if (it != dimensions.end()) {
+            xsWarning << "Impossible to find " << bodyName;
+            return false;
+        }
+        dim = it->second;
+        return true;
+    }
+
     // Calibrate MVN engine following the specified calibrationType routine
     bool XSensMVNCalibrator::calibrateWithType(std::string calibrationType)
     {
@@ -134,6 +162,8 @@ namespace xsensmvn {
         // Check if a previous calibration of the same type is already in use, if so, discard it.
         if (m_suitsConnector.isCalibrationPerformed(calibrationType)) {
             xsInfo << "Discarding previous " << calibrationType << " calibration";
+            m_usedCalibrationType = "";
+            m_achievedCalibrationQuality = CalibrationQuality::UNKNOWN;
             m_operationCompleted = false;
             m_suitsConnector.clearCalibration(calibrationType);
         }
@@ -263,6 +293,9 @@ namespace xsensmvn {
             xsInfo << "Done! Calibration Completed.";
         }
 
+        m_usedCalibrationType = calibrationType;
+        m_achievedCalibrationQuality = CalibrationQualitiesMap.at(quality);
+
         // Calibration completed
         m_calibrationInProgress = false;
         return true;
@@ -320,6 +353,8 @@ namespace xsensmvn {
     // Reset internal state machine atomic variables
     void XSensMVNCalibrator::cleanup()
     {
+        m_usedCalibrationType = "";
+        m_achievedCalibrationQuality = CalibrationQuality::UNKNOWN;
         m_calibrationProcessed = m_operationCompleted = m_calibrationInProgress = false;
         m_calibrationAborted = false;
     }
