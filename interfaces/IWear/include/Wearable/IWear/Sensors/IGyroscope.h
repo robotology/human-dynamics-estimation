@@ -6,23 +6,23 @@
  * GNU Lesser General Public License v2.1 or any later version.
  */
 
-#ifndef WEAR_ISKINSENSOR
-#define WEAR_ISKINSENSOR
+#ifndef WEAR_IGYROSCOPE
+#define WEAR_IGYROSCOPE
 
-#include "IWear/Sensors/ISensor.h"
+#include "Wearable/IWear/Sensors/ISensor.h"
 
 namespace wearable {
     namespace sensor {
-        class ISkinSensor;
+        class IGyroscope;
     }
 } // namespace wearable
 
-class wearable::sensor::ISkinSensor : public wearable::sensor::ISensor
+class wearable::sensor::IGyroscope : public wearable::sensor::ISensor
 {
 public:
-    virtual ~ISkinSensor() = 0;
+    virtual ~IGyroscope() = 0;
 
-    // TODO: to be implemented
+    virtual bool getAngularRate(wearable::Vector3& angularRate) const = 0;
 };
 
-#endif // WEAR_ISKINSENSOR
+#endif // WEAR_IGYROSCOPE

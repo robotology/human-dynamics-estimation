@@ -9,7 +9,7 @@
 #ifndef WEAR_IMAGNETOMETER
 #define WEAR_IMAGNETOMETER
 
-#include "IWear/Sensors/ISensor.h"
+#include "Wearable/IWear/Sensors/ISensor.h"
 
 namespace wearable {
     namespace sensor {

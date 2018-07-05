@@ -9,7 +9,7 @@
 #ifndef WEAR_IFORCETORQUE6DSENSOR
 #define WEAR_IFORCETORQUE6DSENSOR
 
-#include "IWear/Sensors/ISensor.h"
+#include "Wearable/IWear/Sensors/ISensor.h"
 
 namespace wearable {
     namespace sensor {
@@ -22,7 +22,8 @@ class wearable::sensor::IForceTorque6DSensor : public wearable::sensor::ISensor
 public:
     virtual ~IForceTorque6DSensor() = 0;
 
-    virtual bool gerForceTorque6D(wearable::Vector3& force3D, wearable::Vector3& torque3D) const = 0;
+    virtual bool gerForceTorque6D(wearable::Vector3& force3D,
+                                  wearable::Vector3& torque3D) const = 0;
     virtual bool getForceTorque6D(wearable::Vector6& forceTorque6D) const = 0;
     virtual bool getForceTorque3DForce(wearable::Vector3& force3D) const = 0;
     virtual bool getForceTorque3DTorque(wearable::Vector3& torque3D) const = 0;

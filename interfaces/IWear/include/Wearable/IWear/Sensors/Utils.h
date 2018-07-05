@@ -9,19 +9,18 @@
 #ifndef WEAR_UTILS
 #define WEAR_UTILS
 
-#include "IWear/Sensors/ISensor.h"
-
+#include "Wearable/IWear/Sensors/ISensor.h"
 #include <cmath>
 
 namespace wearable {
     namespace utils {
-        wearable::Quaternion normalizeQuaternion(const wearable::Quaternion& quat);
-        wearable::Vector3 quaternionToRPY(const wearable::Quaternion& quat);
-        wearable::Matrix3 quaternionToRotationMatrix(const wearable::Quaternion& quat);
-        wearable::Quaternion rotationMatrixToQuaternion(const wearable::Matrix3& rotMat);
-        wearable::Vector3 rotationMatrixToRPY(const wearable::Matrix3& rotMat);
-        wearable::Quaternion RPYToQuaternion(const wearable::Vector3& rpy);
-        wearable::Matrix3 RPYToRotationMatrix(const wearable::Vector3& rpy);
+        inline wearable::Quaternion normalizeQuaternion(const wearable::Quaternion& quat);
+        inline wearable::Vector3 quaternionToRPY(const wearable::Quaternion& quat);
+        inline wearable::Matrix3 quaternionToRotationMatrix(const wearable::Quaternion& quat);
+        inline wearable::Quaternion rotationMatrixToQuaternion(const wearable::Matrix3& rotMat);
+        inline wearable::Vector3 rotationMatrixToRPY(const wearable::Matrix3& rotMat);
+        inline wearable::Quaternion RPYToQuaternion(const wearable::Vector3& rpy);
+        inline wearable::Matrix3 RPYToRotationMatrix(const wearable::Vector3& rpy);
     } // namespace utils
 } // namespace wearable
 
@@ -29,7 +28,7 @@ namespace wearable {
 //    namespace utils {
 
 //        wearable::Quaternion normalizeQuaternion(const wearable::Quaternion& quat)
-wearable::Quaternion wearable::utils::normalizeQuaternion(const wearable::Quaternion& quat)
+inline wearable::Quaternion wearable::utils::normalizeQuaternion(const wearable::Quaternion& quat)
 {
     double norm =
         std::sqrt(quat[0] * quat[0] + quat[1] * quat[1] + quat[2] * quat[2] + quat[3] * quat[3]);
@@ -46,7 +45,7 @@ wearable::Quaternion wearable::utils::normalizeQuaternion(const wearable::Quater
 }
 
 //        wearable::Vector3 quaternionToRPY(const wearable::Quaternion& quat)
-wearable::Vector3 wearable::utils::quaternionToRPY(const wearable::Quaternion& quat)
+inline wearable::Vector3 wearable::utils::quaternionToRPY(const wearable::Quaternion& quat)
 {
     wearable::Quaternion q = wearable::utils::normalizeQuaternion(quat);
 
@@ -80,7 +79,7 @@ wearable::Vector3 wearable::utils::quaternionToRPY(const wearable::Quaternion& q
 };
 
 //        wearable::Matrix3 quaternionToRotationMatrix(const wearable::Quaternion& quat)
-wearable::Matrix3 wearable::utils::quaternionToRotationMatrix(const wearable::Quaternion& quat)
+inline wearable::Matrix3 wearable::utils::quaternionToRotationMatrix(const wearable::Quaternion& quat)
 {
     wearable::Quaternion q = wearable::utils::normalizeQuaternion(quat);
 
@@ -110,7 +109,7 @@ wearable::Matrix3 wearable::utils::quaternionToRotationMatrix(const wearable::Qu
 };
 
 //        wearable::Quaternion rotationMatrixToQuaternion(const wearable::Matrix3& rotMat)
-wearable::Quaternion wearable::utils::rotationMatrixToQuaternion(const wearable::Matrix3& rotMat)
+inline wearable::Quaternion wearable::utils::rotationMatrixToQuaternion(const wearable::Matrix3& rotMat)
 {
 
     // Taken from "Contributions to the automatic control of aerial vehicles"
@@ -195,7 +194,7 @@ wearable::Quaternion wearable::utils::rotationMatrixToQuaternion(const wearable:
 };
 
 //        wearable::Vector3 rotationMatrixToRPY(const wearable::Matrix3& rotMat)
-wearable::Vector3 wearable::utils::rotationMatrixToRPY(const wearable::Matrix3& rotMat)
+inline wearable::Vector3 wearable::utils::rotationMatrixToRPY(const wearable::Matrix3& rotMat)
 {
 
     wearable::Vector3 rpy;
@@ -223,7 +222,7 @@ wearable::Vector3 wearable::utils::rotationMatrixToRPY(const wearable::Matrix3& 
 };
 
 //        wearable::Quaternion RPYToQuaternion(const wearable::Vector3& rpy)
-wearable::Quaternion wearable::utils::RPYToQuaternion(const wearable::Vector3& rpy)
+inline wearable::Quaternion wearable::utils::RPYToQuaternion(const wearable::Vector3& rpy)
 {
     double cr = std::cos(rpy[0] * 0.5);
     double sr = std::sin(rpy[0] * 0.5);
@@ -244,7 +243,7 @@ wearable::Quaternion wearable::utils::RPYToQuaternion(const wearable::Vector3& r
 
 //        wearable::Matrix3 RPYToRotationMatrix(const wearable::Vector3& rpy)
 
-wearable::Matrix3 wearable::utils::RPYToRotationMatrix(const wearable::Vector3& rpy)
+inline wearable::Matrix3 wearable::utils::RPYToRotationMatrix(const wearable::Vector3& rpy)
 {
     double cr = std::cos(rpy[0]);
     double sr = std::sin(rpy[0]);

@@ -9,7 +9,7 @@
 #ifndef WEAR_IVIRTUALSPHERICALJOINTKINSENSOR
 #define WEAR_IVIRTUALSPHERICALJOINTKINSENSOR
 
-#include "IWear/Sensors/ISensor.h"
+#include "Wearable/IWear/Sensors/ISensor.h"
 
 namespace wearable {
     namespace sensor {

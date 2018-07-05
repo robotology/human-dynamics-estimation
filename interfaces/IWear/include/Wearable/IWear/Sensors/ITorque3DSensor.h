@@ -9,7 +9,7 @@
 #ifndef WEAR_ITORQUE3DSENSOR
 #define WEAR_ITORQUE3DSENSOR
 
-#include "IWear/Sensors/ISensor.h"
+#include "Wearable/IWear/Sensors/ISensor.h"
 
 namespace wearable {
     namespace sensor {

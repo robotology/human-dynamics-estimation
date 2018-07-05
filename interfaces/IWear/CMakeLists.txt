@@ -7,14 +7,20 @@ project(IWear LANGUAGES CXX VERSION 0.1)
 
 include(GNUInstallDirs)
 
+# ===============
+# IWEAR INTERFACE
+# ===============
+
 # Group files with the correct path for the target_sources command
-file(GLOB_RECURSE IWEAR_HEADERS_BUILD *.h)
+file(GLOB_RECURSE IWEAR_HEADERS_BUILD include/*.h)
 file(GLOB_RECURSE IWEAR_HEADERS_INSTALL_TMP
-    RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/../
+    RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/include
     *.h)
-foreach(HDR ${IWEAR_HEADERS_INSTALL_TMP})
-    list(APPEND IWEAR_HEADERS_INSTALL "${CMAKE_INSTALL_INCLUDEDIR}/${HDR}")
-endforeach()
+
+set(IWEAR_HEADERS_INSTALL ${IWEAR_HEADERS_INSTALL_TMP})
+#foreach(HDR ${IWEAR_HEADERS_INSTALL_TMP})
+#    list(APPEND IWEAR_HEADERS_INSTALL "${CMAKE_INSTALL_INCLUDEDIR}/${HDR}")
+#endforeach()
 
 set(IWEAR_HEADERS
     $<BUILD_INTERFACE:${IWEAR_HEADERS_BUILD}>
@@ -22,8 +28,9 @@ set(IWEAR_HEADERS
 
 add_library(${PROJECT_NAME} INTERFACE)
 target_sources(${PROJECT_NAME} INTERFACE ${IWEAR_HEADERS})
+
 target_include_directories(${PROJECT_NAME} INTERFACE
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
 install(
@@ -38,10 +45,10 @@ endif()
 # Install all the directories preserving their structure
 install(
     FILES IWear.h
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/IWear)
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/Wearable)
 install(
     DIRECTORY Sensors
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/IWear)
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/Wearable)
 
 # Generate the PackageConfig.cmake file
 install_basic_package_files(IWear

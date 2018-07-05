@@ -9,7 +9,7 @@
 #ifndef WEAR_IFREEBODYACCELERATIONSENSOR
 #define WEAR_IFREEBODYACCELERATIONSENSOR
 
-#include "IWear/Sensors/ISensor.h"
+#include "Wearable/IWear/Sensors/ISensor.h"
 
 namespace wearable {
     namespace sensor {

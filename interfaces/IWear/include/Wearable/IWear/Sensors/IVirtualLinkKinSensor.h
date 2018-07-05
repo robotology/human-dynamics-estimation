@@ -9,7 +9,7 @@
 #ifndef WEAR_IVIRTUALLINKKINSENSOR
 #define WEAR_IVIRTUALLINKKINSENSOR
 
-#include "IWear/Sensors/ISensor.h"
+#include "Wearable/IWear/Sensors/ISensor.h"
 
 namespace wearable {
     namespace sensor {
@@ -23,8 +23,10 @@ public:
     virtual ~IVirtualLinkKinSensor() = 0;
 
     // 6D quantities
-    virtual bool getLinkAcceleration(wearable::Vector3& linear, wearable::Vector3& angular) const = 0;
-    virtual bool getLinkPose(wearable::Vector3& position, wearable::Quaternion& orientation) const = 0;
+    virtual bool getLinkAcceleration(wearable::Vector3& linear,
+                                     wearable::Vector3& angular) const = 0;
+    virtual bool getLinkPose(wearable::Vector3& position,
+                             wearable::Quaternion& orientation) const = 0;
     virtual bool getLinkVelocity(wearable::Vector3& linear, wearable::Vector3& angular) const = 0;
 
     // 3D quantities
