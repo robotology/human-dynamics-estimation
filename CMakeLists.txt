@@ -57,4 +57,5 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 yarp_configure_plugins_installation(wearable)
 
 add_subdirectory(msgs)
+add_subdirectory(devices)
 add_subdirectory(wrappers)
