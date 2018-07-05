@@ -33,13 +33,13 @@
 
 #ifndef xsWarning
 #define xsWarning          \
-    std::cerr << std::endl \
+    std::cout << std::endl \
               << printLogMessage("[WARNING]", __FILE__, std::to_string(__LINE__), __FUNCTION__)
 #endif
 
 #ifndef xsInfo
 #define xsInfo             \
-    std::cerr << std::endl \
+    std::cout << std::endl \
               << printLogMessage("[INFO]", __FILE__, std::to_string(__LINE__), __FUNCTION__)
 #endif
 
