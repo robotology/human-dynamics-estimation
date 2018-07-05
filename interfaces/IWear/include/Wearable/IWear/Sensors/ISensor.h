@@ -6,8 +6,8 @@
  * GNU Lesser General Public License v2.1 or any later version.
  */
 
-#ifndef WEAR_ISENSOR
-#define WEAR_ISENSOR
+#ifndef WEARABLE_ISENSOR_H
+#define WEARABLE_ISENSOR_H
 
 #include <array>
 #include <string>
@@ -68,4 +68,4 @@ public:
     virtual wearable::sensor::SensorType getSensorType() const = 0;
 };
 
-#endif // WEAR_ISENSOR
+#endif // WEARABLE_ISENSOR_H

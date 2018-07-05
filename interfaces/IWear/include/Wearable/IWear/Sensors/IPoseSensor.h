@@ -6,8 +6,8 @@
  * GNU Lesser General Public License v2.1 or any later version.
  */
 
-#ifndef WEAR_IPOSESENSOR
-#define WEAR_IPOSESENSOR
+#ifndef WEARABLE_IPOSE_SENSOR_H
+#define WEARABLE_IPOSE_SENSOR_H
 
 #include "Wearable/IWear/Sensors/ISensor.h"
 #include "Wearable/IWear/Sensors/Utils.h"
@@ -15,7 +15,7 @@
 namespace wearable {
     namespace sensor {
         class IPoseSensor;
-    }
+    } // namespace sensor
 } // namespace wearable
 
 class wearable::sensor::IPoseSensor : public wearable::sensor::ISensor
@@ -84,4 +84,4 @@ inline bool wearable::sensor::IPoseSensor::getPoseOrientationAsRPY(Vector3& orie
     return true;
 };
 
-#endif // WEAR_IPOSITIONSENSOR
+#endif // WEARABLE_IPOSE_SENSOR_H

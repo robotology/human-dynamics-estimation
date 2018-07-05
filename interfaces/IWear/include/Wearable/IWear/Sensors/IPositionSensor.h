@@ -6,15 +6,15 @@
  * GNU Lesser General Public License v2.1 or any later version.
  */
 
-#ifndef WEAR_IPOSITIONSENSOR
-#define WEAR_IPOSITIONSENSOR
+#ifndef WEARABLE_IPOSITION_SENSOR_H
+#define WEARABLE_IPOSITION_SENSOR_H
 
 #include "Wearable/IWear/Sensors/ISensor.h"
 
 namespace wearable {
     namespace sensor {
         class IPositionSensor;
-    }
+    } // namespace sensor
 } // namespace wearable
 
 class wearable::sensor::IPositionSensor : public wearable::sensor::ISensor
@@ -25,4 +25,4 @@ public:
     virtual bool getPosition(wearable::Vector3& position) const = 0;
 };
 
-#endif // WEAR_IPOSITIONSENSOR
+#endif // WEARABLE_IPOSITION_SENSOR_H

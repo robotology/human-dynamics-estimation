@@ -6,8 +6,8 @@
  * GNU Lesser General Public License v2.1 or any later version.
  */
 
-#ifndef WEAR_IORIENTATIONSENSOR
-#define WEAR_IORIENTATIONSENSOR
+#ifndef WEARABLE_IORIENTATION_SENSOR_H
+#define WEARABLE_IORIENTATION_SENSOR_H
 
 #include "Wearable/IWear/Sensors/ISensor.h"
 #include "Wearable/IWear/Sensors/Utils.h"
@@ -15,7 +15,7 @@
 namespace wearable {
     namespace sensor {
         class IOrientationSensor;
-    }
+    } // namespace sensor
 } // namespace wearable
 
 class wearable::sensor::IOrientationSensor : public wearable::sensor::ISensor
@@ -49,4 +49,4 @@ wearable::sensor::IOrientationSensor::getOrientationAsRotationMatrix(Matrix3& or
     return true;
 };
 
-#endif // WEAR_IORIENTATIONSENSOR
+#endif // WEARABLE_IORIENTATION_SENSOR_H

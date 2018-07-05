@@ -6,15 +6,15 @@
  * GNU Lesser General Public License v2.1 or any later version.
  */
 
-#ifndef WEAR_IFORCE3DSENSOR
-#define WEAR_IFORCE3DSENSOR
+#ifndef WEARABLE_IFORCE_3D_SENSOR_H
+#define WEARABLE_IFORCE_3D_SENSOR_H
 
 #include "Wearable/IWear/Sensors/ISensor.h"
 
 namespace wearable {
     namespace sensor {
         class IForce3DSensor;
-    }
+    } // namespace sensor
 } // namespace wearable
 
 class wearable::sensor::IForce3DSensor : public wearable::sensor::ISensor
@@ -25,4 +25,4 @@ public:
     virtual bool getForce3D(wearable::Vector3& force) const = 0;
 };
 
-#endif // WEAR_I3DFORCE3DSENSOR
+#endif // WEARABLE_IFORCE_3D_SENSOR_H

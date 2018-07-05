@@ -6,15 +6,15 @@
  * GNU Lesser General Public License v2.1 or any later version.
  */
 
-#ifndef WEAR_ITEMPERATURESENSOR
-#define WEAR_ITEMPERATURESENSOR
+#ifndef WEARABLE_ITEMPERATURE_SENSOR_H
+#define WEARABLE_ITEMPERATURE_SENSOR_H
 
 #include "Wearable/IWear/Sensors/ISensor.h"
 
 namespace wearable {
     namespace sensor {
         class ITemperatureSensor;
-    }
+    } // namespace sensor
 } // namespace wearable
 
 class wearable::sensor::ITemperatureSensor : public wearable::sensor::ISensor
@@ -25,4 +25,4 @@ public:
     virtual bool getTemperature(double& temperature) const = 0;
 };
 
-#endif // WEAR_ITEMPERATURESENSOR
+#endif // WEARABLE_ITEMPERATURE_SENSOR_H

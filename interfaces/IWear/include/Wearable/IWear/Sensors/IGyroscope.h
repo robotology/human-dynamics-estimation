@@ -6,15 +6,15 @@
  * GNU Lesser General Public License v2.1 or any later version.
  */
 
-#ifndef WEAR_IGYROSCOPE
-#define WEAR_IGYROSCOPE
+#ifndef WEARABLE_IGYROSCOPE_H
+#define WEARABLE_IGYROSCOPE_H
 
 #include "Wearable/IWear/Sensors/ISensor.h"
 
 namespace wearable {
     namespace sensor {
         class IGyroscope;
-    }
+    } // namespace sensor
 } // namespace wearable
 
 class wearable::sensor::IGyroscope : public wearable::sensor::ISensor
@@ -25,4 +25,4 @@ public:
     virtual bool getAngularRate(wearable::Vector3& angularRate) const = 0;
 };
 
-#endif // WEAR_IGYROSCOPE
+#endif // WEARABLE_IGYROSCOPE_H

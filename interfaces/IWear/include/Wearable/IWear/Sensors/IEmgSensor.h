@@ -6,15 +6,15 @@
  * GNU Lesser General Public License v2.1 or any later version.
  */
 
-#ifndef WEAR_IEMGSENSOR
-#define WEAR_IEMGSENSOR
+#ifndef WEARABLE_IEMG_SENSOR_H
+#define WEARABLE_IEMG_SENSOR_H
 
 #include "Wearable/IWear/Sensors/ISensor.h"
 
 namespace wearable {
     namespace sensor {
         class IEmgSensor;
-    }
+    } // namespace sensor
 } // namespace wearable
 
 class wearable::sensor::IEmgSensor : public wearable::sensor::ISensor
@@ -26,4 +26,4 @@ public:
     virtual bool getNormalizationValue(double& normalizationValue) const = 0;
 };
 
-#endif // WEAR_IEMGSENSOR
+#endif // WEARABLE_IEMG_SENSOR_H

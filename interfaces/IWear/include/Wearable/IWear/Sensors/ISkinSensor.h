@@ -6,15 +6,15 @@
  * GNU Lesser General Public License v2.1 or any later version.
  */
 
-#ifndef WEAR_ISKINSENSOR
-#define WEAR_ISKINSENSOR
+#ifndef WEARABLE_ISKIN_SENSOR_H
+#define WEARABLE_ISKIN_SENSOR_H
 
 #include "Wearable/IWear/Sensors/ISensor.h"
 
 namespace wearable {
     namespace sensor {
         class ISkinSensor;
-    }
+    } // namespace sensor
 } // namespace wearable
 
 class wearable::sensor::ISkinSensor : public wearable::sensor::ISensor
@@ -25,4 +25,4 @@ public:
     // TODO: to be implemented
 };
 
-#endif // WEAR_ISKINSENSOR
+#endif // WEARABLE_ISKIN_SENSOR_H

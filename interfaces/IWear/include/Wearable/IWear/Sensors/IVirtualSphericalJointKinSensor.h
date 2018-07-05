@@ -6,15 +6,15 @@
  * GNU Lesser General Public License v2.1 or any later version.
  */
 
-#ifndef WEAR_IVIRTUALSPHERICALJOINTKINSENSOR
-#define WEAR_IVIRTUALSPHERICALJOINTKINSENSOR
+#ifndef WEARABLE_IVIRTUAL_SPHERICAL_JOINT_KIN_SENSOR_H
+#define WEARABLE_IVIRTUAL_SPHERICAL_JOINT_KIN_SENSOR_H
 
 #include "Wearable/IWear/Sensors/ISensor.h"
 
 namespace wearable {
     namespace sensor {
         class IVirtualSphericalJointKinSensor;
-    }
+    } // namespace sensor
 } // namespace wearable
 
 class wearable::sensor::IVirtualSphericalJointKinSensor : public wearable::sensor::ISensor
@@ -29,4 +29,4 @@ public:
     virtual bool getJointAccelerations(wearable::Vector3 accelerations) const = 0;
 };
 
-#endif // WEAR_IVIRTUALSPHERICALJOINTKINSENSOR
+#endif // WEARABLE_IVIRTUAL_SPHERICAL_JOINT_KIN_SENSOR_H

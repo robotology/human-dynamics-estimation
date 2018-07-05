@@ -6,15 +6,15 @@
  * GNU Lesser General Public License v2.1 or any later version.
  */
 
-#ifndef WEAR_IMAGNETOMETER
-#define WEAR_IMAGNETOMETER
+#ifndef WEARABLE_IMAGNETOMETER_H
+#define WEARABLE_IMAGNETOMETER_H
 
 #include "Wearable/IWear/Sensors/ISensor.h"
 
 namespace wearable {
     namespace sensor {
         class IMagnetometer;
-    }
+    } // namespace sensor
 } // namespace wearable
 
 class wearable::sensor::IMagnetometer : public wearable::sensor::ISensor
@@ -25,4 +25,4 @@ public:
     virtual bool getMagneticField(wearable::Vector3& magneticField) const = 0;
 };
 
-#endif // WEAR_IMAGNETOMETER
+#endif // WEARABLE_IMAGNETOMETER_H

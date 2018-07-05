@@ -6,8 +6,8 @@
  * GNU Lesser General Public License v2.1 or any later version.
  */
 
-#ifndef WEAR_IWEAR
-#define WEAR_IWEAR
+#ifndef WEARABLE_IWEAR_H
+#define WEARABLE_IWEAR_H
 
 #include "Wearable/IWear/Sensors/ISensor.h"
 
@@ -365,4 +365,4 @@ wearable::IWear::getVirtualSphericalJointKinSensors() const
         getSensors(sensor::SensorType::VirtualSphericalJointKinSensor));
 }
 
-#endif // WEAR_IWEAR
+#endif // WEARABLE_IWEAR_H

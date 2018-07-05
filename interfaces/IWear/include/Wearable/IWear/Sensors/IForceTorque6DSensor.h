@@ -6,15 +6,15 @@
  * GNU Lesser General Public License v2.1 or any later version.
  */
 
-#ifndef WEAR_IFORCETORQUE6DSENSOR
-#define WEAR_IFORCETORQUE6DSENSOR
+#ifndef WEARABLE_IFORCE_TORQUE_6D_SENSOR_H
+#define WEARABLE_IFORCE_TORQUE_6D_SENSOR_H
 
 #include "Wearable/IWear/Sensors/ISensor.h"
 
 namespace wearable {
     namespace sensor {
         class IForceTorque6DSensor;
-    }
+    } // namespace sensor
 } // namespace wearable
 
 class wearable::sensor::IForceTorque6DSensor : public wearable::sensor::ISensor
@@ -31,4 +31,4 @@ public:
     virtual bool getForceTorque3DTorque(wearable::Vector3& torque3D) const = 0;
 };
 
-#endif // WEAR_IFORCETORQUE6DSENSOR
+#endif // WEARABLE_IFORCE_TORQUE_6D_SENSOR_H
