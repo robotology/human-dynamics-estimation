@@ -11,6 +11,8 @@
 
 #include "XSensCalibrationQualities.h"
 
+#include "IXsensMVNControl.h"
+
 #include <array>
 #include <map>
 #include <vector>
@@ -95,3 +97,81 @@ namespace xsensmvn {
     };
 
 } // namespace xsensmvn
+
+class xsensmvn::XSensMVNDriver : public IXsensMVNControl
+{
+private:
+    /* ---------- *
+     *  Variables *
+     * ---------- */
+
+    // Pointer to the driver implementation
+    std::unique_ptr<XSensMVNDriverImpl> m_pimpl;
+
+    // Struct to internally store (cache) a single data sample
+    DriverDataSample m_dataSample;
+
+public:
+    /* -------------------------- *
+     *  Construtors / Destructors *
+     * -------------------------- */
+
+    XSensMVNDriver() = delete;
+    XSensMVNDriver(const xsensmvn::DriverConfiguration conf);
+    ~XSensMVNDriver() override;
+
+    /* ---------- *
+     *  Functions *
+     * ---------- */
+
+    // Prevent copy
+    XSensMVNDriver(const XSensMVNDriver& other) = delete;
+    XSensMVNDriver& operator=(const XSensMVNDriver& other) = delete;
+
+    // Driver opening and closing
+    bool configureAndConnect();
+    bool terminate();
+
+    // Minimum calibration quality considered to be satisfactory set/get
+    bool setMinimumAcceptableCalibrationQuality(const xsensmvn::CalibrationQuality quality) const;
+    const xsensmvn::CalibrationQuality& getMinimumAcceptableCalibrationQuality() const;
+
+    // Move the data from the implementation internal memory to the local one
+    void cacheData();
+
+    // Data accessor
+    const DriverDataSample& getDataSample() const;
+    const std::vector<LinkData>& getLinkDataSample() const;
+    const std::vector<SensorData>& getSensorDataSample() const;
+    const std::vector<JointData>& getJointDataSample() const;
+
+    // Metadata accessor
+    std::string getSuitName() const;
+    double getSampleRelativeTime() const;
+    double getSampleAbsoluteTime() const;
+
+    // Labels accessor
+    std::vector<std::string> getSuitLinkLabels() const;
+    std::vector<std::string> getSuitSensorLabels() const;
+    std::vector<std::string> getSuitJointLabels() const;
+
+    // Status get
+    xsensmvn::DriverStatus getStatus() const;
+
+    /* --------------------------- *
+     *  IXsensMVNControl Interface *
+     * --------------------------- */
+
+    bool startAcquisition() override;
+    bool stopAcquisition() override;
+
+    bool calibrate(const std::string& calibrationType = {}) override;
+    bool abortCalibration() override;
+
+    // Body-dimensions set/get
+    bool setBodyDimensions(const std::map<std::string, double>& bodyDimensions) override;
+    bool getBodyDimensions(std::map<std::string, double>& dimensions) const override;
+    bool getBodyDimension(const std::string bodyName, double& dimension) const override;
+};
+
+#endif // XSENS_MVN_DRIVER_H
