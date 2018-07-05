@@ -23,20 +23,20 @@ class wearable::sensor::IPoseSensor : public wearable::sensor::ISensor
 public:
     virtual ~IPoseSensor() = 0;
 
-    virtual bool getPose(wearable::Quaternion& orientation, wearable::Vector3& position) const = 0;
-    virtual bool getPoseOrientationAsQuaternion(wearable::Quaternion& orientation) const = 0;
+    virtual bool getPose(Quaternion& orientation, Vector3& position) const = 0;
 
-    inline bool getPose(wearable::Vector7& pose) const;
-    inline bool getPosePosition(wearable::Vector3& position) const;
-    inline bool getPoseOrientationAsRotationMatrix(wearable::Matrix3& orientation) const;
-    inline bool getPoseOrientationAsRPY(wearable::Vector3& orientation) const;
+    inline bool getPose(Vector7& pose) const;
+    inline bool getPoseOrientationAsQuaternion(Quaternion& orientation) const;
+    inline bool getPosePosition(Vector3& position) const;
+    inline bool getPoseOrientationAsRotationMatrix(Matrix3& orientation) const;
+    inline bool getPoseOrientationAsRPY(Vector3& orientation) const;
 };
 
-inline bool wearable::sensor::IPoseSensor::getPose(wearable::Vector7& pose) const
+inline bool wearable::sensor::IPoseSensor::getPose(Vector7& pose) const
 {
-    wearable::Quaternion orientation;
-    wearable::Vector3 position;
-    if (!wearable::sensor::IPoseSensor::getPose(orientation, position)) {
+    Quaternion orientation;
+    Vector3 position;
+    if (!getPose(orientation, position)) {
         return false;
     }
 
@@ -51,28 +51,36 @@ inline bool wearable::sensor::IPoseSensor::getPose(wearable::Vector7& pose) cons
     return true;
 }
 
-// TODO
-inline bool wearable::sensor::IPoseSensor::getPosePosition(wearable::Vector3& position) const {}
-
-inline bool wearable::sensor::IPoseSensor::getPoseOrientationAsRotationMatrix(
-    wearable::Matrix3& orientation) const
+bool wearable::sensor::IPoseSensor::getPoseOrientationAsQuaternion(Quaternion& orientation) const
 {
-    wearable::Quaternion quat;
-    if (!wearable::sensor::IPoseSensor::getPoseOrientationAsQuaternion(quat)) {
+    Vector3 dummy;
+    return getPose(orientation, dummy);
+}
+
+inline bool wearable::sensor::IPoseSensor::getPosePosition(Vector3& position) const
+{
+    Quaternion dummy;
+    return getPose(dummy, position);
+}
+
+inline bool
+wearable::sensor::IPoseSensor::getPoseOrientationAsRotationMatrix(Matrix3& orientation) const
+{
+    Quaternion quat;
+    if (!getPoseOrientationAsQuaternion(quat)) {
         return false;
     }
-    orientation = wearable::utils::quaternionToRotationMatrix(quat);
+    orientation = utils::quaternionToRotationMatrix(quat);
     return true;
 };
 
-inline bool
-wearable::sensor::IPoseSensor::getPoseOrientationAsRPY(wearable::Vector3& orientation) const
+inline bool wearable::sensor::IPoseSensor::getPoseOrientationAsRPY(Vector3& orientation) const
 {
-    wearable::Quaternion quat;
-    if (!wearable::sensor::IPoseSensor::getPoseOrientationAsQuaternion(quat)) {
+    Quaternion quat;
+    if (!getPoseOrientationAsQuaternion(quat)) {
         return false;
     }
-    orientation = wearable::utils::quaternionToRPY(quat);
+    orientation = utils::quaternionToRPY(quat);
     return true;
 };
 

@@ -22,31 +22,30 @@ class wearable::sensor::IOrientationSensor : public wearable::sensor::ISensor
 {
 public:
     virtual ~IOrientationSensor() = 0;
-    virtual bool getOrientationAsQuaternion(wearable::Quaternion& orientation) const = 0;
+    virtual bool getOrientationAsQuaternion(Quaternion& orientation) const = 0;
 
-    inline bool getOrientationAsRPY(wearable::Vector3& orientation) const;
-    inline bool getOrientationAsRotationMatrix(wearable::Matrix3& orientation) const;
+    inline bool getOrientationAsRPY(Vector3& orientation) const;
+    inline bool getOrientationAsRotationMatrix(Matrix3& orientation) const;
 };
 
-inline bool
-wearable::sensor::IOrientationSensor::getOrientationAsRPY(wearable::Vector3& orientation) const
+inline bool wearable::sensor::IOrientationSensor::getOrientationAsRPY(Vector3& orientation) const
 {
-    wearable::Quaternion quat;
-    if (!wearable::sensor::IOrientationSensor::getOrientationAsQuaternion(quat)) {
+    Quaternion quat;
+    if (!getOrientationAsQuaternion(quat)) {
         return false;
     }
-    orientation = wearable::utils::quaternionToRPY(quat);
+    orientation = utils::quaternionToRPY(quat);
     return true;
 };
 
-inline bool wearable::sensor::IOrientationSensor::getOrientationAsRotationMatrix(
-    wearable::Matrix3& orientation) const
+inline bool
+wearable::sensor::IOrientationSensor::getOrientationAsRotationMatrix(Matrix3& orientation) const
 {
-    wearable::Quaternion quat;
-    if (!wearable::sensor::IOrientationSensor::getOrientationAsQuaternion(quat)) {
+    Quaternion quat;
+    if (!getOrientationAsQuaternion(quat)) {
         return false;
     }
-    orientation = wearable::utils::quaternionToRotationMatrix(quat);
+    orientation = utils::quaternionToRotationMatrix(quat);
     return true;
 };
 

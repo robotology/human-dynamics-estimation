@@ -24,6 +24,8 @@ public:
 
     virtual bool gerForceTorque6D(wearable::Vector3& force3D,
                                   wearable::Vector3& torque3D) const = 0;
+
+    // TODO: inline
     virtual bool getForceTorque6D(wearable::Vector6& forceTorque6D) const = 0;
     virtual bool getForceTorque3DForce(wearable::Vector3& force3D) const = 0;
     virtual bool getForceTorque3DTorque(wearable::Vector3& torque3D) const = 0;
