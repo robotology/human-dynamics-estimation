@@ -68,7 +68,7 @@ const std::map<sensor::SensorType, msg::SensorType> mapSensorTypes = {
 const std::map<sensor::SensorStatus, msg::SensorStatus> mapSensorStatus = {
     {sensor::SensorStatus::Ok, msg::SensorStatus::OK},
     {sensor::SensorStatus::Error, msg::SensorStatus::ERROR},
-    {sensor::SensorStatus::Overflow, msg::SensorStatus::OVERFLOW},
+    {sensor::SensorStatus::Overflow, msg::SensorStatus::DATA_OVERFLOW},
     {sensor::SensorStatus::Calibrating, msg::SensorStatus::CALIBRATING},
     {sensor::SensorStatus::Timeout, msg::SensorStatus::TIMEOUT},
     {sensor::SensorStatus::WaitingForFirstRead, msg::SensorStatus::WAITING_FOR_FIRST_READ},
