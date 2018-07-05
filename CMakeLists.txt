@@ -49,6 +49,7 @@ if(WIN32)
   endif()
 endif()
 
+add_subdirectory(interfaces)
 #add_subdirectory(FTShoes)
 #add_subdirectory(XSensSuit)
 add_subdirectory(msgs)

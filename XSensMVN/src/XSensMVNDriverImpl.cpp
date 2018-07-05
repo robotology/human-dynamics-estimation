@@ -214,7 +214,25 @@ bool XSensMVNDriverImpl::configureAndConnect()
     xsInfo << "Using selected suit configuration:"
            << m_driverConfiguration.suitConfiguration.c_str();
 
-    // TODO: add option to select the available MVN scenario
+    // Get the list of the supported suit configurations
+    xsInfo << "--- Supported MVN acquisition scenarios ---";
+    XsStringArray acqScenarios = m_connection->userScenarioList();
+    for (const auto& xsas : acqScenarios) {
+        xsInfo << " - " << xsas.c_str();
+    }
+    xsInfo << "--------------------------------" << std::endl;
+
+    int acqScenarioIsValid =
+        acqScenarios.find(m_driverConfiguration.acquisitionScenario.c_str(), false);
+    if (acqScenarioIsValid == -1) {
+        xsWarning << "Selected acquisition scenario: "
+                  << m_driverConfiguration.acquisitionScenario.c_str() << "not supported";
+        xsWarning << "Using DEFAULT scenario: " << m_connection->userScenario().c_str();
+    }
+    else {
+        m_connection->setUserScenario(m_driverConfiguration.suitConfiguration.c_str());
+        xsInfo << "Using selected acquisition scenario:" << m_connection->userScenario().c_str();
+    }
 
     //----------------------------------
     // Connect to the Xsens MVN hardware
