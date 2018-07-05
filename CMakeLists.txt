@@ -49,5 +49,12 @@ if(WIN32)
 endif()
 
 add_subdirectory(interfaces)
+
+# Prepare YARP wrapper and devices
+find_package(YARP 3.0 REQUIRED)
+set(BUILD_SHARED_LIBS ON)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+yarp_configure_plugins_installation(wearable)
+
 add_subdirectory(msgs)
 add_subdirectory(wrappers)

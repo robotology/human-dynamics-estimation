@@ -2,14 +2,9 @@
 # This software may be modified and distributed under the terms of the
 # GNU Lesser General Public License v2.1 or any later version.
 
-find_package(YARP REQUIRED)
-
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-
 yarp_add_idl(WEARDATA_FILES thrift/WearData.thrift)
 
 add_library(WearData ${WEARDATA_FILES} thrift/WearData.thrift)
-#set_target_properties(WearData PROPERTIES LINKER_LANGUAGE CXX)
 target_link_libraries(WearData YARP::YARP_OS)
 
 # Extract the include directory from the files names
