@@ -64,10 +64,10 @@ script:
 stage_osx:
   install: &osx_install
     # Setup the dependencies folder
-    - export DEPS_CACHE=$HOME/deps
-    - export PATH=$PATH:$DEPS_CACHE/bin
-    - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$DEPS_CACHE/lib
-    - export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$DEPS_CACHE
+    - export DEPS_INSTALL_PREFIX=$HOME/deps
+    - export PATH=$PATH:$DEPS_INSTALL_PREFIX/bin
+    - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$DEPS_INSTALL_PREFIX/lib
+    - export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$DEPS_INSTALL_PREFIX
     - export CMAKE_BUILD_OPTIONS=""
     # Temporary use devel branches for dependencies waiting the post Yarp3 alignment
     - export DEPS_BRANCH="devel"

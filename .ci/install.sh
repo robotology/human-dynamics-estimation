@@ -28,7 +28,7 @@ cmake --build . --config $TRAVIS_BUILD_TYPE --target install
 # Install icub-main
 cd $HOME/git
 git clone --depth 1 -b devel https://github.com/robotology/icub-main.git
-- git clone --depth 1 -b $DEPS_BRANCH https://github.com/robotology/icub-main.git
+# git clone --depth 1 -b $DEPS_BRANCH https://github.com/robotology/icub-main.git
 cd icub-main
 mkdir build && cd build
 cmake .. \
