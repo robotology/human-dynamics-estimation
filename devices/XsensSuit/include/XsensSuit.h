@@ -9,6 +9,7 @@
 #ifndef XSENSSUIT_H
 #define XSENSSUIT_H
 
+#include "IXsensMVNControl.h"
 #include "Wearable/IWear/IWear.h"
 
 #include <yarp/dev/DeviceDriver.h>
@@ -19,12 +20,13 @@
 namespace wearable {
     namespace devices {
         class XsensSuit;
-    }
+    } // namespace devices
 } // namespace wearable
 
 class wearable::devices::XsensSuit final
     : public yarp::dev::DeviceDriver
     , public yarp::dev::IPreciselyTimed
+    , public xsensmvn::IXsensMVNControl
     , public wearable::IWear
 {
 private:
@@ -40,18 +42,34 @@ public:
     XsensSuit& operator=(const XsensSuit& other) = delete;
     XsensSuit& operator=(XsensSuit&& other) = delete;
 
-    // ============
-    // DEVICEDRIVER
-    // ============
+    // =============
+    // DEVICE_DRIVER
+    // =============
 
     bool open(yarp::os::Searchable& config) override;
     bool close() override;
 
-    // ===============
-    // IPRECISELYTIMED
-    // ===============
+    // ================
+    // IPRECISELY_TIMED
+    // ================
 
     yarp::os::Stamp getLastInputStamp() override;
+
+    // ==================
+    // IXSENS_MVN_CONTROL
+    // ==================
+
+    bool setBodyDimensions(const std::map<std::string, double>& dimensions) override;
+    bool getBodyDimensions(std::map<std::string, double>& dimensions) const override;
+    bool getBodyDimension(const std::string bodyName, double& dimension) const override;
+
+    // Calibration methods
+    bool calibrate(const std::string& calibrationType = {}) override;
+    bool abortCalibration() override;
+
+    // Acquisition methods
+    bool startAcquisition() override;
+    bool stopAcquisition() override;
 
     // =====
     // IWEAR
@@ -59,7 +77,7 @@ public:
 
     // GENERIC
     // -------
-
+    WearableName getWearableName() const override;
     WearStatus getStatus() const override;
     TimeStamp getTimeStamp() const override;
 
