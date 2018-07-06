@@ -66,7 +66,7 @@ private:
     castVectorOfSensorPtr(const VectorOfSensorPtr<const sensor::ISensor> iSensors);
 
 public:
-    virtual ~IWear() = 0;
+    virtual ~IWear() = default;
 
     // ===============
     // GENERIC METHODS
