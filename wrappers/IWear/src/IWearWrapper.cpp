@@ -92,7 +92,7 @@ msg::VectorRPY vector3ToVectorRPY(const wearable::Vector3& input)
     return {input[0], input[1], input[2]};
 }
 
-msg::Quaternion convertQuaternion(const wearable::Quaternion& input)
+msg::QuaternionWXYZ convertQuaternion(const wearable::Quaternion& input)
 {
     return {input[0], {input[1], input[2], input[3]}};
 }

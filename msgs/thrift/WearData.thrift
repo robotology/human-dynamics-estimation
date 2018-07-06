@@ -62,7 +62,7 @@ struct VectorRPY {
   3: double y;
 }
 
-struct Quaternion {
+struct QuaternionWXYZ {
   1: double w;
   2: VectorXYZ imaginary;
 }
@@ -77,12 +77,12 @@ struct ForceTorque6DSensorData {
 }
 
 struct PoseSensorData {
-  1: Quaternion orientation,
+  1: QuaternionWXYZ orientation,
   2: VectorXYZ position
 }
 
 struct VirtualLinkKinSensorData {
-  1: Quaternion orientation,
+  1: QuaternionWXYZ orientation,
   2: VectorXYZ position,
   3: VectorXYZ linearVelocity,
   4: VectorXYZ angularVelocity,
@@ -137,7 +137,7 @@ struct Magnetometer {
 
 struct OrientationSensor {
   1: SensorInfo info,
-  2: Quaternion data
+  2: QuaternionWXYZ data
 }
 
 struct PoseSensor {
