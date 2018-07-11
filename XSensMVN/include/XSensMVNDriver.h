@@ -56,14 +56,36 @@ namespace xsensmvn {
         Vector3 jointAngles;
     };
 
+    struct Timestamp
+    {
+        double relative; // [s]
+        double absolute; // [s]
+    };
+
+    struct LinkDataVector
+    {
+        Timestamp time;
+        std::vector<LinkData> data;
+    };
+
+    struct SensorDataVector
+    {
+        Timestamp time;
+        std::vector<SensorData> data;
+    };
+
+    struct JointDataVector
+    {
+        Timestamp time;
+        std::vector<JointData> data;
+    };
+
     struct DriverDataSample
     {
-        std::string suitName;
-        double relativeTime; // [s]
-        double absoluteTime; // [s]
-        std::vector<LinkData> links;
-        std::vector<SensorData> sensors;
-        std::vector<JointData> joints;
+        Timestamp time;
+        LinkDataVector links;
+        SensorDataVector sensors;
+        JointDataVector joints;
     };
 
     struct DriverDataStreamConfig
@@ -111,6 +133,9 @@ private:
     // Struct to internally store (cache) a single data sample
     DriverDataSample m_dataSample;
 
+    // Move the data from the implementation internal memory to the local one
+    void cacheData();
+
 public:
     /* -------------------------- *
      *  Construtors / Destructors *
@@ -136,19 +161,15 @@ public:
     bool setMinimumAcceptableCalibrationQuality(const xsensmvn::CalibrationQuality quality) const;
     const xsensmvn::CalibrationQuality& getMinimumAcceptableCalibrationQuality() const;
 
-    // Move the data from the implementation internal memory to the local one
-    void cacheData();
-
     // Data accessor
-    const DriverDataSample& getDataSample() const;
-    const std::vector<LinkData>& getLinkDataSample() const;
-    const std::vector<SensorData>& getSensorDataSample() const;
-    const std::vector<JointData>& getJointDataSample() const;
+    const DriverDataSample& getDataSample();
+    const LinkDataVector& getLinkDataSample();
+    const SensorDataVector& getSensorDataSample();
+    const JointDataVector& getJointDataSample();
 
     // Metadata accessor
-    std::string getSuitName() const;
-    double getSampleRelativeTime() const;
-    double getSampleAbsoluteTime() const;
+    //    double getSampleRelativeTime() const;
+    //    double getSampleAbsoluteTime() const;
 
     // Labels accessor
     std::vector<std::string> getSuitLinkLabels() const;

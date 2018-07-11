@@ -54,40 +54,36 @@ void XSensMVNDriver::cacheData()
     xsInfo << "data moved from private to public";
 }
 
-const DriverDataSample& XSensMVNDriver::getDataSample() const
+const DriverDataSample& XSensMVNDriver::getDataSample()
 {
+    cacheData();
     return m_dataSample;
 }
 
-const std::vector<LinkData>& XSensMVNDriver::getLinkDataSample() const
+const LinkDataVector& XSensMVNDriver::getLinkDataSample()
 {
-    return m_dataSample.links;
+    return getDataSample().links;
 }
 
-const std::vector<SensorData>& XSensMVNDriver::getSensorDataSample() const
+const SensorDataVector& XSensMVNDriver::getSensorDataSample()
 {
-    return m_dataSample.sensors;
+    return getDataSample().sensors;
 }
 
-const std::vector<JointData>& XSensMVNDriver::getJointDataSample() const
+const JointDataVector& XSensMVNDriver::getJointDataSample()
 {
-    return m_dataSample.joints;
+    return getDataSample().joints;
 }
 
-std::string XSensMVNDriver::getSuitName() const
-{
-    return m_dataSample.suitName;
-}
+// double XSensMVNDriver::getSampleAbsoluteTime() const
+//{
+//    return m_dataSample.absoluteTime;
+//}
 
-double XSensMVNDriver::getSampleAbsoluteTime() const
-{
-    return m_dataSample.absoluteTime;
-}
-
-double XSensMVNDriver::getSampleRelativeTime() const
-{
-    return m_dataSample.relativeTime;
-}
+// double XSensMVNDriver::getSampleRelativeTime() const
+//{
+//    return m_dataSample.relativeTime;
+//}
 
 std::vector<std::string> XSensMVNDriver::getSuitLinkLabels() const
 {

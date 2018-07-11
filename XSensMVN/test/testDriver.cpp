@@ -52,13 +52,13 @@ int main(int argc, const char* argv[])
     if (driver.startAcquisition()) {
         xsInfo << std::endl << std::endl << "Recording";
         for (int j = 0; j < 50; ++j) {
-            driver.cacheData();
-            std::vector<xsensmvn::LinkData> linkSample;
+            xsensmvn::LinkDataVector linkSample;
             linkSample = driver.getLinkDataSample();
-            double relTime = driver.getSampleRelativeTime();
-            if (!linkSample.empty()) {
+            if (!linkSample.data.empty()) {
+                double relTime = linkSample.time.relative;
                 xsInfo << "time: " << relTime;
-                xsInfo << linkSample.at(0).name << " position:" << linkSample.at(1).position.at(0);
+                xsInfo << linkSample.data.at(0).name
+                       << " position:" << linkSample.data.at(1).position.at(0);
             }
             std::this_thread::sleep_for(std::chrono::milliseconds(20));
         }

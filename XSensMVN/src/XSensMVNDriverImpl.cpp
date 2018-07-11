@@ -83,15 +83,13 @@ void XSensMVNDriverImpl::processDataSamples()
 
             // TODO: fill suit name
 
-            // Copy absolute and relative XSens time
-            m_lastProcessedDataSample.absoluteTime = lastSample.absoluteTime / 1000.0;
-            m_lastProcessedDataSample.relativeTime =
-                static_cast<double>(lastSample.relativeTime) / 1000.0;
-
             if (m_driverConfiguration.dataStreamConfiguration.enableLinkData) {
                 // TODO: check if expected and actual sample dimensions match
-
-                m_lastProcessedDataSample.links.reserve(
+                // Copy absolute and relative XSens time
+                m_lastProcessedDataSample.links.time.absolute = lastSample.absoluteTime / 1000.0;
+                m_lastProcessedDataSample.links.time.relative =
+                    static_cast<double>(lastSample.relativeTime) / 1000.0;
+                m_lastProcessedDataSample.links.data.reserve(
                     lastSample.humanPose.m_segmentStates.size());
 
                 unsigned segmentIx = 0;
@@ -114,13 +112,17 @@ void XSensMVNDriverImpl::processDataSamples()
                         std::lock_guard<std::mutex> labelGuard(m_suitLabels.labelsLock);
                         newLink.name = m_suitLabels.segmentNames.at(segmentIx);
                     }
-                    m_lastProcessedDataSample.links.push_back(newLink);
+                    m_lastProcessedDataSample.links.data.push_back(newLink);
                 };
             }
 
             if (m_driverConfiguration.dataStreamConfiguration.enableSensorData) {
-                m_lastProcessedDataSample.sensors.reserve(
+                m_lastProcessedDataSample.sensors.data.reserve(
                     lastSample.suitData.sensorKinematics().size());
+
+                m_lastProcessedDataSample.sensors.time.absolute = lastSample.absoluteTime / 1000.0;
+                m_lastProcessedDataSample.sensors.time.relative =
+                    static_cast<double>(lastSample.relativeTime) / 1000.0;
 
                 unsigned sensorIx = 0;
                 for (const auto& sensor : lastSample.suitData.sensorKinematics()) {
@@ -140,7 +142,7 @@ void XSensMVNDriverImpl::processDataSamples()
                         newSensor.name = m_suitLabels.sensorNames.at(sensorIx);
                     }
 
-                    m_lastProcessedDataSample.sensors.push_back(newSensor);
+                    m_lastProcessedDataSample.sensors.data.push_back(newSensor);
                 };
             }
 
