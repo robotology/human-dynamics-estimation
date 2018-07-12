@@ -20,6 +20,7 @@ namespace wearable {
 class wearable::sensor::IPositionSensor : public wearable::sensor::ISensor
 {
 public:
+    IPositionSensor() { m_type = SensorType::PositionSensor; }
     virtual ~IPositionSensor() = 0;
 
     virtual bool getPosition(Vector3& position) const = 0;

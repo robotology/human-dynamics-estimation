@@ -20,6 +20,7 @@ namespace wearable {
 class wearable::sensor::IFreeBodyAccelerationSensor : public wearable::sensor::ISensor
 {
 public:
+    IFreeBodyAccelerationSensor() { m_type = SensorType::FreeBodyAccelerationSensor; }
     virtual ~IFreeBodyAccelerationSensor() = 0;
 
     virtual bool getFreeBodyAcceleration(Vector3& freeBodyAcceleration) const = 0;

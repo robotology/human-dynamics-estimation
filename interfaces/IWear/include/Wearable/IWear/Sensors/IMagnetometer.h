@@ -20,6 +20,7 @@ namespace wearable {
 class wearable::sensor::IMagnetometer : public wearable::sensor::ISensor
 {
 public:
+    IMagnetometer() { m_type = SensorType::Magnetometer; }
     virtual ~IMagnetometer() = 0;
 
     virtual bool getMagneticField(Vector3& magneticField) const = 0;

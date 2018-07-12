@@ -20,6 +20,7 @@ namespace wearable {
 class wearable::sensor::IGyroscope : public wearable::sensor::ISensor
 {
 public:
+    IGyroscope() { m_type = SensorType::Gyroscope; }
     virtual ~IGyroscope() = 0;
 
     virtual bool getAngularRate(Vector3& angularRate) const = 0;

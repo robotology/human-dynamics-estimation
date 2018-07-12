@@ -20,6 +20,7 @@ namespace wearable {
 class wearable::sensor::ITorque3DSensor : public wearable::sensor::ISensor
 {
 public:
+    ITorque3DSensor() { m_type = SensorType::Torque3DSensor; }
     virtual ~ITorque3DSensor() = 0;
 
     virtual bool getTorque3D(Vector3& torque) const = 0;

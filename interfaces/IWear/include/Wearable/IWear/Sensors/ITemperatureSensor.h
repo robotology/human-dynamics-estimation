@@ -20,6 +20,7 @@ namespace wearable {
 class wearable::sensor::ITemperatureSensor : public wearable::sensor::ISensor
 {
 public:
+    ITemperatureSensor() { m_type = SensorType::TemperatureSensor; }
     virtual ~ITemperatureSensor() = 0;
 
     virtual bool getTemperature(double& temperature) const = 0;

@@ -21,6 +21,7 @@ class wearable::sensor::IVirtualSphericalJointKinSensor : public wearable::senso
 {
 protected:
 public:
+    IVirtualSphericalJointKinSensor() { m_type = SensorType::VirtualSphericalJointKinSensor; }
     virtual ~IVirtualSphericalJointKinSensor() = 0;
 
     // CONVENTION: RPY are defined as rotationa about X-Y-Z wrt fix frame
