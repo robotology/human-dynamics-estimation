@@ -20,7 +20,12 @@ namespace wearable {
 class wearable::sensor::IVirtualLinkKinSensor : public wearable::sensor::ISensor
 {
 public:
-    IVirtualLinkKinSensor() { m_type = SensorType::VirtualLinkKinSensor; }
+    IVirtualLinkKinSensor(SensorName aName = {}, SensorStatus aStatus = SensorStatus::Unknown)
+        : ISensor(aName, aStatus)
+    {
+        m_type = SensorType::VirtualLinkKinSensor;
+    }
+
     virtual ~IVirtualLinkKinSensor() = 0;
 
     // 6D quantities

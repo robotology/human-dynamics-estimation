@@ -20,7 +20,12 @@ namespace wearable {
 class wearable::sensor::ISkinSensor : public wearable::sensor::ISensor
 {
 public:
-    ISkinSensor() { m_type = SensorType::SkinSensor; }
+    ISkinSensor(SensorName aName = {}, SensorStatus aStatus = SensorStatus::Unknown)
+        : ISensor(aName, aStatus)
+    {
+        m_type = SensorType::SkinSensor;
+    }
+
     virtual ~ISkinSensor() = 0;
 
     // TODO: to be implemented

@@ -20,7 +20,12 @@ namespace wearable {
 class wearable::sensor::IEmgSensor : public wearable::sensor::ISensor
 {
 public:
-    IEmgSensor() { m_type = SensorType::EmgSensor; }
+    IEmgSensor(SensorName aName = {}, SensorStatus aStatus = SensorStatus::Unknown)
+        : ISensor(aName, aStatus)
+    {
+        m_type = SensorType::EmgSensor;
+    }
+
     virtual ~IEmgSensor() = 0;
 
     virtual bool getEmgSignal(double& emgSignal) const = 0;

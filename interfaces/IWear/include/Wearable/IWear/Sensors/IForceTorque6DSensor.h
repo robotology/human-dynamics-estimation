@@ -20,7 +20,12 @@ namespace wearable {
 class wearable::sensor::IForceTorque6DSensor : public wearable::sensor::ISensor
 {
 public:
-    IForceTorque6DSensor() { m_type = SensorType::ForceTorque6DSensor; }
+    IForceTorque6DSensor(SensorName aName = {}, SensorStatus aStatus = SensorStatus::Unknown)
+        : ISensor(aName, aStatus)
+    {
+        m_type = SensorType::ForceTorque6DSensor;
+    }
+
     virtual ~IForceTorque6DSensor() = 0;
 
     virtual bool gerForceTorque6D(Vector3& force3D, Vector3& torque3D) const = 0;

@@ -20,7 +20,12 @@ namespace wearable {
 class wearable::sensor::IAccelerometer : public wearable::sensor::ISensor
 {
 public:
-    IAccelerometer() { m_type = SensorType::Accelerometer; }
+    IAccelerometer(SensorName aName = {}, SensorStatus aStatus = SensorStatus::Unknown)
+        : ISensor(aName, aStatus)
+    {
+        m_type = SensorType::Accelerometer;
+    }
+
     virtual ~IAccelerometer() = 0;
 
     virtual bool getLinearAcceleration(Vector3& linearAcceleration) const = 0;

@@ -65,6 +65,11 @@ protected:
     SensorStatus m_status;
 
 public:
+    ISensor(SensorName aName = {}, SensorStatus aStatus = SensorStatus::Unknown)
+        : m_name{aName}
+        , m_status{aStatus}
+    {}
+
     virtual ~ISensor() = 0;
 
     // TODO: timestamp? sequence number?

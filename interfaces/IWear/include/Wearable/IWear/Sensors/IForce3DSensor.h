@@ -20,7 +20,12 @@ namespace wearable {
 class wearable::sensor::IForce3DSensor : public wearable::sensor::ISensor
 {
 public:
-    IForce3DSensor() { m_type = SensorType::Force3DSensor; }
+    IForce3DSensor(SensorName aName = {}, SensorStatus aStatus = SensorStatus::Unknown)
+        : ISensor(aName, aStatus)
+    {
+        m_type = SensorType::Force3DSensor;
+    }
+
     virtual ~IForce3DSensor() = 0;
 
     virtual bool getForce3D(Vector3& force) const = 0;

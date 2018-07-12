@@ -21,7 +21,12 @@ namespace wearable {
 class wearable::sensor::IOrientationSensor : public wearable::sensor::ISensor
 {
 public:
-    IOrientationSensor() { m_type = SensorType::OrientationSensor; }
+    IOrientationSensor(SensorName aName = {}, SensorStatus aStatus = SensorStatus::Unknown)
+        : ISensor(aName, aStatus)
+    {
+        m_type = SensorType::OrientationSensor;
+    }
+
     virtual ~IOrientationSensor() = 0;
     virtual bool getOrientationAsQuaternion(Quaternion& orientation) const = 0;
 
