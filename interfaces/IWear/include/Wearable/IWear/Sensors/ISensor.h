@@ -59,13 +59,34 @@ namespace wearable {
 
 class wearable::sensor::ISensor
 {
+protected:
+    SensorName m_name;
+    SensorType m_type;
+    SensorStatus m_status;
+
 public:
     virtual ~ISensor() = 0;
 
     // TODO: timestamp? sequence number?
-    virtual SensorName getSensorName() const = 0;
-    virtual SensorStatus getSensorStatus() const = 0;
-    virtual SensorType getSensorType() const = 0;
+    // TODO: virtual?
+    inline SensorName getSensorName() const;
+    inline SensorStatus getSensorStatus() const;
+    inline SensorType getSensorType() const;
 };
+
+inline wearable::sensor::SensorName wearable::sensor::ISensor::getSensorName() const
+{
+    return m_name;
+}
+
+inline wearable::sensor::SensorType wearable::sensor::ISensor::getSensorType() const
+{
+    return m_type;
+}
+
+inline wearable::sensor::SensorStatus wearable::sensor::ISensor::getSensorStatus() const
+{
+    return m_status;
+}
 
 #endif // WEARABLE_ISENSOR_H
