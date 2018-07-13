@@ -16,7 +16,12 @@ using namespace xsensmvn;
  * -------------------------- */
 
 XSensMVNDriver::XSensMVNDriver(const DriverConfiguration conf)
-    : m_pimpl(new XSensMVNDriverImpl(conf)){};
+    : m_dataSample(new DriverDataSample)
+    , m_dataMutex(new std::mutex)
+    , m_pimpl(nullptr)
+{
+    m_pimpl.reset(new XSensMVNDriverImpl(conf, m_dataSample, m_dataMutex));
+};
 
 XSensMVNDriver::~XSensMVNDriver()
 {
@@ -48,31 +53,35 @@ const xsensmvn::CalibrationQuality& XSensMVNDriver::getMinimumAcceptableCalibrat
     return m_pimpl->m_calibrator->getMinimumAcceptableCalibrationQuality();
 }
 
-void XSensMVNDriver::cacheData()
-{
-    m_dataSample = std::move(m_pimpl->m_lastProcessedDataSample);
-    xsInfo << "data moved from private to public";
-}
+// void XSensMVNDriver::cacheData()
+//{
+//    m_dataSample = std::move(*m_pimpl->m_lastProcessedDataSample);
+//    xsInfo << "data moved from private to public";
+//}
 
 const DriverDataSample& XSensMVNDriver::getDataSample()
 {
-    cacheData();
-    return m_dataSample;
+    //    cacheData();
+    std::lock_guard<std::mutex> readLock(*m_dataMutex);
+    return *m_dataSample;
 }
 
 const LinkDataVector& XSensMVNDriver::getLinkDataSample()
 {
-    return getDataSample().links;
+    std::lock_guard<std::mutex> readLock(*m_dataMutex);
+    return m_dataSample->links;
 }
 
 const SensorDataVector& XSensMVNDriver::getSensorDataSample()
 {
-    return getDataSample().sensors;
+    std::lock_guard<std::mutex> readLock(*m_dataMutex);
+    return m_dataSample->sensors;
 }
 
 const JointDataVector& XSensMVNDriver::getJointDataSample()
 {
-    return getDataSample().joints;
+    std::lock_guard<std::mutex> readLock(*m_dataMutex);
+    return m_dataSample->joints;
 }
 
 // double XSensMVNDriver::getSampleAbsoluteTime() const

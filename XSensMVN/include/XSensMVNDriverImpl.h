@@ -77,7 +77,6 @@ private:
     std::condition_variable m_connectionVariable;
 
     mutable std::recursive_mutex m_objectMutex;
-    mutable std::mutex m_outDataMutex;
     std::mutex m_connectionMutex;
     std::mutex m_processorMutex;
 
@@ -97,7 +96,8 @@ public:
      * ---------- */
 
     // Driver output data
-    xsensmvn::DriverDataSample m_lastProcessedDataSample;
+    std::shared_ptr<std::mutex> m_outDataMutex;
+    std::shared_ptr<xsensmvn::DriverDataSample> m_lastProcessedDataSample;
 
     // Calibrator object pointer
     std::unique_ptr<xsensmvn::XSensMVNCalibrator> m_calibrator;
@@ -111,7 +111,9 @@ public:
     /* -------------------------- *
      *  Construtors / Destructors *
      * -------------------------- */
-    XSensMVNDriverImpl(const xsensmvn::DriverConfiguration conf);
+    XSensMVNDriverImpl(const xsensmvn::DriverConfiguration conf,
+                       std::shared_ptr<xsensmvn::DriverDataSample> dataSampleStorage,
+                       std::shared_ptr<std::mutex> dataStorageMutex);
     XSensMVNDriverImpl(const XSensMVNDriverImpl&) = delete;
     XSensMVNDriverImpl& operator=(const XSensMVNDriverImpl&) = delete;
 

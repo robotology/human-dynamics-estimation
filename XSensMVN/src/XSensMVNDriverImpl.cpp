@@ -24,12 +24,17 @@ using namespace xsensmvn;
 /* -------------------------- *
  *  Construtors / Destructors *
  * -------------------------- */
-XSensMVNDriverImpl::XSensMVNDriverImpl(const DriverConfiguration conf)
+XSensMVNDriverImpl::XSensMVNDriverImpl(
+    const xsensmvn::DriverConfiguration conf,
+    std::shared_ptr<xsensmvn::DriverDataSample> dataSampleStorage,
+    std::shared_ptr<std::mutex> dataStorageMutex)
     : m_driverStatus(DriverStatus::Disconnected)
     , m_stopProcessor(false)
     , m_newSampleAvailable(false)
     , m_license(nullptr)
     , m_connection(nullptr)
+    , m_outDataMutex(dataStorageMutex)
+    , m_lastProcessedDataSample(dataSampleStorage)
     , m_calibrator(nullptr)
     , m_driverConfiguration(conf)
     , m_calibrationInfo({})
@@ -79,17 +84,16 @@ void XSensMVNDriverImpl::processDataSamples()
 
         // Copy last retrieved data sample to the driver structure
         {
-            std::lock_guard<std::mutex> copyLock(m_outDataMutex);
+            std::lock_guard<std::mutex> copyLock(*m_outDataMutex);
 
             // TODO: fill suit name
-
             if (m_driverConfiguration.dataStreamConfiguration.enableLinkData) {
                 // TODO: check if expected and actual sample dimensions match
                 // Copy absolute and relative XSens time
-                m_lastProcessedDataSample.links.time.absolute = lastSample.absoluteTime / 1000.0;
-                m_lastProcessedDataSample.links.time.relative =
+                m_lastProcessedDataSample->links.time.absolute = lastSample.absoluteTime / 1000.0;
+                m_lastProcessedDataSample->links.time.relative =
                     static_cast<double>(lastSample.relativeTime) / 1000.0;
-                m_lastProcessedDataSample.links.data.reserve(
+                m_lastProcessedDataSample->links.data.reserve(
                     lastSample.humanPose.m_segmentStates.size());
 
                 unsigned segmentIx = 0;
@@ -112,16 +116,16 @@ void XSensMVNDriverImpl::processDataSamples()
                         std::lock_guard<std::mutex> labelGuard(m_suitLabels.labelsLock);
                         newLink.name = m_suitLabels.segmentNames.at(segmentIx);
                     }
-                    m_lastProcessedDataSample.links.data.push_back(newLink);
+                    m_lastProcessedDataSample->links.data.push_back(newLink);
                 };
             }
 
             if (m_driverConfiguration.dataStreamConfiguration.enableSensorData) {
-                m_lastProcessedDataSample.sensors.data.reserve(
+                m_lastProcessedDataSample->sensors.data.reserve(
                     lastSample.suitData.sensorKinematics().size());
 
-                m_lastProcessedDataSample.sensors.time.absolute = lastSample.absoluteTime / 1000.0;
-                m_lastProcessedDataSample.sensors.time.relative =
+                m_lastProcessedDataSample->sensors.time.absolute = lastSample.absoluteTime / 1000.0;
+                m_lastProcessedDataSample->sensors.time.relative =
                     static_cast<double>(lastSample.relativeTime) / 1000.0;
 
                 unsigned sensorIx = 0;
@@ -142,7 +146,7 @@ void XSensMVNDriverImpl::processDataSamples()
                         newSensor.name = m_suitLabels.sensorNames.at(sensorIx);
                     }
 
-                    m_lastProcessedDataSample.sensors.data.push_back(newSensor);
+                    m_lastProcessedDataSample->sensors.data.push_back(newSensor);
                 };
             }
 

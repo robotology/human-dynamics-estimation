@@ -15,6 +15,7 @@
 
 #include <array>
 #include <map>
+#include <mutex>
 #include <vector>
 
 namespace xsensmvn {
@@ -127,14 +128,15 @@ private:
      *  Variables *
      * ---------- */
 
+    // Struct to internally store (cache) a single data sample
+    std::shared_ptr<DriverDataSample> m_dataSample = nullptr;
+    std::shared_ptr<std::mutex> m_dataMutex = nullptr;
+
     // Pointer to the driver implementation
     std::unique_ptr<XSensMVNDriverImpl> m_pimpl;
 
-    // Struct to internally store (cache) a single data sample
-    DriverDataSample m_dataSample;
-
     // Move the data from the implementation internal memory to the local one
-    void cacheData();
+    // void cacheData();
 
 public:
     /* -------------------------- *
