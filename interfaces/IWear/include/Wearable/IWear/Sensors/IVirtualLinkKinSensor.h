@@ -34,12 +34,53 @@ public:
     virtual bool getLinkVelocity(Vector3& linear, Vector3& angular) const = 0;
 
     // 3D quantities
-    virtual bool getLinkAngularAcceleration(Vector3& angularAcceleration) const = 0;
-    virtual bool getLinkAngularVelocity(Vector3& angularVelocity) const = 0;
-    virtual bool getLinkLinearAcceleration(Vector3& linearAcceleration) const = 0;
-    virtual bool getLinkLinearVelocity(Vector3& linearVelocity) const = 0;
-    virtual bool getLinkOrientation(Quaternion& orientation) const = 0;
-    virtual bool getLinkPosition(Vector3& position) const = 0;
+    inline bool getLinkAngularAcceleration(Vector3& angularAcceleration) const;
+    inline bool getLinkAngularVelocity(Vector3& angularVelocity) const;
+    inline bool getLinkLinearAcceleration(Vector3& linearAcceleration) const;
+    inline bool getLinkLinearVelocity(Vector3& linearVelocity) const;
+    inline bool getLinkOrientation(Quaternion& orientation) const;
+    inline bool getLinkPosition(Vector3& position) const;
 };
+
+inline bool wearable::sensor::IVirtualLinkKinSensor::getLinkAngularAcceleration(
+    Vector3& angularAcceleration) const
+{
+    Vector3 dummy;
+    return getLinkAcceleration(dummy, angularAcceleration);
+}
+
+inline bool wearable::sensor::IVirtualLinkKinSensor::getLinkLinearAcceleration(
+    Vector3& linearAcceleration) const
+{
+    Vector3 dummy;
+    return getLinkAcceleration(linearAcceleration, dummy);
+}
+
+inline bool
+wearable::sensor::IVirtualLinkKinSensor::getLinkAngularVelocity(Vector3& angularVelocity) const
+{
+    Vector3 dummy;
+    return getLinkVelocity(dummy, angularVelocity);
+}
+
+inline bool
+wearable::sensor::IVirtualLinkKinSensor::getLinkLinearVelocity(Vector3& linearVelocity) const
+{
+    Vector3 dummy;
+    return getLinkVelocity(linearVelocity, dummy);
+}
+
+inline bool
+wearable::sensor::IVirtualLinkKinSensor::getLinkOrientation(Quaternion& orientation) const
+{
+    Vector3 dummy;
+    return getLinkPose(dummy, orientation);
+}
+
+inline bool wearable::sensor::IVirtualLinkKinSensor::getLinkPosition(Vector3& position) const
+{
+    Quaternion dummy;
+    return getLinkPose(position, dummy);
+}
 
 #endif // WEARABLE_IVIRTUAL_LINK_KIN_SENSOR_H
