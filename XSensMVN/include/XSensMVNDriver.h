@@ -164,6 +164,9 @@ public:
     const xsensmvn::CalibrationQuality& getMinimumAcceptableCalibrationQuality() const;
 
     // Data accessor
+    // Data are returned as reference, but the user should not store it because the data are
+    // automaically updated by the driver callback. This is intended to be used only to avoid
+    // copying all the data in case just one is needed.
     const DriverDataSample& getDataSample();
     const LinkDataVector& getLinkDataSample();
     const SensorDataVector& getSensorDataSample();
