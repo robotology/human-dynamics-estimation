@@ -47,7 +47,7 @@ namespace wearable {
 
     using TimeStamp = struct
     {
-        size_t time = 0;
+        double time = 0;
         size_t sequenceNumber = 0;
     };
 
@@ -167,7 +167,7 @@ public:
 
     inline VectorOfSensorPtr<const sensor::ITemperatureSensor> getTemperatureSensors() const;
 
-    inline VectorOfSensorPtr<const sensor::ITorque3DSensor> get3DTorqueSensors() const;
+    inline VectorOfSensorPtr<const sensor::ITorque3DSensor> getTorque3DSensors() const;
 
     inline VectorOfSensorPtr<const sensor::IVirtualLinkKinSensor> getVirtualLinkKinSensors() const;
 
@@ -334,7 +334,7 @@ wearable::IWear::getTemperatureSensors() const
 }
 
 inline wearable::VectorOfSensorPtr<const wearable::sensor::ITorque3DSensor>
-wearable::IWear::get3DTorqueSensors() const
+wearable::IWear::getTorque3DSensors() const
 {
     return castVectorOfSensorPtr<sensor::ITorque3DSensor>(
         getSensors(sensor::SensorType::Torque3DSensor));
