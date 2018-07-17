@@ -26,7 +26,7 @@ public:
         m_type = SensorType::Force3DSensor;
     }
 
-    virtual ~IForce3DSensor() = 0;
+    virtual ~IForce3DSensor() = default;
 
     virtual bool getForce3D(Vector3& force) const = 0;
 };

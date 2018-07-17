@@ -70,7 +70,7 @@ public:
         , m_status{aStatus}
     {}
 
-    virtual ~ISensor() = 0;
+    virtual ~ISensor() = default;
 
     // TODO: timestamp? sequence number?
     // TODO: virtual?

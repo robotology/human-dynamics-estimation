@@ -28,7 +28,7 @@ public:
         m_type = SensorType::VirtualSphericalJointKinSensor;
     }
 
-    virtual ~IVirtualSphericalJointKinSensor() = 0;
+    virtual ~IVirtualSphericalJointKinSensor() = default;
 
     // CONVENTION: RPY are defined as rotationa about X-Y-Z wrt fix frame
     virtual bool getJointAnglesAsRPY(Vector3 angleAsRPY) const = 0;

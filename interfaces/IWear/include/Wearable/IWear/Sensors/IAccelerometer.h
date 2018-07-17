@@ -26,7 +26,7 @@ public:
         m_type = SensorType::Accelerometer;
     }
 
-    virtual ~IAccelerometer() = 0;
+    virtual ~IAccelerometer() = default;
 
     virtual bool getLinearAcceleration(Vector3& linearAcceleration) const = 0;
 };

@@ -26,7 +26,7 @@ public:
         m_type = SensorType::EmgSensor;
     }
 
-    virtual ~IEmgSensor() = 0;
+    virtual ~IEmgSensor() = default;
 
     virtual bool getEmgSignal(double& emgSignal) const = 0;
     virtual bool getNormalizationValue(double& normalizationValue) const = 0;

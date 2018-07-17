@@ -26,7 +26,7 @@ public:
         m_type = SensorType::Torque3DSensor;
     }
 
-    virtual ~ITorque3DSensor() = 0;
+    virtual ~ITorque3DSensor() = default;
 
     virtual bool getTorque3D(Vector3& torque) const = 0;
 };

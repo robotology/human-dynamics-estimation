@@ -26,7 +26,7 @@ public:
         m_type = SensorType::PositionSensor;
     }
 
-    virtual ~IPositionSensor() = 0;
+    virtual ~IPositionSensor() = default;
 
     virtual bool getPosition(Vector3& position) const = 0;
 };

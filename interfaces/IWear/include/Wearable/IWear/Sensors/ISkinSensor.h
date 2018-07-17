@@ -26,7 +26,7 @@ public:
         m_type = SensorType::SkinSensor;
     }
 
-    virtual ~ISkinSensor() = 0;
+    virtual ~ISkinSensor() = default;
 
     // TODO: to be implemented
 };

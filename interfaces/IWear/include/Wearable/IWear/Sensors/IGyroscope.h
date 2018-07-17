@@ -26,7 +26,7 @@ public:
         m_type = SensorType::Gyroscope;
     }
 
-    virtual ~IGyroscope() = 0;
+    virtual ~IGyroscope() = default;
 
     virtual bool getAngularRate(Vector3& angularRate) const = 0;
 };

@@ -26,7 +26,7 @@ public:
         m_type = SensorType::Magnetometer;
     }
 
-    virtual ~IMagnetometer() = 0;
+    virtual ~IMagnetometer() = default;
 
     virtual bool getMagneticField(Vector3& magneticField) const = 0;
 };

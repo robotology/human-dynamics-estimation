@@ -26,7 +26,7 @@ public:
         m_type = SensorType::FreeBodyAccelerationSensor;
     }
 
-    virtual ~IFreeBodyAccelerationSensor() = 0;
+    virtual ~IFreeBodyAccelerationSensor() = default;
 
     virtual bool getFreeBodyAcceleration(Vector3& freeBodyAcceleration) const = 0;
 };

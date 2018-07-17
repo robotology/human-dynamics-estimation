@@ -26,7 +26,7 @@ public:
         m_type = SensorType::ForceTorque6DSensor;
     }
 
-    virtual ~IForceTorque6DSensor() = 0;
+    virtual ~IForceTorque6DSensor() = default;
 
     virtual bool getForceTorque6D(Vector3& force3D, Vector3& torque3D) const = 0;
 

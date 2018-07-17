@@ -26,7 +26,7 @@ public:
         m_type = SensorType::VirtualLinkKinSensor;
     }
 
-    virtual ~IVirtualLinkKinSensor() = 0;
+    virtual ~IVirtualLinkKinSensor() = default;
 
     // 6D quantities
     virtual bool getLinkAcceleration(Vector3& linear, Vector3& angular) const = 0;

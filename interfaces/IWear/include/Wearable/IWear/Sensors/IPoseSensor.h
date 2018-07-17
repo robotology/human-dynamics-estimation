@@ -27,7 +27,7 @@ public:
         m_type = SensorType::PoseSensor;
     }
 
-    virtual ~IPoseSensor() = 0;
+    virtual ~IPoseSensor() = default;
 
     virtual bool getPose(Quaternion& orientation, Vector3& position) const = 0;
 

@@ -26,7 +26,7 @@ public:
         m_type = SensorType::TemperatureSensor;
     }
 
-    virtual ~ITemperatureSensor() = 0;
+    virtual ~ITemperatureSensor() = default;
 
     virtual bool getTemperature(double& temperature) const = 0;
 };

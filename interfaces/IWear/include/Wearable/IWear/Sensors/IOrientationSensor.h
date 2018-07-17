@@ -27,7 +27,7 @@ public:
         m_type = SensorType::OrientationSensor;
     }
 
-    virtual ~IOrientationSensor() = 0;
+    virtual ~IOrientationSensor() = default;
     virtual bool getOrientationAsQuaternion(Quaternion& orientation) const = 0;
 
     inline bool getOrientationAsRPY(Vector3& orientation) const;
