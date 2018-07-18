@@ -14,8 +14,8 @@
 %  * Public License for more details
 %  */
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-clear; 
-clc;
+clear variables
+clc
 
 %% Human Configuration
 HUMAN_ON_GAZEBO          = true;

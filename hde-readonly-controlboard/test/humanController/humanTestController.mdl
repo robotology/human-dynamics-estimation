@@ -6,7 +6,7 @@ Model {
     NumRootInports	    0
     NumRootOutports	    0
     ParameterArgumentNames  ""
-    ComputedModelVersion    "1.187"
+    ComputedModelVersion    "1.190"
     NumModelReferences	    0
     NumTestPointedSignals   0
     NumProvidedFunctions    0
@@ -176,8 +176,8 @@ Model {
 	  ViewObjType		  "SimulinkTopLevel"
 	  LoadSaveID		  "0"
 	  Extents		  [2455.0, 1230.0]
-	  ZoomFactor		  [1.9057344918212131]
-	  Offset		  [84.653751054995723, -329.12836147330728]
+	  ZoomFactor		  [1.9057343782252485]
+	  Offset		  [84.653750617104492, -329.30098899894455]
 	}
 	Object {
 	  $ObjectID		  6
@@ -222,9 +222,9 @@ Model {
   ModifiedByFormat	  "%<Auto>"
   LastModifiedBy	  "yeshi"
   ModifiedDateFormat	  "%<Auto>"
-  LastModifiedDate	  "Wed Jul 18 16:14:40 2018"
-  RTWModifiedTimeStamp	  453831230
-  ModelVersionFormat	  "1.%<AutoIncrement:187>"
+  LastModifiedDate	  "Wed Jul 18 16:49:01 2018"
+  RTWModifiedTimeStamp	  453833296
+  ModelVersionFormat	  "1.%<AutoIncrement:190>"
   SampleTimeColors	  off
   SampleTimeAnnotations	  off
   LibraryLinkDisplay	  "disabled"
@@ -1707,7 +1707,7 @@ Model {
       BlockType		      Gain
       Name		      "Gain1"
       SID		      "52"
-      Position		      [450, 40, 495, 70]
+      Position		      [480, 40, 525, 70]
       ZOrder		      138
       Gain		      "180/pi"
       ParamDataTypeStr	      "Inherit: Inherit via internal rule"
@@ -1718,7 +1718,7 @@ Model {
       BlockType		      Gain
       Name		      "Gain2"
       SID		      "54"
-      Position		      [450, 105, 495, 135]
+      Position		      [480, 105, 525, 135]
       ZOrder		      141
       Gain		      "180/pi"
       ParamDataTypeStr	      "Inherit: Inherit via internal rule"
@@ -1729,7 +1729,7 @@ Model {
       BlockType		      Gain
       Name		      "Gain3"
       SID		      "55"
-      Position		      [450, 170, 495, 200]
+      Position		      [480, 170, 525, 200]
       ZOrder		      142
       Gain		      "180/pi"
       ParamDataTypeStr	      "Inherit: Inherit via internal rule"
@@ -2465,7 +2465,7 @@ Model {
       BlockType		      Constant
       Name		      "base pose"
       SID		      "15"
-      Position		      [310, -80, 380, -50]
+      Position		      [260, -225, 330, -195]
       ZOrder		      110
       Value		      "eye(4,4)"
     }
@@ -2473,7 +2473,7 @@ Model {
       BlockType		      Constant
       Name		      "base velocity"
       SID		      "270"
-      Position		      [310, -25, 380, 5]
+      Position		      [260, -125, 330, -95]
       ZOrder		      737
       Value		      "zeros(6,1)"
     }
@@ -5793,47 +5793,47 @@ Model {
       ScopeSpecificationString "Simulink.scopes.TimeScopeBlockCfg('CurrentConfiguration', extmgr.ConfigurationSet(extm"
       "gr.Configuration('Core','General UI',true),extmgr.Configuration('Core','Source UI',true),extmgr.Configuration('S"
       "ources','WiredSimulink',true,'DataLoggingVariableName','ScopeData1'),extmgr.Configuration('Visuals','Time Domain"
-      "',true,'SerializedDisplays',{struct('MinYLimReal','-42.83324','MaxYLimReal','352.2114','YLabelReal','','MinYLimM"
-      "ag','0.00000','MaxYLimMag','352.2114','LegendVisibility','On','XGrid',true,'YGrid',true,'PlotMagPhase',false,'Ax"
-      "esColor',[0 0 0],'AxesTickColor',[0.686274509803922 0.686274509803922 0.686274509803922],'ColorOrder',[1 1 0.066"
-      "6666666666667;0.0745098039215686 0.623529411764706 1;1 0.411764705882353 0.16078431372549;0.392156862745098 0.83"
-      "1372549019608 0.0745098039215686;0.717647058823529 0.274509803921569 1;0.0588235294117647 1 1;1 0.07450980392156"
-      "86 0.650980392156863],'Title','%<SignalLabel>','LinePropertiesCache',{{}},'UserDefinedChannelNames',{{}},'NumLin"
-      "es',3,'LineNames',{{'Human Left Leg Force:1','Human Left Leg Force:2','Human Left Leg Force:3'}},'ShowContent',t"
-      "rue,'Placement',1),struct('MinYLimReal','-2.97473','MaxYLimReal','2.73095','YLabelReal','','MinYLimMag','0.00000"
-      "','MaxYLimMag','1.00000','LegendVisibility','On','XGrid',true,'YGrid',true,'PlotMagPhase',false,'AxesColor',[0 0"
-      " 0],'AxesTickColor',[0.686274509803922 0.686274509803922 0.686274509803922],'ColorOrder',[1 1 0.0666666666666667"
-      ";0.0745098039215686 0.623529411764706 1;1 0.411764705882353 0.16078431372549;0.392156862745098 0.831372549019608"
-      " 0.0745098039215686;0.717647058823529 0.274509803921569 1;0.0588235294117647 1 1;1 0.0745098039215686 0.65098039"
-      "2156863],'Title','%<SignalLabel>','LinePropertiesCache',{{}},'UserDefinedChannelNames',{{}},'NumLines',3,'LineNa"
-      "mes',{{'Human Left Leg Torque:1','Human Left Leg Torque:2','Human Left Leg Torque:3'}},'ShowContent',true,'Place"
-      "ment',2),struct('MinYLimReal','-43.14744','MaxYLimReal','355.48855','YLabelReal','','MinYLimMag','0.00000','MaxY"
-      "LimMag','1.00000','LegendVisibility','On','XGrid',true,'YGrid',true,'PlotMagPhase',false,'AxesColor',[0 0 0],'Ax"
-      "esTickColor',[0.686274509803922 0.686274509803922 0.686274509803922],'ColorOrder',[1 1 0.0666666666666667;0.0745"
-      "098039215686 0.623529411764706 1;1 0.411764705882353 0.16078431372549;0.392156862745098 0.831372549019608 0.0745"
-      "098039215686;0.717647058823529 0.274509803921569 1;0.0588235294117647 1 1;1 0.0745098039215686 0.650980392156863"
-      "],'Title','%<SignalLabel>','LinePropertiesCache',{{}},'UserDefinedChannelNames',{{}},'NumLines',3,'LineNames',{{"
-      "'Human Right Leg Force:1','Human Right Leg Force:2','Human Right Leg Force:3'}},'ShowContent',true,'Placement',3"
-      "),struct('MinYLimReal','-2.89531','MaxYLimReal','2.68816','YLabelReal','','MinYLimMag','0.00000','MaxYLimMag','1"
-      ".00000','LegendVisibility','On','XGrid',true,'YGrid',true,'PlotMagPhase',false,'AxesColor',[0 0 0],'AxesTickColo"
-      "r',[0.686274509803922 0.686274509803922 0.686274509803922],'ColorOrder',[1 1 0.0666666666666667;0.07450980392156"
-      "86 0.623529411764706 1;1 0.411764705882353 0.16078431372549;0.392156862745098 0.831372549019608 0.07450980392156"
-      "86;0.717647058823529 0.274509803921569 1;0.0588235294117647 1 1;1 0.0745098039215686 0.650980392156863],'Title',"
-      "'%<SignalLabel>','LinePropertiesCache',{{}},'UserDefinedChannelNames',{{}},'NumLines',3,'LineNames',{{'Human Rig"
-      "ht Leg Torque:1','Human Right Leg Torque:2','Human Right Leg Torque:3'}},'ShowContent',true,'Placement',4),struc"
-      "t('MinYLimReal','-7.92907','MaxYLimReal','70.2513','YLabelReal','','MinYLimMag','0.00000','MaxYLimMag','1.00000'"
-      ",'LegendVisibility','On','XGrid',true,'YGrid',true,'PlotMagPhase',false,'AxesColor',[0 0 0],'AxesTickColor',[0.6"
-      "86274509803922 0.686274509803922 0.686274509803922],'ColorOrder',[1 1 0.0666666666666667;0.0745098039215686 0.62"
-      "3529411764706 1;1 0.411764705882353 0.16078431372549;0.392156862745098 0.831372549019608 0.0745098039215686;0.71"
-      "7647058823529 0.274509803921569 1;0.0588235294117647 1 1;1 0.0745098039215686 0.650980392156863],'Title','%<Sign"
-      "alLabel>','LinePropertiesCache',{{}},'UserDefinedChannelNames',{{}},'NumLines',3,'LineNames',{{'weight:1','weigh"
-      "t:2','weight:3'}},'ShowContent',true,'Placement',5)},'DisplayPropertyDefaults',struct('YLabelReal','','AxesColor"
-      "',[0 0 0],'AxesTickColor',[0.686274509803922 0.686274509803922 0.686274509803922],'ColorOrder',[0.07450980392156"
-      "86 0.623529411764706 1;1 0.411764705882353 0.16078431372549;1 1 0.0666666666666667;0.717647058823529 0.274509803"
-      "921569 1;0.392156862745098 0.831372549019608 0.0745098039215686;0.0588235294117647 1 1;1 0.0745098039215686 0.65"
-      "0980392156863]),'DisplayLayoutDimensions',[5 1],'DisplayContentCache',[]),extmgr.Configuration('Tools','Plot Nav"
-      "igation',true,'PreviousAutoscale','XY','OnceAtStop',false),extmgr.Configuration('Tools','Measurements',true,'Ver"
-      "sion','2018a')),'Version','2018a','Position',[68 1 2493 1328])"
+      "',true,'SerializedDisplays',{struct('MinYLimReal','-42.7578','MaxYLimReal','353.13648','YLabelReal','','MinYLimM"
+      "ag','0.00000','MaxYLimMag','353.13648','LegendVisibility','On','XGrid',true,'YGrid',true,'PlotMagPhase',false,'A"
+      "xesColor',[0 0 0],'AxesTickColor',[0.686274509803922 0.686274509803922 0.686274509803922],'ColorOrder',[1 1 0.06"
+      "66666666666667;0.0745098039215686 0.623529411764706 1;1 0.411764705882353 0.16078431372549;0.392156862745098 0.8"
+      "31372549019608 0.0745098039215686;0.717647058823529 0.274509803921569 1;0.0588235294117647 1 1;1 0.0745098039215"
+      "686 0.650980392156863],'Title','%<SignalLabel>','LinePropertiesCache',{{}},'UserDefinedChannelNames',{{}},'NumLi"
+      "nes',3,'LineNames',{{'Human Left Leg Force:1','Human Left Leg Force:2','Human Left Leg Force:3'}},'ShowContent',"
+      "true,'Placement',1),struct('MinYLimReal','-2.75527','MaxYLimReal','2.78161','YLabelReal','','MinYLimMag','0.0000"
+      "0','MaxYLimMag','1.00000','LegendVisibility','On','XGrid',true,'YGrid',true,'PlotMagPhase',false,'AxesColor',[0 "
+      "0 0],'AxesTickColor',[0.686274509803922 0.686274509803922 0.686274509803922],'ColorOrder',[1 1 0.066666666666666"
+      "7;0.0745098039215686 0.623529411764706 1;1 0.411764705882353 0.16078431372549;0.392156862745098 0.83137254901960"
+      "8 0.0745098039215686;0.717647058823529 0.274509803921569 1;0.0588235294117647 1 1;1 0.0745098039215686 0.6509803"
+      "92156863],'Title','%<SignalLabel>','LinePropertiesCache',{{}},'UserDefinedChannelNames',{{}},'NumLines',3,'LineN"
+      "ames',{{'Human Left Leg Torque:1','Human Left Leg Torque:2','Human Left Leg Torque:3'}},'ShowContent',true,'Plac"
+      "ement',2),struct('MinYLimReal','-42.84131','MaxYLimReal','353.79906','YLabelReal','','MinYLimMag','0.00000','Max"
+      "YLimMag','1.00000','LegendVisibility','On','XGrid',true,'YGrid',true,'PlotMagPhase',false,'AxesColor',[0 0 0],'A"
+      "xesTickColor',[0.686274509803922 0.686274509803922 0.686274509803922],'ColorOrder',[1 1 0.0666666666666667;0.074"
+      "5098039215686 0.623529411764706 1;1 0.411764705882353 0.16078431372549;0.392156862745098 0.831372549019608 0.074"
+      "5098039215686;0.717647058823529 0.274509803921569 1;0.0588235294117647 1 1;1 0.0745098039215686 0.65098039215686"
+      "3],'Title','%<SignalLabel>','LinePropertiesCache',{{}},'UserDefinedChannelNames',{{}},'NumLines',3,'LineNames',{"
+      "{'Human Right Leg Force:1','Human Right Leg Force:2','Human Right Leg Force:3'}},'ShowContent',true,'Placement',"
+      "3),struct('MinYLimReal','-2.67854','MaxYLimReal','2.74077','YLabelReal','','MinYLimMag','0.00000','MaxYLimMag','"
+      "1.00000','LegendVisibility','On','XGrid',true,'YGrid',true,'PlotMagPhase',false,'AxesColor',[0 0 0],'AxesTickCol"
+      "or',[0.686274509803922 0.686274509803922 0.686274509803922],'ColorOrder',[1 1 0.0666666666666667;0.0745098039215"
+      "686 0.623529411764706 1;1 0.411764705882353 0.16078431372549;0.392156862745098 0.831372549019608 0.0745098039215"
+      "686;0.717647058823529 0.274509803921569 1;0.0588235294117647 1 1;1 0.0745098039215686 0.650980392156863],'Title'"
+      ",'%<SignalLabel>','LinePropertiesCache',{{}},'UserDefinedChannelNames',{{}},'NumLines',3,'LineNames',{{'Human Ri"
+      "ght Leg Torque:1','Human Right Leg Torque:2','Human Right Leg Torque:3'}},'ShowContent',true,'Placement',4),stru"
+      "ct('MinYLimReal','-7.91505','MaxYLimReal','70.24975','YLabelReal','','MinYLimMag','0.00000','MaxYLimMag','1.0000"
+      "0','LegendVisibility','On','XGrid',true,'YGrid',true,'PlotMagPhase',false,'AxesColor',[0 0 0],'AxesTickColor',[0"
+      ".686274509803922 0.686274509803922 0.686274509803922],'ColorOrder',[1 1 0.0666666666666667;0.0745098039215686 0."
+      "623529411764706 1;1 0.411764705882353 0.16078431372549;0.392156862745098 0.831372549019608 0.0745098039215686;0."
+      "717647058823529 0.274509803921569 1;0.0588235294117647 1 1;1 0.0745098039215686 0.650980392156863],'Title','%<Si"
+      "gnalLabel>','LinePropertiesCache',{{}},'UserDefinedChannelNames',{{}},'NumLines',3,'LineNames',{{'weight:1','wei"
+      "ght:2','weight:3'}},'ShowContent',true,'Placement',5)},'DisplayPropertyDefaults',struct('YLabelReal','','AxesCol"
+      "or',[0 0 0],'AxesTickColor',[0.686274509803922 0.686274509803922 0.686274509803922],'ColorOrder',[0.074509803921"
+      "5686 0.623529411764706 1;1 0.411764705882353 0.16078431372549;1 1 0.0666666666666667;0.717647058823529 0.2745098"
+      "03921569 1;0.392156862745098 0.831372549019608 0.0745098039215686;0.0588235294117647 1 1;1 0.0745098039215686 0."
+      "650980392156863]),'DisplayLayoutDimensions',[5 1],'DisplayContentCache',[]),extmgr.Configuration('Tools','Plot N"
+      "avigation',true,'PreviousAutoscale','XY','OnceAtStop',false),extmgr.Configuration('Tools','Measurements',true,'V"
+      "ersion','2018a')),'Version','2018a','Position',[68 1 2493 1328])"
       NumInputPorts	      "5"
       Floating		      off
     }
@@ -6069,34 +6069,43 @@ Model {
       ZOrder		      3
       SrcBlock		      "Joint Positions"
       SrcPort		      1
-      DstBlock		      "Gain1"
-      DstPort		      1
+      Points		      [15, 0]
+      Branch {
+	ZOrder			279
+	Points			[0, -120]
+	Branch {
+	  ZOrder		  281
+	  DstBlock		  "Leg Contact Kinematics"
+	  DstPort		  2
+	}
+	Branch {
+	  ZOrder		  280
+	  Points		  [0, -95]
+	  Branch {
+	    ZOrder		    289
+	    DstBlock		    "Dynamics"
+	    DstPort		    3
+	  }
+	  Branch {
+	    ZOrder		    288
+	    Points		    [0, -95]
+	    DstBlock		    "Get Gravity Forces"
+	    DstPort		    2
+	  }
+	}
+      }
+      Branch {
+	ZOrder			278
+	DstBlock		"Gain1"
+	DstPort			1
+      }
     }
     Line {
       ZOrder		      113
       SrcBlock		      "Gain2"
       SrcPort		      1
-      Points		      [26, 0]
-      Branch {
-	ZOrder			226
-	Points			[0, -125]
-	Branch {
-	  ZOrder		  228
-	  Points		  [0, -130]
-	  DstBlock		  "Dynamics"
-	  DstPort		  4
-	}
-	Branch {
-	  ZOrder		  227
-	  DstBlock		  "Leg Contact Kinematics"
-	  DstPort		  4
-	}
-      }
-      Branch {
-	ZOrder			225
-	DstBlock		"human joint velocities data"
-	DstPort			1
-      }
+      DstBlock		      "human joint velocities data"
+      DstPort		      1
     }
     Line {
       ZOrder		      114
@@ -6109,8 +6118,27 @@ Model {
       ZOrder		      91
       SrcBlock		      "Joint Velocities"
       SrcPort		      1
-      DstBlock		      "Gain2"
-      DstPort		      1
+      Points		      [31, 0]
+      Branch {
+	ZOrder			291
+	Points			[0, -125]
+	Branch {
+	  ZOrder		  293
+	  DstBlock		  "Leg Contact Kinematics"
+	  DstPort		  4
+	}
+	Branch {
+	  ZOrder		  292
+	  Points		  [0, -130]
+	  DstBlock		  "Dynamics"
+	  DstPort		  4
+	}
+      }
+      Branch {
+	ZOrder			290
+	DstBlock		"Gain2"
+	DstPort			1
+      }
     }
     Line {
       ZOrder		      93
@@ -6140,41 +6168,39 @@ Model {
       ZOrder		      132
       SrcBlock		      "base pose"
       SrcPort		      1
-      Points		      [107, 0; 0, -30]
+      Points		      [63, 0]
       Branch {
-	ZOrder			137
-	DstBlock		"Leg Contact Kinematics"
+	ZOrder			284
+	DstBlock		"Dynamics"
 	DstPort			1
       }
       Branch {
-	ZOrder			136
-	Points			[0, -115; 1, 0]
-	Branch {
-	  ZOrder		  174
-	  Points		  [0, -80]
-	  DstBlock		  "Get Gravity Forces"
-	  DstPort		  1
-	}
-	Branch {
-	  ZOrder		  173
-	  DstBlock		  "Dynamics"
-	  DstPort		  1
-	}
+	ZOrder			174
+	Points			[0, -80]
+	DstBlock		"Get Gravity Forces"
+	DstPort			1
+      }
+      Branch {
+	ZOrder			282
+	Points			[0, 115]
+	DstBlock		"Leg Contact Kinematics"
+	DstPort			1
       }
     }
     Line {
       ZOrder		      133
       SrcBlock		      "base velocity"
       SrcPort		      1
-      Points		      [119, 0; 0, -25]
+      Points		      [31, 0]
       Branch {
-	ZOrder			142
+	ZOrder			286
+	Points			[0, 75]
 	DstBlock		"Leg Contact Kinematics"
 	DstPort			3
       }
       Branch {
 	ZOrder			141
-	Points			[0, -150]
+	Points			[0, -75]
 	DstBlock		"Dynamics"
 	DstPort			2
       }
@@ -6183,36 +6209,8 @@ Model {
       ZOrder		      78
       SrcBlock		      "Gain1"
       SrcPort		      1
-      Points		      [14, 0]
-      Branch {
-	ZOrder			134
-	Points			[0, -120]
-	Branch {
-	  ZOrder		  140
-	  DstBlock		  "Leg Contact Kinematics"
-	  DstPort		  2
-	}
-	Branch {
-	  ZOrder		  139
-	  Points		  [0, -95]
-	  Branch {
-	    ZOrder		    229
-	    DstBlock		    "Dynamics"
-	    DstPort		    3
-	  }
-	  Branch {
-	    ZOrder		    176
-	    Points		    [0, -95]
-	    DstBlock		    "Get Gravity Forces"
-	    DstPort		    2
-	  }
-	}
-      }
-      Branch {
-	ZOrder			99
-	DstBlock		"human joint data"
-	DstPort			1
-      }
+      DstBlock		      "human joint data"
+      DstPort		      1
     }
     Line {
       ZOrder		      145
