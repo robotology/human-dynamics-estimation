@@ -2,7 +2,7 @@
 # This software may be modified and distributed under the terms of the
 # GNU Lesser General Public License v2.1 or any later version.
 
-yarp_prepare_plugin(IWearWrapper
+yarp_prepare_plugin(iwear_wrapper
     TYPE wearable::wrappers::IWearWrapper
     INCLUDE IWearWrapper.h
     CATEGORY device
@@ -17,7 +17,7 @@ target_include_directories(IWearWrapper PRIVATE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
 
 target_link_libraries(IWearWrapper PUBLIC
-    IWear WearData YARP::YARP_dev)
+    IWear WearableData YARP::YARP_dev)
 
 yarp_install(
     TARGETS IWearWrapper
@@ -27,4 +27,5 @@ yarp_install(
 
 yarp_install(
     FILES "${CMAKE_CURRENT_SOURCE_DIR}/iwear_wrapper.ini"
+    #FILES "${CMAKE_CURRENT_SOURCE_DIR}/IWearWrapper.ini"
     DESTINATION ${YARP_PLUGIN_MANIFESTS_INSTALL_DIR})

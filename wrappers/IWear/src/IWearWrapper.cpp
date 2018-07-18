@@ -8,10 +8,13 @@
 
 #include "IWearWrapper.h"
 #include "Wearable/IWear/IWear.h"
-#include "thrift/WearData.h"
+#include "thrift/WearableData.h"
+#include "thrift/WearableMetadataService.h"
 
 #include <yarp/dev/PreciselyTimed.h>
+#include <yarp/os/BufferedPort.h>
 #include <yarp/os/LogStream.h>
+#include <yarp/os/Port.h>
 
 #include <mutex>
 
@@ -22,13 +25,46 @@ constexpr double DefaultPeriod = 0.01;
 using namespace wearable;
 using namespace wearable::wrappers;
 
-class IWearWrapper::impl
+class IWearWrapper::impl : public wearable::msg::WearableMetadataService
 {
 public:
-    yarp::os::BufferedPort<msg::WearData> portWearData;
+    yarp::os::Port rpcPort;
+    yarp::os::BufferedPort<msg::WearableData> dataPort;
+
+    std::map<msg::SensorType, std::vector<msg::WearableSensorMetadata>> wearableMetadata;
+
+    std::string rpcPortName;
+    std::string dataPortName;
+
+    bool firstRun = true;
 
     wearable::IWear* iWear = nullptr;
     yarp::dev::IPreciselyTimed* iPreciselyTimed = nullptr;
+
+    wearable::VectorOfSensorPtr<const wearable::sensor::IAccelerometer> accelerometers;
+    wearable::VectorOfSensorPtr<const wearable::sensor::IEmgSensor> emgSensors;
+    wearable::VectorOfSensorPtr<const wearable::sensor::IForce3DSensor> force3DSensors;
+    wearable::VectorOfSensorPtr<const wearable::sensor::IForceTorque6DSensor> forceTorque6DSensors;
+    wearable::VectorOfSensorPtr<const wearable::sensor::IFreeBodyAccelerationSensor>
+        freeBodyAccelerationSensors;
+    wearable::VectorOfSensorPtr<const wearable::sensor::IGyroscope> gyroscopes;
+    wearable::VectorOfSensorPtr<const wearable::sensor::IMagnetometer> magnetometers;
+    wearable::VectorOfSensorPtr<const wearable::sensor::IOrientationSensor> orientationSensors;
+    wearable::VectorOfSensorPtr<const wearable::sensor::IPoseSensor> poseSensors;
+    wearable::VectorOfSensorPtr<const wearable::sensor::IPositionSensor> positionSensors;
+    wearable::VectorOfSensorPtr<const wearable::sensor::ISkinSensor> skinSensors;
+    wearable::VectorOfSensorPtr<const wearable::sensor::ITemperatureSensor> temperatureSensors;
+    wearable::VectorOfSensorPtr<const wearable::sensor::ITorque3DSensor> torque3DSensors;
+    wearable::VectorOfSensorPtr<const wearable::sensor::IVirtualLinkKinSensor>
+        virtualLinkKinSensors;
+    wearable::VectorOfSensorPtr<const wearable::sensor::IVirtualSphericalJointKinSensor>
+        virtualSphericalJointKinSensors;
+
+    std::map<msg::SensorType, std::vector<msg::WearableSensorMetadata>> getMetadata() override
+    {
+        return wearableMetadata;
+    }
+    //    std::vector<std::string> help(const std::string& functionName = "--all") override; // TODO
 };
 
 IWearWrapper::IWearWrapper()
@@ -45,26 +81,6 @@ IWearWrapper::~IWearWrapper()
 // Helpers
 // =======
 
-const std::map<sensor::SensorType, msg::SensorType> mapSensorTypes = {
-    {sensor::SensorType::Accelerometer, msg::SensorType::ACCELEROMETER},
-    {sensor::SensorType::EmgSensor, msg::SensorType::EMG_SENSOR},
-    {sensor::SensorType::Force3DSensor, msg::SensorType::FORCE_3D_SENSOR},
-    {sensor::SensorType::ForceTorque6DSensor, msg::SensorType::FORCE_TORQUE_6D_SENSOR},
-    {sensor::SensorType::FreeBodyAccelerationSensor,
-     msg::SensorType::FREE_BODY_ACCELERATION_SENSOR},
-    {sensor::SensorType::Gyroscope, msg::SensorType::GYROSCOPE},
-    {sensor::SensorType::Magnetometer, msg::SensorType::MAGNETOMETER},
-    {sensor::SensorType::OrientationSensor, msg::SensorType::ORIENTATION_SENSOR},
-    {sensor::SensorType::PoseSensor, msg::SensorType::POSE_SENSOR},
-    {sensor::SensorType::PositionSensor, msg::SensorType::POSITION_SENSOR},
-    {sensor::SensorType::SkinSensor, msg::SensorType::SKIN_SENSOR},
-    {sensor::SensorType::TemperatureSensor, msg::SensorType::TEMPERATURE_SENSOR},
-    {sensor::SensorType::Torque3DSensor, msg::SensorType::TORQUE_3D_SENSOR},
-    {sensor::SensorType::VirtualLinkKinSensor, msg::SensorType::VIRTUAL_LINK_KIN_SENSOR},
-    {sensor::SensorType::VirtualSphericalJointKinSensor,
-     msg::SensorType::VIRTUAL_SPHERICAL_JOINT_KIN_SENSOR},
-};
-
 const std::map<sensor::SensorStatus, msg::SensorStatus> mapSensorStatus = {
     {sensor::SensorStatus::Ok, msg::SensorStatus::OK},
     {sensor::SensorStatus::Error, msg::SensorStatus::ERROR},
@@ -77,9 +93,7 @@ const std::map<sensor::SensorStatus, msg::SensorStatus> mapSensorStatus = {
 
 msg::SensorInfo generateSensorStatus(const wearable::sensor::ISensor* sensor)
 {
-    return {sensor->getSensorName(),
-            mapSensorTypes.at(sensor->getSensorType()),
-            mapSensorStatus.at(sensor->getSensorStatus())};
+    return {sensor->getSensorName(), mapSensorStatus.at(sensor->getSensorStatus())};
 }
 
 msg::VectorXYZ vector3ToVectorXYZ(const wearable::Vector3& input)
@@ -94,22 +108,12 @@ msg::VectorRPY vector3ToVectorRPY(const wearable::Vector3& input)
 
 msg::QuaternionWXYZ convertQuaternion(const wearable::Quaternion& input)
 {
-    return {input[0], {input[1], input[2], input[3]}};
+    return {input[0], input[1], input[2], input[3]};
 }
 
 // ========================
 // PeriodicThread interface
 // ========================
-
-bool IWearWrapper::threadInit()
-{
-    if (pImpl->iWear->getStatus() != WearStatus::Ok) {
-        yError() << logPrefix << "Status of IWear object is not ::Ok";
-        return false;
-    }
-
-    return true;
-}
 
 void IWearWrapper::run()
 {
@@ -123,176 +127,214 @@ void IWearWrapper::run()
         return;
     }
 
-    msg::WearData& data = pImpl->portWearData.prepare();
+    if (pImpl->iWear->getStatus() != WearStatus::Ok) {
+        return;
+    }
+
+    if (pImpl->firstRun) {
+        pImpl->firstRun = false;
+
+        pImpl->accelerometers = pImpl->iWear->getAccelerometers();
+        pImpl->emgSensors = pImpl->iWear->getEmgSensors();
+        pImpl->force3DSensors = pImpl->iWear->getForce3DSensors();
+        pImpl->forceTorque6DSensors = pImpl->iWear->getForceTorque6DSensors();
+        pImpl->freeBodyAccelerationSensors = pImpl->iWear->getFreeBodyAccelerationSensors();
+        pImpl->gyroscopes = pImpl->iWear->getGyroscopes();
+        pImpl->magnetometers = pImpl->iWear->getMagnetometers();
+        pImpl->orientationSensors = pImpl->iWear->getOrientationSensors();
+        pImpl->poseSensors = pImpl->iWear->getPoseSensors();
+        pImpl->positionSensors = pImpl->iWear->getPositionSensors();
+        pImpl->skinSensors = pImpl->iWear->getSkinSensors();
+        pImpl->temperatureSensors = pImpl->iWear->getTemperatureSensors();
+        pImpl->torque3DSensors = pImpl->iWear->getTorque3DSensors();
+        pImpl->virtualLinkKinSensors = pImpl->iWear->getVirtualLinkKinSensors();
+        pImpl->virtualSphericalJointKinSensors = pImpl->iWear->getVirtualSphericalJointKinSensors();
+    }
+
+    msg::WearableData& data = pImpl->dataPort.prepare();
+    data.producerName = pImpl->iWear->getWearableName();
 
     yarp::os::Stamp timestamp = pImpl->iPreciselyTimed->getLastInputStamp();
-    pImpl->portWearData.setEnvelope(timestamp);
+    pImpl->dataPort.setEnvelope(timestamp);
 
     {
-        const auto vectorOfSensors = pImpl->iWear->getAccelerometers();
-        for (const auto& sensor : vectorOfSensors) {
+        for (const auto& sensor : pImpl->accelerometers) {
             wearable::Vector3 vector3;
             if (!sensor->getLinearAcceleration(vector3)) {
+                yError() << logPrefix << "[Accelerometers] "
+                         << "Failed to read data";
                 askToStop();
                 return;
             }
 
-            data.accelerometers.push_back(
-                {generateSensorStatus(sensor.get()), vector3ToVectorXYZ(vector3)});
+            data.accelerometers[sensor->getSensorName()] = {generateSensorStatus(sensor.get()),
+                                                            vector3ToVectorXYZ(vector3)};
         }
     }
     {
-        const auto vectorOfSensors = pImpl->iWear->getEmgSensors();
-        for (const auto& sensor : vectorOfSensors) {
-            double value;
+        for (const auto& sensor : pImpl->emgSensors) {
+            double value, normalization;
             // double normalizationValue;
-            if (!sensor->getEmgSignal(value)
-                // TODO
-                // || !sensor->getEmgSignal(normalizationValue)
-            ) {
+            if (!sensor->getEmgSignal(value) || !sensor->getEmgSignal(normalization)) {
+                yError() << logPrefix << "[EmgSensors] "
+                         << "Failed to read data";
                 askToStop();
                 return;
             }
-
-            data.emgSensors.push_back({generateSensorStatus(sensor.get()), value});
+            data.emgSensors[sensor->getSensorName()] = {generateSensorStatus(sensor.get()),
+                                                        {value, normalization}};
         }
     }
     {
-        const auto vectorOfSensors = pImpl->iWear->getForce3DSensors();
-        for (const auto& sensor : vectorOfSensors) {
+        for (const auto& sensor : pImpl->force3DSensors) {
+            yError() << logPrefix << "[Force3DSensors] "
+                     << "Failed to read data";
             wearable::Vector3 vector3;
             if (!sensor->getForce3D(vector3)) {
                 askToStop();
                 return;
             }
 
-            data.force3DSensors.push_back(
-                {generateSensorStatus(sensor.get()), vector3ToVectorXYZ(vector3)});
+            data.force3DSensors[sensor->getSensorName()] = {generateSensorStatus(sensor.get()),
+                                                            vector3ToVectorXYZ(vector3)};
         }
     }
     {
-        const auto vectorOfSensors = pImpl->iWear->getForceTorque6DSensors();
-        for (const auto& sensor : vectorOfSensors) {
+        for (const auto& sensor : pImpl->forceTorque6DSensors) {
             wearable::Vector6 vector6;
             if (!sensor->getForceTorque6D(vector6)) {
+                yError() << logPrefix << "[ForceTorque6DSensors] "
+                         << "Failed to read data";
                 askToStop();
                 return;
             }
 
-            data.forceTorque6DSensors.push_back(
-                {generateSensorStatus(sensor.get()),
-                 {{vector6[0], vector6[1], vector6[2]}, {vector6[3], vector6[4], vector6[5]}}});
+            data.forceTorque6DSensors[sensor->getSensorName()] = {
+                generateSensorStatus(sensor.get()),
+                {{vector6[0], vector6[1], vector6[2]}, {vector6[3], vector6[4], vector6[5]}}};
         }
     }
     {
-        const auto vectorOfSensors = pImpl->iWear->getFreeBodyAccelerationSensors();
-        for (const auto& sensor : vectorOfSensors) {
+        for (const auto& sensor : pImpl->freeBodyAccelerationSensors) {
             wearable::Vector3 vector3;
             if (!sensor->getFreeBodyAcceleration(vector3)) {
+                yError() << logPrefix << "[FreeBodyAccelerationSensors] "
+                         << "Failed to read data";
                 askToStop();
                 return;
             }
 
-            data.freeBodyAccelerationSensors.push_back(
-                {generateSensorStatus(sensor.get()), vector3ToVectorXYZ(vector3)});
+            data.freeBodyAccelerationSensors[sensor->getSensorName()] = {
+                generateSensorStatus(sensor.get()), vector3ToVectorXYZ(vector3)};
         }
     }
     {
-        const auto vectorOfSensors = pImpl->iWear->getGyroscopes();
-        for (const auto& sensor : vectorOfSensors) {
+        for (const auto& sensor : pImpl->gyroscopes) {
             wearable::Vector3 vector3;
             if (!sensor->getAngularRate(vector3)) {
+                yError() << logPrefix << "[Gyroscopes] "
+                         << "Failed to read data";
                 askToStop();
                 return;
             }
 
-            data.gyroscopes.push_back(
-                {generateSensorStatus(sensor.get()), vector3ToVectorXYZ(vector3)});
+            data.gyroscopes[sensor->getSensorName()] = {generateSensorStatus(sensor.get()),
+                                                        vector3ToVectorXYZ(vector3)};
         }
     }
     {
-        const auto vectorOfSensors = pImpl->iWear->getMagnetometers();
-        for (const auto& sensor : vectorOfSensors) {
+        for (const auto& sensor : pImpl->magnetometers) {
             wearable::Vector3 vector3;
             if (!sensor->getMagneticField(vector3)) {
+                yError() << logPrefix << "[Magnetometers] "
+                         << "Failed to read data";
                 askToStop();
                 return;
             }
 
-            data.magnetometers.push_back(
-                {generateSensorStatus(sensor.get()), vector3ToVectorXYZ(vector3)});
+            data.magnetometers[sensor->getSensorName()] = {generateSensorStatus(sensor.get()),
+                                                           vector3ToVectorXYZ(vector3)};
         }
     }
     {
-        const auto vectorOfSensors = pImpl->iWear->getOrientationSensors();
-        for (const auto& sensor : vectorOfSensors) {
+        for (const auto& sensor : pImpl->orientationSensors) {
             wearable::Quaternion quaternion;
             if (!sensor->getOrientationAsQuaternion(quaternion)) {
+                yError() << logPrefix << "[OrientationSensors] "
+                         << "Failed to read data";
                 askToStop();
                 return;
             }
 
-            data.orientationSensors.push_back(
-                {generateSensorStatus(sensor.get()), convertQuaternion(quaternion)});
+            data.orientationSensors[sensor->getSensorName()] = {generateSensorStatus(sensor.get()),
+                                                                convertQuaternion(quaternion)};
         }
     }
     {
-        const auto vectorOfSensors = pImpl->iWear->getPoseSensors();
-        for (const auto& sensor : vectorOfSensors) {
+        for (const auto& sensor : pImpl->poseSensors) {
             wearable::Vector3 vector3;
             wearable::Quaternion quaternion;
             if (!sensor->getPose(quaternion, vector3)) {
+                yError() << logPrefix << "[PoseSensors] "
+                         << "Failed to read data";
                 askToStop();
                 return;
             }
 
-            data.poseSensors.push_back(
-                {generateSensorStatus(sensor.get()),
-                 {convertQuaternion(quaternion), vector3ToVectorXYZ(vector3)}});
+            data.poseSensors[sensor->getSensorName()] = {
+                generateSensorStatus(sensor.get()),
+                {convertQuaternion(quaternion), vector3ToVectorXYZ(vector3)}};
         }
     }
     {
-        const auto vectorOfSensors = pImpl->iWear->getPositionSensors();
-        for (const auto& sensor : vectorOfSensors) {
+        for (const auto& sensor : pImpl->positionSensors) {
             wearable::Vector3 vector3;
             if (!sensor->getPosition(vector3)) {
+                yError() << logPrefix << "[PositionSensors] "
+                         << "Failed to read data";
                 askToStop();
                 return;
             }
 
-            data.positionSensors.push_back(
-                {generateSensorStatus(sensor.get()), vector3ToVectorXYZ(vector3)});
+            data.positionSensors[sensor->getSensorName()] = {generateSensorStatus(sensor.get()),
+                                                             vector3ToVectorXYZ(vector3)};
         }
     }
-    // TODO: skin sensor
     {
-        const auto vectorOfSensors = pImpl->iWear->getTemperatureSensors();
-        for (const auto& sensor : vectorOfSensors) {
+        if (pImpl->skinSensors.size() > 0) {
+            yWarning() << logPrefix << "SkinSensor not yet implemented.";
+        }
+    }
+    {
+        for (const auto& sensor : pImpl->temperatureSensors) {
             double value;
             if (!sensor->getTemperature(value)) {
+                yError() << logPrefix << "[TemperatureSensors] "
+                         << "Failed to read data";
                 askToStop();
                 return;
             }
 
-            data.temperatureSensors.push_back({generateSensorStatus(sensor.get()), value});
+            data.temperatureSensors[sensor->getSensorName()] = {generateSensorStatus(sensor.get()),
+                                                                value};
         }
     }
     {
-        const auto vectorOfSensors = pImpl->iWear->get3DTorqueSensors();
-        for (const auto& sensor : vectorOfSensors) {
+        for (const auto& sensor : pImpl->torque3DSensors) {
             wearable::Vector3 vector3;
             if (!sensor->getTorque3D(vector3)) {
+                yError() << logPrefix << "[Torque3DSensors] "
+                         << "Failed to read data";
                 askToStop();
                 return;
             }
 
-            data.torque3DSensors.push_back(
-                {generateSensorStatus(sensor.get()), vector3ToVectorXYZ(vector3)});
+            data.torque3DSensors[sensor->getSensorName()] = {generateSensorStatus(sensor.get()),
+                                                             vector3ToVectorXYZ(vector3)};
         }
     }
     {
-        const auto vectorOfSensors = pImpl->iWear->getVirtualLinkKinSensors();
-        for (const auto& sensor : vectorOfSensors) {
+        for (const auto& sensor : pImpl->virtualLinkKinSensors) {
             wearable::Vector3 linearAcc;
             wearable::Vector3 angularAcc;
             wearable::Vector3 linearVel;
@@ -302,40 +344,45 @@ void IWearWrapper::run()
             if (!sensor->getLinkAcceleration(linearAcc, angularAcc)
                 || !sensor->getLinkPose(position, orientation)
                 || !sensor->getLinkVelocity(linearVel, angularVel)) {
+                yError() << logPrefix << "[VirtualLinkKinSensors] "
+                         << "Failed to read data";
                 askToStop();
                 return;
             }
 
-            data.virtualLinkKinSensors.push_back({generateSensorStatus(sensor.get()),
-                                                  {convertQuaternion(orientation),
-                                                   vector3ToVectorXYZ(position),
-                                                   vector3ToVectorXYZ(linearVel),
-                                                   vector3ToVectorXYZ(angularVel),
-                                                   vector3ToVectorXYZ(linearAcc),
-                                                   vector3ToVectorXYZ(angularAcc)}});
+            data.virtualLinkKinSensors[sensor->getSensorName()] = {
+                generateSensorStatus(sensor.get()),
+                {convertQuaternion(orientation),
+                 vector3ToVectorXYZ(position),
+                 vector3ToVectorXYZ(linearVel),
+                 vector3ToVectorXYZ(angularVel),
+                 vector3ToVectorXYZ(linearAcc),
+                 vector3ToVectorXYZ(angularAcc)}};
         }
     }
     {
-        const auto vectorOfSensors = pImpl->iWear->getVirtualSphericalJointKinSensors();
-        for (const auto& sensor : vectorOfSensors) {
+        for (const auto& sensor : pImpl->virtualSphericalJointKinSensors) {
             wearable::Vector3 jointAngles;
             wearable::Vector3 jointVel;
             wearable::Vector3 jointAcc;
             if (!sensor->getJointAnglesAsRPY(jointAngles) || !sensor->getJointVelocities(jointVel)
                 || !sensor->getJointAccelerations(jointAcc)) {
+                yError() << logPrefix << "[VirtualSphericalJointKinSensors] "
+                         << "Failed to read data";
                 askToStop();
                 return;
             }
-
-            data.virtualSphericalJointKinSensors.push_back({generateSensorStatus(sensor.get()),
-                                                            {vector3ToVectorRPY(jointAngles),
-                                                             vector3ToVectorXYZ(jointVel),
-                                                             vector3ToVectorXYZ(jointAcc)}});
+            data.virtualSphericalJointKinSensors[sensor->getSensorName()] = {
+                generateSensorStatus(sensor.get()),
+                {vector3ToVectorRPY(jointAngles),
+                 vector3ToVectorXYZ(jointVel),
+                 vector3ToVectorXYZ(jointAcc)}};
         }
     }
 
     // Stream the data though the port
-    pImpl->portWearData.write();
+    pImpl->dataPort.write(true);
+    yInfo() << "Serialized";
 }
 
 // ======================
@@ -344,14 +391,22 @@ void IWearWrapper::run()
 
 bool IWearWrapper::open(yarp::os::Searchable& config)
 {
-    if (!config.check("outputPortName")) {
-        yError() << logPrefix << "Output port name not specified";
+    if (!config.check("dataPortName") || !config.find("dataPortName").isString()) {
+        yError() << logPrefix << "dataPortName parameter not found";
+        return false;
+    }
+
+    if (!config.check("rpcPortName") || !config.find("rpcPortName").isString()) {
+        yError() << logPrefix << "rpcPortName parameter not found";
         return false;
     }
 
     if (!config.check("period")) {
         yInfo() << logPrefix << "Using default period: " << DefaultPeriod << "s";
     }
+
+    pImpl->rpcPortName = config.find("rpcPortName").asString();
+    pImpl->dataPortName = config.find("dataPortName").asString();
 
     const double period = config.check("period", yarp::os::Value(DefaultPeriod)).asFloat64();
     setPeriod(period);
@@ -361,6 +416,8 @@ bool IWearWrapper::open(yarp::os::Searchable& config)
 
 bool IWearWrapper::close()
 {
+    pImpl->rpcPort.close();
+    pImpl->dataPort.close();
     return true;
 }
 
@@ -392,6 +449,67 @@ bool IWearWrapper::attach(yarp::dev::PolyDriver* poly)
         return false;
     }
 
+    // Open the port for streaming data
+    pImpl->dataPort.open(pImpl->dataPortName);
+
+    // Prepare the metadata for the RPC port
+    for (const auto& s : pImpl->iWear->getAccelerometers()) {
+        pImpl->wearableMetadata[msg::SensorType::ACCELEROMETER].push_back(s->getSensorName());
+    }
+    for (const auto& s : pImpl->iWear->getEmgSensors()) {
+        pImpl->wearableMetadata[msg::SensorType::EMG_SENSOR].push_back(s->getSensorName());
+    }
+    for (const auto& s : pImpl->iWear->getForce3DSensors()) {
+        pImpl->wearableMetadata[msg::SensorType::FORCE_3D_SENSOR].push_back(s->getSensorName());
+    }
+    for (const auto& s : pImpl->iWear->getForceTorque6DSensors()) {
+        pImpl->wearableMetadata[msg::SensorType::FORCE_TORQUE_6D_SENSOR].push_back(
+            s->getSensorName());
+    }
+    for (const auto& s : pImpl->iWear->getFreeBodyAccelerationSensors()) {
+        pImpl->wearableMetadata[msg::SensorType::FREE_BODY_ACCELERATION_SENSOR].push_back(
+            s->getSensorName());
+    }
+    for (const auto& s : pImpl->iWear->getGyroscopes()) {
+        pImpl->wearableMetadata[msg::SensorType::GYROSCOPE].push_back(s->getSensorName());
+    }
+    for (const auto& s : pImpl->iWear->getMagnetometers()) {
+        pImpl->wearableMetadata[msg::SensorType::MAGNETOMETER].push_back(s->getSensorName());
+    }
+    for (const auto& s : pImpl->iWear->getOrientationSensors()) {
+        pImpl->wearableMetadata[msg::SensorType::ORIENTATION_SENSOR].push_back(s->getSensorName());
+    }
+    for (const auto& s : pImpl->iWear->getPoseSensors()) {
+        pImpl->wearableMetadata[msg::SensorType::POSE_SENSOR].push_back(s->getSensorName());
+    }
+    for (const auto& s : pImpl->iWear->getPositionSensors()) {
+        pImpl->wearableMetadata[msg::SensorType::POSITION_SENSOR].push_back(s->getSensorName());
+    }
+    for (const auto& s : pImpl->iWear->getSkinSensors()) {
+        pImpl->wearableMetadata[msg::SensorType::SKIN_SENSOR].push_back(s->getSensorName());
+    }
+    for (const auto& s : pImpl->iWear->getTemperatureSensors()) {
+        pImpl->wearableMetadata[msg::SensorType::TEMPERATURE_SENSOR].push_back(s->getSensorName());
+    }
+    for (const auto& s : pImpl->iWear->getTorque3DSensors()) {
+        pImpl->wearableMetadata[msg::SensorType::TORQUE_3D_SENSOR].push_back(s->getSensorName());
+    }
+    for (const auto& s : pImpl->iWear->getVirtualLinkKinSensors()) {
+        pImpl->wearableMetadata[msg::SensorType::VIRTUAL_LINK_KIN_SENSOR].push_back(
+            s->getSensorName());
+    }
+    for (const auto& s : pImpl->iWear->getVirtualSphericalJointKinSensors()) {
+        pImpl->wearableMetadata[msg::SensorType::VIRTUAL_SPHERICAL_JOINT_KIN_SENSOR].push_back(
+            s->getSensorName());
+    }
+
+    // Open the RPC port for providing metadata
+    pImpl->yarp().attachAsServer(pImpl->rpcPort);
+    if (!pImpl->rpcPort.open(pImpl->rpcPortName)) {
+        yError() << logPrefix << "Failed to open " << pImpl->rpcPortName;
+        return false;
+    }
+
     return true;
 }
 
@@ -399,6 +517,7 @@ bool IWearWrapper::detach()
 {
     pImpl->iWear = nullptr;
     pImpl->iPreciselyTimed = nullptr;
+    pImpl->wearableMetadata = {};
 
     return true;
 }

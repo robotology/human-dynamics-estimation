@@ -35,7 +35,6 @@ public:
     ~IWearWrapper() override;
 
     // PeriodicThread
-    bool threadInit() override;
     void run() override;
 
     // DeviceDriver interface
