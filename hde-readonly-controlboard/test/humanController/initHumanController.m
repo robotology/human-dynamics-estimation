@@ -90,6 +90,11 @@ HUMAN.WBTConfigRobot.ControlledJoints         =  {   torso_4{:},...
                                                      left_ball_foot{:},...
                                                  };
                                              
+% Frames list
+HUMAN_Frames.BASE              = 'Pelvis'; 
+HUMAN_Frames.LEFT_FOOT         = 'LeftFoot';
+HUMAN_Frames.RIGHT_FOOT        = 'RightFoot';
+                                             
 %% Controller period [s]
 Config.Ts              = 0.01; 
 
