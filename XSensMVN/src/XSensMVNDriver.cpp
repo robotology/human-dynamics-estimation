@@ -114,6 +114,12 @@ DriverStatus XSensMVNDriver::getStatus() const
     return m_pimpl->getDriverStatus();
 }
 
+xsensmvn::Timestamp XSensMVNDriver::getTimeStamps() const
+{
+    std::lock_guard<std::mutex> readLock(*m_dataMutex);
+    return *(m_dataSample->timestamps);
+}
+
 /* ------------------------------------------ *
  *  IXsensMVNControl Interface Implementation *
  * ------------------------------------------ */

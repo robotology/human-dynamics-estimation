@@ -87,12 +87,20 @@ void XSensMVNDriverImpl::processDataSamples()
             std::lock_guard<std::mutex> copyLock(*m_outDataMutex);
 
             // TODO: fill suit name
+
+            // Fill timestamps structure : absolute, relative, systemClock(Unix time)
+            m_lastProcessedDataSample->timestamps->absolute = lastSample.absoluteTime / 1000.0;
+            m_lastProcessedDataSample->timestamps->relative =
+                static_cast<double>(lastSample.relativeTime) / 1000.0;
+            m_lastProcessedDataSample->timestamps->systemTime =
+                std::chrono::duration_cast<std::chrono::duration<double>>(
+                    std::chrono::high_resolution_clock::now().time_since_epoch())
+                    .count(); // From yarp/os/SystemClock.cpp
+
             if (m_driverConfiguration.dataStreamConfiguration.enableLinkData) {
                 // TODO: check if expected and actual sample dimensions match
                 // Copy absolute and relative XSens time
-                m_lastProcessedDataSample->links.time.absolute = lastSample.absoluteTime / 1000.0;
-                m_lastProcessedDataSample->links.time.relative =
-                    static_cast<double>(lastSample.relativeTime) / 1000.0;
+
                 m_lastProcessedDataSample->links.data.reserve(
                     lastSample.humanPose.m_segmentStates.size());
 
@@ -123,10 +131,6 @@ void XSensMVNDriverImpl::processDataSamples()
             if (m_driverConfiguration.dataStreamConfiguration.enableSensorData) {
                 m_lastProcessedDataSample->sensors.data.reserve(
                     lastSample.suitData.sensorKinematics().size());
-
-                m_lastProcessedDataSample->sensors.time.absolute = lastSample.absoluteTime / 1000.0;
-                m_lastProcessedDataSample->sensors.time.relative =
-                    static_cast<double>(lastSample.relativeTime) / 1000.0;
 
                 unsigned sensorIx = 0;
                 for (const auto& sensor : lastSample.suitData.sensorKinematics()) {

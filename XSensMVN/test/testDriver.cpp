@@ -55,8 +55,9 @@ int main(int argc, const char* argv[])
             xsensmvn::LinkDataVector linkSample;
             linkSample = driver.getLinkDataSample();
             if (!linkSample.data.empty()) {
-                double relTime = linkSample.time.relative;
-                xsInfo << "time: " << relTime;
+                xsInfo << "Xsens relative time: " << linkSample.time->relative;
+                xsInfo << "Xsens absolute time: " << linkSample.time->absolute;
+                xsInfo << "System time (UNIX time): " << linkSample.time->systemTime;
                 xsInfo << linkSample.data.at(0).name
                        << " position:" << linkSample.data.at(1).position.at(0);
             }

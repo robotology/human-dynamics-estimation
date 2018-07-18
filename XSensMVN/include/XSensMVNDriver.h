@@ -54,39 +54,50 @@ namespace xsensmvn {
     struct JointData
     {
         std::string name;
-        Vector3 jointAngles;
+        Vector3 angles; // RPY fix frame X-Y-Z
+        Vector3 velocities;
+        Vector3 accelerations;
     };
 
     struct Timestamp
     {
+        double systemTime;
         double relative; // [s]
         double absolute; // [s]
     };
 
     struct LinkDataVector
     {
-        Timestamp time;
+        std::shared_ptr<Timestamp> time = nullptr;
         std::vector<LinkData> data;
     };
 
     struct SensorDataVector
     {
-        Timestamp time;
+        std::shared_ptr<Timestamp> time = nullptr;
         std::vector<SensorData> data;
     };
 
     struct JointDataVector
     {
-        Timestamp time;
+        std::shared_ptr<Timestamp> time = nullptr;
         std::vector<JointData> data;
     };
 
     struct DriverDataSample
     {
-        Timestamp time;
+        std::shared_ptr<Timestamp> timestamps = nullptr;
         LinkDataVector links;
         SensorDataVector sensors;
         JointDataVector joints;
+
+        DriverDataSample()
+            : timestamps(new Timestamp)
+        {
+            links.time = timestamps;
+            sensors.time = timestamps;
+            joints.time = timestamps;
+        }
     };
 
     struct DriverDataStreamConfig
@@ -183,6 +194,9 @@ public:
 
     // Status get
     xsensmvn::DriverStatus getStatus() const;
+
+    // Timestamp get
+    xsensmvn::Timestamp getTimeStamps() const;
 
     /* --------------------------- *
      *  IXsensMVNControl Interface *
