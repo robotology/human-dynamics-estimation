@@ -30,8 +30,8 @@ class wearable::devices::XsensSuit final
     , public wearable::IWear
 {
 private:
-    class impl;
-    std::unique_ptr<impl> pImpl;
+    class XsensSuitImpl;
+    std::unique_ptr<XsensSuitImpl> pImpl;
 
 public:
     XsensSuit();

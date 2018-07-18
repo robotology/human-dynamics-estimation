@@ -20,7 +20,7 @@ using namespace wearable::devices;
 
 const std::string logPrefix = "XsensSuit : ";
 
-class XsensSuit::impl
+class XsensSuit::XsensSuitImpl
 {
 public:
     class XsensFreeBodyAccelerationSensor;
@@ -32,7 +32,7 @@ public:
     class XsensVirtualSphericalJointKinSensor;
 
     std::unique_ptr<xsensmvn::XSensMVNDriver> driver;
-    impl()
+    XsensSuitImpl()
         : driver(nullptr)
     {}
 
@@ -89,7 +89,7 @@ public:
 // ===================================================
 // Xsens implementation of IFreeBodyAccelerationSensor
 // ===================================================
-class XsensSuit::impl::XsensFreeBodyAccelerationSensor
+class XsensSuit::XsensSuitImpl::XsensFreeBodyAccelerationSensor
     : public wearable::sensor::IFreeBodyAccelerationSensor
 {
 public:
@@ -97,7 +97,7 @@ public:
     // Constructor / Destructor
     // ------------------------
     XsensFreeBodyAccelerationSensor(
-        XsensSuit::impl* xsSuitImpl,
+        XsensSuit::XsensSuitImpl* xsSuitImpl,
         const wearable::sensor::SensorName aName = {},
         const wearable::sensor::SensorStatus aStatus = wearable::sensor::SensorStatus::Unknown)
         : IFreeBodyAccelerationSensor(aName, aStatus)
@@ -136,20 +136,20 @@ private:
     // ---------
     // Variables
     // ---------
-    const XsensSuit::impl* m_suitImpl = nullptr;
+    const XsensSuit::XsensSuitImpl* m_suitImpl = nullptr;
 };
 
 // =======================================
 // Xsens implementation of IPositionSensor
 // =======================================
-class XsensSuit::impl::XsensPositionSensor : public wearable::sensor::IPositionSensor
+class XsensSuit::XsensSuitImpl::XsensPositionSensor : public wearable::sensor::IPositionSensor
 {
 public:
     // ------------------------
     // Constructor / Destructor
     // ------------------------
     XsensPositionSensor(
-        XsensSuit::impl* xsSuitImpl,
+        XsensSuit::XsensSuitImpl* xsSuitImpl,
         const wearable::sensor::SensorName aName = {},
         const wearable::sensor::SensorStatus aStatus = wearable::sensor::SensorStatus::Unknown)
         : IPositionSensor(aName, aStatus)
@@ -185,20 +185,20 @@ public:
     inline void setStatus(const wearable::sensor::SensorStatus aStatus) { m_status = aStatus; }
 
 private:
-    XsensSuit::impl* m_suitImpl = nullptr;
+    XsensSuit::XsensSuitImpl* m_suitImpl = nullptr;
 };
 
 // ==========================================
 // Xsens implementation of IOrientationSensor
 // ==========================================
-class XsensSuit::impl::XsensOrientationSensor : public wearable::sensor::IOrientationSensor
+class XsensSuit::XsensSuitImpl::XsensOrientationSensor : public wearable::sensor::IOrientationSensor
 {
 public:
     // ------------------------
     // Constructor / Destructor
     // ------------------------
     XsensOrientationSensor(
-        XsensSuit::impl* xsSuitImpl,
+        XsensSuit::XsensSuitImpl* xsSuitImpl,
         const wearable::sensor::SensorName aName = {},
         const wearable::sensor::SensorStatus aStatus = wearable::sensor::SensorStatus::Unknown)
         : IOrientationSensor(aName, aStatus)
@@ -234,20 +234,20 @@ public:
     inline void setStatus(const wearable::sensor::SensorStatus aStatus) { m_status = aStatus; }
 
 private:
-    XsensSuit::impl* m_suitImpl = nullptr;
+    XsensSuit::XsensSuitImpl* m_suitImpl = nullptr;
 };
 
 // ===================================
 // Xsens implementation of IPoseSensor
 // ===================================
-class XsensSuit::impl::XsensPoseSensor : public wearable::sensor::IPoseSensor
+class XsensSuit::XsensSuitImpl::XsensPoseSensor : public wearable::sensor::IPoseSensor
 {
 public:
     // ------------------------
     // Constructor / Destructor
     // ------------------------
     XsensPoseSensor(
-        XsensSuit::impl* xsSuitImpl,
+        XsensSuit::XsensSuitImpl* xsSuitImpl,
         const wearable::sensor::SensorName aName = {},
         const wearable::sensor::SensorStatus aStatus = wearable::sensor::SensorStatus::Unknown)
         : IPoseSensor(aName, aStatus)
@@ -284,20 +284,20 @@ public:
     inline void setStatus(const wearable::sensor::SensorStatus aStatus) { m_status = aStatus; }
 
 private:
-    XsensSuit::impl* m_suitImpl = nullptr;
+    XsensSuit::XsensSuitImpl* m_suitImpl = nullptr;
 };
 
 // =====================================
 // Xsens implementation of IMagnetometer
 // =====================================
-class XsensSuit::impl::XsensMagnetometer : public wearable::sensor::IMagnetometer
+class XsensSuit::XsensSuitImpl::XsensMagnetometer : public wearable::sensor::IMagnetometer
 {
 public:
     // ------------------------
     // Constructor / Destructor
     // ------------------------
     XsensMagnetometer(
-        XsensSuit::impl* xsSuitImpl,
+        XsensSuit::XsensSuitImpl* xsSuitImpl,
         const wearable::sensor::SensorName aName = {},
         const wearable::sensor::SensorStatus aStatus = wearable::sensor::SensorStatus::Unknown)
         : IMagnetometer(aName, aStatus)
@@ -333,20 +333,21 @@ public:
     inline void setStatus(const wearable::sensor::SensorStatus aStatus) { m_status = aStatus; }
 
 private:
-    XsensSuit::impl* m_suitImpl = nullptr;
+    XsensSuit::XsensSuitImpl* m_suitImpl = nullptr;
 };
 
 // =============================================
 // Xsens implementation of IVirtualLinkKinsensor
 // =============================================
-class XsensSuit::impl::XsensVirtualLinkKinSensor : public wearable::sensor::IVirtualLinkKinSensor
+class XsensSuit::XsensSuitImpl::XsensVirtualLinkKinSensor
+    : public wearable::sensor::IVirtualLinkKinSensor
 {
 public:
     // ------------------------
     // Constructor / Destructor
     // ------------------------
     XsensVirtualLinkKinSensor(
-        XsensSuit::impl* xsSuitImpl,
+        XsensSuit::XsensSuitImpl* xsSuitImpl,
         const wearable::sensor::SensorName aName = {},
         const wearable::sensor::SensorStatus aStatus = wearable::sensor::SensorStatus::Unknown)
         : IVirtualLinkKinSensor(aName, aStatus)
@@ -421,13 +422,13 @@ public:
     inline void setStatus(const wearable::sensor::SensorStatus aStatus) { m_status = aStatus; }
 
 private:
-    XsensSuit::impl* m_suitImpl = nullptr;
+    XsensSuit::XsensSuitImpl* m_suitImpl = nullptr;
 };
 
 // ==============================================
 // Xsens implementation of IVirtualJointKinSensor
 // ==============================================
-class XsensSuit::impl::XsensVirtualSphericalJointKinSensor
+class XsensSuit::XsensSuitImpl::XsensVirtualSphericalJointKinSensor
     : public wearable::sensor::IVirtualSphericalJointKinSensor
 {
 public:
@@ -435,7 +436,7 @@ public:
     // Constructor / Destructor
     // ------------------------
     XsensVirtualSphericalJointKinSensor(
-        XsensSuit::impl* xsSuitImpl,
+        XsensSuit::XsensSuitImpl* xsSuitImpl,
         const wearable::sensor::SensorName aName = {},
         const wearable::sensor::SensorStatus aStatus = wearable::sensor::SensorStatus::Unknown)
         : IVirtualSphericalJointKinSensor(aName, aStatus)
@@ -507,13 +508,13 @@ public:
     inline void setStatus(const wearable::sensor::SensorStatus aStatus) { m_status = aStatus; }
 
 private:
-    XsensSuit::impl* m_suitImpl = nullptr;
+    XsensSuit::XsensSuitImpl* m_suitImpl = nullptr;
 };
 
 // ==========================================
 // XsensSuit utility functions implementation
 // ==========================================
-void XsensSuit::impl::setAllSensorStates(wearable::sensor::SensorStatus aStatus)
+void XsensSuit::XsensSuitImpl::setAllSensorStates(wearable::sensor::SensorStatus aStatus)
 {
     for (const auto& fbas : freeBodyAccerlerationSensorsMap) {
         fbas.second.xsSensor->setStatus(aStatus);
@@ -542,7 +543,7 @@ void XsensSuit::impl::setAllSensorStates(wearable::sensor::SensorStatus aStatus)
 // XsensSuit constructor / destructor implementation
 // =================================================
 XsensSuit::XsensSuit()
-    : pImpl{new impl()}
+    : pImpl{new XsensSuitImpl()}
 {}
 
 XsensSuit::~XsensSuit() = default;
@@ -685,30 +686,33 @@ bool XsensSuit::open(yarp::os::Searchable& config)
     for (size_t s = 0; s < sensorNames.size(); ++s) {
         pImpl->freeBodyAccerlerationSensorsMap.emplace(
             fbasPrefix + sensorNames[s],
-            impl::driverToDeviceSensors<impl::XsensFreeBodyAccelerationSensor>{
-                std::make_shared<impl::XsensFreeBodyAccelerationSensor>(
+            XsensSuitImpl::driverToDeviceSensors<XsensSuitImpl::XsensFreeBodyAccelerationSensor>{
+                std::make_shared<XsensSuitImpl::XsensFreeBodyAccelerationSensor>(
                     pImpl.get(), fbasPrefix + sensorNames[s]),
                 s});
-        pImpl->positionSensorsMap.emplace(posPrefix + sensorNames[s],
-                                          impl::driverToDeviceSensors<impl::XsensPositionSensor>{
-                                              std::make_shared<impl::XsensPositionSensor>(
-                                                  pImpl.get(), posPrefix + sensorNames[s]),
-                                              s});
+        pImpl->positionSensorsMap.emplace(
+            posPrefix + sensorNames[s],
+            XsensSuitImpl::driverToDeviceSensors<XsensSuitImpl::XsensPositionSensor>{
+                std::make_shared<XsensSuitImpl::XsensPositionSensor>(pImpl.get(),
+                                                                     posPrefix + sensorNames[s]),
+                s});
         pImpl->orientationSensorsMap.emplace(
             orientPrefix + sensorNames[s],
-            impl::driverToDeviceSensors<impl::XsensOrientationSensor>{
-                std::make_shared<impl::XsensOrientationSensor>(pImpl.get(),
-                                                               orientPrefix + sensorNames[s]),
+            XsensSuitImpl::driverToDeviceSensors<XsensSuitImpl::XsensOrientationSensor>{
+                std::make_shared<XsensSuitImpl::XsensOrientationSensor>(
+                    pImpl.get(), orientPrefix + sensorNames[s]),
                 s});
         pImpl->poseSensorsMap.emplace(
             posePrefix + sensorNames[s],
-            impl::driverToDeviceSensors<impl::XsensPoseSensor>{
-                std::make_shared<impl::XsensPoseSensor>(pImpl.get(), posePrefix + sensorNames[s]),
+            XsensSuitImpl::driverToDeviceSensors<XsensSuitImpl::XsensPoseSensor>{
+                std::make_shared<XsensSuitImpl::XsensPoseSensor>(pImpl.get(),
+                                                                 posePrefix + sensorNames[s]),
                 s});
         pImpl->magnetometersMap.emplace(
             magPrefix + sensorNames[s],
-            impl::driverToDeviceSensors<impl::XsensMagnetometer>{
-                std::make_shared<impl::XsensMagnetometer>(pImpl.get(), magPrefix + sensorNames[s]),
+            XsensSuitImpl::driverToDeviceSensors<XsensSuitImpl::XsensMagnetometer>{
+                std::make_shared<XsensSuitImpl::XsensMagnetometer>(pImpl.get(),
+                                                                   magPrefix + sensorNames[s]),
                 s});
     }
 
@@ -716,9 +720,9 @@ bool XsensSuit::open(yarp::os::Searchable& config)
     for (size_t s = 0; s < linkNames.size(); ++s) {
         pImpl->virtualLinkKinSensorsMap.emplace(
             vlksPrefix + linkNames[s],
-            impl::driverToDeviceSensors<impl::XsensVirtualLinkKinSensor>{
-                std::make_shared<impl::XsensVirtualLinkKinSensor>(pImpl.get(),
-                                                                  vlksPrefix + linkNames[s]),
+            XsensSuitImpl::driverToDeviceSensors<XsensSuitImpl::XsensVirtualLinkKinSensor>{
+                std::make_shared<XsensSuitImpl::XsensVirtualLinkKinSensor>(
+                    pImpl.get(), vlksPrefix + linkNames[s]),
                 s});
     }
 
@@ -726,8 +730,9 @@ bool XsensSuit::open(yarp::os::Searchable& config)
     for (size_t s = 0; s < jointNames.size(); ++s) {
         pImpl->virtualJointKinSensorsMap.emplace(
             vjksPrefix + jointNames[s],
-            impl::driverToDeviceSensors<impl::XsensVirtualSphericalJointKinSensor>{
-                std::make_shared<impl::XsensVirtualSphericalJointKinSensor>(
+            XsensSuitImpl::driverToDeviceSensors<
+                XsensSuitImpl::XsensVirtualSphericalJointKinSensor>{
+                std::make_shared<XsensSuitImpl::XsensVirtualSphericalJointKinSensor>(
                     pImpl.get(), vjksPrefix + jointNames[s]),
                 s});
     }
