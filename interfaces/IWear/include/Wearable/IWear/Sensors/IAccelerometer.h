@@ -29,6 +29,13 @@ public:
     virtual ~IAccelerometer() = default;
 
     virtual bool getLinearAcceleration(Vector3& linearAcceleration) const = 0;
+
+    inline static const std::string& getPrefix();
 };
 
+inline const std::string& wearable::sensor::IAccelerometer::getPrefix()
+{
+    static std::string prefix{"acc_"};
+    return prefix;
+}
 #endif // WEARABLE_IACCELEROMETER_H

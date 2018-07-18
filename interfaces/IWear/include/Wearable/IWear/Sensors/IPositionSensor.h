@@ -29,6 +29,14 @@ public:
     virtual ~IPositionSensor() = default;
 
     virtual bool getPosition(Vector3& position) const = 0;
+
+    inline static const std::string& getPrefix();
 };
+
+inline const std::string& wearable::sensor::IPositionSensor::getPrefix()
+{
+    static std::string prefix{"pos_"};
+    return prefix;
+}
 
 #endif // WEARABLE_IPOSITION_SENSOR_H

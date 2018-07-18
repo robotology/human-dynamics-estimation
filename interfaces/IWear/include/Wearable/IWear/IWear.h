@@ -32,6 +32,7 @@
 #include <vector>
 
 namespace wearable {
+    using WearableName = std::string;
 
     template <typename S>
     using SensorVector = std::vector<S>;
@@ -72,6 +73,7 @@ public:
     // GENERIC METHODS
     // ===============
 
+    virtual WearableName getWearableName() const = 0;
     virtual WearStatus getStatus() const = 0;
     virtual TimeStamp getTimeStamp() const = 0;
 

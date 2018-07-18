@@ -29,6 +29,14 @@ public:
     virtual ~IGyroscope() = default;
 
     virtual bool getAngularRate(Vector3& angularRate) const = 0;
+
+    inline static const std::string& getPrefix();
 };
+
+inline const std::string& wearable::sensor::IGyroscope::getPrefix()
+{
+    static std::string prefix{"gyro_"};
+    return prefix;
+}
 
 #endif // WEARABLE_IGYROSCOPE_H

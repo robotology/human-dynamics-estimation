@@ -40,7 +40,15 @@ public:
     inline bool getLinkLinearVelocity(Vector3& linearVelocity) const;
     inline bool getLinkOrientation(Quaternion& orientation) const;
     inline bool getLinkPosition(Vector3& position) const;
+
+    inline static const std::string& getPrefix();
 };
+
+inline const std::string& wearable::sensor::IVirtualLinkKinSensor::getPrefix()
+{
+    static std::string prefix{"vLink_"};
+    return prefix;
+}
 
 inline bool wearable::sensor::IVirtualLinkKinSensor::getLinkAngularAcceleration(
     Vector3& angularAcceleration) const

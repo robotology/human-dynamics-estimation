@@ -19,7 +19,6 @@ namespace wearable {
 
 class wearable::sensor::IVirtualSphericalJointKinSensor : public wearable::sensor::ISensor
 {
-protected:
 public:
     IVirtualSphericalJointKinSensor(SensorName aName = {},
                                     SensorStatus aStatus = SensorStatus::Unknown)
@@ -34,6 +33,14 @@ public:
     virtual bool getJointAnglesAsRPY(Vector3 angleAsRPY) const = 0;
     virtual bool getJointVelocities(Vector3 velocities) const = 0;
     virtual bool getJointAccelerations(Vector3 accelerations) const = 0;
+
+    inline static const std::string& getPrefix();
 };
+
+inline const std::string& wearable::sensor::IVirtualSphericalJointKinSensor::getPrefix()
+{
+    static std::string prefix{"vSJoint_"};
+    return prefix;
+}
 
 #endif // WEARABLE_IVIRTUAL_SPHERICAL_JOINT_KIN_SENSOR_H

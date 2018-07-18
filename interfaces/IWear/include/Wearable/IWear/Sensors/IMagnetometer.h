@@ -29,6 +29,14 @@ public:
     virtual ~IMagnetometer() = default;
 
     virtual bool getMagneticField(Vector3& magneticField) const = 0;
+
+    inline static const std::string& getPrefix();
 };
+
+inline const std::string& wearable::sensor::IMagnetometer::getPrefix()
+{
+    static std::string prefix{"mag_"};
+    return prefix;
+}
 
 #endif // WEARABLE_IMAGNETOMETER_H

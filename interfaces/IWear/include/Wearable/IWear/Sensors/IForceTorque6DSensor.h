@@ -33,8 +33,15 @@ public:
     inline bool getForceTorque6D(Vector6& forceTorque6D) const;
     inline bool getForceTorque3DForce(Vector3& force3D) const;
     inline bool getForceTorque3DTorque(Vector3& torque3D) const;
+
+    inline static const std::string& getPrefix();
 };
 
+inline const std::string& wearable::sensor::IForceTorque6DSensor::getPrefix()
+{
+    static std::string prefix{"ft6D_"};
+    return prefix;
+}
 bool wearable::sensor::IForceTorque6DSensor::getForceTorque6D(
     wearable::Vector6& forceTorque6D) const
 {

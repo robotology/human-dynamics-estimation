@@ -29,6 +29,14 @@ public:
     virtual ~IForce3DSensor() = default;
 
     virtual bool getForce3D(Vector3& force) const = 0;
+
+    inline static const std::string& getPrefix();
 };
+
+inline const std::string& wearable::sensor::IForce3DSensor::getPrefix()
+{
+    static std::string prefix{"f3D_"};
+    return prefix;
+}
 
 #endif // WEARABLE_IFORCE_3D_SENSOR_H

@@ -29,6 +29,13 @@ public:
     virtual ~ITemperatureSensor() = default;
 
     virtual bool getTemperature(double& temperature) const = 0;
+
+    inline static const std::string& getPrefix();
 };
 
+inline const std::string& wearable::sensor::ITemperatureSensor::getPrefix()
+{
+    static std::string prefix{"temp_"};
+    return prefix;
+}
 #endif // WEARABLE_ITEMPERATURE_SENSOR_H
