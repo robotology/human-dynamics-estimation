@@ -623,6 +623,17 @@ bool XsensSuit::open(yarp::os::Searchable& config)
         scanTimeout = config.find("scan-timeout").asInt();
     }
 
+    // Read from config file the sampling-rate.
+    // If not provided USING highest available one
+    int samplingRate = -1;
+    if (!config.check("sampling-rate")) {
+        yWarning() << logPrefix << "OPTIONAL parameter <sampling-rate> NOT found";
+        yWarning() << logPrefix << "Using highest supported sampling rate";
+    }
+    else {
+        scanTimeout = config.find("sampling-rate").asInt();
+    }
+
     // Get subject-specific body dimensions from the configuration file and push them to
     // subjectBodyDimensions
     // TODO: remove the hardcoded allowed list
@@ -663,6 +674,7 @@ bool XsensSuit::open(yarp::os::Searchable& config)
                                                defaultCalibrationType,
                                                minCalibrationQualityRequired,
                                                scanTimeout,
+                                               samplingRate,
                                                subjectBodyDimensions,
                                                outputStreamConfig};
 
