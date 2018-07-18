@@ -342,6 +342,32 @@ bool XSensMVNDriverImpl::configureAndConnect()
     }
     xsInfo << "Default calibration type set: " << m_driverConfiguration.defaultCalibrationType;
 
+    //--------------------------------
+    // Retrieve supported sample rates
+    //--------------------------------
+
+    xsInfo << "--- Supported acquisition frequencies [Hz] ---";
+    XsIntArray supportedUpdateRates = m_connection->determineSupportedUpdateRates(
+        m_connection->detectedDevices(),
+        static_cast<int>(m_connection->sensorCountForConfiguration(m_connection->configuration())),
+        false);
+    for (const auto& ur : supportedUpdateRates) {
+        xsInfo << " - " << ur << " [Hz]";
+    }
+    xsInfo << "------------------------------------";
+    if (supportedUpdateRates.find(m_driverConfiguration.samplingRate) == -1) {
+        xsWarning << "Requested sampling rate: " << m_driverConfiguration.samplingRate
+                  << " not supported.";
+        xsWarning << "Using default sampling rate: " << supportedUpdateRates.at(0) << " Hz";
+        m_connection->setSampleRate(static_cast<double>(supportedUpdateRates.at(0)));
+    }
+    else {
+        m_connection->setSampleRate(static_cast<double>(m_driverConfiguration.samplingRate));
+    }
+    // Sleep for at least (EMPIRICALLY RETRIEVED VALUE) to allow XSens to update its sampling rate
+    std::this_thread::sleep_for(std::chrono::milliseconds(300));
+    xsInfo << "Sampling rate set to: " << m_connection->sampleRate() << " Hz";
+
     //---------------------------------------
     // Create the datasample processor thread
     //---------------------------------------

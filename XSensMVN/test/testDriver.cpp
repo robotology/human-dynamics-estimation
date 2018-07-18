@@ -36,10 +36,14 @@ int main(int argc, const char* argv[])
         "Tpose",
         xsensmvn::CalibrationQuality::FAILED,
         20,
+        120,
         bd,
         dsconf};
 
+    xsInfo << std::endl << std::endl << "Creating";
     xsensmvn::XSensMVNDriver driver(conf);
+
+    xsInfo << std::endl << std::endl << "Configuring";
 
     driver.configureAndConnect();
 

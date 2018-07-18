@@ -115,6 +115,7 @@ namespace xsensmvn {
         const std::string defaultCalibrationType;
         const xsensmvn::CalibrationQuality minimumRequiredCalibrationQuality;
         const int scanTimeout;
+        const int samplingRate;
         const bodyDimensions bodyDimensions;
         const DriverDataStreamConfig dataStreamConfiguration;
     };
