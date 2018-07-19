@@ -88,6 +88,7 @@ void XSensMVNDriverImpl::processDataSamples()
 
             // TODO: fill suit name
 
+            m_lastProcessedDataSample->reset();
             // Fill timestamps structure : absolute, relative, systemClock(Unix time)
             m_lastProcessedDataSample->timestamps->absolute = lastSample.absoluteTime / 1000.0;
             m_lastProcessedDataSample->timestamps->relative =
@@ -125,6 +126,7 @@ void XSensMVNDriverImpl::processDataSamples()
                         newLink.name = m_suitLabels.segmentNames.at(segmentIx);
                     }
                     m_lastProcessedDataSample->links.data.push_back(newLink);
+                    ++segmentIx;
                 };
             }
 
@@ -151,6 +153,7 @@ void XSensMVNDriverImpl::processDataSamples()
                     }
 
                     m_lastProcessedDataSample->sensors.data.push_back(newSensor);
+                    ++sensorIx;
                 };
             }
 

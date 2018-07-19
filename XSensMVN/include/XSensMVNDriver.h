@@ -98,6 +98,16 @@ namespace xsensmvn {
             sensors.time = timestamps;
             joints.time = timestamps;
         }
+
+        inline void reset()
+        {
+            timestamps->absolute = 0.0;
+            timestamps->relative = 0.0;
+            timestamps->systemTime = 0.0;
+            links.data = {};
+            sensors.data = {};
+            joints.data = {};
+        }
     };
 
     struct DriverDataStreamConfig
