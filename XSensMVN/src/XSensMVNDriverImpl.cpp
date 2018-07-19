@@ -158,8 +158,32 @@ void XSensMVNDriverImpl::processDataSamples()
             }
 
             if (m_driverConfiguration.dataStreamConfiguration.enableJointData) {
-                // TODO: add support for joint angles
-                xsWarning << "Joint angles not supported yet.";
+                // Xsens store angles this way: dof are the rows, X, Y, Z the columns
+                // They are computed using XZY permutation using current frame formalism
+                XsMatrix angles = m_connection->jointAngles(lastSample.humanPose,
+                                                            XmeEulerPermutation::XEP_ZXY_YUp,
+                                                            XmePoseReference::XPR_AnatomicalPose);
+                // Loop through all the joints in the XSens model
+                for (size_t j = 0; j < angles.rows(); ++j) {
+                    JointData newJoint{};
+
+                    // Fill newly created joint with data coming from XSems
+                    // Since the order of XSens matrix columns depends on the chosen permutation it
+                    // is safer to copy them manually
+
+                    newJoint.angles.at(0) = angles.value(j, 1);
+                    newJoint.angles.at(1) = angles.value(j, 2);
+                    newJoint.angles.at(2) = angles.value(j, 0);
+
+                    // Set the namw of the newly created joint
+                    {
+                        std::lock_guard<std::mutex> labelGuard(m_suitLabels.labelsLock);
+                        newJoint.name = m_suitLabels.jointNames.at(j);
+                    }
+                    // Push the newly created joint in the joint vector of the last processed frame
+                    m_lastProcessedDataSample->joints.data.push_back(newJoint);
+                }
+                //                xsWarning << "Joint angles supported yet but very Experimental.";
             }
         }
     }

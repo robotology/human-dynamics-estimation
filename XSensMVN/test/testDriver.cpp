@@ -17,7 +17,7 @@
 int main(int argc, const char* argv[])
 {
 
-    xsensmvn::DriverDataStreamConfig dsconf = {true, true, false};
+    xsensmvn::DriverDataStreamConfig dsconf = {true, true, true};
 
     xsensmvn::bodyDimensions bd = {{"ankleHeight", 0.07},
                                    {"armSpan", 1.71},
@@ -55,17 +55,52 @@ int main(int argc, const char* argv[])
 
     if (driver.startAcquisition()) {
         xsInfo << std::endl << std::endl << "Recording";
+
+        const auto jointLabels = driver.getSuitJointLabels();
+        xsInfo << "----------- Joint Labels -------------";
+        for (const auto& j : jointLabels) {
+            xsInfo << " - " << j;
+        }
+        xsInfo << "--------------------------------------";
+
+        const auto linkLabels = driver.getSuitLinkLabels();
+        xsInfo << "----------- Link Labels -------------";
+        for (const auto& l : linkLabels) {
+            xsInfo << " - " << l;
+        }
+        xsInfo << "--------------------------------------";
+
         for (int j = 0; j < 50; ++j) {
             xsensmvn::LinkDataVector linkSample;
             linkSample = driver.getLinkDataSample();
             if (!linkSample.data.empty()) {
-                xsInfo << "Xsens relative time: " << linkSample.time->relative;
-                xsInfo << "Xsens absolute time: " << linkSample.time->absolute;
-                xsInfo << "System time (UNIX time): " << linkSample.time->systemTime;
-                xsInfo << linkSample.data.at(0).name
-                       << " position:" << linkSample.data.at(1).position.at(0);
+                //  xsInfo << "Xsens relative time: " << linkSample.time->relative;
+                //  xsInfo << "Xsens absolute time: " << linkSample.time->absolute;
+                xsInfo << std::endl
+                       << std::endl
+                       << "System time (UNIX time): " << linkSample.time->systemTime;
+
+                for (size_t l = 0; l < linkLabels.size(); ++l) {
+                    xsInfo << linkSample.data.at(l).name
+                           << " position: " << linkSample.data.at(l).position.at(0) << " "
+                           << linkSample.data.at(l).position.at(1) << " "
+                           << linkSample.data.at(l).position.at(2);
+                }
             }
-            std::this_thread::sleep_for(std::chrono::milliseconds(20));
+
+            xsensmvn::JointDataVector jointSample = driver.getJointDataSample();
+            if (!jointSample.data.empty()) {
+                xsInfo << std::endl
+                       << std::endl
+                       << "System time (UNIX time): " << jointSample.time->systemTime;
+                for (size_t j = 0; j < jointLabels.size(); ++j) {
+                    xsInfo << jointSample.data.at(j).name
+                           << " jointAngles XYZ: " << jointSample.data.at(j).angles.at(0) << " "
+                           << jointSample.data.at(j).angles.at(1) << " "
+                           << jointSample.data.at(j).angles.at(2);
+                }
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
         }
     }
 
