@@ -43,15 +43,16 @@ public:
         {"Poor", xsensmvn::CalibrationQuality::POOR},
         {"Failed", xsensmvn::CalibrationQuality::FAILED}};
 
-    const std::vector<std::string> allowedBodyDimensions{"ankleHeight",
-                                                         "armSpan",
-                                                         "bodyHeight",
-                                                         "footSize",
-                                                         "hipHeight",
-                                                         "hipWidth",
-                                                         "kneeHeight",
-                                                         "shoulderWidth",
-                                                         "shoeSoleHeight"};
+    // TODO: to be removed if not needed
+    //    const std::vector<std::string> allowedBodyDimensions{"ankleHeight",
+    //                                                         "armSpan",
+    //                                                         "bodyHeight",
+    //                                                         "footSize",
+    //                                                         "hipHeight",
+    //                                                         "hipWidth",
+    //                                                         "kneeHeight",
+    //                                                         "shoulderWidth",
+    //                                                         "shoeSoleHeight"};
 
     const std::map<xsensmvn::DriverStatus, wearable::sensor::SensorStatus> driverToSensorStatusMap{
         {xsensmvn::DriverStatus::Disconnected, sensor::SensorStatus::Error},
@@ -644,12 +645,23 @@ bool XsensSuit::open(yarp::os::Searchable& config)
         yWarning() << logPrefix
                    << "USING default body dimensions, this may affect estimation quality";
     }
-    for (const auto& abd : pImpl->allowedBodyDimensions) {
-        double tmpDim = bodyDimensionSet.check(abd, yarp::os::Value(-1.0)).asDouble();
-        if (tmpDim != -1.0) {
-            subjectBodyDimensions.insert({abd, tmpDim});
+    for (size_t i = 0; i < bodyDimensionSet.size(); ++i) {
+        if (bodyDimensionSet.get(i).asList()->get(1).isDouble()
+            && bodyDimensionSet.get(i).asList()->get(1).asDouble() != -1) {
+            subjectBodyDimensions.insert({bodyDimensionSet.get(i).asList()->get(0).asString(),
+                                          bodyDimensionSet.get(i).asList()->get(1).asDouble()});
         }
     }
+    // TODO: to be removed
+    for (const auto& tmp : subjectBodyDimensions) {
+        yInfo() << tmp.first << " " << tmp.second;
+    }
+    //   for (const auto& abd : pImpl->allowedBodyDimensions) {
+    //        double tmpDim = bodyDimensionSet.check(abd, yarp::os::Value(-1.0)).asDouble();
+    //        if (tmpDim != -1.0) {
+    //            subjectBodyDimensions.insert({abd, tmpDim});
+    //        }
+    //    }
 
     // Read from config file the selected output stream configuration.
     // If not provided USING default configuration, Joints: OFF, Links: ON, Sensors: ON
