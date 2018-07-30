@@ -89,28 +89,40 @@ void XSensMVNDriverImpl::processDataSamples()
         {
             std::lock_guard<std::mutex> copyLock(*m_outDataMutex);
 
+            // Reset the structure keeping only the name
             m_lastProcessedDataSample->reset();
+
             // Fill timestamps structure : absolute, relative, systemClock(Unix time)
+            // Copy absolute and relative XSens time
             m_lastProcessedDataSample->timestamps->absolute = lastSample.absoluteTime / 1000.0;
             m_lastProcessedDataSample->timestamps->relative =
                 static_cast<double>(lastSample.relativeTime) / 1000.0;
+            // TODO: is this system time representation what we really want?
             m_lastProcessedDataSample->timestamps->systemTime =
                 std::chrono::duration_cast<std::chrono::duration<double>>(
                     std::chrono::high_resolution_clock::now().time_since_epoch())
                     .count(); // From yarp/os/SystemClock.cpp
-            // TODO: is this time representation what we really want?
 
             if (m_driverConfiguration.dataStreamConfiguration.enableLinkData) {
-                // TODO: check if expected and actual sample dimensions match
-                // Copy absolute and relative XSens time
 
-                m_lastProcessedDataSample->links.data.reserve(
-                    lastSample.humanPose.m_segmentStates.size());
+                // If the link data vector is empty is the first run, so allocate the space
+                if (m_lastProcessedDataSample->links.data.empty()) {
+                    m_lastProcessedDataSample->links.data.resize(
+                        lastSample.humanPose.m_segmentStates.size());
+                }
+
+                // Check if expected and actual sample dimensions match
+                if (m_lastProcessedDataSample->links.data.size()
+                    != lastSample.humanPose.m_segmentStates.size()) {
+                    xsError << "The number of links do not match previous samples";
+                    xsError << "Skipping sample";
+                    continue;
+                }
 
                 unsigned segmentIx = 0;
                 for (const auto& link : lastSample.humanPose.m_segmentStates) {
 
-                    xsensmvn::LinkData newLink{};
+                    xsensmvn::LinkData newLink = {};
 
                     for (unsigned i = 0; i < 3; ++i) {
                         newLink.position.at(i) = link.m_position.at(i);
@@ -123,19 +135,29 @@ void XSensMVNDriverImpl::processDataSamples()
                                             link.m_orientation.x(),
                                             link.m_orientation.y(),
                                             link.m_orientation.z()}};
-                    //                    {
-                    //                        std::lock_guard<std::mutex>
-                    //                        labelGuard(m_suitLabels.labelsLock);
+
                     newLink.name = m_suitLabels.segmentNames.at(segmentIx);
-                    //                    }
-                    m_lastProcessedDataSample->links.data.push_back(newLink);
+
+                    m_lastProcessedDataSample->links.data[segmentIx] = newLink;
                     ++segmentIx;
                 };
             }
 
             if (m_driverConfiguration.dataStreamConfiguration.enableSensorData) {
-                m_lastProcessedDataSample->sensors.data.reserve(
-                    lastSample.suitData.sensorKinematics().size());
+
+                // If the link data vector is empty is the first run, so allocate the space
+                if (m_lastProcessedDataSample->sensors.data.empty()) {
+                    m_lastProcessedDataSample->sensors.data.resize(
+                        lastSample.suitData.sensorKinematics().size());
+                }
+
+                // Check if expected and actual sample dimensions match
+                if (m_lastProcessedDataSample->sensors.data.size()
+                    != lastSample.suitData.sensorKinematics().size()) {
+                    xsError << "The number of sensors do not match previous samples";
+                    xsError << "Skipping sample";
+                    continue;
+                }
 
                 unsigned sensorIx = 0;
                 for (const auto& sensor : lastSample.suitData.sensorKinematics()) {
@@ -150,43 +172,56 @@ void XSensMVNDriverImpl::processDataSamples()
                     newSensor.orientation = {
                         {sensor.m_q.w(), sensor.m_q.x(), sensor.m_q.y(), sensor.m_q.z()}};
 
-                    //                    {
-                    //                        std::lock_guard<std::mutex>
-                    //                        labelGuard(m_suitLabels.labelsLock);
                     newSensor.name = m_suitLabels.sensorNames.at(sensorIx);
-                    //                    }
 
-                    m_lastProcessedDataSample->sensors.data.push_back(newSensor);
+                    m_lastProcessedDataSample->sensors.data[sensorIx] = newSensor;
                     ++sensorIx;
                 };
             }
 
             if (m_driverConfiguration.dataStreamConfiguration.enableJointData) {
                 // Xsens store angles this way: dof are the rows, X, Y, Z the columns
-                // They are computed using XZY permutation using current frame formalism
-                XsMatrix angles = m_connection->jointAngles(lastSample.humanPose,
-                                                            XmeEulerPermutation::XEP_ZXY_YUp,
-                                                            XmePoseReference::XPR_AnatomicalPose);
+                // They are computed using ZXY permutation using current frame formalism
+                XmeEulerPermutation anglePermutation = XmeEulerPermutation::XEP_ZXY_YUp;
+                XsMatrix angles = m_connection->jointAngles(
+                    lastSample.humanPose, anglePermutation, XmePoseReference::XPR_AnatomicalPose);
+
+                // If the link data vector is empty is the first run, so allocate the space
+                if (m_lastProcessedDataSample->joints.data.empty()) {
+                    m_lastProcessedDataSample->joints.data.resize(angles.rows());
+                }
+
+                // Check if expected and actual sample dimensions match
+                if (m_lastProcessedDataSample->joints.data.size() != angles.rows()) {
+                    xsError << "The number of joints do not match previous samples";
+                    xsError << "Skipping sample";
+                    continue;
+                }
+
                 // Loop through all the joints in the XSens model
-                for (size_t j = 0; j < angles.rows(); ++j) {
+                for (size_t jointIx = 0; jointIx < angles.rows(); ++jointIx) {
                     JointData newJoint{};
 
                     // Fill newly created joint with data coming from XSems
                     // Since the order of XSens matrix columns depends on the chosen permutation it
                     // is safer to copy them manually
+                    switch (anglePermutation) {
+                        case XmeEulerPermutation::XEP_ZXY_YUp:
+                            newJoint.angles.at(0) = angles.value(jointIx, 1);
+                            newJoint.angles.at(1) = angles.value(jointIx, 2);
+                            newJoint.angles.at(2) = angles.value(jointIx, 0);
+                            break;
+                        case XmeEulerPermutation::XEP_XZY_YUp:
+                            newJoint.angles.at(0) = angles.value(jointIx, 0);
+                            newJoint.angles.at(1) = angles.value(jointIx, 2);
+                            newJoint.angles.at(2) = angles.value(jointIx, 1);
+                            break;
+                    }
 
-                    newJoint.angles.at(0) = angles.value(j, 1);
-                    newJoint.angles.at(1) = angles.value(j, 2);
-                    newJoint.angles.at(2) = angles.value(j, 0);
+                    newJoint.name = m_suitLabels.jointNames.at(jointIx);
 
-                    // Set the namw of the newly created joint
-                    //                    {
-                    //                        std::lock_guard<std::mutex>
-                    //                        labelGuard(m_suitLabels.labelsLock);
-                    newJoint.name = m_suitLabels.jointNames.at(j);
-                    //                    }
                     // Push the newly created joint in the joint vector of the last processed frame
-                    m_lastProcessedDataSample->joints.data.push_back(newJoint);
+                    m_lastProcessedDataSample->joints.data[jointIx] = newJoint;
                 }
             }
         }

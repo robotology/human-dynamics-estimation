@@ -104,9 +104,24 @@ namespace xsensmvn {
             timestamps->absolute = 0.0;
             timestamps->relative = 0.0;
             timestamps->systemTime = 0.0;
-            links.data = {};
-            sensors.data = {};
-            joints.data = {};
+
+            for (auto& element : links.data) {
+                const std::string name = element.name;
+                element = {};
+                element.name = name;
+            }
+
+            for (auto& element : sensors.data) {
+                const std::string name = element.name;
+                element = {};
+                element.name = name;
+            }
+
+            for (auto& element : joints.data) {
+                const std::string name = element.name;
+                element = {};
+                element.name = name;
+            }
         }
     };
 

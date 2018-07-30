@@ -111,7 +111,7 @@ public:
         }
 
         // Retrieve data sample directly form XSens Driver
-        const auto& sensorData = m_suitImpl->driver->getSensorDataSample().data.at(
+        const auto sensorData = m_suitImpl->driver->getSensorDataSample().data.at(
             m_suitImpl->freeBodyAccerlerationSensorsMap.at(this->m_name).driverIndex);
 
         // TODO: This should be guaranteed, runtime check should be removed
@@ -171,7 +171,7 @@ public:
             return false;
         }
         // Retrieve data sample directly form XSens Driver
-        const auto& sensorData = m_suitImpl->driver->getSensorDataSample().data.at(
+        const auto sensorData = m_suitImpl->driver->getSensorDataSample().data.at(
             m_suitImpl->positionSensorsMap.at(this->m_name).driverIndex);
 
         // TODO: This should be guaranteed, runtime check should be removed
@@ -229,7 +229,7 @@ public:
         }
 
         // Retrieve data sample directly form XSens Driver
-        const auto& sensorData = m_suitImpl->driver->getSensorDataSample().data.at(
+        const auto sensorData = m_suitImpl->driver->getSensorDataSample().data.at(
             m_suitImpl->orientationSensorsMap.at(this->m_name).driverIndex);
 
         // TODO: This should be guaranteed, runtime check should be removed
@@ -287,7 +287,7 @@ public:
         }
 
         // Retrieve data sample directly form XSens Driver
-        const auto& sensorData = m_suitImpl->driver->getSensorDataSample().data.at(
+        const auto sensorData = m_suitImpl->driver->getSensorDataSample().data.at(
             m_suitImpl->poseSensorsMap.at(this->m_name).driverIndex);
 
         // TODO: This should be guaranteed, runtime check should be removed
@@ -345,7 +345,7 @@ public:
         }
 
         // Retrieve data sample directly form XSens Driver
-        const auto& sensorData = m_suitImpl->driver->getSensorDataSample().data.at(
+        const auto sensorData = m_suitImpl->driver->getSensorDataSample().data.at(
             m_suitImpl->magnetometersMap.at(this->m_name).driverIndex);
 
         // TODO: This should be guaranteed, runtime check should be removed
@@ -405,7 +405,7 @@ public:
         }
 
         // Retrieve data sample directly form XSens Driver
-        const auto& linkData = m_suitImpl->driver->getLinkDataSample().data.at(
+        const auto linkData = m_suitImpl->driver->getLinkDataSample().data.at(
             m_suitImpl->virtualLinkKinSensorsMap.at(this->m_name).driverIndex);
 
         // TODO: This should be guaranteed, runtime check should be removed
@@ -434,7 +434,7 @@ public:
         }
 
         // Retrieve data sample directly form XSens Driver
-        const auto& linkData = m_suitImpl->driver->getLinkDataSample().data.at(
+        const auto linkData = m_suitImpl->driver->getLinkDataSample().data.at(
             m_suitImpl->virtualLinkKinSensorsMap.at(this->m_name).driverIndex);
 
         // TODO: This should be guaranteed, runtime check should be removed
@@ -463,7 +463,7 @@ public:
         }
 
         // Retrieve data sample directly form XSens Driver
-        const auto& linkData = m_suitImpl->driver->getLinkDataSample().data.at(
+        const auto linkData = m_suitImpl->driver->getLinkDataSample().data.at(
             m_suitImpl->virtualLinkKinSensorsMap.at(this->m_name).driverIndex);
 
         // TODO: This should be guaranteed, runtime check should be removed
@@ -523,7 +523,7 @@ public:
         }
 
         // Retrieve data sample directly form XSens Driver
-        const auto& jointData = m_suitImpl->driver->getJointDataSample().data.at(
+        const auto jointData = m_suitImpl->driver->getJointDataSample().data.at(
             m_suitImpl->virtualJointKinSensorsMap.at(this->m_name).driverIndex);
 
         // TODO: This should be guaranteed, runtime check should be removed
@@ -550,7 +550,7 @@ public:
         }
 
         // Retrieve data sample directly form XSens Driver
-        const auto& jointData = m_suitImpl->driver->getJointDataSample().data.at(
+        const auto jointData = m_suitImpl->driver->getJointDataSample().data.at(
             m_suitImpl->virtualJointKinSensorsMap.at(this->m_name).driverIndex);
 
         // TODO: This should be guaranteed, runtime check should be removed
@@ -577,7 +577,7 @@ public:
         }
 
         // Retrieve data sample directly form XSens Driver
-        const auto& jointData = m_suitImpl->driver->getJointDataSample().data.at(
+        const auto jointData = m_suitImpl->driver->getJointDataSample().data.at(
             m_suitImpl->virtualJointKinSensorsMap.at(this->m_name).driverIndex);
 
         // TODO: This should be guaranteed, runtime check should be removed
