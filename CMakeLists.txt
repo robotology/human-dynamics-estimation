@@ -19,6 +19,17 @@ if(MSVC)
     set(CMAKE_DEBUG_POSTFIX "d")
 endif()
 
+# Libraries type
+if(MSVC)
+    option(WBT_SHARED_LIBRARY "Compile WBToolbox as a shared library" FALSE)
+else()
+    option(WBT_SHARED_LIBRARY "Compile WBToolbox as a shared library" TRUE)
+endif()
+set(BUILD_SHARED_LIBS ${WBT_SHARED_LIBRARY})
+if(NOT BUILD_SHARED_LIBS)
+    set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+endif()
+
 # Control where binaries and libraries are placed in the build folder.
 # This simplifies tests running in Windows.
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}")
