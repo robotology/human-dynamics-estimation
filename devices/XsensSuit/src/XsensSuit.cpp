@@ -43,17 +43,6 @@ public:
         {"Poor", xsensmvn::CalibrationQuality::POOR},
         {"Failed", xsensmvn::CalibrationQuality::FAILED}};
 
-    // TODO: to be removed if not needed
-    //    const std::vector<std::string> allowedBodyDimensions{"ankleHeight",
-    //                                                         "armSpan",
-    //                                                         "bodyHeight",
-    //                                                         "footSize",
-    //                                                         "hipHeight",
-    //                                                         "hipWidth",
-    //                                                         "kneeHeight",
-    //                                                         "shoulderWidth",
-    //                                                         "shoeSoleHeight"};
-
     const std::map<xsensmvn::DriverStatus, wearable::sensor::SensorStatus> driverToSensorStatusMap{
         {xsensmvn::DriverStatus::Disconnected, sensor::SensorStatus::Error},
         {xsensmvn::DriverStatus::Unknown, sensor::SensorStatus::Unknown},
@@ -85,6 +74,8 @@ public:
     // Custom utility functions
     // ------------------------
     void setAllSensorStates(wearable::sensor::SensorStatus aStatus);
+
+    const WearableName wearableName = "XsensSuit_";
 };
 
 // ===================================================
@@ -112,14 +103,23 @@ public:
     // -------------------------------------
     bool getFreeBodyAcceleration(wearable::Vector3& fba) const override
     {
+        if (m_suitImpl->freeBodyAccerlerationSensorsMap.find(this->m_name)
+            == m_suitImpl->freeBodyAccerlerationSensorsMap.end()) {
+            yError() << "Sensor " << this->m_name << " NOT found";
+            fba.fill(0.0);
+            return false;
+        }
+
         // Retrieve data sample directly form XSens Driver
         const auto& sensorData = m_suitImpl->driver->getSensorDataSample().data.at(
             m_suitImpl->freeBodyAccerlerationSensorsMap.at(this->m_name).driverIndex);
 
         // TODO: This should be guaranteed, runtime check should be removed
         // Check if suit sensor and driver data sample have the same name
-        if (this->m_name != sensorData.name) {
-            yError() << logPrefix << "Driver has non entry with my name";
+        auto prefix = m_suitImpl->wearableName + this->getPrefix();
+        if (this->m_name != prefix + sensorData.name) {
+            yError() << logPrefix << "Names mismatch Driver name: " << prefix + sensorData.name
+                     << " Wearable Sensor name " << this->m_name;
             return false;
         }
 
@@ -164,14 +164,22 @@ public:
     // -------------------------
     bool getPosition(wearable::Vector3& pos) const override
     {
+        if (m_suitImpl->positionSensorsMap.find(this->m_name)
+            == m_suitImpl->positionSensorsMap.end()) {
+            yError() << "Sensor " << this->m_name << " NOT found";
+            pos.fill(0.0);
+            return false;
+        }
         // Retrieve data sample directly form XSens Driver
         const auto& sensorData = m_suitImpl->driver->getSensorDataSample().data.at(
             m_suitImpl->positionSensorsMap.at(this->m_name).driverIndex);
 
         // TODO: This should be guaranteed, runtime check should be removed
         // Check if suit sensor and driver data sample have the same name
-        if (this->m_name != sensorData.name) {
-            yError() << logPrefix << "Driver has non entry with my name";
+        auto prefix = m_suitImpl->wearableName + this->getPrefix();
+        if (this->m_name != prefix + sensorData.name) {
+            yError() << logPrefix << "Names mismatch Driver name: " << prefix + sensorData.name
+                     << " Wearable Sensor name " << this->m_name;
             return false;
         }
 
@@ -213,14 +221,23 @@ public:
     // -------------------------
     bool getOrientationAsQuaternion(wearable::Quaternion& quat) const override
     {
+        if (m_suitImpl->orientationSensorsMap.find(this->m_name)
+            == m_suitImpl->orientationSensorsMap.end()) {
+            yError() << "Sensor " << this->m_name << " NOT found";
+            quat.fill(0.0);
+            return false;
+        }
+
         // Retrieve data sample directly form XSens Driver
         const auto& sensorData = m_suitImpl->driver->getSensorDataSample().data.at(
             m_suitImpl->orientationSensorsMap.at(this->m_name).driverIndex);
 
         // TODO: This should be guaranteed, runtime check should be removed
         // Check if suit sensor and driver data sample have the same name
-        if (this->m_name != sensorData.name) {
-            yError() << logPrefix << "Driver has non entry with my name";
+        auto prefix = m_suitImpl->wearableName + this->getPrefix();
+        if (this->m_name != prefix + sensorData.name) {
+            yError() << logPrefix << "Names mismatch Driver name: " << prefix + sensorData.name
+                     << " Wearable Sensor name " << this->m_name;
             return false;
         }
 
@@ -262,14 +279,23 @@ public:
     // -------------------------
     bool getPose(Quaternion& orientation, Vector3& position) const override
     {
+        if (m_suitImpl->poseSensorsMap.find(this->m_name) == m_suitImpl->poseSensorsMap.end()) {
+            yError() << "Sensor " << this->m_name << " NOT found";
+            orientation.fill(0.0);
+            position.fill(0.0);
+            return false;
+        }
+
         // Retrieve data sample directly form XSens Driver
         const auto& sensorData = m_suitImpl->driver->getSensorDataSample().data.at(
-            m_suitImpl->orientationSensorsMap.at(this->m_name).driverIndex);
+            m_suitImpl->poseSensorsMap.at(this->m_name).driverIndex);
 
         // TODO: This should be guaranteed, runtime check should be removed
         // Check if suit sensor and driver data sample have the same name
-        if (this->m_name != sensorData.name) {
-            yError() << logPrefix << "Driver has non entry with my name";
+        auto prefix = m_suitImpl->wearableName + this->getPrefix();
+        if (this->m_name != prefix + sensorData.name) {
+            yError() << logPrefix << "Names mismatch Driver name: " << prefix + sensorData.name
+                     << " Wearable Sensor name " << this->m_name;
             return false;
         }
 
@@ -312,14 +338,22 @@ public:
     // -------------------------
     bool getMagneticField(wearable::Vector3& mf) const override
     {
+        if (m_suitImpl->magnetometersMap.find(this->m_name) == m_suitImpl->magnetometersMap.end()) {
+            yError() << "Sensor " << this->m_name << " NOT found";
+            mf.fill(0.0);
+            return false;
+        }
+
         // Retrieve data sample directly form XSens Driver
         const auto& sensorData = m_suitImpl->driver->getSensorDataSample().data.at(
             m_suitImpl->magnetometersMap.at(this->m_name).driverIndex);
 
         // TODO: This should be guaranteed, runtime check should be removed
         // Check if suit sensor and driver data sample have the same name
-        if (this->m_name != sensorData.name) {
-            yError() << logPrefix << "Driver has non entry with my name";
+        auto prefix = m_suitImpl->wearableName + this->getPrefix();
+        if (this->m_name != prefix + sensorData.name) {
+            yError() << logPrefix << "Names mismatch Driver name: " << prefix + sensorData.name
+                     << " Wearable Sensor name " << this->m_name;
             return false;
         }
 
@@ -362,14 +396,24 @@ public:
     // -------------------------------
     bool getLinkAcceleration(Vector3& linear, Vector3& angular) const override
     {
+        if (m_suitImpl->virtualLinkKinSensorsMap.find(this->m_name)
+            == m_suitImpl->virtualLinkKinSensorsMap.end()) {
+            yError() << "Sensor " << this->m_name << " NOT found";
+            linear.fill(0.0);
+            angular.fill(0.0);
+            return false;
+        }
+
         // Retrieve data sample directly form XSens Driver
         const auto& linkData = m_suitImpl->driver->getLinkDataSample().data.at(
             m_suitImpl->virtualLinkKinSensorsMap.at(this->m_name).driverIndex);
 
         // TODO: This should be guaranteed, runtime check should be removed
         // Check if suit sensor and driver data sample have the same name
-        if (this->m_name != linkData.name) {
-            yError() << logPrefix << "Driver has non entry with my name";
+        auto prefix = m_suitImpl->wearableName + this->getPrefix();
+        if (this->m_name != prefix + linkData.name) {
+            yError() << logPrefix << "Names mismatch Driver name: " << prefix + linkData.name
+                     << " Wearable Sensor name " << this->m_name;
             return false;
         }
 
@@ -381,14 +425,24 @@ public:
 
     bool getLinkPose(Vector3& position, Quaternion& orientation) const override
     {
+        if (m_suitImpl->virtualLinkKinSensorsMap.find(this->m_name)
+            == m_suitImpl->virtualLinkKinSensorsMap.end()) {
+            yError() << "Sensor " << this->m_name << " NOT found";
+            position.fill(0.0);
+            orientation.fill(0.0);
+            return false;
+        }
+
         // Retrieve data sample directly form XSens Driver
         const auto& linkData = m_suitImpl->driver->getLinkDataSample().data.at(
             m_suitImpl->virtualLinkKinSensorsMap.at(this->m_name).driverIndex);
 
         // TODO: This should be guaranteed, runtime check should be removed
         // Check if suit sensor and driver data sample have the same name
-        if (this->m_name != linkData.name) {
-            yError() << logPrefix << "Driver has non entry with my name";
+        auto prefix = m_suitImpl->wearableName + this->getPrefix();
+        if (this->m_name != prefix + linkData.name) {
+            yError() << logPrefix << "Names mismatch Driver name: " << prefix + linkData.name
+                     << " Wearable Sensor name " << this->m_name;
             return false;
         }
 
@@ -400,14 +454,24 @@ public:
 
     bool getLinkVelocity(Vector3& linear, Vector3& angular) const override
     {
+        if (m_suitImpl->virtualLinkKinSensorsMap.find(this->m_name)
+            == m_suitImpl->virtualLinkKinSensorsMap.end()) {
+            yError() << "Sensor " << this->m_name << " NOT found";
+            linear.fill(0.0);
+            angular.fill(0.0);
+            return false;
+        }
+
         // Retrieve data sample directly form XSens Driver
         const auto& linkData = m_suitImpl->driver->getLinkDataSample().data.at(
             m_suitImpl->virtualLinkKinSensorsMap.at(this->m_name).driverIndex);
 
         // TODO: This should be guaranteed, runtime check should be removed
         // Check if suit sensor and driver data sample have the same name
-        if (this->m_name != linkData.name) {
-            yError() << logPrefix << "Driver has non entry with my name";
+        auto prefix = m_suitImpl->wearableName + this->getPrefix();
+        if (this->m_name != prefix + linkData.name) {
+            yError() << logPrefix << "Names mismatch Driver name: " << prefix + linkData.name
+                     << " Wearable Sensor name " << this->m_name;
             return false;
         }
 
@@ -451,14 +515,23 @@ public:
     // -----------------------------------------
     bool getJointAnglesAsRPY(Vector3 angleAsRPY) const override
     {
+        if (m_suitImpl->virtualJointKinSensorsMap.find(this->m_name)
+            == m_suitImpl->virtualJointKinSensorsMap.end()) {
+            yError() << "Sensor " << this->m_name << " NOT found";
+            angleAsRPY.fill(0.0);
+            return false;
+        }
+
         // Retrieve data sample directly form XSens Driver
         const auto& jointData = m_suitImpl->driver->getJointDataSample().data.at(
             m_suitImpl->virtualJointKinSensorsMap.at(this->m_name).driverIndex);
 
         // TODO: This should be guaranteed, runtime check should be removed
         // Check if suit sensor and driver data sample have the same name
-        if (this->m_name != jointData.name) {
-            yError() << logPrefix << "Driver has non entry with my name";
+        auto prefix = m_suitImpl->wearableName + this->getPrefix();
+        if (this->m_name != prefix + jointData.name) {
+            yError() << logPrefix << "Names mismatch Driver name: " << prefix + jointData.name
+                     << " Wearable Sensor name " << this->m_name;
             return false;
         }
 
@@ -469,14 +542,23 @@ public:
 
     bool getJointVelocities(Vector3 velocities) const override
     {
+        if (m_suitImpl->virtualJointKinSensorsMap.find(this->m_name)
+            == m_suitImpl->virtualJointKinSensorsMap.end()) {
+            yError() << "Sensor " << this->m_name << " NOT found";
+            velocities.fill(0.0);
+            return false;
+        }
+
         // Retrieve data sample directly form XSens Driver
         const auto& jointData = m_suitImpl->driver->getJointDataSample().data.at(
             m_suitImpl->virtualJointKinSensorsMap.at(this->m_name).driverIndex);
 
         // TODO: This should be guaranteed, runtime check should be removed
         // Check if suit sensor and driver data sample have the same name
-        if (this->m_name != jointData.name) {
-            yError() << logPrefix << "Driver has non entry with my name";
+        auto prefix = m_suitImpl->wearableName + this->getPrefix();
+        if (this->m_name != prefix + jointData.name) {
+            yError() << logPrefix << "Names mismatch Driver name: " << prefix + jointData.name
+                     << " Wearable Sensor name " << this->m_name;
             return false;
         }
 
@@ -487,14 +569,23 @@ public:
 
     bool getJointAccelerations(Vector3 accelerations) const override
     {
+        if (m_suitImpl->virtualJointKinSensorsMap.find(this->m_name)
+            == m_suitImpl->virtualJointKinSensorsMap.end()) {
+            yError() << "Sensor " << this->m_name << " NOT found";
+            accelerations.fill(0.0);
+            return false;
+        }
+
         // Retrieve data sample directly form XSens Driver
         const auto& jointData = m_suitImpl->driver->getJointDataSample().data.at(
             m_suitImpl->virtualJointKinSensorsMap.at(this->m_name).driverIndex);
 
         // TODO: This should be guaranteed, runtime check should be removed
         // Check if suit sensor and driver data sample have the same name
-        if (this->m_name != jointData.name) {
-            yError() << logPrefix << "Driver has non entry with my name";
+        auto prefix = m_suitImpl->wearableName + this->getPrefix();
+        if (this->m_name != prefix + jointData.name) {
+            yError() << logPrefix << "Names mismatch Driver name: " << prefix + jointData.name
+                     << " Wearable Sensor name " << this->m_name;
             return false;
         }
 
@@ -554,7 +645,7 @@ XsensSuit::~XsensSuit() = default;
 // ======================
 bool XsensSuit::open(yarp::os::Searchable& config)
 {
-
+    yInfo() << logPrefix << " Starting to configure";
     // Read from config file the Xsens rundeps folder
     if (!config.check("xsens-rundeps-dir")) {
         yError() << logPrefix << "REQUIRED parameter <xsens-rundeps-dir> NOT found";
@@ -582,13 +673,13 @@ bool XsensSuit::open(yarp::os::Searchable& config)
 
     // Read from config file the calibration routine to be used as default.
     // Since it is optional, if not found it is safe to use an empty string
-    std::string defaultCalibrationType;
+    std::string defaultCalibrationType = "Npose";
     if (!config.check("default-calibration-type")) {
         yWarning() << logPrefix << "OPTIONAL parameter <default-calibration-type> NOT found";
-        defaultCalibrationType = "";
+        yInfo() << logPrefix << "Using Npose as default";
     }
     else {
-        acquisitionScenario = config.find("default-calibration-type").asString();
+        defaultCalibrationType = config.find("default-calibration-type").asString();
     }
 
     // Read from config file the minimum required calibration quality.
@@ -637,7 +728,6 @@ bool XsensSuit::open(yarp::os::Searchable& config)
 
     // Get subject-specific body dimensions from the configuration file and push them to
     // subjectBodyDimensions
-    // TODO: remove the hardcoded allowed list
     xsensmvn::bodyDimensions subjectBodyDimensions;
     yarp::os::Bottle bodyDimensionSet = config.findGroup("body-dimensions", "");
     if (bodyDimensionSet.isNull()) {
@@ -645,23 +735,15 @@ bool XsensSuit::open(yarp::os::Searchable& config)
         yWarning() << logPrefix
                    << "USING default body dimensions, this may affect estimation quality";
     }
-    for (size_t i = 0; i < bodyDimensionSet.size(); ++i) {
-        if (bodyDimensionSet.get(i).asList()->get(1).isDouble()
-            && bodyDimensionSet.get(i).asList()->get(1).asDouble() != -1) {
-            subjectBodyDimensions.insert({bodyDimensionSet.get(i).asList()->get(0).asString(),
-                                          bodyDimensionSet.get(i).asList()->get(1).asDouble()});
+    else {
+        for (size_t i = 1; i < bodyDimensionSet.size(); ++i) {
+            if (bodyDimensionSet.get(i).asList()->get(1).isDouble()
+                && bodyDimensionSet.get(i).asList()->get(1).asDouble() != -1) {
+                subjectBodyDimensions.insert({bodyDimensionSet.get(i).asList()->get(0).asString(),
+                                              bodyDimensionSet.get(i).asList()->get(1).asDouble()});
+            }
         }
     }
-    // TODO: to be removed
-    for (const auto& tmp : subjectBodyDimensions) {
-        yInfo() << tmp.first << " " << tmp.second;
-    }
-    //   for (const auto& abd : pImpl->allowedBodyDimensions) {
-    //        double tmpDim = bodyDimensionSet.check(abd, yarp::os::Value(-1.0)).asDouble();
-    //        if (tmpDim != -1.0) {
-    //            subjectBodyDimensions.insert({abd, tmpDim});
-    //        }
-    //    }
 
     // Read from config file the selected output stream configuration.
     // If not provided USING default configuration, Joints: OFF, Links: ON, Sensors: ON
@@ -706,59 +788,66 @@ bool XsensSuit::open(yarp::os::Searchable& config)
     std::string vjksPrefix =
         getWearableName() + sensor::IVirtualSphericalJointKinSensor::getPrefix();
 
-    std::vector<std::string> sensorNames = pImpl->driver->getSuitSensorLabels();
-    for (size_t s = 0; s < sensorNames.size(); ++s) {
-        pImpl->freeBodyAccerlerationSensorsMap.emplace(
-            fbasPrefix + sensorNames[s],
-            XsensSuitImpl::driverToDeviceSensors<XsensSuitImpl::XsensFreeBodyAccelerationSensor>{
-                std::make_shared<XsensSuitImpl::XsensFreeBodyAccelerationSensor>(
-                    pImpl.get(), fbasPrefix + sensorNames[s]),
-                s});
-        pImpl->positionSensorsMap.emplace(
-            posPrefix + sensorNames[s],
-            XsensSuitImpl::driverToDeviceSensors<XsensSuitImpl::XsensPositionSensor>{
-                std::make_shared<XsensSuitImpl::XsensPositionSensor>(pImpl.get(),
-                                                                     posPrefix + sensorNames[s]),
-                s});
-        pImpl->orientationSensorsMap.emplace(
-            orientPrefix + sensorNames[s],
-            XsensSuitImpl::driverToDeviceSensors<XsensSuitImpl::XsensOrientationSensor>{
-                std::make_shared<XsensSuitImpl::XsensOrientationSensor>(
-                    pImpl.get(), orientPrefix + sensorNames[s]),
-                s});
-        pImpl->poseSensorsMap.emplace(
-            posePrefix + sensorNames[s],
-            XsensSuitImpl::driverToDeviceSensors<XsensSuitImpl::XsensPoseSensor>{
-                std::make_shared<XsensSuitImpl::XsensPoseSensor>(pImpl.get(),
-                                                                 posePrefix + sensorNames[s]),
-                s});
-        pImpl->magnetometersMap.emplace(
-            magPrefix + sensorNames[s],
-            XsensSuitImpl::driverToDeviceSensors<XsensSuitImpl::XsensMagnetometer>{
-                std::make_shared<XsensSuitImpl::XsensMagnetometer>(pImpl.get(),
-                                                                   magPrefix + sensorNames[s]),
-                s});
+    if (pImpl->driver->getDriverConfiguration().dataStreamConfiguration.enableSensorData) {
+        std::vector<std::string> sensorNames = pImpl->driver->getSuitSensorLabels();
+        for (size_t s = 0; s < sensorNames.size(); ++s) {
+            pImpl->freeBodyAccerlerationSensorsMap.emplace(
+                fbasPrefix + sensorNames[s],
+                XsensSuitImpl::driverToDeviceSensors<
+                    XsensSuitImpl::XsensFreeBodyAccelerationSensor>{
+                    std::make_shared<XsensSuitImpl::XsensFreeBodyAccelerationSensor>(
+                        pImpl.get(), fbasPrefix + sensorNames[s]),
+                    s});
+            pImpl->positionSensorsMap.emplace(
+                posPrefix + sensorNames[s],
+                XsensSuitImpl::driverToDeviceSensors<XsensSuitImpl::XsensPositionSensor>{
+                    std::make_shared<XsensSuitImpl::XsensPositionSensor>(
+                        pImpl.get(), posPrefix + sensorNames[s]),
+                    s});
+            pImpl->orientationSensorsMap.emplace(
+                orientPrefix + sensorNames[s],
+                XsensSuitImpl::driverToDeviceSensors<XsensSuitImpl::XsensOrientationSensor>{
+                    std::make_shared<XsensSuitImpl::XsensOrientationSensor>(
+                        pImpl.get(), orientPrefix + sensorNames[s]),
+                    s});
+            pImpl->poseSensorsMap.emplace(
+                posePrefix + sensorNames[s],
+                XsensSuitImpl::driverToDeviceSensors<XsensSuitImpl::XsensPoseSensor>{
+                    std::make_shared<XsensSuitImpl::XsensPoseSensor>(pImpl.get(),
+                                                                     posePrefix + sensorNames[s]),
+                    s});
+            pImpl->magnetometersMap.emplace(
+                magPrefix + sensorNames[s],
+                XsensSuitImpl::driverToDeviceSensors<XsensSuitImpl::XsensMagnetometer>{
+                    std::make_shared<XsensSuitImpl::XsensMagnetometer>(pImpl.get(),
+                                                                       magPrefix + sensorNames[s]),
+                    s});
+        }
     }
 
-    std::vector<std::string> linkNames = pImpl->driver->getSuitLinkLabels();
-    for (size_t s = 0; s < linkNames.size(); ++s) {
-        pImpl->virtualLinkKinSensorsMap.emplace(
-            vlksPrefix + linkNames[s],
-            XsensSuitImpl::driverToDeviceSensors<XsensSuitImpl::XsensVirtualLinkKinSensor>{
-                std::make_shared<XsensSuitImpl::XsensVirtualLinkKinSensor>(
-                    pImpl.get(), vlksPrefix + linkNames[s]),
-                s});
+    if (pImpl->driver->getDriverConfiguration().dataStreamConfiguration.enableLinkData) {
+        std::vector<std::string> linkNames = pImpl->driver->getSuitLinkLabels();
+        for (size_t s = 0; s < linkNames.size(); ++s) {
+            pImpl->virtualLinkKinSensorsMap.emplace(
+                vlksPrefix + linkNames[s],
+                XsensSuitImpl::driverToDeviceSensors<XsensSuitImpl::XsensVirtualLinkKinSensor>{
+                    std::make_shared<XsensSuitImpl::XsensVirtualLinkKinSensor>(
+                        pImpl.get(), vlksPrefix + linkNames[s]),
+                    s});
+        }
     }
 
-    std::vector<std::string> jointNames = pImpl->driver->getSuitJointLabels();
-    for (size_t s = 0; s < jointNames.size(); ++s) {
-        pImpl->virtualJointKinSensorsMap.emplace(
-            vjksPrefix + jointNames[s],
-            XsensSuitImpl::driverToDeviceSensors<
-                XsensSuitImpl::XsensVirtualSphericalJointKinSensor>{
-                std::make_shared<XsensSuitImpl::XsensVirtualSphericalJointKinSensor>(
-                    pImpl.get(), vjksPrefix + jointNames[s]),
-                s});
+    if (pImpl->driver->getDriverConfiguration().dataStreamConfiguration.enableJointData) {
+        std::vector<std::string> jointNames = pImpl->driver->getSuitJointLabels();
+        for (size_t s = 0; s < jointNames.size(); ++s) {
+            pImpl->virtualJointKinSensorsMap.emplace(
+                vjksPrefix + jointNames[s],
+                XsensSuitImpl::driverToDeviceSensors<
+                    XsensSuitImpl::XsensVirtualSphericalJointKinSensor>{
+                    std::make_shared<XsensSuitImpl::XsensVirtualSphericalJointKinSensor>(
+                        pImpl.get(), vjksPrefix + jointNames[s]),
+                    s});
+        }
     }
 
     return true;
@@ -766,6 +855,8 @@ bool XsensSuit::open(yarp::os::Searchable& config)
 
 bool XsensSuit::close()
 {
+    pImpl->driver->stopAcquisition();
+    pImpl->driver->terminate();
     return true;
 }
 
@@ -895,7 +986,7 @@ bool XsensSuit::stopAcquisition()
 
 wearable::WearableName XsensSuit::getWearableName() const
 {
-    return "XsensSuit_";
+    return pImpl->wearableName;
 }
 
 wearable::WearStatus XsensSuit::getStatus() const

@@ -2,7 +2,7 @@
 # This software may be modified and distributed under the terms of the
 # GNU Lesser General Public License v2.1 or any later version.
 
-yarp_prepare_plugin(XsensSuit
+yarp_prepare_plugin(xsens_suit
     TYPE wearable::devices::XsensSuit
     INCLUDE XsensSuit.h
     CATEGORY device
