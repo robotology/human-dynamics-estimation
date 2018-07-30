@@ -73,7 +73,6 @@ public:
     virtual ~ISensor() = default;
 
     // TODO: timestamp? sequence number?
-    // TODO: virtual?
     inline SensorName getSensorName() const;
     inline SensorStatus getSensorStatus() const;
     inline SensorType getSensorType() const;

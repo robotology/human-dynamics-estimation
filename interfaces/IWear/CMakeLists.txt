@@ -44,10 +44,10 @@ endif()
 
 # Install all the directories preserving their structure
 install(
-    FILES IWear.h
+    FILES include/Wearable/IWear/IWear.h
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/Wearable)
 install(
-    DIRECTORY Sensors
+    DIRECTORY include/Wearable/IWear/Sensors
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/Wearable)
 
 # Generate the PackageConfig.cmake file
