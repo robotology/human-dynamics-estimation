@@ -3,3 +3,4 @@
 # GNU Lesser General Public License v2.1 or any later version.
 
 add_subdirectory(IWear)
+add_subdirectory(IXsensMVNControl)
