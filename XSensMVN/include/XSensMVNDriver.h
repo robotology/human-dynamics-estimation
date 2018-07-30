@@ -166,7 +166,7 @@ public:
      * -------------------------- */
 
     XSensMVNDriver() = delete;
-    XSensMVNDriver(const xsensmvn::DriverConfiguration conf);
+    XSensMVNDriver(const xsensmvn::DriverConfiguration& conf);
     ~XSensMVNDriver() override;
 
     /* ---------- *
@@ -185,14 +185,16 @@ public:
     bool setMinimumAcceptableCalibrationQuality(const xsensmvn::CalibrationQuality quality) const;
     const xsensmvn::CalibrationQuality& getMinimumAcceptableCalibrationQuality() const;
 
+    const xsensmvn::DriverConfiguration& getDriverConfiguration() const;
+
     // Data accessor
     // Data are returned as reference, but the user should not store it because the data are
     // automaically updated by the driver callback. This is intended to be used only to avoid
     // copying all the data in case just one is needed.
-    const DriverDataSample& getDataSample();
-    const LinkDataVector& getLinkDataSample();
-    const SensorDataVector& getSensorDataSample();
-    const JointDataVector& getJointDataSample();
+    const DriverDataSample getDataSample();
+    const LinkDataVector getLinkDataSample();
+    const SensorDataVector getSensorDataSample();
+    const JointDataVector getJointDataSample();
 
     // Metadata accessor
     //    double getSampleRelativeTime() const;
