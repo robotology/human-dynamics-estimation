@@ -18,7 +18,7 @@ namespace human
 {
     AbstractForceReader::AbstractForceReader(std::string attachedLink,
                                              std::string referenceFrame)
-    : m_frameTransformer(0)
+    : m_frameTransformer(nullptr)
     , m_attachedLink(attachedLink)
     , m_referenceFrame(referenceFrame)
     , m_packedForce(6, 0.0)

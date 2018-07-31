@@ -8,7 +8,7 @@
 #include "thrift/XsensDriverService.h"
 #include "thrift/XsensSegmentsFrame.h"
 
-#include <iDynTree/Model/Indeces.h>
+#include <iDynTree/Model/Indices.h>
 #include <iDynTree/ModelIO/ModelLoader.h>
 
 #include <yarp/os/BufferedPort.h>
@@ -30,12 +30,12 @@ using namespace std;
 using namespace yarp::os;
 using namespace xsens;
 
-inline TickTime normalizeSecNSec(double yarpTimeStamp)
+inline yarp::rosmsg::TickTime normalizeSecNSec(double yarpTimeStamp)
 {
     uint64_t time = static_cast<uint64_t>(yarpTimeStamp * 1000000000UL);
     uint64_t nsec_part = (time % 1000000000UL);
     uint64_t sec_part = (time / 1000000000UL);
-    TickTime ret;
+    yarp::rosmsg::TickTime ret;
 
     if (sec_part > UINT_MAX)
     {
@@ -68,8 +68,8 @@ class HumanTFBridge : public RFModule, public TypedReaderCallback<XsensSegmentsF
     BufferedPort<XsensSegmentsFrame> xsensDataPort;
     XsensDriverService xsensDriver;
     
-    Publisher<tf2_msgs_TFMessage> publisher_tf;
-    tf2_msgs_TFMessage tf;
+    Publisher<yarp::rosmsg::tf2_msgs::TFMessage> publisher_tf;
+    yarp::rosmsg::tf2_msgs::TFMessage tf;
     vector<string> segments;
     vector<string> fakeSegments;
     
@@ -205,8 +205,8 @@ public:
 
         if (xsensData.status != xsens::OK) return;
     
-        TickTime currentTime = normalizeSecNSec(yarp::os::Time::now());
-        tf2_msgs_TFMessage &tfMsg = publisher_tf.prepare();
+        yarp::rosmsg::TickTime currentTime = normalizeSecNSec(yarp::os::Time::now());
+        yarp::rosmsg::tf2_msgs::TFMessage &tfMsg = publisher_tf.prepare();
         // Send the transforms
         for (size_t index = 0; index < segments.size(); ++index){
             tf.transforms[index].header.seq   = index;

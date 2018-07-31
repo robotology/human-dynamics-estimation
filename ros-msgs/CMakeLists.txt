@@ -22,6 +22,6 @@ target_include_directories(human-rosmsgs INTERFACE ${STRING_INCLUDE_DIRS}
                                                    ${VECTOR_INCLUDE_DIRS} 
                                                    ${WRENCH_INCLUDE_DIRS} 
                                                    ${WRENCHSTAMPED_INCLUDE_DIRS} 
-                                                   ${JOINTSTATE__INCLUDE_DIRS} 
-                                                   ${TFTFMESSAGE__INCLUDE_DIRS}
+                                                   ${JOINTSTATE_INCLUDE_DIRS}
+                                                   ${TFTFMESSAGE_INCLUDE_DIRS}
                                                    ${TEMPERATURE_INCLUDE_DIRS})

@@ -13,7 +13,7 @@
 
 namespace human {
     HumanStateProvider::HumanStateProviderPrivate::HumanStateProviderPrivate()
-    : m_frameProvider(0) {}
+    : m_frameProvider(nullptr) {}
 
     HumanStateProvider::HumanStateProviderPrivate::~HumanStateProviderPrivate() {}
 

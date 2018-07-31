@@ -10,7 +10,7 @@ yarp_idl_to_dir("${CMAKE_CURRENT_SOURCE_DIR}/thrifts/HumanDynamics.thrift" "${CM
 
 # Until nobody uses it, make this static
 add_library(human-dynamics-estimator-data STATIC ${THRIFT_SOURCES} ${THRIFT_HEADERS})
-target_include_directories(human-dynamics-estimator-data SYSTEM PUBLIC ${THRIFT_INCLUDE_DIRS} ${YARP_INCLUDE_DIRS})
+target_include_directories(human-dynamics-estimator-data SYSTEM PUBLIC ${THRIFT_INCLUDE_DIRS})
 target_link_libraries(human-dynamics-estimator-data YARP::YARP_OS YARP::YARP_sig)
 
 set(SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp 
@@ -30,7 +30,7 @@ target_compile_features(${PROJECT_NAME} PRIVATE cxx_auto_type
 
 ## Include directories
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIR} ${YARP_INCLUDE_DIRS})
+target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIR})
 
 ## Specify targets for the linkage
 target_link_libraries(${PROJECT_NAME} human-dynamics-estimator-data

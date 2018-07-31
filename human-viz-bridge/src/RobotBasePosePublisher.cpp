@@ -40,12 +40,12 @@ using namespace std;
 using namespace yarp::os;
 using namespace human;
 
-inline TickTime normalizeSecNSec(double yarpTimeStamp)
+inline yarp::rosmsg::TickTime normalizeSecNSec(double yarpTimeStamp)
 {
     uint64_t time = (uint64_t) (yarpTimeStamp * 1000000000UL);
     uint64_t nsec_part = (time % 1000000000UL);
     uint64_t sec_part = (time / 1000000000UL);
-    TickTime ret;
+    yarp::rosmsg::TickTime ret;
 
     if (sec_part > UINT_MAX)
     {
@@ -134,7 +134,7 @@ class RobotBasePosePublisher : public RFModule
     yarp::dev::PolyDriver robotDriver;
     yarp::dev::IEncoders *robotEncoders;
 
-    Publisher<tf2_msgs_TFMessage> tfPublisher;
+    Publisher<yarp::rosmsg::tf2_msgs::TFMessage> tfPublisher;
 
 
     bool updateHumanPose;
@@ -163,7 +163,7 @@ public:
     // Main function. Will be called periodically every getPeriod() seconds
     bool updateModule()
     {
-        TickTime currentTime = normalizeSecNSec(yarp::os::Time::now());
+        yarp::rosmsg::TickTime currentTime = normalizeSecNSec(yarp::os::Time::now());
 
         // Read robot
         robotEncoders->getEncoders(robotConfiguration.data());
@@ -207,7 +207,7 @@ public:
         iDynTree::Position ground_P_robotBase = ground_H_robotBase.getPosition();
         iDynTree::Vector4 ground_R_robotBase = ground_H_robotBase.getRotation().asQuaternion();
 
-        tf2_msgs_TFMessage &tf = tfPublisher.prepare();
+        yarp::rosmsg::tf2_msgs::TFMessage &tf = tfPublisher.prepare();
         tf.transforms.resize(1);
         tf.transforms[0].header.seq   = rosSequenceCounter++;
         tf.transforms[0].header.stamp = currentTime;
@@ -372,7 +372,7 @@ public:
 
         rosSequenceCounter = 1;
 
-        tf2_msgs_TFMessage &tf = tfPublisher.prepare();
+        yarp::rosmsg::tf2_msgs::TFMessage &tf = tfPublisher.prepare();
         tf.transforms.resize(1);
         tf.transforms[0].header.frame_id = rf.find("worldRFName").asString();
         tf.transforms[0].child_frame_id = robotChildFrame;

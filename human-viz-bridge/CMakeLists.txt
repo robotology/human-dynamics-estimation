@@ -11,7 +11,6 @@ add_library(human-viz-bridge-thrift STATIC ${THRIFT_SOURCES} ${THRIFT_HEADERS}
 target_link_libraries(human-viz-bridge-thrift ${YARP_LIBRARIES})
 target_include_directories(human-viz-bridge-thrift PUBLIC ${THRIFT_INCLUDE_DIRS}
                                                           ${THRIFT_SERVICE_INCLUDE_DIRS})
-target_include_directories(human-viz-bridge-thrift SYSTEM PUBLIC ${YARP_INCLUDE_DIRS})
 
 # TF bridge
 add_executable(human-tf-bridge src/HumanTFBridge.cpp)
@@ -28,9 +27,6 @@ target_link_libraries(human-tf-bridge YARP::YARP_OS
                                       iDynTree::idyntree-modelio-urdf
                                       human-viz-bridge-thrift
                                       human-rosmsgs)
-
-target_include_directories(human-tf-bridge PUBLIC ${YARP_INCLUDE_DIRS})
-
                                                 
 list(APPEND conf config/human-tf-bridge.ini)
 
@@ -53,8 +49,6 @@ target_link_libraries(human-jointstate-bridge YARP::YARP_OS
                                               human-rosmsgs
                                               human-state-provider-data)
 
-target_include_directories(human-jointstate-bridge PUBLIC ${YARP_INCLUDE_DIRS})
-
 list(APPEND conf config/human-jointstate-bridge.ini)
 
 # Effort bridge
@@ -74,8 +68,6 @@ target_link_libraries(human-effort-bridge YARP::YARP_OS
                                           human-state-provider-data
                                           human-dynamics-estimator-data)
 
-target_include_directories(human-effort-bridge PUBLIC ${YARP_INCLUDE_DIRS})
-                                              
 list(APPEND conf config/human-effort-bridge.ini)
 
 
@@ -97,7 +89,7 @@ target_link_libraries(robot-basepose-publisher  YARP::YARP_OS
                                                human-state-provider-data
                                                human-dynamics-estimator-data)
 
-target_include_directories(robot-basepose-publisher PUBLIC ${YARP_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIR})
+target_include_directories(robot-basepose-publisher PUBLIC ${EIGEN3_INCLUDE_DIR})
                                               
 list(APPEND conf config/robot-basepose-publisher.ini)
 

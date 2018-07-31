@@ -17,7 +17,7 @@
 #include <thrifts/HumanForces.h>
 #include <thrifts/HumanState.h>
 
-#include <geometry_msgs/WrenchStamped.h>
+#include <yarp/rosmsg/geometry_msgs/WrenchStamped.h>
 
 
 namespace human
@@ -68,7 +68,7 @@ private:
 
     yarp::os::Node *m_rosNode;
     std::string m_tfPrefix;
-    std::vector<yarp::os::Publisher<geometry_msgs::WrenchStamped>*> m_topics;
+    std::vector<yarp::os::Publisher<yarp::rosmsg::geometry_msgs::WrenchStamped>*> m_topics;
     unsigned m_rosSequence;
     double m_rosForcesScale;
 

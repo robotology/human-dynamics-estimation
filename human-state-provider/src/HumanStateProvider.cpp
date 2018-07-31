@@ -10,7 +10,6 @@
 #include "HumanStateProviderPrivate.h"
 #include "HumanIKWorkerPool.h"
 
-
 #include <thrifts/HumanState.h>
 #include <thrifts/HumanStateProviderService.h>
 
@@ -63,7 +62,7 @@ namespace human {
     HumanStateProvider::~HumanStateProvider()
     {
         delete m_pimpl;
-        m_pimpl = 0;
+        m_pimpl = nullptr;
     }
 
     double HumanStateProvider::getPeriod()

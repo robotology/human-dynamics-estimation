@@ -21,7 +21,8 @@ namespace yarp
 {
     namespace sig
     {
-        class Vector;
+        template<class T> class VectorOf;
+        typedef VectorOf<double> Vector;
     }
 }
 

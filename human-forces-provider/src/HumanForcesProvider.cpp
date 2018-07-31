@@ -408,7 +408,7 @@ bool HumanForcesProvider::configure(yarp::os::ResourceFinder &rf)
             //create also topic
             std::vector<std::string>::difference_type index = std::distance<std::vector<std::string>::const_iterator>(sources.begin(), it);
             if (index >= 0) {
-                m_topics[static_cast<size_t>(index)] = new yarp::os::Publisher<geometry_msgs::WrenchStamped>();
+                m_topics[static_cast<size_t>(index)] = new yarp::os::Publisher<yarp::rosmsg::geometry_msgs::WrenchStamped>();
                 if (m_topics[static_cast<size_t>(index)]) {
                     std::string ROSname = getName();
                     while(ROSname.find("-")!=std::string::npos) {
@@ -559,7 +559,7 @@ bool HumanForcesProvider::updateModule()
 
         if (m_rosNode && m_topics[index])
         {
-            geometry_msgs::WrenchStamped &wrench = m_topics[index]->prepare();
+            yarp::rosmsg::geometry_msgs::WrenchStamped &wrench = m_topics[index]->prepare();
 
             wrench.header.seq = m_rosSequence;
             wrench.header.stamp = rosTime;
@@ -624,7 +624,7 @@ bool HumanForcesProvider::close()
     /*
      * ------Releasing allocated memory for m_topics
      */
-    for (std::vector<yarp::os::Publisher<geometry_msgs::WrenchStamped>*>::iterator it(m_topics.begin());
+    for (std::vector<yarp::os::Publisher<yarp::rosmsg::geometry_msgs::WrenchStamped>*>::iterator it(m_topics.begin());
          it != m_topics.end(); ++it)
     {
         if (!(*it)) {

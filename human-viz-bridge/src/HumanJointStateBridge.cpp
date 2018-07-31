@@ -35,12 +35,12 @@ using namespace std;
 using namespace yarp::os;
 using namespace human;
 
-inline TickTime normalizeSecNSec(double yarpTimeStamp)
+inline yarp::rosmsg::TickTime normalizeSecNSec(double yarpTimeStamp)
 {
     uint64_t time = (uint64_t) (yarpTimeStamp * 1000000000UL);
     uint64_t nsec_part = (time % 1000000000UL);
     uint64_t sec_part = (time / 1000000000UL);
-    TickTime ret;
+    yarp::rosmsg::TickTime ret;
 
     if (sec_part > UINT_MAX)
     {
@@ -123,10 +123,10 @@ class xsensJointStatePublisherModule : public RFModule, public TypedReaderCallba
     Port rpcPort;
     BufferedPort<HumanState> humanStateDataPort;
 
-    Publisher<sensor_msgs_JointState> publisher;
-    Publisher<tf2_msgs_TFMessage> publisher_tf;
-    sensor_msgs_JointState joint_state;
-    tf2_msgs_TFMessage tf;
+    Publisher<yarp::rosmsg::sensor_msgs::JointState> publisher;
+    Publisher<yarp::rosmsg::tf2_msgs::TFMessage> publisher_tf;
+    yarp::rosmsg::sensor_msgs::JointState joint_state;
+    yarp::rosmsg::tf2_msgs::TFMessage tf;
     Mutex mutex;
 
     bool hasRobotFrame;
@@ -323,9 +323,9 @@ public:
     
     virtual void onRead(HumanState& humanStateData) {
     
-        TickTime currentTime = normalizeSecNSec(yarp::os::Time::now());
-        tf2_msgs_TFMessage &tfMsg = publisher_tf.prepare();
-        sensor_msgs_JointState &jointStateMsg = publisher.prepare();
+        yarp::rosmsg::TickTime currentTime = normalizeSecNSec(yarp::os::Time::now());
+        yarp::rosmsg::tf2_msgs::TFMessage &tfMsg = publisher_tf.prepare();
+        yarp::rosmsg::sensor_msgs::JointState &jointStateMsg = publisher.prepare();
         joint_state.header.stamp = currentTime;
         
         for (size_t index = 0; index < joint_state.position.size(); ++index){

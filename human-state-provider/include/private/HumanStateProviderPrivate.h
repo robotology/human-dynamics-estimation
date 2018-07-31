@@ -17,7 +17,7 @@
 #include <iDynTree/Core/MatrixDynSize.h>
 #include <iDynTree/Core/VectorDynSize.h>
 #include <iDynTree/Core/Transform.h>
-#include <iDynTree/Model/Indeces.h>
+#include <iDynTree/Model/Indices.h>
 #include <iDynTree/KinDynComputations.h>
 #include <human-ik/InverseKinematics.h>
 #include <yarp/dev/PolyDriver.h>

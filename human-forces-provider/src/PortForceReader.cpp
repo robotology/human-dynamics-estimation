@@ -27,7 +27,7 @@ namespace human
     {
         yarp::sig::Vector *tmp = m_bufferedPort.read(false);
         
-        if(tmp != NULL && tmp->size() == 6)
+        if(tmp && tmp->size() == 6)
         {
             m_internal_buffer = *tmp;
         }
