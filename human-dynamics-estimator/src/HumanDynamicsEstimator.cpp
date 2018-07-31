@@ -548,14 +548,11 @@ bool HumanDynamicsEstimator::updateModule()
                                                         jointTorques);
         for (int jointIdx = 0; jointIdx <m_inputOutputMapping.outputJoints.size(); ++jointIdx) {
             human::JointDynamicsEstimation &jointEstimation = output.jointVariables[jointIdx];
-            jointEstimation.torque[0] = jointEstimation.transmittedWrench[3+jointIdx%3];// jointTorques.getVal(jointIdx);
-            //yInfo() << jointEstimation.jointName << " direct y wrench :" << jointEstimation.torque[0] << " helper torque : " << jointTorques.getVal(jointIdx);
+            jointEstimation.torque[0] = jointTorques.getVal(jointIdx);
         }
     }
 
     m_outputPort.write();
-    //std::cerr << "Map took " <<std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - t1).count() << "ms" << std::endl;
-
 
 #ifdef EIGEN_RUNTIME_NO_MALLOC
     Eigen::internal::set_is_malloc_allowed(true);
