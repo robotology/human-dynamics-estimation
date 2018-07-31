@@ -1,6 +1,8 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.5)
 
 project(HumanDynamicsEstimation CXX)
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include(GNUInstallDirs)
 include(CTest)
@@ -50,6 +52,7 @@ add_subdirectory(human-state-provider)
 add_subdirectory(human-forces-provider)
 add_subdirectory(human-dynamics-estimator)
 add_subdirectory(human-viz-bridge)
+add_subdirectory(human-robot-pose)
 
 add_subdirectory(app)
 

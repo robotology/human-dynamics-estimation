@@ -89,23 +89,23 @@ public:
     /*!
      * Return the module period.
      */
-    double getPeriod();
+    double getPeriod() override;
     /*!
      * Module configuration by means of:
      * - generic parameters (name, periodicity)
      * - specific force plates parameters
      * - specific robot parameters
      */
-    bool configure(yarp::os::ResourceFinder &rf);
+    bool configure(yarp::os::ResourceFinder &rf) override;
     /*!
      * Module updating: at each timestamp it writes a transformed force on
      * an output YARP port.
      */
-    bool updateModule();
+    bool updateModule() override;
     /*!
      * Close module, release allocated memory and perform cleanup.
      */
-    bool close();
+    bool close() override;
 };
 
 #endif /* end of include guard: HUMANFORCESPROVIDER_H */
