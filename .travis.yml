@@ -1,8 +1,10 @@
-sudo: false
 dist: trusty
-osx_image: xcode7.3
 language: cpp
-cache: ccache
+
+cache:
+  directories:
+    - $HOME/.ccache
+    - $HOME/Library/Caches/Homebrew
 
 services:
   - docker
@@ -11,143 +13,115 @@ compiler:
   - clang
   - gcc
 
-os:
-  - linux
+os: linux
+
+stages:
+  - test # Default stage with job matrix
   - osx
 
 env:
-  matrix:
-    - TRAVIS_CMAKE_GENERATOR="Unix Makefiles", TRAVIS_BUILD_TYPE="Release"
-    - TRAVIS_CMAKE_GENERATOR="Unix Makefiles", TRAVIS_BUILD_TYPE="Debug"
   global:
-    - PROJECT_DIR_ABS=$TRAVIS_BUILD_DIR
-    - DOCKER_IMAGE=robotology/yarp-tdd:gazebo8master
+    - TRAVIS_CMAKE_GENERATOR="Ninja"
+    - DEPS_BRANCH="master"
+  matrix:
+    - TRAVIS_BUILD_TYPE="Release" UBUNTU="xenial"
+    - TRAVIS_BUILD_TYPE="Debug" UBUNTU="xenial"
+    - TRAVIS_BUILD_TYPE="Release" UBUNTU="bionic"
+    - TRAVIS_BUILD_TYPE="Debug" UBUNTU="bionic"
 
-matrix:
-  include:
-    - os: osx
-      env: TRAVIS_CMAKE_GENERATOR="Xcode", TRAVIS_BUILD_TYPE="Release"
-    - os: osx
-      env: TRAVIS_CMAKE_GENERATOR="Xcode", TRAVIS_BUILD_TYPE="Debug"
-    # Enable a job for building the documentation
-    - os: linux
-      env: TRAVIS_CMAKE_GENERATOR="Unix Makefiles", TRAVIS_BUILD_TYPE="Release" TRAVIS_BUILD_DOCS=true
-      addons:
-        apt:
-          packages:
-            - doxygen
-            - doxygen-doc
-            - doxygen-gui
-            - graphviz
+# ===================
+# STAGE: test (linux)
+# ===================
 
-before_install:
-  # Pull the docker image if this is a linux build and install the binary
-  # dependencies in the docker image or osx
+# This step is shared with osx stage
+before_install: &before_install
+  - if [ "$TRAVIS_BRANCH" != "master" ] ; then export DEPS_BRANCH="devel" ; fi
+  - if echo $TRAVIS_COMMIT_MESSAGE | grep -F -q "[ci master]" ; then export DEPS_BRANCH="master" ; fi
+  - if echo $TRAVIS_COMMIT_MESSAGE | grep -F -q "[master ci]" ; then export DEPS_BRANCH="master" ; fi
+
+install:
+  - echo "Using $DEPS_BRANCH for dependencies"
   - >-
-    if [[ "$TRAVIS_OS_NAME" = "linux" ]] ; then
-      docker pull $DOCKER_IMAGE || travis_terminate 1
-      docker run -it \
-        -v "$PROJECT_DIR_ABS:/app" \
-        -w /app \
-        -e TRAVIS_OS_NAME \
-        --name baseimage \
-        $DOCKER_IMAGE \
-        sh .ci/install_deps.sh \
-        || travis_terminate 1
-      docker commit baseimage imagewithbindeps || travis_terminate 1
-    elif [[ "$TRAVIS_OS_NAME" = "osx" ]] ; then
-      source $PROJECT_DIR_ABS/.ci/install_deps.sh
+    if [ "$UBUNTU" = "xenial" ] ; then
+      export DOCKER_IMAGE_NAME=robotology/robotology-tdd:gazebo8${DEPS_BRANCH}
+    elif [ "$UBUNTU" = "bionic" ] ; then
+      export DOCKER_IMAGE_NAME=robotology/robotology-tdd:gazebo9${DEPS_BRANCH}
+    else
+      travis_terminate 1
     fi
-
-before_script:
-  # Build the dependencies from sources
+  - docker pull $DOCKER_IMAGE_NAME
+  # Start the test container
+  - export DEPS_INSTALL_PREFIX=/
   - >-
-    if [[ "$TRAVIS_OS_NAME" = "linux" ]] ; then
-      docker run -it \
-        -v "$PROJECT_DIR_ABS:/app" \
-        -v "$HOME/.ccache:/root/.ccache" \
-        -w /app \
-        -e CC=$CC \
-        -e CXX=$CXX \
-        -e TRAVIS_OS_NAME \
-        -e TRAVIS_BUILD_TYPE \
-        -e TRAVIS_CMAKE_GENERATOR \
-        --name imagewithbindeps \
-        imagewithbindeps \
-        sh .ci/build_deps.sh \
-        || travis_terminate 1
-      docker commit imagewithbindeps imagewithalldeps || travis_terminate 1
-    elif [[ "$TRAVIS_OS_NAME" = "osx" ]] ; then
-      source $PROJECT_DIR_ABS/.ci/build_deps.sh
-    fi
-
-  # Run CMake into the persistent $PROJECT_DIR_ABS folder
-  - cd $PROJECT_DIR_ABS
-  - mkdir build && cd build
-  - >-
-    if [[ "$TRAVIS_OS_NAME" = "osx" ]] ; then
-      export CFLAGS="-Wno-old-style-cast -Wno-documentation-unknown-command -Wno-documentation -Wno-deprecated"
-      export CXXFLAGS=$CFLAGS
-      cmake -DCMAKE_BUILD_TYPE=${TRAVIS_BUILD_TYPE} \
-            .. \
-            || travis_terminate 1
-    elif [[ "$TRAVIS_OS_NAME" = "linux" ]] ; then
-      docker run -it --rm \
-        -v "$HOME/.ccache:/root/.ccache" \
-        -v "$PROJECT_DIR_ABS:/app" \
-        -w /app \
-        -e CC=$CC \
-        -e CXX=$CXX \
-        imagewithalldeps \
-        sh -c 'cd build && cmake -DCMAKE_BUILD_TYPE=${TRAVIS_BUILD_TYPE} ..' \
-        || travis_terminate 1
-    fi
+    docker run -it -d \
+      --name testContainer \
+      -v $TRAVIS_BUILD_DIR:$TRAVIS_BUILD_DIR \
+      -v $HOME/.ccache:$HOME/.ccache \
+      -w $TRAVIS_BUILD_DIR \
+      --env-file .ci/env-file \
+      $DOCKER_IMAGE_NAME \
+      bash
+  # Install dependencies not included in the docker image
+  - docker exec testContainer ./.ci/build_deps.sh
 
 script:
-  # Build the project
-  - >-
-    if [[ "$TRAVIS_OS_NAME" = "osx" ]] ; then
-      cmake --build . --config ${TRAVIS_BUILD_TYPE} \
-      || travis_terminate 1
-    elif [[ "$TRAVIS_OS_NAME" = "linux" ]] ; then
-      docker run -it --rm \
-        -v "$HOME/.ccache:/root/.ccache" \
-        -v "$PROJECT_DIR_ABS:/app" -w /app \
-        -e CC=$CC \
-        -e CXX=$CXX \
-        imagewithalldeps \
-        sh -c 'cd build && cmake --build . --config ${TRAVIS_BUILD_TYPE}' \
-        || travis_terminate 1
-    fi
+  - docker exec testContainer ./.ci/script.sh
 
-after_success:
-  # Install the project (just for logging)
-  - >-
-    if [[ "$TRAVIS_OS_NAME" = "osx" ]] ; then
-      cmake --build . --config ${TRAVIS_BUILD_TYPE} --target install \
-      || travis_terminate 1
-    elif [[ "$TRAVIS_OS_NAME" = "linux" ]] ; then
-      docker run -it --rm \
-        -v "$HOME/.ccache:/root/.ccache" \
-        -v "$PROJECT_DIR_ABS:/app" -w /app \
-        -e CC=$CC \
-        -e CXX=$CXX \
-        imagewithalldeps \
-        sh -c 'cd build && cmake --build . --config ${TRAVIS_BUILD_TYPE}  --target install' \
-        || travis_terminate 1
-    fi
-  # Generate the docs only if master, the travis_build_docs is true and we can use secure variables
-  - >-
-    if [[ "$TRAVIS_BRANCH" = "master" && -n "$TRAVIS_BUILD_DOCS" && "$TRAVIS_PULL_REQUEST" = "false" ]] ; then
-      cd $PROJECT_DIR_ABS
-      source .ci/setup-ssh.sh || travis_terminate 1
-      .ci/generateDocumentation.sh || travis_terminate 1
-    fi
+# ==========
+# STAGE: osx
+# ==========
 
-# Enable when tests are added to the repo
-# - ctest --build . --config ${TRAVIS_BUILD_TYPE}
+stage_osx:    
+  install: &osx_install
+    # Install ccache
+    - brew install ccache
+    - export PATH="/usr/local/opt/ccache/libexec:$PATH"
+    # Setup the dependencies folder
+    - export DEPS_INSTALL_PREFIX=$HOME/deps
+    - export PATH=$PATH:$DEPS_INSTALL_PREFIX/bin
+    #- export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$DEPS_INSTALL_PREFIX/lib
+    - export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$DEPS_INSTALL_PREFIX
+    # Fix https://github.com/travis-ci/travis-ci/issues/8826
+    - brew cask uninstall oclint
+    # Install dependencies
+    - brew install eigen ace tinyxml gsl dartsim/dart/ipopt qt
+    - export PATH="/usr/local/opt/qt/bin/:$PATH"
+    # Build other dependencies
+    - cd $TRAVIS_BUILD_DIR
+    - sh .ci/build_deps.sh || travis_terminate 1
+  script: &osx_script
+    - cd $TRAVIS_BUILD_DIR
+    - sh .ci/script.sh
 
-# Fill with mantainer(s) emails
+# ======================
+# BUILD JOBS FROM STAGES
+# ======================
+
+jobs:
+  include:
+    # ---------
+    # STAGE OSX
+    # ---------
+    - &osx_template
+      stage: osx
+      os: osx
+      osx_image: xcode9.3
+      before_install: *before_install
+      install: *osx_install
+      before_script: skip
+      script: *osx_script
+      after_failure: skip
+      after_success: skip
+      after_script: skip
+      env:
+        TRAVIS_CMAKE_GENERATOR="Xcode"
+        TRAVIS_BUILD_TYPE="Debug"
+    - <<: *osx_template
+      compiler: clang
+      env:
+        TRAVIS_CMAKE_GENERATOR="Unix Makefiles"
+        TRAVIS_BUILD_TYPE="Debug"
+
 # notifications:
 #  email:
 #    - whowantstobemantainedr@email.com
