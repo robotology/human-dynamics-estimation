@@ -4,6 +4,11 @@ project(HumanDynamicsEstimation CXX)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+if(BUILD_DOCS)
+    add_subdirectory(doc)
+    return()
+endif()
+
 include(GNUInstallDirs)
 include(CTest)
 
