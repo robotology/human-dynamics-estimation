@@ -18,6 +18,7 @@ os: linux
 stages:
   - test # Default stage with job matrix
   - osx
+  - deploy
 
 env:
   global:
@@ -93,6 +94,49 @@ stage_osx:
     - cd $TRAVIS_BUILD_DIR
     - sh .ci/script.sh
 
+# =============
+# STAGE: deploy
+# =============
+
+stage_deploy:
+  script: &deploy_script
+    # Clone the gh-pages branch
+    - GH_PAGES_ROOTDIR=$HOME/gh-pages
+    - export GH_REPO_ORG=${TRAVIS_REPO_SLUG%*/*}
+    - export GH_REPO_NAME=${TRAVIS_REPO_SLUG#*/*}
+    - export GH_REPO_REF="github.com/$GH_REPO_ORG/$GH_REPO_NAME.git"
+    ## Select the deploy folder
+    - DEPLOY_FOLDER=$GH_PAGES_ROOTDIR
+    #- if [ "$TRAVIS_BRANCH" = "master" ] ; then DEPLOY_FOLDER=$GH_PAGES_ROOTDIR ; fi
+    #- if [ "$TRAVIS_BRANCH" = "devel" ] ; then DEPLOY_FOLDER=$GH_PAGES_ROOTDIR/devel ; fi
+    # Check if the gh-pages branch exists and clone it
+    - cd $TRAVIS_BUILD_DIR
+    - git ls-remote --heads --exit-code https://$GH_REPO_REF gh-pages || travis_terminate 1
+    - git clone -b gh-pages https://$GH_REPO_REF $GH_PAGES_ROOTDIR
+    # Push only the current branch
+    - cd $GH_PAGES_ROOTDIR
+    - git config push.default simple
+    # Clean old documentation files
+    - rm -rf ${DEPLOY_FOLDER}/html
+    # Disable GitHub jekyll generation
+    - touch $GH_PAGES_ROOTDIR/.nojekyll
+    # Generate documentation
+    - cd $TRAVIS_BUILD_DIR
+    - mkdir build && cd build
+    - cmake .. -DBUILD_DOCS:BOOL=TRUE -DDOXYGEN_INSTALL_DIR=${DEPLOY_FOLDER}
+    - make dox || travis_terminate 1
+    - make install
+    # Deploy the folder
+    - cd $GH_PAGES_ROOTDIR
+    - git remote add origin-botlogin https://$GIT_COMMITTER_USERNAME:$DEPLOY_TOKEN@$GH_REPO_REF
+    - git add --all
+    - COMMIT_AUTHOR="$(git --no-pager show -s --format='%an <%ae>' $TRAVIS_COMMIT)"
+    - >-
+      git commit -m "Automatic docs deployment Travis#${TRAVIS_BUILD_NUMBER}" \
+                 -m "Commit: https://github.com/$TRAVIS_REPO_SLUG/commit/$TRAVIS_COMMIT" \
+                 --author "$COMMIT_AUTHOR"
+    - git push --force origin-botlogin gh-pages
+
 # ======================
 # BUILD JOBS FROM STAGES
 # ======================
@@ -121,6 +165,38 @@ jobs:
       env:
         TRAVIS_CMAKE_GENERATOR="Unix Makefiles"
         TRAVIS_BUILD_TYPE="Debug"
+    # ------------
+    # STAGE DEPLOY
+    # ------------
+    - &deploy_template
+      stage: deploy
+      compiler:
+      cache:
+      if: fork = false AND branch = "master" AND type != pull_request
+      before_install: skip
+      install: skip
+      install: skip
+      before_script: skip
+      script: *deploy_script
+      after_failure: skip
+      after_success: skip
+      after_script: skip
+      env:
+        GIT_COMMITTER_USERNAME=LOC2Bot
+        GIT_COMMITTER_NAME=LOC2Bot
+        GIT_COMMITTER_EMAIL=locomotion.control@gmail.com
+        DOXYGEN_INPUT_FOLDER=$TRAVIS_BUILD_DIR/build/doc/doxygen
+        MKDOCS_INPUT_FOLDER=$TRAVIS_BUILD_DIR/build/doc/mkdocs
+      addons:
+        apt:
+          packages:
+            - doxygen
+            - doxygen-doc
+            - doxygen-gui
+            - graphviz
+            - python3-pip
+    #- <<: *deploy_template
+      #if: fork = false AND branch = "devel" AND type != pull_request
 
 # notifications:
 #  email:
