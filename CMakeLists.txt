@@ -21,11 +21,10 @@ endif()
 
 # Libraries type
 if(MSVC)
-    option(WBT_SHARED_LIBRARY "Compile WBToolbox as a shared library" FALSE)
+    option(BUILD_SHARED_LIBS "Compile WBToolbox as a shared library" OFF)
 else()
-    option(WBT_SHARED_LIBRARY "Compile WBToolbox as a shared library" TRUE)
+    option(BUILD_SHARED_LIBS "Compile WBToolbox as a shared library" ON)
 endif()
-set(BUILD_SHARED_LIBS ${WBT_SHARED_LIBRARY})
 if(NOT BUILD_SHARED_LIBS)
     set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 endif()
