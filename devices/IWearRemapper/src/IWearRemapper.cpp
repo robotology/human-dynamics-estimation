@@ -319,6 +319,16 @@ void IWearRemapper::run()
     return;
 }
 
+const std::map<msg::SensorStatus, sensor::SensorStatus> MapSensorStatus = {
+    {msg::SensorStatus::OK, sensor::SensorStatus::Ok},
+    {msg::SensorStatus::ERROR, sensor::SensorStatus::Error},
+    {msg::SensorStatus::DATA_OVERFLOW, sensor::SensorStatus::Overflow},
+    {msg::SensorStatus::CALIBRATING, sensor::SensorStatus::Calibrating},
+    {msg::SensorStatus::TIMEOUT, sensor::SensorStatus::Timeout},
+    {msg::SensorStatus::WAITING_FOR_FIRST_READ, sensor::SensorStatus::WaitingForFirstRead},
+    {msg::SensorStatus::UNKNOWN, sensor::SensorStatus::Unknown},
+};
+
 void IWearRemapper::onRead(msg::WearableData& receivedWearData)
 {
     auto& wearableData = pImpl->outputPortWearData.prepare();
@@ -345,6 +355,8 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
         // Copy its data to the buffer used for exposing the IWear interface
         sensor->setBuffer(
             {wearDataInputSensor.data.x, wearDataInputSensor.data.y, wearDataInputSensor.data.z});
+        // Set the status
+        sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
     }
 
     for (auto& s : receivedWearData.emgSensors) {
@@ -367,6 +379,8 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
         auto* sensor = const_cast<sensorImpl::EmgSensor*>(constSensor);
         // Copy its data to the buffer used for exposing the IWear interface
         sensor->setBuffer(wearDataInputSensor.data.value, wearDataInputSensor.data.normalization);
+        // Set the status
+        sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
     }
 
     for (auto& s : receivedWearData.force3DSensors) {
@@ -386,6 +400,8 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
         // Copy its data to the buffer used for exposing the IWear interface
         sensor->setBuffer(
             {wearDataInputSensor.data.x, wearDataInputSensor.data.y, wearDataInputSensor.data.z});
+        // Set the status
+        sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
     }
 
     for (auto& s : receivedWearData.forceTorque6DSensors) {
@@ -414,6 +430,8 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
                           {wearDataInputSensor.data.torque.x,
                            wearDataInputSensor.data.torque.y,
                            wearDataInputSensor.data.torque.z});
+        // Set the status
+        sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
     }
 
     for (auto& s : receivedWearData.freeBodyAccelerationSensors) {
@@ -438,6 +456,8 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
         // Copy its data to the buffer used for exposing the IWear interface
         sensor->setBuffer(
             {wearDataInputSensor.data.x, wearDataInputSensor.data.y, wearDataInputSensor.data.z});
+        // Set the status
+        sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
     }
 
     for (auto& s : receivedWearData.gyroscopes) {
@@ -461,6 +481,8 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
         // Copy its data to the buffer used for exposing the IWear interface
         sensor->setBuffer(
             {wearDataInputSensor.data.x, wearDataInputSensor.data.y, wearDataInputSensor.data.z});
+        // Set the status
+        sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
     }
 
     for (auto& s : receivedWearData.magnetometers) {
@@ -484,6 +506,8 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
         // Copy its data to the buffer used for exposing the IWear interface
         sensor->setBuffer(
             {wearDataInputSensor.data.x, wearDataInputSensor.data.y, wearDataInputSensor.data.z});
+        // Set the status
+        sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
     }
 
     for (auto& s : receivedWearData.orientationSensors) {
@@ -509,6 +533,8 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
                            wearDataInputSensor.data.x,
                            wearDataInputSensor.data.y,
                            wearDataInputSensor.data.z});
+        // Set the status
+        sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
     }
 
     for (auto& s : receivedWearData.poseSensors) {
@@ -537,6 +563,8 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
                           {wearDataInputSensor.data.position.x,
                            wearDataInputSensor.data.position.y,
                            wearDataInputSensor.data.position.z});
+        // Set the status
+        sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
     }
 
     for (auto& s : receivedWearData.positionSensors) {
@@ -560,6 +588,8 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
         // Copy its data to the buffer used for exposing the IWear interface
         sensor->setBuffer(
             {wearDataInputSensor.data.x, wearDataInputSensor.data.y, wearDataInputSensor.data.z});
+        // Set the status
+        sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
     }
 
     for (auto& s : receivedWearData.skinSensors) {
@@ -586,6 +616,8 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
         //        pImpl->skinSensors[inputSensorName]->setBuffer(
         //            {wearDataInputSensor.data.x, wearDataInputSensor.data.y,
         //            wearDataInputSensor.data.z});
+        //        // Set the status
+        //        sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
     }
 
     for (auto& s : receivedWearData.temperatureSensors) {
@@ -608,6 +640,8 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
         auto* sensor = const_cast<sensorImpl::TemperatureSensor*>(constSensor);
         // Copy its data to the buffer used for exposing the IWear interface
         sensor->setBuffer(wearDataInputSensor.data);
+        // Set the status
+        sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
     }
 
     for (auto& s : receivedWearData.torque3DSensors) {
@@ -631,6 +665,8 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
         // Copy its data to the buffer used for exposing the IWear interface
         sensor->setBuffer(
             {wearDataInputSensor.data.x, wearDataInputSensor.data.y, wearDataInputSensor.data.z});
+        // Set the status
+        sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
     }
 
     for (auto& s : receivedWearData.virtualLinkKinSensors) {
@@ -672,6 +708,8 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
                            wearDataInputSensor.data.orientation.x,
                            wearDataInputSensor.data.orientation.y,
                            wearDataInputSensor.data.orientation.z});
+        // Set the status
+        sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
     }
 
     for (auto& s : receivedWearData.virtualSphericalJointKinSensors) {
@@ -703,6 +741,8 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
                           {wearDataInputSensor.data.acceleration.x,
                            wearDataInputSensor.data.acceleration.y,
                            wearDataInputSensor.data.acceleration.z});
+        // Set the status
+        sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
     }
 
     // Update the timestamp
