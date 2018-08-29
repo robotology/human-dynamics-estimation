@@ -10,6 +10,7 @@
 #define WEARABLE_ISENSOR_H
 
 #include <array>
+#include <atomic>
 #include <string>
 
 namespace wearable {
@@ -62,7 +63,7 @@ class wearable::sensor::ISensor
 protected:
     SensorName m_name;
     SensorType m_type;
-    SensorStatus m_status;
+    std::atomic<SensorStatus> m_status;
 
 public:
     ISensor(SensorName aName = {}, SensorStatus aStatus = SensorStatus::Unknown)
