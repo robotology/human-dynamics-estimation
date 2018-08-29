@@ -349,6 +349,7 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
         if (!isensor) {
             yError() << logPrefix << "Failed to get Accelerometer" << inputSensorName;
             askToStop();
+            return;
         }
         const auto* constSensor = static_cast<const sensorImpl::Accelerometer*>(isensor.get());
         auto* sensor = const_cast<sensorImpl::Accelerometer*>(constSensor);
@@ -374,6 +375,7 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
         if (!isensor) {
             yError() << logPrefix << "Failed to get EmgSensor" << inputSensorName;
             askToStop();
+            return;
         }
         const auto* constSensor = static_cast<const sensorImpl::EmgSensor*>(isensor.get());
         auto* sensor = const_cast<sensorImpl::EmgSensor*>(constSensor);
@@ -395,6 +397,11 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
         // EXPOSE THE INTERFACE
         // ====================
         auto isensor = getForce3DSensor(inputSensorName);
+        if (!isensor) {
+            yError() << logPrefix << "Failed to get Force3DSensor" << inputSensorName;
+            askToStop();
+            return;
+        }
         const auto* constSensor = static_cast<const sensorImpl::Force3DSensor*>(isensor.get());
         auto* sensor = const_cast<sensorImpl::Force3DSensor*>(constSensor);
         // Copy its data to the buffer used for exposing the IWear interface
@@ -419,6 +426,7 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
         if (!isensor) {
             yError() << logPrefix << "Failed to get ForceTorque6DSensor" << inputSensorName;
             askToStop();
+            return;
         }
         const auto* constSensor =
             static_cast<const sensorImpl::ForceTorque6DSensor*>(isensor.get());
@@ -449,6 +457,7 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
         if (!isensor) {
             yError() << logPrefix << "Failed to get FreeBodyAccelerationSensor" << inputSensorName;
             askToStop();
+            return;
         }
         const auto* constSensor =
             static_cast<const sensorImpl::FreeBodyAccelerationSensor*>(isensor.get());
@@ -475,6 +484,7 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
         if (!isensor) {
             yError() << logPrefix << "Failed to get Gyroscope" << inputSensorName;
             askToStop();
+            return;
         }
         const auto* constSensor = static_cast<const sensorImpl::Gyroscope*>(isensor.get());
         auto* sensor = const_cast<sensorImpl::Gyroscope*>(constSensor);
@@ -500,6 +510,7 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
         if (!isensor) {
             yError() << logPrefix << "Failed to get Magnetometer" << inputSensorName;
             askToStop();
+            return;
         }
         const auto* constSensor = static_cast<const sensorImpl::Magnetometer*>(isensor.get());
         auto* sensor = const_cast<sensorImpl::Magnetometer*>(constSensor);
@@ -525,6 +536,7 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
         if (!isensor) {
             yError() << logPrefix << "Failed to get OrientationSensor" << inputSensorName;
             askToStop();
+            return;
         }
         const auto* constSensor = static_cast<const sensorImpl::OrientationSensor*>(isensor.get());
         auto* sensor = const_cast<sensorImpl::OrientationSensor*>(constSensor);
@@ -552,6 +564,7 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
         if (!isensor) {
             yError() << logPrefix << "Failed to get PoseSensor" << inputSensorName;
             askToStop();
+            return;
         }
         const auto* constSensor = static_cast<const sensorImpl::PoseSensor*>(isensor.get());
         auto* sensor = const_cast<sensorImpl::PoseSensor*>(constSensor);
@@ -582,6 +595,7 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
         if (!isensor) {
             yError() << logPrefix << "Failed to get PositionSensor" << inputSensorName;
             askToStop();
+            return;
         }
         const auto* constSensor = static_cast<const sensorImpl::PositionSensor*>(isensor.get());
         auto* sensor = const_cast<sensorImpl::PositionSensor*>(constSensor);
@@ -608,6 +622,7 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
         if (!isensor) {
             yError() << logPrefix << "Failed to get SkinSensor" << inputSensorName;
             askToStop();
+            return;
         }
         const auto* constSensor = static_cast<const sensorImpl::SkinSensor*>(isensor.get());
         auto* sensor = const_cast<sensorImpl::SkinSensor*>(constSensor);
@@ -635,6 +650,7 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
         if (!isensor) {
             yError() << logPrefix << "Failed to get TemperatureSensor" << inputSensorName;
             askToStop();
+            return;
         }
         const auto* constSensor = static_cast<const sensorImpl::TemperatureSensor*>(isensor.get());
         auto* sensor = const_cast<sensorImpl::TemperatureSensor*>(constSensor);
@@ -659,6 +675,7 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
         if (!isensor) {
             askToStop();
             yError() << logPrefix << "Failed to get Torque3DSensor" << inputSensorName;
+            return;
         }
         const auto* constSensor = static_cast<const sensorImpl::Torque3DSensor*>(isensor.get());
         auto* sensor = const_cast<sensorImpl::Torque3DSensor*>(constSensor);
@@ -684,6 +701,7 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
         if (!isensor) {
             yError() << logPrefix << "Failed to get VirtualLinkKinSensor" << inputSensorName;
             askToStop();
+            return;
         }
         const auto* constSensor =
             static_cast<const sensorImpl::VirtualLinkKinSensor*>(isensor.get());
@@ -726,7 +744,9 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
         auto isensor = getVirtualSphericalJointKinSensor(inputSensorName);
         if (!isensor) {
             yError() << logPrefix << "Failed to get VirtualSphericalJointKinSensor"
+                     << inputSensorName;
             askToStop();
+            return;
         }
         const auto* constSensor =
             static_cast<const sensorImpl::VirtualSphericalJointKinSensor*>(isensor.get());
