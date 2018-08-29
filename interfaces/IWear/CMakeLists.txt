@@ -40,14 +40,14 @@ endif()
 # Install all the directories preserving their structure
 install(
     FILES include/Wearable/IWear/IWear.h
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/Wearable)
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/Wearable/IWear)
 install(
     DIRECTORY include/Wearable/IWear/Sensors
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/Wearable)
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/Wearable/IWear)
 
 # Generate the PackageConfig.cmake file
 install_basic_package_files(IWear
     VERSION ${PROJECT_VERSION}
     COMPATIBILITY AnyNewerVersion
-    TARGETS ${PROJECT_NAME}
+    EXPORT IWear
     NO_CHECK_REQUIRED_COMPONENTS_MACRO)
