@@ -40,6 +40,8 @@ public:
     TimeStamp timestamp;
     bool firstRun = true;
 
+    mutable std::mutex mutex;
+
     std::vector<yarp::os::Port> rpcPorts;
 
     msg::WearableData wearableData;
@@ -718,11 +720,13 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
 
 WearableName IWearRemapper::getWearableName() const
 {
+    std::lock_guard<std::mutex> lock(pImpl->mutex);
     return WrapperName;
 }
 
 WearStatus IWearRemapper::getStatus() const
 {
+    std::lock_guard<std::mutex> lock(pImpl->mutex);
     if (pImpl->firstRun) {
         return WearStatus::WaitingForFirstRead;
     }
@@ -741,11 +745,13 @@ WearStatus IWearRemapper::getStatus() const
 
 TimeStamp IWearRemapper::getTimeStamp() const
 {
+    std::lock_guard<std::mutex> lock(pImpl->mutex);
     return pImpl->timestamp;
 }
 
 SensorPtr<const sensor::ISensor> IWearRemapper::getSensor(const sensor::SensorName name) const
 {
+    std::lock_guard<std::mutex> lock(pImpl->mutex);
     for (const auto& s : getAllSensors()) {
         if (s->getSensorName() == name) {
             return s;
@@ -757,6 +763,7 @@ SensorPtr<const sensor::ISensor> IWearRemapper::getSensor(const sensor::SensorNa
 VectorOfSensorPtr<const sensor::ISensor>
 IWearRemapper::getSensors(const sensor::SensorType type) const
 {
+    std::lock_guard<std::mutex> lock(pImpl->mutex);
     VectorOfSensorPtr<const sensor::ISensor> sensors;
 
     switch (type) {
@@ -872,12 +879,14 @@ IWearRemapper::impl::getSensor(const sensor::SensorName name,
 SensorPtr<const sensor::IAccelerometer>
 IWearRemapper::getAccelerometer(const sensor::SensorName name) const
 {
+    std::lock_guard<std::mutex> lock(pImpl->mutex);
     return pImpl->getSensor<const sensor::IAccelerometer, sensorImpl::Accelerometer>(
         name, wearable::sensor::SensorType::Accelerometer, pImpl->accelerometers);
 }
 
 SensorPtr<const sensor::IEmgSensor> IWearRemapper::getEmgSensor(const sensor::SensorName name) const
 {
+    std::lock_guard<std::mutex> lock(pImpl->mutex);
     return pImpl->getSensor<const sensor::IEmgSensor, sensorImpl::EmgSensor>(
         name, sensor::SensorType::EmgSensor, pImpl->emgSensors);
 }
@@ -885,6 +894,7 @@ SensorPtr<const sensor::IEmgSensor> IWearRemapper::getEmgSensor(const sensor::Se
 SensorPtr<const sensor::IForce3DSensor>
 IWearRemapper::getForce3DSensor(const sensor::SensorName name) const
 {
+    std::lock_guard<std::mutex> lock(pImpl->mutex);
     return pImpl->getSensor<const sensor::IForce3DSensor, sensorImpl::Force3DSensor>(
         name, sensor::SensorType::Force3DSensor, pImpl->force3DSensors);
 }
@@ -892,6 +902,7 @@ IWearRemapper::getForce3DSensor(const sensor::SensorName name) const
 SensorPtr<const sensor::IForceTorque6DSensor>
 IWearRemapper::getForceTorque6DSensor(const sensor::SensorName name) const
 {
+    std::lock_guard<std::mutex> lock(pImpl->mutex);
     return pImpl->getSensor<const sensor::IForceTorque6DSensor, sensorImpl::ForceTorque6DSensor>(
         name, sensor::SensorType::ForceTorque6DSensor, pImpl->forceTorque6DSensors);
 }
@@ -899,6 +910,7 @@ IWearRemapper::getForceTorque6DSensor(const sensor::SensorName name) const
 SensorPtr<const sensor::IFreeBodyAccelerationSensor>
 IWearRemapper::getFreeBodyAccelerationSensor(const sensor::SensorName name) const
 {
+    std::lock_guard<std::mutex> lock(pImpl->mutex);
     return pImpl->getSensor<const sensor::IFreeBodyAccelerationSensor,
                             sensorImpl::FreeBodyAccelerationSensor>(
         name, sensor::SensorType::FreeBodyAccelerationSensor, pImpl->freeBodyAccelerationSensors);
@@ -906,6 +918,7 @@ IWearRemapper::getFreeBodyAccelerationSensor(const sensor::SensorName name) cons
 
 SensorPtr<const sensor::IGyroscope> IWearRemapper::getGyroscope(const sensor::SensorName name) const
 {
+    std::lock_guard<std::mutex> lock(pImpl->mutex);
     return pImpl->getSensor<const sensor::IGyroscope, sensorImpl::Gyroscope>(
         name, sensor::SensorType::Gyroscope, pImpl->gyroscopes);
 }
@@ -913,6 +926,7 @@ SensorPtr<const sensor::IGyroscope> IWearRemapper::getGyroscope(const sensor::Se
 SensorPtr<const sensor::IMagnetometer>
 IWearRemapper::getMagnetometer(const sensor::SensorName name) const
 {
+    std::lock_guard<std::mutex> lock(pImpl->mutex);
     return pImpl->getSensor<const sensor::IMagnetometer, sensorImpl::Magnetometer>(
         name, sensor::SensorType::Magnetometer, pImpl->magnetometers);
 }
@@ -920,6 +934,7 @@ IWearRemapper::getMagnetometer(const sensor::SensorName name) const
 SensorPtr<const sensor::IOrientationSensor>
 IWearRemapper::getOrientationSensor(const sensor::SensorName name) const
 {
+    std::lock_guard<std::mutex> lock(pImpl->mutex);
     return pImpl->getSensor<const sensor::IOrientationSensor, sensorImpl::OrientationSensor>(
         name, sensor::SensorType::OrientationSensor, pImpl->orientationSensors);
 }
@@ -927,6 +942,7 @@ IWearRemapper::getOrientationSensor(const sensor::SensorName name) const
 SensorPtr<const sensor::IPoseSensor>
 IWearRemapper::getPoseSensor(const sensor::SensorName name) const
 {
+    std::lock_guard<std::mutex> lock(pImpl->mutex);
     return pImpl->getSensor<const sensor::IPoseSensor, sensorImpl::PoseSensor>(
         name, sensor::SensorType::PoseSensor, pImpl->poseSensors);
 }
@@ -934,6 +950,7 @@ IWearRemapper::getPoseSensor(const sensor::SensorName name) const
 SensorPtr<const sensor::IPositionSensor>
 IWearRemapper::getPositionSensor(const sensor::SensorName name) const
 {
+    std::lock_guard<std::mutex> lock(pImpl->mutex);
     return pImpl->getSensor<const sensor::IPositionSensor, sensorImpl::PositionSensor>(
         name, sensor::SensorType::PositionSensor, pImpl->positionSensors);
 }
@@ -941,6 +958,7 @@ IWearRemapper::getPositionSensor(const sensor::SensorName name) const
 SensorPtr<const sensor::ISkinSensor>
 IWearRemapper::getSkinSensor(const sensor::SensorName name) const
 {
+    std::lock_guard<std::mutex> lock(pImpl->mutex);
     return pImpl->getSensor<const sensor::ISkinSensor, sensorImpl::SkinSensor>(
         name, sensor::SensorType::SkinSensor, pImpl->skinSensors);
 }
@@ -948,6 +966,7 @@ IWearRemapper::getSkinSensor(const sensor::SensorName name) const
 SensorPtr<const sensor::ITemperatureSensor>
 IWearRemapper::getTemperatureSensor(const sensor::SensorName name) const
 {
+    std::lock_guard<std::mutex> lock(pImpl->mutex);
     return pImpl->getSensor<const sensor::ITemperatureSensor, sensorImpl::TemperatureSensor>(
         name, sensor::SensorType::TemperatureSensor, pImpl->temperatureSensors);
 }
@@ -955,6 +974,7 @@ IWearRemapper::getTemperatureSensor(const sensor::SensorName name) const
 SensorPtr<const sensor::ITorque3DSensor>
 IWearRemapper::getTorque3DSensor(const sensor::SensorName name) const
 {
+    std::lock_guard<std::mutex> lock(pImpl->mutex);
     return pImpl->getSensor<const sensor::ITorque3DSensor, sensorImpl::Torque3DSensor>(
         name, sensor::SensorType::Torque3DSensor, pImpl->torque3DSensors);
 }
@@ -962,6 +982,7 @@ IWearRemapper::getTorque3DSensor(const sensor::SensorName name) const
 SensorPtr<const sensor::IVirtualLinkKinSensor>
 IWearRemapper::getVirtualLinkKinSensor(const sensor::SensorName name) const
 {
+    std::lock_guard<std::mutex> lock(pImpl->mutex);
     return pImpl->getSensor<const sensor::IVirtualLinkKinSensor, sensorImpl::VirtualLinkKinSensor>(
         name, sensor::SensorType::VirtualLinkKinSensor, pImpl->virtualLinkKinSensors);
 }
@@ -969,6 +990,7 @@ IWearRemapper::getVirtualLinkKinSensor(const sensor::SensorName name) const
 SensorPtr<const sensor::IVirtualSphericalJointKinSensor>
 IWearRemapper::getVirtualSphericalJointKinSensor(const sensor::SensorName name) const
 {
+    std::lock_guard<std::mutex> lock(pImpl->mutex);
     return pImpl->getSensor<const sensor::IVirtualSphericalJointKinSensor,
                             sensorImpl::VirtualSphericalJointKinSensor>(
         name,
