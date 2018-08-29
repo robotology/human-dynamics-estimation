@@ -451,6 +451,17 @@ bool IWearWrapper::attach(yarp::dev::PolyDriver* poly)
         return false;
     }
 
+    // Handle whe IWear status
+    while (pImpl->iWear->getStatus() == WearStatus::WaitingForFirstRead) {
+        yInfo() << logPrefix << "IWear interface waiting for first data. Waiting...";
+        yarp::os::Time::delay(5);
+    }
+    if (pImpl->iWear->getStatus() != WearStatus::Ok) {
+        yError() << logPrefix << "The status of the attached IWear interface is not ok ("
+                 << static_cast<int>(pImpl->iWear->getStatus()) << ")";
+        return false;
+    }
+
     // Open the port for streaming data
     pImpl->dataPort.open(pImpl->dataPortName);
 
