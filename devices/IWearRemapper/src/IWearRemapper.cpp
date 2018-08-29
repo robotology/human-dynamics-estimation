@@ -723,12 +723,14 @@ WearableName IWearRemapper::getWearableName() const
 
 WearStatus IWearRemapper::getStatus() const
 {
-    if (!pImpl->firstRun) {
+    if (pImpl->firstRun) {
         return WearStatus::WaitingForFirstRead;
     }
 
     for (const auto& s : getAllSensors()) {
-        if (s->getSensorStatus() == sensor::SensorStatus::Error) {
+        if (s->getSensorStatus() != sensor::SensorStatus::Ok) {
+            yError() << "The status of" << s->getSensorName() << "is not Ok ("
+                     << static_cast<int>(s->getSensorStatus()) << ")";
             return WearStatus::Error;
         }
         // TODO: improve handling of the overall status
