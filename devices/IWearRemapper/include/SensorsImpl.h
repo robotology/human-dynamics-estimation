@@ -43,8 +43,7 @@ public:
     bool getLinearAcceleration(wearable::Vector3& linearAcceleration) const override;
 
     void setBuffer(const wearable::Vector3& data);
-    //    inline void setName(const wearable::sensor::SensorName name) { m_name = name; }
-    //    inline void setStatus(const wearable::sensor::SensorStatus status) { m_status = status; }
+    inline void setStatus(const wearable::sensor::SensorStatus status) { m_status = status; }
 };
 
 class sensorImpl::EmgSensor : public wearable::sensor::IEmgSensor
@@ -61,8 +60,7 @@ public:
     bool getNormalizationValue(double& normalizationValue) const override;
 
     void setBuffer(const double value, const double normalization);
-    //    inline void setName(const wearable::sensor::SensorName name) { m_name = name; }
-    //    inline void setStatus(const wearable::sensor::SensorStatus status) { m_status = status; }
+    inline void setStatus(const wearable::sensor::SensorStatus status) { m_status = status; }
 };
 
 class sensorImpl::Force3DSensor : public wearable::sensor::IForce3DSensor
@@ -77,8 +75,7 @@ public:
     bool getForce3D(wearable::Vector3& force) const override;
 
     void setBuffer(const wearable::Vector3& data);
-    //    inline void setName(const wearable::sensor::SensorName name) { m_name = name; }
-    //    inline void setStatus(const wearable::sensor::SensorStatus status) { m_status = status; }
+    inline void setStatus(const wearable::sensor::SensorStatus status) { m_status = status; }
 };
 
 class sensorImpl::ForceTorque6DSensor : public wearable::sensor::IForceTorque6DSensor
@@ -94,8 +91,7 @@ public:
     bool getForceTorque6D(wearable::Vector3& force3D, wearable::Vector3& torque3D) const override;
 
     void setBuffer(const wearable::Vector3& force, const wearable::Vector3& torque);
-    //    inline void setName(const wearable::sensor::SensorName name) { m_name = name; }
-    //    inline void setStatus(const wearable::sensor::SensorStatus status) { m_status = status; }
+    inline void setStatus(const wearable::sensor::SensorStatus status) { m_status = status; }
 };
 
 class sensorImpl::FreeBodyAccelerationSensor : public wearable::sensor::IFreeBodyAccelerationSensor
@@ -112,8 +108,7 @@ public:
     bool getFreeBodyAcceleration(wearable::Vector3& freeBodyAcceleration) const override;
 
     void setBuffer(const wearable::Vector3& data);
-    //    inline void setName(const wearable::sensor::SensorName name) { m_name = name; }
-    //    inline void setStatus(const wearable::sensor::SensorStatus status) { m_status = status; }
+    inline void setStatus(const wearable::sensor::SensorStatus status) { m_status = status; }
 };
 
 class sensorImpl::Gyroscope : public wearable::sensor::IGyroscope
@@ -129,8 +124,7 @@ public:
     bool getAngularRate(wearable::Vector3& angularRate) const override;
 
     void setBuffer(const wearable::Vector3& data);
-    //    inline void setName(const wearable::sensor::SensorName name) { m_name = name; }
-    //    inline void setStatus(const wearable::sensor::SensorStatus status) { m_status = status; }
+    inline void setStatus(const wearable::sensor::SensorStatus status) { m_status = status; }
 };
 
 class sensorImpl::Magnetometer : public wearable::sensor::IMagnetometer
@@ -146,8 +140,7 @@ public:
     bool getMagneticField(wearable::Vector3& magneticField) const override;
 
     void setBuffer(const wearable::Vector3& data);
-    //    inline void setName(const wearable::sensor::SensorName name) { m_name = name; }
-    //    inline void setStatus(const wearable::sensor::SensorStatus status) { m_status = status; }
+    inline void setStatus(const wearable::sensor::SensorStatus status) { m_status = status; }
 };
 
 class sensorImpl::OrientationSensor : public wearable::sensor::IOrientationSensor
@@ -163,8 +156,7 @@ public:
     bool getOrientationAsQuaternion(wearable::Quaternion& orientation) const override;
 
     void setBuffer(const wearable::Quaternion& data);
-    //    inline void setName(const wearable::sensor::SensorName name) { m_name = name; }
-    //    inline void setStatus(const wearable::sensor::SensorStatus status) { m_status = status; }
+    inline void setStatus(const wearable::sensor::SensorStatus status) { m_status = status; }
 };
 
 class sensorImpl::PoseSensor : public wearable::sensor::IPoseSensor
@@ -181,8 +173,7 @@ public:
     bool getPose(wearable::Quaternion& orientation, wearable::Vector3& position) const override;
 
     void setBuffer(const wearable::Quaternion& orientation, const wearable::Vector3& position);
-    //    inline void setName(const wearable::sensor::SensorName name) { m_name = name; }
-    //    inline void setStatus(const wearable::sensor::SensorStatus status) { m_status = status; }
+    inline void setStatus(const wearable::sensor::SensorStatus status) { m_status = status; }
 };
 
 class sensorImpl::PositionSensor : public wearable::sensor::IPositionSensor
@@ -198,8 +189,7 @@ public:
     bool getPosition(wearable::Vector3& position) const override;
 
     void setBuffer(const wearable::Vector3& data);
-    //    inline void setName(const wearable::sensor::SensorName name) { m_name = name; }
-    //    inline void setStatus(const wearable::sensor::SensorStatus status) { m_status = status; }
+    inline void setStatus(const wearable::sensor::SensorStatus status) { m_status = status; }
 };
 
 class sensorImpl::SkinSensor : public wearable::sensor::ISkinSensor
@@ -211,8 +201,7 @@ public:
                wearable::sensor::SensorStatus s = wearable::sensor::SensorStatus::Unknown);
     ~SkinSensor() override = default;
 
-    //    inline void setName(const wearable::sensor::SensorName name) { m_name = name; }
-    //    inline void setStatus(const wearable::sensor::SensorStatus status) { m_status = status; }
+    inline void setStatus(const wearable::sensor::SensorStatus status) { m_status = status; }
 };
 
 class sensorImpl::TemperatureSensor : public wearable::sensor::ITemperatureSensor
@@ -228,9 +217,7 @@ public:
     bool getTemperature(double& temperature) const override;
 
     void setBuffer(const double value);
-
-    //    inline void setName(const wearable::sensor::SensorName name) { m_name = name; }
-    //    inline void setStatus(const wearable::sensor::SensorStatus status) { m_status = status; }
+    inline void setStatus(const wearable::sensor::SensorStatus status) { m_status = status; }
 };
 
 class sensorImpl::Torque3DSensor : public wearable::sensor::ITorque3DSensor
@@ -246,8 +233,7 @@ public:
     bool getTorque3D(wearable::Vector3& torque) const override;
 
     void setBuffer(const wearable::Vector3& data);
-    //    inline void setName(const wearable::sensor::SensorName name) { m_name = name; }
-    //    inline void setStatus(const wearable::sensor::SensorStatus status) { m_status = status; }
+    inline void setStatus(const wearable::sensor::SensorStatus status) { m_status = status; }
 };
 
 class sensorImpl::VirtualLinkKinSensor : public wearable::sensor::IVirtualLinkKinSensor
@@ -277,8 +263,7 @@ public:
                    const wearable::Vector3& position,
                    const wearable::Quaternion& orientation);
 
-    //    inline void setName(const wearable::sensor::SensorName name) { m_name = name; }
-    //    inline void setStatus(const wearable::sensor::SensorStatus status) { m_status = status; }
+    inline void setStatus(const wearable::sensor::SensorStatus status) { m_status = status; }
 };
 
 class sensorImpl::VirtualSphericalJointKinSensor
@@ -303,8 +288,7 @@ public:
                    const wearable::Vector3& velocities,
                    const wearable::Vector3& accelerations);
 
-    //    inline void setName(const wearable::sensor::SensorName name) { m_name = name; }
-    //    inline void setStatus(const wearable::sensor::SensorStatus status) { m_status = status; }
+    inline void setStatus(const wearable::sensor::SensorStatus status) { m_status = status; }
 };
 
 #endif // SENSORSIMPL_H
