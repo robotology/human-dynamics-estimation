@@ -16,8 +16,6 @@
 #include <yarp/os/LogStream.h>
 #include <yarp/os/Port.h>
 
-#include <mutex>
-
 const std::string WrapperName = "IWearWrapper";
 const std::string logPrefix = WrapperName + " : ";
 constexpr double DefaultPeriod = 0.01;
@@ -387,7 +385,6 @@ void IWearWrapper::run()
 
     // Stream the data though the port
     pImpl->dataPort.write(true);
-    yInfo() << "Serialized";
 }
 
 // ======================
