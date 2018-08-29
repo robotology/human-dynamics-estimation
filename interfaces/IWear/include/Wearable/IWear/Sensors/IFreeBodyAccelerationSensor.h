@@ -35,7 +35,7 @@ public:
 
 inline const std::string& wearable::sensor::IFreeBodyAccelerationSensor::getPrefix()
 {
-    static std::string prefix{"fbAcc_"};
+    static std::string prefix{"fbAcc::"};
     return prefix;
 }
 

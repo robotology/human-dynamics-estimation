@@ -35,7 +35,7 @@ public:
 
 inline const std::string& wearable::sensor::ITemperatureSensor::getPrefix()
 {
-    static std::string prefix{"temp_"};
+    static std::string prefix{"temp::"};
     return prefix;
 }
 #endif // WEARABLE_ITEMPERATURE_SENSOR_H

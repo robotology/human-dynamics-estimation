@@ -35,7 +35,7 @@ public:
 
 inline const std::string& wearable::sensor::ITorque3DSensor::getPrefix()
 {
-    static std::string prefix{"t3D_"};
+    static std::string prefix{"t3D::"};
     return prefix;
 }
 

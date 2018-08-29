@@ -35,7 +35,7 @@ public:
 
 inline const std::string& wearable::sensor::IForce3DSensor::getPrefix()
 {
-    static std::string prefix{"f3D_"};
+    static std::string prefix{"f3D::"};
     return prefix;
 }
 

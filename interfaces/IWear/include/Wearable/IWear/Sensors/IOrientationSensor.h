@@ -38,7 +38,7 @@ public:
 
 inline const std::string& wearable::sensor::IOrientationSensor::getPrefix()
 {
-    static std::string prefix{"orient_"};
+    static std::string prefix{"orient::"};
     return prefix;
 }
 

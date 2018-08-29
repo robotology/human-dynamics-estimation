@@ -39,7 +39,7 @@ public:
 
 inline const std::string& wearable::sensor::IVirtualSphericalJointKinSensor::getPrefix()
 {
-    static std::string prefix{"vSJoint_"};
+    static std::string prefix{"vSJoint::"};
     return prefix;
 }
 

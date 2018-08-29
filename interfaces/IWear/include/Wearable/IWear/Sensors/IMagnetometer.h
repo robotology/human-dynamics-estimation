@@ -35,7 +35,7 @@ public:
 
 inline const std::string& wearable::sensor::IMagnetometer::getPrefix()
 {
-    static std::string prefix{"mag_"};
+    static std::string prefix{"mag::"};
     return prefix;
 }
 

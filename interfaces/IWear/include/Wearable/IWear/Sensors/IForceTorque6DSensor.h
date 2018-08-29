@@ -39,7 +39,7 @@ public:
 
 inline const std::string& wearable::sensor::IForceTorque6DSensor::getPrefix()
 {
-    static std::string prefix{"ft6D_"};
+    static std::string prefix{"ft6D::"};
     return prefix;
 }
 bool wearable::sensor::IForceTorque6DSensor::getForceTorque6D(

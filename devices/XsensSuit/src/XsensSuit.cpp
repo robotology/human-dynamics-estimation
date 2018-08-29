@@ -75,7 +75,7 @@ public:
     // ------------------------
     void setAllSensorStates(wearable::sensor::SensorStatus aStatus);
 
-    const WearableName wearableName = "XsensSuit_";
+    const WearableName wearableName = "XsensSuit::";
 };
 
 // ===================================================

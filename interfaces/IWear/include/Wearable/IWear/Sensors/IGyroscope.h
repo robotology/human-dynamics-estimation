@@ -35,7 +35,7 @@ public:
 
 inline const std::string& wearable::sensor::IGyroscope::getPrefix()
 {
-    static std::string prefix{"gyro_"};
+    static std::string prefix{"gyro::"};
     return prefix;
 }
 

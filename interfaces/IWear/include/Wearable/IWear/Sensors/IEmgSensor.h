@@ -36,7 +36,7 @@ public:
 
 inline const std::string& wearable::sensor::IEmgSensor::getPrefix()
 {
-    static std::string prefix{"emg_"};
+    static std::string prefix{"emg::"};
     return prefix;
 }
 #endif // WEARABLE_IEMG_SENSOR_H

@@ -34,7 +34,7 @@ public:
 
 inline const std::string& wearable::sensor::ISkinSensor::getPrefix()
 {
-    static std::string prefix{"skin_"};
+    static std::string prefix{"skin::"};
     return prefix;
 }
 

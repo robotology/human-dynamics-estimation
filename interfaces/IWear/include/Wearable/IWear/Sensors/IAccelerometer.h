@@ -35,7 +35,7 @@ public:
 
 inline const std::string& wearable::sensor::IAccelerometer::getPrefix()
 {
-    static std::string prefix{"acc_"};
+    static std::string prefix{"acc::"};
     return prefix;
 }
 #endif // WEARABLE_IACCELEROMETER_H

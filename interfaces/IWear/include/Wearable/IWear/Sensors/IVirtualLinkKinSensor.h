@@ -46,7 +46,7 @@ public:
 
 inline const std::string& wearable::sensor::IVirtualLinkKinSensor::getPrefix()
 {
-    static std::string prefix{"vLink_"};
+    static std::string prefix{"vLink::"};
     return prefix;
 }
 
