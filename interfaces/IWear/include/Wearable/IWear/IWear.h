@@ -216,7 +216,7 @@ wearable::IWear::getAllSensors() const
         sensor::SensorType::VirtualSphericalJointKinSensor,
     };
 
-    VectorOfSensorPtr<const sensor::ISensor> allSensors, tmp;
+    VectorOfSensorPtr<const sensor::ISensor> allSensors;
 
     for (const auto& sensorType : allSensorTypes) {
         VectorOfSensorPtr<const sensor::ISensor> tmp;

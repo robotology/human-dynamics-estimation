@@ -24,7 +24,7 @@
 #include <utility>
 
 const std::string WrapperName = "IWearRemapper";
-const std::string logPrefix = WrapperName + " : ";
+const std::string logPrefix = WrapperName + " :";
 
 using namespace wearable;
 using namespace wearable::devices;
@@ -102,16 +102,6 @@ const std::map<wearable::msg::SensorType, wearable::sensor::SensorType> MapSenso
     {wearable::msg::SensorType::VIRTUAL_SPHERICAL_JOINT_KIN_SENSOR,
      wearable::sensor::SensorType::VirtualSphericalJointKinSensor}};
 
-// const std::map<msg::SensorStatus, sensor::SensorStatus> MapSensorStatus = {
-//    {msg::SensorStatus::OK, sensor::SensorStatus::Ok},
-//    {msg::SensorStatus::ERROR, sensor::SensorStatus::Error},
-//    {msg::SensorStatus::DATA_OVERFLOW, sensor::SensorStatus::Overflow},
-//    {msg::SensorStatus::CALIBRATING, sensor::SensorStatus::Calibrating},
-//    {msg::SensorStatus::TIMEOUT, sensor::SensorStatus::Timeout},
-//    {msg::SensorStatus::WAITING_FOR_FIRST_READ, sensor::SensorStatus::WaitingForFirstRead},
-//    {msg::SensorStatus::UNKNOWN, sensor::SensorStatus::Unknown},
-//};
-
 // ==============
 // IWEAR REMAPPER
 // ==============
@@ -128,29 +118,30 @@ bool IWearRemapper::open(yarp::os::Searchable& config)
     // ================
     // PARSE PARAMETERS
     // ================
+    yDebug() << logPrefix << "Parsing parameters";
 
     // Data ports
-    if (!(config.check("iwearDataPorts") && config.find("iwearDataPorts").isList())) {
-        yError() << logPrefix << "iwearDataPorts option does not exist or it is not a list";
+    if (!(config.check("wearableDataPorts") && config.find("wearableDataPorts").isList())) {
+        yError() << logPrefix << "wearableDataPorts option does not exist or it is not a list";
         return false;
     }
-    yarp::os::Bottle* inputDataPortsNamesList = config.find("iwearDataPorts").asList();
+    yarp::os::Bottle* inputDataPortsNamesList = config.find("wearableDataPorts").asList();
     for (unsigned i = 0; i < inputDataPortsNamesList->size(); ++i) {
         if (!inputDataPortsNamesList->get(i).isString()) {
-            yError() << logPrefix << "ith entry of iwearDataPorts list is not a string";
+            yError() << logPrefix << "ith entry of wearableDataPorts list is not a string";
             return false;
         }
     }
 
     // RPC ports
-    if (!(config.check("iwearRPCPorts") && config.find("iwearRPCPorts").isList())) {
-        yError() << logPrefix << "iwearRPCPorts option does not exist or it is not a list";
+    if (!(config.check("wearableRPCPorts") && config.find("wearableRPCPorts").isList())) {
+        yError() << logPrefix << "wearableRPCPorts option does not exist or it is not a list";
         return false;
     }
-    yarp::os::Bottle* inputRPCPortsNamesList = config.find("iwearRPCPorts").asList();
+    yarp::os::Bottle* inputRPCPortsNamesList = config.find("wearableRPCPorts").asList();
     for (unsigned i = 0; i < inputRPCPortsNamesList->size(); ++i) {
         if (!inputRPCPortsNamesList->get(i).isString()) {
-            yError() << logPrefix << "ith entry of iwearRPCPorts list is not a string";
+            yError() << logPrefix << "ith entry of wearableRPCPorts list is not a string";
             return false;
         }
     }
@@ -186,8 +177,9 @@ bool IWearRemapper::open(yarp::os::Searchable& config)
     // ==========================
     // CONFIGURE INPUT DATA PORTS
     // ==========================
+    yDebug() << logPrefix << "Configuring input data ports";
 
-    for (unsigned i = 0; i < config.find("iwearDataPorts").asList()->size(); ++i) {
+    for (unsigned i = 0; i < config.find("wearableDataPorts").asList()->size(); ++i) {
         pImpl->inputPortsWearData.emplace_back(new yarp::os::BufferedPort<msg::WearableData>());
         pImpl->inputPortsWearData.back()->useCallback(*this);
 
@@ -200,6 +192,7 @@ bool IWearRemapper::open(yarp::os::Searchable& config)
     // ======================
     // CONFIGURE OUTPUT PORTS
     // ======================
+    yDebug() << logPrefix << "Configuring output ports";
 
     if (!pImpl->outputPortWearData.open(outputPortName)) {
         yError() << logPrefix << "Failed to open port " << outputPortName;
@@ -209,16 +202,13 @@ bool IWearRemapper::open(yarp::os::Searchable& config)
     // ====================
     // OPEN INPUT RPC PORTS
     // ====================
+    yDebug() << logPrefix << "Opening input RPC ports";
 
     if (inputDataPortsNamesVector.size() != inputRPCPortsNamesVector.size()) {
-        yError() << logPrefix << "iwearDataPorts and iwearRPCPorts lists should contain "
+        yError() << logPrefix << "wearableDataPorts and wearableRPCPorts lists should contain "
                  << "the same number of elements.";
         return false;
     }
-
-    //    using LocalPortName = std::string;
-    //    using RemotePortName = std::string;
-    //    std::vector<std::pair<RemotePortName, LocalPortName>> rpcConnections;
 
     using SensorTypeMetadata = std::vector<wearable::msg::WearableSensorMetadata>;
     using WearableMetadata = std::map<wearable::msg::SensorType, SensorTypeMetadata>;
@@ -260,6 +250,7 @@ bool IWearRemapper::open(yarp::os::Searchable& config)
     // ====================================
     // PROCESS METADATA READ FROM RPC PORTS
     // ====================================
+    yDebug() << logPrefix << "Processing RPC metadata";
 
     auto findStoredSensorName =
         [](const std::string& name,
@@ -298,8 +289,9 @@ bool IWearRemapper::open(yarp::os::Searchable& config)
     // ================
     // OPEN INPUT PORTS
     // ================
+    yDebug() << logPrefix << "Opening input ports";
 
-    for (unsigned i = 0; i < config.find("iwearDataPorts").asList()->size(); ++i) {
+    for (unsigned i = 0; i < config.find("wearableDataPorts").asList()->size(); ++i) {
         if (!yarp::os::Network::connect(inputDataPortsNamesVector[i],
                                         pImpl->inputPortsWearData.back()->getName())) {
             yError() << logPrefix << "Failed to connect " << inputDataPortsNamesVector[i]
@@ -311,6 +303,7 @@ bool IWearRemapper::open(yarp::os::Searchable& config)
     // We use callbacks on the input ports, the loop is a no-op
     start();
 
+    yDebug() << logPrefix << "Opened correctly";
     return true;
 }
 
@@ -342,6 +335,7 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
         // ====================
         auto isensor = getAccelerometer(inputSensorName);
         if (!isensor) {
+            yError() << logPrefix << "Failed to get Accelerometer" << inputSensorName;
             askToStop();
         }
         const auto* constSensor = static_cast<const sensorImpl::Accelerometer*>(isensor.get());
@@ -364,6 +358,7 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
         // ====================
         auto isensor = getEmgSensor(inputSensorName);
         if (!isensor) {
+            yError() << logPrefix << "Failed to get EmgSensor" << inputSensorName;
             askToStop();
         }
         const auto* constSensor = static_cast<const sensorImpl::EmgSensor*>(isensor.get());
@@ -404,6 +399,7 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
         // ====================
         auto isensor = getForceTorque6DSensor(inputSensorName);
         if (!isensor) {
+            yError() << logPrefix << "Failed to get ForceTorque6DSensor" << inputSensorName;
             askToStop();
         }
         const auto* constSensor =
@@ -431,6 +427,7 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
         // ====================
         auto isensor = getFreeBodyAccelerationSensor(inputSensorName);
         if (!isensor) {
+            yError() << logPrefix << "Failed to get FreeBodyAccelerationSensor" << inputSensorName;
             askToStop();
         }
         const auto* constSensor =
@@ -454,6 +451,7 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
         // ====================
         auto isensor = getGyroscope(inputSensorName);
         if (!isensor) {
+            yError() << logPrefix << "Failed to get Gyroscope" << inputSensorName;
             askToStop();
         }
         const auto* constSensor = static_cast<const sensorImpl::Gyroscope*>(isensor.get());
@@ -476,6 +474,7 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
         // ====================
         auto isensor = getMagnetometer(inputSensorName);
         if (!isensor) {
+            yError() << logPrefix << "Failed to get Magnetometer" << inputSensorName;
             askToStop();
         }
         const auto* constSensor = static_cast<const sensorImpl::Magnetometer*>(isensor.get());
@@ -498,6 +497,7 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
         // ====================
         auto isensor = getOrientationSensor(inputSensorName);
         if (!isensor) {
+            yError() << logPrefix << "Failed to get OrientationSensor" << inputSensorName;
             askToStop();
         }
         const auto* constSensor = static_cast<const sensorImpl::OrientationSensor*>(isensor.get());
@@ -522,6 +522,7 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
         // ====================
         auto isensor = getPoseSensor(inputSensorName);
         if (!isensor) {
+            yError() << logPrefix << "Failed to get PoseSensor" << inputSensorName;
             askToStop();
         }
         const auto* constSensor = static_cast<const sensorImpl::PoseSensor*>(isensor.get());
@@ -549,6 +550,7 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
         // ====================
         auto isensor = getPositionSensor(inputSensorName);
         if (!isensor) {
+            yError() << logPrefix << "Failed to get PositionSensor" << inputSensorName;
             askToStop();
         }
         const auto* constSensor = static_cast<const sensorImpl::PositionSensor*>(isensor.get());
@@ -572,6 +574,7 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
         // Create the sensor if it does not exist
         auto isensor = getSkinSensor(inputSensorName);
         if (!isensor) {
+            yError() << logPrefix << "Failed to get SkinSensor" << inputSensorName;
             askToStop();
         }
         const auto* constSensor = static_cast<const sensorImpl::SkinSensor*>(isensor.get());
@@ -596,6 +599,7 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
         // ====================
         auto isensor = getTemperatureSensor(inputSensorName);
         if (!isensor) {
+            yError() << logPrefix << "Failed to get TemperatureSensor" << inputSensorName;
             askToStop();
         }
         const auto* constSensor = static_cast<const sensorImpl::TemperatureSensor*>(isensor.get());
@@ -618,6 +622,7 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
         auto isensor = getTorque3DSensor(inputSensorName);
         if (!isensor) {
             askToStop();
+            yError() << logPrefix << "Failed to get Torque3DSensor" << inputSensorName;
         }
         const auto* constSensor = static_cast<const sensorImpl::Torque3DSensor*>(isensor.get());
         auto* sensor = const_cast<sensorImpl::Torque3DSensor*>(constSensor);
@@ -639,6 +644,7 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
         // ====================
         auto isensor = getVirtualLinkKinSensor(inputSensorName);
         if (!isensor) {
+            yError() << logPrefix << "Failed to get VirtualLinkKinSensor" << inputSensorName;
             askToStop();
         }
         const auto* constSensor =
@@ -679,6 +685,7 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
         // ====================
         auto isensor = getVirtualSphericalJointKinSensor(inputSensorName);
         if (!isensor) {
+            yError() << logPrefix << "Failed to get VirtualSphericalJointKinSensor"
             askToStop();
         }
         const auto* constSensor =
@@ -847,7 +854,7 @@ IWearRemapper::impl::getSensor(const sensor::SensorName name,
                                std::map<std::string, SensorPtr<SensorImpl>>& storage)
 {
     if (!validSensorName(name, type)) {
-        yError() << "Sensor " << name << " does not exist";
+        yError() << "Sensor" << name << "does not exist";
         return nullptr;
     }
 

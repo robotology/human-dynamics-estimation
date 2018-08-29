@@ -18,7 +18,7 @@
 
 using namespace wearable::devices;
 
-const std::string logPrefix = "XsensSuit : ";
+const std::string logPrefix = "XsensSuit :";
 
 class XsensSuit::XsensSuitImpl
 {
@@ -105,7 +105,7 @@ public:
     {
         if (m_suitImpl->freeBodyAccerlerationSensorsMap.find(this->m_name)
             == m_suitImpl->freeBodyAccerlerationSensorsMap.end()) {
-            yError() << "Sensor " << this->m_name << " NOT found";
+            yError() << logPrefix << "Sensor" << this->m_name << "NOT found";
             fba.fill(0.0);
             return false;
         }
@@ -118,8 +118,8 @@ public:
         // Check if suit sensor and driver data sample have the same name
         auto prefix = m_suitImpl->wearableName + this->getPrefix();
         if (this->m_name != prefix + sensorData.name) {
-            yError() << logPrefix << "Names mismatch Driver name: " << prefix + sensorData.name
-                     << " Wearable Sensor name " << this->m_name;
+            yError() << logPrefix << "Names mismatch Driver name:" << prefix + sensorData.name
+                     << "Wearable Sensor name" << this->m_name;
             return false;
         }
 
@@ -166,7 +166,7 @@ public:
     {
         if (m_suitImpl->positionSensorsMap.find(this->m_name)
             == m_suitImpl->positionSensorsMap.end()) {
-            yError() << "Sensor " << this->m_name << " NOT found";
+            yError() << logPrefix << "Sensor" << this->m_name << "NOT found";
             pos.fill(0.0);
             return false;
         }
@@ -178,8 +178,8 @@ public:
         // Check if suit sensor and driver data sample have the same name
         auto prefix = m_suitImpl->wearableName + this->getPrefix();
         if (this->m_name != prefix + sensorData.name) {
-            yError() << logPrefix << "Names mismatch Driver name: " << prefix + sensorData.name
-                     << " Wearable Sensor name " << this->m_name;
+            yError() << logPrefix << "Names mismatch Driver name:" << prefix + sensorData.name
+                     << "Wearable Sensor name" << this->m_name;
             return false;
         }
 
@@ -223,7 +223,7 @@ public:
     {
         if (m_suitImpl->orientationSensorsMap.find(this->m_name)
             == m_suitImpl->orientationSensorsMap.end()) {
-            yError() << "Sensor " << this->m_name << " NOT found";
+            yError() << logPrefix << "Sensor" << this->m_name << "NOT found";
             quat.fill(0.0);
             return false;
         }
@@ -236,8 +236,8 @@ public:
         // Check if suit sensor and driver data sample have the same name
         auto prefix = m_suitImpl->wearableName + this->getPrefix();
         if (this->m_name != prefix + sensorData.name) {
-            yError() << logPrefix << "Names mismatch Driver name: " << prefix + sensorData.name
-                     << " Wearable Sensor name " << this->m_name;
+            yError() << logPrefix << "Names mismatch Driver name:" << prefix + sensorData.name
+                     << "Wearable Sensor name" << this->m_name;
             return false;
         }
 
@@ -280,7 +280,7 @@ public:
     bool getPose(Quaternion& orientation, Vector3& position) const override
     {
         if (m_suitImpl->poseSensorsMap.find(this->m_name) == m_suitImpl->poseSensorsMap.end()) {
-            yError() << "Sensor " << this->m_name << " NOT found";
+            yError() << logPrefix << "Sensor" << this->m_name << "NOT found";
             orientation.fill(0.0);
             position.fill(0.0);
             return false;
@@ -294,8 +294,8 @@ public:
         // Check if suit sensor and driver data sample have the same name
         auto prefix = m_suitImpl->wearableName + this->getPrefix();
         if (this->m_name != prefix + sensorData.name) {
-            yError() << logPrefix << "Names mismatch Driver name: " << prefix + sensorData.name
-                     << " Wearable Sensor name " << this->m_name;
+            yError() << logPrefix << "Names mismatch Driver name:" << prefix + sensorData.name
+                     << "Wearable Sensor name" << this->m_name;
             return false;
         }
 
@@ -339,7 +339,7 @@ public:
     bool getMagneticField(wearable::Vector3& mf) const override
     {
         if (m_suitImpl->magnetometersMap.find(this->m_name) == m_suitImpl->magnetometersMap.end()) {
-            yError() << "Sensor " << this->m_name << " NOT found";
+            yError() << logPrefix << "Sensor" << this->m_name << "NOT found";
             mf.fill(0.0);
             return false;
         }
@@ -352,8 +352,8 @@ public:
         // Check if suit sensor and driver data sample have the same name
         auto prefix = m_suitImpl->wearableName + this->getPrefix();
         if (this->m_name != prefix + sensorData.name) {
-            yError() << logPrefix << "Names mismatch Driver name: " << prefix + sensorData.name
-                     << " Wearable Sensor name " << this->m_name;
+            yError() << logPrefix << "Names mismatch Driver name:" << prefix + sensorData.name
+                     << "Wearable Sensor name" << this->m_name;
             return false;
         }
 
@@ -398,7 +398,7 @@ public:
     {
         if (m_suitImpl->virtualLinkKinSensorsMap.find(this->m_name)
             == m_suitImpl->virtualLinkKinSensorsMap.end()) {
-            yError() << "Sensor " << this->m_name << " NOT found";
+            yError() << logPrefix << "Sensor" << this->m_name << "NOT found";
             linear.fill(0.0);
             angular.fill(0.0);
             return false;
@@ -412,8 +412,8 @@ public:
         // Check if suit sensor and driver data sample have the same name
         auto prefix = m_suitImpl->wearableName + this->getPrefix();
         if (this->m_name != prefix + linkData.name) {
-            yError() << logPrefix << "Names mismatch Driver name: " << prefix + linkData.name
-                     << " Wearable Sensor name " << this->m_name;
+            yError() << logPrefix << "Names mismatch Driver name:" << prefix + linkData.name
+                     << "Wearable Sensor name" << this->m_name;
             return false;
         }
 
@@ -427,7 +427,7 @@ public:
     {
         if (m_suitImpl->virtualLinkKinSensorsMap.find(this->m_name)
             == m_suitImpl->virtualLinkKinSensorsMap.end()) {
-            yError() << "Sensor " << this->m_name << " NOT found";
+            yError() << logPrefix << "Sensor" << this->m_name << "NOT found";
             position.fill(0.0);
             orientation.fill(0.0);
             return false;
@@ -441,8 +441,8 @@ public:
         // Check if suit sensor and driver data sample have the same name
         auto prefix = m_suitImpl->wearableName + this->getPrefix();
         if (this->m_name != prefix + linkData.name) {
-            yError() << logPrefix << "Names mismatch Driver name: " << prefix + linkData.name
-                     << " Wearable Sensor name " << this->m_name;
+            yError() << logPrefix << "Names mismatch Driver name:" << prefix + linkData.name
+                     << "Wearable Sensor name" << this->m_name;
             return false;
         }
 
@@ -456,7 +456,7 @@ public:
     {
         if (m_suitImpl->virtualLinkKinSensorsMap.find(this->m_name)
             == m_suitImpl->virtualLinkKinSensorsMap.end()) {
-            yError() << "Sensor " << this->m_name << " NOT found";
+            yError() << logPrefix << "Sensor" << this->m_name << "NOT found";
             linear.fill(0.0);
             angular.fill(0.0);
             return false;
@@ -470,8 +470,8 @@ public:
         // Check if suit sensor and driver data sample have the same name
         auto prefix = m_suitImpl->wearableName + this->getPrefix();
         if (this->m_name != prefix + linkData.name) {
-            yError() << logPrefix << "Names mismatch Driver name: " << prefix + linkData.name
-                     << " Wearable Sensor name " << this->m_name;
+            yError() << logPrefix << "Names mismatch Driver name:" << prefix + linkData.name
+                     << "Wearable Sensor name " << this->m_name;
             return false;
         }
 
@@ -517,7 +517,7 @@ public:
     {
         if (m_suitImpl->virtualJointKinSensorsMap.find(this->m_name)
             == m_suitImpl->virtualJointKinSensorsMap.end()) {
-            yError() << "Sensor " << this->m_name << " NOT found";
+            yError() << logPrefix << "Sensor" << this->m_name << "NOT found";
             angleAsRPY.fill(0.0);
             return false;
         }
@@ -530,8 +530,8 @@ public:
         // Check if suit sensor and driver data sample have the same name
         auto prefix = m_suitImpl->wearableName + this->getPrefix();
         if (this->m_name != prefix + jointData.name) {
-            yError() << logPrefix << "Names mismatch Driver name: " << prefix + jointData.name
-                     << " Wearable Sensor name " << this->m_name;
+            yError() << logPrefix << "Names mismatch Driver name:" << prefix + jointData.name
+                     << "Wearable Sensor name" << this->m_name;
             return false;
         }
 
@@ -544,7 +544,7 @@ public:
     {
         if (m_suitImpl->virtualJointKinSensorsMap.find(this->m_name)
             == m_suitImpl->virtualJointKinSensorsMap.end()) {
-            yError() << "Sensor " << this->m_name << " NOT found";
+            yError() << logPrefix << "Sensor" << this->m_name << "NOT found";
             velocities.fill(0.0);
             return false;
         }
@@ -557,8 +557,8 @@ public:
         // Check if suit sensor and driver data sample have the same name
         auto prefix = m_suitImpl->wearableName + this->getPrefix();
         if (this->m_name != prefix + jointData.name) {
-            yError() << logPrefix << "Names mismatch Driver name: " << prefix + jointData.name
-                     << " Wearable Sensor name " << this->m_name;
+            yError() << logPrefix << "Names mismatch Driver name:" << prefix + jointData.name
+                     << "Wearable Sensor name" << this->m_name;
             return false;
         }
 
@@ -571,7 +571,7 @@ public:
     {
         if (m_suitImpl->virtualJointKinSensorsMap.find(this->m_name)
             == m_suitImpl->virtualJointKinSensorsMap.end()) {
-            yError() << "Sensor " << this->m_name << " NOT found";
+            yError() << logPrefix << "Sensor" << this->m_name << "NOT found";
             accelerations.fill(0.0);
             return false;
         }
@@ -584,8 +584,8 @@ public:
         // Check if suit sensor and driver data sample have the same name
         auto prefix = m_suitImpl->wearableName + this->getPrefix();
         if (this->m_name != prefix + jointData.name) {
-            yError() << logPrefix << "Names mismatch Driver name: " << prefix + jointData.name
-                     << " Wearable Sensor name " << this->m_name;
+            yError() << logPrefix << "Names mismatch Driver name " << prefix + jointData.name
+                     << "Wearable Sensor name" << this->m_name;
             return false;
         }
 
