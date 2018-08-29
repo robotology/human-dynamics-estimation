@@ -74,6 +74,7 @@ IWearWrapper::IWearWrapper()
 
 IWearWrapper::~IWearWrapper()
 {
+    close();
     detachAll();
 }
 
@@ -119,15 +120,19 @@ void IWearWrapper::run()
 {
     if (!pImpl->iWear) {
         yError() << logPrefix << "The IWear pointer is null in the driver loop.";
+        askToStop();
         return;
     }
 
     if (!pImpl->iPreciselyTimed) {
         yError() << logPrefix << "The IPreciselyTimed pointer is null in the driver loop.";
+        askToStop();
         return;
     }
 
     if (pImpl->iWear->getStatus() != WearStatus::Ok) {
+        yError() << logPrefix << "The status of the IWear interface is not Ok";
+        askToStop();
         return;
     }
 
