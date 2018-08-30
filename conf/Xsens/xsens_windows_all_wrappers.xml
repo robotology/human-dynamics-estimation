@@ -26,7 +26,7 @@
         <param name="sampling-rate">120</param>
         <!-- Quantities to be extracted from the driver for each time sample -->
         <group name="output-stream-configuration">
-            <param name="enable-joint-data">false</param>
+            <param name="enable-joint-data">true</param>
             <param name="enable-link-data">true</param>
             <param name="enable-sensor-data">false</param>
         </group>
@@ -50,17 +50,17 @@
         <param name="rpcPortName">/XSensSuit/WearableData/metadataRpc:o</param>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
-                <elem name="XsensSuitYarpDevice"> XsensSuitDevice </elem>
+                <elem name="XsensSuitDeviceWrapper"> XsensSuitDevice </elem>
             </paramlist>
         </action>
         <action phase="shutdown" level="5" type="detach"/>
     </device>
     
     <device type="ixsensmvncontrol_wrapper" name="XSensSuitControl">
-        <param name="rpcPortName">/XSensSuit/Device/rpc:i</param>
+        <param name="rpcPortName">/XSensSuit/Control/rpc:i</param>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
-                <elem name="XsensSuitYarpDevice"> XsensSuitDevice </elem>
+                <elem name="XsensSuitControlWrapper"> XsensSuitDevice </elem>
             </paramlist>
         </action>
         <action phase="shutdown" level="5" type="detach"/>
