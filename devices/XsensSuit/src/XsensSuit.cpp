@@ -48,8 +48,9 @@ public:
         {xsensmvn::DriverStatus::Unknown, sensor::SensorStatus::Unknown},
         {xsensmvn::DriverStatus::Recording, sensor::SensorStatus::Ok},
         {xsensmvn::DriverStatus::Calibrating, sensor::SensorStatus::Calibrating},
-        {xsensmvn::DriverStatus::CalibratedAndReadyToRecord, sensor::SensorStatus::Error},
-        {xsensmvn::DriverStatus::Connected, sensor::SensorStatus::Error},
+        {xsensmvn::DriverStatus::CalibratedAndReadyToRecord,
+         sensor::SensorStatus::WaitingForFirstRead},
+        {xsensmvn::DriverStatus::Connected, sensor::SensorStatus::WaitingForFirstRead},
         {xsensmvn::DriverStatus::Scanning, sensor::SensorStatus::Error}};
 
     template <typename T>
@@ -1075,10 +1076,12 @@ XsensSuit::getSensors(const wearable::sensor::SensorType aType) const
             break;
         }
         default: {
-            yWarning() << logPrefix << "Selected sensor type is not supported by XsensSuit";
-            outVec.clear();
+            yWarning() << logPrefix << "Selected sensor type (" << static_cast<int>(aType)
+                       << ") is not supported by XsensSuit";
+            return {};
         }
     }
+
     return outVec;
 }
 

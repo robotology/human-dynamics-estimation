@@ -35,6 +35,7 @@ public:
     std::string dataPortName;
 
     bool firstRun = true;
+    size_t waitingFirstReadCounter = 1;
 
     wearable::IWear* iWear = nullptr;
     yarp::dev::IPreciselyTimed* iPreciselyTimed = nullptr;
@@ -128,8 +129,18 @@ void IWearWrapper::run()
         return;
     }
 
+    while (pImpl->iWear->getStatus() == WearStatus::Calibrating
+           || pImpl->iWear->getStatus() == WearStatus::WaitingForFirstRead) {
+        if (pImpl->waitingFirstReadCounter++ % 1000 == 0) {
+            pImpl->waitingFirstReadCounter = 1;
+            yInfo() << logPrefix << "IWear interface waiting for first data. Waiting...";
+        }
+        return;
+    }
+
     if (pImpl->iWear->getStatus() != WearStatus::Ok) {
-        yError() << logPrefix << "The status of the IWear interface is not Ok";
+        yError() << logPrefix << "The status of the IWear interface is not Ok"
+                 << static_cast<int>(pImpl->iWear->getStatus()) << ")";
         askToStop();
         return;
     }
@@ -445,23 +456,6 @@ bool IWearWrapper::attach(yarp::dev::PolyDriver* poly)
         return false;
     }
 
-    // Start the PeriodicThread loop
-    if (!this->start()) {
-        yError() << logPrefix << "Failed to start the loop.";
-        return false;
-    }
-
-    // Handle whe IWear status
-    while (pImpl->iWear->getStatus() == WearStatus::WaitingForFirstRead) {
-        yInfo() << logPrefix << "IWear interface waiting for first data. Waiting...";
-        yarp::os::Time::delay(5);
-    }
-    if (pImpl->iWear->getStatus() != WearStatus::Ok) {
-        yError() << logPrefix << "The status of the attached IWear interface is not ok ("
-                 << static_cast<int>(pImpl->iWear->getStatus()) << ")";
-        return false;
-    }
-
     // Open the port for streaming data
     pImpl->dataPort.open(pImpl->dataPortName);
 
@@ -520,6 +514,12 @@ bool IWearWrapper::attach(yarp::dev::PolyDriver* poly)
     pImpl->yarp().attachAsServer(pImpl->rpcPort);
     if (!pImpl->rpcPort.open(pImpl->rpcPortName)) {
         yError() << logPrefix << "Failed to open " << pImpl->rpcPortName;
+        return false;
+    }
+
+    // Start the PeriodicThread loop
+    if (!start()) {
+        yError() << logPrefix << "Failed to start the loop.";
         return false;
     }
 
