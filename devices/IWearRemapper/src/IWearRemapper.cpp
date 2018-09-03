@@ -784,7 +784,7 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
 WearableName IWearRemapper::getWearableName() const
 {
     std::lock_guard<std::mutex> lock(pImpl->mutex);
-    return WrapperName;
+    return WrapperName + "::";
 }
 
 WearStatus IWearRemapper::getStatus() const
