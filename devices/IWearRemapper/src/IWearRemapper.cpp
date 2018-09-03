@@ -916,7 +916,7 @@ bool IWearRemapper::impl::validSensorName(const sensor::SensorName& name,
     const std::vector<std::string> sensorNames = rpcSensorNames[type];
 
     const auto it = std::find(sensorNames.begin(), sensorNames.end(), name);
-    return (it == sensorNames.end()) ? true : false;
+    return (it != sensorNames.end()) ? true : false;
 }
 
 template <typename SensorInterface, typename SensorImpl>
