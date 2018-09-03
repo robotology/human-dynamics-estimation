@@ -461,54 +461,71 @@ bool IWearWrapper::attach(yarp::dev::PolyDriver* poly)
 
     // Prepare the metadata for the RPC port
     for (const auto& s : pImpl->iWear->getAccelerometers()) {
+        yInfo() << logPrefix << "Adding sensor" << s->getSensorName();
         pImpl->wearableMetadata[msg::SensorType::ACCELEROMETER].push_back(s->getSensorName());
     }
     for (const auto& s : pImpl->iWear->getEmgSensors()) {
+        yInfo() << logPrefix << "Adding sensor" << s->getSensorName();
         pImpl->wearableMetadata[msg::SensorType::EMG_SENSOR].push_back(s->getSensorName());
     }
     for (const auto& s : pImpl->iWear->getForce3DSensors()) {
+        yInfo() << logPrefix << "Adding sensor" << s->getSensorName();
         pImpl->wearableMetadata[msg::SensorType::FORCE_3D_SENSOR].push_back(s->getSensorName());
     }
     for (const auto& s : pImpl->iWear->getForceTorque6DSensors()) {
+        yInfo() << logPrefix << "Adding sensor" << s->getSensorName();
         pImpl->wearableMetadata[msg::SensorType::FORCE_TORQUE_6D_SENSOR].push_back(
             s->getSensorName());
     }
     for (const auto& s : pImpl->iWear->getFreeBodyAccelerationSensors()) {
+        yInfo() << logPrefix << "Adding sensor" << s->getSensorName();
         pImpl->wearableMetadata[msg::SensorType::FREE_BODY_ACCELERATION_SENSOR].push_back(
             s->getSensorName());
     }
     for (const auto& s : pImpl->iWear->getGyroscopes()) {
+        yInfo() << logPrefix << "Adding sensor" << s->getSensorName();
         pImpl->wearableMetadata[msg::SensorType::GYROSCOPE].push_back(s->getSensorName());
     }
     for (const auto& s : pImpl->iWear->getMagnetometers()) {
+        yInfo() << logPrefix << "Adding sensor" << s->getSensorName();
         pImpl->wearableMetadata[msg::SensorType::MAGNETOMETER].push_back(s->getSensorName());
     }
     for (const auto& s : pImpl->iWear->getOrientationSensors()) {
+        yInfo() << logPrefix << "Adding sensor" << s->getSensorName();
         pImpl->wearableMetadata[msg::SensorType::ORIENTATION_SENSOR].push_back(s->getSensorName());
     }
     for (const auto& s : pImpl->iWear->getPoseSensors()) {
+        yInfo() << logPrefix << "Adding sensor" << s->getSensorName();
         pImpl->wearableMetadata[msg::SensorType::POSE_SENSOR].push_back(s->getSensorName());
     }
     for (const auto& s : pImpl->iWear->getPositionSensors()) {
+        yInfo() << logPrefix << "Adding sensor" << s->getSensorName();
         pImpl->wearableMetadata[msg::SensorType::POSITION_SENSOR].push_back(s->getSensorName());
     }
     for (const auto& s : pImpl->iWear->getSkinSensors()) {
+        yInfo() << logPrefix << "Adding sensor" << s->getSensorName();
         pImpl->wearableMetadata[msg::SensorType::SKIN_SENSOR].push_back(s->getSensorName());
     }
     for (const auto& s : pImpl->iWear->getTemperatureSensors()) {
+        yInfo() << logPrefix << "Adding sensor" << s->getSensorName();
         pImpl->wearableMetadata[msg::SensorType::TEMPERATURE_SENSOR].push_back(s->getSensorName());
     }
     for (const auto& s : pImpl->iWear->getTorque3DSensors()) {
+        yInfo() << logPrefix << "Adding sensor" << s->getSensorName();
         pImpl->wearableMetadata[msg::SensorType::TORQUE_3D_SENSOR].push_back(s->getSensorName());
     }
     for (const auto& s : pImpl->iWear->getVirtualLinkKinSensors()) {
+        yInfo() << logPrefix << "Adding sensor" << s->getSensorName();
         pImpl->wearableMetadata[msg::SensorType::VIRTUAL_LINK_KIN_SENSOR].push_back(
             s->getSensorName());
     }
     for (const auto& s : pImpl->iWear->getVirtualSphericalJointKinSensors()) {
+        yInfo() << logPrefix << "Adding sensor" << s->getSensorName();
         pImpl->wearableMetadata[msg::SensorType::VIRTUAL_SPHERICAL_JOINT_KIN_SENSOR].push_back(
             s->getSensorName());
     }
+
+    yDebug() << logPrefix << "Parsed sensor metadata";
 
     // Open the RPC port for providing metadata
     if (!pImpl->rpcPort.open(pImpl->rpcPortName)) {
@@ -527,6 +544,7 @@ bool IWearWrapper::attach(yarp::dev::PolyDriver* poly)
         return false;
     }
 
+    yDebug() << logPrefix << "attach() successful";
     return true;
 }
 

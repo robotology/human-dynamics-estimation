@@ -231,18 +231,18 @@ bool IWearRemapper::open(yarp::os::Searchable& config)
             if (yarp::os::Network::isConnected(inputRpcPortName, localRpcPort.getName())) {
                 break;
             }
-            yInfo() << logPrefix << "Waiting connection with " << inputRpcPortName;
+            yInfo() << logPrefix << "Waiting connection with" << inputRpcPortName;
             yarp::os::Time::delay(10);
         }
 
         // Attach the rpc client
         wearable::msg::WearableMetadataService service;
         if (!service.yarp().attachAsClient(localRpcPort)) {
-            yError() << "Failed to attach to " << localRpcPort.getName();
+            yError() << logPrefix << "Failed to attach to" << localRpcPort.getName();
             return false;
         }
 
-        // Ask metadata and store it
+        // Ask metadata and store them
         metadata.push_back(service.getMetadata());
 
         // Close the temporary port
@@ -279,10 +279,12 @@ bool IWearRemapper::open(yarp::os::Searchable& config)
             for (const wearable::msg::WearableSensorMetadata& sensorMD : sensorTypeMetadata) {
                 // Check there isn't any sensor name collision
                 if (findStoredSensorName(sensorMD.name, pImpl->rpcSensorNames)) {
-                    yError() << "Sensor with name " << sensorMD.name << " alredy exists.";
+                    yError() << logPrefix << "Sensor with name " << sensorMD.name
+                             << " alredy exists.";
                     return false;
                 }
                 // Add the sensor name
+                yInfo() << logPrefix << "Found sensor" << sensorMD.name;
                 pImpl->rpcSensorNames[MapSensorType.at(sensorType)].push_back(sensorMD.name);
             }
         }
@@ -793,7 +795,7 @@ WearStatus IWearRemapper::getStatus() const
 
     for (const auto& s : getAllSensors()) {
         if (s->getSensorStatus() != sensor::SensorStatus::Ok) {
-            yError() << "The status of" << s->getSensorName() << "is not Ok ("
+            yError() << logPrefix << "The status of" << s->getSensorName() << "is not Ok ("
                      << static_cast<int>(s->getSensorStatus()) << ")";
             return WearStatus::Error;
         }
@@ -923,7 +925,7 @@ IWearRemapper::impl::getSensor(const sensor::SensorName name,
                                std::map<std::string, SensorPtr<SensorImpl>>& storage)
 {
     if (!validSensorName(name, type)) {
-        yError() << "Sensor" << name << "does not exist";
+        yError() << logPrefix << "Sensor" << name << "not found in the list read from the wrapper";
         return nullptr;
     }
 

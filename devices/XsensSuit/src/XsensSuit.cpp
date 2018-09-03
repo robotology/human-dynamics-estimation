@@ -7,7 +7,6 @@
  */
 
 #include "XsensSuit.h"
-
 #include "XSensMVNDriver.h"
 
 #include <yarp/os/LogStream.h>
@@ -112,7 +111,7 @@ public:
         }
 
         // Retrieve data sample directly form XSens Driver
-        const auto sensorData = m_suitImpl->driver->getSensorDataSample().data.at(
+        const xsensmvn::SensorData sensorData = m_suitImpl->driver->getSensorDataSample().data.at(
             m_suitImpl->freeBodyAccerlerationSensorsMap.at(this->m_name).driverIndex);
 
         // TODO: This should be guaranteed, runtime check should be removed
@@ -172,7 +171,7 @@ public:
             return false;
         }
         // Retrieve data sample directly form XSens Driver
-        const auto sensorData = m_suitImpl->driver->getSensorDataSample().data.at(
+        const xsensmvn::SensorData sensorData = m_suitImpl->driver->getSensorDataSample().data.at(
             m_suitImpl->positionSensorsMap.at(this->m_name).driverIndex);
 
         // TODO: This should be guaranteed, runtime check should be removed
@@ -230,7 +229,7 @@ public:
         }
 
         // Retrieve data sample directly form XSens Driver
-        const auto sensorData = m_suitImpl->driver->getSensorDataSample().data.at(
+        const xsensmvn::SensorData sensorData = m_suitImpl->driver->getSensorDataSample().data.at(
             m_suitImpl->orientationSensorsMap.at(this->m_name).driverIndex);
 
         // TODO: This should be guaranteed, runtime check should be removed
@@ -288,7 +287,7 @@ public:
         }
 
         // Retrieve data sample directly form XSens Driver
-        const auto sensorData = m_suitImpl->driver->getSensorDataSample().data.at(
+        const xsensmvn::SensorData sensorData = m_suitImpl->driver->getSensorDataSample().data.at(
             m_suitImpl->poseSensorsMap.at(this->m_name).driverIndex);
 
         // TODO: This should be guaranteed, runtime check should be removed
@@ -346,7 +345,7 @@ public:
         }
 
         // Retrieve data sample directly form XSens Driver
-        const auto sensorData = m_suitImpl->driver->getSensorDataSample().data.at(
+        const xsensmvn::SensorData sensorData = m_suitImpl->driver->getSensorDataSample().data.at(
             m_suitImpl->magnetometersMap.at(this->m_name).driverIndex);
 
         // TODO: This should be guaranteed, runtime check should be removed
@@ -406,7 +405,7 @@ public:
         }
 
         // Retrieve data sample directly form XSens Driver
-        const auto linkData = m_suitImpl->driver->getLinkDataSample().data.at(
+        const xsensmvn::LinkData linkData = m_suitImpl->driver->getLinkDataSample().data.at(
             m_suitImpl->virtualLinkKinSensorsMap.at(this->m_name).driverIndex);
 
         // TODO: This should be guaranteed, runtime check should be removed
@@ -524,7 +523,7 @@ public:
         }
 
         // Retrieve data sample directly form XSens Driver
-        const auto jointData = m_suitImpl->driver->getJointDataSample().data.at(
+        const xsensmvn::JointData jointData = m_suitImpl->driver->getJointDataSample().data.at(
             m_suitImpl->virtualJointKinSensorsMap.at(this->m_name).driverIndex);
 
         // TODO: This should be guaranteed, runtime check should be removed
@@ -790,64 +789,75 @@ bool XsensSuit::open(yarp::os::Searchable& config)
         getWearableName() + sensor::IVirtualSphericalJointKinSensor::getPrefix();
 
     if (pImpl->driver->getDriverConfiguration().dataStreamConfiguration.enableSensorData) {
+        // Get the names of the sensors from the driver
         std::vector<std::string> sensorNames = pImpl->driver->getSuitSensorLabels();
+
         for (size_t s = 0; s < sensorNames.size(); ++s) {
+            // Create the new sensors
+            auto fba = std::make_shared<XsensSuitImpl::XsensFreeBodyAccelerationSensor>(
+                pImpl.get(), fbasPrefix + sensorNames[s]);
+            auto pos = std::make_shared<XsensSuitImpl::XsensPositionSensor>(
+                pImpl.get(), posPrefix + sensorNames[s]);
+            auto orient = std::make_shared<XsensSuitImpl::XsensOrientationSensor>(
+                pImpl.get(), orientPrefix + sensorNames[s]);
+            auto pose = std::make_shared<XsensSuitImpl::XsensPoseSensor>(
+                pImpl.get(), posePrefix + sensorNames[s]);
+            auto mag = std::make_shared<XsensSuitImpl::XsensMagnetometer>(
+                pImpl.get(), magPrefix + sensorNames[s]);
+
             pImpl->freeBodyAccerlerationSensorsMap.emplace(
                 fbasPrefix + sensorNames[s],
                 XsensSuitImpl::driverToDeviceSensors<
-                    XsensSuitImpl::XsensFreeBodyAccelerationSensor>{
-                    std::make_shared<XsensSuitImpl::XsensFreeBodyAccelerationSensor>(
-                        pImpl.get(), fbasPrefix + sensorNames[s]),
-                    s});
+                    XsensSuitImpl::XsensFreeBodyAccelerationSensor>{fba, s});
+
             pImpl->positionSensorsMap.emplace(
                 posPrefix + sensorNames[s],
-                XsensSuitImpl::driverToDeviceSensors<XsensSuitImpl::XsensPositionSensor>{
-                    std::make_shared<XsensSuitImpl::XsensPositionSensor>(
-                        pImpl.get(), posPrefix + sensorNames[s]),
-                    s});
+                XsensSuitImpl::driverToDeviceSensors<XsensSuitImpl::XsensPositionSensor>{pos, s});
+
             pImpl->orientationSensorsMap.emplace(
                 orientPrefix + sensorNames[s],
-                XsensSuitImpl::driverToDeviceSensors<XsensSuitImpl::XsensOrientationSensor>{
-                    std::make_shared<XsensSuitImpl::XsensOrientationSensor>(
-                        pImpl.get(), orientPrefix + sensorNames[s]),
-                    s});
+                XsensSuitImpl::driverToDeviceSensors<XsensSuitImpl::XsensOrientationSensor>{orient,
+                                                                                            s});
+
             pImpl->poseSensorsMap.emplace(
                 posePrefix + sensorNames[s],
-                XsensSuitImpl::driverToDeviceSensors<XsensSuitImpl::XsensPoseSensor>{
-                    std::make_shared<XsensSuitImpl::XsensPoseSensor>(pImpl.get(),
-                                                                     posePrefix + sensorNames[s]),
-                    s});
+                XsensSuitImpl::driverToDeviceSensors<XsensSuitImpl::XsensPoseSensor>{pose, s});
+
             pImpl->magnetometersMap.emplace(
                 magPrefix + sensorNames[s],
-                XsensSuitImpl::driverToDeviceSensors<XsensSuitImpl::XsensMagnetometer>{
-                    std::make_shared<XsensSuitImpl::XsensMagnetometer>(pImpl.get(),
-                                                                       magPrefix + sensorNames[s]),
-                    s});
+                XsensSuitImpl::driverToDeviceSensors<XsensSuitImpl::XsensMagnetometer>{mag, s});
         }
     }
 
     if (pImpl->driver->getDriverConfiguration().dataStreamConfiguration.enableLinkData) {
+        // Get the names of the links from the driver
         std::vector<std::string> linkNames = pImpl->driver->getSuitLinkLabels();
+
         for (size_t s = 0; s < linkNames.size(); ++s) {
+            // Create the new sensor
+            auto sensor = std::make_shared<XsensSuitImpl::XsensVirtualLinkKinSensor>(
+                pImpl.get(), vlksPrefix + linkNames[s]);
+            // Insert it in the output structure
             pImpl->virtualLinkKinSensorsMap.emplace(
                 vlksPrefix + linkNames[s],
                 XsensSuitImpl::driverToDeviceSensors<XsensSuitImpl::XsensVirtualLinkKinSensor>{
-                    std::make_shared<XsensSuitImpl::XsensVirtualLinkKinSensor>(
-                        pImpl.get(), vlksPrefix + linkNames[s]),
-                    s});
+                    sensor, s});
         }
     }
 
     if (pImpl->driver->getDriverConfiguration().dataStreamConfiguration.enableJointData) {
+        // Get the names of the joints from the driver
         std::vector<std::string> jointNames = pImpl->driver->getSuitJointLabels();
+
         for (size_t s = 0; s < jointNames.size(); ++s) {
+            // Create the new sensor
+            auto sensor = std::make_shared<XsensSuitImpl::XsensVirtualSphericalJointKinSensor>(
+                pImpl.get(), vjksPrefix + jointNames[s]);
+            // Insert it in the output structure
             pImpl->virtualJointKinSensorsMap.emplace(
                 vjksPrefix + jointNames[s],
                 XsensSuitImpl::driverToDeviceSensors<
-                    XsensSuitImpl::XsensVirtualSphericalJointKinSensor>{
-                    std::make_shared<XsensSuitImpl::XsensVirtualSphericalJointKinSensor>(
-                        pImpl.get(), vjksPrefix + jointNames[s]),
-                    s});
+                    XsensSuitImpl::XsensVirtualSphericalJointKinSensor>{sensor, s});
         }
     }
 
@@ -1073,6 +1083,7 @@ XsensSuit::getSensors(const wearable::sensor::SensorType aType) const
                 outVec.push_back(
                     static_cast<std::shared_ptr<sensor::ISensor>>(vjks.second.xsSensor));
             }
+
             break;
         }
         default: {
