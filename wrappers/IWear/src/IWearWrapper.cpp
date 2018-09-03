@@ -14,7 +14,7 @@
 #include <yarp/dev/PreciselyTimed.h>
 #include <yarp/os/BufferedPort.h>
 #include <yarp/os/LogStream.h>
-#include <yarp/os/Port.h>
+#include <yarp/os/RpcServer.h>
 
 const std::string WrapperName = "IWearWrapper";
 const std::string logPrefix = WrapperName + " : ";
@@ -26,7 +26,7 @@ using namespace wearable::wrappers;
 class IWearWrapper::impl : public wearable::msg::WearableMetadataService
 {
 public:
-    yarp::os::Port rpcPort;
+    yarp::os::RpcServer rpcPort;
     yarp::os::BufferedPort<msg::WearableData> dataPort;
 
     std::map<msg::SensorType, std::vector<msg::WearableSensorMetadata>> wearableMetadata;
@@ -511,9 +511,13 @@ bool IWearWrapper::attach(yarp::dev::PolyDriver* poly)
     }
 
     // Open the RPC port for providing metadata
-    pImpl->yarp().attachAsServer(pImpl->rpcPort);
     if (!pImpl->rpcPort.open(pImpl->rpcPortName)) {
         yError() << logPrefix << "Failed to open " << pImpl->rpcPortName;
+        return false;
+    }
+
+    if (!pImpl->yarp().attachAsServer(pImpl->rpcPort)) {
+        yError() << logPrefix << "Failed to attach local port to rpc service";
         return false;
     }
 
