@@ -16,6 +16,7 @@
 #include <yarp/os/BufferedPort.h>
 #include <yarp/os/LogStream.h>
 #include <yarp/os/Network.h>
+#include <yarp/os/RpcClient.h>
 #include <yarp/os/Time.h>
 #include <yarp/os/TypedReaderCallback.h>
 
@@ -41,8 +42,6 @@ public:
     bool firstRun = true;
 
     mutable std::mutex mutex;
-
-    std::vector<yarp::os::Port> rpcPorts;
 
     msg::WearableData wearableData;
     yarp::os::BufferedPort<msg::WearableData> outputPortWearData;
@@ -214,12 +213,13 @@ bool IWearRemapper::open(yarp::os::Searchable& config)
 
     using SensorTypeMetadata = std::vector<wearable::msg::WearableSensorMetadata>;
     using WearableMetadata = std::map<wearable::msg::SensorType, SensorTypeMetadata>;
+
     std::vector<WearableMetadata> metadata;
 
     // Get metadata from remote rpc ports
     for (const auto& inputRpcPortName : inputRPCPortsNamesVector) {
         // Open a local port for the rpc data
-        yarp::os::Port localRpcPort;
+        yarp::os::RpcClient localRpcPort;
         if (!localRpcPort.open("...")) {
             yInfo() << logPrefix << "Failed to open local port";
             return false;
@@ -227,8 +227,9 @@ bool IWearRemapper::open(yarp::os::Searchable& config)
 
         // Wait the connection with the remote port
         while (true) {
-            yarp::os::Network::connect(inputRpcPortName, localRpcPort.getName());
-            if (yarp::os::Network::isConnected(inputRpcPortName, localRpcPort.getName())) {
+            yarp::os::Network::connect(localRpcPort.getName(), inputRpcPortName);
+            if (yarp::os::Network::isConnected(localRpcPort.getName(), inputRpcPortName)) {
+                yInfo() << logPrefix << "Connected with" << inputRpcPortName;
                 break;
             }
             yInfo() << logPrefix << "Waiting connection with" << inputRpcPortName;
