@@ -30,9 +30,9 @@ public:
     virtual ~IVirtualSphericalJointKinSensor() = default;
 
     // CONVENTION: RPY are defined as rotationa about X-Y-Z wrt fix frame
-    virtual bool getJointAnglesAsRPY(Vector3 angleAsRPY) const = 0;
-    virtual bool getJointVelocities(Vector3 velocities) const = 0;
-    virtual bool getJointAccelerations(Vector3 accelerations) const = 0;
+    virtual bool getJointAnglesAsRPY(Vector3& angleAsRPY) const = 0;
+    virtual bool getJointVelocities(Vector3& velocities) const = 0;
+    virtual bool getJointAccelerations(Vector3& accelerations) const = 0;
 
     inline static const std::string& getPrefix();
 };

@@ -513,7 +513,7 @@ public:
     // -----------------------------------------
     // IVirtualSphericalJointKinSensor interface
     // -----------------------------------------
-    bool getJointAnglesAsRPY(Vector3 angleAsRPY) const override
+    bool getJointAnglesAsRPY(Vector3& angleAsRPY) const override
     {
         if (m_suitImpl->virtualJointKinSensorsMap.find(this->m_name)
             == m_suitImpl->virtualJointKinSensorsMap.end()) {
@@ -540,7 +540,7 @@ public:
         return true;
     }
 
-    bool getJointVelocities(Vector3 velocities) const override
+    bool getJointVelocities(Vector3& velocities) const override
     {
         if (m_suitImpl->virtualJointKinSensorsMap.find(this->m_name)
             == m_suitImpl->virtualJointKinSensorsMap.end()) {
@@ -567,7 +567,7 @@ public:
         return true;
     }
 
-    bool getJointAccelerations(Vector3 accelerations) const override
+    bool getJointAccelerations(Vector3& accelerations) const override
     {
         if (m_suitImpl->virtualJointKinSensorsMap.find(this->m_name)
             == m_suitImpl->virtualJointKinSensorsMap.end()) {

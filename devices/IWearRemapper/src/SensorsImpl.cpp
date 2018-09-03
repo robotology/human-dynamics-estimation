@@ -358,7 +358,7 @@ sensorImpl::VirtualSphericalJointKinSensor::VirtualSphericalJointKinSensor(
 {}
 
 bool sensorImpl::VirtualSphericalJointKinSensor::getJointAnglesAsRPY(
-    wearable::Vector3 angleAsRPY) const
+    wearable::Vector3& angleAsRPY) const
 {
     std::lock_guard<std::mutex> lock(m_mutex);
     angleAsRPY = m_angleAsRPY;
@@ -366,7 +366,7 @@ bool sensorImpl::VirtualSphericalJointKinSensor::getJointAnglesAsRPY(
 }
 
 bool sensorImpl::VirtualSphericalJointKinSensor::getJointVelocities(
-    wearable::Vector3 velocities) const
+    wearable::Vector3& velocities) const
 {
     std::lock_guard<std::mutex> lock(m_mutex);
     velocities = m_velocities;
@@ -374,7 +374,7 @@ bool sensorImpl::VirtualSphericalJointKinSensor::getJointVelocities(
 }
 
 bool sensorImpl::VirtualSphericalJointKinSensor::getJointAccelerations(
-    wearable::Vector3 accelerations) const
+    wearable::Vector3& accelerations) const
 {
     std::lock_guard<std::mutex> lock(m_mutex);
     accelerations = m_accelerations;

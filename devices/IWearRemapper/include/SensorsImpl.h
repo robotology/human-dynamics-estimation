@@ -280,9 +280,9 @@ public:
         wearable::sensor::SensorStatus s = wearable::sensor::SensorStatus::Unknown);
     ~VirtualSphericalJointKinSensor() override = default;
 
-    bool getJointAnglesAsRPY(wearable::Vector3 angleAsRPY) const override;
-    bool getJointVelocities(wearable::Vector3 velocities) const override;
-    bool getJointAccelerations(wearable::Vector3 accelerations) const override;
+    bool getJointAnglesAsRPY(wearable::Vector3& angleAsRPY) const override;
+    bool getJointVelocities(wearable::Vector3& velocities) const override;
+    bool getJointAccelerations(wearable::Vector3& accelerations) const override;
 
     void setBuffer(const wearable::Vector3& angleAsRPY,
                    const wearable::Vector3& velocities,
