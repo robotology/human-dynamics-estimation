@@ -116,10 +116,9 @@ IWearRemapper::~IWearRemapper() = default;
 
 bool IWearRemapper::open(yarp::os::Searchable& config)
 {
-    // ================
-    // PARSE PARAMETERS
-    // ================
-    yDebug() << logPrefix << "Parsing parameters";
+    // ===============================
+    // CHECK THE CONFIGURATION OPTIONS
+    // ===============================
 
     // Data ports
     if (!(config.check("wearableDataPorts") && config.find("wearableDataPorts").isList())) {
@@ -153,6 +152,10 @@ bool IWearRemapper::open(yarp::os::Searchable& config)
         return false;
     }
 
+    // ===============================
+    // PARSE THE CONFIGURATION OPTIONS
+    // ===============================
+
     // Get the values of the options
     std::string outputPortName = config.find("outputPortName").asString();
 
@@ -168,7 +171,21 @@ bool IWearRemapper::open(yarp::os::Searchable& config)
         inputRPCPortsNamesVector.emplace_back(inputRPCPortsNamesList->get(i).asString());
     }
 
+    yInfo() << logPrefix << "*** ========================";
+    for (unsigned i = 0; i < inputDataPortsNamesVector.size(); ++i) {
+        yInfo() << logPrefix << "*** Wearable Data Port" << i + 1 << "  :"
+                << inputDataPortsNamesVector[i];
+    }
+    for (unsigned i = 0; i < inputDataPortsNamesVector.size(); ++i) {
+        yInfo() << logPrefix << "*** Wearable RPC Port" << i + 1 << "   :"
+                << inputRPCPortsNamesVector[i];
+        ;
+    }
+    yInfo() << logPrefix << "*** Output port            :" << outputPortName;
+    yInfo() << logPrefix << "*** ========================";
+
     // Initialize the network
+    // TODO: is this required in every DeviceDriver?
     pImpl->network = yarp::os::Network();
     if (!yarp::os::Network::initialized() || !yarp::os::Network::checkNetwork(5.0)) {
         yError() << logPrefix << "YARP server wasn't found active.";
@@ -729,6 +746,7 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
                            wearDataInputSensor.data.orientation.x,
                            wearDataInputSensor.data.orientation.y,
                            wearDataInputSensor.data.orientation.z});
+
         // Set the status
         sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
     }

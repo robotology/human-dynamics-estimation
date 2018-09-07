@@ -17,7 +17,7 @@
 #include <yarp/os/RpcServer.h>
 
 const std::string WrapperName = "IWearWrapper";
-const std::string logPrefix = WrapperName + " : ";
+const std::string logPrefix = WrapperName + " :";
 constexpr double DefaultPeriod = 0.01;
 
 using namespace wearable;
