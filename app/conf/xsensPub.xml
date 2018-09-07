@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<robot name="xsens-pub" build=0 portprefix="">
+
+<device type="iwear_remapper" name="IWearRemapper">
+    <param name="wearableDataPorts">(/XSensSuit/WearableData/data:o)</param>
+    <param name="wearableRPCPorts">(/XSensSuit/WearableData/metadataRpc:o)</param>
+    <param name="outputPortName">/Xsens/IWearRemapper/data:o</param>
+</device>
+
+<device type="xsens_tf_publisher" name="XsensTFPublisher">
+    <param name="period">0.010</param>
+    <param name="baseLinkName">Pelvis</param>
+    <param name="baseLinkVirtualSensor">XsensSuit::vLink::Pelvis</param>
+    <param name="tfPrefix">/Xsens/</param>
+    <action phase="startup" level="5" type="attach">
+        <paramlist name="networks">
+            <elem name="XsensTFPublisherLabel">IWearRemapper</elem>
+        </paramlist>
+    </action>
+    <action phase="shutdown" level="5" type="detach"/>
+</device>
+
+</robot>
