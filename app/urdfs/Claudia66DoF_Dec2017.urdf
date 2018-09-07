@@ -1421,8 +1421,6 @@
         <axis xyz="0 0 1" />
     </joint>
 
-	<!---------------------URDF MODEL 48 DoFs----------------------->
-<!-------------------------------------------------------------->
 <robot name="XSensStyleModel_template">
 <!--To open this model with Gazebo replace the null masses, inertias and dimensions of the 'fake links f1 and f2'-->
     <!--LINKS-->
