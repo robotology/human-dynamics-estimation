@@ -53,3 +53,13 @@ cmake -G"${TRAVIS_CMAKE_GENERATOR}" \
       -DENABLE_xsens_mvn_remote=OFF \
       ..
 cmake --build . --config ${TRAVIS_BUILD_TYPE} --target install
+
+# Build and install wearable
+cd $GIT_FOLDER
+git clone https://github.com/robotology-playground/wearables.git
+cd wearables
+mkdir build && cd build
+cmake -G"${TRAVIS_CMAKE_GENERATOR}" \
+      -DCMAKE_BUILD_TYPE=${TRAVIS_BUILD_TYPE} \
+      ..
+cmake --build . --config ${TRAVIS_BUILD_TYPE} --target install
