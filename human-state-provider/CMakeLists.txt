@@ -5,6 +5,8 @@ project(human-state-provider CXX)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 ## Find packages
+find_package(iDynTree REQUIRED)
+find_package(Eigen3 REQUIRED)
 find_package(YARP_experimental REQUIRED)
 
 # linux needs to explicitly ask for pthreads
@@ -24,13 +26,16 @@ yarp_idl_to_dir("${CMAKE_CURRENT_SOURCE_DIR}/thrifts/HumanStateProviderService.t
     THRIFT_SERVICE_SOURCES THRIFT_SERVICE_HEADERS THRIFT_SERVICE_INCLUDE_DIRS)
 
 add_library("${PROJECT_NAME}-data" ${THRIFT_STATE_SOURCES} ${THRIFT_STATE_HEADERS} ${THRIFT_SERVICE_SOURCES} ${THRIFT_SERVICE_HEADERS})
-target_include_directories("${PROJECT_NAME}-data" SYSTEM PUBLIC ${THRIFT_STATE_INCLUDE_DIRS} ${THRIFT_SERVICE_INCLUDE_DIRS})
+target_include_directories("${PROJECT_NAME}-data" SYSTEM PUBLIC ${THRIFT_STATE_INCLUDE_DIRS} ${THRIFT_SERVICE_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIR})
 target_link_libraries("${PROJECT_NAME}-data" YARP::YARP_OS YARP::YARP_sig)
 
 install(TARGETS "${PROJECT_NAME}-data"
         RUNTIME DESTINATION ${CMAKE_INSTALL_FULL_BINDIR}
         ARCHIVE DESTINATION ${CMAKE_INSTALL_FULL_LIBDIR}
         LIBRARY DESTINATION ${CMAKE_INSTALL_FULL_LIBDIR})
+
+# Only generate the thrifts used in other modules
+return()
 
 if (HUMAN_DYNAMICS_ESTIMATION_USE_IPOPT)
 
