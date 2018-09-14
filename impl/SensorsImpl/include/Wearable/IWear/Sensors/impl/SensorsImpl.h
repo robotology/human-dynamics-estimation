@@ -12,25 +12,29 @@
 #include "Wearable/IWear/IWear.h"
 #include <mutex>
 
-namespace sensorImpl {
-    class Accelerometer;
-    class EmgSensor;
-    class Force3DSensor;
-    class ForceTorque6DSensor;
-    class FreeBodyAccelerationSensor;
-    class Gyroscope;
-    class Magnetometer;
-    class OrientationSensor;
-    class PoseSensor;
-    class PositionSensor;
-    class SkinSensor;
-    class TemperatureSensor;
-    class Torque3DSensor;
-    class VirtualLinkKinSensor;
-    class VirtualSphericalJointKinSensor;
-} // namespace sensorImpl
+namespace wearable {
+    namespace sensor {
+        namespace impl {
+            class Accelerometer;
+            class EmgSensor;
+            class Force3DSensor;
+            class ForceTorque6DSensor;
+            class FreeBodyAccelerationSensor;
+            class Gyroscope;
+            class Magnetometer;
+            class OrientationSensor;
+            class PoseSensor;
+            class PositionSensor;
+            class SkinSensor;
+            class TemperatureSensor;
+            class Torque3DSensor;
+            class VirtualLinkKinSensor;
+            class VirtualSphericalJointKinSensor;
+        } // namespace impl
+    } // namespace sensor
+} // namespace wearable
 
-class sensorImpl::Accelerometer : public wearable::sensor::IAccelerometer
+class wearable::sensor::impl::Accelerometer : public wearable::sensor::IAccelerometer
 {
 public:
     wearable::Vector3 m_buffer;
@@ -46,7 +50,7 @@ public:
     inline void setStatus(const wearable::sensor::SensorStatus status) { m_status = status; }
 };
 
-class sensorImpl::EmgSensor : public wearable::sensor::IEmgSensor
+class wearable::sensor::impl::EmgSensor : public wearable::sensor::IEmgSensor
 {
 public:
     double m_value;
@@ -63,7 +67,7 @@ public:
     inline void setStatus(const wearable::sensor::SensorStatus status) { m_status = status; }
 };
 
-class sensorImpl::Force3DSensor : public wearable::sensor::IForce3DSensor
+class wearable::sensor::impl::Force3DSensor : public wearable::sensor::IForce3DSensor
 {
 public:
     wearable::Vector3 m_buffer;
@@ -78,7 +82,7 @@ public:
     inline void setStatus(const wearable::sensor::SensorStatus status) { m_status = status; }
 };
 
-class sensorImpl::ForceTorque6DSensor : public wearable::sensor::IForceTorque6DSensor
+class wearable::sensor::impl::ForceTorque6DSensor : public wearable::sensor::IForceTorque6DSensor
 {
 public:
     wearable::Vector3 m_force;
@@ -94,7 +98,8 @@ public:
     inline void setStatus(const wearable::sensor::SensorStatus status) { m_status = status; }
 };
 
-class sensorImpl::FreeBodyAccelerationSensor : public wearable::sensor::IFreeBodyAccelerationSensor
+class wearable::sensor::impl::FreeBodyAccelerationSensor
+    : public wearable::sensor::IFreeBodyAccelerationSensor
 {
 public:
     wearable::Vector3 m_buffer;
@@ -111,7 +116,7 @@ public:
     inline void setStatus(const wearable::sensor::SensorStatus status) { m_status = status; }
 };
 
-class sensorImpl::Gyroscope : public wearable::sensor::IGyroscope
+class wearable::sensor::impl::Gyroscope : public wearable::sensor::IGyroscope
 {
 public:
     wearable::Vector3 m_buffer;
@@ -127,7 +132,7 @@ public:
     inline void setStatus(const wearable::sensor::SensorStatus status) { m_status = status; }
 };
 
-class sensorImpl::Magnetometer : public wearable::sensor::IMagnetometer
+class wearable::sensor::impl::Magnetometer : public wearable::sensor::IMagnetometer
 {
 public:
     wearable::Vector3 m_buffer;
@@ -143,7 +148,7 @@ public:
     inline void setStatus(const wearable::sensor::SensorStatus status) { m_status = status; }
 };
 
-class sensorImpl::OrientationSensor : public wearable::sensor::IOrientationSensor
+class wearable::sensor::impl::OrientationSensor : public wearable::sensor::IOrientationSensor
 {
 public:
     wearable::Quaternion m_buffer;
@@ -159,7 +164,7 @@ public:
     inline void setStatus(const wearable::sensor::SensorStatus status) { m_status = status; }
 };
 
-class sensorImpl::PoseSensor : public wearable::sensor::IPoseSensor
+class wearable::sensor::impl::PoseSensor : public wearable::sensor::IPoseSensor
 {
 public:
     wearable::Vector3 m_position;
@@ -176,7 +181,7 @@ public:
     inline void setStatus(const wearable::sensor::SensorStatus status) { m_status = status; }
 };
 
-class sensorImpl::PositionSensor : public wearable::sensor::IPositionSensor
+class wearable::sensor::impl::PositionSensor : public wearable::sensor::IPositionSensor
 {
 public:
     wearable::Vector3 m_buffer;
@@ -192,7 +197,7 @@ public:
     inline void setStatus(const wearable::sensor::SensorStatus status) { m_status = status; }
 };
 
-class sensorImpl::SkinSensor : public wearable::sensor::ISkinSensor
+class wearable::sensor::impl::SkinSensor : public wearable::sensor::ISkinSensor
 {
 public:
     mutable std::mutex m_mutex;
@@ -204,7 +209,7 @@ public:
     inline void setStatus(const wearable::sensor::SensorStatus status) { m_status = status; }
 };
 
-class sensorImpl::TemperatureSensor : public wearable::sensor::ITemperatureSensor
+class wearable::sensor::impl::TemperatureSensor : public wearable::sensor::ITemperatureSensor
 {
 public:
     mutable std::mutex m_mutex;
@@ -220,7 +225,7 @@ public:
     inline void setStatus(const wearable::sensor::SensorStatus status) { m_status = status; }
 };
 
-class sensorImpl::Torque3DSensor : public wearable::sensor::ITorque3DSensor
+class wearable::sensor::impl::Torque3DSensor : public wearable::sensor::ITorque3DSensor
 {
 public:
     wearable::Vector3 m_buffer;
@@ -236,7 +241,7 @@ public:
     inline void setStatus(const wearable::sensor::SensorStatus status) { m_status = status; }
 };
 
-class sensorImpl::VirtualLinkKinSensor : public wearable::sensor::IVirtualLinkKinSensor
+class wearable::sensor::impl::VirtualLinkKinSensor : public wearable::sensor::IVirtualLinkKinSensor
 {
 public:
     wearable::Vector3 m_linearAcc;
@@ -266,7 +271,7 @@ public:
     inline void setStatus(const wearable::sensor::SensorStatus status) { m_status = status; }
 };
 
-class sensorImpl::VirtualSphericalJointKinSensor
+class wearable::sensor::impl::VirtualSphericalJointKinSensor
     : public wearable::sensor::IVirtualSphericalJointKinSensor
 {
 public:
