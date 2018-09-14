@@ -13,6 +13,7 @@
 yarp_add_idl(WEARABLEDATA_FILES thrift/WearableData.thrift)
 
 add_library(WearableData ${WEARABLEDATA_FILES} thrift/WearableData.thrift)
+add_library(Wearable::WearableData ALIAS WearableData)
 target_link_libraries(WearableData YARP::YARP_OS)
 
 # Extract the include directory from the files names

@@ -22,6 +22,7 @@ set(IWEAR_HEADERS
     $<INSTALL_INTERFACE:${IWEAR_HEADERS_INSTALL}>)
 
 add_library(${PROJECT_NAME} INTERFACE)
+add_library(Wearable::IWear ALIAS IWear)
 target_sources(${PROJECT_NAME} INTERFACE ${IWEAR_HEADERS})
 
 target_include_directories(${PROJECT_NAME} INTERFACE

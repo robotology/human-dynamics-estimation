@@ -17,7 +17,7 @@ target_include_directories(XsensSuit PRIVATE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
 
 target_link_libraries(XsensSuit PUBLIC
-    IWear IXsensMVNControl XSensMVN YARP::YARP_dev)
+    Wearable::IWear IXsensMVNControl XSensMVN YARP::YARP_dev)
 
 yarp_install(
     TARGETS XsensSuit
