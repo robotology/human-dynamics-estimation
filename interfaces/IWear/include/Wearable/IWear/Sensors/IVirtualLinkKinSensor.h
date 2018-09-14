@@ -41,13 +41,12 @@ public:
     inline bool getLinkOrientation(Quaternion& orientation) const;
     inline bool getLinkPosition(Vector3& position) const;
 
-    inline static const std::string& getPrefix();
+    inline static const std::string getPrefix();
 };
 
-inline const std::string& wearable::sensor::IVirtualLinkKinSensor::getPrefix()
+inline const std::string wearable::sensor::IVirtualLinkKinSensor::getPrefix()
 {
-    static std::string prefix{"vLink::"};
-    return prefix;
+    return "vLink" + wearable::Separator;
 }
 
 inline bool wearable::sensor::IVirtualLinkKinSensor::getLinkAngularAcceleration(

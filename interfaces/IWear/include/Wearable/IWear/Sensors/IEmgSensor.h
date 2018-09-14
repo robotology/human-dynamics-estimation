@@ -31,12 +31,11 @@ public:
     virtual bool getEmgSignal(double& emgSignal) const = 0;
     virtual bool getNormalizationValue(double& normalizationValue) const = 0;
 
-    inline static const std::string& getPrefix();
+    inline static const std::string getPrefix();
 };
 
-inline const std::string& wearable::sensor::IEmgSensor::getPrefix()
+inline const std::string wearable::sensor::IEmgSensor::getPrefix()
 {
-    static std::string prefix{"emg::"};
-    return prefix;
+    return "emg" + wearable::Separator;
 }
 #endif // WEARABLE_IEMG_SENSOR_H

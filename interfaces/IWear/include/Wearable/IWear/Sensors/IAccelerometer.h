@@ -30,12 +30,11 @@ public:
 
     virtual bool getLinearAcceleration(Vector3& linearAcceleration) const = 0;
 
-    inline static const std::string& getPrefix();
+    inline static const std::string getPrefix();
 };
 
-inline const std::string& wearable::sensor::IAccelerometer::getPrefix()
+inline const std::string wearable::sensor::IAccelerometer::getPrefix()
 {
-    static std::string prefix{"acc::"};
-    return prefix;
+    return "acc" + wearable::Separator;
 }
 #endif // WEARABLE_IACCELEROMETER_H

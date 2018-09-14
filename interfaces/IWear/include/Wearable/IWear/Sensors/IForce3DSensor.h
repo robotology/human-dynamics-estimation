@@ -30,13 +30,12 @@ public:
 
     virtual bool getForce3D(Vector3& force) const = 0;
 
-    inline static const std::string& getPrefix();
+    inline static const std::string getPrefix();
 };
 
-inline const std::string& wearable::sensor::IForce3DSensor::getPrefix()
+inline const std::string wearable::sensor::IForce3DSensor::getPrefix()
 {
-    static std::string prefix{"f3D::"};
-    return prefix;
+    return "f3D" + wearable::Separator;
 }
 
 #endif // WEARABLE_IFORCE_3D_SENSOR_H

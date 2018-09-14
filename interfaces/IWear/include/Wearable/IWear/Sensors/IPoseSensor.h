@@ -37,13 +37,12 @@ public:
     inline bool getPoseOrientationAsRotationMatrix(Matrix3& orientation) const;
     inline bool getPoseOrientationAsRPY(Vector3& orientation) const;
 
-    inline static const std::string& getPrefix();
+    inline static const std::string getPrefix();
 };
 
-inline const std::string& wearable::sensor::IPoseSensor::getPrefix()
+inline const std::string wearable::sensor::IPoseSensor::getPrefix()
 {
-    static std::string prefix{"pose::"};
-    return prefix;
+    return "pose" + wearable::Separator;
 }
 
 inline bool wearable::sensor::IPoseSensor::getPose(Vector7& pose) const

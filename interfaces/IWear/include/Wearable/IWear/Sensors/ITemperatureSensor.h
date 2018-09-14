@@ -30,12 +30,11 @@ public:
 
     virtual bool getTemperature(double& temperature) const = 0;
 
-    inline static const std::string& getPrefix();
+    inline static const std::string getPrefix();
 };
 
-inline const std::string& wearable::sensor::ITemperatureSensor::getPrefix()
+inline const std::string wearable::sensor::ITemperatureSensor::getPrefix()
 {
-    static std::string prefix{"temp::"};
-    return prefix;
+    return "temp" + wearable::Separator;
 }
 #endif // WEARABLE_ITEMPERATURE_SENSOR_H

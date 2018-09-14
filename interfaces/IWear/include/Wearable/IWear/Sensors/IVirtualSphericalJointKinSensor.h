@@ -34,13 +34,12 @@ public:
     virtual bool getJointVelocities(Vector3& velocities) const = 0;
     virtual bool getJointAccelerations(Vector3& accelerations) const = 0;
 
-    inline static const std::string& getPrefix();
+    inline static const std::string getPrefix();
 };
 
-inline const std::string& wearable::sensor::IVirtualSphericalJointKinSensor::getPrefix()
+inline const std::string wearable::sensor::IVirtualSphericalJointKinSensor::getPrefix()
 {
-    static std::string prefix{"vSJoint::"};
-    return prefix;
+    return "vSJoint" + wearable::Separator;
 }
 
 #endif // WEARABLE_IVIRTUAL_SPHERICAL_JOINT_KIN_SENSOR_H

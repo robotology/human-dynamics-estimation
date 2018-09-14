@@ -30,13 +30,12 @@ public:
 
     virtual bool getFreeBodyAcceleration(Vector3& freeBodyAcceleration) const = 0;
 
-    inline static const std::string& getPrefix();
+    inline static const std::string getPrefix();
 };
 
-inline const std::string& wearable::sensor::IFreeBodyAccelerationSensor::getPrefix()
+inline const std::string wearable::sensor::IFreeBodyAccelerationSensor::getPrefix()
 {
-    static std::string prefix{"fbAcc::"};
-    return prefix;
+    return "fbAcc" + wearable::Separator;
 }
 
 #endif // WEARABLE_IFREE_BODY_ACCELERATION_SENSOR_H

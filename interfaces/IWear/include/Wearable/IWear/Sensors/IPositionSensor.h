@@ -30,13 +30,12 @@ public:
 
     virtual bool getPosition(Vector3& position) const = 0;
 
-    inline static const std::string& getPrefix();
+    inline static const std::string getPrefix();
 };
 
-inline const std::string& wearable::sensor::IPositionSensor::getPrefix()
+inline const std::string wearable::sensor::IPositionSensor::getPrefix()
 {
-    static std::string prefix{"pos::"};
-    return prefix;
+    return "pos" + wearable::Separator;
 }
 
 #endif // WEARABLE_IPOSITION_SENSOR_H

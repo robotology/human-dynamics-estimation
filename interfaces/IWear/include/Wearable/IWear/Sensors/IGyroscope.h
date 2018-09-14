@@ -30,13 +30,12 @@ public:
 
     virtual bool getAngularRate(Vector3& angularRate) const = 0;
 
-    inline static const std::string& getPrefix();
+    inline static const std::string getPrefix();
 };
 
-inline const std::string& wearable::sensor::IGyroscope::getPrefix()
+inline const std::string wearable::sensor::IGyroscope::getPrefix()
 {
-    static std::string prefix{"gyro::"};
-    return prefix;
+    return "gyro" + wearable::Separator;
 }
 
 #endif // WEARABLE_IGYROSCOPE_H

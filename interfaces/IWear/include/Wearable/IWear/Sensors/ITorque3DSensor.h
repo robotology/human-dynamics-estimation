@@ -30,13 +30,12 @@ public:
 
     virtual bool getTorque3D(Vector3& torque) const = 0;
 
-    inline static const std::string& getPrefix();
+    inline static const std::string getPrefix();
 };
 
-inline const std::string& wearable::sensor::ITorque3DSensor::getPrefix()
+inline const std::string wearable::sensor::ITorque3DSensor::getPrefix()
 {
-    static std::string prefix{"t3D::"};
-    return prefix;
+    return "t3D" + wearable::Separator;
 }
 
 #endif // WEARABLE_ITORQUE_3D_SENSOR_H
