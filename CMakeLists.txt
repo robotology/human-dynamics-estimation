@@ -59,6 +59,7 @@ if(WIN32)
 endif()
 
 add_subdirectory(interfaces)
+add_subdirectory(impl)
 
 # Prepare YARP wrapper and devices
 find_package(YARP 3.0 REQUIRED)
