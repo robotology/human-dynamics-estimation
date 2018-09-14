@@ -3,6 +3,7 @@
 # GNU Lesser General Public License v2.1 or any later version.
 
 add_subdirectory(IWearRemapper)
+add_subdirectory(IAnalogSensorToIWear)
 
 if(XSENS_MVN_USE_SDK)
   add_subdirectory(XsensSuit)
