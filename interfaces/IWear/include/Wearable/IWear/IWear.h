@@ -52,10 +52,6 @@ namespace wearable {
         size_t sequenceNumber = 0;
     };
 
-    template <typename S>
-    void castVectorOfSensorPtr(const VectorOfSensorPtr<const sensor::ISensor> isensors,
-                               VectorOfSensorPtr<const S>& sensors);
-
     class IWear;
 } // namespace wearable
 
@@ -64,7 +60,7 @@ class wearable::IWear
 private:
     template <typename S>
     static VectorOfSensorPtr<const S>
-    castVectorOfSensorPtr(const VectorOfSensorPtr<const sensor::ISensor> iSensors);
+    castVectorOfSensorPtr(const VectorOfSensorPtr<const sensor::ISensor>& iSensors);
 
 public:
     virtual ~IWear() = default;
@@ -183,13 +179,20 @@ public:
 
 template <typename S>
 wearable::VectorOfSensorPtr<const S>
-wearable::IWear::castVectorOfSensorPtr(const VectorOfSensorPtr<const sensor::ISensor> iSensors)
+wearable::IWear::castVectorOfSensorPtr(const VectorOfSensorPtr<const sensor::ISensor>& iSensors)
 {
     VectorOfSensorPtr<const S> sensors;
     sensors.reserve(iSensors.size());
 
-    for (const auto& s : iSensors) {
-        sensors.push_back(std::dynamic_pointer_cast<const S>(s));
+    for (const auto& iSensor : iSensors) {
+        wearable::SensorPtr<const S> castSensor = std::dynamic_pointer_cast<const S>(iSensor);
+
+        if (!castSensor) {
+            wError << "Failed to cast sensor";
+            return {};
+        }
+
+        sensors.push_back(castSensor);
     }
 
     return sensors;
