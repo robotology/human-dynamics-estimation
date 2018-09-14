@@ -7,8 +7,8 @@
  */
 
 #include "IWearRemapper.h"
-#include "SensorsImpl.h"
 #include "Wearable/IWear/IWear.h"
+#include "Wearable/IWear/Sensors/impl/SensorsImpl.h"
 #include "thrift/WearableData.h"
 #include "thrift/WearableMetadataService.h"
 
@@ -50,22 +50,23 @@ public:
     std::map<wearable::sensor::SensorName, size_t> sensorNameToIndex;
 
     // Sensors stored for exposing wearable::IWear
-    std::map<std::string, std::shared_ptr<sensorImpl::Accelerometer>> accelerometers;
-    std::map<std::string, std::shared_ptr<sensorImpl::EmgSensor>> emgSensors;
-    std::map<std::string, std::shared_ptr<sensorImpl::Force3DSensor>> force3DSensors;
-    std::map<std::string, std::shared_ptr<sensorImpl::ForceTorque6DSensor>> forceTorque6DSensors;
-    std::map<std::string, std::shared_ptr<sensorImpl::FreeBodyAccelerationSensor>>
+    std::map<std::string, std::shared_ptr<sensor::impl::Accelerometer>> accelerometers;
+    std::map<std::string, std::shared_ptr<sensor::impl::EmgSensor>> emgSensors;
+    std::map<std::string, std::shared_ptr<sensor::impl::Force3DSensor>> force3DSensors;
+    std::map<std::string, std::shared_ptr<sensor::impl::ForceTorque6DSensor>> forceTorque6DSensors;
+    std::map<std::string, std::shared_ptr<sensor::impl::FreeBodyAccelerationSensor>>
         freeBodyAccelerationSensors;
-    std::map<std::string, std::shared_ptr<sensorImpl::Gyroscope>> gyroscopes;
-    std::map<std::string, std::shared_ptr<sensorImpl::Magnetometer>> magnetometers;
-    std::map<std::string, std::shared_ptr<sensorImpl::OrientationSensor>> orientationSensors;
-    std::map<std::string, std::shared_ptr<sensorImpl::PoseSensor>> poseSensors;
-    std::map<std::string, std::shared_ptr<sensorImpl::PositionSensor>> positionSensors;
-    std::map<std::string, std::shared_ptr<sensorImpl::SkinSensor>> skinSensors;
-    std::map<std::string, std::shared_ptr<sensorImpl::TemperatureSensor>> temperatureSensors;
-    std::map<std::string, std::shared_ptr<sensorImpl::Torque3DSensor>> torque3DSensors;
-    std::map<std::string, std::shared_ptr<sensorImpl::VirtualLinkKinSensor>> virtualLinkKinSensors;
-    std::map<std::string, std::shared_ptr<sensorImpl::VirtualSphericalJointKinSensor>>
+    std::map<std::string, std::shared_ptr<sensor::impl::Gyroscope>> gyroscopes;
+    std::map<std::string, std::shared_ptr<sensor::impl::Magnetometer>> magnetometers;
+    std::map<std::string, std::shared_ptr<sensor::impl::OrientationSensor>> orientationSensors;
+    std::map<std::string, std::shared_ptr<sensor::impl::PoseSensor>> poseSensors;
+    std::map<std::string, std::shared_ptr<sensor::impl::PositionSensor>> positionSensors;
+    std::map<std::string, std::shared_ptr<sensor::impl::SkinSensor>> skinSensors;
+    std::map<std::string, std::shared_ptr<sensor::impl::TemperatureSensor>> temperatureSensors;
+    std::map<std::string, std::shared_ptr<sensor::impl::Torque3DSensor>> torque3DSensors;
+    std::map<std::string, std::shared_ptr<sensor::impl::VirtualLinkKinSensor>>
+        virtualLinkKinSensors;
+    std::map<std::string, std::shared_ptr<sensor::impl::VirtualSphericalJointKinSensor>>
         virtualSphericalJointKinSensors;
 
     // Maps storing sensor names read from RPC
@@ -371,8 +372,8 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
             askToStop();
             return;
         }
-        const auto* constSensor = static_cast<const sensorImpl::Accelerometer*>(isensor.get());
-        auto* sensor = const_cast<sensorImpl::Accelerometer*>(constSensor);
+        const auto* constSensor = static_cast<const sensor::impl::Accelerometer*>(isensor.get());
+        auto* sensor = const_cast<sensor::impl::Accelerometer*>(constSensor);
         // Copy its data to the buffer used for exposing the IWear interface
         sensor->setBuffer(
             {wearDataInputSensor.data.x, wearDataInputSensor.data.y, wearDataInputSensor.data.z});
@@ -397,8 +398,8 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
             askToStop();
             return;
         }
-        const auto* constSensor = static_cast<const sensorImpl::EmgSensor*>(isensor.get());
-        auto* sensor = const_cast<sensorImpl::EmgSensor*>(constSensor);
+        const auto* constSensor = static_cast<const sensor::impl::EmgSensor*>(isensor.get());
+        auto* sensor = const_cast<sensor::impl::EmgSensor*>(constSensor);
         // Copy its data to the buffer used for exposing the IWear interface
         sensor->setBuffer(wearDataInputSensor.data.value, wearDataInputSensor.data.normalization);
         // Set the status
@@ -422,8 +423,8 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
             askToStop();
             return;
         }
-        const auto* constSensor = static_cast<const sensorImpl::Force3DSensor*>(isensor.get());
-        auto* sensor = const_cast<sensorImpl::Force3DSensor*>(constSensor);
+        const auto* constSensor = static_cast<const sensor::impl::Force3DSensor*>(isensor.get());
+        auto* sensor = const_cast<sensor::impl::Force3DSensor*>(constSensor);
         // Copy its data to the buffer used for exposing the IWear interface
         sensor->setBuffer(
             {wearDataInputSensor.data.x, wearDataInputSensor.data.y, wearDataInputSensor.data.z});
@@ -449,8 +450,8 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
             return;
         }
         const auto* constSensor =
-            static_cast<const sensorImpl::ForceTorque6DSensor*>(isensor.get());
-        auto* sensor = const_cast<sensorImpl::ForceTorque6DSensor*>(constSensor);
+            static_cast<const sensor::impl::ForceTorque6DSensor*>(isensor.get());
+        auto* sensor = const_cast<sensor::impl::ForceTorque6DSensor*>(constSensor);
         // Copy its data to the buffer used for exposing the IWear interface
         sensor->setBuffer({wearDataInputSensor.data.force.x,
                            wearDataInputSensor.data.force.y,
@@ -480,8 +481,8 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
             return;
         }
         const auto* constSensor =
-            static_cast<const sensorImpl::FreeBodyAccelerationSensor*>(isensor.get());
-        auto* sensor = const_cast<sensorImpl::FreeBodyAccelerationSensor*>(constSensor);
+            static_cast<const sensor::impl::FreeBodyAccelerationSensor*>(isensor.get());
+        auto* sensor = const_cast<sensor::impl::FreeBodyAccelerationSensor*>(constSensor);
         // Copy its data to the buffer used for exposing the IWear interface
         sensor->setBuffer(
             {wearDataInputSensor.data.x, wearDataInputSensor.data.y, wearDataInputSensor.data.z});
@@ -506,8 +507,8 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
             askToStop();
             return;
         }
-        const auto* constSensor = static_cast<const sensorImpl::Gyroscope*>(isensor.get());
-        auto* sensor = const_cast<sensorImpl::Gyroscope*>(constSensor);
+        const auto* constSensor = static_cast<const sensor::impl::Gyroscope*>(isensor.get());
+        auto* sensor = const_cast<sensor::impl::Gyroscope*>(constSensor);
         // Copy its data to the buffer used for exposing the IWear interface
         sensor->setBuffer(
             {wearDataInputSensor.data.x, wearDataInputSensor.data.y, wearDataInputSensor.data.z});
@@ -532,8 +533,8 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
             askToStop();
             return;
         }
-        const auto* constSensor = static_cast<const sensorImpl::Magnetometer*>(isensor.get());
-        auto* sensor = const_cast<sensorImpl::Magnetometer*>(constSensor);
+        const auto* constSensor = static_cast<const sensor::impl::Magnetometer*>(isensor.get());
+        auto* sensor = const_cast<sensor::impl::Magnetometer*>(constSensor);
         // Copy its data to the buffer used for exposing the IWear interface
         sensor->setBuffer(
             {wearDataInputSensor.data.x, wearDataInputSensor.data.y, wearDataInputSensor.data.z});
@@ -558,8 +559,9 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
             askToStop();
             return;
         }
-        const auto* constSensor = static_cast<const sensorImpl::OrientationSensor*>(isensor.get());
-        auto* sensor = const_cast<sensorImpl::OrientationSensor*>(constSensor);
+        const auto* constSensor =
+            static_cast<const sensor::impl::OrientationSensor*>(isensor.get());
+        auto* sensor = const_cast<sensor::impl::OrientationSensor*>(constSensor);
         // Copy its data to the buffer used for exposing the IWear interface
         sensor->setBuffer({wearDataInputSensor.data.w,
                            wearDataInputSensor.data.x,
@@ -586,8 +588,8 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
             askToStop();
             return;
         }
-        const auto* constSensor = static_cast<const sensorImpl::PoseSensor*>(isensor.get());
-        auto* sensor = const_cast<sensorImpl::PoseSensor*>(constSensor);
+        const auto* constSensor = static_cast<const sensor::impl::PoseSensor*>(isensor.get());
+        auto* sensor = const_cast<sensor::impl::PoseSensor*>(constSensor);
         // Copy its data to the buffer used for exposing the IWear interface
         sensor->setBuffer({wearDataInputSensor.data.orientation.w,
                            wearDataInputSensor.data.orientation.x,
@@ -617,8 +619,8 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
             askToStop();
             return;
         }
-        const auto* constSensor = static_cast<const sensorImpl::PositionSensor*>(isensor.get());
-        auto* sensor = const_cast<sensorImpl::PositionSensor*>(constSensor);
+        const auto* constSensor = static_cast<const sensor::impl::PositionSensor*>(isensor.get());
+        auto* sensor = const_cast<sensor::impl::PositionSensor*>(constSensor);
         // Copy its data to the buffer used for exposing the IWear interface
         sensor->setBuffer(
             {wearDataInputSensor.data.x, wearDataInputSensor.data.y, wearDataInputSensor.data.z});
@@ -644,8 +646,8 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
             askToStop();
             return;
         }
-        const auto* constSensor = static_cast<const sensorImpl::SkinSensor*>(isensor.get());
-        auto* sensor = const_cast<sensorImpl::SkinSensor*>(constSensor);
+        const auto* constSensor = static_cast<const sensor::impl::SkinSensor*>(isensor.get());
+        auto* sensor = const_cast<sensor::impl::SkinSensor*>(constSensor);
         yWarning() << logPrefix << "SkinSensor is not yet implemented";
         // Copy its data to the buffer used for exposing the IWear interface
         //        pImpl->skinSensors[inputSensorName]->setBuffer(
@@ -672,8 +674,9 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
             askToStop();
             return;
         }
-        const auto* constSensor = static_cast<const sensorImpl::TemperatureSensor*>(isensor.get());
-        auto* sensor = const_cast<sensorImpl::TemperatureSensor*>(constSensor);
+        const auto* constSensor =
+            static_cast<const sensor::impl::TemperatureSensor*>(isensor.get());
+        auto* sensor = const_cast<sensor::impl::TemperatureSensor*>(constSensor);
         // Copy its data to the buffer used for exposing the IWear interface
         sensor->setBuffer(wearDataInputSensor.data);
         // Set the status
@@ -697,8 +700,8 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
             yError() << logPrefix << "Failed to get Torque3DSensor" << inputSensorName;
             return;
         }
-        const auto* constSensor = static_cast<const sensorImpl::Torque3DSensor*>(isensor.get());
-        auto* sensor = const_cast<sensorImpl::Torque3DSensor*>(constSensor);
+        const auto* constSensor = static_cast<const sensor::impl::Torque3DSensor*>(isensor.get());
+        auto* sensor = const_cast<sensor::impl::Torque3DSensor*>(constSensor);
         // Copy its data to the buffer used for exposing the IWear interface
         sensor->setBuffer(
             {wearDataInputSensor.data.x, wearDataInputSensor.data.y, wearDataInputSensor.data.z});
@@ -724,8 +727,8 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
             return;
         }
         const auto* constSensor =
-            static_cast<const sensorImpl::VirtualLinkKinSensor*>(isensor.get());
-        auto* sensor = const_cast<sensorImpl::VirtualLinkKinSensor*>(constSensor);
+            static_cast<const sensor::impl::VirtualLinkKinSensor*>(isensor.get());
+        auto* sensor = const_cast<sensor::impl::VirtualLinkKinSensor*>(constSensor);
         // Copy its data to the buffer used for exposing the IWear interface
         sensor->setBuffer({wearDataInputSensor.data.linearAcceleration.x,
                            wearDataInputSensor.data.linearAcceleration.y,
@@ -770,8 +773,8 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
             return;
         }
         const auto* constSensor =
-            static_cast<const sensorImpl::VirtualSphericalJointKinSensor*>(isensor.get());
-        auto* sensor = const_cast<sensorImpl::VirtualSphericalJointKinSensor*>(constSensor);
+            static_cast<const sensor::impl::VirtualSphericalJointKinSensor*>(isensor.get());
+        auto* sensor = const_cast<sensor::impl::VirtualSphericalJointKinSensor*>(constSensor);
         // Copy its data to the buffer used for exposing the IWear interface
         sensor->setBuffer({wearDataInputSensor.data.angle.r,
                            wearDataInputSensor.data.angle.p,
@@ -961,7 +964,7 @@ wearable::SensorPtr<const sensor::IAccelerometer>
 IWearRemapper::getAccelerometer(const sensor::SensorName name) const
 {
     std::lock_guard<std::recursive_mutex> lock(pImpl->mutex);
-    return pImpl->getSensor<const sensor::IAccelerometer, sensorImpl::Accelerometer>(
+    return pImpl->getSensor<const sensor::IAccelerometer, sensor::impl::Accelerometer>(
         name, wearable::sensor::SensorType::Accelerometer, pImpl->accelerometers);
 }
 
@@ -969,7 +972,7 @@ wearable::SensorPtr<const sensor::IEmgSensor>
 IWearRemapper::getEmgSensor(const sensor::SensorName name) const
 {
     std::lock_guard<std::recursive_mutex> lock(pImpl->mutex);
-    return pImpl->getSensor<const sensor::IEmgSensor, sensorImpl::EmgSensor>(
+    return pImpl->getSensor<const sensor::IEmgSensor, sensor::impl::EmgSensor>(
         name, sensor::SensorType::EmgSensor, pImpl->emgSensors);
 }
 
@@ -977,7 +980,7 @@ wearable::SensorPtr<const sensor::IForce3DSensor>
 IWearRemapper::getForce3DSensor(const sensor::SensorName name) const
 {
     std::lock_guard<std::recursive_mutex> lock(pImpl->mutex);
-    return pImpl->getSensor<const sensor::IForce3DSensor, sensorImpl::Force3DSensor>(
+    return pImpl->getSensor<const sensor::IForce3DSensor, sensor::impl::Force3DSensor>(
         name, sensor::SensorType::Force3DSensor, pImpl->force3DSensors);
 }
 
@@ -985,7 +988,7 @@ wearable::SensorPtr<const sensor::IForceTorque6DSensor>
 IWearRemapper::getForceTorque6DSensor(const sensor::SensorName name) const
 {
     std::lock_guard<std::recursive_mutex> lock(pImpl->mutex);
-    return pImpl->getSensor<const sensor::IForceTorque6DSensor, sensorImpl::ForceTorque6DSensor>(
+    return pImpl->getSensor<const sensor::IForceTorque6DSensor, sensor::impl::ForceTorque6DSensor>(
         name, sensor::SensorType::ForceTorque6DSensor, pImpl->forceTorque6DSensors);
 }
 
@@ -994,7 +997,7 @@ IWearRemapper::getFreeBodyAccelerationSensor(const sensor::SensorName name) cons
 {
     std::lock_guard<std::recursive_mutex> lock(pImpl->mutex);
     return pImpl->getSensor<const sensor::IFreeBodyAccelerationSensor,
-                            sensorImpl::FreeBodyAccelerationSensor>(
+                            sensor::impl::FreeBodyAccelerationSensor>(
         name, sensor::SensorType::FreeBodyAccelerationSensor, pImpl->freeBodyAccelerationSensors);
 }
 
@@ -1002,7 +1005,7 @@ wearable::SensorPtr<const sensor::IGyroscope>
 IWearRemapper::getGyroscope(const sensor::SensorName name) const
 {
     std::lock_guard<std::recursive_mutex> lock(pImpl->mutex);
-    return pImpl->getSensor<const sensor::IGyroscope, sensorImpl::Gyroscope>(
+    return pImpl->getSensor<const sensor::IGyroscope, sensor::impl::Gyroscope>(
         name, sensor::SensorType::Gyroscope, pImpl->gyroscopes);
 }
 
@@ -1010,7 +1013,7 @@ wearable::SensorPtr<const sensor::IMagnetometer>
 IWearRemapper::getMagnetometer(const sensor::SensorName name) const
 {
     std::lock_guard<std::recursive_mutex> lock(pImpl->mutex);
-    return pImpl->getSensor<const sensor::IMagnetometer, sensorImpl::Magnetometer>(
+    return pImpl->getSensor<const sensor::IMagnetometer, sensor::impl::Magnetometer>(
         name, sensor::SensorType::Magnetometer, pImpl->magnetometers);
 }
 
@@ -1018,7 +1021,7 @@ wearable::SensorPtr<const sensor::IOrientationSensor>
 IWearRemapper::getOrientationSensor(const sensor::SensorName name) const
 {
     std::lock_guard<std::recursive_mutex> lock(pImpl->mutex);
-    return pImpl->getSensor<const sensor::IOrientationSensor, sensorImpl::OrientationSensor>(
+    return pImpl->getSensor<const sensor::IOrientationSensor, sensor::impl::OrientationSensor>(
         name, sensor::SensorType::OrientationSensor, pImpl->orientationSensors);
 }
 
@@ -1026,7 +1029,7 @@ wearable::SensorPtr<const sensor::IPoseSensor>
 IWearRemapper::getPoseSensor(const sensor::SensorName name) const
 {
     std::lock_guard<std::recursive_mutex> lock(pImpl->mutex);
-    return pImpl->getSensor<const sensor::IPoseSensor, sensorImpl::PoseSensor>(
+    return pImpl->getSensor<const sensor::IPoseSensor, sensor::impl::PoseSensor>(
         name, sensor::SensorType::PoseSensor, pImpl->poseSensors);
 }
 
@@ -1034,7 +1037,7 @@ wearable::SensorPtr<const sensor::IPositionSensor>
 IWearRemapper::getPositionSensor(const sensor::SensorName name) const
 {
     std::lock_guard<std::recursive_mutex> lock(pImpl->mutex);
-    return pImpl->getSensor<const sensor::IPositionSensor, sensorImpl::PositionSensor>(
+    return pImpl->getSensor<const sensor::IPositionSensor, sensor::impl::PositionSensor>(
         name, sensor::SensorType::PositionSensor, pImpl->positionSensors);
 }
 
@@ -1042,7 +1045,7 @@ wearable::SensorPtr<const sensor::ISkinSensor>
 IWearRemapper::getSkinSensor(const sensor::SensorName name) const
 {
     std::lock_guard<std::recursive_mutex> lock(pImpl->mutex);
-    return pImpl->getSensor<const sensor::ISkinSensor, sensorImpl::SkinSensor>(
+    return pImpl->getSensor<const sensor::ISkinSensor, sensor::impl::SkinSensor>(
         name, sensor::SensorType::SkinSensor, pImpl->skinSensors);
 }
 
@@ -1050,7 +1053,7 @@ wearable::SensorPtr<const sensor::ITemperatureSensor>
 IWearRemapper::getTemperatureSensor(const sensor::SensorName name) const
 {
     std::lock_guard<std::recursive_mutex> lock(pImpl->mutex);
-    return pImpl->getSensor<const sensor::ITemperatureSensor, sensorImpl::TemperatureSensor>(
+    return pImpl->getSensor<const sensor::ITemperatureSensor, sensor::impl::TemperatureSensor>(
         name, sensor::SensorType::TemperatureSensor, pImpl->temperatureSensors);
 }
 
@@ -1058,7 +1061,7 @@ wearable::SensorPtr<const sensor::ITorque3DSensor>
 IWearRemapper::getTorque3DSensor(const sensor::SensorName name) const
 {
     std::lock_guard<std::recursive_mutex> lock(pImpl->mutex);
-    return pImpl->getSensor<const sensor::ITorque3DSensor, sensorImpl::Torque3DSensor>(
+    return pImpl->getSensor<const sensor::ITorque3DSensor, sensor::impl::Torque3DSensor>(
         name, sensor::SensorType::Torque3DSensor, pImpl->torque3DSensors);
 }
 
@@ -1066,8 +1069,9 @@ wearable::SensorPtr<const sensor::IVirtualLinkKinSensor>
 IWearRemapper::getVirtualLinkKinSensor(const sensor::SensorName name) const
 {
     std::lock_guard<std::recursive_mutex> lock(pImpl->mutex);
-    return pImpl->getSensor<const sensor::IVirtualLinkKinSensor, sensorImpl::VirtualLinkKinSensor>(
-        name, sensor::SensorType::VirtualLinkKinSensor, pImpl->virtualLinkKinSensors);
+    return pImpl
+        ->getSensor<const sensor::IVirtualLinkKinSensor, sensor::impl::VirtualLinkKinSensor>(
+            name, sensor::SensorType::VirtualLinkKinSensor, pImpl->virtualLinkKinSensors);
 }
 
 wearable::SensorPtr<const sensor::IVirtualSphericalJointKinSensor>
@@ -1075,7 +1079,7 @@ IWearRemapper::getVirtualSphericalJointKinSensor(const sensor::SensorName name) 
 {
     std::lock_guard<std::recursive_mutex> lock(pImpl->mutex);
     return pImpl->getSensor<const sensor::IVirtualSphericalJointKinSensor,
-                            sensorImpl::VirtualSphericalJointKinSensor>(
+                            sensor::impl::VirtualSphericalJointKinSensor>(
         name,
         sensor::SensorType::VirtualSphericalJointKinSensor,
         pImpl->virtualSphericalJointKinSensors);

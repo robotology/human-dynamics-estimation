@@ -11,15 +11,18 @@ yarp_prepare_plugin(iwear_remapper
 
 yarp_add_plugin(IWearRemapper
     src/IWearRemapper.cpp
-    src/SensorsImpl.cpp
-    include/IWearRemapper.h
-    include/SensorsImpl.h)
+    include/IWearRemapper.h)
 
 target_include_directories(IWearRemapper PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
 
 target_link_libraries(IWearRemapper PUBLIC
-    IWear WearableData YARP::YARP_dev YARP::YARP_OS YARP::YARP_init)
+    Wearable::IWear
+    Wearable::WearableData
+    Wearable::SensorsImpl
+    YARP::YARP_dev
+    YARP::YARP_OS
+    YARP::YARP_init)
 
 yarp_install(
     TARGETS IWearRemapper
