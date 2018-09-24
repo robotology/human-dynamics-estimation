@@ -9,7 +9,7 @@
 yarp_add_idl(HUMANSTATE_FILES thrift/HumanState.thrift)
 
 add_library(HumanStateMsg ${HUMANSTATE_FILES} thrift/HumanState.thrift)
-target_link_libraries(HumanStateMsg YARP::YARP_OS)
+target_link_libraries(HumanStateMsg YARP::YARP_OS YARP::YARP_sig)
 
 target_include_directories(HumanStateMsg PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>)

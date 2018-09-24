@@ -26,6 +26,7 @@ target_link_libraries(XsensTFPublisher PRIVATE
     YARP::YARP_OS
     YARP::YARP_dev
     YARP::YARP_init
+    YARP::YARP_math
     YARP::YARP_rosmsg
     iDynTree::idyntree-core)
 
