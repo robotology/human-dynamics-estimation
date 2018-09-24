@@ -685,35 +685,37 @@ bool HumanStateProvider::attach(yarp::dev::PolyDriver* poly)
     // CHECK JOINTS
     // ============
 
-    yDebug() << "Checking joints";
+    if (pImpl->useXsensJointsAngles) {
+        yDebug() << "Checking joints";
 
-    for (size_t jointIndex = 0; jointIndex < pImpl->humanModel.getNrOfJoints(); ++jointIndex) {
-        // Get the name of the joint from the model and its prefix from iWear
-        std::string modelJointName = pImpl->humanModel.getJointName(jointIndex);
+        for (size_t jointIndex = 0; jointIndex < pImpl->humanModel.getNrOfJoints(); ++jointIndex) {
+            // Get the name of the joint from the model and its prefix from iWear
+            std::string modelJointName = pImpl->humanModel.getJointName(jointIndex);
 
-        // Urdfs don't have support of spherical joints, IWear instead does.
-        // We use the configuration for addressing this mismatch.
-        if (pImpl->wearableStorage.modelToWearable_JointInfo.find(modelJointName)
-            == pImpl->wearableStorage.modelToWearable_JointInfo.end()) {
-            yWarning() << LogPrefix << "Failed to find" << modelJointName
-                       << "entry in the configuration map. Skipping this joint.";
-            continue;
+            // Urdfs don't have support of spherical joints, IWear instead does.
+            // We use the configuration for addressing this mismatch.
+            if (pImpl->wearableStorage.modelToWearable_JointInfo.find(modelJointName)
+                == pImpl->wearableStorage.modelToWearable_JointInfo.end()) {
+                yWarning() << LogPrefix << "Failed to find" << modelJointName
+                           << "entry in the configuration map. Skipping this joint.";
+                continue;
+            }
+
+            // Get the name of the sensor associate to the joint
+            std::string wearableJointName =
+                pImpl->wearableStorage.modelToWearable_JointInfo.at(modelJointName).name;
+
+            // Try to get the sensor
+            auto sensor = pImpl->iWear->getVirtualSphericalJointKinSensor(wearableJointName);
+            if (!sensor) {
+                yError() << LogPrefix << "Failed to find sensor associated with joint"
+                         << wearableJointName << "from the IWear interface";
+                return false;
+            }
+
+            // Create a sensor map entry using the wearable sensor name as key
+            pImpl->wearableStorage.jointSensorsMap[wearableJointName] = sensor;
         }
-
-        // Get the name of the sensor associate to the joint
-        std::string wearableJointName =
-            pImpl->wearableStorage.modelToWearable_JointInfo.at(modelJointName).name;
-
-        // Try to get the sensor
-        auto sensor = pImpl->iWear->getVirtualSphericalJointKinSensor(wearableJointName);
-        if (!sensor) {
-            yError() << LogPrefix << "Failed to find sensor associated with joint"
-                     << wearableJointName << "from the IWear interface";
-            return false;
-        }
-
-        // Create a sensor map entry using the wearable sensor name as key
-        pImpl->wearableStorage.jointSensorsMap[wearableJointName] = sensor;
     }
 
     // ====
