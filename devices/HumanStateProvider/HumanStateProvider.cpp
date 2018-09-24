@@ -62,7 +62,7 @@ struct SolutionIK
     std::array<double, 3> basePosition;
     std::array<double, 4> baseOrientation;
 
-    std::array<double, 3> baseVelocity;
+    std::array<double, 6> baseVelocity;
 
     void clear()
     {
@@ -797,7 +797,7 @@ std::vector<double> HumanStateProvider::getJointVelocities() const
     return pImpl->solution.jointVelocities;
 }
 
-std::array<double, 3> HumanStateProvider::getBaseVelocity() const
+std::array<double, 6> HumanStateProvider::getBaseVelocity() const
 {
     std::lock_guard<std::mutex> lock(pImpl->mutex);
     return pImpl->solution.baseVelocity;

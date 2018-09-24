@@ -1,4 +1,4 @@
-namespace yarp hde.msgs
+namespace yarp human
 
 struct Vector {
   1: list<double> content;
@@ -36,5 +36,5 @@ struct HumanState {
 
     3: Vector3 baseOriginWRTGlobal;
     4: Quaternion baseOrientationWRTGlobal;
-    5: Vector3 baseVelocityWRTGlobal;
+    5: Vector baseVelocityWRTGlobal;
 }

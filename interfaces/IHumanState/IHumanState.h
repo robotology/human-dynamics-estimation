@@ -33,7 +33,7 @@ public:
     virtual std::array<double, 3> getBasePosition() const = 0;
     virtual std::array<double, 4> getBaseOrientation() const = 0;
 
-    virtual std::array<double, 3> getBaseVelocity() const = 0;
+    virtual std::array<double, 6> getBaseVelocity() const = 0;
 };
 
 #endif // HDE_INTERFACES_IHUMANSTATE

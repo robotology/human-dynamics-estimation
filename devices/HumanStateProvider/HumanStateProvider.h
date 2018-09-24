@@ -60,7 +60,7 @@ public:
     std::vector<double> getJointVelocities() const override;
     std::array<double, 3> getBasePosition() const override;
     std::array<double, 4> getBaseOrientation() const override;
-    std::array<double, 3> getBaseVelocity() const override;
+    std::array<double, 6> getBaseVelocity() const override;
 };
 
 #endif // HDE_DEVICES_HUMANSTATEPROVIDER

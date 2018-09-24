@@ -24,7 +24,7 @@ class HumanStateWrapper::impl
 {
 public:
     hde::interfaces::IHumanState* humanState = nullptr;
-    yarp::os::BufferedPort<hde::msgs::HumanState> outputPort;
+    yarp::os::BufferedPort<human::HumanState> outputPort;
 };
 
 HumanStateWrapper::HumanStateWrapper()
@@ -89,12 +89,12 @@ void HumanStateWrapper::run()
     // Get data from the interface
     std::array<double, 3> basePositionInterface = pImpl->humanState->getBasePosition();
     std::array<double, 4> baseOrientationInterface = pImpl->humanState->getBaseOrientation();
-    std::array<double, 3> baseVelocity = pImpl->humanState->getBaseVelocity();
+    std::array<double, 6> baseVelocity = pImpl->humanState->getBaseVelocity();
     std::vector<double> jointPositionsInterface = pImpl->humanState->getJointPositions();
     std::vector<double> jointVelocitiesInterface = pImpl->humanState->getJointVelocities();
 
     // Prepare the message
-    hde::msgs::HumanState& humanStateData = pImpl->outputPort.prepare();
+    human::HumanState& humanStateData = pImpl->outputPort.prepare();
 
     // Convert the base position
     humanStateData.baseOriginWRTGlobal = {
@@ -106,7 +106,13 @@ void HumanStateWrapper::run()
         {baseOrientationInterface[1], baseOrientationInterface[2], baseOrientationInterface[3]}};
 
     // Convert the base velocity
-    humanStateData.baseVelocityWRTGlobal = {baseVelocity[0], baseVelocity[1], baseVelocity[2]};
+    humanStateData.baseVelocityWRTGlobal.resize(6);
+    humanStateData.baseVelocityWRTGlobal[0] = baseVelocity[0];
+    humanStateData.baseVelocityWRTGlobal[1] = baseVelocity[1];
+    humanStateData.baseVelocityWRTGlobal[2] = baseVelocity[2];
+    humanStateData.baseVelocityWRTGlobal[3] = baseVelocity[3];
+    humanStateData.baseVelocityWRTGlobal[4] = baseVelocity[4];
+    humanStateData.baseVelocityWRTGlobal[5] = baseVelocity[5];
 
     // Convert the joint positions
     humanStateData.positions.resize(jointPositionsInterface.size());
