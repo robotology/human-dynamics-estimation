@@ -3,7 +3,7 @@
 # GNU Lesser General Public License v2.1 or any later version.
 
 find_package(IWear REQUIRED)
-find_package(iDynTree)
+find_package(iDynTree REQUIRED)
 
 yarp_prepare_plugin(human_state_provider
     TYPE hde::devices::HumanStateProvider

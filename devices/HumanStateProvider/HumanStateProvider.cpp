@@ -454,9 +454,6 @@ void HumanStateProvider::run()
             return;
         }
 
-        //        iDynTree::Vector4 q = pImpl->linkRotationMatrices.at(linkName).asQuaternion();
-        //        yDebug() << LogPrefix << q(0) << q(1) << q(2) << q(3) << linkName;
-
         if (!pImpl->ik.updateRotationTarget(linkName, pImpl->linkRotationMatrices.at(linkName))) {
             yError() << LogPrefix << "Failed to update rotation target for link" << linkName;
             askToStop();
