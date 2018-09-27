@@ -6,23 +6,19 @@
  * GNU Lesser General Public License v2.1 or any later version.
  */
 
-#ifndef HDE_INTERFACES_IHUMANFORCES
-#define HDE_INTERFACES_IHUMANFORCES
-
-//#include <array>
-//#include <string>
-//#include <vector>
+#ifndef HDE_INTERFACES_IHUMANWRENCH
+#define HDE_INTERFACES_IHUMANWRENCH
 
 namespace hde {
     namespace interfaces {
-        class IHumanForces;
+        class IHumanWrench;
     } // namespace interfaces
 } // namespace hde
 
-class hde::interfaces::IHumanForces
+class hde::interfaces::IHumanWrench
 {
 public:
-    virtual ~IHumanState() = default;
+    virtual ~IHumanWrench() = default;
 };
 
-#endif // HDE_INTERFACES_IHUMANFORCES
+#endif // HDE_INTERFACES_IHUMANWRENCH

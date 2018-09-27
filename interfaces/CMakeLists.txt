@@ -3,5 +3,5 @@
 # GNU Lesser General Public License v2.1 or any later version.
 
 add_subdirectory(IHumanState)
-add_subdirectory(IHumanForces)
+add_subdirectory(IHumanWrench)
 add_subdirectory(IHumanDynamics)
