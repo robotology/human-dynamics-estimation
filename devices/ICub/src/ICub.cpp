@@ -19,20 +19,28 @@
 
 using namespace wearable::devices;
 
-const std::string logPrefix = "ICub :";
+const std::string LogPrefix = "ICub :";
 
 class ICub::ICubImpl
 {
 public:
     class ICubForceTorque6DSensor;
 
-    const WearableName wearableName = "ICub" + wearable::Separator;
-
-    int nSensors;
-    std::vector<std::shared_ptr<ICubForceTorque6DSensor>> sensorList;
+    size_t nSensors;
     std::vector<std::string> sensorNames;
     yarp::os::BufferedPort<yarp::os::Bottle> leftHandFTPort;
     yarp::os::BufferedPort<yarp::os::Bottle> rightHandFTPort;
+
+    template<typename T>
+    struct icubDeviceSensors
+    {
+        std::shared_ptr<T> icubSensor;
+        size_t index;
+    };
+
+    std::map<std::string, icubDeviceSensors<ICubForceTorque6DSensor>> ftSensorsMap;
+
+    const WearableName wearableName = "ICub" + wearable::Separator;
 };
 
 // ==========================================
@@ -108,17 +116,17 @@ ICub::~ICub() = default;
 // ======================
 bool ICub::open(yarp::os::Searchable& config)
 {
-    yInfo() << logPrefix << "Starting to configure";
+    yInfo() << LogPrefix << "Starting to configure";
 
     yarp::os::Bottle wbdHandsFTSensorsSet = config.findGroup("wbd-hand-ft-sensors");
     if(wbdHandsFTSensorsSet.isNull()) {
-        yError() << logPrefix << "REQUIRED parameter <wbd-hand-ft-sensors> NOT found";
+        yError() << LogPrefix << "REQUIRED parameter <wbd-hand-ft-sensors> NOT found";
         return false;
     }
     else {
 
         if (!wbdHandsFTSensorsSet.check("nSensors")) {
-            yError() << logPrefix << "REQUIRED parameter <nSensors> NOT found";
+            yError() << LogPrefix << "REQUIRED parameter <nSensors> NOT found";
             return false;
         }
         else {
@@ -126,7 +134,7 @@ bool ICub::open(yarp::os::Searchable& config)
             pImpl->nSensors = wbdHandsFTSensorsSet.check("nSensors",yarp::os::Value(false)).asInt();
 
             if (!wbdHandsFTSensorsSet.check("leftHand") || !wbdHandsFTSensorsSet.check("rightHand")) {
-                yError() << logPrefix << "REQUIRED parameter <leftHand> or <rightHand> NOT found";
+                yError() << LogPrefix << "REQUIRED parameter <leftHand> or <rightHand> NOT found";
                 return false;
             }
             else {
@@ -144,7 +152,7 @@ bool ICub::open(yarp::os::Searchable& config)
                 {
                     if(!yarp::os::Network::connect(leftHandFTPortName,pImpl->leftHandFTPort.getName().c_str()))
                     {
-                        yError() << logPrefix << "Failed to connect " << leftHandFTPortName << " and " << pImpl->leftHandFTPort.getName().c_str();
+                        yError() << LogPrefix << "Failed to connect " << leftHandFTPortName << " and " << pImpl->leftHandFTPort.getName().c_str();
                         return false;
                     }
                     else {
@@ -153,7 +161,7 @@ bool ICub::open(yarp::os::Searchable& config)
                 }
                 else
                 {
-                    yError() << logPrefix << "Failed to open " << pImpl->leftHandFTPort.getName().c_str();
+                    yError() << LogPrefix << "Failed to open " << pImpl->leftHandFTPort.getName().c_str();
                     return false;
                 }
 
@@ -164,7 +172,7 @@ bool ICub::open(yarp::os::Searchable& config)
                 {
                     if(!yarp::os::Network::connect(rightHandFTPortName,pImpl->rightHandFTPort.getName().c_str()))
                     {
-                        yError() << logPrefix << "Failed to connect " << rightHandFTPortName << " and " << pImpl->rightHandFTPort.getName().c_str();
+                        yError() << LogPrefix << "Failed to connect " << rightHandFTPortName << " and " << pImpl->rightHandFTPort.getName().c_str();
                         return false;
                     }
                     else {
@@ -173,7 +181,7 @@ bool ICub::open(yarp::os::Searchable& config)
                 }
                 else
                 {
-                    yError() << logPrefix << "Failed to open " << pImpl->rightHandFTPort.getName().c_str();
+                    yError() << LogPrefix << "Failed to open " << pImpl->rightHandFTPort.getName().c_str();
                     return false;
                 }
 
@@ -190,7 +198,9 @@ bool ICub::open(yarp::os::Searchable& config)
          auto ft6d = std::make_shared<ICubImpl::ICubForceTorque6DSensor>(
             pImpl.get(), ft6dPrefix + pImpl->sensorNames[s]);
 
-         pImpl->sensorList.push_back(ft6d);
+         pImpl->ftSensorsMap.emplace(
+                     ft6dPrefix + pImpl->sensorNames[s],
+                     ICubImpl::icubDeviceSensors<ICubImpl::ICubForceTorque6DSensor>{ft6d,s});
     }
 
     return true;
@@ -210,13 +220,58 @@ bool ICub::close()
     return true;
 }
 
+// ---------------------------
+// Implemented Sensors Methods
+// ---------------------------
+
+wearable::SensorPtr<const wearable::sensor::ISensor>
+ICub::getSensor(const wearable::sensor::SensorName name) const
+{
+    wearable::VectorOfSensorPtr<const wearable::sensor::ISensor> sensors = getAllSensors();
+    for (const auto& s : sensors) {
+        if (s->getSensorName() == name) {
+            return s;
+        }
+    }
+    yWarning() << LogPrefix << "User specified name <" << name << "> not found";
+    return nullptr;
+}
+
+wearable::VectorOfSensorPtr<const wearable::sensor::ISensor>
+ICub::getSensors(const wearable::sensor::SensorType type) const
+{
+    wearable::VectorOfSensorPtr<const wearable::sensor::ISensor> outVec;
+    switch (type) {
+        case sensor::SensorType::Force3DSensor: {
+            outVec.reserve(pImpl->nSensors);
+            for (const auto& ft6d : pImpl->ftSensorsMap) {
+                outVec.push_back(
+                    static_cast<std::shared_ptr<sensor::ISensor>>(ft6d.second.icubSensor));
+            }
+
+            break;
+        }
+        default: {
+            yWarning() << LogPrefix << "Selected sensor type (" << static_cast<int>(type)
+                       << ") is not supported by ICub";
+            return {};
+        }
+    }
+
+    return outVec;
+}
+
 wearable::SensorPtr<const wearable::sensor::IForceTorque6DSensor>
 ICub::getForceTorque6DSensor(const wearable::sensor::SensorName name) const
 {
     // Check if user-provided name corresponds to an available sensor
-    // TODO
+    if (pImpl->ftSensorsMap.find(static_cast<std::string>(name))
+        == pImpl->ftSensorsMap.end()) {
+        yError() << LogPrefix << "Invalid sensor name";
+        return nullptr;
+    }
 
     //return a shared point to the required sensor
     return static_cast<std::shared_ptr<sensor::IForceTorque6DSensor>>(
-        pImpl->sensorList.at(1));
+        pImpl->ftSensorsMap.at(static_cast<std::string>(name)).icubSensor);
 }

@@ -64,6 +64,10 @@ public:
     WearStatus getStatus() const override;
     //TimeStamp getTimeStamp() const override;
 
+    SensorPtr<const sensor::ISensor> getSensor(const sensor::SensorName name) const override;
+
+    VectorOfSensorPtr<const sensor::ISensor> getSensors(const sensor::SensorType) const override;
+
     // IMPLEMENTED SENSORS
     // -------------------
 
@@ -72,12 +76,6 @@ public:
 
     // UNIMPLEMENTED SENSORS
     // ---------------------
-
-    inline SensorPtr<const sensor::ISensor>
-    getSensor(const sensor::SensorName /*name*/) const override;
-
-    inline VectorOfSensorPtr<const sensor::ISensor>
-    getSensors(const sensor::SensorType) const override;
 
     inline SensorPtr<const sensor::IFreeBodyAccelerationSensor>
     getFreeBodyAccelerationSensor(const sensor::SensorName /*name*/) const override;
@@ -122,18 +120,6 @@ public:
     getTorque3DSensor(const sensor::SensorName /*name*/) const override;
 
 };
-
-inline wearable::SensorPtr<const wearable::sensor::ISensor>
-wearable::devices::ICub::getSensor(const sensor::SensorName /*name*/) const
-{
-    return nullptr;
-}
-
-inline wearable::VectorOfSensorPtr<const wearable::sensor::ISensor>
-wearable::devices::ICub::getSensors(const sensor::SensorType) const
-{
-    return {nullptr};
-}
 
 inline wearable::SensorPtr<const wearable::sensor::IFreeBodyAccelerationSensor>
 wearable::devices::ICub::getFreeBodyAccelerationSensor(const sensor::SensorName /*name*/) const
