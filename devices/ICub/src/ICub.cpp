@@ -26,6 +26,15 @@ class ICub::ICubImpl
 public:
     class ICubForceTorque6DSensor;
 
+    struct Timestamp
+    {
+        double systemTime;
+        double relative; // [s]
+        double absolute; // [s]
+    };
+
+    std::shared_ptr<Timestamp> timestamps = nullptr;
+
     size_t nSensors;
     std::vector<std::string> sensorNames;
     yarp::os::BufferedPort<yarp::os::Bottle> leftHandFTPort;
@@ -79,9 +88,11 @@ public:
         // Reading wrench from WBD ports
         if (this->m_name == "leftWBDFTSensor") {
             icubImpl->leftHandFTPort.read(wrench);
+            icubImpl->timestamps->systemTime = yarp::os::Time::now();
         }
         else if(this->m_name == "rightWBDFTSensor") {
             icubImpl->rightHandFTPort.read(wrench);
+            icubImpl->timestamps->systemTime = yarp::os::Time::now();
         }
 
         if(!wrench->isNull() && wrench->size() != 6) {
@@ -117,6 +128,12 @@ ICub::~ICub() = default;
 bool ICub::open(yarp::os::Searchable& config)
 {
     yInfo() << LogPrefix << "Starting to configure";
+
+    // Configure clock
+    if (!yarp::os::Time::isSystemClock())
+    {
+        yarp::os::Time::useSystemClock();
+    }
 
     yarp::os::Bottle wbdHandsFTSensorsSet = config.findGroup("wbd-hand-ft-sensors");
     if(wbdHandsFTSensorsSet.isNull()) {
@@ -213,6 +230,12 @@ bool ICub::open(yarp::os::Searchable& config)
 wearable::WearableName ICub::getWearableName() const
 {
     return pImpl->wearableName;
+}
+
+wearable::TimeStamp ICub::getTimeStamp() const
+{
+    // Stamp count should be always zero
+    return {pImpl->timestamps->systemTime,0};
 }
 
 bool ICub::close()

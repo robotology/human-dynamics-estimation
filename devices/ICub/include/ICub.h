@@ -17,7 +17,7 @@
 #include <memory>
 
 namespace wearable {
-    namespace   devices {
+    namespace devices {
         class ICub;
     } // namespace devices
 } // namespace wearable
@@ -62,7 +62,7 @@ public:
 
     WearableName getWearableName() const override;
     WearStatus getStatus() const override;
-    //TimeStamp getTimeStamp() const override;
+    TimeStamp getTimeStamp() const override;
 
     SensorPtr<const sensor::ISensor> getSensor(const sensor::SensorName name) const override;
 
