@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<robot name="ICub">
+    <device type="ICub" name="ICub">
+        <group name="wbd-hand-ft-sensors">
+            <param name="nSensors">2</param>
+            <param name="leftHand">/wholeBodyDynamics/left_arm/endEffectorWrench:o</param>
+            <param name="rightHand">/wholeBodyDynamics/right_arm/endEffectorWrench:o</param>
+        </group>
+    </device>
+</robot>

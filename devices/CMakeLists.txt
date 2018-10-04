@@ -8,3 +8,5 @@ add_subdirectory(IAnalogSensorToIWear)
 if(XSENS_MVN_USE_SDK)
   add_subdirectory(XsensSuit)
 endif()
+
+add_subdirectory(ICub)
