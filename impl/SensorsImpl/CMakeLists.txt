@@ -11,3 +11,10 @@ target_include_directories(SensorsImpl PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
 
 target_link_libraries(SensorsImpl PUBLIC Wearable::IWear)
+
+install(
+    TARGETS SensorsImpl
+    EXPORT SensorsImpl
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
