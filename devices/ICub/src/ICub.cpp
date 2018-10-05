@@ -284,7 +284,7 @@ ICub::getSensors(const wearable::sensor::SensorType type) const
 {
     wearable::VectorOfSensorPtr<const wearable::sensor::ISensor> outVec;
     switch (type) {
-        case sensor::SensorType::Force3DSensor: {
+        case sensor::SensorType::ForceTorque6DSensor: {
             outVec.reserve(pImpl->nSensors);
             for (const auto& ft6d : pImpl->ftSensorsMap) {
                 outVec.push_back(
