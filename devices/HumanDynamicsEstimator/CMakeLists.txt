@@ -25,7 +25,8 @@ target_link_libraries(HumanDynamicsEstimator PUBLIC
     YARP::YARP_sig
     YARP::YARP_init
     iDynTree::idyntree-core
-    iDynTree::idyntree-model)
+    iDynTree::idyntree-model
+    iDynTree::idyntree-estimation)
 
 yarp_install(
     TARGETS HumanDynamicsEstimator
