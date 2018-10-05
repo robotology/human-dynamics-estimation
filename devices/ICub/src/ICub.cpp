@@ -42,6 +42,13 @@ public:
 
     std::map<std::string, icubDeviceSensors<ICubForceTorque6DSensor>> ftSensorsMap;
 
+    const std::map<std::string, wearable::sensor::SensorStatus> icubSensorStatutsMap{
+        {"Ok", sensor::SensorStatus::Ok},
+        {"Error", sensor::SensorStatus::Error}
+    };
+
+    std::string sensorStatus;
+
     const WearableName wearableName = "ICub" + wearable::Separator;
 };
 
@@ -82,10 +89,12 @@ public:
         if (this->m_name == "leftWBDFTSensor") {
             icubImpl->leftHandFTPort.read(wrench);
             icubImpl->timeStamp.time = yarp::os::Time::now();
+            icubImpl->sensorStatus = "Ok";
         }
         else if(this->m_name == "rightWBDFTSensor") {
             icubImpl->rightHandFTPort.read(wrench);
             icubImpl->timeStamp.time = yarp::os::Time::now();
+            icubImpl->sensorStatus = "Ok";
         }
 
         if(!wrench->isNull() && wrench->size() != 6) {
@@ -121,6 +130,9 @@ ICub::~ICub() = default;
 bool ICub::open(yarp::os::Searchable& config)
 {
     yInfo() << LogPrefix << "Starting to configure";
+
+    // Default sensor status
+    pImpl->sensorStatus = "Error";
 
     // Configure clock
     if (!yarp::os::Time::isSystemClock())
@@ -223,6 +235,11 @@ bool ICub::open(yarp::os::Searchable& config)
 wearable::WearableName ICub::getWearableName() const
 {
     return pImpl->wearableName;
+}
+
+wearable::WearStatus ICub::getStatus() const
+{
+    return pImpl->icubSensorStatutsMap.at(pImpl->sensorStatus);
 }
 
 wearable::TimeStamp ICub::getTimeStamp() const
