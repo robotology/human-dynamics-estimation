@@ -42,13 +42,6 @@ public:
 
     std::map<std::string, icubDeviceSensors<ICubForceTorque6DSensor>> ftSensorsMap;
 
-    const std::map<std::string, wearable::sensor::SensorStatus> icubSensorStatutsMap{
-        {"Ok", sensor::SensorStatus::Ok},
-        {"Error", sensor::SensorStatus::Error}
-    };
-
-    std::string sensorStatus;
-
     const WearableName wearableName = "ICub" + wearable::Separator;
 };
 
@@ -70,12 +63,14 @@ public:
     ICubForceTorque6DSensor(
             ICub::ICubImpl* impl,
             const wearable::sensor::SensorName name = {},
-            const wearable::sensor::SensorStatus status = wearable::sensor::SensorStatus::Unknown)
+            const wearable::sensor::SensorStatus status = wearable::sensor::SensorStatus::WaitingForFirstRead)
             : IForceTorque6DSensor(name, status)
             , icubImpl(impl)
     {}
 
     ~ICubForceTorque6DSensor() override = default;
+
+     void setStatus(const wearable::sensor::SensorStatus status) { m_status = status; }
 
     // ==============================
     // IForceTorque6DSensor interface
@@ -89,15 +84,19 @@ public:
         if (this->m_name == "leftWBDFTSensor") {
             icubImpl->leftHandFTPort.read(wrench);
             icubImpl->timeStamp.time = yarp::os::Time::now();
-            icubImpl->sensorStatus = "Ok";
+
+            auto nonConstThis = const_cast<ICubForceTorque6DSensor*>(this);
+            nonConstThis->setStatus(wearable::sensor::SensorStatus::Ok);
         }
         else if(this->m_name == "rightWBDFTSensor") {
             icubImpl->rightHandFTPort.read(wrench);
             icubImpl->timeStamp.time = yarp::os::Time::now();
-            icubImpl->sensorStatus = "Ok";
+
+            auto nonConstThis = const_cast<ICubForceTorque6DSensor*>(this);
+            nonConstThis->setStatus(wearable::sensor::SensorStatus::Ok);
         }
 
-        if(!wrench->isNull() && wrench->size() != 6) {
+        if(!wrench->isNull() && wrench->size() == 6) {
             force3D[0] = wrench->get(0).asDouble();
             force3D[1] = wrench->get(1).asDouble();
             force3D[2] = wrench->get(2).asDouble();
@@ -109,6 +108,10 @@ public:
         else {
             force3D.fill(0.0);
             torque3D.fill(0.0);
+
+            // Set the sensor status to Error
+            auto nonConstThis = const_cast<ICubForceTorque6DSensor*>(this);
+            nonConstThis->setStatus(wearable::sensor::SensorStatus::Error);
         }
 
         return true;
@@ -130,9 +133,6 @@ ICub::~ICub() = default;
 bool ICub::open(yarp::os::Searchable& config)
 {
     yInfo() << LogPrefix << "Starting to configure";
-
-    // Default sensor status
-    pImpl->sensorStatus = "Error";
 
     // Configure clock
     if (!yarp::os::Time::isSystemClock())
@@ -239,8 +239,26 @@ wearable::WearableName ICub::getWearableName() const
 
 wearable::WearStatus ICub::getStatus() const
 {
-    return pImpl->icubSensorStatutsMap.at(pImpl->sensorStatus);
+    wearable::WearStatus status = wearable::WearStatus::Ok;
+
+    for (const auto& s : getAllSensors()) {
+
+        if (s->getSensorStatus() != sensor::SensorStatus::Ok) {
+            if (s->getSensorStatus() != sensor::SensorStatus::WaitingForFirstRead) {
+                yError() << LogPrefix << "The status of" << s->getSensorName() << "is not Ok ("
+                         << static_cast<int>(s->getSensorStatus()) << ")";
+                return status = wearable::WearStatus::Error;
+            }
+            else {
+                status = wearable::WearStatus::WaitingForFirstRead;
+            }
+        }
+        // TODO: improve handling of the overall status
+    }
+
+    return status;
 }
+
 
 wearable::TimeStamp ICub::getTimeStamp() const
 {
