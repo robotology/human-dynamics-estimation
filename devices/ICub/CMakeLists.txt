@@ -2,7 +2,7 @@
 # This software may be modified and distributed under the terms of the
 # GNU Lesser General Public License v2.1 or any later version.
 
-yarp_prepare_plugin(icub_device
+yarp_prepare_plugin(icub_wearable_device
     TYPE wearable::devices::ICub
     INCLUDE ICub.h
     CATEGORY device
@@ -24,3 +24,8 @@ yarp_install(
     COMPONENT runtime
     LIBRARY DESTINATION ${YARP_DYNAMIC_PLUGINS_INSTALL_DIR}
     ARCHIVE DESTINATION ${YARP_STATIC_PLUGINS_INSTALL_DIR})
+
+yarp_install(
+    FILES "${CMAKE_CURRENT_SOURCE_DIR}/icub_wearable_device.ini"
+    DESTINATION ${YARP_PLUGIN_MANIFESTS_INSTALL_DIR})
+
