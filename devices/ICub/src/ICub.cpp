@@ -236,6 +236,15 @@ bool ICub::close()
     return true;
 }
 
+// =========================
+// IPreciselyTimed interface
+// =========================
+yarp::os::Stamp ICub::getLastInputStamp()
+{
+    // Stamp count should be always zero
+    return yarp::os::Stamp(0, pImpl->timeStamp.time);
+}
+
 // ---------------------------
 // Implemented Sensors Methods
 // ---------------------------
