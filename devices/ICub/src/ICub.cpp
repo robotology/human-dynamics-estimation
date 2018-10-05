@@ -26,14 +26,7 @@ class ICub::ICubImpl
 public:
     class ICubForceTorque6DSensor;
 
-    struct Timestamp
-    {
-        double systemTime;
-        double relative; // [s]
-        double absolute; // [s]
-    };
-
-    std::shared_ptr<Timestamp> timestamps = nullptr;
+    wearable::TimeStamp timeStamp;
 
     size_t nSensors;
     std::vector<std::string> sensorNames;
@@ -88,11 +81,11 @@ public:
         // Reading wrench from WBD ports
         if (this->m_name == "leftWBDFTSensor") {
             icubImpl->leftHandFTPort.read(wrench);
-            icubImpl->timestamps->systemTime = yarp::os::Time::now();
+            icubImpl->timeStamp.time = yarp::os::Time::now();
         }
         else if(this->m_name == "rightWBDFTSensor") {
             icubImpl->rightHandFTPort.read(wrench);
-            icubImpl->timestamps->systemTime = yarp::os::Time::now();
+            icubImpl->timeStamp.time = yarp::os::Time::now();
         }
 
         if(!wrench->isNull() && wrench->size() != 6) {
@@ -235,7 +228,7 @@ wearable::WearableName ICub::getWearableName() const
 wearable::TimeStamp ICub::getTimeStamp() const
 {
     // Stamp count should be always zero
-    return {pImpl->timestamps->systemTime,0};
+    return {pImpl->timeStamp.time,0};
 }
 
 bool ICub::close()
