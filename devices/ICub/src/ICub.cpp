@@ -30,8 +30,9 @@ public:
 
     size_t nSensors;
     std::vector<std::string> sensorNames;
-    yarp::os::BufferedPort<yarp::os::Bottle> leftHandFTPort;
-    yarp::os::BufferedPort<yarp::os::Bottle> rightHandFTPort;
+
+    bool leftHandFTDataReceived  = false;
+    bool rightHandFTDataReceived = false;
 
     template<typename T>
     struct icubDeviceSensors
@@ -43,6 +44,32 @@ public:
     std::map<std::string, icubDeviceSensors<ICubForceTorque6DSensor>> ftSensorsMap;
 
     const WearableName wearableName = "ICub" + wearable::Separator;
+
+    class wrenchPort : public yarp::os::BufferedPort<yarp::os::Bottle> {
+    public:
+        yarp::os::Bottle wrenchValues;
+        bool firstDataReceived = false;
+        using yarp::os::BufferedPort<yarp::os::Bottle>::onRead;
+        virtual void onRead(yarp::os::Bottle& wrench) {
+            this->wrenchValues.copy(wrench);
+
+            if(this->firstDataReceived != true)
+            {
+                this->firstDataReceived = true;
+            }
+        }
+
+        yarp::os::Bottle getWrench() {
+            return this->wrenchValues;
+        }
+
+        bool getFirstDataFlag() {
+            return this->firstDataReceived;
+        }
+    };
+
+    wrenchPort leftHandFTPort;
+    wrenchPort rightHandFTPort;
 };
 
 // ==========================================
@@ -51,9 +78,6 @@ public:
 class ICub::ICubImpl::ICubForceTorque6DSensor
         : public wearable::sensor::IForceTorque6DSensor
 {
-private:
-    yarp::os::Bottle* wrench;
-
 public:
     ICub::ICubImpl* icubImpl = nullptr;
 
@@ -63,7 +87,7 @@ public:
     ICubForceTorque6DSensor(
             ICub::ICubImpl* impl,
             const wearable::sensor::SensorName name = {},
-            const wearable::sensor::SensorStatus status = wearable::sensor::SensorStatus::WaitingForFirstRead)
+            const wearable::sensor::SensorStatus status = wearable::sensor::SensorStatus::WaitingForFirstRead) //Default sensor status
             : IForceTorque6DSensor(name, status)
             , icubImpl(impl)
     {}
@@ -80,30 +104,43 @@ public:
             return false;
         }
 
+        yarp::os::Bottle wrench;
+
         // Reading wrench from WBD ports
-        if (this->m_name == "leftWBDFTSensor") {
-            icubImpl->leftHandFTPort.read(wrench);
+        if (this->m_name == icubImpl->wearableName + sensor::IForceTorque6DSensor::getPrefix() + "leftWBDFTSensor") {
+            icubImpl->leftHandFTPort.useCallback();
+            wrench = icubImpl->leftHandFTPort.getWrench();
+
             icubImpl->timeStamp.time = yarp::os::Time::now();
 
-            auto nonConstThis = const_cast<ICubForceTorque6DSensor*>(this);
-            nonConstThis->setStatus(wearable::sensor::SensorStatus::Ok);
+            // Set sensor status to Ok after checking first data flag
+            if (icubImpl->leftHandFTPort.firstDataReceived) {
+                auto nonConstThis = const_cast<ICubForceTorque6DSensor*>(this);
+                nonConstThis->setStatus(wearable::sensor::SensorStatus::Ok);
+            }
         }
-        else if(this->m_name == "rightWBDFTSensor") {
-            icubImpl->rightHandFTPort.read(wrench);
+        else if(this->m_name == icubImpl->wearableName + sensor::IForceTorque6DSensor::getPrefix() + "rightWBDFTSensor") {
+            icubImpl->rightHandFTPort.useCallback();
+            wrench = icubImpl->rightHandFTPort.getWrench();
+
             icubImpl->timeStamp.time = yarp::os::Time::now();
 
-            auto nonConstThis = const_cast<ICubForceTorque6DSensor*>(this);
-            nonConstThis->setStatus(wearable::sensor::SensorStatus::Ok);
+            // Set sensor status to Ok after checking first data flag
+            if (icubImpl->rightHandFTPort.firstDataReceived) {
+                auto nonConstThis = const_cast<ICubForceTorque6DSensor*>(this);
+                nonConstThis->setStatus(wearable::sensor::SensorStatus::Ok);
+            }
         }
 
-        if(!wrench->isNull() && wrench->size() == 6) {
-            force3D[0] = wrench->get(0).asDouble();
-            force3D[1] = wrench->get(1).asDouble();
-            force3D[2] = wrench->get(2).asDouble();
+        //TODO: Check if the bottle is valid
+        if(wrench.size() == 6) {
+            force3D[0] = wrench.get(0).asDouble();
+            force3D[1] = wrench.get(1).asDouble();
+            force3D[2] = wrench.get(2).asDouble();
 
-            torque3D[0] = wrench->get(3).asDouble();
-            torque3D[1] = wrench->get(4).asDouble();
-            torque3D[2] = wrench->get(5).asDouble();
+            torque3D[0] = wrench.get(3).asDouble();
+            torque3D[1] = wrench.get(4).asDouble();
+            torque3D[2] = wrench.get(5).asDouble();
         }
         else {
             force3D.fill(0.0);
@@ -241,21 +278,15 @@ wearable::WearStatus ICub::getStatus() const
 {
     wearable::WearStatus status = wearable::WearStatus::Ok;
 
-    for (const auto& s : getAllSensors()) {
-
+    /*for (const auto& s : getAllSensors()) {
         if (s->getSensorStatus() != sensor::SensorStatus::Ok) {
-            if (s->getSensorStatus() != sensor::SensorStatus::WaitingForFirstRead) {
-                yError() << LogPrefix << "The status of" << s->getSensorName() << "is not Ok ("
-                         << static_cast<int>(s->getSensorStatus()) << ")";
-                return status = wearable::WearStatus::Error;
-            }
-            else {
-                status = wearable::WearStatus::WaitingForFirstRead;
-            }
+            yError() << LogPrefix << "The status of" << s->getSensorName() << "is not Ok ("
+                     << static_cast<int>(s->getSensorStatus()) << ")";
+            status = wearable::WearStatus::Error;
         }
-        // TODO: improve handling of the overall status
-    }
+    }*/
 
+    // Default return status is Ok
     return status;
 }
 
@@ -312,8 +343,8 @@ ICub::getSensors(const wearable::sensor::SensorType type) const
             break;
         }
         default: {
-            yWarning() << LogPrefix << "Selected sensor type (" << static_cast<int>(type)
-                       << ") is not supported by ICub";
+            //yWarning() << LogPrefix << "Selected sensor type (" << static_cast<int>(type)
+            //           << ") is not supported by ICub";
             return {};
         }
     }
