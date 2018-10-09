@@ -51,10 +51,16 @@ public:
         bool firstDataReceived = false;
         using yarp::os::BufferedPort<yarp::os::Bottle>::onRead;
         virtual void onRead(yarp::os::Bottle& wrench) {
-            this->wrenchValues.copy(wrench);
 
-            if(this->firstDataReceived != true)
+            //std::cout << "Received wrench of size : " << wrench.size() << std::endl;
+            //std::cout << "Wrench values : " << wrench.toString().c_str() << std::endl;
+            if (wrench.size() == 6) {
+                this->wrenchValues.copy(wrench);
+            }
+
+            while (this->firstDataReceived != true)
             {
+                std::cout << "Set firstDataReceived flag : true" << std::endl;
                 this->firstDataReceived = true;
             }
         }
@@ -90,16 +96,53 @@ public:
             const wearable::sensor::SensorStatus status = wearable::sensor::SensorStatus::WaitingForFirstRead) //Default sensor status
             : IForceTorque6DSensor(name, status)
             , icubImpl(impl)
-    {}
+    {
+        //Set the sensor status Ok after receiving the first data on the wrench ports
+        std::cout << "ICubForceTorque6DSensor constructor" << std::endl;
+        if (icubImpl->leftHandFTPort.getFirstDataFlag() || icubImpl->rightHandFTPort.getFirstDataFlag()) {
+            auto nonConstThis = const_cast<ICubForceTorque6DSensor*>(this);
+            nonConstThis->setStatus(wearable::sensor::SensorStatus::Ok);
+            std::cout << "ICubForceTorque6DSensor constructor setting sensor status flag" << std::endl;
+        }
+
+    }
 
     ~ICubForceTorque6DSensor() override = default;
 
-     void setStatus(const wearable::sensor::SensorStatus status) { m_status = status; }
+     void setStatus(const wearable::sensor::SensorStatus status) {
+         //std::cout << "Status : " << status << std::endl;
+         m_status = status;
+         switch(m_status)
+         {
+         case sensor::SensorStatus::Error:
+             std::cout << "Sensor Status : Error" << std::endl;
+             break;
+         case sensor::SensorStatus::Ok:
+             //std::cout << "Sensor Status : Ok" << std::endl;
+             break;
+         case sensor::SensorStatus::Calibrating:
+             std::cout << "Sensor Status : Calibrating" << std::endl;
+             break;
+         case sensor::SensorStatus::Timeout:
+             std::cout << "Sensor Status : Timeout" << std::endl;
+             break;
+         case sensor::SensorStatus::Unknown:
+             std::cout << "Sensor Status : Unknown" << std::endl;
+             break;
+         case sensor::SensorStatus::WaitingForFirstRead:
+             std::cout << "Sensor Status : WaitingForFirstRead" << std::endl;
+             break;
+         default:
+             std::cout << "Sensor Status : Default case" << std::endl;
+             break;
+         }
+     }
 
     // ==============================
     // IForceTorque6DSensor interface
     // ==============================
     bool getForceTorque6D(Vector3& force3D, Vector3& torque3D) const override {
+        //std::cout << "Inside getForceTorque6D" << std::endl;
         if (!icubImpl) {
             return false;
         }
@@ -108,32 +151,25 @@ public:
 
         // Reading wrench from WBD ports
         if (this->m_name == icubImpl->wearableName + sensor::IForceTorque6DSensor::getPrefix() + "leftWBDFTSensor") {
+
+            //std::cout << "Inside leftWBDFTSensor" << std::endl;
             icubImpl->leftHandFTPort.useCallback();
             wrench = icubImpl->leftHandFTPort.getWrench();
 
             icubImpl->timeStamp.time = yarp::os::Time::now();
-
-            // Set sensor status to Ok after checking first data flag
-            if (icubImpl->leftHandFTPort.firstDataReceived) {
-                auto nonConstThis = const_cast<ICubForceTorque6DSensor*>(this);
-                nonConstThis->setStatus(wearable::sensor::SensorStatus::Ok);
-            }
         }
         else if(this->m_name == icubImpl->wearableName + sensor::IForceTorque6DSensor::getPrefix() + "rightWBDFTSensor") {
+
+            //std::cout << "Inside rightWBDFTSensor" << std::endl;
             icubImpl->rightHandFTPort.useCallback();
             wrench = icubImpl->rightHandFTPort.getWrench();
 
             icubImpl->timeStamp.time = yarp::os::Time::now();
-
-            // Set sensor status to Ok after checking first data flag
-            if (icubImpl->rightHandFTPort.firstDataReceived) {
-                auto nonConstThis = const_cast<ICubForceTorque6DSensor*>(this);
-                nonConstThis->setStatus(wearable::sensor::SensorStatus::Ok);
-            }
         }
 
         //TODO: Check if the bottle is valid
         if(wrench.size() == 6) {
+            //std::cout << "Correct wrench data received" << std::endl;
             force3D[0] = wrench.get(0).asDouble();
             force3D[1] = wrench.get(1).asDouble();
             force3D[2] = wrench.get(2).asDouble();
@@ -143,10 +179,11 @@ public:
             torque3D[2] = wrench.get(5).asDouble();
         }
         else {
+            //std::cout << "Wrong wrench data received" << std::endl;
             force3D.fill(0.0);
             torque3D.fill(0.0);
 
-            // Set the sensor status to Error
+            // Set sensor status to error if wrong data is read
             auto nonConstThis = const_cast<ICubForceTorque6DSensor*>(this);
             nonConstThis->setStatus(wearable::sensor::SensorStatus::Error);
         }
@@ -215,6 +252,9 @@ bool ICub::open(yarp::os::Searchable& config)
                         return false;
                     }
                     else {
+                        while (!pImpl->leftHandFTPort.getFirstDataFlag()) {
+                            pImpl->leftHandFTPort.useCallback();
+                        }
                         pImpl->sensorNames.push_back("leftWBDFTSensor");
                     }
                 }
@@ -235,6 +275,9 @@ bool ICub::open(yarp::os::Searchable& config)
                         return false;
                     }
                     else {
+                        while (!pImpl->rightHandFTPort.getFirstDataFlag()) {
+                            pImpl->rightHandFTPort.useCallback();
+                        }
                         pImpl->sensorNames.push_back("rightWBDFTSensor");
                     }
                 }
@@ -278,13 +321,13 @@ wearable::WearStatus ICub::getStatus() const
 {
     wearable::WearStatus status = wearable::WearStatus::Ok;
 
-    /*for (const auto& s : getAllSensors()) {
+    for (const auto& s : getAllSensors()) {
         if (s->getSensorStatus() != sensor::SensorStatus::Ok) {
             yError() << LogPrefix << "The status of" << s->getSensorName() << "is not Ok ("
                      << static_cast<int>(s->getSensorStatus()) << ")";
             status = wearable::WearStatus::Error;
         }
-    }*/
+    }
 
     // Default return status is Ok
     return status;
