@@ -47,12 +47,18 @@ public:
 
     class wrenchPort : public yarp::os::BufferedPort<yarp::os::Bottle> {
     public:
-        yarp::os::Bottle wrenchValues;
+        std::vector<double> wrenchValues;
         bool firstDataReceived = false;
         using yarp::os::BufferedPort<yarp::os::Bottle>::onRead;
         virtual void onRead(yarp::os::Bottle& wrench) {
-            if (wrench.size() == 6) {
-                this->wrenchValues.copy(wrench);
+            if (!wrench.isNull()) {
+                wrenchValues.clear(); // Clear the vector of previous values
+                for (size_t i = 0; i < wrench.size(); ++i) {
+                    this->wrenchValues.push_back(wrench.get(i).asDouble());
+                }
+            }
+            else {
+                yWarning() << LogPrefix << "[wrenchPort] read an invalid wrench bottle";
             }
 
             while (this->firstDataReceived != true)
@@ -61,7 +67,7 @@ public:
             }
         }
 
-        yarp::os::Bottle getWrench() {
+        std::vector<double> getWrench() {
             return this->wrenchValues;
         }
 
@@ -113,7 +119,7 @@ public:
             return false;
         }
 
-        yarp::os::Bottle wrench;
+        std::vector<double> wrench;
 
         // Reading wrench from WBD ports
         if (this->m_name == icubImpl->wearableName + sensor::IForceTorque6DSensor::getPrefix() + "leftWBDFTSensor") {
@@ -129,23 +135,24 @@ public:
             icubImpl->timeStamp.time = yarp::os::Time::now();
         }
 
-        //TODO: Check if the bottle is valid
+        // Check the size of wrench values
         if(wrench.size() == 6) {
-            force3D[0] = wrench.get(0).asDouble();
-            force3D[1] = wrench.get(1).asDouble();
-            force3D[2] = wrench.get(2).asDouble();
+            force3D[0] = wrench[0];
+            force3D[1] = wrench[1];
+            force3D[2] = wrench[2];
 
-            torque3D[0] = wrench.get(3).asDouble();
-            torque3D[1] = wrench.get(4).asDouble();
-            torque3D[2] = wrench.get(5).asDouble();
+            torque3D[0] = wrench[3];
+            torque3D[1] = wrench[4];
+            torque3D[2] = wrench[5];
         }
         else {
+            yWarning() << LogPrefix << "Size of wrench read is wrong. Setting zero values instead.";
             force3D.fill(0.0);
             torque3D.fill(0.0);
 
             // Set sensor status to error if wrong data is read
-            auto nonConstThis = const_cast<ICubForceTorque6DSensor*>(this);
-            nonConstThis->setStatus(wearable::sensor::SensorStatus::Error);
+            //auto nonConstThis = const_cast<ICubForceTorque6DSensor*>(this);
+            //nonConstThis->setStatus(wearable::sensor::SensorStatus::Error);
         }
 
         return true;
