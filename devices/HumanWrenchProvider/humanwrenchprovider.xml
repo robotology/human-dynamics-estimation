@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<robot name="human-wrench-provider">
+
+    <device type="iwear_remapper" name="IWearRemapper">
+        <param name="wearableDataPorts">(/ICub/WearableData/data:o)</param>
+        <param name="wearableRPCPorts">(/ICub/WearableData/metadataRpc:o)</param>
+        <param name="outputPortName">/HDE/IWearRemapper/data:o</param>
+    </device>
+
+    <device type="human_wrench_provider" name="HumanWrenchProvider">
+        <param name="human_urdf">Claudia66DoF.urdf</param>
+        <param name="robot_urdf">model.urdf</param>
+        <param name="sources">(RobotLeftHandFT RobotRightHandFT)</param>
+        <group name="RobotLeftHandFT">
+            <param name="sensorName">leftWBDFTSensor</param>
+            <param name="outputFrame">l_hand_dh_frame</param>
+            <param name="type">Robot</param>
+            <param name="rotation">((-1.0 0.0 0.0),(0.0 -1.0 0.0),(0.0 0.0 1.0))</param>
+            <param name="position">(0.59 -0.2549 0.0)</position>
+            <param name="humanLinkingFrame">LeftFoot</param>
+            <param name="robotLinkingFrame">l_sole</param>
+            <param name="humanFootPosition">(0.0 0.0 0.0918)</param>
+        </group>
+        <group name="RobotRightHandFT">
+            <param name="sensorName">rightWBDFTSensor</param>
+            <param name="outputFrame">r_hand_dh_frame</param>
+            <param name="type">Robot</param>
+            <param name="rotation">((-1.0 0.0 0.0),(0.0 -1.0 0.0),(0.0 0.0 1.0))</param>
+            <param name="position">(0.59 -0.2549 0.0)</position>
+            <param name="humanLinkingFrame">LeftFoot</param>
+            <param name="robotLinkingFrame">l_sole</param>
+            <param name="humanFootPosition">(0.0 0.0 0.0918)</param>
+        </group>
+    </device>
+</robot>
