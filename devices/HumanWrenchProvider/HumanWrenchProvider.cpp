@@ -10,10 +10,16 @@
 #include "WrenchFrameTransformers.h"
 
 #include <Wearable/IWear/IWear.h>
+
+#include <iDynTree/Model/Model.h>
+#include <iDynTree/ModelIO/ModelLoader.h>
 #include <iDynTree/Core/EigenHelpers.h>
 #include <iDynTree/Core/Transform.h>
 #include <iDynTree/Core/Wrench.h>
+#include <iDynTree/KinDynComputations.h>
+
 #include <yarp/os/LogStream.h>
+#include <yarp/os/ResourceFinder.h>
 
 #include <mutex>
 #include <string>
@@ -32,22 +38,28 @@ struct AnalogSensorData
     std::vector<double> measurements;
 };
 
-enum class ForceSourceType
+enum class WrenchSourceType
 {
     Fixed,
     Robot, // TODO
 };
 
-struct ForceSourceData
+struct WrenchSourceData
 {
     std::string name;
-    ForceSourceType type;
+    WrenchSourceType type;
 
     std::string outputFrame;
     std::unique_ptr<IWrenchFrameTransformer> frameTransformer;
 
     wearable::sensor::SensorName sensorName;
     wearable::SensorPtr<const wearable::sensor::IForceTorque6DSensor> wearableSensor;
+
+    // Variables for Robot Human Transformation
+    std::string humanLinkingFrame;
+    std::string robotLinkingFrame;
+
+    iDynTree::Position humanFootPosition;
 };
 
 class HumanWrenchProvider::Impl
@@ -57,7 +69,11 @@ public:
     wearable::IWear* iWear = nullptr;
 
     AnalogSensorData analogSensorData;
-    std::vector<ForceSourceData> forceSources;
+    std::vector<WrenchSourceData> wrenchSources;
+
+    // Model variables
+    iDynTree::Model humanModel;
+    iDynTree::Model robotModel;
 };
 
 HumanWrenchProvider::HumanWrenchProvider()
@@ -110,6 +126,50 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
         yInfo() << LogPrefix << "Using default period:" << DefaultPeriod << "s";
     }
 
+    // ==========================
+    // INITIALIZE THE HUMAN MODEL
+    // ==========================
+
+    const std::string humanURDFFileName = config.find("human_urdf").asString();
+    auto& human_rf = yarp::os::ResourceFinder::getResourceFinderSingleton();
+    std::string humanURDFFilePath = human_rf.findFile(humanURDFFileName);
+    if (humanURDFFilePath.empty()) {
+        yError() << LogPrefix << "Failed to find file" << config.find("human_urdf").asString();
+        return false;
+    }
+
+    iDynTree::ModelLoader humanModelLoader;
+    if (!humanModelLoader.loadModelFromFile(humanURDFFilePath) || !humanModelLoader.isValid()) {
+        yError() << LogPrefix << "Failed to load model" << humanURDFFilePath;
+        return false;
+    }
+
+    pImpl->humanModel = humanModelLoader.model();
+
+    // ==========================
+    // INITIALIZE THE ROBOT MODEL
+    // ==========================
+
+    const std::string robotURDFFileName = config.find("robot_urdf").asString();
+    auto& robot_rf = yarp::os::ResourceFinder::getResourceFinderSingleton();
+    std::string robotURDFFilePath = robot_rf.findFile(robotURDFFileName);
+    if (robotURDFFilePath.empty()) {
+        yError() << LogPrefix << "Failed to find file" << config.find("robot_urdf").asString();
+        return false;
+    }
+
+    iDynTree::ModelLoader robotModelLoader;
+    if (!robotModelLoader.loadModelFromFile(robotURDFFilePath) || !robotModelLoader.isValid()) {
+        yError() << LogPrefix << "Failed to load model" << robotURDFFilePath;
+        return false;
+    }
+
+    pImpl->robotModel = robotModelLoader.model();
+
+    // =============================
+    // INITIALIZE THE WRENCH SOURCES
+    // =============================
+
     if (!(config.check("sources") && config.find("sources").isList())) {
         yError() << LogPrefix << "Option 'sources' not found or not a valid list";
         return false;
@@ -133,8 +193,8 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
         }
 
         // Temporary object
-        ForceSourceData forceSourceData;
-        forceSourceData.name = sourceName;
+        WrenchSourceData WrenchSourceData;
+        WrenchSourceData.name = sourceName;
 
         if (!(sourceGroup.check("sensorName") && sourceGroup.find("sensorName").isString())) {
             yError() << LogPrefix << "Option" << sourceName
@@ -142,7 +202,7 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
             return false;
         }
 
-        forceSourceData.sensorName = sourceGroup.find("sensorName").asString();
+        WrenchSourceData.sensorName = sourceGroup.find("sensorName").asString();
 
         if (!(sourceGroup.check("outputFrame") && sourceGroup.find("outputFrame").isString())) {
             yError() << LogPrefix << "Option" << sourceName
@@ -150,7 +210,7 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
             return false;
         }
 
-        forceSourceData.outputFrame = sourceGroup.find("outputFrame").asString();
+        WrenchSourceData.outputFrame = sourceGroup.find("outputFrame").asString();
 
         if (!(sourceGroup.check("type") && sourceGroup.find("type").isString())) {
             yError() << LogPrefix << "Option" << sourceName
@@ -160,10 +220,10 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
 
         std::string sourceType = sourceGroup.find("type").asString();
         if (sourceType == "fixed") {
-            forceSourceData.type = ForceSourceType::Fixed;
+            WrenchSourceData.type = WrenchSourceType::Fixed;
         }
         else if (sourceType == "robot") {
-            forceSourceData.type = ForceSourceType::Robot;
+            WrenchSourceData.type = WrenchSourceType::Robot;
         }
         else {
             yError() << LogPrefix << "Option" << sourceName
@@ -171,11 +231,11 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
             return false;
         }
 
-        switch (forceSourceData.type) {
-                //
+        switch (WrenchSourceData.type) {
                 // Process Fixed source type
-                //
-            case ForceSourceType::Fixed: {
+                // =========================
+
+            case WrenchSourceType::Fixed: {
                 auto transformer = std::make_unique<FixedFrameWrenchTransformer>();
 
                 if (!(sourceGroup.check("rotation") && sourceGroup.find("rotation").isList())) {
@@ -204,13 +264,13 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
 
                 // Downcast it and move the ownership into the object containing the source data
                 auto ptr = static_cast<IWrenchFrameTransformer*>(transformer.release());
-                forceSourceData.frameTransformer.reset(ptr);
+                WrenchSourceData.frameTransformer.reset(ptr);
 
                 yDebug() << LogPrefix << "=============:";
-                yDebug() << LogPrefix << "New source   :" << forceSourceData.name;
-                yDebug() << LogPrefix << "Sensor name  :" << forceSourceData.sensorName;
+                yDebug() << LogPrefix << "New source   :" << WrenchSourceData.name;
+                yDebug() << LogPrefix << "Sensor name  :" << WrenchSourceData.sensorName;
                 yDebug() << LogPrefix << "Type         :" << sourceType;
-                yDebug() << LogPrefix << "Output frame :" << forceSourceData.outputFrame;
+                yDebug() << LogPrefix << "Output frame :" << WrenchSourceData.outputFrame;
                 yDebug() << LogPrefix
                          << "Rotation     :" << sourceGroup.find("rotation").asList()->toString();
                 yDebug() << LogPrefix
@@ -219,16 +279,91 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
 
                 break;
             }
-            //
+
             // Process Robot source type
-            //
-            case ForceSourceType::Robot:
-                // TODO
+            // =========================
+            case WrenchSourceType::Robot: {
+                auto transformer = std::make_unique<RobotFrameWrenchTransformer>();
+
+                if (!(sourceGroup.check("rotation") && sourceGroup.find("rotation").isList())) {
+                    yError() << LogPrefix << "Option" << sourceName
+                             << ":: rotation not found or not a valid list";
+                    return false;
+                }
+
+                if (!(sourceGroup.check("position") && sourceGroup.find("position").isList())) {
+                    yError() << LogPrefix << "Option" << sourceName
+                             << ":: position not found or not a valid list";
+                    return false;
+                }
+
+                iDynTree::Rotation rotation;
+                iDynTree::Position position;
+
+                if (!parseRotation(sourceGroup.find("rotation").asList(),rotation)
+                        || !parsePosition(sourceGroup.find("position").asList(),position)) {
+                    yError() << LogPrefix << "Failed to parse" << sourceName
+                             << ":: rotation or position";
+                    return false;
+                }
+
+                if (!(sourceGroup.check("humanLinkingFrame") && sourceGroup.find("humanLinkingFrame").isString())) {
+                    yError() << LogPrefix << "Option" << sourceName
+                             << ":: humanLinkingFrame not found or not a valid string";
+                    return false;
+                }
+
+                WrenchSourceData.humanLinkingFrame = sourceGroup.find("humanLinkingFrame").asString();
+
+                if (!(sourceGroup.check("robotLinkingFrame") && sourceGroup.find("robotLinkingFrame").isString())) {
+                    yError() << LogPrefix << "Option" << sourceName
+                             << ":: robotLinkingFrame not found or not a valid string";
+                    return false;
+                }
+
+                WrenchSourceData.robotLinkingFrame = sourceGroup.find("robotLinkingFrame").asString();
+
+                if (!(sourceGroup.check("humanFootPosition") && sourceGroup.find("humanFootPosition").isList())) {
+                    yError() << LogPrefix << "Option" << sourceName
+                             << ":: humanFootPosition not found or not a valid list";
+                    return false;
+                }
+
+                if (!parsePosition(sourceGroup.find("humanFootPosition").asList(),WrenchSourceData.humanFootPosition)) {
+                    yError() << LogPrefix << "Failed to parse" << sourceName
+                             << ":: humanFootPosition";
+                    return false;
+                }
+
+                // Store the transform in the temporary object
+                transformer->transform = {rotation, position};
+
+                // Downcast it and move the ownership into the object containing the source data
+                auto ptr = static_cast<IWrenchFrameTransformer*>(transformer.release());
+                WrenchSourceData.frameTransformer.reset(ptr);
+
+                yDebug() << LogPrefix << "=============:";
+                yDebug() << LogPrefix << "New source   :" << WrenchSourceData.name;
+                yDebug() << LogPrefix << "Sensor name  :" << WrenchSourceData.sensorName;
+                yDebug() << LogPrefix << "Type         :" << sourceType;
+                yDebug() << LogPrefix << "Output frame :" << WrenchSourceData.outputFrame;
+                yDebug() << LogPrefix
+                         << "Rotation     :" << sourceGroup.find("rotation").asList()->toString();
+                yDebug() << LogPrefix
+                         << "Position     :" << sourceGroup.find("position").asList()->toString();
+                yDebug() << LogPrefix <<
+                            "Human foot position :" << sourceGroup.find("humanFootPosition").asList()->toString();
+                yDebug() << LogPrefix << "Human linking frame :" << WrenchSourceData.humanLinkingFrame;
+                yDebug() << LogPrefix << "Robot linking frame :" << WrenchSourceData.robotLinkingFrame;
+                yDebug() << LogPrefix << "=============:";
+
                 break;
+            }
+
         }
 
-        // Store the source data
-        pImpl->forceSources.emplace_back(std::move(forceSourceData));
+        // Store the wrench source data
+        pImpl->wrenchSources.emplace_back(std::move(WrenchSourceData));
     }
 
     return true;
@@ -243,8 +378,8 @@ bool HumanWrenchProvider::close()
 
 void HumanWrenchProvider::run()
 {
-    for (unsigned i = 0; i < pImpl->forceSources.size(); ++i) {
-        auto& forceSource = pImpl->forceSources[i];
+    for (unsigned i = 0; i < pImpl->wrenchSources.size(); ++i) {
+        auto& forceSource = pImpl->wrenchSources[i];
 
         // Get the measurement
         // ===================
@@ -271,6 +406,26 @@ void HumanWrenchProvider::run()
         iDynTree::Wrench inputWrench({forces[0], forces[1], forces[2]},
                                      {torques[0], torques[1], torques[2]});
         iDynTree::Wrench transformedWrench;
+
+        if (forceSource.type == WrenchSourceType::Robot) {
+
+            // TODO: Compute robot feet to hands transform
+            iDynTree::Transform robotFeetToHandsTransform = iDynTree::Transform::Identity();
+            iDynTree::KinDynComputations robotKinDynComp;
+
+            robotKinDynComp.loadRobotModel(pImpl->robotModel);
+            robotFeetToHandsTransform = robotKinDynComp.getRelativeTransform(forceSource.robotLinkingFrame,forceSource.outputFrame);
+
+            iDynTree::Transform robotToHumanTransform;
+
+            robotToHumanTransform = iDynTree::Transform::Identity() *
+                                    iDynTree::Transform(iDynTree::Rotation::Identity(), forceSource.humanFootPosition) *
+                                    forceSource.frameTransformer->transform * // TODO: Double check if this transform is accessed correctly
+                                    robotFeetToHandsTransform;
+
+            // Update the stored transform
+            forceSource.frameTransformer->transform = robotToHumanTransform;
+        }
 
         if (!forceSource.frameTransformer->transformWrenchFrame(inputWrench, transformedWrench)) {
             yError() << LogPrefix << "Failed to transform wrench";
@@ -319,7 +474,7 @@ bool HumanWrenchProvider::attach(yarp::dev::PolyDriver* poly)
     // TODO: switch to FourceSourceData
 
     // Get the wearable sensors containing the input measurements
-    for (auto& sensorSourceData : pImpl->forceSources) {
+    for (auto& sensorSourceData : pImpl->wrenchSources) {
         auto sensor = pImpl->iWear->getForceTorque6DSensor(sensorSourceData.sensorName);
 
         if (!sensor) {
@@ -332,7 +487,7 @@ bool HumanWrenchProvider::attach(yarp::dev::PolyDriver* poly)
     }
 
     // Initialize the number of channels of the equivalent IAnalogSensor
-    const size_t numberOfFTSensors = pImpl->forceSources.size();
+    const size_t numberOfFTSensors = pImpl->wrenchSources.size();
     {
         std::lock_guard<std::mutex> lock(pImpl->mutex);
         pImpl->analogSensorData.measurements.resize(numberOfFTSensors, 0);
@@ -404,15 +559,15 @@ int HumanWrenchProvider::read(yarp::sig::Vector& out)
 int HumanWrenchProvider::getState(int ch)
 {
     // Check if channel is in the right range
-    if (ch < 0 || ch > pImpl->forceSources.size() - 1) {
+    if (ch < 0 || ch > pImpl->wrenchSources.size() - 1) {
         yError() << LogPrefix << "Failed to get status for channel" << ch;
         yError() << LogPrefix << "Channels must be in the range 0 -"
-                 << pImpl->forceSources.size() - 1;
+                 << pImpl->wrenchSources.size() - 1;
         return IAnalogSensor::AS_ERROR;
     }
 
     // Get the sensor associated with the channel
-    const auto& sensorData = pImpl->forceSources[ch];
+    const auto& sensorData = pImpl->wrenchSources[ch];
 
     if (!sensorData.wearableSensor) {
         yError() << "The wearable sensor for this channel was not allocated";

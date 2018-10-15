@@ -27,6 +27,8 @@ namespace hde {
 class hde::devices::impl::IWrenchFrameTransformer
 {
 public:
+    iDynTree::Transform transform;
+
     virtual ~IWrenchFrameTransformer() = default;
     virtual bool transformWrenchFrame(const iDynTree::Wrench inputWrench,
                                       iDynTree::Wrench& transformedWrench) = 0;
@@ -51,8 +53,11 @@ class hde::devices::impl::RobotFrameWrenchTransformer final
     : public hde::devices::impl::IWrenchFrameTransformer
 {
 public:
+    iDynTree::Transform transform;
+
     RobotFrameWrenchTransformer() = default;
     ~RobotFrameWrenchTransformer() override = default;
+
     bool transformWrenchFrame(const iDynTree::Wrench inputWrench,
                               iDynTree::Wrench& transformedWrench) override;
 };
