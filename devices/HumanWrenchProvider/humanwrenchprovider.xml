@@ -14,9 +14,9 @@
         <group name="RobotLeftHandFT">
             <param name="sensorName">leftWBDFTSensor</param>
             <param name="outputFrame">l_hand_dh_frame</param>
-            <param name="type">Robot</param>
-            <param name="rotation">((-1.0 0.0 0.0),(0.0 -1.0 0.0),(0.0 0.0 1.0))</param>
-            <param name="position">(0.59 -0.2549 0.0)</position>
+            <param name="type">robot</param>
+            <param name="rotation">(-1.0 0.0 0.0 0.0 -1.0 0.0 0.0 0.0 1.0)</param>
+            <param name="position">(0.59 -0.2549 0.0)</param>
             <param name="humanLinkingFrame">LeftFoot</param>
             <param name="robotLinkingFrame">l_sole</param>
             <param name="humanFootPosition">(0.0 0.0 0.0918)</param>
@@ -24,9 +24,9 @@
         <group name="RobotRightHandFT">
             <param name="sensorName">rightWBDFTSensor</param>
             <param name="outputFrame">r_hand_dh_frame</param>
-            <param name="type">Robot</param>
-            <param name="rotation">((-1.0 0.0 0.0),(0.0 -1.0 0.0),(0.0 0.0 1.0))</param>
-            <param name="position">(0.59 -0.2549 0.0)</position>
+            <param name="type">robot</param>
+            <param name="rotation">(-1.0 0.0 0.0 0.0 -1.0 0.0 0.0 0.0 1.0)</param>
+            <param name="position">(0.59 -0.2549 0.0)</param>
             <param name="humanLinkingFrame">LeftFoot</param>
             <param name="robotLinkingFrame">l_sole</param>
             <param name="humanFootPosition">(0.0 0.0 0.0918)</param>
