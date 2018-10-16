@@ -49,12 +49,20 @@ public:
     public:
         std::vector<double> wrenchValues;
         bool firstDataReceived = false;
+        std::mutex mtx;
+
         using yarp::os::BufferedPort<yarp::os::Bottle>::onRead;
         virtual void onRead(yarp::os::Bottle& wrench) {
             if (!wrench.isNull()) {
-                wrenchValues.clear(); // Clear the vector of previous values
-                for (size_t i = 0; i < wrench.size(); ++i) {
-                    this->wrenchValues.push_back(wrench.get(i).asDouble());
+                std::lock_guard<std::mutex> lock (mtx);
+
+                this->wrenchValues.clear(); // Clear the vector of previous values
+
+                if (this->wrenchValues.empty()) {
+                    this->wrenchValues.resize(wrench.size());
+                    for (size_t i = 0; i < wrench.size(); ++i) {
+                        this->wrenchValues.at(i) = wrench.get(i).asDouble();
+                    }
                 }
             }
             else {
@@ -68,6 +76,7 @@ public:
         }
 
         std::vector<double> getWrench() {
+            std::lock_guard<std::mutex> lck (mtx);
             return this->wrenchValues;
         }
 
@@ -135,15 +144,16 @@ public:
             icubImpl->timeStamp.time = yarp::os::Time::now();
         }
 
+
         // Check the size of wrench values
         if(wrench.size() == 6) {
-            force3D[0] = wrench[0];
-            force3D[1] = wrench[1];
-            force3D[2] = wrench[2];
+            force3D[0] = wrench.at(0);
+            force3D[1] = wrench.at(1);
+            force3D[2] = wrench.at(2);
 
-            torque3D[0] = wrench[3];
-            torque3D[1] = wrench[4];
-            torque3D[2] = wrench[5];
+            torque3D[0] = wrench.at(3);
+            torque3D[1] = wrench.at(4);
+            torque3D[2] = wrench.at(5);
         }
         else {
             yWarning() << LogPrefix << "Size of wrench read is wrong. Setting zero values instead.";
