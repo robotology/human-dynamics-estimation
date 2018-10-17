@@ -12,7 +12,7 @@
         <param name="robot_urdf">model.urdf</param>
         <param name="sources">(RobotLeftHandFT RobotRightHandFT)</param>
         <group name="RobotLeftHandFT">
-            <param name="sensorName">leftWBDFTSensor</param>
+            <param name="sensorName">ICub::ft6D::leftWBDFTSensor</param>
             <param name="outputFrame">l_hand_dh_frame</param>
             <param name="type">robot</param>
             <param name="rotation">(-1.0 0.0 0.0 0.0 -1.0 0.0 0.0 0.0 1.0)</param>
@@ -22,7 +22,7 @@
             <param name="humanFootPosition">(0.0 0.0 0.0918)</param>
         </group>
         <group name="RobotRightHandFT">
-            <param name="sensorName">rightWBDFTSensor</param>
+            <param name="sensorName">ICub::ft6D::rightWBDFTSensor</param>
             <param name="outputFrame">r_hand_dh_frame</param>
             <param name="type">robot</param>
             <param name="rotation">(-1.0 0.0 0.0 0.0 -1.0 0.0 0.0 0.0 1.0)</param>
@@ -31,5 +31,105 @@
             <param name="robotLinkingFrame">l_sole</param>
             <param name="humanFootPosition">(0.0 0.0 0.0918)</param>
         </group>
+
+        <action phase="startup" level="5" type="attach">
+            <paramlist name="networks">
+                 <elem name="HumanWrenchProviderLabel">IWearRemapper</elem>
+            </paramlist>
+        </action>
+
+        <action phase="shutdown" level="5" type="detach" />
+    </device>
+
+    <device name="human_wrench_wrapper" type="analogServer">
+        <param name="name">/HDE/HumanWrenchWrapper/wrench:o</param>
+        <param name="period">10</param>
+
+        <action phase="startup" level="5" type="attach">
+            <paramlist name="networks">
+                <elem name="HumanWrenchWrapperLabel">HumanWrenchProvider</elem>
+            </paramlist>
+        </action>
+
+        <action phase="shutdown" level="5" type="detach" />
     </device>
 </robot>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!--device name="human_wrench_wrapper" type="analogServer">
+    <param name="name">/HDE/HumanWrenchWrapper/wrench:o</param>
+    <param name="period">10</param>
+
+    <param name="subdevice">human_wrench_provider</param>
+    <param name="human_urdf">Claudia66DoF.urdf</param>
+    <param name="robot_urdf">model.urdf</param>
+    <param name="sources">(RobotLeftHandFT RobotRightHandFT)</param>
+    <group name="RobotLeftHandFT">
+        <param name="sensorName">leftWBDFTSensor</param>
+        <param name="outputFrame">l_hand_dh_frame</param>
+        <param name="type">robot</param>
+        <param name="rotation">(-1.0 0.0 0.0 0.0 -1.0 0.0 0.0 0.0 1.0)</param>
+        <param name="position">(0.59 -0.2549 0.0)</param>
+        <param name="humanLinkingFrame">LeftFoot</param>
+        <param name="robotLinkingFrame">l_sole</param>
+        <param name="humanFootPosition">(0.0 0.0 0.0918)</param>
+    </group>
+    <group name="RobotRightHandFT">
+        <param name="sensorName">rightWBDFTSensor</param>
+        <param name="outputFrame">r_hand_dh_frame</param>
+        <param name="type">robot</param>
+        <param name="rotation">(-1.0 0.0 0.0 0.0 -1.0 0.0 0.0 0.0 1.0)</param>
+        <param name="position">(0.59 -0.2549 0.0)</param>
+        <param name="humanLinkingFrame">LeftFoot</param>
+        <param name="robotLinkingFrame">l_sole</param>
+        <param name="humanFootPosition">(0.0 0.0 0.0918)</param>
+    </group>
+    <param name="channels">1344</param>
+        <paramlist name="ports">
+            <elem name="FirstSetOfChannels">0   191  0 191</elem>
+            <elem name="SecondSetOfChannels">192 575  0 383</elem>
+            <elem name="ThirdSetOfChannels">576 1343 0 767</elem>
+        </paramlist>
+
+    <action phase="startup" level="5" type="attach">
+        <paramlist name="networks">
+            <elem name="HumanWrenchWrapperLabel">HumanWrenchProvider</elem>
+        </paramlist>
+    </action>
+
+    <action phase="shutdown" level="5" type="detach" />
+</device>
+
+
+
