@@ -27,5 +27,5 @@ bool RobotFrameWrenchTransformer::transformWrenchFrame(const iDynTree::Wrench in
     auto transformedWrenchEigen = iDynTree::toEigen(transform.asAdjointTransformWrench())
                                   * iDynTree::toEigen(inputWrench.asVector());
     iDynTree::fromEigen(transformedWrench, transformedWrenchEigen);
-    return false;
+    return true;
 }

@@ -405,6 +405,7 @@ void HumanWrenchProvider::run()
 
         iDynTree::Wrench inputWrench({forces[0], forces[1], forces[2]},
                                      {torques[0], torques[1], torques[2]});
+
         iDynTree::Wrench transformedWrench;
 
         if (forceSource.type == WrenchSourceType::Robot) {
@@ -428,7 +429,6 @@ void HumanWrenchProvider::run()
         }
 
         if (!forceSource.frameTransformer->transformWrenchFrame(inputWrench, transformedWrench)) {
-            yError() << LogPrefix << "Failed to transform wrench";
             askToStop();
             return;
         }
@@ -490,7 +490,7 @@ bool HumanWrenchProvider::attach(yarp::dev::PolyDriver* poly)
     const size_t numberOfFTSensors = pImpl->wrenchSources.size();
     {
         std::lock_guard<std::mutex> lock(pImpl->mutex);
-        pImpl->analogSensorData.measurements.resize(numberOfFTSensors, 0);
+        pImpl->analogSensorData.measurements.resize(6 * numberOfFTSensors, 0);
         pImpl->analogSensorData.numberOfChannels = 6 * numberOfFTSensors;
     }
 
