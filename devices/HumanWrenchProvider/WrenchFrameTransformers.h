@@ -12,6 +12,7 @@
 #include <iDynTree/Core/Transform.h>
 #include <iDynTree/Core/Wrench.h>
 
+#include <mutex>
 #include <string>
 
 namespace hde {
@@ -27,8 +28,6 @@ namespace hde {
 class hde::devices::impl::IWrenchFrameTransformer
 {
 public:
-    iDynTree::Transform transform;
-
     virtual ~IWrenchFrameTransformer() = default;
     virtual bool transformWrenchFrame(const iDynTree::Wrench inputWrench,
                                       iDynTree::Wrench& transformedWrench) = 0;
@@ -54,6 +53,8 @@ class hde::devices::impl::RobotFrameWrenchTransformer final
 {
 public:
     iDynTree::Transform transform;
+    iDynTree::Transform fixedTransform;
+    std::mutex _mutex;
 
     RobotFrameWrenchTransformer() = default;
     ~RobotFrameWrenchTransformer() override = default;

@@ -24,6 +24,8 @@ bool FixedFrameWrenchTransformer::transformWrenchFrame(const iDynTree::Wrench in
 bool RobotFrameWrenchTransformer::transformWrenchFrame(const iDynTree::Wrench inputWrench,
                                                        iDynTree::Wrench& transformedWrench)
 {
+    std::lock_guard<std::mutex> lock(_mutex);
+
     auto transformedWrenchEigen = iDynTree::toEigen(transform.asAdjointTransformWrench())
                                   * iDynTree::toEigen(inputWrench.asVector());
     iDynTree::fromEigen(transformedWrench, transformedWrenchEigen);

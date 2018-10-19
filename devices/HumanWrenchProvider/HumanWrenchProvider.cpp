@@ -335,8 +335,11 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
                     return false;
                 }
 
-                // Store the transform in the temporary object
-                transformer->transform = {rotation, position};
+                // Store the fixed transform in the temporary object
+                transformer->fixedTransform = {rotation, position};
+
+                // Initialize the wrench transform to be Identity
+                transformer->transform = iDynTree::Transform::Identity();
 
                 // Downcast it and move the ownership into the object containing the source data
                 auto ptr = static_cast<IWrenchFrameTransformer*>(transformer.release());
@@ -410,22 +413,38 @@ void HumanWrenchProvider::run()
 
         if (forceSource.type == WrenchSourceType::Robot) {
 
-            // TODO: Compute robot feet to hands transform
             iDynTree::Transform robotFeetToHandsTransform = iDynTree::Transform::Identity();
             iDynTree::KinDynComputations robotKinDynComp;
 
             robotKinDynComp.loadRobotModel(pImpl->robotModel);
             robotFeetToHandsTransform = robotKinDynComp.getRelativeTransform(forceSource.robotLinkingFrame,forceSource.outputFrame);
 
+
+            // Access the tranforms through pointers
+            std::lock_guard<std::mutex> lock(pImpl->mutex);
+
+            // Downcast it and move the pointer ownership into the object of derived class
+            auto transformerPtr = dynamic_cast<RobotFrameWrenchTransformer*>(forceSource.frameTransformer.release());
+            std::unique_ptr<RobotFrameWrenchTransformer> newTransformer;
+            newTransformer.reset(transformerPtr);
+
+            // Access the fixed transformation stored from configuration
+            auto robotHumanFeetFixedTransform = newTransformer->fixedTransform;
+
+            // Compute the final robot to human transform
             iDynTree::Transform robotToHumanTransform;
 
             robotToHumanTransform = iDynTree::Transform::Identity() *
                                     iDynTree::Transform(iDynTree::Rotation::Identity(), forceSource.humanFootPosition) *
-                                    forceSource.frameTransformer->transform * // TODO: Double check if this transform is accessed correctly
+                                    robotHumanFeetFixedTransform *
                                     robotFeetToHandsTransform;
 
             // Update the stored transform
-            forceSource.frameTransformer->transform = robotToHumanTransform;
+            newTransformer->transform = robotToHumanTransform;
+
+            // Downcast it and move the pointer ownership into the object containing the source data
+            auto ptr = static_cast<IWrenchFrameTransformer*>(newTransformer.release());
+            forceSource.frameTransformer.reset(ptr);
         }
 
         if (!forceSource.frameTransformer->transformWrenchFrame(inputWrench, transformedWrench)) {
