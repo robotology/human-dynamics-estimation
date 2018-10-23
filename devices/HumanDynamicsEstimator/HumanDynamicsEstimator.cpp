@@ -136,6 +136,7 @@ struct BerdyData
         iDynTree::VectorDynSize dynamicsRegularizationExpectedValue;
         iDynTree::SparseMatrix<iDynTree::ColumnMajor> dynamicsConstraintsCovarianceInverse;
         iDynTree::SparseMatrix<iDynTree::ColumnMajor> dynamicsRegularizationCovarianceInverse;
+
         // Measurements
         iDynTree::SparseMatrix<iDynTree::ColumnMajor> measurementsCovarianceInverse;
 
@@ -588,10 +589,6 @@ static bool parsePriorsGroup(const yarp::os::Bottle& priorsGroup,
                 modifiedTriplet.row += berdySensor.range.offset;
                 modifiedTriplet.column += berdySensor.range.offset;
 
-                yInfo() << "Modified triplet : " << modifiedTriplet.row << " "
-                        << modifiedTriplet.column << " "
-                        << modifiedTriplet.value;
-
                 // Combine the triplet of the sensor with the global one
                 allSensorsTriplets.setTriplet(modifiedTriplet);
             }
@@ -603,13 +600,12 @@ static bool parsePriorsGroup(const yarp::os::Bottle& priorsGroup,
         }
     }
 
-    yInfo() << "Check";
     // Store the priors of the sensors
     berdyData.priors.measurementsCovarianceInverse.setFromTriplets(allSensorsTriplets);
 
     // TODO: store this later into the solver as done with the other sparse matices
 
-    return false;
+    return true;
 }
 
 static bool parseSensorRemovalGroup(const yarp::os::Bottle& sensorRemovalGroup,
@@ -888,6 +884,9 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
     if (!parsePriorsGroup(config.findGroup("PRIORS"), berdyData, pImpl->mapBerdySensorType)) {
         yError() << LogPrefix << "Failed to parse PRIORS group";
         return false;
+    }
+    else {
+        yInfo() << LogPrefix << "PRIORS group parsed correctly";
     }
 
     // Set the priors into the berdy solver.
