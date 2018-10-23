@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<robot name="human-dynamics-estimator" build=0 portprefix="">
+
+<!--device type="iwear_remapper" name="IWearRemapper">
+    <param name="wearableDataPorts">(/XSensSuit/WearableData/data:o)</param>
+    <param name="wearableRPCPorts">(/XSensSuit/WearableData/metadataRpc:o)</param>
+    <param name="outputPortName">/HDE/IWearRemapper/data:o</param>
+</device-->
+
+<device type="human_dynamics_estimator" name="HumanDynamicsEstimator">
+    <param name="period">0.100</param>
+    <param name="urdf">Claudia66DoF.urdf</param>
+    <param name="baseLink">Pelvis</param>
+    <group name="PRIORS">
+        <param name="cov_dyn_variables">10000.0</param>
+        <param name="cov_dyn_constraints">0.0001</param>
+        <param name="mu_dyn_variables">0.0001</param>
+        <param name="cov_measurements_ACCELEROMETER_SENSOR">(0.0011 0.0011 0.0011)</param>
+        <param name="cov_measurements_DOF_ACCELERATION_SENSOR">0.666e-5</param>
+        <group name="cov_measurements_NET_EXT_WRENCH_SENSOR">
+            <param name="value">1e-6</param>
+            <param name="specific_elements">(LeftFoot RightFoot LeftHand RightHand)</param>
+            <param name="LeftFoot">(0.0589998348 0.0589998348 0.0359999712 0.002250000225 0.002250000225 0.56e-3)</param>
+            <param name="RightFoot">(0.0589998348 0.0589998348 0.0359999712 0.002250000225 0.002250000225 0.56e-3)</param>
+            <param name="LeftHand">(0.0589998348 0.0589998348 0.0359999712 0.002250000225 0.002250000225 0.56e-3)</param>
+            <param name="RightHand">(0.0589998348 0.0589998348 0.0359999712 0.002250000225 0.002250000225 0.56e-3)</param>
+        </group>
+    </group>
+    <group name="SENSORS_REMOVAL">
+        <param name="GYROSCOPE_SENSOR">*</param>
+        <!--Currently force torque sensors are not defined in Claudia66DoF.urdf file>
+        <So, the list used below will throw an error. It is better to use * instead>
+        <TODO: How to include the FTSensors from ICub device-->
+        <!--param name="SIX_AXIS_FORCE_TORQUE_SENSOR">*</param-->
+    </group>
+</device>
+
+</robot>
