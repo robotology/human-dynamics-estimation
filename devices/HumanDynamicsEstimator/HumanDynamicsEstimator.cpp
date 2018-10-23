@@ -902,16 +902,16 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
         // Check that it is unique
         if (berdyData.sensorMapIndex.find(key) != berdyData.sensorMapIndex.end()) {
             yWarning() << "The sensor" << sensor.id
-                       << "has been alredy inserted. Check the urdf model for duplicates. "
+                       << "has been already inserted. Check the urdf model for duplicates. "
                           "Skipping it.";
             continue;
         }
 
         // Insert the sensor index range
         berdyData.sensorMapIndex.insert({key, sensor.range});
-
-        // TODO print yInfo messages for notifying that the sensor was parsed
     }
+
+    yInfo() << LogPrefix << "The sensors are parsed successfully";
 
     // Load the priors
     if (!parsePriorsGroup(config.findGroup("PRIORS"), berdyData, pImpl->mapBerdySensorType)) {
