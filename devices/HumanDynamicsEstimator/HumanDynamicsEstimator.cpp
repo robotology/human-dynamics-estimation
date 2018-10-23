@@ -484,6 +484,8 @@ static bool parsePriorsGroup(const yarp::os::Bottle& priorsGroup,
         for (size_t i = 0; i < muDynVariables.size(); ++i) {
             berdyData.priors.dynamicsRegularizationExpectedValue(i) = muDynVariables[i];
         }
+
+        yInfo() << LogPrefix << "Dynamic variables regularization expected value vector set successfully";
     }
 
     // --------------------------------------------------
@@ -513,9 +515,21 @@ static bool parsePriorsGroup(const yarp::os::Bottle& priorsGroup,
             return false;
         }
 
-        // Store the value into the berdyData
-        berdyData.priors.dynamicsConstraintsCovarianceInverse.setFromTriplets(
-            covDynConstraintsTriplets);
+        // Check the size of the triplets
+        if (covDynConstraintsTriplets.size() != 0) {
+            // Resize the sparse matrix before storing values from triplets
+            berdyData.priors.dynamicsConstraintsCovarianceInverse.resize(covDynConstraintsTriplets.size(),
+                                                                         covDynConstraintsTriplets.size());
+            // Store the value into the berdyData
+            berdyData.priors.dynamicsConstraintsCovarianceInverse.setFromTriplets(covDynConstraintsTriplets);
+
+        }
+        else {
+            yError() << LogPrefix << "covDynConstraintsTriplets size invalid";
+            return false;
+        }
+
+        yInfo() << LogPrefix << "Dynamic constraints covariance covariance matrix set successfully";
     }
 
     // ---------------------------------------------------------------
@@ -545,11 +559,21 @@ static bool parsePriorsGroup(const yarp::os::Bottle& priorsGroup,
             return false;
         }
 
-        // Store the value into the berdyData
-        berdyData.priors.dynamicsRegularizationCovarianceInverse.setFromTriplets(
-            covDynVariablesTriplets);
+        // Check the size of the triplets
+        if (covDynVariablesTriplets.size() != 0) {
+            // Resize the sparse matrix before storing values from triplets
+            berdyData.priors.dynamicsRegularizationCovarianceInverse.resize(covDynVariablesTriplets.size(),
+                                                                            covDynVariablesTriplets.size());
+            // Store the value into the berdyData
+            berdyData.priors.dynamicsRegularizationCovarianceInverse.setFromTriplets(covDynVariablesTriplets);
 
-        yInfo() << LogPrefix << "Dynamic variables covariance set successfully";
+        }
+        else {
+            yError() << LogPrefix << "covDynVariablesTriplets size invalid";
+            return false;
+        }
+
+        yInfo() << LogPrefix << "Dynamic variables regularization covariance matrix set successfully";
     }
 
     // ----------------------------------
@@ -570,7 +594,6 @@ static bool parsePriorsGroup(const yarp::os::Bottle& priorsGroup,
         // Get the string from the enum
         std::string berdySensorTypeString = mapBerdySensorType.at(berdySensor.type);
 
-        // TODO: @Yeshi for some reason this find fails but the option is there
         if (!priorsGroup.find(covMeasurementOptionPrefix + berdySensorTypeString).isNull()) {
 
             iDynTree::Triplets triplets;
@@ -595,15 +618,25 @@ static bool parsePriorsGroup(const yarp::os::Bottle& priorsGroup,
 
         }
         else {
-            yError() << "Failed to find the parameter " << covMeasurementOptionPrefix + berdySensorTypeString;
+            yError() << LogPrefix << "Failed to find the parameter " << covMeasurementOptionPrefix + berdySensorTypeString;
             return false;
         }
     }
 
-    // Store the priors of the sensors
-    berdyData.priors.measurementsCovarianceInverse.setFromTriplets(allSensorsTriplets);
+    // Check the size of the triplets
+    if (allSensorsTriplets.size() != 0) {
+        // Resize the sparse matrix before storing values from triplets
+        berdyData.priors.measurementsCovarianceInverse.resize(allSensorsTriplets.size(),
+                                                              allSensorsTriplets.size());
+        // Store the priors of the sensors
+        berdyData.priors.measurementsCovarianceInverse.setFromTriplets(allSensorsTriplets);
+    }
+    else {
+        yError() << LogPrefix << "allSensorsTriplets size invalid";
+        return false;
+    }
 
-    // TODO: store this later into the solver as done with the other sparse matices
+    yInfo() << LogPrefix << "Measurements covariance inverse matrix set successfully";
 
     return true;
 }
@@ -889,16 +922,19 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
         yInfo() << LogPrefix << "PRIORS group parsed correctly";
     }
 
-    // Set the priors into the berdy solver.
-    // The sizes of the priors are set in the parsePriorsGroup function.
-    // TODO: what aboyut setMeasurementsPriorCovariance?
-    berdyData.solver->setDynamicsRegularizationPriorExpectedValue(
-        berdyData.priors.dynamicsRegularizationExpectedValue);
-    // TODO: @Yeshi The following for some reason crashes during runtime
-    berdyData.solver->setDynamicsRegularizationPriorCovariance(
-        berdyData.priors.dynamicsRegularizationCovarianceInverse);
-    berdyData.solver->setDynamicsConstraintsPriorCovariance(
-        berdyData.priors.dynamicsConstraintsCovarianceInverse);
+    // Set the priors into the berdy solver
+    // The sizes of the priors are set in the parsePriorsGroup function
+    berdyData.solver->setDynamicsRegularizationPriorExpectedValue(berdyData.priors.dynamicsRegularizationExpectedValue);
+    yInfo() << LogPrefix << "Berdy solver DynamicsRegularizationPriorExpectedValue set successfully";
+
+    berdyData.solver->setDynamicsConstraintsPriorCovariance(berdyData.priors.dynamicsConstraintsCovarianceInverse);
+    yInfo() << LogPrefix << "Berdy solver DynamicsConstraintsPriorCovariance set successfully";
+
+    berdyData.solver->setDynamicsRegularizationPriorCovariance(berdyData.priors.dynamicsRegularizationCovarianceInverse);
+    yInfo() << LogPrefix << "Berdy solver DynamicsRegularizationPriorCovariance set successfully";
+
+    berdyData.solver->setMeasurementsPriorCovariance(berdyData.priors.measurementsCovarianceInverse);
+    yInfo() << LogPrefix << "Berdy solver MeasurementsPriorCovariance set successfully";
 
     berdyData.buffers.measurements.resize(berdyData.helper.getNrOfSensorsMeasurements());
 
