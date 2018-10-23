@@ -404,7 +404,9 @@ static bool getTripletsFromPriorGroup(const yarp::os::Bottle priorGroup,
     return true;
 }
 
-static bool parsePriorsGroup(const yarp::os::Bottle& priorsGroup, BerdyData& berdyData)
+static bool parsePriorsGroup(const yarp::os::Bottle& priorsGroup,
+                             BerdyData& berdyData,
+                             const std::unordered_map<iDynTree::BerdySensorTypes, std::string>& mapBerdySensorType)
 {
     // =================
     // CHECK THE OPTIONS
@@ -545,29 +547,19 @@ static bool parsePriorsGroup(const yarp::os::Bottle& priorsGroup, BerdyData& ber
         // Store the value into the berdyData
         berdyData.priors.dynamicsRegularizationCovarianceInverse.setFromTriplets(
             covDynVariablesTriplets);
+
+        yInfo() << LogPrefix << "Dynamic variables covariance set successfully";
     }
 
     // ----------------------------------
     // Priors on measurements constraints
     // ----------------------------------
 
-    std::map<iDynTree::BerdySensorTypes, std::string> mapBerdySensorType = {
-        {iDynTree::BerdySensorTypes::SIX_AXIS_FORCE_TORQUE_SENSOR, "SIX_AXIS_FORCE_TORQUE_SENSOR"},
-        {iDynTree::BerdySensorTypes::ACCELEROMETER_SENSOR, "ACCELEROMETER_SENSOR"},
-        {iDynTree::BerdySensorTypes::GYROSCOPE_SENSOR, "GYROSCOPE_SENSOR"},
-        {iDynTree::BerdySensorTypes::THREE_AXIS_ANGULAR_ACCELEROMETER_SENSOR,
-         "THREE_AXIS_ANGULAR_ACCELEROMETER_SENSOR"},
-        {iDynTree::BerdySensorTypes::THREE_AXIS_FORCE_TORQUE_CONTACT_SENSOR,
-         "THREE_AXIS_FORCE_TORQUE_CONTACT_SENSOR"},
-        {iDynTree::BerdySensorTypes::DOF_ACCELERATION_SENSOR, "DOF_ACCELERATION_SENSOR"},
-        {iDynTree::BerdySensorTypes::DOF_TORQUE_SENSOR, "DOF_TORQUE_SENSOR"},
-        {iDynTree::BerdySensorTypes::NET_EXT_WRENCH_SENSOR, "NET_EXT_WRENCH_SENSOR"},
-        {iDynTree::BerdySensorTypes::JOINT_WRENCH_SENSOR, "JOINT_WRENCH_SENSOR"}};
-
     iDynTree::Triplets allSensorsTriplets;
     std::string covMeasurementOptionPrefix = "cov_measurements_";
 
     for (const iDynTree::BerdySensor& berdySensor : berdyData.helper.getSensorsOrdering()) {
+
         // Check that the sensor is a valid berdy sensor
         if (mapBerdySensorType.find(berdySensor.type) == mapBerdySensorType.end()) {
             yError() << LogPrefix << "Failed to find berdy sensor type. Maybe is a new sensor?";
@@ -579,8 +571,7 @@ static bool parsePriorsGroup(const yarp::os::Bottle& priorsGroup, BerdyData& ber
 
         // TODO: @Yeshi for some reason this find fails but the option is there
         if (!priorsGroup.find(covMeasurementOptionPrefix + berdySensorTypeString).isNull()) {
-            yDebug() << "HERE";
-            // TODO: log messages
+
             iDynTree::Triplets triplets;
 
             if (!getTripletsFromPriorGroup(
@@ -596,21 +587,34 @@ static bool parsePriorsGroup(const yarp::os::Bottle& priorsGroup, BerdyData& ber
                 iDynTree::Triplet modifiedTriplet = triplet;
                 modifiedTriplet.row += berdySensor.range.offset;
                 modifiedTriplet.column += berdySensor.range.offset;
+
+                yInfo() << "Modified triplet : " << modifiedTriplet.row << " "
+                        << modifiedTriplet.column << " "
+                        << modifiedTriplet.value;
+
                 // Combine the triplet of the sensor with the global one
                 allSensorsTriplets.setTriplet(modifiedTriplet);
             }
+
+        }
+        else {
+            yError() << "Failed to find the parameter " << covMeasurementOptionPrefix + berdySensorTypeString;
+            return false;
         }
     }
 
+    yInfo() << "Check";
     // Store the priors of the sensors
     berdyData.priors.measurementsCovarianceInverse.setFromTriplets(allSensorsTriplets);
+
     // TODO: store this later into the solver as done with the other sparse matices
 
-    return true;
+    return false;
 }
 
 static bool parseSensorRemovalGroup(const yarp::os::Bottle& sensorRemovalGroup,
-                                    iDynTree::SensorsList& sensorList)
+                                    iDynTree::SensorsList& sensorList,
+                                    const std::unordered_map<iDynTree::BerdySensorTypes, std::string>& mapBerdySensorType)
 {
     // =================
     // CHECK THE OPTIONS
@@ -620,19 +624,6 @@ static bool parseSensorRemovalGroup(const yarp::os::Bottle& sensorRemovalGroup,
         yError() << LogPrefix << "Failed to find the SENSOR_REMOVAL options group";
         return false;
     }
-
-    const std::unordered_map<iDynTree::BerdySensorTypes, std::string> mapBerdySensorType = {
-        {iDynTree::BerdySensorTypes::SIX_AXIS_FORCE_TORQUE_SENSOR, "SIX_AXIS_FORCE_TORQUE_SENSOR"},
-        {iDynTree::BerdySensorTypes::ACCELEROMETER_SENSOR, "ACCELEROMETER_SENSOR"},
-        {iDynTree::BerdySensorTypes::GYROSCOPE_SENSOR, "GYROSCOPE_SENSOR"},
-        {iDynTree::BerdySensorTypes::THREE_AXIS_ANGULAR_ACCELEROMETER_SENSOR,
-         "THREE_AXIS_ANGULAR_ACCELEROMETER_SENSOR"},
-        {iDynTree::BerdySensorTypes::THREE_AXIS_FORCE_TORQUE_CONTACT_SENSOR,
-         "THREE_AXIS_FORCE_TORQUE_CONTACT_SENSOR"},
-        {iDynTree::BerdySensorTypes::DOF_ACCELERATION_SENSOR, "DOF_ACCELERATION_SENSOR"},
-        {iDynTree::BerdySensorTypes::DOF_TORQUE_SENSOR, "DOF_TORQUE_SENSOR"},
-        {iDynTree::BerdySensorTypes::NET_EXT_WRENCH_SENSOR, "NET_EXT_WRENCH_SENSOR"},
-        {iDynTree::BerdySensorTypes::JOINT_WRENCH_SENSOR, "JOINT_WRENCH_SENSOR"}};
 
     for (const auto& sensor : mapBerdySensorType) {
         iDynTree::BerdySensorTypes berdySensorType = sensor.first;
@@ -721,6 +712,18 @@ static bool parseSensorRemovalGroup(const yarp::os::Bottle& sensorRemovalGroup,
         }
     }
 
+    // Debug code to show the type and number of sensors finally contained in sensor list
+    yInfo() << LogPrefix << "Number of SIX_AXIS_FORCE_TORQUE_SENSOR sensors loaded from urdf model : " << sensorList.getNrOfSensors(static_cast<iDynTree::SensorType>(iDynTree::BerdySensorTypes::SIX_AXIS_FORCE_TORQUE_SENSOR));
+    yInfo() << LogPrefix << "Number of ACCELEROMETER_SENSOR sensors loaded from urdf model : " << sensorList.getNrOfSensors(static_cast<iDynTree::SensorType>(iDynTree::BerdySensorTypes::ACCELEROMETER_SENSOR));
+    yInfo() << LogPrefix << "Number of GYROSCOPE_SENSOR sensors loaded from urdf model : " << sensorList.getNrOfSensors(static_cast<iDynTree::SensorType>(iDynTree::BerdySensorTypes::GYROSCOPE_SENSOR));
+    yInfo() << LogPrefix << "Number of THREE_AXIS_ANGULAR_ACCELEROMETER_SENSOR sensors loaded from urdf model : " << sensorList.getNrOfSensors(static_cast<iDynTree::SensorType>(iDynTree::BerdySensorTypes::THREE_AXIS_ANGULAR_ACCELEROMETER_SENSOR));
+    yInfo() << LogPrefix << "Number of THREE_AXIS_FORCE_TORQUE_CONTACT_SENSOR sensors loaded from urdf model : " << sensorList.getNrOfSensors(static_cast<iDynTree::SensorType>(iDynTree::BerdySensorTypes::THREE_AXIS_FORCE_TORQUE_CONTACT_SENSOR));
+
+    //TODO: Double check the casting for the following berdy sensors
+    //yInfo() << LogPrefix << "Number of DOF_ACCELERATION_SENSOR sensors loaded from urdf model : " << sensorList.getNrOfSensors(static_cast<iDynTree::SensorType>(iDynTree::BerdySensorTypes::DOF_ACCELERATION_SENSOR));
+    //yInfo() << LogPrefix << "Number of DOF_TORQUE_SENSOR sensors loaded from urdf model : " << sensorList.getNrOfSensors(static_cast<iDynTree::SensorType>(iDynTree::BerdySensorTypes::DOF_TORQUE_SENSOR));
+    //yInfo() << LogPrefix << "Number of NET_EXT_WRENCH_SENSOR sensors loaded from urdf model : " << sensorList.getNrOfSensors(static_cast<iDynTree::SensorType>(iDynTree::BerdySensorTypes::NET_EXT_WRENCH_SENSOR));
+
     return true;
 }
 
@@ -735,6 +738,20 @@ public:
 
     mutable std::mutex mutex;
     iDynTree::Vector3 gravity;
+
+    const std::unordered_map<iDynTree::BerdySensorTypes, std::string> mapBerdySensorType = {
+        {iDynTree::BerdySensorTypes::SIX_AXIS_FORCE_TORQUE_SENSOR, "SIX_AXIS_FORCE_TORQUE_SENSOR"},
+        {iDynTree::BerdySensorTypes::ACCELEROMETER_SENSOR, "ACCELEROMETER_SENSOR"},
+        {iDynTree::BerdySensorTypes::GYROSCOPE_SENSOR, "GYROSCOPE_SENSOR"},
+        {iDynTree::BerdySensorTypes::THREE_AXIS_ANGULAR_ACCELEROMETER_SENSOR,
+         "THREE_AXIS_ANGULAR_ACCELEROMETER_SENSOR"},
+        {iDynTree::BerdySensorTypes::THREE_AXIS_FORCE_TORQUE_CONTACT_SENSOR,
+         "THREE_AXIS_FORCE_TORQUE_CONTACT_SENSOR"},
+        {iDynTree::BerdySensorTypes::DOF_ACCELERATION_SENSOR, "DOF_ACCELERATION_SENSOR"},
+        {iDynTree::BerdySensorTypes::DOF_TORQUE_SENSOR, "DOF_TORQUE_SENSOR"},
+        {iDynTree::BerdySensorTypes::NET_EXT_WRENCH_SENSOR, "NET_EXT_WRENCH_SENSOR"},
+        {iDynTree::BerdySensorTypes::JOINT_WRENCH_SENSOR, "JOINT_WRENCH_SENSOR"}};
+
 };
 
 HumanDynamicsEstimator::HumanDynamicsEstimator()
@@ -798,8 +815,12 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
     // Initialize the sensors
     iDynTree::SensorsList humanSensors = modelLoader.sensors();
 
+    // TODO: Currently FT sensors of the shoe are not included in the urdf model
+    // So, the shoes have to be added as sensors. Also, iCub hand FT sensors should
+    // taken into account
+
     // If any, remove the sensors from the SENSORS_REMOVAL option
-    if (!parseSensorRemovalGroup(config.findGroup("SENSORS_REMOVAL"), humanSensors)) {
+    if (!parseSensorRemovalGroup(config.findGroup("SENSORS_REMOVAL"), humanSensors, pImpl->mapBerdySensorType)) {
         yError() << LogPrefix << "Failed to parse SENSORS_REMOVAL group";
         return false;
     }
@@ -864,13 +885,13 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
     }
 
     // Load the priors
-    if (!parsePriorsGroup(config.findGroup("PRIORS"), berdyData)) {
+    if (!parsePriorsGroup(config.findGroup("PRIORS"), berdyData, pImpl->mapBerdySensorType)) {
         yError() << LogPrefix << "Failed to parse PRIORS group";
         return false;
     }
 
     // Set the priors into the berdy solver.
-    // The sizes or the priors are set in the parsePriorsGroup function.
+    // The sizes of the priors are set in the parsePriorsGroup function.
     // TODO: what aboyut setMeasurementsPriorCovariance?
     berdyData.solver->setDynamicsRegularizationPriorExpectedValue(
         berdyData.priors.dynamicsRegularizationExpectedValue);
