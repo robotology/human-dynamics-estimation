@@ -1001,22 +1001,35 @@ void HumanDynamicsEstimator::run()
     // TODO @Yeshi take inspiration from the dummy estimation performed at the end of the open()
     // method
     // Get kinematic state data
-    std::vector<double> jointPosition     = pImpl->iHumanState->getJointPositions();
-    std::vector<double> jointVelocities   = pImpl->iHumanState->getJointVelocities();
+    std::vector<double> jointsPosition    = pImpl->iHumanState->getJointPositions();
+    std::vector<double> jointsVelocity    = pImpl->iHumanState->getJointVelocities();
 
     std::array<double, 3> basePosition    = pImpl->iHumanState->getBasePosition();
     std::array<double, 4> baseOrientation = pImpl->iHumanState->getBaseOrientation();
     std::array<double, 6> baseVelocity    = pImpl->iHumanState->getBaseVelocity();
 
+    // Debug code
+    yInfo() << LogPrefix << "Joint positions : " << jointsPosition;
+    yInfo() << LogPrefix << "Joint velocity : " << jointsVelocity;
+
+    yInfo() << LogPrefix << "Base position : " << basePosition.at(0) << basePosition.at(1) << basePosition.at(2);
+    yInfo() << LogPrefix << "Base orientation : " << baseOrientation.at(0) << baseOrientation.at(1) << baseOrientation.at(2);
+    yInfo() << LogPrefix << "Base velocity : " << baseVelocity.at(0)
+                                               << baseVelocity.at(1)
+                                               << baseVelocity.at(2)
+                                               << baseVelocity.at(3)
+                                               << baseVelocity.at(4)
+                                               << baseVelocity.at(5);
+
     // Pad the received state data to berdy state variables
-    pImpl->berdyData.state.jointsPosition.resize(jointPosition.size());
-    for (size_t i = 0; i < jointPosition.size(); i++) {
-        pImpl->berdyData.state.jointsPosition.setVal(i, jointPosition.at(i));
+    pImpl->berdyData.state.jointsPosition.resize(jointsPosition.size());
+    for (size_t i = 0; i < jointsPosition.size(); i++) {
+        pImpl->berdyData.state.jointsPosition.setVal(i, jointsPosition.at(i));
     }
 
-    pImpl->berdyData.state.jointsVelocity.resize(jointVelocities.size());
-    for (size_t i = 0; i < jointVelocities.size(); ++i) {
-        pImpl->berdyData.state.jointsVelocity.setVal(i, jointVelocities.size());
+    pImpl->berdyData.state.jointsVelocity.resize(jointsVelocity.size());
+    for (size_t i = 0; i < jointsVelocity.size(); ++i) {
+        pImpl->berdyData.state.jointsVelocity.setVal(i, jointsVelocity.size());
     }
 
     pImpl->berdyData.state.baseAngularVelocity.setVal(0, baseVelocity.at(3));
