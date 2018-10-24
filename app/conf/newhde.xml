@@ -206,7 +206,7 @@
         <action phase="shutdown" level="5" type="detach" />
     </device>
 
-    <device name="human_wrench_wrapper" type="analogServer">
+    <device type="analogServer" name="HumanWrenchWrapper">
         <param name="name">/HDE/HumanWrenchWrapper/wrench:o</param>
         <param name="period">10</param>
 
@@ -245,6 +245,15 @@
             <TODO: How to include the FTSensors from ICub device-->
             <!--param name="SIX_AXIS_FORCE_TORQUE_SENSOR">*</param-->
         </group>
+
+        <action phase="startup" level="5" type="attach">
+            <paramlist name="networks">
+                <elem name="HumanDynamicsEstimatorLabel">HumanStateProvider</elem>
+            </paramlist>
+        </action>
+
+        <action phase="shutdown" level="5" type="detach"/>
+
     </device>
 
 </robot>
