@@ -953,9 +953,9 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
     // Run a first dummy estimation
     // ----------------------------
 
-    iDynTree::FrameIndex baseIx = pImpl->berdyData.helper.model().getFrameIndex(baseLink);
+    pImpl->berdyData.state.floatingFrameIndex = pImpl->berdyData.helper.model().getFrameIndex(baseLink);
 
-    if (baseIx == iDynTree::FRAME_INVALID_INDEX) {
+    if (pImpl->berdyData.state.floatingFrameIndex == iDynTree::FRAME_INVALID_INDEX) {
         yError() << LogPrefix << "Passed frame" << baseLink << "not found in the model";
         return false;
     }
