@@ -21,6 +21,7 @@ target_include_directories(HumanDynamicsEstimator PUBLIC
     SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIR})
 
 target_link_libraries(HumanDynamicsEstimator PUBLIC
+    IHumanState
     IHumanDynamics
     YARP::YARP_OS
     YARP::YARP_dev

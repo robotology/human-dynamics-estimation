@@ -8,6 +8,8 @@
 
 #include "HumanDynamicsEstimator.h"
 
+#include "IHumanState.h"
+
 #include <Eigen/SparseCholesky>
 #include <Eigen/SparseCore>
 #include <Eigen/SparseLU>
@@ -765,6 +767,9 @@ public:
         gravity(2) = -9.81;
     }
 
+    // Attached interfaces
+    hde::interfaces::IHumanState* iHumanState = nullptr;
+
     mutable std::mutex mutex;
     iDynTree::Vector3 gravity;
 
@@ -780,6 +785,9 @@ public:
         {iDynTree::BerdySensorTypes::DOF_TORQUE_SENSOR, "DOF_TORQUE_SENSOR"},
         {iDynTree::BerdySensorTypes::NET_EXT_WRENCH_SENSOR, "NET_EXT_WRENCH_SENSOR"},
         {iDynTree::BerdySensorTypes::JOINT_WRENCH_SENSOR, "JOINT_WRENCH_SENSOR"}};
+
+    // Berdy variable
+    BerdyData berdyData;
 
 };
 
@@ -820,7 +828,11 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
     std::string urdfFileName = config.find("urdf").asString();
     std::string baseLink = config.find("baseLink").asString();
 
-    // TODO: print
+    yInfo() << LogPrefix << "*** ========================";
+    yInfo() << LogPrefix << "*** Period                 :" << period;
+    yInfo() << LogPrefix << "*** Urdf file name         :" << urdfFileName;
+    yInfo() << LogPrefix << "*** Base link name         :" << baseLink;
+    yInfo() << LogPrefix << "*** ========================";
 
     // ===========
     // BERDY SETUP
@@ -870,28 +882,27 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
     }
 
     // Initialize the BerdyHelper
-    BerdyData berdyData;
-    if (!berdyData.helper.init(modelLoader.model(), humanSensors, berdyOptions)) {
+    if (!pImpl->berdyData.helper.init(modelLoader.model(), humanSensors, berdyOptions)) {
         yError() << LogPrefix << "Failed to initialize BERDY";
         return false;
     }
 
     // Initialize the BerdySolver
-    berdyData.solver = std::make_unique<iDynTree::BerdySparseMAPSolver>(berdyData.helper);
-    berdyData.solver->initialize();
+    pImpl->berdyData.solver = std::make_unique<iDynTree::BerdySparseMAPSolver>(pImpl->berdyData.helper);
+    pImpl->berdyData.solver->initialize();
 
-    if (!berdyData.solver->isValid()) {
+    if (!pImpl->berdyData.solver->isValid()) {
         yError() << LogPrefix << "Failed to initialize the Berdy MAP solver";
         return false;
     }
 
     // Initialize buffers of the state
-    berdyData.state.jointsPosition = iDynTree::JointPosDoubleArray(berdyData.helper.model());
-    berdyData.state.jointsVelocity = iDynTree::JointDOFsDoubleArray(berdyData.helper.model());
-    berdyData.state.jointsAcceleration = iDynTree::JointDOFsDoubleArray(berdyData.helper.model());
+    pImpl->berdyData.state.jointsPosition = iDynTree::JointPosDoubleArray(pImpl->berdyData.helper.model());
+    pImpl->berdyData.state.jointsVelocity = iDynTree::JointDOFsDoubleArray(pImpl->berdyData.helper.model());
+    pImpl->berdyData.state.jointsAcceleration = iDynTree::JointDOFsDoubleArray(pImpl->berdyData.helper.model());
 
     // Get the berdy sensors following its internal order
-    std::vector<iDynTree::BerdySensor> berdySensors = berdyData.helper.getSensorsOrdering();
+    std::vector<iDynTree::BerdySensor> berdySensors = pImpl->berdyData.helper.getSensorsOrdering();
 
     // Create a map that describes where are the sensors measurements in the y vector
     // in terms of index offset and range
@@ -900,7 +911,7 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
         BerdyData::SensorKey key = {sensor.type, sensor.id};
 
         // Check that it is unique
-        if (berdyData.sensorMapIndex.find(key) != berdyData.sensorMapIndex.end()) {
+        if (pImpl->berdyData.sensorMapIndex.find(key) != pImpl->berdyData.sensorMapIndex.end()) {
             yWarning() << "The sensor" << sensor.id
                        << "has been already inserted. Check the urdf model for duplicates. "
                           "Skipping it.";
@@ -908,13 +919,13 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
         }
 
         // Insert the sensor index range
-        berdyData.sensorMapIndex.insert({key, sensor.range});
+        pImpl->berdyData.sensorMapIndex.insert({key, sensor.range});
     }
 
     yInfo() << LogPrefix << "The sensors are parsed successfully";
 
     // Load the priors
-    if (!parsePriorsGroup(config.findGroup("PRIORS"), berdyData, pImpl->mapBerdySensorType)) {
+    if (!parsePriorsGroup(config.findGroup("PRIORS"), pImpl->berdyData, pImpl->mapBerdySensorType)) {
         yError() << LogPrefix << "Failed to parse PRIORS group";
         return false;
     }
@@ -924,25 +935,25 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
 
     // Set the priors into the berdy solver
     // The sizes of the priors are set in the parsePriorsGroup function
-    berdyData.solver->setDynamicsRegularizationPriorExpectedValue(berdyData.priors.dynamicsRegularizationExpectedValue);
+    pImpl->berdyData.solver->setDynamicsRegularizationPriorExpectedValue(pImpl->berdyData.priors.dynamicsRegularizationExpectedValue);
     yInfo() << LogPrefix << "Berdy solver DynamicsRegularizationPriorExpectedValue set successfully";
 
-    berdyData.solver->setDynamicsConstraintsPriorCovariance(berdyData.priors.dynamicsConstraintsCovarianceInverse);
+    pImpl->berdyData.solver->setDynamicsConstraintsPriorCovariance(pImpl->berdyData.priors.dynamicsConstraintsCovarianceInverse);
     yInfo() << LogPrefix << "Berdy solver DynamicsConstraintsPriorCovariance set successfully";
 
-    berdyData.solver->setDynamicsRegularizationPriorCovariance(berdyData.priors.dynamicsRegularizationCovarianceInverse);
+    pImpl->berdyData.solver->setDynamicsRegularizationPriorCovariance(pImpl->berdyData.priors.dynamicsRegularizationCovarianceInverse);
     yInfo() << LogPrefix << "Berdy solver DynamicsRegularizationPriorCovariance set successfully";
 
-    berdyData.solver->setMeasurementsPriorCovariance(berdyData.priors.measurementsCovarianceInverse);
+    pImpl->berdyData.solver->setMeasurementsPriorCovariance(pImpl->berdyData.priors.measurementsCovarianceInverse);
     yInfo() << LogPrefix << "Berdy solver MeasurementsPriorCovariance set successfully";
 
-    berdyData.buffers.measurements.resize(berdyData.helper.getNrOfSensorsMeasurements());
+    pImpl->berdyData.buffers.measurements.resize(pImpl->berdyData.helper.getNrOfSensorsMeasurements());
 
     // ----------------------------
     // Run a first dummy estimation
     // ----------------------------
 
-    iDynTree::FrameIndex baseIx = berdyData.helper.model().getFrameIndex(baseLink);
+    iDynTree::FrameIndex baseIx = pImpl->berdyData.helper.model().getFrameIndex(baseLink);
 
     if (baseIx == iDynTree::FRAME_INVALID_INDEX) {
         yError() << LogPrefix << "Passed frame" << baseLink << "not found in the model";
@@ -950,26 +961,26 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
     }
 
     // Fill random data
-    iDynTree::getRandomVector(berdyData.state.jointsPosition);
-    iDynTree::getRandomVector(berdyData.state.jointsVelocity);
-    iDynTree::getRandomVector(berdyData.state.baseAngularVelocity);
-    iDynTree::getRandomVector(berdyData.buffers.measurements);
+    iDynTree::getRandomVector(pImpl->berdyData.state.jointsPosition);
+    iDynTree::getRandomVector(pImpl->berdyData.state.jointsVelocity);
+    iDynTree::getRandomVector(pImpl->berdyData.state.baseAngularVelocity);
+    iDynTree::getRandomVector(pImpl->berdyData.buffers.measurements);
 
     // Solve a dummy problem
-    berdyData.solver->updateEstimateInformationFloatingBase(berdyData.state.jointsPosition,
-                                                            berdyData.state.jointsVelocity,
-                                                            berdyData.state.floatingFrameIndex,
-                                                            berdyData.state.baseAngularVelocity,
-                                                            berdyData.buffers.measurements);
+    pImpl->berdyData.solver->updateEstimateInformationFloatingBase(pImpl->berdyData.state.jointsPosition,
+                                                                   pImpl->berdyData.state.jointsVelocity,
+                                                                   pImpl->berdyData.state.floatingFrameIndex,
+                                                                   pImpl->berdyData.state.baseAngularVelocity,
+                                                                   pImpl->berdyData.buffers.measurements);
 
-    if (!berdyData.solver->doEstimate()) {
+    if (!pImpl->berdyData.solver->doEstimate()) {
         yError() << LogPrefix << "Failed to launch a first dummy estimation";
         return false;
     }
 
     // Extract the solution
-    iDynTree::VectorDynSize estimatedDynamicVariables(berdyData.helper.getNrOfDynamicVariables());
-    berdyData.solver->getLastEstimate(estimatedDynamicVariables);
+    iDynTree::VectorDynSize estimatedDynamicVariables(pImpl->berdyData.helper.getNrOfDynamicVariables());
+    pImpl->berdyData.solver->getLastEstimate(estimatedDynamicVariables);
 
     // TODO: @Yeshi this is more or less the behavior of the run() function.
     //       The only difference is that the kinematic state is read from the
@@ -989,6 +1000,47 @@ void HumanDynamicsEstimator::run()
 {
     // TODO @Yeshi take inspiration from the dummy estimation performed at the end of the open()
     // method
+    // Get kinematic state data
+    std::vector<double> jointPosition     = pImpl->iHumanState->getJointPositions();
+    std::vector<double> jointVelocities   = pImpl->iHumanState->getJointVelocities();
+
+    std::array<double, 3> basePosition    = pImpl->iHumanState->getBasePosition();
+    std::array<double, 4> baseOrientation = pImpl->iHumanState->getBaseOrientation();
+    std::array<double, 6> baseVelocity    = pImpl->iHumanState->getBaseVelocity();
+
+    // Pad the received state data to berdy state variables
+    pImpl->berdyData.state.jointsPosition.resize(jointPosition.size());
+    for (size_t i = 0; i < jointPosition.size(); i++) {
+        pImpl->berdyData.state.jointsPosition.setVal(i, jointPosition.at(i));
+    }
+
+    pImpl->berdyData.state.jointsVelocity.resize(jointVelocities.size());
+    for (size_t i = 0; i < jointVelocities.size(); ++i) {
+        pImpl->berdyData.state.jointsVelocity.setVal(i, jointVelocities.size());
+    }
+
+    pImpl->berdyData.state.baseAngularVelocity.setVal(0, baseVelocity.at(3));
+    pImpl->berdyData.state.baseAngularVelocity.setVal(1, baseVelocity.at(4));
+    pImpl->berdyData.state.baseAngularVelocity.setVal(2, baseVelocity.at(5));
+
+    // TODO: Update the random measurements with proper data
+    iDynTree::getRandomVector(pImpl->berdyData.buffers.measurements);
+
+    // Solve a berdy problem
+    pImpl->berdyData.solver->updateEstimateInformationFloatingBase(pImpl->berdyData.state.jointsPosition,
+                                                                   pImpl->berdyData.state.jointsVelocity,
+                                                                   pImpl->berdyData.state.floatingFrameIndex,
+                                                                   pImpl->berdyData.state.baseAngularVelocity,
+                                                                   pImpl->berdyData.buffers.measurements);
+
+    if (!pImpl->berdyData.solver->doEstimate()) {
+        yError() << LogPrefix << "Failed to do berdy estimation";
+    }
+
+    // Extract the solution
+    iDynTree::VectorDynSize estimatedDynamicVariables(pImpl->berdyData.helper.getNrOfDynamicVariables());
+    pImpl->berdyData.solver->getLastEstimate(estimatedDynamicVariables);
+
 }
 
 bool HumanDynamicsEstimator::attach(yarp::dev::PolyDriver* poly)
@@ -1000,6 +1052,20 @@ bool HumanDynamicsEstimator::attach(yarp::dev::PolyDriver* poly)
 
     // TODO: Attach with IHumanState and IHumanWrench interfaces coming respectively
     //       from HumanStateProvider and HumanWrenchProvider
+    if (pImpl->iHumanState || !poly->view(pImpl->iHumanState) || !pImpl->iHumanState) {
+        yError() << LogPrefix << "Failed to view IHumanState interface from the polydriver";
+        return false;
+    }
+
+    // ===================
+    // CHECK THE INTERFACE
+    // ===================
+
+    if (pImpl->iHumanState->getNumberOfJoints() == 0
+            || pImpl->iHumanState->getNumberOfJoints() != pImpl->iHumanState->getJointNames().size()) {
+        yError() << "The IHumanState interface might not be ready";
+        return false;
+    }
 
     // ====
     // MISC
@@ -1017,6 +1083,7 @@ bool HumanDynamicsEstimator::attach(yarp::dev::PolyDriver* poly)
 
 bool HumanDynamicsEstimator::detach()
 {
+    pImpl->iHumanState = nullptr;
     stop();
     return true;
 }
