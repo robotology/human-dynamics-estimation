@@ -12,7 +12,7 @@
     <device type="iwear_remapper" name="XSenseIWearRemapper">
         <param name="wearableDataPorts">(/XSensSuit/WearableData/data:o)</param>
         <param name="wearableRPCPorts">(/XSensSuit/WearableData/metadataRpc:o)</param>
-        <param name="outputPortName">/HDE/IWearRemapper/data:o</param>
+        <param name="outputPortName">/HDE/XsensIWearRemapper/data:o</param>
     </device>
 
     <device type="human_state_provider" name="HumanStateProvider">
@@ -160,7 +160,7 @@
         <param name="tfPrefix">/Xsens/</param>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
-                <elem name="XsensTFPublisherLabel">IWearRemapper</elem>
+                <elem name="XsensTFPublisherLabel">XSenseIWearRemapper</elem>
             </paramlist>
         </action>
         <action phase="shutdown" level="5" type="detach"/>
@@ -169,7 +169,7 @@
     <device type="iwear_remapper" name="ICubIWearRemapper">
         <param name="wearableDataPorts">(/ICub/WearableData/data:o)</param>
         <param name="wearableRPCPorts">(/ICub/WearableData/metadataRpc:o)</param>
-        <param name="outputPortName">/HDE/IWearRemapper/data:o</param>
+        <param name="outputPortName">/HDE/ICubIWearRemapper/data:o</param>
     </device>
 
     <device type="human_wrench_provider" name="HumanWrenchProvider">

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<robot name="human-wrench-provider">
+<robot name="human-wrench-provider"  build=0 portprefix="">
 
     <device type="iwear_remapper" name="IWearRemapper">
         <param name="wearableDataPorts">(/ICub/WearableData/data:o)</param>
@@ -54,5 +54,3 @@
         <action phase="shutdown" level="5" type="detach" />
     </device>
 </robot>
-
-
