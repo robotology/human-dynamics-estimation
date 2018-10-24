@@ -41,7 +41,7 @@
         <action phase="shutdown" level="5" type="detach" />
     </device>
 
-    <device name="human_wrench_wrapper" type="analogServer">
+    <device type="analogServer" name="HumanWrenchWrapper">
         <param name="name">/HDE/HumanWrenchWrapper/wrench:o</param>
         <param name="period">10</param>
 
