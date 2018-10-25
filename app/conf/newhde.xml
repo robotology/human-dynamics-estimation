@@ -175,6 +175,7 @@
     <device type="human_wrench_provider" name="HumanWrenchProvider">
         <param name="human_urdf">Claudia66DoF.urdf</param>
         <param name="robot_urdf">model.urdf</param>
+        <param name="number_of_sources">2</param>
         <param name="sources">(RobotLeftHandFT RobotRightHandFT)</param>
         <group name="RobotLeftHandFT">
             <param name="sensorName">ICub::ft6D::leftWBDFTSensor</param>
@@ -248,7 +249,8 @@
 
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
-                <elem name="HumanDynamicsEstimatorLabel">HumanStateProvider</elem>
+                <elem name="HumanDynamicsEstimatorLabel1">HumanStateProvider</elem>
+                <elem name="HumanDynamicsEstimatorLabel2">HumanWrenchProvider</elem>
             </paramlist>
         </action>
 

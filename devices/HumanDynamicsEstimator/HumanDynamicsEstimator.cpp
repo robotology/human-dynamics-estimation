@@ -13,6 +13,7 @@
 #include <Eigen/SparseCholesky>
 #include <Eigen/SparseCore>
 #include <Eigen/SparseLU>
+
 #include <iDynTree/Core/EigenHelpers.h>
 #include <iDynTree/Core/EigenSparseHelpers.h>
 #include <iDynTree/Core/TestUtils.h>
@@ -24,9 +25,10 @@
 #include <iDynTree/Model/ContactWrench.h>
 #include <iDynTree/Model/Model.h>
 #include <iDynTree/ModelIO/ModelLoader.h>
+
 #include <yarp/os/LogStream.h>
 #include <yarp/os/ResourceFinder.h>
-
+#include <yarp/dev/IAnalogSensor.h>
 #include <mutex>
 #include <string>
 #include <unordered_map>
@@ -769,6 +771,7 @@ public:
 
     // Attached interfaces
     hde::interfaces::IHumanState* iHumanState = nullptr;
+    yarp::dev::IAnalogSensor* iAnalogSensor = nullptr;
 
     mutable std::mutex mutex;
     iDynTree::Vector3 gravity;
@@ -1039,6 +1042,12 @@ void HumanDynamicsEstimator::run()
     // TODO: Update the random measurements with proper data
     iDynTree::getRandomVector(pImpl->berdyData.buffers.measurements);
 
+    // TODO: Check how to use the wrench data in berdy
+    yarp::sig::Vector wrenchData;
+    pImpl->iAnalogSensor->read(wrenchData);
+    yInfo() << LogPrefix << "Wrench data size : " << wrenchData.size();
+    yInfo() << LogPrefix << "Wrench data : " << wrenchData.toString();
+
     // Solve a berdy problem
     pImpl->berdyData.solver->updateEstimateInformationFloatingBase(pImpl->berdyData.state.jointsPosition,
                                                                    pImpl->berdyData.state.jointsVelocity,
@@ -1063,21 +1072,42 @@ bool HumanDynamicsEstimator::attach(yarp::dev::PolyDriver* poly)
         return false;
     }
 
-    // TODO: Attach with IHumanState and IHumanWrench interfaces coming respectively
-    //       from HumanStateProvider and HumanWrenchProvider
-    if (pImpl->iHumanState || !poly->view(pImpl->iHumanState) || !pImpl->iHumanState) {
-        yError() << LogPrefix << "Failed to view IHumanState interface from the polydriver";
-        return false;
+    // Get the device name from the driver
+    const std::string deviceName = poly->getValue("device").asString();
+
+    if (deviceName == "human_state_provider") {
+
+        // Attach IHumanState interface from HumanStateProvider
+        if (pImpl->iHumanState || !poly->view(pImpl->iHumanState) || !pImpl->iHumanState) {
+            yError() << LogPrefix << "Failed to view IHumanState interface from the polydriver";
+            return false;
+        }
+
+        // Check the interface
+        if (pImpl->iHumanState->getNumberOfJoints() == 0
+                || pImpl->iHumanState->getNumberOfJoints() != pImpl->iHumanState->getJointNames().size()) {
+            yError() << "The IHumanState interface might not be ready";
+            return false;
+        }
+
+        yInfo() << LogPrefix << deviceName << "attach() successful";
     }
 
-    // ===================
-    // CHECK THE INTERFACE
-    // ===================
+    if (deviceName == "human_wrench_provider") {
+        // Attach IHumanWrench interfaces coming from HumanWrenchProvider
+        if (pImpl->iAnalogSensor || !poly->view(pImpl->iAnalogSensor) || !pImpl->iAnalogSensor) {
+            yError() << LogPrefix << "Failed to view IAnalogSensor interface from the polydriver";
+            return false;
+        }
 
-    if (pImpl->iHumanState->getNumberOfJoints() == 0
-            || pImpl->iHumanState->getNumberOfJoints() != pImpl->iHumanState->getJointNames().size()) {
-        yError() << "The IHumanState interface might not be ready";
-        return false;
+        // Check the interface
+        auto numberOfSensors = stoi(poly->getValue("number_of_sources").asString());
+        if (pImpl->iAnalogSensor->getChannels() != 6 * numberOfSensors) {
+            yError() << LogPrefix << "The IAnalogSensor interface might not be ready";
+            return false;
+        }
+
+        yInfo() << LogPrefix << deviceName << "attach() successful";
     }
 
     // ====
@@ -1090,32 +1120,37 @@ bool HumanDynamicsEstimator::attach(yarp::dev::PolyDriver* poly)
         return false;
     }
 
-    yInfo() << LogPrefix << "attach() successful";
     return true;
 }
 
 bool HumanDynamicsEstimator::detach()
 {
     pImpl->iHumanState = nullptr;
+    pImpl->iAnalogSensor = nullptr;
     stop();
     return true;
 }
 
 bool HumanDynamicsEstimator::attachAll(const yarp::dev::PolyDriverList& driverList)
 {
-    if (driverList.size() > 1) {
-        yError() << LogPrefix << "This wrapper accepts only one attached PolyDriver";
+    bool attachStatus = false;
+    if (driverList.size() > 2) {
+        yError() << LogPrefix << "This wrapper accepts only two attached PolyDriver";
         return false;
     }
 
-    const yarp::dev::PolyDriverDescriptor* driver = driverList[0];
+    for (size_t i = 0; i < driverList.size(); i++) {
+        const yarp::dev::PolyDriverDescriptor* driver = driverList[i];
 
-    if (!driver) {
-        yError() << LogPrefix << "Passed PolyDriverDescriptor is nullptr";
-        return false;
+        if (!driver) {
+            yError() << LogPrefix << "Passed PolyDriverDescriptor is nullptr";
+            return false;
+        }
+
+        attachStatus = attach(driver->poly);
     }
 
-    return attach(driver->poly);
+    return attachStatus;
 }
 
 bool HumanDynamicsEstimator::detachAll()
