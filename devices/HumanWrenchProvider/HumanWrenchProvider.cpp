@@ -170,17 +170,29 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
     // INITIALIZE THE WRENCH SOURCES
     // =============================
 
+    if (!(config.check("number_of_sources") && config.find("number_of_sources").asInt())) {
+        yError() << LogPrefix << "Option 'number_of_sources' not found or not a valid Integer";
+        return false;
+    }
+
     if (!(config.check("sources") && config.find("sources").isList())) {
         yError() << LogPrefix << "Option 'sources' not found or not a valid list";
         return false;
     }
 
     yarp::os::Bottle* listOfSources = config.find("sources").asList();
-
     std::vector<std::string> sourcesNames;
-    for (unsigned i = 0; i < listOfSources->size(); ++i) {
-        sourcesNames.push_back(listOfSources->get(i).asString());
-        yDebug() << LogPrefix << "Found source" << sourcesNames.back();
+
+    // Check the number of sources are correct
+    if ( config.find("number_of_sources").asInt() != listOfSources->size()) {
+        yError() << LogPrefix << " 'number_of_sources' and 'sources' list provided are not matching";
+        return false;
+    }
+    else {
+        for (unsigned i = 0; i < listOfSources->size(); ++i) {
+            sourcesNames.push_back(listOfSources->get(i).asString());
+            yDebug() << LogPrefix << "Found source" << sourcesNames.back();
+        }
     }
 
     // Parse the groups using the sources list names
