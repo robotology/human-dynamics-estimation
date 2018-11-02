@@ -99,8 +99,36 @@ The documentation for HDE is automatically extracted from the C++ code using Dox
 
 ## Citing this work
 
-Please cite the following publication if you are using the code contained in this repository for your own research and/or experiments
+Please cite the following publications if you are using the code contained in this repository for your own research and/or experiments:
 
+#### AUtonomous RObots
+
+~~~
+Towards Real-time Whole-Body Human Dynamics Estimation through Probabilistic Sensor Fusion Algorithms.
+A Physical Human–Robot Interaction Case Study.
+Latella, C.; Lorenzini, M.; Lazzaroni, M.; Romano, F.; Traversaro, S.; Akhras, M.A.; Pucci, D.; Nori, F.
+Autonomous Robots, Springer US, October 2018, doi:
+10.1007/s10514-018-9808-4
+https://doi.org/10.1007/s10514-018-9808-4
+~~~
+
+The bibtex code for including this citation is provided:
+
+~~~
+@Article{Latella2018,
+author="Latella, Claudia and Lorenzini, Marta and Lazzaroni, Maria and Romano, Francesco and Traversaro, Silvio and Akhras, M. Ali and Pucci, Daniele and Nori, Francesco",
+title="Towards real-time whole-body human dynamics estimation through probabilistic sensor fusion algorithms",
+journal="Autonomous Robots",
+year="2018",
+month="Oct",
+day="31",
+issn="1573-7527",
+doi="10.1007/s10514-018-9808-4",
+url="https://doi.org/10.1007/s10514-018-9808-4"
+}
+~~~
+
+#### IEEE Robotics and Automation Letters
 
 ~~~
 The CoDyCo Project achievements and beyond: Towards Human Aware Whole-body Controllers for Physical Human Robot Interaction
@@ -111,6 +139,7 @@ http://ieeexplore.ieee.org/document/8093992
 ~~~
 
 The bibtex code for including this citation is provided:
+
 ~~~
 @article{romano2017codyco,
   title={The CoDyCo Project achievements and beyond: Towards Human Aware Whole-body Controllers for Physical Human Robot Interaction},
