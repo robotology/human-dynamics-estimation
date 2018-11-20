@@ -3,4 +3,5 @@
 # GNU Lesser General Public License v2.1 or any later version.
 
 add_subdirectory(HumanStatePublisher)
+add_subdirectory(HumanDynamicsPublisher)
 add_subdirectory(XsensTFPublisher)
