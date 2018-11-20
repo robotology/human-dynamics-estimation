@@ -431,6 +431,7 @@ void HumanWrenchProvider::run()
             robotKinDynComp.loadRobotModel(pImpl->robotModel);
             robotFeetToHandsTransform = robotKinDynComp.getRelativeTransform(forceSource.robotLinkingFrame,forceSource.outputFrame);
 
+            // TODO: Move this logic to WrenchFrameTransformers.cpp file
 
             // Access the tranforms through pointers
             std::lock_guard<std::mutex> lock(pImpl->mutex);
