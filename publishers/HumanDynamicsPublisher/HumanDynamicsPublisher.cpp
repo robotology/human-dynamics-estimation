@@ -18,38 +18,53 @@
 
 #include <iDynTree/ModelIO/ModelLoader.h>
 
-#include <array>
 #include <string>
 #include <vector>
+#include <cmath>
 
 const std::string DeviceName = "HumanDynamicsPublisher";
 const std::string LogPrefix = DeviceName + " :";
 constexpr double DefaultPeriod = 0.01;
 
+typedef iDynTree::JointIndex JointIndex;
+typedef std::string LinkName;
+
+struct JointEffortData
+{
+    LinkName parentLinkName;
+    std::string sphericalJointName;
+    std::vector<JointIndex> fakeJointsIndices;
+
+    yarp::rosmsg::sensor_msgs::Temperature message;
+    std::shared_ptr<yarp::os::Publisher<yarp::rosmsg::sensor_msgs::Temperature>> publisher;
+};
+
+struct ModelEffortData
+{
+  std::vector<JointEffortData> efforts;
+};
+
+typedef std::string SphericalLinkName;
+typedef std::string SphericalJointName;
+typedef std::pair<SphericalLinkName, SphericalJointName> SphericalJointDataPair;
+bool parseFrameListOption(const yarp::os::Value& option, std::vector<std::string>& parsedSegments);
+
 using namespace hde::publishers;
 
 yarp::rosmsg::TickTime getTimeStampFromYarp();
 
-struct HumanJointTorquesPublisherResources
-{
-    size_t counter = 0;
-    yarp::rosmsg::sensor_msgs::Temperature message;
-    yarp::os::Publisher<yarp::rosmsg::sensor_msgs::Temperature> publisher;
-};
-
 class HumanDynamicsPublisher::impl
 {
 public:
-    hde::interfaces::IHumanDynamics* humanDynamics = nullptr;
-
     bool firstRun = true;
+
+    hde::interfaces::IHumanDynamics* humanDynamics = nullptr;
+    std::vector<JointEffortData> modelEffortData;
+
+    std::vector<double> jointTorques;
 
     // ROS Publisher
     yarp::os::Node node = {"/" + DeviceName};
-    HumanJointTorquesPublisherResources humanJointTorquesROS;
-
-    // Model variables
-    iDynTree::Model humanModel;
 };
 
 HumanDynamicsPublisher::HumanDynamicsPublisher()
@@ -72,16 +87,16 @@ bool HumanDynamicsPublisher::open(yarp::os::Searchable& config)
         yInfo() << LogPrefix << "Using default period: " << DefaultPeriod << "s";
     }
 
-    if (!(config.check("urdf") && config.find("urdf").isString())) {
-        yError() << LogPrefix << "Parameter 'urdf' missing or invalid";
+    // MODEL OPTIONS
+    // =============
+
+    if (!(config.check("parentLinkNames") && config.find("parentLinkNames").isList())) {
+        yError() << LogPrefix << "Parameter 'parentLinkNames' list missing or invalid";
         return false;
     }
 
-    // ROS TOPICS
-    // ==========
-
-    if (!(config.check("humanJointTorquesTopic") && config.find("humanJointTorquesTopic").isString())) {
-        yError() << LogPrefix << "Parameter 'humanJointTorquesTopic' missing or invalid";
+    if (!(config.check("sphericalJointNames") && config.find("sphericalJointNames").isList())) {
+        yError() << LogPrefix << "Parameter 'sphericalJointNames' list missing or invalid";
         return false;
     }
 
@@ -90,38 +105,56 @@ bool HumanDynamicsPublisher::open(yarp::os::Searchable& config)
     // ===============
 
     double period = config.find("period").asFloat64();
-    std::string urdfFileName = config.find("urdf").asString();
-    std::string humanJointTorquesTopicName = config.find("humanJointTorquesTopic").asString();
 
-    yInfo() << LogPrefix << "*** =====================";
-    yInfo() << LogPrefix << "*** Period              :" << period;
-    yInfo() << LogPrefix << "*** Urdf file name         :" << urdfFileName;
-    yInfo() << LogPrefix << "*** Joint topic name    :" << humanJointTorquesTopicName;
-    yInfo() << LogPrefix << "*** =====================";
+    yarp::os::Bottle* listOfLinkNames = config.find("parentLinkNames").asList();
+    yarp::os::Bottle* listOfJointNames = config.find("sphericalJointNames").asList();
 
-    // Find the URDF file
-    auto& rf = yarp::os::ResourceFinder::getResourceFinderSingleton();
-    std::string urdfFilePath = rf.findFile(urdfFileName);
-    if (urdfFilePath.empty()) {
-        yError() << LogPrefix << "Failed to find file" << config.find("urdf").asString();
+    if ( listOfLinkNames->size() != listOfJointNames->size()) {
+        yError() << LogPrefix << "Number of `parentLinkNames` and 'sphericalJointNames' do not match";
         return false;
     }
 
-    // Load the model
-    iDynTree::ModelLoader modelLoader;
-    if (!modelLoader.loadModelFromFile(urdfFilePath) || !modelLoader.isValid()) {
-        yError() << LogPrefix << "Failed to load model" << urdfFilePath;
-        return false;
+    yInfo() << LogPrefix << "*** =============================";
+    yInfo() << LogPrefix << "*** Period                      :" << period;
+    yInfo() << LogPrefix << "*** parentLinkNames             :" << listOfLinkNames->toString();
+    yInfo() << LogPrefix << "*** sphericalJointNames         :" << listOfJointNames->toString();
+    yInfo() << LogPrefix << "*** =============================";
+
+
+    std::vector<SphericalJointDataPair> SphericalJointData;
+    for (size_t joint = 0; joint < listOfJointNames->size(); joint++) {
+        SphericalJointData.emplace_back(listOfLinkNames->get(joint).asString(),
+                                        listOfJointNames->get(joint).asString());
     }
 
-    // Get the model from the loader
-    pImpl->humanModel = modelLoader.model();
+    // Initialize JointEffortData
+    bool ok = true;
+    for (const auto& sphericalJoint : SphericalJointData) {
+        JointEffortData jointEffortData;
 
-    // =========================
-    // INITIALIZE ROS PUBLISHERS
-    // =========================
+        jointEffortData.parentLinkName = sphericalJoint.first;
+        jointEffortData.sphericalJointName = sphericalJoint.second;
 
-    // TODO: Initialize ROS resource for human joint torques
+        // ROS message
+        jointEffortData.message.header.frame_id =
+                "/" + DeviceName + "/" + jointEffortData.parentLinkName;
+        jointEffortData.message.header.seq = 0;
+        jointEffortData.message.variance = 0;
+
+        // ROS publisher
+        jointEffortData.publisher =
+                std::make_shared<yarp::os::Publisher<yarp::rosmsg::sensor_msgs::Temperature>>();
+        ok = ok && jointEffortData.publisher->topic("/" + DeviceName + "/"
+                                         + jointEffortData.sphericalJointName);
+
+        // Populate ModelEffortData
+        pImpl->modelEffortData.push_back(jointEffortData);
+    }
+
+    if (!ok) {
+        yError() << LogPrefix << "ROS publishers initialization failed";
+        return false;
+    }
 
     setPeriod(period);
     return true;
@@ -130,7 +163,6 @@ bool HumanDynamicsPublisher::open(yarp::os::Searchable& config)
 bool HumanDynamicsPublisher::close()
 {
     detach();
-    pImpl->humanJointTorquesROS.publisher.close();
     pImpl->node.interrupt();
 
     return true;
@@ -138,7 +170,53 @@ bool HumanDynamicsPublisher::close()
 
 void HumanDynamicsPublisher::run()
 {
-    // TODO: Implement how the joint torques should be published
+    if (pImpl->firstRun) {
+
+        // Get the fake joint indices
+        std::vector<std::string> URDFjoints = pImpl->humanDynamics->getJointNames();
+
+        // Check all the occurences of sphericalJointName* in the urdf model joints
+        for (unsigned jointIdx = 0; jointIdx < URDFjoints.size(); ++jointIdx) {
+            // Name of the processed urdf joint
+            const std::string urdfJointName = URDFjoints[jointIdx];
+            // Find if one of the sphericalJointNames from the conf is a substring
+            for (auto& effortData : pImpl->modelEffortData) {
+                if (urdfJointName.find(effortData.sphericalJointName) != std::string::npos) {
+                    // Store the index
+                    effortData.fakeJointsIndices.push_back(jointIdx);
+                }
+            }
+        }
+
+        pImpl->firstRun = false;
+    }
+
+    // Get the timestamp
+    yarp::rosmsg::TickTime currentTime = getTimeStampFromYarp();
+
+    // Get the jointTorques
+    pImpl->jointTorques = pImpl->humanDynamics->getJointTorques();
+
+    for (auto& jointEffortData : pImpl->modelEffortData) {
+        jointEffortData.message.header.stamp = currentTime;
+        jointEffortData.message.header.seq++;
+
+        double effortTmp = 0;
+        for (const auto& modelFakeJointIdx : jointEffortData.fakeJointsIndices) {
+            //effortTmp += pow(humanDynamicsData.jointVariables[modelFakeJointIdx].torque[0], 2);
+            // TODO: Use the correct joint torques corresponding to the fake joints
+        }
+        effortTmp = sqrt(effortTmp);
+
+        jointEffortData.message.temperature = effortTmp;
+
+        // Store the message into the publisher
+        yarp::rosmsg::sensor_msgs::Temperature& effortMsg = jointEffortData.publisher->prepare();
+        effortMsg = jointEffortData.message;
+
+        // Publish the effort for this joint
+        jointEffortData.publisher->write(/*forceStrict=*/false);
+    }
 }
 
 bool HumanDynamicsPublisher::attach(yarp::dev::PolyDriver* poly)
@@ -181,7 +259,7 @@ bool HumanDynamicsPublisher::attach(yarp::dev::PolyDriver* poly)
 bool HumanDynamicsPublisher::detach()
 {
     stop();
-    pImpl->humanJointTorquesROS.publisher.interrupt();
+
     pImpl->humanDynamics = nullptr;
     return true;
 }
