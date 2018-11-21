@@ -54,7 +54,9 @@ public:
     bool detachAll() override;
 
     // IHumanDynamics
-    // TODO
+    std::vector<std::string> getJointNames() const override;
+    size_t getNumberOfJoints() const override;
+    std::vector<double> getJointTorques() const override;
 };
 
 #endif // HDE_DEVICES_HUMANDYNAMICSESTIMATOR
