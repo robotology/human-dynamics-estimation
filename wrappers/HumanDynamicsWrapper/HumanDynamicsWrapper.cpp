@@ -13,6 +13,8 @@
 #include <yarp/os/LogStream.h>
 #include <yarp/sig/Vector.h>
 
+#include <mutex>
+
 const std::string DeviceName = "HumanDynamicsWrapper";
 const std::string LogPrefix = DeviceName + " :";
 constexpr double DefaultPeriod = 0.01;
@@ -22,6 +24,7 @@ using namespace hde::wrappers;
 class HumanDynamicsWrapper::impl
 {
 public:
+    mutable std::mutex mutex;
     hde::interfaces::IHumanDynamics* humanDynamics = nullptr;
 
     // TODO: Currently as only joint torques are streamed,
@@ -91,12 +94,26 @@ bool HumanDynamicsWrapper::close()
 void HumanDynamicsWrapper::run()
 {
     // Get data from the interface
-    std::vector<double> jointTorquesInterface = pImpl->humanDynamics->getJointTorques();
+    std::vector<double> jointTorques = pImpl->humanDynamics->getJointTorques();
 
-    // Prepare the message
+    // Prepare the human dynamics data bottle
     yarp::os::Bottle& humanDynamicsData = pImpl->outputPort.prepare();
 
+    if (humanDynamicsData.size() != 0) {
+        // Clear the human dynamics data bottle
+        humanDynamicsData.clear();
+    }
+
+    // Add joint torques to human dynamics data bottle
+    for (size_t index = 0; index < jointTorques.size(); index++) {
+        humanDynamicsData.addDouble(jointTorques.at(index));
+    }
+
+    yInfo() << LogPrefix << "Received joint torques size : " << humanDynamicsData.size();
+    yInfo() << LogPrefix << "Recevied joint torques : " << humanDynamicsData.toString();
+
     // Send the data
+    std::lock_guard<std::mutex> lock(pImpl->mutex);
     pImpl->outputPort.write(/*forceStrict=*/true);
 }
 

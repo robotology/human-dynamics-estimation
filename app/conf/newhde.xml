@@ -246,16 +246,23 @@
             <TODO: How to include the FTSensors from ICub device-->
             <!--param name="SIX_AXIS_FORCE_TORQUE_SENSOR">*</param-->
         </group>
-
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
                 <elem name="HumanDynamicsEstimatorLabel1">HumanStateProvider</elem>
                 <elem name="HumanDynamicsEstimatorLabel2">HumanWrenchProvider</elem>
             </paramlist>
         </action>
-
         <action phase="shutdown" level="5" type="detach"/>
-
     </device>
 
+    <device type="human_dynamics_wrapper" name="HumanDynamicsWrapper">
+        <param name="period">0.1</param>
+        <param name="outputPort">/HDE/HumanDynamicsWrapper/torques:o</param>
+        <action phase="startup" level="5" type="attach">
+            <paramlist name="networks">
+                <elem name="HumanDynamicsWrapperLabel">HumanDynamicsEstimator</elem>
+            </paramlist>
+        </action>
+        <action phase="shutdown" level="5" type="detach"/>
+    </device>
 </robot>
