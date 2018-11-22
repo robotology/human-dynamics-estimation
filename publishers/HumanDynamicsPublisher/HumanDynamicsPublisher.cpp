@@ -100,6 +100,19 @@ bool HumanDynamicsPublisher::open(yarp::os::Searchable& config)
         return false;
     }
 
+    // ROS OPTIONS
+    // =============
+
+    if (!(config.check("topicPrefix") && config.find("topicPrefix").isString())) {
+        yError() << LogPrefix << "Parameter 'topicPrefix' missing or invalid";
+        return false;
+    }
+
+    if (!(config.check("tfPrefix") && config.find("tfPrefix").isString())) {
+        yError() << LogPrefix << "Parameter 'tfPrefix' missing or invalid";
+        return false;
+    }
+
     // ===============
     // READ PARAMETERS
     // ===============
@@ -114,10 +127,15 @@ bool HumanDynamicsPublisher::open(yarp::os::Searchable& config)
         return false;
     }
 
+    std::string topicPrefix = config.find("topicPrefix").asString();
+    std::string tfPrefix = config.find("tfPrefix").asString();
+
     yInfo() << LogPrefix << "*** =============================";
     yInfo() << LogPrefix << "*** Period                      :" << period;
     yInfo() << LogPrefix << "*** parentLinkNames             :" << listOfLinkNames->toString();
     yInfo() << LogPrefix << "*** sphericalJointNames         :" << listOfJointNames->toString();
+    yInfo() << LogPrefix << "*** topicPrefix                 :" << topicPrefix;
+    yInfo() << LogPrefix << "*** tfPrefix                    :" << tfPrefix;
     yInfo() << LogPrefix << "*** =============================";
 
 
@@ -128,7 +146,6 @@ bool HumanDynamicsPublisher::open(yarp::os::Searchable& config)
     }
 
     // Initialize JointEffortData
-    bool ok = true;
     for (const auto& sphericalJoint : SphericalJointData) {
         JointEffortData jointEffortData;
 
@@ -137,23 +154,22 @@ bool HumanDynamicsPublisher::open(yarp::os::Searchable& config)
 
         // ROS message
         jointEffortData.message.header.frame_id =
-                "/" + DeviceName + "/" + jointEffortData.parentLinkName;
+                tfPrefix + "/" + jointEffortData.parentLinkName;
         jointEffortData.message.header.seq = 0;
         jointEffortData.message.variance = 0;
 
         // ROS publisher
         jointEffortData.publisher =
                 std::make_shared<yarp::os::Publisher<yarp::rosmsg::sensor_msgs::Temperature>>();
-        ok = ok && jointEffortData.publisher->topic("/" + DeviceName + "/"
-                                         + jointEffortData.sphericalJointName);
+
+        if (!jointEffortData.publisher->topic(topicPrefix + "/"
+                                              + jointEffortData.sphericalJointName)) {
+            yError() << LogPrefix << "ROS publishers initialization failed for " << jointEffortData.sphericalJointName;
+            return false;
+        }
 
         // Populate ModelEffortData
         pImpl->modelEffortData.push_back(jointEffortData);
-    }
-
-    if (!ok) {
-        yError() << LogPrefix << "ROS publishers initialization failed";
-        return false;
     }
 
     setPeriod(period);
@@ -163,6 +179,12 @@ bool HumanDynamicsPublisher::open(yarp::os::Searchable& config)
 bool HumanDynamicsPublisher::close()
 {
     detach();
+
+    // Close ROS publishers
+    for (auto& jointEffortData : pImpl->modelEffortData) {
+        jointEffortData.publisher->close();
+    }
+
     pImpl->node.interrupt();
 
     return true;
@@ -191,31 +213,29 @@ void HumanDynamicsPublisher::run()
         pImpl->firstRun = false;
     }
 
-    // Get the timestamp
-    yarp::rosmsg::TickTime currentTime = getTimeStampFromYarp();
-
     // Get the jointTorques
     pImpl->jointTorques = pImpl->humanDynamics->getJointTorques();
 
     for (auto& jointEffortData : pImpl->modelEffortData) {
-        jointEffortData.message.header.stamp = currentTime;
+        // Update metadata
         jointEffortData.message.header.seq++;
+        jointEffortData.message.header.stamp = getTimeStampFromYarp();
 
         double effortTmp = 0;
+
         for (const auto& modelFakeJointIdx : jointEffortData.fakeJointsIndices) {
-            //effortTmp += pow(humanDynamicsData.jointVariables[modelFakeJointIdx].torque[0], 2);
-            // TODO: Use the correct joint torques corresponding to the fake joints
+            effortTmp += pow(pImpl->jointTorques.at(modelFakeJointIdx), 2);
         }
         effortTmp = sqrt(effortTmp);
 
         jointEffortData.message.temperature = effortTmp;
 
         // Store the message into the publisher
-        yarp::rosmsg::sensor_msgs::Temperature& effortMsg = jointEffortData.publisher->prepare();
+        auto& effortMsg = jointEffortData.publisher->prepare();
         effortMsg = jointEffortData.message;
 
         // Publish the effort for this joint
-        jointEffortData.publisher->write(/*forceStrict=*/false);
+        jointEffortData.publisher->write(/*forceStrict=*/true);
     }
 }
 

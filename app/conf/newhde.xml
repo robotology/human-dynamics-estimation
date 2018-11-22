@@ -265,4 +265,19 @@
         </action>
         <action phase="shutdown" level="5" type="detach"/>
     </device>
+
+    <device type="human_dynamics_publisher" name="HumanDynamicsPublisher">
+        <param name="period">0.020</param>
+        <param name="parentLinkNames">(LeftFoot LeftLowerLeg LeftUpperLeg LeftHand LeftForeArm LeftUpperArm RightFoot RightLowerLeg RightUpperLeg RightHand RightForeArm RightUpperArm)</param>
+        <param name="sphericalJointNames">(jLeftAnkle jLeftKnee jLeftHip jLeftWrist jLeftElbow jLeftShoulder jRightAnkle jRightKnee jRightHip jRightWrist jRightElbow jRightShoulder)</param>
+        <param name="topicPrefix">/HumanEffortBridge</param>
+        <param name="tfPrefix">HDEVizTF</param>
+        <action phase="startup" level="5" type="attach">
+            <paramlist name="networks">
+                <elem name="HumanDynamicsPublisherLabel">HumanDynamicsEstimator</elem>
+            </paramlist>
+        </action>
+        <action phase="shutdown" level="5" type="detach"/>
+    </device>
+
 </robot>
