@@ -1034,17 +1034,17 @@ void HumanDynamicsEstimator::run()
     std::array<double, 6> baseVelocity    = pImpl->iHumanState->getBaseVelocity();
 
     // Debug code
-    yInfo() << LogPrefix << "Joint positions : " << jointsPosition;
-    yInfo() << LogPrefix << "Joint velocity : " << jointsVelocity;
+    //yInfo() << LogPrefix << "Joint positions : " << jointsPosition;
+    //yInfo() << LogPrefix << "Joint velocity : " << jointsVelocity;
 
-    yInfo() << LogPrefix << "Base position : " << basePosition.at(0) << basePosition.at(1) << basePosition.at(2);
-    yInfo() << LogPrefix << "Base orientation : " << baseOrientation.at(0) << baseOrientation.at(1) << baseOrientation.at(2);
-    yInfo() << LogPrefix << "Base velocity : " << baseVelocity.at(0)
-                                               << baseVelocity.at(1)
-                                               << baseVelocity.at(2)
-                                               << baseVelocity.at(3)
-                                               << baseVelocity.at(4)
-                                               << baseVelocity.at(5);
+    //yInfo() << LogPrefix << "Base position : " << basePosition.at(0) << basePosition.at(1) << basePosition.at(2);
+    //yInfo() << LogPrefix << "Base orientation : " << baseOrientation.at(0) << baseOrientation.at(1) << baseOrientation.at(2);
+    //yInfo() << LogPrefix << "Base velocity : " << baseVelocity.at(0)
+     //                                          << baseVelocity.at(1)
+      //                                         << baseVelocity.at(2)
+      //                                         << baseVelocity.at(3)
+       //                                        << baseVelocity.at(4)
+         //                                      << baseVelocity.at(5);
 
     // Pad the received state data to berdy state variables
     pImpl->berdyData.state.jointsPosition.resize(jointsPosition.size());
@@ -1065,76 +1065,35 @@ void HumanDynamicsEstimator::run()
     // TODO: Check how to use the wrench data in berdy
     yarp::sig::Vector wrenchData;
     pImpl->iAnalogSensor->read(wrenchData);
-    yInfo() << LogPrefix << "Wrench data size : " << wrenchData.size();
-    yInfo() << LogPrefix << "Wrench data : " << wrenchData.toString();
+    //yInfo() << LogPrefix << "Wrench data size : " << wrenchData.size();
+    //yInfo() << LogPrefix << "Wrench data : " << wrenchData.toString();
 
-    // Update sensor measurements vector
-    std::vector<iDynTree::BerdySensor> berdySensors = pImpl->berdyData.helper.getSensorsOrdering();
 
-    /*for (iDynTree::BerdySensor& sensor : berdySensors) {
+    // TODO: Update the random measurements with proper data
+    //iDynTree::getRandomVector(pImpl->berdyData.buffers.measurements);
 
-        switch (sensor.type) {
+    //yInfo() << LogPrefix << " sensor measurements size : " << pImpl->berdyData.buffers.sensorMeasurements.getSizeOfAllSensorsMeasurements();
+    //yInfo() << LogPrefix << " number of accelerometers : " << pImpl->berdyData.buffers.sensorMeasurements.getNrOfSensors(iDynTree::ACCELEROMETER);
 
-            case iDynTree::BerdySensorTypes::ACCELEROMETER_SENSOR:
-            {
-                //TODO: Where is the IMU data ??
-                iDynTree::LinAcceleration dummyLinAcc;
-                dummyLinAcc(0) = 0;
-                dummyLinAcc(1) = 0;
-                dummyLinAcc(2) = 0;
-                if (sensor.range.isValid()) {
-                    pImpl->berdyData.buffers.sensorMeasurements.setMeasurement(iDynTree::ACCELEROMETER, int(sensor.range.offset), dummyLinAcc);
-                }
-                else {
-                    yError() << LogPrefix << sensor.id << " range is not valid";
-                }
-
-                break;
-            }
-
-            case iDynTree::BerdySensorTypes::SIX_AXIS_FORCE_TORQUE_SENSOR:
-            {
-                //TODO: Use the FT values from the shoes and hands??
-                break;
-            }
-
-            case iDynTree::BerdySensorTypes::NET_EXT_WRENCH_SENSOR:
-            {
-                    iDynTree::Wrench dummyWrench;
-                    dummyWrench(0) = 0;
-                    dummyWrench(1) = 0;
-                    dummyWrench(2) = 0;
-                    dummyWrench(3) = 0;
-                    dummyWrench(4) = 0;
-                    dummyWrench(5) = 0;
-                    if (sensor.range.isValid()) {
-                        pImpl->berdyData.buffers.sensorMeasurements.setMeasurement(iDynTree::SIX_AXIS_FORCE_TORQUE, int(sensor.range.offset), dummyWrench);
-                    }
-                    else {
-                        yError() << LogPrefix << sensor.id << " rang is not valid";
-                    }
-
-                    break;
-            }
-
-            default:
-            {
-                yError() << LogPrefix << " Sensor type : " << sensor.type << "not recognized";
-                break;
-            }
-
-        }
+    // Update sensor measurements vector y
+    // Filling y vector with zero values for ACCELEROMETER sensors
+    // TODO: Fill the correct data
+    iDynTree::LinAcceleration dummyLinAcc;
+    dummyLinAcc(0) = 0;
+    dummyLinAcc(1) = 0;
+    dummyLinAcc(2) = 0;
+    for (size_t index = 0; index < pImpl->berdyData.buffers.sensorMeasurements.getNrOfSensors(iDynTree::ACCELEROMETER); index++) {
+        pImpl->berdyData.buffers.sensorMeasurements.setMeasurement(iDynTree::ACCELEROMETER, index, dummyLinAcc);
     }
+
+    // TODO: Fill in the y vector with sensor measurements for the FT sensors
 
     pImpl->berdyData.helper.serializeSensorVariables(pImpl->berdyData.buffers.sensorMeasurements,
                                                      pImpl->berdyData.buffers.zeroExternalWrenches,
                                                      pImpl->berdyData.buffers.dummyJointTorques,
                                                      pImpl->berdyData.buffers.jointAccelerations,
                                                      pImpl->berdyData.buffers.dummyInternalWrenches,
-                                                     pImpl->berdyData.buffers.measurements);*/
-
-    // TODO: Update the random measurements with proper data
-    iDynTree::getRandomVector(pImpl->berdyData.buffers.measurements);
+                                                     pImpl->berdyData.buffers.measurements);
 
     // Solve a berdy problem
     pImpl->berdyData.solver->updateEstimateInformationFloatingBase(pImpl->berdyData.state.jointsPosition,
@@ -1163,8 +1122,8 @@ void HumanDynamicsEstimator::run()
                                                                         pImpl->berdyData.state.jointsPosition,
                                                                         pImpl->berdyData.estimates.jointTorqueEstimates);
 
-        yInfo() << LogPrefix << "Estimated joint torques size : " << pImpl->berdyData.estimates.jointTorqueEstimates.size();
-        yInfo() << LogPrefix << "Estimated joint torques : " << pImpl->berdyData.estimates.jointTorqueEstimates.toString();
+        //yInfo() << LogPrefix << "Estimated joint torques size : " << pImpl->berdyData.estimates.jointTorqueEstimates.size();
+        //yInfo() << LogPrefix << "Estimated joint torques : " << pImpl->berdyData.estimates.jointTorqueEstimates.toString();
 
     }
 
