@@ -65,7 +65,9 @@ public:
     int calibrateChannel(int ch, double value) override;
 
     // IHumanWrench
-    // TODO
+    std::vector<std::string> getWrenchSourceNames() const override;
+    size_t getNumberOfWrenchSources() const override;
+    std::vector<double> getWrenches() const override;
 };
 
 #endif // HDE_DEVICES_HUMANWRENCHPROVIDER

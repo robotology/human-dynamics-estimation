@@ -9,6 +9,8 @@
 #include "HumanWrenchProvider.h"
 #include "WrenchFrameTransformers.h"
 
+#include "IHumanWrench.h"
+
 #include <Wearable/IWear/IWear.h>
 
 #include <iDynTree/Model/Model.h>
@@ -653,3 +655,40 @@ int HumanWrenchProvider::calibrateChannel(int /*ch*/, double /*value*/)
 {
     return IAnalogSensor::AS_ERROR;
 }
+
+// ============
+// IHumanWrench
+// ============
+
+std::vector<std::string> HumanWrenchProvider::getWrenchSourceNames() const
+{
+    std::lock_guard<std::mutex> lock(pImpl->mutex);
+    std::vector<std::string> sourcesNames;
+    for (size_t idx = 0; idx < pImpl->wrenchSources.size(); idx++) {
+        sourcesNames.emplace_back(pImpl->wrenchSources.at(idx).name);
+    }
+
+    return sourcesNames;
+}
+
+size_t HumanWrenchProvider::getNumberOfWrenchSources() const
+{
+    std::lock_guard<std::mutex> lock(pImpl->mutex);
+    return pImpl->wrenchSources.size();
+}
+
+std::vector<double> HumanWrenchProvider::getWrenches() const
+{
+    std::vector<double> wrenchValues;
+
+    std::lock_guard<std::mutex> lock(pImpl->mutex);
+    size_t vecSize = pImpl->analogSensorData.measurements.size();
+    wrenchValues.resize(vecSize);
+    for (size_t idx = 0; idx < vecSize; idx++) {
+        wrenchValues.at(idx) = pImpl->analogSensorData.measurements.at(idx);
+    }
+
+    return wrenchValues;
+}
+
+
