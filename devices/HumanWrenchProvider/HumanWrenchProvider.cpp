@@ -66,7 +66,9 @@ class HumanWrenchProvider::Impl
 {
 public:
     mutable std::mutex mutex;
-    wearable::IWear* iWear = nullptr;
+    std::vector<wearable::IWear*> iWearVec;
+    int numberOfSourceDevices;
+    int deviceCount = 0;
 
     AnalogSensorData analogSensorData;
     std::vector<WrenchSourceData> wrenchSources;
@@ -165,6 +167,24 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
     }
 
     pImpl->robotModel = robotModelLoader.model();
+
+    // ===================================
+    // INITIALIZE THE DEVICE DRIVERS COUNT
+    // ===================================
+
+    if (!(config.check("number_of_source_devices") && config.find("number_of_source_devices").asInt())) {
+        yError() << LogPrefix << "Option 'number_of_source_devices' not found or not a valid Integer";
+        return false;
+    }
+
+    pImpl->numberOfSourceDevices = config.find("number_of_source_devices").asInt();
+
+    // Initialize the IWear interfaces to nullptr
+    pImpl->iWearVec.resize(pImpl->numberOfSourceDevices);
+    for (int idx = 0 ; idx < pImpl->numberOfSourceDevices; idx++) {
+        pImpl->iWearVec.at(idx) = nullptr;
+    }
+
 
     // =============================
     // INITIALIZE THE WRENCH SOURCES
@@ -487,36 +507,45 @@ bool HumanWrenchProvider::attach(yarp::dev::PolyDriver* poly)
         return false;
     }
 
-    if (pImpl->iWear || !poly->view(pImpl->iWear) || !pImpl->iWear) {
+    if (pImpl->iWearVec.at(pImpl->deviceCount) || !poly->view(pImpl->iWearVec.at(pImpl->deviceCount)) || !pImpl->iWearVec.at(pImpl->deviceCount)) {
         yError() << LogPrefix << "Failed to view the IWear interface from the PolyDriver";
         return false;
     }
 
-    while (pImpl->iWear->getStatus() == wearable::WearStatus::WaitingForFirstRead) {
+    while (pImpl->iWearVec.at(pImpl->deviceCount)->getStatus() == wearable::WearStatus::WaitingForFirstRead) {
         yInfo() << LogPrefix << "IWear interface waiting for first data. Waiting...";
         yarp::os::Time::delay(5);
     }
 
-    if (pImpl->iWear->getStatus() != wearable::WearStatus::Ok) {
+    if (pImpl->iWearVec.at(pImpl->deviceCount)->getStatus() != wearable::WearStatus::Ok) {
         yError() << LogPrefix << "The status of the attached IWear interface is not ok ("
-                 << static_cast<int>(pImpl->iWear->getStatus()) << ")";
+                 << static_cast<int>(pImpl->iWearVec.at(pImpl->deviceCount)->getStatus()) << ")";
         return false;
     }
 
     // TODO: switch to FourceSourceData
 
     // Get the wearable sensors containing the input measurements
+    wearable::VectorOfSensorNames deviceSensorNames = pImpl->iWearVec.at(pImpl->deviceCount)->getAllSensorNames();
     for (auto& sensorSourceData : pImpl->wrenchSources) {
-        auto sensor = pImpl->iWear->getForceTorque6DSensor(sensorSourceData.sensorName);
+        for (size_t index = 0; index < deviceSensorNames.size(); index++) {
 
-        if (!sensor) {
-            yError() << LogPrefix << "Failed to get sensor" << sensorSourceData.sensorName
-                     << "from the attached IWear interface";
-            return false;
+            if (sensorSourceData.sensorName == deviceSensorNames.at(index)) {
+
+                auto sensor = pImpl->iWearVec.at(pImpl->deviceCount)->getForceTorque6DSensor(sensorSourceData.sensorName);
+
+                if (!sensor) {
+                    yError() << LogPrefix << "Failed to get sensor" << sensorSourceData.sensorName
+                             << "from the attached IWear interface";
+                    return false;
+                }
+
+                sensorSourceData.wearableSensor = sensor;
+            }
         }
-
-        sensorSourceData.wearableSensor = sensor;
     }
+
+    pImpl->deviceCount++;
 
     // Initialize the number of channels of the equivalent IAnalogSensor
     const size_t numberOfFTSensors = pImpl->wrenchSources.size();
@@ -544,25 +573,34 @@ bool HumanWrenchProvider::detach()
 {
     askToStop();
 
-    pImpl->iWear = nullptr;
+    for (size_t idx = 0 ; idx < pImpl->numberOfSourceDevices; idx++) {
+        pImpl->iWearVec.at(idx) = nullptr;
+    }
+
     return true;
 }
 
 bool HumanWrenchProvider::attachAll(const yarp::dev::PolyDriverList& driverList)
 {
-    if (driverList.size() > 1) {
-        yError() << LogPrefix << "This wrapper accepts only one attached PolyDriver";
+    bool attachStatus = false;
+    if (driverList.size() > 3) {
+        yError() << LogPrefix << "This wrapper accepts only three attached PolyDrivers";
         return false;
     }
 
-    const yarp::dev::PolyDriverDescriptor* driver = driverList[0];
+    for (size_t i = 0; i < driverList.size(); i++) {
+        yInfo() << LogPrefix << "This is a new PolyDriver device";
+        const yarp::dev::PolyDriverDescriptor* driver = driverList[i];
 
-    if (!driver) {
-        yError() << LogPrefix << "Passed PolyDriverDescriptor is nullptr";
-        return false;
+        if (!driver) {
+            yError() << LogPrefix << "Passed PolyDriverDescriptor is nullptr";
+            return false;
+        }
+
+        attachStatus = attach(driver->poly);
     }
 
-    return attach(driver->poly);
+    return attachStatus;
 }
 
 bool HumanWrenchProvider::detachAll()
