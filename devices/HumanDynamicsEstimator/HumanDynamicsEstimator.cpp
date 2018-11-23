@@ -9,6 +9,7 @@
 #include "HumanDynamicsEstimator.h"
 
 #include "IHumanState.h"
+#include "IHumanWrench.h"
 
 #include <Eigen/SparseCholesky>
 #include <Eigen/SparseCore>
@@ -785,6 +786,7 @@ public:
 
     // Attached interfaces
     hde::interfaces::IHumanState* iHumanState = nullptr;
+    hde::interfaces::IHumanWrench* iHumanWrench = nullptr;
     yarp::dev::IAnalogSensor* iAnalogSensor = nullptr;
 
     mutable std::mutex mutex;
@@ -1065,6 +1067,14 @@ void HumanDynamicsEstimator::run()
     // TODO: Check how to use the wrench data in berdy
     yarp::sig::Vector wrenchData;
     pImpl->iAnalogSensor->read(wrenchData);
+
+    int wrenchValues;
+    wrenchValues = pImpl->iHumanWrench->getNumberOfWrenchSources();
+
+    yInfo() << LogPrefix << " number of wrench sources : " << pImpl->iHumanWrench->getNumberOfWrenchSources();
+    yInfo() << LogPrefix << " wrench source names : " << pImpl->iHumanWrench->getWrenchSourceNames().size();
+    yInfo() << LogPrefix << " wrench values : " << pImpl->iHumanWrench->getWrenches();
+
     //yInfo() << LogPrefix << "Wrench data size : " << wrenchData.size();
     //yInfo() << LogPrefix << "Wrench data : " << wrenchData.toString();
 
@@ -1158,7 +1168,7 @@ bool HumanDynamicsEstimator::attach(yarp::dev::PolyDriver* poly)
     }
 
     if (deviceName == "human_wrench_provider") {
-        // Attach IHumanWrench interfaces coming from HumanWrenchProvider
+        // Attach IAnalogServer interfaces coming from HumanWrenchProvider
         if (pImpl->iAnalogSensor || !poly->view(pImpl->iAnalogSensor) || !pImpl->iAnalogSensor) {
             yError() << LogPrefix << "Failed to view IAnalogSensor interface from the polydriver";
             return false;
@@ -1168,6 +1178,19 @@ bool HumanDynamicsEstimator::attach(yarp::dev::PolyDriver* poly)
         auto numberOfSensors = stoi(poly->getValue("number_of_sources").asString());
         if (pImpl->iAnalogSensor->getChannels() != 6 * numberOfSensors) {
             yError() << LogPrefix << "The IAnalogSensor interface might not be ready";
+            return false;
+        }
+
+        // Attach IHumanWrench interfaces coming from HumanWrenchProvider
+        if (pImpl->iHumanWrench || !poly->view(pImpl->iHumanWrench) || !pImpl->iHumanWrench) {
+            yError() << LogPrefix << "Failed to view iHumanWrench interface from the polydriver";
+            return false;
+        }
+
+        // Check the interface
+        if (pImpl->iHumanWrench->getNumberOfWrenchSources() == 0
+                || pImpl->iHumanWrench->getNumberOfWrenchSources() != pImpl->iHumanWrench->getWrenchSourceNames().size()) {
+            yError() << "The IHumanState interface might not be ready";
             return false;
         }
 
