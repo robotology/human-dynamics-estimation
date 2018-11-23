@@ -135,7 +135,7 @@
 <device type="iwear_wrapper" name="FTShoeLeftIWearWrapper">
     <param name="period">0.01</param>
     <param name="dataPortName">/FTShoeLeft/WearableData/data:o</param>
-    <param name="rpcPortName">/FTShoeLeft/WearableData/metadata:o</param>
+    <param name="rpcPortName">/FTShoeLeft/WearableData/metadataRpc:o</param>
     <action phase="startup" level="5" type="attach">
         <paramlist name="networks">
             <elem name="FTShoeLeftIWearWrapperLabel">FTShoeLeftIAnalogSensorToIWear</elem>
