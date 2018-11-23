@@ -1,22 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <robot name="human-wrench-provider"  build=0 portprefix="">
 
-    <device type="iwear_remapper" name="ICubIWearRemapper">
-        <param name="wearableDataPorts">(/ICub/WearableData/data:o)</param>
-        <param name="wearableRPCPorts">(/ICub/WearableData/metadataRpc:o)</param>
+    <device type="iwear_remapper" name="FTSourcesIWearRemapper">
+        <param name="wearableDataPorts">(/FTShoeLeft/WearableData/data:o /FTShoeRight/WearableData/data:o /ICub/WearableData/data:o)</param>
+        <param name="wearableRPCPorts">(/FTShoeLeft/WearableData/metadataRpc:o /FTShoeRight/WearableData/metadataRpc:o /ICub/WearableData/metadataRpc:o)</param>
         <param name="outputPortName">/HDE/ICubIWearRemapper/data:o</param>
-    </device>
-
-    <device type="iwear_remapper" name="FTShoeLeftIWearRemapper">
-        <param name="wearableDataPorts">(/FTShoeLeft/WearableData/data:o)</param>
-        <param name="wearableRPCPorts">(/FTShoeLeft/WearableData/metadataRpc:o)</param>
-        <param name="outputPortName">/HDE/FTShoeLeftIWearRemapper/data:o</param>
-    </device>
-
-    <device type="iwear_remapper" name="FTShoeRightIWearRemapper">
-        <param name="wearableDataPorts">(/FTShoeRight/WearableData/data:o)</param>
-        <param name="wearableRPCPorts">(/FTShoeRight/WearableData/metadataRpc:o)</param>
-        <param name="outputPortName">/HDE/FTShoeRightIWearRemapper/data:o</param>
     </device>
 
     <device type="human_wrench_provider" name="HumanWrenchProvider">
@@ -68,9 +56,7 @@
 
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
-                 <elem name="HumanWrenchProviderLabelFTShoeLeft">FTShoeLeftIWearRemapper</elem>
-                 <elem name="HumanWrenchProviderLabelFTShoeRight">FTShoeRightIWearRemapper</elem>
-                 <elem name="HumanWrenchProviderLabelICub">ICubIWearRemapper</elem>
+                 <elem name="HumanWrenchProviderLabelFTShoeLeft">FTSourcesIWearRemapper</elem>
             </paramlist>
         </action>
 
