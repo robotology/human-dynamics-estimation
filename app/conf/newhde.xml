@@ -166,17 +166,38 @@
         <action phase="shutdown" level="5" type="detach"/>
     </device>
 
-    <device type="iwear_remapper" name="ICubIWearRemapper">
-        <param name="wearableDataPorts">(/ICub/WearableData/data:o)</param>
-        <param name="wearableRPCPorts">(/ICub/WearableData/metadataRpc:o)</param>
-        <param name="outputPortName">/HDE/ICubIWearRemapper/data:o</param>
+    <device type="iwear_remapper" name="FTSourcesIWearRemapper">
+        <param name="wearableDataPorts">(/FTShoeLeft/WearableData/data:o /FTShoeRight/WearableData/data:o /ICub/WearableData/data:o)</param>
+        <param name="wearableRPCPorts">(/FTShoeLeft/WearableData/metadataRpc:o /FTShoeRight/WearableData/metadataRpc:o /ICub/WearableData/metadataRpc:o)</param>
+        <param name="outputPortName">/HDE/FTSourcesIWearRemapper/data:o</param>
     </device>
 
     <device type="human_wrench_provider" name="HumanWrenchProvider">
+        <param name="period">0.100</param>
         <param name="human_urdf">Claudia66DoF.urdf</param>
         <param name="robot_urdf">model.urdf</param>
-        <param name="number_of_sources">2</param>
-        <param name="sources">(RobotLeftHandFT RobotRightHandFT)</param>
+        <param name="number_of_source_devices">3</param>
+        <param name="number_of_sources">4</param>
+        <param name="sources">(FTShoeLeft FTShoeRight RobotLeftHandFT RobotRightHandFT)</param>
+        <group name="FTShoeLeft">
+            <param name="sensorName">FTShoes::ft6D::LeftFTShoe</param>
+            <param name="outputFrame">LeftFoot</param>
+            <param name="type">fixed</param>
+            <param name="rotation">(1.0 0.0 0.0
+                                    0.0 1.0 0.0
+                                    0.0 0.0 1.0)</param>
+            <param name="position">(-0.0026 0.0 -0.1208)</param>
+        </group>
+
+        <group name="FTShoeRight">
+            <param name="sensorName">FTShoes::ft6D::RightFTShoe</param>
+            <param name="outputFrame">RightFoot</param>
+            <param name="type">fixed</param>
+            <param name="rotation">(1.0 0.0 0.0
+                                    0.0 1.0 0.0
+                                    0.0 0.0 1.0)</param>
+            <param name="position">(-0.0026 0.0 -0.1208)</param>
+        </group>
         <group name="RobotLeftHandFT">
             <param name="sensorName">ICub::ft6D::leftWBDFTSensor</param>
             <param name="outputFrame">l_hand_dh_frame</param>
@@ -200,7 +221,7 @@
 
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
-                <elem name="HumanWrenchProviderLabel">ICubIWearRemapper</elem>
+                 <elem name="HumanWrenchProviderLabelFTShoeLeft">FTSourcesIWearRemapper</elem>
             </paramlist>
         </action>
 
