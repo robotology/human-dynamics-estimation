@@ -4,7 +4,7 @@
     <device type="iwear_remapper" name="FTSourcesIWearRemapper">
         <param name="wearableDataPorts">(/FTShoeLeft/WearableData/data:o /FTShoeRight/WearableData/data:o /ICub/WearableData/data:o)</param>
         <param name="wearableRPCPorts">(/FTShoeLeft/WearableData/metadataRpc:o /FTShoeRight/WearableData/metadataRpc:o /ICub/WearableData/metadataRpc:o)</param>
-        <param name="outputPortName">/HDE/ICubIWearRemapper/data:o</param>
+        <param name="outputPortName">/HDE/FTSourcesIWearRemapper/data:o</param>
     </device>
 
     <device type="human_wrench_provider" name="HumanWrenchProvider">
