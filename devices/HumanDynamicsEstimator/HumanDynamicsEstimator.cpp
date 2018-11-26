@@ -941,9 +941,6 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
         return false;
     }
 
-    yInfo() << LogPrefix << "Number of measurements : " << pImpl->berdyData.helper.getNrOfSensorsMeasurements();
-    yInfo() << LogPrefix << "Number of links : " << pImpl->humanModel.getNrOfLinks();
-
     // Initialize buffers of the state
     pImpl->berdyData.state.jointsPosition = iDynTree::JointPosDoubleArray(pImpl->berdyData.helper.model());
     pImpl->berdyData.state.jointsVelocity = iDynTree::JointDOFsDoubleArray(pImpl->berdyData.helper.model());
@@ -1058,19 +1055,6 @@ void HumanDynamicsEstimator::run()
     std::array<double, 4> baseOrientation = pImpl->iHumanState->getBaseOrientation();
     std::array<double, 6> baseVelocity    = pImpl->iHumanState->getBaseVelocity();
 
-    // Debug code
-    //yInfo() << LogPrefix << "Joint positions : " << jointsPosition;
-    //yInfo() << LogPrefix << "Joint velocity : " << jointsVelocity;
-
-    //yInfo() << LogPrefix << "Base position : " << basePosition.at(0) << basePosition.at(1) << basePosition.at(2);
-    //yInfo() << LogPrefix << "Base orientation : " << baseOrientation.at(0) << baseOrientation.at(1) << baseOrientation.at(2);
-    //yInfo() << LogPrefix << "Base velocity : " << baseVelocity.at(0)
-     //                                          << baseVelocity.at(1)
-      //                                         << baseVelocity.at(2)
-      //                                         << baseVelocity.at(3)
-       //                                        << baseVelocity.at(4)
-         //                                      << baseVelocity.at(5);
-
     // Pad the received state data to berdy state variables
     pImpl->berdyData.state.jointsPosition.resize(jointsPosition.size());
     for (size_t i = 0; i < jointsPosition.size(); i++) {
@@ -1086,24 +1070,9 @@ void HumanDynamicsEstimator::run()
     pImpl->berdyData.state.baseAngularVelocity.setVal(1, baseVelocity.at(4));
     pImpl->berdyData.state.baseAngularVelocity.setVal(2, baseVelocity.at(5));
 
-    // Wrench data is read from the attached IAnalogSensor interface
-    // TODO: Check how to use the wrench data in berdy
-    yarp::sig::Vector wrenchData;
-    pImpl->iAnalogSensor->read(wrenchData);
-
-    //yInfo() << LogPrefix << "Wrench data size : " << wrenchData.size();
-    //yInfo() << LogPrefix << "Wrench data : " << wrenchData.toString();
-
-    //yInfo() << LogPrefix << " sensor measurements size : " << pImpl->berdyData.buffers.sensorMeasurements.getSizeOfAllSensorsMeasurements();
-    //yInfo() << LogPrefix << " number of accelerometers : " << pImpl->berdyData.buffers.sensorMeasurements.getNrOfSensors(iDynTree::ACCELEROMETER);
-
     // Fill in the y vector with sensor measurements for the FT sensors
     std::vector<double> wrenchValues;
     wrenchValues = pImpl->iHumanWrench->getWrenches();
-
-    //yInfo() << LogPrefix << " number of wrench sources : " << pImpl->iHumanWrench->getNumberOfWrenchSources();
-    //yInfo() << LogPrefix << " wrench source names : " << pImpl->iHumanWrench->getWrenchSourceNames().size();
-    //yInfo() << LogPrefix << " wrench values : " << pImpl->iHumanWrench->getWrenches();
 
     // Get the berdy sensors following its internal order
     std::vector<iDynTree::BerdySensor> berdySensors = pImpl->berdyData.helper.getSensorsOrdering();
@@ -1209,10 +1178,6 @@ void HumanDynamicsEstimator::run()
         pImpl->berdyData.helper.extractJointTorquesFromDynamicVariables(estimatedDynamicVariables,
                                                                         pImpl->berdyData.state.jointsPosition,
                                                                         pImpl->berdyData.estimates.jointTorqueEstimates);
-
-        //yInfo() << LogPrefix << "Estimated joint torques size : " << pImpl->berdyData.estimates.jointTorqueEstimates.size();
-        //yInfo() << LogPrefix << "Estimated joint torques : " << pImpl->berdyData.estimates.jointTorqueEstimates.toString();
-
     }
 
 }

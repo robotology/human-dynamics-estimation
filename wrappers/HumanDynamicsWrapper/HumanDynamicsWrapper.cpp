@@ -109,9 +109,6 @@ void HumanDynamicsWrapper::run()
         humanDynamicsData.addDouble(jointTorques.at(index));
     }
 
-    yInfo() << LogPrefix << "Received joint torques size : " << humanDynamicsData.size();
-    yInfo() << LogPrefix << "Recevied joint torques : " << humanDynamicsData.toString();
-
     // Send the data
     std::lock_guard<std::mutex> lock(pImpl->mutex);
     pImpl->outputPort.write(/*forceStrict=*/true);

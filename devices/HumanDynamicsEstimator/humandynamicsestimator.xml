@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <robot name="human-dynamics-estimator" build=0 portprefix="">
 
-<!--device type="iwear_remapper" name="IWearRemapper">
+<device type="iwear_remapper" name="IWearRemapper">
     <param name="wearableDataPorts">(/XSensSuit/WearableData/data:o)</param>
     <param name="wearableRPCPorts">(/XSensSuit/WearableData/metadataRpc:o)</param>
     <param name="outputPortName">/HDE/IWearRemapper/data:o</param>
-</device-->
+</device>
 
 <device type="human_dynamics_estimator" name="HumanDynamicsEstimator">
     <param name="period">0.100</param>
