@@ -26,6 +26,8 @@
 #include <iDynTree/Model/ContactWrench.h>
 #include <iDynTree/Model/Model.h>
 #include <iDynTree/ModelIO/ModelLoader.h>
+#include <iDynTree/Sensors/Sensors.h>
+#include <iDynTree/Sensors/ThreeAxisForceTorqueContactSensor.h>
 
 #include <yarp/os/LogStream.h>
 #include <yarp/os/ResourceFinder.h>
@@ -74,6 +76,32 @@ static bool parseYarpValueToStdVector(const yarp::os::Value& option, std::vector
 
     return true;
 }
+
+struct SensorKey
+{
+    iDynTree::BerdySensorTypes type;
+    std::string id;
+
+    bool operator==(const SensorKey& other) const
+    {
+        return type == other.type && id == other.id;
+    }
+};
+
+struct SensorKeyHash
+{
+    std::size_t operator()(const SensorKey& k) const
+    {
+        // Using the hash as suggested in
+        // http://stackoverflow.com/questions/1646807/quick-and-simple-hash-code-combinations/1646913#1646913
+        size_t result = 17;
+        result = result * 31 + std::hash<int>()(static_cast<int>(k.type));
+        result = result * 31 + std::hash<std::string>()(k.id);
+        return result;
+    }
+};
+
+typedef std::unordered_map<SensorKey, iDynTree::IndexRange, SensorKeyHash> SensorMapIndex;
 
 // This function processes the covariance option in the following way:
 // - double: if a single value is passed, it resizes the vector argument to match the
@@ -193,12 +221,6 @@ struct BerdyData
 
         iDynTree::VectorDynSize measurements;
 
-        iDynTree::SensorsMeasurements sensorMeasurements;
-        iDynTree::LinkNetExternalWrenches zeroExternalWrenches;
-        iDynTree::JointDOFsDoubleArray dummyJointTorques;
-        iDynTree::JointDOFsDoubleArray jointAccelerations;
-        iDynTree::LinkInternalWrenches dummyInternalWrenches;
-
     } buffers;
 
     struct KinematicState
@@ -221,31 +243,7 @@ struct BerdyData
     // TODO where put these
     // ====================
 
-    struct SensorKey
-    {
-        iDynTree::BerdySensorTypes type;
-        std::string id;
-
-        bool operator==(const SensorKey& other) const
-        {
-            return type == other.type && id == other.id;
-        }
-    };
-
-    struct SensorKeyHash
-    {
-        std::size_t operator()(const SensorKey& k) const
-        {
-            // Using the hash as suggested in
-            // http://stackoverflow.com/questions/1646807/quick-and-simple-hash-code-combinations/1646913#1646913
-            size_t result = 17;
-            result = result * 31 + std::hash<int>()(static_cast<int>(k.type));
-            result = result * 31 + std::hash<std::string>()(k.id);
-            return result;
-        }
-    };
-
-    std::unordered_map<SensorKey, iDynTree::IndexRange, SensorKeyHash> sensorMapIndex;
+    SensorMapIndex sensorMapIndex;
 };
 
 // Creates an iDynTree sparse matrix (set of triplets) from a vector
@@ -761,16 +759,16 @@ static bool parseSensorRemovalGroup(const yarp::os::Bottle& sensorRemovalGroup,
     }
 
     // Debug code to show the type and number of sensors finally contained in sensor list
-    yInfo() << LogPrefix << "Number of SIX_AXIS_FORCE_TORQUE_SENSOR sensors loaded from urdf model : " << sensorList.getNrOfSensors(static_cast<iDynTree::SensorType>(iDynTree::BerdySensorTypes::SIX_AXIS_FORCE_TORQUE_SENSOR));
-    yInfo() << LogPrefix << "Number of ACCELEROMETER_SENSOR sensors loaded from urdf model : " << sensorList.getNrOfSensors(static_cast<iDynTree::SensorType>(iDynTree::BerdySensorTypes::ACCELEROMETER_SENSOR));
-    yInfo() << LogPrefix << "Number of GYROSCOPE_SENSOR sensors loaded from urdf model : " << sensorList.getNrOfSensors(static_cast<iDynTree::SensorType>(iDynTree::BerdySensorTypes::GYROSCOPE_SENSOR));
-    yInfo() << LogPrefix << "Number of THREE_AXIS_ANGULAR_ACCELEROMETER_SENSOR sensors loaded from urdf model : " << sensorList.getNrOfSensors(static_cast<iDynTree::SensorType>(iDynTree::BerdySensorTypes::THREE_AXIS_ANGULAR_ACCELEROMETER_SENSOR));
-    yInfo() << LogPrefix << "Number of THREE_AXIS_FORCE_TORQUE_CONTACT_SENSOR sensors loaded from urdf model : " << sensorList.getNrOfSensors(static_cast<iDynTree::SensorType>(iDynTree::BerdySensorTypes::THREE_AXIS_FORCE_TORQUE_CONTACT_SENSOR));
+    yInfo() << LogPrefix << "Number of SIX_AXIS_FORCE_TORQUE_SENSOR sensors : " << sensorList.getNrOfSensors(static_cast<iDynTree::SensorType>(iDynTree::BerdySensorTypes::SIX_AXIS_FORCE_TORQUE_SENSOR));
+    yInfo() << LogPrefix << "Number of ACCELEROMETER_SENSOR sensors : " << sensorList.getNrOfSensors(static_cast<iDynTree::SensorType>(iDynTree::BerdySensorTypes::ACCELEROMETER_SENSOR));
+    yInfo() << LogPrefix << "Number of GYROSCOPE_SENSOR sensors : " << sensorList.getNrOfSensors(static_cast<iDynTree::SensorType>(iDynTree::BerdySensorTypes::GYROSCOPE_SENSOR));
+    yInfo() << LogPrefix << "Number of THREE_AXIS_ANGULAR_ACCELEROMETER_SENSOR sensors : " << sensorList.getNrOfSensors(static_cast<iDynTree::SensorType>(iDynTree::BerdySensorTypes::THREE_AXIS_ANGULAR_ACCELEROMETER_SENSOR));
+    yInfo() << LogPrefix << "Number of THREE_AXIS_FORCE_TORQUE_CONTACT_SENSOR sensors : " << sensorList.getNrOfSensors(static_cast<iDynTree::SensorType>(iDynTree::BerdySensorTypes::THREE_AXIS_FORCE_TORQUE_CONTACT_SENSOR));
 
     //TODO: Double check the casting for the following berdy sensors
-    //yInfo() << LogPrefix << "Number of DOF_ACCELERATION_SENSOR sensors loaded from urdf model : " << sensorList.getNrOfSensors(static_cast<iDynTree::SensorType>(iDynTree::BerdySensorTypes::DOF_ACCELERATION_SENSOR));
-    //yInfo() << LogPrefix << "Number of DOF_TORQUE_SENSOR sensors loaded from urdf model : " << sensorList.getNrOfSensors(static_cast<iDynTree::SensorType>(iDynTree::BerdySensorTypes::DOF_TORQUE_SENSOR));
-    //yInfo() << LogPrefix << "Number of NET_EXT_WRENCH_SENSOR sensors loaded from urdf model : " << sensorList.getNrOfSensors(static_cast<iDynTree::SensorType>(iDynTree::BerdySensorTypes::NET_EXT_WRENCH_SENSOR));
+    //yInfo() << LogPrefix << "Number of DOF_ACCELERATION_SENSOR sensors : " << sensorList.getNrOfSensors(static_cast<iDynTree::SensorType>(iDynTree::BerdySensorTypes::DOF_ACCELERATION_SENSOR));
+    //yInfo() << LogPrefix << "Number of DOF_TORQUE_SENSOR sensors : " << sensorList.getNrOfSensors(static_cast<iDynTree::SensorType>(iDynTree::BerdySensorTypes::DOF_TORQUE_SENSOR));
+    //yInfo() << LogPrefix << "Number of NET_EXT_WRENCH_SENSOR sensors : " << sensorList.getNrOfSensors(static_cast<iDynTree::SensorType>(iDynTree::BerdySensorTypes::NET_EXT_WRENCH_SENSOR));
 
     return true;
 }
@@ -810,6 +808,9 @@ public:
 
     // Model variables
     iDynTree::Model humanModel;
+
+    // Wrench sensor link names variable
+    std::vector<std::string> wrenchSensorsLinkNames;
 };
 
 HumanDynamicsEstimator::HumanDynamicsEstimator()
@@ -841,6 +842,16 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
         return false;
     }
 
+    if (!(config.check("number_of_wrench_sensors") && config.find("number_of_wrench_sensors").isInt())) {
+        yError() << LogPrefix << "Parameter 'number_of_wrench_sensors' missing or invalid";
+        return false;
+    }
+
+    if (!(config.check("wrench_sensors_link_name") && config.find("wrench_sensors_link_name").isList())) {
+        yError() << LogPrefix << "Parameter 'number_of_wrench_sensors' missing or invalid";
+        return false;
+    }
+
     // ===============================
     // PARSE THE CONFIGURATION OPTIONS
     // ===============================
@@ -848,12 +859,26 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
     double period = config.find("period").asFloat64();
     std::string urdfFileName = config.find("urdf").asString();
     std::string baseLink = config.find("baseLink").asString();
+    int number_of_wrench_sensors = config.find("number_of_wrench_sensors").asInt();
+    yarp::os::Bottle* linkNames = config.find("wrench_sensors_link_name").asList();
 
-    yInfo() << LogPrefix << "*** ========================";
-    yInfo() << LogPrefix << "*** Period                 :" << period;
-    yInfo() << LogPrefix << "*** Urdf file name         :" << urdfFileName;
-    yInfo() << LogPrefix << "*** Base link name         :" << baseLink;
-    yInfo() << LogPrefix << "*** ========================";
+    if (number_of_wrench_sensors != linkNames->size()) {
+        yError() << LogPrefix << "mismatch between the number of wrench sensors and corresponding sensor link names list";
+        return false;
+    }
+
+    pImpl->wrenchSensorsLinkNames.resize(linkNames->size());
+    for (int i = 0; i < linkNames->size(); i++) {
+        pImpl->wrenchSensorsLinkNames.at(i) = linkNames->get(i).asString();
+    }
+
+    yInfo() << LogPrefix << "*** ===========================";
+    yInfo() << LogPrefix << "*** Period                    :" << period;
+    yInfo() << LogPrefix << "*** Urdf file name            :" << urdfFileName;
+    yInfo() << LogPrefix << "*** Base link name            :" << baseLink;
+    yInfo() << LogPrefix << "*** Number of wrench sensors  :" << number_of_wrench_sensors;
+    yInfo() << LogPrefix << "*** Wrench sensors link names :" << linkNames->toString();
+    yInfo() << LogPrefix << "*** ===========================";
 
     // ===========
     // BERDY SETUP
@@ -879,9 +904,6 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
 
     // Initialize the sensors
     iDynTree::SensorsList humanSensors = modelLoader.sensors();
-
-    // TODO: Currently FT sensors of the shoe are not included in the urdf model
-    // So, the shoes have to be added as sensors through IWear implementation.
 
     // If any, remove the sensors from the SENSORS_REMOVAL option
     if (!parseSensorRemovalGroup(config.findGroup("SENSORS_REMOVAL"), humanSensors, pImpl->mapBerdySensorType)) {
@@ -919,28 +941,29 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
         return false;
     }
 
+    yInfo() << LogPrefix << "Number of measurements : " << pImpl->berdyData.helper.getNrOfSensorsMeasurements();
+    yInfo() << LogPrefix << "Number of links : " << pImpl->humanModel.getNrOfLinks();
+
     // Initialize buffers of the state
     pImpl->berdyData.state.jointsPosition = iDynTree::JointPosDoubleArray(pImpl->berdyData.helper.model());
     pImpl->berdyData.state.jointsVelocity = iDynTree::JointDOFsDoubleArray(pImpl->berdyData.helper.model());
     pImpl->berdyData.state.jointsAcceleration = iDynTree::JointDOFsDoubleArray(pImpl->berdyData.helper.model());
-
-    // Resize the buffers
-    pImpl->berdyData.buffers.sensorMeasurements.resize(pImpl->berdyData.helper.sensors());
-    pImpl->berdyData.buffers.zeroExternalWrenches.resize(pImpl->berdyData.helper.model());
-    pImpl->berdyData.buffers.dummyJointTorques.resize(pImpl->berdyData.helper.model());
-    pImpl->berdyData.buffers.jointAccelerations.resize(pImpl->berdyData.helper.model());
-    pImpl->berdyData.buffers.dummyInternalWrenches.resize(pImpl->berdyData.helper.model());
 
     pImpl->berdyData.estimates.jointTorqueEstimates.resize(modelLoader.model());
 
     // Get the berdy sensors following its internal order
     std::vector<iDynTree::BerdySensor> berdySensors = pImpl->berdyData.helper.getSensorsOrdering();
 
+    /* The total number of sensors are :
+     * 17 Accelerometers, 66 DOF Acceleration sensors and 67 NET EXT WRENCH sensors
+     * The total number of sensor measurements = (17x3) + (66x1) + (67x6) = 519
+     */
+
     // Create a map that describes where are the sensors measurements in the y vector
     // in terms of index offset and range
     for (const iDynTree::BerdySensor& sensor : berdySensors) {
         // Create the key
-        BerdyData::SensorKey key = {sensor.type, sensor.id};
+        SensorKey key = {sensor.type, sensor.id};
 
         // Check that it is unique
         if (pImpl->berdyData.sensorMapIndex.find(key) != pImpl->berdyData.sensorMapIndex.end()) {
@@ -1068,42 +1091,97 @@ void HumanDynamicsEstimator::run()
     yarp::sig::Vector wrenchData;
     pImpl->iAnalogSensor->read(wrenchData);
 
-    int wrenchValues;
-    wrenchValues = pImpl->iHumanWrench->getNumberOfWrenchSources();
-
-    yInfo() << LogPrefix << " number of wrench sources : " << pImpl->iHumanWrench->getNumberOfWrenchSources();
-    yInfo() << LogPrefix << " wrench source names : " << pImpl->iHumanWrench->getWrenchSourceNames().size();
-    yInfo() << LogPrefix << " wrench values : " << pImpl->iHumanWrench->getWrenches();
-
     //yInfo() << LogPrefix << "Wrench data size : " << wrenchData.size();
     //yInfo() << LogPrefix << "Wrench data : " << wrenchData.toString();
-
-
-    // TODO: Update the random measurements with proper data
-    //iDynTree::getRandomVector(pImpl->berdyData.buffers.measurements);
 
     //yInfo() << LogPrefix << " sensor measurements size : " << pImpl->berdyData.buffers.sensorMeasurements.getSizeOfAllSensorsMeasurements();
     //yInfo() << LogPrefix << " number of accelerometers : " << pImpl->berdyData.buffers.sensorMeasurements.getNrOfSensors(iDynTree::ACCELEROMETER);
 
-    // Update sensor measurements vector y
-    // Filling y vector with zero values for ACCELEROMETER sensors
-    // TODO: Fill the correct data
-    iDynTree::LinAcceleration dummyLinAcc;
-    dummyLinAcc(0) = 0;
-    dummyLinAcc(1) = 0;
-    dummyLinAcc(2) = 0;
-    for (size_t index = 0; index < pImpl->berdyData.buffers.sensorMeasurements.getNrOfSensors(iDynTree::ACCELEROMETER); index++) {
-        pImpl->berdyData.buffers.sensorMeasurements.setMeasurement(iDynTree::ACCELEROMETER, index, dummyLinAcc);
+    // Fill in the y vector with sensor measurements for the FT sensors
+    std::vector<double> wrenchValues;
+    wrenchValues = pImpl->iHumanWrench->getWrenches();
+
+    //yInfo() << LogPrefix << " number of wrench sources : " << pImpl->iHumanWrench->getNumberOfWrenchSources();
+    //yInfo() << LogPrefix << " wrench source names : " << pImpl->iHumanWrench->getWrenchSourceNames().size();
+    //yInfo() << LogPrefix << " wrench values : " << pImpl->iHumanWrench->getWrenches();
+
+    // Get the berdy sensors following its internal order
+    std::vector<iDynTree::BerdySensor> berdySensors = pImpl->berdyData.helper.getSensorsOrdering();
+
+    /* The total number of sensors are :
+     * 17 Accelerometers, 66 DOF Acceleration sensors and 67 NET EXT WRENCH sensors
+     * The total number of sensor measurements = (17x3) + (66x1) + (67x6) = 519
+     */
+
+    // Iterate over the sensors and add corresponding measurements
+    int wrenchSensor = 0;
+    bool wrenchMeasurementsSet = false;
+    for (const iDynTree::BerdySensor& sensor : berdySensors) {
+        // Create the key
+        SensorKey key = {sensor.type, sensor.id};
+
+        // Check that it exists in the sensorMapIndex
+        if (pImpl->berdyData.sensorMapIndex.find(key) != pImpl->berdyData.sensorMapIndex.end()) {
+            SensorMapIndex::const_iterator found = pImpl->berdyData.sensorMapIndex.find(key);
+            // Update sensor measurements vector y
+            switch (sensor.type)
+            {
+                case iDynTree::ACCELEROMETER_SENSOR:
+                {
+                    // Filling y vector with zero values for ACCELEROMETER sensors
+                    // TODO: Fill the correct data
+                    for (int i = 0; i < 3; i++)
+                    {
+                        pImpl->berdyData.buffers.measurements(found->second.offset + i) = 0;
+                    }
+                }
+                break;
+                case iDynTree::DOF_ACCELERATION_SENSOR:
+                {
+                    // Filling y vector with zero values for DOF_ACCELEROMETER sensors
+                    pImpl->berdyData.buffers.measurements(found->second.offset) = 0;
+                }
+                break;
+                case iDynTree::NET_EXT_WRENCH_SENSOR:
+                {
+                    // Filling y vector with zero values for NET_EXT_WRENCH sensors
+                    // TODO: Fill the correct data
+                    if (!wrenchMeasurementsSet) {
+                        std::string wrenchSensorLinkName = pImpl->wrenchSensorsLinkNames.at(wrenchSensor);
+                        for (int idx = 0; idx < pImpl->humanModel.getNrOfLinks(); idx++) {
+                            std::string linkName = pImpl->humanModel.getLinkName(idx);
+
+                            if(linkName.compare(wrenchSensorLinkName) == 0) {
+                                for (int i = 0; i < 6; i++)
+                                {
+                                    pImpl->berdyData.buffers.measurements(found->second.offset + i) = wrenchValues.at(wrenchSensor*6 + i);
+                                }
+                                if (wrenchSensor < 4) {
+                                    wrenchSensor++;
+                                    if (wrenchSensor == 4) {
+                                        wrenchMeasurementsSet = true;
+                                    }
+                                }
+                            }
+
+                        }
+                    }
+                    else {
+                        for (int i = 0; i < 6; i++)
+                        {
+                            pImpl->berdyData.buffers.measurements(found->second.offset + i) = 0;
+                        }
+                    }
+
+                }
+                break;
+                default:
+                    yWarning() << LogPrefix << sensor.type << " sensor unimplemented";
+                break;
+            }
+        }
+
     }
-
-    // TODO: Fill in the y vector with sensor measurements for the FT sensors
-
-    pImpl->berdyData.helper.serializeSensorVariables(pImpl->berdyData.buffers.sensorMeasurements,
-                                                     pImpl->berdyData.buffers.zeroExternalWrenches,
-                                                     pImpl->berdyData.buffers.dummyJointTorques,
-                                                     pImpl->berdyData.buffers.jointAccelerations,
-                                                     pImpl->berdyData.buffers.dummyInternalWrenches,
-                                                     pImpl->berdyData.buffers.measurements);
 
     // Solve a berdy problem
     pImpl->berdyData.solver->updateEstimateInformationFloatingBase(pImpl->berdyData.state.jointsPosition,

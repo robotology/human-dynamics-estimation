@@ -11,6 +11,8 @@
     <param name="period">0.100</param>
     <param name="urdf">Claudia66DoF.urdf</param>
     <param name="baseLink">Pelvis</param>
+    <param name="number_of_wrench_sensors">4</param>
+    <param name="wrench_sensors_link_name">(LeftFoot RightFoot LeftHand RightHand)</param>
     <group name="PRIORS">
         <param name="cov_dyn_variables">10000.0</param>
         <param name="cov_dyn_constraints">0.0001</param>
@@ -28,10 +30,6 @@
     </group>
     <group name="SENSORS_REMOVAL">
         <param name="GYROSCOPE_SENSOR">*</param>
-        <!--Currently force torque sensors are not defined in Claudia66DoF.urdf file>
-        <So, the list used below will throw an error. It is better to use * instead>
-        <TODO: How to include the FTSensors from ICub device-->
-        <!--param name="SIX_AXIS_FORCE_TORQUE_SENSOR">*</param-->
     </group>
 </device>
 
