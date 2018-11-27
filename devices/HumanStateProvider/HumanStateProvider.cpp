@@ -162,6 +162,11 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         return false;
     }
 
+    if (!(config.check("costTolerance") && config.find("costTolerance").isFloat64())) {
+        yError() << LogPrefix << "costTolerance option not found or not valid";
+        return false;
+    }
+
     if (!(config.check("useXsensJointsAngles") && config.find("useXsensJointsAngles").isBool())) {
         yError() << LogPrefix << "useXsensJointsAngles option not found or not valid";
         return false;
@@ -226,6 +231,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
 
     pImpl->allowIKFailures = config.find("allowIKFailures").asBool();
     int maxIterationsIK = config.find("maxIterationsIK").asInt();
+    double costTolerance = config.find("costTolerance").asFloat64();
     pImpl->useXsensJointsAngles = config.find("useXsensJointsAngles").asBool();
     const std::string urdfFileName = config.find("urdf").asString();
     pImpl->floatingBaseFrame.model = floatingBaseFrameList->get(0).asString();
@@ -262,6 +268,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     yInfo() << LogPrefix << "*** Urdf file name         :" << urdfFileName;
     yInfo() << LogPrefix << "*** Allow IK failures      :" << pImpl->allowIKFailures;
     yInfo() << LogPrefix << "*** Max IK iterations      :" << maxIterationsIK;
+    yInfo() << LogPrefix << "*** Cost Tolerance         :" << costTolerance;
     yInfo() << LogPrefix << "*** Use Xsens joint angles :" << pImpl->useXsensJointsAngles;
     yInfo() << LogPrefix << "*** ========================";
 
@@ -311,7 +318,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         pImpl->ik.setMaxIterations(maxIterationsIK);
         //        pImpl->ik.setRotationParametrization(InverseKinematicsRotationParametrizationQuaternion);
         pImpl->ik.setRotationParametrization(InverseKinematicsRotationParametrizationRollPitchYaw);
-        pImpl->ik.setCostTolerance(1E-0); // TODO
+        pImpl->ik.setCostTolerance(costTolerance);
 
         if (!pImpl->ik.setModel(pImpl->humanModel)) {
             yError() << LogPrefix << "IK: failed to load the model";

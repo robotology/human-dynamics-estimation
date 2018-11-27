@@ -15,37 +15,13 @@
     <param name="outputPortName">/HDE/IWearRemapper/data:o</param>
 </device>
 
-<device type="human_dynamics_estimator" name="HumanDynamicsEstimator">
-    <param name="period">0.100</param>
-    <param name="urdf">Claudia66DoF.urdf</param>
-    <param name="baseLink">Pelvis</param>
-    <group name="PRIORS">
-        <param name="cov_dyn_variables">10000.0</param>
-        <param name="cov_dyn_constraints">0.0001</param>
-        <param name="cov_measurements_ACCELEROMETER_SENSOR">(0.0011 0.0011 0.0011)</param>
-        <param name="cov_measurements_DOF_ACCELERATION_SENSOR">0.666e-5</param>
-        <group name="cov_measurements_NET_EXT_WRENCH_SENSOR">
-            <param name="value">1e-6</param>
-            <param name="specific_elements">(LeftFoot RightFoot LeftHand RightHand)</param>
-            <param name="LeftFoot">(0.0589998348 0.0589998348 0.0359999712 0.002250000225 0.002250000225 0.56e-3)</param>
-            <param name="RightFoot">(0.0589998348 0.0589998348 0.0359999712 0.002250000225 0.002250000225 0.56e-3)</param>
-            <param name="LeftHand">(0.0589998348 0.0589998348 0.0359999712 0.002250000225 0.002250000225 0.56e-3)</param>
-            <param name="RightHand">(0.0589998348 0.0589998348 0.0359999712 0.002250000225 0.002250000225 0.56e-3)</param>
-        </group>
-    </group>
-    <group name="SENSORS_REMOVAL">
-        <param name="GYROSCOPE_SENSOR">*</param>
-        <param name="SIX_AXIS_FORCE_TORQUE_SENSOR">(s1 s2)</param>
-    </group>
-</device>
-
 <device type="human_state_provider" name="HumanStateProvider">
     <param name="period">0.100</param>
     <param name="urdf">Claudia66DoF.urdf</param>
     <param name="floatingBaseFrame">(Pelvis, XsensSuit::vLink::Pelvis)</param>
     <param name="allowIKFailures">true</param>
-    <param name="maxIterationsIK">500</param>
-    <param name="costTolerance">0.1</param>
+    <param name="maxIterationsIK">300</param>
+    <param name="costTolerance">0.06</param>
     <param name="useXsensJointsAngles">false</param>
     <!-- TODO: How to use a reduced model in the entire HDE? (Starting from HumanStateProvider) -->
     <group name="MODEL_TO_DATA_LINK_NAMES">
@@ -173,19 +149,6 @@
     <action phase="startup" level="5" type="attach">
         <paramlist name="networks">
             <elem name="HumanStatePublisherLabel">HumanStateProvider</elem>
-        </paramlist>
-    </action>
-    <action phase="shutdown" level="5" type="detach"/>
-</device>
-
-<device type="xsens_tf_publisher" name="XsensTFPublisher">
-    <param name="period">0.010</param>
-    <param name="baseLinkName">Pelvis</param>
-    <param name="baseLinkVirtualSensor">XsensSuit::vLink::Pelvis</param>
-    <param name="tfPrefix">/Xsens/</param>
-    <action phase="startup" level="5" type="attach">
-        <paramlist name="networks">
-            <elem name="XsensTFPublisherLabel">IWearRemapper</elem>
         </paramlist>
     </action>
     <action phase="shutdown" level="5" type="detach"/>
