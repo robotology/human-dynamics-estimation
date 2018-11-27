@@ -153,7 +153,7 @@
         <action phase="shutdown" level="5" type="detach"/>
     </device>
 
-    <device type="xsens_tf_publisher" name="XsensTFPublisher">
+    <!--device type="xsens_tf_publisher" name="XsensTFPublisher">
         <param name="period">0.010</param>
         <param name="baseLinkName">Pelvis</param>
         <param name="baseLinkVirtualSensor">XsensSuit::vLink::Pelvis</param>
@@ -164,7 +164,7 @@
             </paramlist>
         </action>
         <action phase="shutdown" level="5" type="detach"/>
-    </device>
+    </device-->
 
     <device type="iwear_remapper" name="FTSourcesIWearRemapper">
         <param name="wearableDataPorts">(/FTShoeLeft/WearableData/data:o /FTShoeRight/WearableData/data:o /ICub/WearableData/data:o)</param>
@@ -188,7 +188,6 @@
                                     0.0 0.0 1.0)</param>
             <param name="position">(-0.0026 0.0 -0.1208)</param>
         </group>
-
         <group name="FTShoeRight">
             <param name="sensorName">FTShoes::ft6D::RightFTShoe</param>
             <param name="outputFrame">RightFoot</param>
@@ -218,26 +217,111 @@
             <param name="robotLinkingFrame">l_sole</param>
             <param name="humanFootPosition">(0.0 0.0 0.0918)</param>
         </group>
-
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
                  <elem name="HumanWrenchProviderLabelFTShoeLeft">FTSourcesIWearRemapper</elem>
             </paramlist>
         </action>
-
         <action phase="shutdown" level="5" type="detach" />
     </device>
 
     <device type="analogServer" name="HumanWrenchWrapper">
         <param name="name">/HDE/HumanWrenchWrapper/wrench:o</param>
         <param name="period">10</param>
-
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
                 <elem name="HumanWrenchWrapperLabel">HumanWrenchProvider</elem>
             </paramlist>
         </action>
+        <action phase="shutdown" level="5" type="detach" />
+    </device>
 
+    <!--Wrappers for each wrench source to publish WrenchStamped message to Rviz-->
+    <device type="analogServer" name="LeftFootAnalogServer">
+        <param name="name">/HDE/LeftFootPublisher/wrench:o</param>
+        <param name="period">20</param>
+        <param name="channels">24</param>
+        <paramlist name="ports">
+            <elem name="FirstSetOfChannels">0 6 0 6</elem>
+        </paramlist>
+        <group name="ROS">
+            <param name="useROS">only</param>
+            <param name="ROS_topicName">/HDE/WrenchStamped/LeftFoot</param>
+            <param name="ROS_nodeName">/HDE/LeftFootPublisher</param>
+            <param name="ROS_msgType">geometry_msgs/WrenchStamped</param>
+            <param name="frame_id">Human/LeftFoot</param>
+        </group>
+        <action phase="startup" level="5" type="attach">
+            <paramlist name="networks">
+                <elem name="MyAnalogSensor">HumanWrenchProvider</elem>
+            </paramlist>
+        </action>
+        <action phase="shutdown" level="5" type="detach" />
+    </device>
+
+    <device type="analogServer" name="RightFootAnalogServer">
+        <param name="name">/HDE/RightFootPublisher/wrench:o</param>
+        <param name="period">20</param>
+        <param name="channels">24</param>
+        <paramlist name="ports">
+            <elem name="FirstSetOfChannels">7 12 0 6</elem>
+        </paramlist>
+        <group name="ROS">
+            <param name="useROS">only</param>
+            <param name="ROS_topicName">/HDE/WrenchStamped/RightFoot</param>
+            <param name="ROS_nodeName">/HDE/RightFootPublisher</param>
+            <param name="ROS_msgType">geometry_msgs/WrenchStamped</param>
+            <param name="frame_id">Human/RightFoot</param>
+        </group>
+        <action phase="startup" level="5" type="attach">
+            <paramlist name="networks">
+                <elem name="MyAnalogSensor">HumanWrenchProvider</elem>
+            </paramlist>
+        </action>
+        <action phase="shutdown" level="5" type="detach" />
+    </device>
+
+    <device type="analogServer" name="LeftHandAnalogServer">
+        <param name="name">/HDE/LeftHandPublisher/wrench:o</param>
+        <param name="period">20</param>
+        <param name="channels">24</param>
+        <paramlist name="ports">
+            <elem name="FirstSetOfChannels">13 18 0 6</elem>
+        </paramlist>
+        <group name="ROS">
+            <param name="useROS">only</param>
+            <param name="ROS_topicName">/HDE/WrenchStamped/LeftHand</param>
+            <param name="ROS_nodeName">/HDE/LeftHandPublisher</param>
+            <param name="ROS_msgType">geometry_msgs/WrenchStamped</param>
+            <param name="frame_id">Human/LeftHand</param>
+        </group>
+        <action phase="startup" level="5" type="attach">
+            <paramlist name="networks">
+                <elem name="MyAnalogSensor">HumanWrenchProvider</elem>
+            </paramlist>
+        </action>
+        <action phase="shutdown" level="5" type="detach" />
+    </device>
+
+    <device type="analogServer" name="RightHandAnalogServer">
+        <param name="name">/HDE/RightHandPublisher/wrench:o</param>
+        <param name="period">20</param>
+        <param name="channels">24</param>
+        <paramlist name="ports">
+            <elem name="FirstSetOfChannels">18 24 0 6</elem>
+        </paramlist>
+        <group name="ROS">
+            <param name="useROS">only</param>
+            <param name="ROS_topicName">/HDE/WrenchStamped/RightHand</param>
+            <param name="ROS_nodeName">/HDE/RightHandPublisher</param>
+            <param name="ROS_msgType">geometry_msgs/WrenchStamped</param>
+            <param name="frame_id">Human/RightHand</param>
+        </group>
+        <action phase="startup" level="5" type="attach">
+            <paramlist name="networks">
+                <elem name="MyAnalogSensor">HumanWrenchProvider</elem>
+            </paramlist>
+        </action>
         <action phase="shutdown" level="5" type="detach" />
     </device>
 
@@ -294,7 +378,7 @@
         <param name="parentLinkNames">(LeftFoot LeftLowerLeg LeftUpperLeg LeftHand LeftForeArm LeftUpperArm RightFoot RightLowerLeg RightUpperLeg RightHand RightForeArm RightUpperArm)</param>
         <param name="sphericalJointNames">(jLeftAnkle jLeftKnee jLeftHip jLeftWrist jLeftElbow jLeftShoulder jRightAnkle jRightKnee jRightHip jRightWrist jRightElbow jRightShoulder)</param>
         <param name="topicPrefix">/HumanEffortBridge</param>
-        <param name="tfPrefix">HDEVizTF</param>
+        <param name="tfPrefix">Human</param>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
                 <elem name="HumanDynamicsPublisherLabel">HumanDynamicsEstimator</elem>
