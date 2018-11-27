@@ -4,6 +4,7 @@
 
 find_package(IWear REQUIRED)
 find_package(iDynTree REQUIRED)
+find_package(Eigen3 REQUIRED)
 
 yarp_prepare_plugin(human_wrench_provider
     TYPE hde::devices::HumanWrenchProvider
@@ -19,7 +20,8 @@ yarp_add_plugin(HumanWrenchProvider
     WrenchFrameTransformers.h)
 
 target_include_directories(HumanWrenchProvider PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+    SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIR})
 
 target_link_libraries(HumanWrenchProvider PUBLIC
     IHumanWrench

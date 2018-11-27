@@ -3,6 +3,7 @@
 # GNU Lesser General Public License v2.1 or any later version.
 
 find_package(iDynTree REQUIRED)
+find_package(Eigen3 REQUIRED)
 
 yarp_prepare_plugin(human_dynamics_estimator
     TYPE hde::devices::HumanDynamicsEstimator
@@ -16,7 +17,8 @@ yarp_add_plugin(HumanDynamicsEstimator
     HumanDynamicsEstimator.h)
 
 target_include_directories(HumanDynamicsEstimator PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+    SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIR})
 
 target_link_libraries(HumanDynamicsEstimator PUBLIC
     IHumanDynamics
