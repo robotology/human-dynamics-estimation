@@ -87,7 +87,10 @@ include(AddUninstallTarget)
 #endif()
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> remove dependency from robotology-playground/xsens-mvn
 # add_subdirectory(human-state-provider)
 # add_subdirectory(human-forces-provider)
 # add_subdirectory(human-dynamics-estimator)
