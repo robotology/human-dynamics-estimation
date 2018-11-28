@@ -79,9 +79,9 @@
     <device type="analogServer" name="HumanWrenchPublisher">
         <param name="name">/HDE/HumanWrenchPublisher/wrench:o</param>
         <param name="period">20</param>
-        <param name="channels">6</param>
+        <param name="channels">24</param>
         <paramlist name="ports">
-            <elem name="FirstSetOfChannels">0 5 0 5</elem>
+            <elem name="FirstSetOfChannels">0 23 0 23</elem>
         </paramlist>
         <group name="ROS">
             <param name="useROS">only</param>
