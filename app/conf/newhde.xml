@@ -236,90 +236,24 @@
         <action phase="shutdown" level="5" type="detach" />
     </device>
 
-    <!--Wrappers for each wrench source to publish WrenchStamped message to Rviz-->
-    <device type="analogServer" name="LeftFootAnalogServer">
-        <param name="name">/HDE/LeftFootPublisher/wrench:o</param>
+    <!--Wrapper to publish WrenchStamped message to Rviz-->
+    <device type="analogServer" name="HumanWrenchPublisher">
+        <param name="name">/HDE/HumanWrenchPublisher/wrench:o</param>
         <param name="period">20</param>
-        <param name="channels">24</param>
+        <param name="channels">6</param>
         <paramlist name="ports">
-            <elem name="FirstSetOfChannels">0 6 0 6</elem>
+            <elem name="FirstSetOfChannels">0 5 0 5</elem>
         </paramlist>
         <group name="ROS">
             <param name="useROS">only</param>
-            <param name="ROS_topicName">/HDE/WrenchStamped/LeftFoot</param>
-            <param name="ROS_nodeName">/HDE/LeftFootPublisher</param>
+            <param name="ROS_topicName">(/HDE/WrenchStamped/LeftFoot /HDE/WrenchStamped/RightFoot /HDE/WrenchStamped/LeftHand /HDE/WrenchStamped/RightHand)</param>
+            <param name="ROS_nodeName">/HDE/HumanWrenchPublisherNode</param>
             <param name="ROS_msgType">geometry_msgs/WrenchStamped</param>
-            <param name="frame_id">Human/LeftFoot</param>
+            <param name="frame_id">(Human/LeftFoot Human/RightFoot Human/LeftHand Human/RightHand)</param>
         </group>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
-                <elem name="MyAnalogSensor">HumanWrenchProvider</elem>
-            </paramlist>
-        </action>
-        <action phase="shutdown" level="5" type="detach" />
-    </device>
-
-    <device type="analogServer" name="RightFootAnalogServer">
-        <param name="name">/HDE/RightFootPublisher/wrench:o</param>
-        <param name="period">20</param>
-        <param name="channels">24</param>
-        <paramlist name="ports">
-            <elem name="FirstSetOfChannels">7 12 0 6</elem>
-        </paramlist>
-        <group name="ROS">
-            <param name="useROS">only</param>
-            <param name="ROS_topicName">/HDE/WrenchStamped/RightFoot</param>
-            <param name="ROS_nodeName">/HDE/RightFootPublisher</param>
-            <param name="ROS_msgType">geometry_msgs/WrenchStamped</param>
-            <param name="frame_id">Human/RightFoot</param>
-        </group>
-        <action phase="startup" level="5" type="attach">
-            <paramlist name="networks">
-                <elem name="MyAnalogSensor">HumanWrenchProvider</elem>
-            </paramlist>
-        </action>
-        <action phase="shutdown" level="5" type="detach" />
-    </device>
-
-    <device type="analogServer" name="LeftHandAnalogServer">
-        <param name="name">/HDE/LeftHandPublisher/wrench:o</param>
-        <param name="period">20</param>
-        <param name="channels">24</param>
-        <paramlist name="ports">
-            <elem name="FirstSetOfChannels">13 18 0 6</elem>
-        </paramlist>
-        <group name="ROS">
-            <param name="useROS">only</param>
-            <param name="ROS_topicName">/HDE/WrenchStamped/LeftHand</param>
-            <param name="ROS_nodeName">/HDE/LeftHandPublisher</param>
-            <param name="ROS_msgType">geometry_msgs/WrenchStamped</param>
-            <param name="frame_id">Human/LeftHand</param>
-        </group>
-        <action phase="startup" level="5" type="attach">
-            <paramlist name="networks">
-                <elem name="MyAnalogSensor">HumanWrenchProvider</elem>
-            </paramlist>
-        </action>
-        <action phase="shutdown" level="5" type="detach" />
-    </device>
-
-    <device type="analogServer" name="RightHandAnalogServer">
-        <param name="name">/HDE/RightHandPublisher/wrench:o</param>
-        <param name="period">20</param>
-        <param name="channels">24</param>
-        <paramlist name="ports">
-            <elem name="FirstSetOfChannels">18 24 0 6</elem>
-        </paramlist>
-        <group name="ROS">
-            <param name="useROS">only</param>
-            <param name="ROS_topicName">/HDE/WrenchStamped/RightHand</param>
-            <param name="ROS_nodeName">/HDE/RightHandPublisher</param>
-            <param name="ROS_msgType">geometry_msgs/WrenchStamped</param>
-            <param name="frame_id">Human/RightHand</param>
-        </group>
-        <action phase="startup" level="5" type="attach">
-            <paramlist name="networks">
-                <elem name="MyAnalogSensor">HumanWrenchProvider</elem>
+                <elem name="HumanWrenchPublisherLabel">HumanWrenchProvider</elem>
             </paramlist>
         </action>
         <action phase="shutdown" level="5" type="detach" />

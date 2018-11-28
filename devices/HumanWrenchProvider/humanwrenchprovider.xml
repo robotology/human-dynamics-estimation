@@ -23,7 +23,6 @@
                                     0.0 0.0 1.0)</param>
             <param name="position">(-0.0026 0.0 -0.1208)</param>
         </group>
-
         <group name="FTShoeRight">
             <param name="sensorName">FTShoes::ft6D::RightFTShoe</param>
             <param name="outputFrame">RightFoot</param>
@@ -73,6 +72,29 @@
             </paramlist>
         </action>
 
+        <action phase="shutdown" level="5" type="detach" />
+    </device>
+
+    <!--Wrapper to publish WrenchStamped message to Rviz-->
+    <device type="analogServer" name="HumanWrenchPublisher">
+        <param name="name">/HDE/HumanWrenchPublisher/wrench:o</param>
+        <param name="period">20</param>
+        <param name="channels">6</param>
+        <paramlist name="ports">
+            <elem name="FirstSetOfChannels">0 5 0 5</elem>
+        </paramlist>
+        <group name="ROS">
+            <param name="useROS">only</param>
+            <param name="ROS_topicName">(/HDE/WrenchStamped/LeftFoot /HDE/WrenchStamped/RightFoot /HDE/WrenchStamped/LeftHand /HDE/WrenchStamped/RightHand)</param>
+            <param name="ROS_nodeName">/HDE/HumanWrenchPublisherNode</param>
+            <param name="ROS_msgType">geometry_msgs/WrenchStamped</param>
+            <param name="frame_id">(Human/LeftFoot Human/RightFoot Human/LeftHand Human/RightHand)</param>
+        </group>
+        <action phase="startup" level="5" type="attach">
+            <paramlist name="networks">
+                <elem name="HumanWrenchPublisherLabel">HumanWrenchProvider</elem>
+            </paramlist>
+        </action>
         <action phase="shutdown" level="5" type="detach" />
     </device>
 </robot>
