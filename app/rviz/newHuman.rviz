@@ -5,6 +5,7 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Status1
+        - /LeftFoot_ExtWrenches1/Status1
       Splitter Ratio: 0.5099999904632568
     Tree Height: 1060
   - Class: rviz/Selection
@@ -720,13 +721,13 @@ Visualization Manager:
       Arrow Width: 0.30000001192092896
       Class: rviz/WrenchStamped
       Enabled: true
-      Force Arrow Scale: 2
+      Force Arrow Scale: 1
       Force Color: 255; 239; 6
       Hide Small Values: true
       History Length: 1
       Name: LeftFoot_ExtWrenches
       Topic: /HDE/WrenchStamped/LeftFoot
-      Torque Arrow Scale: 1
+      Torque Arrow Scale: 0
       Torque Color: 37; 95; 255
       Unreliable: true
       Value: true
@@ -734,13 +735,13 @@ Visualization Manager:
       Arrow Width: 0.30000001192092896
       Class: rviz/WrenchStamped
       Enabled: true
-      Force Arrow Scale: 2
+      Force Arrow Scale: 1
       Force Color: 255; 239; 6
       Hide Small Values: true
       History Length: 1
       Name: RightFoot_ExtWrenches
       Topic: /HDE/WrenchStamped/RightFoot
-      Torque Arrow Scale: 1
+      Torque Arrow Scale: 0
       Torque Color: 37; 95; 255
       Unreliable: false
       Value: true
@@ -748,13 +749,13 @@ Visualization Manager:
       Arrow Width: 0.30000001192092896
       Class: rviz/WrenchStamped
       Enabled: true
-      Force Arrow Scale: 15
+      Force Arrow Scale: 1
       Force Color: 0; 255; 200
       Hide Small Values: true
       History Length: 1
       Name: LeftHand_ExtWrenches
       Topic: /HDE/WrenchStamped/LeftHand
-      Torque Arrow Scale: 1
+      Torque Arrow Scale: 0
       Torque Color: 37; 95; 255
       Unreliable: false
       Value: true
@@ -762,13 +763,13 @@ Visualization Manager:
       Arrow Width: 0.30000001192092896
       Class: rviz/WrenchStamped
       Enabled: true
-      Force Arrow Scale: 15
+      Force Arrow Scale: 1
       Force Color: 0; 255; 200
       Hide Small Values: true
       History Length: 1
       Name: RightHand_ExtWrenches
       Topic: /HDE/WrenchStamped/RightHand
-      Torque Arrow Scale: 0.05000000074505806
+      Torque Arrow Scale: 0
       Torque Color: 37; 95; 255
       Unreliable: false
       Value: true
@@ -825,25 +826,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 11.263215065002441
+      Distance: 12.08926010131836
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -5.94878625869751
-        Y: 2.414194345474243
-        Z: -0.6062227487564087
+        X: -5.123363494873047
+        Y: 4.460787773132324
+        Z: -0.105855293571949
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.27065011858940125
+      Pitch: 0.19065013527870178
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 5.418115139007568
+      Yaw: 5.573117733001709
     Saved: ~
 Window Geometry:
   Displays:
