@@ -242,10 +242,13 @@
         <param name="period">20</param>
         <param name="channels">24</param>
         <paramlist name="ports">
-            <elem name="FirstSetOfChannels">0 23 0 23</elem>
+            <elem name="FirstSetOfChannels">0 5 0 5</elem>
+            <elem name="SecondSetOfChannels">6 11 0 5</elem>
+            <elem name="ThirdSetOfChannels">12 17 0 5</elem>
+            <elem name="FourthSetOfChannels">18 23 0 5</elem>
         </paramlist>
         <group name="ROS">
-            <param name="useROS">only</param>
+            <param name="useROS">true</param>
             <param name="ROS_topicName">(/HDE/WrenchStamped/LeftFoot /HDE/WrenchStamped/RightFoot /HDE/WrenchStamped/LeftHand /HDE/WrenchStamped/RightHand)</param>
             <param name="ROS_nodeName">/HDE/HumanWrenchPublisherNode</param>
             <param name="ROS_msgType">geometry_msgs/WrenchStamped</param>
