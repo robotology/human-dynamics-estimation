@@ -5,3 +5,4 @@
 add_subdirectory(HumanStateProvider)
 add_subdirectory(HumanWrenchProvider)
 add_subdirectory(HumanDynamicsEstimator)
+add_subdirectory(XsensHumanStateProvider)
