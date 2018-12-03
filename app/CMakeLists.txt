@@ -6,6 +6,7 @@ set(URDF_HUMAN_FILES urdfs/Marta48DoF.urdf
                      urdfs/Marta66DoF.urdf
                      urdfs/Meri48DoF.urdf
                      urdfs/Meri66DoF.urdf
+                     urdfs/Claudia66DoF.urdf
                      urdfs/Claudia48DoF_Dec2017.urdf
                      urdfs/Claudia66DoF_Dec2017.urdf)
 
@@ -28,3 +29,28 @@ yarp_install(FILES ${JOINT_INI_HUMAN_FILES}
 # yarp_install(FILES ${APP_FILES}
 #              DESTINATION ${YARP_APPLICATIONS_INSTALL_DIR})
 
+# ROS related installation
+set (ROS_PROJECT_NAME HDERviz)
+set (ROS_PACKAGE_FILE ros/package.xml)
+set (ROS_LAUNCH_FILE ros/launch/HDERviz.launch)
+set (ROS_RVIZ_FILE ros/rviz/HDERviz.rviz)
+
+# Copy the package.xml, which is necessary to be treated as
+# a ROS package
+install(FILES ${ROS_PACKAGE_FILE}
+             DESTINATION ${CMAKE_INSTALL_PREFIX}/share/${ROS_PROJECT_NAME}/)
+
+
+# Install the .launch file and the config file
+install(FILES ${ROS_LAUNCH_FILE}
+             DESTINATION ${CMAKE_INSTALL_PREFIX}/share/${ROS_PROJECT_NAME}/launch/)
+
+install(FILES ${ROS_RVIZ_FILE}
+             DESTINATION ${CMAKE_INSTALL_PREFIX}/share/${ROS_PROJECT_NAME}/rviz/)
+
+# Install urdf files
+install(FILES ${URDF_FILES}
+             DESTINATION ${CMAKE_INSTALL_PREFIX}/share/${ROS_PROJECT_NAME}/urdfs/)
+
+install(FILES ${URDF_HUMAN_FILES}
+             DESTINATION ${CMAKE_INSTALL_PREFIX}/share/${ROS_PROJECT_NAME}/urdfs/)
