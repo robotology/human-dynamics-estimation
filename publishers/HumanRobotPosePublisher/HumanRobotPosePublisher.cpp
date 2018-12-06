@@ -23,7 +23,7 @@
 #include <string>
 #include <mutex>
 
-const std::string DeviceName = "HumanRobotPoseProvider";
+const std::string DeviceName = "HumanRobotPosePublisher";
 const std::string LogPrefix = DeviceName + " :";
 constexpr double DefaultPeriod = 0.01;
 
@@ -102,11 +102,6 @@ bool HumanRobotPosePublisher::open(yarp::os::Searchable& config)
         yInfo() << LogPrefix << "Using default period:" << DefaultPeriod << "s";
     }
 
-    if (!(config.check("urdfModelName") && config.find("urdfModelName").isString())) {
-        yError() << LogPrefix << "urdfModelName option not found or not valid";
-        return false;
-    }
-
     if (!(config.check("urdfFileName") && config.find("urdfFileName").isString())) {
         yError() << LogPrefix << "urdfFileName option not found or not valid";
         return false;
@@ -139,15 +134,16 @@ bool HumanRobotPosePublisher::open(yarp::os::Searchable& config)
     const double period = config.check("period", yarp::os::Value(DefaultPeriod)).asFloat64();
     const std::string urdfModelName = config.find("urdfModelName").asString();
     const std::string urdfFileName = config.find("urdfFileName").asString();
+
     pImpl->robotFloatingBaseFrame = config.find("robotFloatingBaseFrame").asString();
     pImpl->robotLeftFootFrame = config.find("robotLeftFootFrame").asString();
     pImpl->robotTFPrefix = config.find("robotTFPrefix").asString();
-    pImpl->humanLeftFootFrame = config.find("humanLeftFeetFrame").asString();
+    pImpl->humanLeftFootFrame = config.find("humanLeftFootFrame").asString();
 
-    yarp::os::Bottle& fixedTransformGroup = config.findGroup("HumanRobotLeftFeetFixedTransform");
+    yarp::os::Bottle& fixedTransformGroup = config.findGroup("HumanRobotLeftFootFixedTransform");
 
     if (fixedTransformGroup.isNull()) {
-        yError() << LogPrefix << "Failed to find HumanRobotLeftFeetFixedTransform group";
+        yError() << LogPrefix << "Failed to find HumanRobotLeftFootFixedTransform group";
         return false;
     }
 
@@ -174,13 +170,13 @@ bool HumanRobotPosePublisher::open(yarp::os::Searchable& config)
 
     yInfo() << LogPrefix << "*** ========================================";
     yInfo() << LogPrefix << "*** Period                                 :" << period;
-    yInfo() << LogPrefix << "*** Urdf mode name                         :" << urdfModelName;
     yInfo() << LogPrefix << "*** Urdf file name                         :" << urdfFileName;
     yInfo() << LogPrefix << "*** Robot TF prefix                        :" << pImpl->robotTFPrefix;
     yInfo() << LogPrefix << "*** Robot floating base frame              :" << pImpl->robotFloatingBaseFrame;
     yInfo() << LogPrefix << "*** Robot left foot frame                  :" << pImpl->robotLeftFootFrame;
     yInfo() << LogPrefix << "*** Human left foot frame                  :" << pImpl->humanLeftFootFrame;
-    yInfo() << LogPrefix << "*** Human robot left foot fixed transform  :" << pImpl->humanRobotFixedTransform.toString();
+    yInfo() << LogPrefix << "*** Human robot left foot fixed transform  :";
+    yInfo() << pImpl->humanRobotFixedTransform.toString();
     yInfo() << LogPrefix << "*** ========================================";
 
     // ==========================
@@ -188,16 +184,16 @@ bool HumanRobotPosePublisher::open(yarp::os::Searchable& config)
     // ==========================
 
     auto& rf = yarp::os::ResourceFinder::getResourceFinderSingleton();
-    std::string urdfModelPath = rf.findPath(urdfModelName);
-    if (urdfModelPath.empty()) {
-        yError() << LogPrefix << "Failed to find model path" << config.find("urdfModelName").asString();
+    std::string urdfFilePath = rf.findFile(urdfFileName);
+    if (urdfFilePath.empty()) {
+        yError() << LogPrefix << "Failed to find file" << config.find("urdf").asString();
         return false;
     }
 
     iDynTree::ModelLoader modelLoader;
-    if (!modelLoader.loadModelFromFile(urdfModelPath+"/"+urdfFileName) || !modelLoader.isValid()) {
-        yError() << LogPrefix << "Failed to load model " << urdfModelPath+"/"+urdfFileName;
-        return  false;
+    if (!modelLoader.loadModelFromFile(urdfFilePath) || !modelLoader.isValid()) {
+        yError() << LogPrefix << "Failed to load model" << urdfFilePath;
+        return false;
     }
 
     // Get the model from the model loader
@@ -222,11 +218,19 @@ bool HumanRobotPosePublisher::open(yarp::os::Searchable& config)
         return false;
     }
 
-    // =====
-    // OTHER
-    // =====
+    // ===============
+    // Periodic Thread
+    // ===============
 
     setPeriod(period);
+
+    // Start the PeriodicThread loop
+    if (!start()) {
+        yError() << LogPrefix << "Failed to start the loop.";
+        return false;
+    }
+
+    yInfo() << LogPrefix << "Configured correctly, running thread";
     return true;
 }
 
@@ -239,7 +243,7 @@ bool HumanRobotPosePublisher::close()
 
 void HumanRobotPosePublisher::run()
 {
-
+    yInfo() << LogPrefix << "Inside run";
     // Read the tf from ground to human left foot
     yarp::sig::Matrix humanGroundToHumanBaseTF;
     pImpl->iHumanTransform->getTransform(pImpl->humanLeftFootFrame, "ground", humanGroundToHumanBaseTF);
@@ -267,6 +271,7 @@ void HumanRobotPosePublisher::run()
     iDynTree::Transform humanGroundToRobotBaseTransform;
     humanGroundToRobotBaseTransform = humanGroundToHumanBaseTransform * pImpl->humanRobotFixedTransform * robotLeftFootToBaseTransform;
 
+    yInfo() << LogPrefix << humanGroundToRobotBaseTransform.toString();
     iDynTree::Position finalPosition = humanGroundToRobotBaseTransform.getPosition();
     iDynTree::Rotation finalRotation = humanGroundToRobotBaseTransform.getRotation();
 
