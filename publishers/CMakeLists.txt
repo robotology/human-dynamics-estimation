@@ -4,4 +4,5 @@
 
 add_subdirectory(HumanStatePublisher)
 add_subdirectory(HumanDynamicsPublisher)
+add_subdirectory(HumanRobotPosePublisher)
 add_subdirectory(XsensTFPublisher)

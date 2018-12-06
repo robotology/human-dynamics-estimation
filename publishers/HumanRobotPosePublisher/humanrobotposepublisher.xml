@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<robot name="new-hde-setup" build=0 portprefix="">
+
+    <device type="human_robot_pose_provider" name="HumanRobotPoseProvider">
+        <param name="period">0.1</param>
+        <param name="urdfModelName">icubGazeboSim</param>
+        <param name="urdfFileName">model.urdf</param>
+        <param name="robotFloatingBaseFrame">root_link</param>
+        <param name="robotLeftFootFrame">l_foot</param>
+        <param name="robotTFPrefix">/robot</param>
+        <param name="humanLeftFoottFrame">/human/LeftFoot</param>
+        <group name="HumanRobotLeftFoottFixedTransform">
+            <param name="rotation">(-1.0 0.0 0.0 0.0 -1.0 0.0 0.0 0.0 1.0)</param>
+            <param name="position">(0.59 -0.2549 0.0)</param>
+        </group>
+    </device>
+
+</robot>
