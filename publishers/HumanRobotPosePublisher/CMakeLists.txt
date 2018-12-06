@@ -25,7 +25,9 @@ target_link_libraries(HumanRobotPosePublisher PRIVATE
     YARP::YARP_init
     YARP::YARP_math
     YARP::YARP_rosmsg
-    iDynTree::idyntree-core)
+    iDynTree::idyntree-core
+    iDynTree::idyntree-model
+    iDynTree::idyntree-high-level)
 
 yarp_install(
     TARGETS HumanRobotPosePublisher
