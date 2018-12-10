@@ -19,6 +19,7 @@
 #include <yarp/math/Math.h>
 #include <yarp/os/LogStream.h>
 #include <yarp/os/Node.h>
+#include <iDynTree/yarp/YARPConversions.h>
 
 #include <string>
 #include <mutex>
@@ -40,6 +41,7 @@ public:
 
     // Human Robot fixed transform
     iDynTree::Transform humanRobotFixedTransform;
+    yarp::sig::Matrix humanLeftFoot_H_robotLeftFoot;
 
     // Model variables
     iDynTree::Model robotModel;
@@ -175,6 +177,7 @@ bool HumanRobotPosePublisher::open(yarp::os::Searchable& config)
 
     // Store the transform in the temporary object
     pImpl->humanRobotFixedTransform = {rotation, position};
+    iDynTree::toYarp(pImpl->humanRobotFixedTransform.asHomogeneousTransform(), pImpl->humanLeftFoot_H_robotLeftFoot);
 
     yInfo() << LogPrefix << "*** ========================================";
     yInfo() << LogPrefix << "*** Period                                 :" << period;
@@ -261,23 +264,9 @@ bool HumanRobotPosePublisher::close()
 
 void HumanRobotPosePublisher::run()
 {
-    // Read the tf from ground to human left foot
-    yarp::sig::Matrix humanGroundToHumanBaseTF;
-    pImpl->iHumanTransform->getTransform(pImpl->humanLeftFootFrame, pImpl->humanFloatingBaseFrame, humanGroundToHumanBaseTF);
-
-    // Store the received tf in iDynTree transform format
-    iDynTree::Transform humanGroundToHumanBaseTransform(iDynTree::Rotation(humanGroundToHumanBaseTF(1,1),
-                                                                           humanGroundToHumanBaseTF(1,2),
-                                                                           humanGroundToHumanBaseTF(1,3),
-                                                                           humanGroundToHumanBaseTF(2,1),
-                                                                           humanGroundToHumanBaseTF(2,2),
-                                                                           humanGroundToHumanBaseTF(2,3),
-                                                                           humanGroundToHumanBaseTF(3,1),
-                                                                           humanGroundToHumanBaseTF(3,2),
-                                                                           humanGroundToHumanBaseTF(3,4)),
-                                                        iDynTree::Position(humanGroundToHumanBaseTF(1,4),
-                                                                           humanGroundToHumanBaseTF(2,4),
-                                                                           humanGroundToHumanBaseTF(3,4)));
+    // Read the homogeneous tf from ground to human left foot using IFrameTransform interface
+    yarp::sig::Matrix ground_H_humanLeftFoot;
+    pImpl->iHumanTransform->getTransform(pImpl->humanLeftFootFrame, pImpl->humanFloatingBaseFrame, ground_H_humanLeftFoot);
 
     // Get the transform from robot left foot to root link
     iDynTree::KinDynComputations robotKinDynComp;
@@ -286,41 +275,22 @@ void HumanRobotPosePublisher::run()
     iDynTree::Transform robotLeftFootToBaseTransform = robotKinDynComp.getRelativeTransform(pImpl->robotLeftFootFrame,
                                                                                             pImpl->robotFloatingBaseFrame);
 
+    yarp::sig::Matrix robotBase_H_robotLeftFoot;
+    iDynTree::toYarp(robotLeftFootToBaseTransform.asHomogeneousTransform(), robotBase_H_robotLeftFoot);
+
+
     // Compute groud to robot base frame transform
-    iDynTree::Transform humanGroundToRobotBaseTransform;
-    humanGroundToRobotBaseTransform = humanGroundToHumanBaseTransform * pImpl->humanRobotFixedTransform * robotLeftFootToBaseTransform;
+    yarp::sig::Matrix humanGround_H_robotBase;
+    humanGround_H_robotBase = robotBase_H_robotLeftFoot * pImpl->humanLeftFoot_H_robotLeftFoot * ground_H_humanLeftFoot;
 
-    yInfo() << LogPrefix << humanGroundToRobotBaseTransform.toString();
-    iDynTree::Position finalPosition = humanGroundToRobotBaseTransform.getPosition();
-    iDynTree::Rotation finalRotation = humanGroundToRobotBaseTransform.getRotation();
+    //iDynTree::Transform dummy = iDynTree::Transform::Identity();
+    //iDynTree::toYarp(dummy.asHomogeneousTransform(), humanGround_H_robotBase);
 
-    // Convert iDynTree Transform to yarp Matrix
-    yarp::sig::Matrix humanGroundToRobotBaseTF(4,4);
-
-    // Initialize to Identity
-    humanGroundToHumanBaseTF.eye();
-
-    // Store position
-    humanGroundToHumanBaseTF(1,4) = finalPosition.getVal(0);
-    humanGroundToHumanBaseTF(2,4) = finalPosition.getVal(1);
-    humanGroundToHumanBaseTF(3,4) = finalPosition.getVal(2);
-
-    // Store rotation
-    humanGroundToHumanBaseTF(1,1) = finalRotation.getVal(1,1);
-    humanGroundToHumanBaseTF(1,2) = finalRotation.getVal(1,2);
-    humanGroundToHumanBaseTF(1,3) = finalRotation.getVal(1,3);
-
-    humanGroundToHumanBaseTF(2,1) = finalRotation.getVal(2,1);
-    humanGroundToHumanBaseTF(2,2) = finalRotation.getVal(2,2);
-    humanGroundToHumanBaseTF(2,3) = finalRotation.getVal(2,3);
-
-    humanGroundToHumanBaseTF(3,1) = finalRotation.getVal(3,1);
-    humanGroundToHumanBaseTF(3,2) = finalRotation.getVal(3,2);
-    humanGroundToHumanBaseTF(3,3) = finalRotation.getVal(3,3);
+    yInfo() << LogPrefix << humanGround_H_robotBase.toString();
 
     // Send the final transform to transformServer
-    pImpl->iHumanTransform->setTransform(pImpl->robotTFPrefix + "/" + pImpl->robotLeftFootFrame,
-                                         "ground", humanGroundToRobotBaseTF);
+    pImpl->iHumanTransform->setTransform(pImpl->robotTFPrefix + "/" + pImpl->robotFloatingBaseFrame,
+                                         "ground", humanGround_H_robotBase);
 }
 
 
