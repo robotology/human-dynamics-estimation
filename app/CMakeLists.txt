@@ -1,6 +1,7 @@
 # install urdf files
 set(URDF_FILES urdfs/iCubGenova02.urdf
-               urdfs/iCubGenova04.urdf)
+               urdfs/iCubGenova04.urdf
+               urdfs/iCubGazeboV2_5.urdf)
 
 set(URDF_HUMAN_FILES urdfs/Marta48DoF.urdf
                      urdfs/Marta66DoF.urdf

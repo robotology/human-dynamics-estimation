@@ -6,11 +6,11 @@
         <arg name="eff" default="True"/>
 
         <!-- TODO: the abs path should be created by CMake -->
-        <param name="robot_description" textfile="/home/dferigo/git/human-dynamics-estimation/app/urdfs/Claudia66DoF_Dec2017.urdf"/>
+        <param name="robot_description" textfile="/home/yeshi/software/human-dynamics-estimation/app/urdfs/Claudia66DoF.urdf"/>
 
         <!-- Open RVIZ -->
         <param name="use_gui" value="$(arg gui)"/>
-        <node pkg="rviz" name="RvizHuman" type="rviz" args="-d /home/dferigo/git/human-dynamics-estimation/app/rviz/Human.rviz" required="true" />
+        <node pkg="rviz" name="RvizHuman" type="rviz" args="-d /home/yeshi/software/human-dynamics-estimation/app/rviz/Human.rviz" required="true" />
 
         <!-- Configure the robot_state_publisher node -->
         <!-- This is the old method. Now we use the idyntree module -->
@@ -21,15 +21,14 @@
         <!--param name="tf_prefix" value="Human" type="str"/-->
         <!--node pkg="robot_state_publisher" type="robot_state_publisher" name="HumanJoints2TF" /-->
     </group>
-    <!-- TODO -->
-    <!--group ns="icub02">
-        <arg name="robotModel" />
+    <group ns="RobotGroup">
+        <arg name="icubSim" />
         <arg name="gui" default="False" />
         <arg name="vel" default="True" />
         <arg name="eff" default="True" />
-        <param name="robot_description" textfile="$(find human_viz_model)/urdf/iCubGenova02.urdf"  />
+        <param name="robot_description" textfile="/home/yeshi/software/human-dynamics-estimation/app/urdfs/iCubGazeboV2_5.urdf"  />
         <param name="use_gui" value="$(arg gui)"/>
         <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
-        <param name="tf_prefix" value="icub02" type="str"/>
-    </group-->
+        <param name="tf_prefix" value="icubSim" type="str"/>
+    </group>
 </launch>
