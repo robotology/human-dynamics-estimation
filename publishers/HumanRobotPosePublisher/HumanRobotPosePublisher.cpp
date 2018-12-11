@@ -8,10 +8,7 @@
 
 #include "HumanRobotPosePublisher.h"
 
-#include <iDynTree/Model/Model.h>
-#include <iDynTree/ModelIO/ModelLoader.h>
 #include <iDynTree/Core/Transform.h>
-#include <iDynTree/KinDynComputations.h>
 
 #include <yarp/os/ResourceFinder.h>
 #include <yarp/dev/IFrameTransform.h>
@@ -37,14 +34,11 @@ public:
     mutable std::mutex mutex;
 
     yarp::dev::PolyDriver transformClientDevice;
-    yarp::dev::IFrameTransform* iHumanTransform = nullptr;
+    yarp::dev::IFrameTransform* iFrameTransform = nullptr;
 
     // Human Robot fixed transform
     iDynTree::Transform humanRobotFixedTransform;
     yarp::sig::Matrix robotLeftFoot_H_humanLeftFoot;
-
-    // Model variables
-    iDynTree::Model robotModel;
 
     std::string robotTFPrefix;
     std::string robotFloatingBaseFrame;
@@ -181,7 +175,6 @@ bool HumanRobotPosePublisher::open(yarp::os::Searchable& config)
 
     yInfo() << LogPrefix << "*** ========================================";
     yInfo() << LogPrefix << "*** Period                                 :" << period;
-    yInfo() << LogPrefix << "*** Robot Urdf file name                   :" << robotURDFFileName;
     yInfo() << LogPrefix << "*** Robot TF prefix                        :" << pImpl->robotTFPrefix;
     yInfo() << LogPrefix << "*** Robot floating base frame              :" << pImpl->robotFloatingBaseFrame;
     yInfo() << LogPrefix << "*** Robot left foot frame                  :" << pImpl->robotLeftFootFrame;
@@ -190,35 +183,6 @@ bool HumanRobotPosePublisher::open(yarp::os::Searchable& config)
     yInfo() << LogPrefix << "*** Human robot left foot fixed transform  :";
     yInfo() << pImpl->humanRobotFixedTransform.toString();
     yInfo() << LogPrefix << "*** ========================================";
-
-    // ==========================
-    // INITIALIZE THE ROBOT MODEL
-    // ==========================
-
-    auto& rf = yarp::os::ResourceFinder::getResourceFinderSingleton();
-    std::string urdfFilePath = rf.findFile(robotURDFFileName);
-    if (urdfFilePath.empty()) {
-        yError() << LogPrefix << "Failed to find file" << config.find("urdfFileName").asString();
-        return false;
-    }
-
-    iDynTree::ModelLoader modelLoader;
-    if (!modelLoader.loadModelFromFile(urdfFilePath) || !modelLoader.isValid()) {
-        yError() << LogPrefix << "Failed to load model" << urdfFilePath;
-        return false;
-    }
-
-    // Get the model from the model loader
-    pImpl->robotModel = modelLoader.model();
-
-    // Check if the robot frames are present in the model
-    bool ok = pImpl->robotModel.isValidLinkIndex(pImpl->robotModel.getLinkIndex(pImpl->robotFloatingBaseFrame));
-    ok = ok && pImpl->robotModel.isValidFrameIndex(pImpl->robotModel.getLinkIndex(pImpl->robotLeftFootFrame));
-
-    if (!ok) {
-        yError() << LogPrefix << "given robot frames not present in the robot urdf model";
-        return false;
-    }
 
     // =========================
     // OPEN THE TRANSFORM CLIENT
@@ -234,8 +198,18 @@ bool HumanRobotPosePublisher::open(yarp::os::Searchable& config)
         return false;
     }
 
-    if (!pImpl->transformClientDevice.view(pImpl->iHumanTransform)) {
+    if (!pImpl->transformClientDevice.view(pImpl->iFrameTransform)) {
         yError() << "The IFrameTransform is not implemented by the opened device";
+        return false;
+    }
+
+    // Check if transforms are available in the transformServer for the input frames from the config file
+    bool ok = pImpl->iFrameTransform->canTransform(pImpl->robotTFPrefix + "/" + pImpl->robotFloatingBaseFrame,
+                                                   pImpl->robotTFPrefix + "/" + pImpl->robotLeftFootFrame);
+    ok = ok && pImpl->iFrameTransform->canTransform(pImpl->humanLeftFootFrame, pImpl->humanFloatingBaseFrame);
+
+    if (!ok) {
+        yError() << LogPrefix << "tranforms do not exist for the given frames in the transformServer";
         return false;
     }
 
@@ -266,24 +240,19 @@ void HumanRobotPosePublisher::run()
 {
     // Read the homogeneous tf from ground to human left foot using IFrameTransform interface
     yarp::sig::Matrix humanLeftFoot_H_humanBase;
-    pImpl->iHumanTransform->getTransform(pImpl->humanLeftFootFrame, pImpl->humanFloatingBaseFrame, humanLeftFoot_H_humanBase);
+    pImpl->iFrameTransform->getTransform(pImpl->humanLeftFootFrame, pImpl->humanFloatingBaseFrame, humanLeftFoot_H_humanBase);
 
-    // Get the transform from robot left foot to root link
-    iDynTree::KinDynComputations robotKinDynComp;
-    robotKinDynComp.loadRobotModel(pImpl->robotModel);
-
-    iDynTree::Transform robotLeftFootToBaseTransform = robotKinDynComp.getRelativeTransform(pImpl->robotFloatingBaseFrame,
-                                                                                            pImpl->robotLeftFootFrame);
-
+    // Read the homogenous tf from robot left foot to robot base using IFrameTransform interface
     yarp::sig::Matrix robotBase_H_robotLeftFoot;
-    iDynTree::toYarp(robotLeftFootToBaseTransform.asHomogeneousTransform(), robotBase_H_robotLeftFoot);
+    pImpl->iFrameTransform->getTransform(pImpl->robotTFPrefix + "/" + pImpl->robotFloatingBaseFrame,
+                                         pImpl->robotTFPrefix + "/" + pImpl->robotLeftFootFrame, robotBase_H_robotLeftFoot);
 
     // Compute groud to robot base frame transform
     yarp::sig::Matrix robotBase_H_humanBase;
     robotBase_H_humanBase = robotBase_H_robotLeftFoot * pImpl->robotLeftFoot_H_humanLeftFoot * humanLeftFoot_H_humanBase;
 
     // Send the final transform to transformServer
-    pImpl->iHumanTransform->setTransform(pImpl->robotTFPrefix + "/" + pImpl->robotFloatingBaseFrame,
+    pImpl->iFrameTransform->setTransform(pImpl->robotTFPrefix + "/" + pImpl->robotFloatingBaseFrame,
                                          pImpl->humanFloatingBaseFrame, robotBase_H_humanBase);
 }
 
