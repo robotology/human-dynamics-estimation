@@ -41,7 +41,7 @@ public:
 
     // Human Robot fixed transform
     iDynTree::Transform humanRobotFixedTransform;
-    yarp::sig::Matrix humanLeftFoot_H_robotLeftFoot;
+    yarp::sig::Matrix robotLeftFoot_H_humanLeftFoot;
 
     // Model variables
     iDynTree::Model robotModel;
@@ -177,7 +177,7 @@ bool HumanRobotPosePublisher::open(yarp::os::Searchable& config)
 
     // Store the transform in the temporary object
     pImpl->humanRobotFixedTransform = {rotation, position};
-    iDynTree::toYarp(pImpl->humanRobotFixedTransform.asHomogeneousTransform(), pImpl->humanLeftFoot_H_robotLeftFoot);
+    iDynTree::toYarp(pImpl->humanRobotFixedTransform.asHomogeneousTransform(), pImpl->robotLeftFoot_H_humanLeftFoot);
 
     yInfo() << LogPrefix << "*** ========================================";
     yInfo() << LogPrefix << "*** Period                                 :" << period;
@@ -265,32 +265,26 @@ bool HumanRobotPosePublisher::close()
 void HumanRobotPosePublisher::run()
 {
     // Read the homogeneous tf from ground to human left foot using IFrameTransform interface
-    yarp::sig::Matrix ground_H_humanLeftFoot;
-    pImpl->iHumanTransform->getTransform(pImpl->humanLeftFootFrame, pImpl->humanFloatingBaseFrame, ground_H_humanLeftFoot);
+    yarp::sig::Matrix humanLeftFoot_H_humanBase;
+    pImpl->iHumanTransform->getTransform(pImpl->humanLeftFootFrame, pImpl->humanFloatingBaseFrame, humanLeftFoot_H_humanBase);
 
     // Get the transform from robot left foot to root link
     iDynTree::KinDynComputations robotKinDynComp;
     robotKinDynComp.loadRobotModel(pImpl->robotModel);
 
-    iDynTree::Transform robotLeftFootToBaseTransform = robotKinDynComp.getRelativeTransform(pImpl->robotLeftFootFrame,
-                                                                                            pImpl->robotFloatingBaseFrame);
+    iDynTree::Transform robotLeftFootToBaseTransform = robotKinDynComp.getRelativeTransform(pImpl->robotFloatingBaseFrame,
+                                                                                            pImpl->robotLeftFootFrame);
 
     yarp::sig::Matrix robotBase_H_robotLeftFoot;
     iDynTree::toYarp(robotLeftFootToBaseTransform.asHomogeneousTransform(), robotBase_H_robotLeftFoot);
 
-
     // Compute groud to robot base frame transform
-    yarp::sig::Matrix humanGround_H_robotBase;
-    humanGround_H_robotBase = robotBase_H_robotLeftFoot * pImpl->humanLeftFoot_H_robotLeftFoot * ground_H_humanLeftFoot;
-
-    //iDynTree::Transform dummy = iDynTree::Transform::Identity();
-    //iDynTree::toYarp(dummy.asHomogeneousTransform(), humanGround_H_robotBase);
-
-    yInfo() << LogPrefix << humanGround_H_robotBase.toString();
+    yarp::sig::Matrix robotBase_H_humanBase;
+    robotBase_H_humanBase = robotBase_H_robotLeftFoot * pImpl->robotLeftFoot_H_humanLeftFoot * humanLeftFoot_H_humanBase;
 
     // Send the final transform to transformServer
     pImpl->iHumanTransform->setTransform(pImpl->robotTFPrefix + "/" + pImpl->robotFloatingBaseFrame,
-                                         "ground", humanGround_H_robotBase);
+                                         pImpl->humanFloatingBaseFrame, robotBase_H_humanBase);
 }
 
 
