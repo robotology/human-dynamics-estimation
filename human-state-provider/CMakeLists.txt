@@ -7,7 +7,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 ## Find packages
 find_package(iDynTree REQUIRED)
 find_package(Eigen3 REQUIRED)
-find_package(YARP_experimental REQUIRED)
+#find_package(YARP_experimental REQUIRED)
 
 # linux needs to explicitly ask for pthreads
 if (UNIX AND NOT APPLE)
