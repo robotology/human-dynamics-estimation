@@ -1125,9 +1125,9 @@ void HumanDynamicsEstimator::run()
                                 {
                                     pImpl->berdyData.buffers.measurements(found->second.offset + i) = wrenchValues.at(wrenchSensor*6 + i);
                                 }
-                                if (wrenchSensor < 4) {
+                                if (wrenchSensor < pImpl->wrenchSensorsLinkNames.size()) {
                                     wrenchSensor++;
-                                    if (wrenchSensor == 4) {
+                                    if (wrenchSensor == pImpl->wrenchSensorsLinkNames.size()) {
                                         wrenchMeasurementsSet = true;
                                     }
                                 }
