@@ -61,8 +61,29 @@ struct LinkPairInfo {
     std::vector<std::pair<size_t, size_t> > consideredJointLocations; /*!< For each joint connecting the pair: first = offset in the full model , second = dofs of joint */
 
     LinkPairInfo() = default;
-
+#if defined(_MSC_VER) && _MSC_VER < 1900
+    LinkPairInfo(LinkPairInfo&& rvalue)
+    : jointConfigurations(std::move(rvalue.jointConfigurations))
+    , jointVelocities(std::move(rvalue.jointVelocities))
+    , ikSolver(std::move(rvalue.ikSolver))
+    , parentJacobian(std::move(rvalue.parentJacobian))
+    , childJacobian(std::move(rvalue.childJacobian))
+    , relativeJacobian(std::move(rvalue.relativeJacobian))
+    , kinDynComputations(std::move(rvalue.kinDynComputations))
+    , jacobianDecomposition(std::move(rvalue.jacobianDecomposition))
+    , parentFrameName(std::move(rvalue.parentFrameName))
+    , parentFrameModelIndex(rvalue.parentFrameModelIndex)
+    , parentFrameSegmentsIndex(rvalue.parentFrameSegmentsIndex)
+    , childFrameName(std::move(rvalue.childFrameName))
+    , childFrameModelIndex(rvalue.childFrameModelIndex)
+    , childFrameSegmentsIndex(rvalue.childFrameSegmentsIndex)
+    , consideredJointLocations(std::move(rvalue.consideredJointLocations))
+    {}
+#else
+    LinkPairInfo(LinkPairInfo&&) = default;
+#endif
     LinkPairInfo(const LinkPairInfo&) = delete;
+
 };
 
 /*!
