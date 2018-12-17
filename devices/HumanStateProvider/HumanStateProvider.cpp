@@ -7,6 +7,7 @@
  */
 
 #include "HumanStateProvider.h"
+#include "HumanIKWorkerPool.h"
 
 #include <Wearable/IWear/IWear.h>
 #include <iDynTree/InverseKinematics.h>
@@ -14,6 +15,8 @@
 #include <iDynTree/ModelIO/ModelLoader.h>
 #include <yarp/os/LogStream.h>
 #include <yarp/os/ResourceFinder.h>
+
+#include <iDynTree/Model/Traversal.h>
 
 #include <array>
 #include <mutex>
@@ -23,6 +26,25 @@
 #include <atomic>
 #include <chrono>
 #include <thread>
+#include <stack>
+
+/*!
+ * @brief analyze model and list of segments to create all possible segment pairs
+ *
+ * @param[in] model the full model
+ * @param[in] humanSegments list of segments on which look for the possible pairs
+ * @param[out] framePairs resulting list of all possible pairs. First element is parent, second is child
+ * @param[out] framePairIndeces indeces in the humanSegments list of the pairs in framePairs
+ */
+static void createEndEffectorsPairs(const iDynTree::Model& model,
+                                    std::vector<SegmentInfo>& humanSegments,
+                                    std::vector<std::pair<std::string, std::string>> &framePairs,
+                                    std::vector<std::pair<iDynTree::FrameIndex, iDynTree::FrameIndex> > &framePairIndeces);
+
+static bool getReducedModel(const iDynTree::Model& modelInput,
+                            const std::string& parentFrame,
+                            const std::string& endEffectorFrame,
+                            iDynTree::Model& modelOutput);
 
 const std::string DeviceName = "HumanStateProvider";
 const std::string LogPrefix = DeviceName + " :";
@@ -110,14 +132,20 @@ public:
     iDynTree::Model humanModel;
     FloatingBaseName floatingBaseFrame;
 
+    std::vector<SegmentInfo> segments;
+    std::vector<LinkPairInfo> linkPairs;
+
     // Buffers
     iDynTree::VectorDynSize jointAngles;
     std::unordered_map<std::string, iDynTree::Rotation> linkRotationMatrices;
     iDynTree::VectorDynSize jointConfigurationSolution;
 
     // IK stuff
+    yarp::os::Value ikPoolOption;
+    std::unique_ptr<HumanIKWorkerPool> ikPool;
     SolutionIK solution;
     iDynTree::InverseKinematics ik;
+    std::string solverName;
 
     bool getJointAnglesFromInputData(iDynTree::VectorDynSize& jointAngles);
     bool getLinkOrientationFromInputData(std::unordered_map<std::string, iDynTree::Rotation>& t);
@@ -162,8 +190,18 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         return false;
     }
 
+<<<<<<< refs/remotes/yeshifork/yeshi-release/HDEv2
     if (!(config.check("costTolerance") && config.find("costTolerance").isFloat64())) {
         yError() << LogPrefix << "costTolerance option not found or not valid";
+=======
+    if (!(config.check("ikLinearSolver") && config.find("ikLinearSolver").isString())) {
+        yError() << LogPrefix << "ikLinearSolver option not found or not valid";
+        return false;
+    }
+
+    if (!(config.check("ikPoolOption") && (config.find("ikPoolOption").isString() || config.find("ikPoolOption").isInt()))) {
+        yError() << LogPrefix << "ikPoolOption option not found or not valid";
+>>>>>>> Update config with ik worker pool
         return false;
     }
 
@@ -231,7 +269,11 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
 
     pImpl->allowIKFailures = config.find("allowIKFailures").asBool();
     int maxIterationsIK = config.find("maxIterationsIK").asInt();
+<<<<<<< refs/remotes/yeshifork/yeshi-release/HDEv2
     double costTolerance = config.find("costTolerance").asFloat64();
+=======
+    pImpl->solverName = config.find("ikLinearSolver").asString();
+>>>>>>> Update config with ik worker pool
     pImpl->useXsensJointsAngles = config.find("useXsensJointsAngles").asBool();
     const std::string urdfFileName = config.find("urdf").asString();
     pImpl->floatingBaseFrame.model = floatingBaseFrameList->get(0).asString();
@@ -268,7 +310,11 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     yInfo() << LogPrefix << "*** Urdf file name         :" << urdfFileName;
     yInfo() << LogPrefix << "*** Allow IK failures      :" << pImpl->allowIKFailures;
     yInfo() << LogPrefix << "*** Max IK iterations      :" << maxIterationsIK;
+<<<<<<< refs/remotes/yeshifork/yeshi-release/HDEv2
     yInfo() << LogPrefix << "*** Cost Tolerance         :" << costTolerance;
+=======
+    yInfo() << LogPrefix << "*** IK Solver Name         :" << pImpl->solverName;
+>>>>>>> Update config with ik worker pool
     yInfo() << LogPrefix << "*** Use Xsens joint angles :" << pImpl->useXsensJointsAngles;
     yInfo() << LogPrefix << "*** ========================";
 
@@ -307,6 +353,139 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     pImpl->jointConfigurationSolution.resize(nrOfJoints);
     pImpl->jointConfigurationSolution.zero();
 
+    // TODO: Verify this
+    // Get the model link names from the attached IWear interface
+    const size_t nrOfSegments = pImpl->humanModel.getNrOfLinks();
+    pImpl->segments.resize(nrOfSegments);
+    for (size_t linkIndex = 0; linkIndex < nrOfSegments; ++linkIndex) {
+        pImpl->segments[linkIndex].velocities.resize(6);
+        pImpl->segments[linkIndex].velocities.zero();
+
+        // Get the name of the link from the model and its prefix from iWear
+        pImpl->segments[linkIndex].segmentName =  pImpl->humanModel.getLinkName(linkIndex);
+    }
+
+    // Get all the possible pairs composing the model
+    std::vector<std::pair<std::string, std::string>> pairNames;
+    std::vector<std::pair<iDynTree::FrameIndex, iDynTree::FrameIndex> > pairSegmentIndeces;
+
+    // Get the pairNames
+    createEndEffectorsPairs(pImpl->humanModel, pImpl->segments, pairNames, pairSegmentIndeces);
+
+    pImpl->linkPairs.reserve(pairNames.size());
+
+    for (unsigned index = 0; index < pairNames.size(); ++index) {
+        LinkPairInfo pairInfo;
+
+        pairInfo.parentFrameName = pairNames[index].first;
+        pairInfo.parentFrameSegmentsIndex = pairSegmentIndeces[index].first;
+
+        pairInfo.childFrameName = pairNames[index].second;
+        pairInfo.childFrameSegmentsIndex = pairSegmentIndeces[index].second;
+
+        // Allocate the solver
+        pairInfo.ikSolver = std::unique_ptr<iDynTree::InverseKinematics>(new iDynTree::InverseKinematics());
+
+        pairInfo.ikSolver->setVerbosity(1);
+
+        // Get the reduced model
+        iDynTree::Model pairModel;
+        if (!getReducedModel(pImpl->humanModel, pairInfo.parentFrameName, pairInfo.childFrameName, pairModel)) {
+
+            yWarning() << LogPrefix << "failed to get reduced model for the segment pair " << pairInfo.parentFrameName.c_str()
+                                    << ", " << pairInfo.childFrameName.c_str();
+            continue;
+        }
+
+        if (!pairInfo.ikSolver->setModel(pairModel)) {
+            yWarning() << LogPrefix << "failed to configure IK solver for the segment pair" << pairInfo.parentFrameName.c_str()
+                                  << ", " << pairInfo.childFrameName.c_str() <<  " Skipping pair";
+            continue;
+        }
+
+        //now we have to obtain the information needed to map the IK solution
+        //back to the total Dofs vector we need to output
+        std::vector<std::string> solverJoints;
+
+        solverJoints.resize(pairModel.getNrOfJoints());
+
+        for (int i=0; i < pairModel.getNrOfJoints(); i++) {
+            solverJoints[i] = pairModel.getJointName(i);
+        }
+
+        pairInfo.consideredJointLocations.reserve(solverJoints.size());
+        for (std::vector<std::string>::const_iterator jointName(solverJoints.begin());
+             jointName != solverJoints.end(); ++jointName) {
+            iDynTree::JointIndex jointIndex = pairModel.getJointIndex(*jointName);
+            if (jointIndex == iDynTree::JOINT_INVALID_INDEX) {
+                yWarning("IK considered joint %s not found in the complete model", jointName->c_str());
+                continue;
+            }
+            iDynTree::IJointConstPtr joint = pairModel.getJoint(jointIndex);
+            //Save location and length of each DoFs
+            pairInfo.consideredJointLocations.push_back(std::pair<size_t, size_t>(joint->getDOFsOffset(), joint->getNrOfDOFs()));
+        }
+
+        pairInfo.jointConfigurations.resize(solverJoints.size());
+        pairInfo.jointConfigurations.zero();
+
+        //same size and initialization
+        pairInfo.jointVelocities = pairInfo.jointConfigurations;
+
+
+        //Now configure the kinDynComputation objects
+        modelLoader.loadReducedModelFromFullModel(pairModel, solverJoints);
+        const iDynTree::Model &reducedModel = modelLoader.model();
+        //save the indeces
+        //TODO: check if link or frame
+        pairInfo.parentFrameModelIndex = reducedModel.getFrameIndex(pairInfo.parentFrameName);
+        pairInfo.childFrameModelIndex = reducedModel.getFrameIndex(pairInfo.childFrameName);
+
+        pairInfo.kinDynComputations = std::unique_ptr<iDynTree::KinDynComputations>(new iDynTree::KinDynComputations());
+
+        pairInfo.kinDynComputations->loadRobotModel(modelLoader.model());
+        pairInfo.parentJacobian.resize(6, modelLoader.model().getNrOfDOFs());
+        pairInfo.parentJacobian.zero();
+        pairInfo.childJacobian = pairInfo.relativeJacobian = pairInfo.parentJacobian;
+
+        //overwriting the default contructed object
+        pairInfo.jacobianDecomposition = Eigen::ColPivHouseholderQR<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> >(pairInfo.relativeJacobian.rows(), pairInfo.relativeJacobian.cols());
+
+        pImpl->linkPairs.push_back(std::move(pairInfo));
+    }
+
+
+    // =========================
+    // INITIALIZE IK WORKER POOL
+    // =========================
+
+    yInfo() << LogPrefix << "Available logical threads are %u : " << std::thread::hardware_concurrency();
+    int ikPoolSize = -1;
+
+    // TODO: Verify this option
+    // Get ikPoolOption
+    pImpl->ikPoolOption = rf.check("ikPoolOption", yarp::os::Value(1), "Checking size of pool");
+
+    if (pImpl->ikPoolOption.isString()) {
+        if (pImpl->ikPoolOption.asString() != "auto") {
+            yWarning() << LogPrefix << "IK pool option not recognized. Not using IK worker pool";
+        } else {
+            ikPoolSize = static_cast<int>(std::thread::hardware_concurrency());
+        }
+
+    } else {
+        ikPoolSize = pImpl->ikPoolOption.asInt();
+    }
+
+    pImpl->ikPool = std::unique_ptr<HumanIKWorkerPool>(new HumanIKWorkerPool(ikPoolSize,
+                                                                             pImpl->linkPairs,
+                                                                             pImpl->segments));
+
+    if (!pImpl->ikPool) {
+        yError() << LogPrefix << "failed to create IK worker pool";
+        return false;
+    }
+
     // =============================
     // INITIALIZE INVERSE KINEMATICS
     // =============================
@@ -339,6 +518,153 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
 
     return true;
 }
+
+
+// TODO: Verify this method
+static void createEndEffectorsPairs(const iDynTree::Model& model,
+                                    std::vector<SegmentInfo>& humanSegments,
+                                    std::vector<std::pair<std::string, std::string> > &framePairs,
+                                    std::vector<std::pair<iDynTree::FrameIndex, iDynTree::FrameIndex> > &framePairIndeces)
+{
+    //for each element in human segments
+    //extract it from the vector (to avoid duplications)
+    //Look for it in the model and get neighbours.
+
+    std::vector<SegmentInfo> segments(humanSegments);
+    size_t segmentCount = segments.size();
+
+    while (!segments.empty()) {
+        SegmentInfo segment = segments.back();
+        segments.pop_back();
+        segmentCount--;
+
+        iDynTree::LinkIndex linkIndex = model.getLinkIndex(segment.segmentName);
+        if (linkIndex < 0 || static_cast<unsigned>(linkIndex) >= model.getNrOfLinks()) {
+            yWarning("Segment %s not found in the URDF model", segment.segmentName.c_str());
+            continue;
+        }
+
+        //this for loop should not be necessary, but this can help keeps the backtrace short
+        //as we do not assume that we can go back further that this node
+        for (unsigned neighbourIndex = 0; neighbourIndex < model.getNrOfNeighbors(linkIndex); ++neighbourIndex) {
+            //remember the "biforcations"
+            std::stack<iDynTree::LinkIndex> backtrace;
+            //and the visited nodes
+            std::vector<iDynTree::LinkIndex> visited;
+
+            //I've already visited the starting node
+            visited.push_back(linkIndex);
+            iDynTree::Neighbor neighbour = model.getNeighbor(linkIndex, neighbourIndex);
+            backtrace.push(neighbour.neighborLink);
+
+            while (!backtrace.empty()) {
+                iDynTree::LinkIndex currentLink = backtrace.top();
+                backtrace.pop();
+                //add the current link to the visited
+                visited.push_back(currentLink);
+
+                std::string linkName = model.getLinkName(currentLink);
+
+                // check if this is a human segment
+                std::vector<SegmentInfo>::iterator foundSegment = std::find_if(segments.begin(),
+                                                                               segments.end(),
+                                                                               [&](SegmentInfo& frame){ return frame.segmentName == linkName; });
+                if (foundSegment != segments.end()) {
+                    std::vector<SegmentInfo>::difference_type foundLinkIndex = std::distance(segments.begin(), foundSegment);
+                    //Found! This is a segment
+                    framePairs.push_back(std::pair<std::string, std::string>(segment.segmentName, linkName));
+                    framePairIndeces.push_back(std::pair<iDynTree::FrameIndex, iDynTree::FrameIndex>(segmentCount, foundLinkIndex));
+                    break;
+                }
+                //insert all non-visited neighbours
+                for (unsigned i = 0; i < model.getNrOfNeighbors(currentLink); ++i) {
+                    iDynTree::LinkIndex link = model.getNeighbor(currentLink, i).neighborLink;
+                    //check if we already visited this segment
+                    if (std::find(visited.begin(), visited.end(), link) != visited.end()) {
+                        //Yes => skip
+                        continue;
+                    }
+                    backtrace.push(link);
+                }
+            }
+
+        }
+    }
+
+}
+
+static bool getReducedModel(const iDynTree::Model& modelInput,
+                            const std::string& parentFrame,
+                            const std::string& endEffectorFrame,
+                            iDynTree::Model& modelOutput)
+{
+    iDynTree::FrameIndex parentFrameIndex;
+    iDynTree::FrameIndex endEffectorFrameIndex;
+    std::vector< std::string> consideredJoints;
+    iDynTree::Traversal traversal;
+    iDynTree::LinkIndex parentLinkIdx;
+    iDynTree::IJointConstPtr joint;
+    iDynTree::ModelLoader loader;
+
+    // TODO: Check if autoSelectJointsFromTraversal and removeUnsupportedJoints methods
+    // are needed
+
+
+    // Get frame indices
+    parentFrameIndex = modelInput.getFrameIndex(parentFrame);
+    endEffectorFrameIndex = modelInput.getFrameIndex(endEffectorFrame);
+
+    if(parentFrameIndex == iDynTree::FRAME_INVALID_INDEX){
+        yError() << LogPrefix << " Invalid parent frame: "<< parentFrame;
+        return false;
+    }
+    else if(endEffectorFrameIndex == iDynTree::FRAME_INVALID_INDEX){
+        yError() << LogPrefix << " Invalid End Effector Frame: "<< endEffectorFrame;
+        return false;
+    }
+
+    // Select joint from traversal
+    modelInput.computeFullTreeTraversal(traversal, modelInput.getFrameLink(parentFrameIndex));
+
+    iDynTree::LinkIndex visitedLink = modelInput.getFrameLink(endEffectorFrameIndex);
+
+    while (visitedLink != traversal.getBaseLink()->getIndex())
+    {
+        parentLinkIdx = traversal.getParentLinkFromLinkIndex(visitedLink)->getIndex();
+        joint = traversal.getParentJointFromLinkIndex(visitedLink);
+
+        consideredJoints.insert(consideredJoints.begin(), modelInput.getJointName(joint->getIndex()));
+
+        visitedLink = parentLinkIdx;
+    }
+
+    if (!loader.loadReducedModelFromFullModel(modelInput, consideredJoints)) {
+        std::cerr << LogPrefix << " failed to select joints: " ;
+        for (std::vector< std::string >::const_iterator i = consideredJoints.begin(); i != consideredJoints.end(); ++i){
+            std::cerr << *i << ' ';
+        }
+        std::cerr << std::endl;
+        return false;
+
+    }
+
+    // Remove unsupported joints
+    // TODO: Check if this is needed
+    for(int i=0; i < loader.model().getNrOfJoints(); ++i){
+        if(loader.model().getJoint(i)->getNrOfDOFs() == 1){
+            consideredJoints.push_back(loader.model().getJointName(i));
+        }
+        else std::cerr << "Joint " << loader.model().getJointName(i) << " ignored (" << loader.model().getJoint(i)->getNrOfDOFs() << " DOF)" << std::endl;
+    }
+
+    loader.loadReducedModelFromFullModel(loader.model(), consideredJoints);
+
+    modelOutput = loader.model();
+
+    return true;
+}
+
+
 
 bool HumanStateProvider::close()
 {

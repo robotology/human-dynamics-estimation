@@ -14,7 +14,9 @@ yarp_prepare_plugin(human_state_provider
 
 yarp_add_plugin(HumanStateProvider
     HumanStateProvider.cpp
-    HumanStateProvider.h)
+    HumanStateProvider.h
+    HumanIKWorkerPool.cpp
+    HumanIKWorkerPool.h)
 
 target_include_directories(HumanStateProvider PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
