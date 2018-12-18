@@ -332,7 +332,8 @@ static bool getTripletsFromPriorGroupCase1Case2(const yarp::os::Value& covMeasur
 static bool getTripletsFromPriorGroup(const yarp::os::Bottle priorGroup,
                                       const std::string& optionPrefix,
                                       const std::string& sensorType,
-                                      iDynTree::Triplets& triplets)
+                                      iDynTree::Triplets& triplets,
+                                      const iDynTree::BerdySensor& sensor)
 {
     // Three cases:
     //
@@ -343,6 +344,7 @@ static bool getTripletsFromPriorGroup(const yarp::os::Bottle priorGroup,
     // We are in case 3 if there is a group option with a value param inside
     bool isCase3 = !priorGroup.findGroup(optionPrefix + sensorType).isNull()
                    && priorGroup.findGroup(optionPrefix + sensorType).check("value");
+    double value = 0;
 
     // -----------------
     // Case 1 and Case 2
@@ -360,17 +362,22 @@ static bool getTripletsFromPriorGroup(const yarp::os::Bottle priorGroup,
 
         return true;
     }
-
     // ------
     // Case 3
     // ------
+    else {
+        // Get the value option
+        yarp::os::Value& valueOption = priorGroup.findGroup(optionPrefix + sensorType).find("value");
 
-    // Check if value exists and is valid
-    yarp::os::Bottle covMeasurementGroup = priorGroup.findGroup(optionPrefix + sensorType);
-    if (!(covMeasurementGroup.check("value") && covMeasurementGroup.find("value").asFloat64())) {
-        yError() << LogPrefix << "Failed to find 'value' option inside cov measurement group";
-        return false;
+        // Initialize the triplet with the default value
+        if (!getTripletsFromPriorGroupCase1Case2(valueOption, sensorType, triplets)) {
+            yError() << LogPrefix << "Failed to parse the 'value' option for sensor" << sensorType;
+            return false;
+        }
     }
+
+    // Parse the exceptions for sensors that have a different covariance than the default one
+    yarp::os::Bottle covMeasurementGroup = priorGroup.findGroup(optionPrefix + sensorType);
 
     // Check if specific_element list exists and is valid
     if (!(covMeasurementGroup.check("specific_elements")
@@ -397,25 +404,27 @@ static bool getTripletsFromPriorGroup(const yarp::os::Bottle priorGroup,
             return false;
         }
 
-        // Now it is as Case 1 and 2:
-        yarp::os::Value covMeasurementOfSpecificElement = covMeasurementGroup.find(frameName);
+        if (frameName == sensor.id) {
+            // Now it is as Case 1 and 2:
+            yarp::os::Value covMeasurementOfSpecificElement = covMeasurementGroup.find(frameName);
 
-        // This check allows sharing the same getTripletsFromPriorGroupCase1Case2 function
-        // for parsing Case 3
-        if (!covMeasurementOfSpecificElement.isDouble()
-            && !(covMeasurementOfSpecificElement.isList()
-                 && (covMeasurementOfSpecificElement.asList()->size() > 0))) {
-            yError() << LogPrefix << "The specific elements for"
-                     << "frameName should be either a double or a list of doubles";
-            return false;
-        }
+            // This check allows sharing the same getTripletsFromPriorGroupCase1Case2 function
+            // for parsing Case 3
+            if (!covMeasurementOfSpecificElement.isDouble()
+                && !(covMeasurementOfSpecificElement.isList()
+                     && (covMeasurementOfSpecificElement.asList()->size() > 0))) {
+                yError() << LogPrefix << "The specific elements for"
+                         << "frameName should be either a double or a list of doubles";
+                return false;
+            }
 
-        // Parse the specific element reusing the Case1Case2 function
-        if (!getTripletsFromPriorGroupCase1Case2(
-                covMeasurementOfSpecificElement, sensorType, triplets)) {
-            yError() << LogPrefix << "Failed to parse covariance data for specific element"
-                     << frameName;
-            return false;
+            // Parse the specific element reusing the Case1Case2 function
+            if (!getTripletsFromPriorGroupCase1Case2(
+                    covMeasurementOfSpecificElement, sensorType, triplets)) {
+                yError() << LogPrefix << "Failed to parse covariance data for specific element"
+                         << frameName;
+                return false;
+            }
         }
     }
 
@@ -539,7 +548,6 @@ static bool parsePriorsGroup(const yarp::os::Bottle& priorsGroup,
                                                                          covDynConstraintsTriplets.size());
             // Store the value into the berdyData
             berdyData.priors.dynamicsConstraintsCovarianceInverse.setFromTriplets(covDynConstraintsTriplets);
-
         }
         else {
             yError() << LogPrefix << "covDynConstraintsTriplets size invalid";
@@ -583,7 +591,6 @@ static bool parsePriorsGroup(const yarp::os::Bottle& priorsGroup,
                                                                             covDynVariablesTriplets.size());
             // Store the value into the berdyData
             berdyData.priors.dynamicsRegularizationCovarianceInverse.setFromTriplets(covDynVariablesTriplets);
-
         }
         else {
             yError() << LogPrefix << "covDynVariablesTriplets size invalid";
@@ -613,10 +620,10 @@ static bool parsePriorsGroup(const yarp::os::Bottle& priorsGroup,
 
         if (!priorsGroup.find(covMeasurementOptionPrefix + berdySensorTypeString).isNull()) {
 
-            iDynTree::Triplets triplets;
+            iDynTree::Triplets triplets{};
 
             if (!getTripletsFromPriorGroup(
-                    priorsGroup, covMeasurementOptionPrefix, berdySensorTypeString, triplets)) {
+                    priorsGroup, covMeasurementOptionPrefix, berdySensorTypeString, triplets, berdySensor)) {
                 yError() << LogPrefix << "Failed to get triplets for sensor"
                          << berdySensorTypeString;
                 return false;
@@ -1077,14 +1084,15 @@ void HumanDynamicsEstimator::run()
     // Get the berdy sensors following its internal order
     std::vector<iDynTree::BerdySensor> berdySensors = pImpl->berdyData.helper.getSensorsOrdering();
 
+    // Clear measurements
+    pImpl->berdyData.buffers.measurements.zero();
+
     /* The total number of sensors are :
      * 17 Accelerometers, 66 DOF Acceleration sensors and 67 NET EXT WRENCH sensors
      * The total number of sensor measurements = (17x3) + (66x1) + (67x6) = 519
      */
 
     // Iterate over the sensors and add corresponding measurements
-    int wrenchSensor = 0;
-    bool wrenchMeasurementsSet = false;
     for (const iDynTree::BerdySensor& sensor : berdySensors) {
         // Create the key
         SensorKey key = {sensor.type, sensor.id};
@@ -1114,42 +1122,29 @@ void HumanDynamicsEstimator::run()
                 case iDynTree::NET_EXT_WRENCH_SENSOR:
                 {
                     // Filling y vector with zero values for NET_EXT_WRENCH sensors
-                    // TODO: Fill the correct data
-                    if (!wrenchMeasurementsSet) {
-                        std::string wrenchSensorLinkName = pImpl->wrenchSensorsLinkNames.at(wrenchSensor);
-                        for (int idx = 0; idx < pImpl->humanModel.getNrOfLinks(); idx++) {
-                            std::string linkName = pImpl->humanModel.getLinkName(idx);
-
-                            if(linkName.compare(wrenchSensorLinkName) == 0) {
-                                for (int i = 0; i < 6; i++)
-                                {
-                                    pImpl->berdyData.buffers.measurements(found->second.offset + i) = wrenchValues.at(wrenchSensor*6 + i);
-                                }
-                                if (wrenchSensor < pImpl->wrenchSensorsLinkNames.size()) {
-                                    wrenchSensor++;
-                                    if (wrenchSensor == pImpl->wrenchSensorsLinkNames.size()) {
-                                        wrenchMeasurementsSet = true;
-                                    }
-                                }
+                    for (int idx = 0; idx < pImpl->wrenchSensorsLinkNames.size(); idx++) {
+                        std::string wrenchSensorLinkName = pImpl->wrenchSensorsLinkNames.at(idx);
+                        if (wrenchSensorLinkName.compare(sensor.id) == 0) {
+                            for (int i = 0; i < 6; i++)
+                            {
+                                pImpl->berdyData.buffers.measurements(found->second.offset + i) = wrenchValues.at(idx*6 + i);
                             }
-
+                            break;
+                        }
+                        else {
+                            for (int i = 0; i < 6; i++)
+                            {
+                                pImpl->berdyData.buffers.measurements(found->second.offset + i) = 0;
+                            }
                         }
                     }
-                    else {
-                        for (int i = 0; i < 6; i++)
-                        {
-                            pImpl->berdyData.buffers.measurements(found->second.offset + i) = 0;
-                        }
-                    }
-
                 }
                 break;
-                default:
-                    yWarning() << LogPrefix << sensor.type << " sensor unimplemented";
+            default:
+                yWarning() << LogPrefix << sensor.type << " sensor unimplemented";
                 break;
             }
         }
-
     }
 
     // Solve a berdy problem
