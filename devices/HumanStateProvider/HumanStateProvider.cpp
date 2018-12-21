@@ -17,16 +17,16 @@
 #include <yarp/os/ResourceFinder.h>
 
 #include <iDynTree/Model/Traversal.h>
+#include <iDynTree/Core/EigenHelpers.h>
 
 #include <array>
 #include <mutex>
 #include <string>
-#include <unordered_map>
-
 #include <atomic>
 #include <chrono>
 #include <thread>
 #include <stack>
+#include <unordered_map>
 
 /*!
  * @brief analyze model and list of segments to create all possible segment pairs
@@ -139,6 +139,7 @@ public:
     iDynTree::VectorDynSize jointAngles;
     std::unordered_map<std::string, iDynTree::Rotation> linkRotationMatrices;
     iDynTree::VectorDynSize jointConfigurationSolution;
+    iDynTree::VectorDynSize jointVelocitiesSolution;
 
     // IK stuff
     yarp::os::Value ikPoolOption;
@@ -352,6 +353,9 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
 
     pImpl->jointConfigurationSolution.resize(nrOfJoints);
     pImpl->jointConfigurationSolution.zero();
+
+    pImpl->jointVelocitiesSolution.resize(nrOfJoints);
+    pImpl->jointVelocitiesSolution.zero();
 
     // TODO: Verify this
     // Get the model link names from the attached IWear interface
@@ -692,6 +696,80 @@ void HumanStateProvider::run()
             }
         }
     }
+
+    // Process incoming data
+    for (unsigned linkIndex = 0; linkIndex < pImpl->humanModel.getNrOfLinks(); linkIndex++) {
+        std::string linkName = pImpl->humanModel.getLinkName(linkIndex);
+
+        Vector3 position;
+        Quaternion orientation;
+
+        if (!pImpl->wearableStorage.baseLinkSensor->getLinkPose(position, orientation)) {
+            yError() << LogPrefix << "Failed to get position and orientation of the base"
+                     << "from the input data";
+            askToStop();
+            return;
+        }
+        else {
+            if (pImpl->wearableStorage.linkSensorsMap.find(linkName)
+                == pImpl->wearableStorage.linkSensorsMap.end()) {
+                yError() << LogPrefix << "Failed to find sensor for link" << linkName;
+                askToStop();
+                return;
+            }
+
+            auto& linkSensor = pImpl->wearableStorage.linkSensorsMap.at(linkName);
+
+            // Get the position and orientation of the link
+            if (!linkSensor->getLinkPose(position, orientation)) {
+                yError() << LogPrefix << "Failed to get position and orientation of link "
+                         << linkName << "from the input data";
+                askToStop();
+                return;
+            }
+        }
+
+        iDynTree::Position pos(position.at(0),
+                               position.at(1),
+                               position.at(2));
+
+        iDynTree::Vector4 quat;
+        quat.setVal(0,orientation[0]);
+        quat.setVal(1,orientation[1]);
+        quat.setVal(2,orientation[2]);
+        quat.setVal(3,orientation[3]);
+
+        iDynTree::Rotation rot = iDynTree::Rotation::RotationFromQuaternion(quat);
+
+        // Fill the link data into segements
+        SegmentInfo& segmentInfo = pImpl->segments.at(linkIndex);
+        segmentInfo.poseWRTWorld = iDynTree::Transform(rot, pos);
+
+        // TODO: Change the velocites from zero to data from the suit
+        for (unsigned i = 0; i < 6; ++i) {
+            segmentInfo.velocities(i) = 0;
+        }
+    }
+
+    // Call IK worker pool to solve
+    pImpl->ikPool->runAndWait();
+
+    // Join ik solutions saved in jointsConfiguration and jointsVelocitu of various pairInfo variables
+    for (auto &pair : pImpl->linkPairs) {
+        size_t jointIndex = 0;
+        for (auto &pairJoint : pair.consideredJointLocations) {
+
+            // Initialize joint quantities with zero values and size
+            Eigen::Map<Eigen::VectorXd> jointPositions(pImpl->jointConfigurationSolution.data(), pImpl->jointConfigurationSolution.size());
+            jointPositions.segment(pairJoint.first, pairJoint.second) = iDynTree::toEigen(pair.jointConfigurations).segment(jointIndex, pairJoint.second);
+
+            Eigen::Map<Eigen::VectorXd> jointVelocities(pImpl->jointVelocitiesSolution.data(),pImpl->jointVelocitiesSolution.size());
+            jointVelocities.segment(pairJoint.first, pairJoint.second) = iDynTree::toEigen(pair.jointVelocities).segment(jointIndex, pairJoint.second);
+
+            jointIndex += pairJoint.second;
+        }
+    }
+
 
     // =================
     // INITIALIZE THE IK
