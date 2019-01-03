@@ -138,6 +138,7 @@ public:
     // Buffers
     iDynTree::VectorDynSize jointAngles;
     std::unordered_map<std::string, iDynTree::Rotation> linkRotationMatrices;
+    std::unordered_map<std::string, iDynTree::Transform> linkTransformMatrices;
     iDynTree::VectorDynSize jointConfigurationSolution;
     iDynTree::VectorDynSize jointVelocitiesSolution;
 
@@ -149,7 +150,8 @@ public:
     std::string solverName;
 
     bool getJointAnglesFromInputData(iDynTree::VectorDynSize& jointAngles);
-    bool getLinkOrientationFromInputData(std::unordered_map<std::string, iDynTree::Rotation>& t);
+    bool getLinkOrientationFromInputData(std::unordered_map<std::string, iDynTree::Rotation>& r);
+    bool getLinkTransformFromInputData(std::unordered_map<std::string, iDynTree::Transform>& t);
 };
 
 // =========================
@@ -357,7 +359,6 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     pImpl->jointVelocitiesSolution.resize(nrOfJoints);
     pImpl->jointVelocitiesSolution.zero();
 
-    // TODO: Verify this
     // Get the model link names from the attached IWear interface
     const size_t nrOfSegments = pImpl->humanModel.getNrOfLinks();
     pImpl->segments.resize(nrOfSegments);
@@ -464,7 +465,6 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         pImpl->linkPairs.push_back(std::move(pairInfo));
     }
 
-
     // =========================
     // INITIALIZE IK WORKER POOL
     // =========================
@@ -489,41 +489,10 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         return false;
     }
 
-    // =============================
-    // INITIALIZE INVERSE KINEMATICS
-    // =============================
-
-    {
-        using namespace iDynTree;
-
-        pImpl->ik.setVerbosity(1); // TODO
-        pImpl->ik.setMaxIterations(maxIterationsIK);
-        //        pImpl->ik.setRotationParametrization(InverseKinematicsRotationParametrizationQuaternion);
-        pImpl->ik.setRotationParametrization(InverseKinematicsRotationParametrizationRollPitchYaw);
-        pImpl->ik.setCostTolerance(costTolerance);
-
-        if (!pImpl->ik.setModel(pImpl->humanModel)) {
-            yError() << LogPrefix << "IK: failed to load the model";
-            return false;
-        }
-
-        if (!pImpl->ik.setFloatingBaseOnFrameNamed(pImpl->floatingBaseFrame.model)) {
-            yError() << LogPrefix << "Failed to set the IK floating base frame on link"
-                     << pImpl->floatingBaseFrame.model;
-            return false;
-        }
-
-        // Use targets only as targets (in the cost)
-        pImpl->ik.setDefaultTargetResolutionMode(InverseKinematicsTreatTargetAsConstraintNone);
-        // pImpl->ik.setDefaultTargetResolutionMode(
-        //     InverseKinematicsTreatTargetAsConstraintRotationOnly);
-    }
-
     return true;
 }
 
-
-// TODO: Verify this method
+// This method returns the link pari names from the human model
 static void createEndEffectorsPairs(const iDynTree::Model& model,
                                     std::vector<SegmentInfo>& humanSegments,
                                     std::vector<std::pair<std::string, std::string> > &framePairs,
@@ -609,9 +578,6 @@ static bool getReducedModel(const iDynTree::Model& modelInput,
     iDynTree::IJointConstPtr joint;
     iDynTree::ModelLoader loader;
 
-    // TODO: Check if autoSelectJointsFromTraversal and removeUnsupportedJoints methods
-    // are needed
-
     // Get frame indices
     parentFrameIndex = modelInput.getFrameIndex(parentFrame);
     endEffectorFrameIndex = modelInput.getFrameIndex(endEffectorFrame);
@@ -671,73 +637,32 @@ bool HumanStateProvider::close()
 
 void HumanStateProvider::run()
 {
-    if (pImpl->firstRun) {
-        pImpl->firstRun = false;
-        // Set the link orientations as IK targets
-        for (size_t linkIndex = 0; linkIndex < pImpl->humanModel.getNrOfLinks(); ++linkIndex) {
-            std::string linkName = pImpl->humanModel.getLinkName(linkIndex);
-
-            // Do not insert in the cost the rotation of the link used as base
-            if (linkName == pImpl->floatingBaseFrame.model) {
-                continue;
-            }
-
-            iDynTree::Rotation dummyRotation;
-            if (!pImpl->ik.addRotationTarget(linkName, dummyRotation)) {
-                yError() << LogPrefix << "Failed to add rotation target for link" << linkName;
-                askToStop();
-                return;
-            }
-        }
+    // Get the orientation of the links from the input data
+    if (!pImpl->getLinkTransformFromInputData(pImpl->linkTransformMatrices)) {
+        yError() << LogPrefix << "Failed to get link orientations from input data";
+        askToStop();
+        return;
     }
 
     // Process incoming data
     for (unsigned linkIndex = 0; linkIndex < pImpl->humanModel.getNrOfLinks(); linkIndex++) {
         std::string linkName = pImpl->humanModel.getLinkName(linkIndex);
 
-        Vector3 position;
-        Quaternion orientation;
+        // Skip links with no associated measures (use only links from the configuration)
+        if (pImpl->wearableStorage.modelToWearable_LinkName.find(linkName)
+                == pImpl->wearableStorage.modelToWearable_LinkName.end()) {
+            continue;
+        }
 
-        if (!pImpl->wearableStorage.baseLinkSensor->getLinkPose(position, orientation)) {
-            yError() << LogPrefix << "Failed to get position and orientation of the base"
-                     << "from the input data";
+        if (pImpl->linkTransformMatrices.find(linkName) == pImpl->linkTransformMatrices.end()) {
+            yError() << LogPrefix << "Failed to find transformation matrix for link" << linkName;
             askToStop();
             return;
         }
-        else {
-            if (pImpl->wearableStorage.linkSensorsMap.find(linkName)
-                == pImpl->wearableStorage.linkSensorsMap.end()) {
-                yError() << LogPrefix << "Failed to find sensor for link" << linkName;
-                askToStop();
-                return;
-            }
-
-            auto& linkSensor = pImpl->wearableStorage.linkSensorsMap.at(linkName);
-
-            // Get the position and orientation of the link
-            if (!linkSensor->getLinkPose(position, orientation)) {
-                yError() << LogPrefix << "Failed to get position and orientation of link "
-                         << linkName << "from the input data";
-                askToStop();
-                return;
-            }
-        }
-
-        iDynTree::Position pos(position.at(0),
-                               position.at(1),
-                               position.at(2));
-
-        iDynTree::Vector4 quat;
-        quat.setVal(0,orientation[0]);
-        quat.setVal(1,orientation[1]);
-        quat.setVal(2,orientation[2]);
-        quat.setVal(3,orientation[3]);
-
-        iDynTree::Rotation rot = iDynTree::Rotation::RotationFromQuaternion(quat);
 
         // Fill the link data into segements
         SegmentInfo& segmentInfo = pImpl->segments.at(linkIndex);
-        segmentInfo.poseWRTWorld = iDynTree::Transform(rot, pos);
+        segmentInfo.poseWRTWorld = pImpl->linkTransformMatrices.at(linkName); //TODO verify if this is wrt world
 
         // TODO: Change the velocites from zero to data from the suit
         for (unsigned i = 0; i < 6; ++i) {
@@ -748,12 +673,16 @@ void HumanStateProvider::run()
     // Call IK worker pool to solve
     pImpl->ikPool->runAndWait();
 
-    // Join ik solutions saved in jointsConfiguration and jointsVelocitu of various pairInfo variables
+    // Join ik solutions saved in jointsConfiguration and jointsVelocity of various pairInfo variables
     for (auto &pair : pImpl->linkPairs) {
+        yInfo() << LogPrefix << pair.jointConfigurations.toString();
         size_t jointIndex = 0;
         for (auto &pairJoint : pair.consideredJointLocations) {
 
             // Initialize joint quantities with zero values and size
+            // TODO: How is the map.segment variable work?
+            // TODO: The pairJoint should contain first = offset in the full model , second = dofs of joint
+            // TODO: Verify this
             Eigen::Map<Eigen::VectorXd> jointPositions(pImpl->jointConfigurationSolution.data(), pImpl->jointConfigurationSolution.size());
             jointPositions.segment(pairJoint.first, pairJoint.second) = iDynTree::toEigen(pair.jointConfigurations).segment(jointIndex, pairJoint.second);
 
@@ -763,162 +692,65 @@ void HumanStateProvider::run()
             jointIndex += pairJoint.second;
         }
     }
+}
 
+bool HumanStateProvider::impl::getLinkTransformFromInputData(
+    std::unordered_map<std::string, iDynTree::Transform>& transforms)
+{
+    for (const auto& linkMapEntry : wearableStorage.modelToWearable_LinkName) {
+        const ModelLinkName& modelLinkName = linkMapEntry.first;
+        const WearableLinkName& wearableLinkName = linkMapEntry.second;
 
-    // =================
-    // INITIALIZE THE IK
-    // =================
-    //
-    // The Xsens segment (link) measurements are used in the IK cost for calculating
-    // the joint angles of our urdf model.
-    //
-    // The IK can be initialized either with the previous solution or with the joint
-    // angles provided by Xsens.
-
-    // Get the base transform
-    // ======================
-
-    Vector3 position;
-    Quaternion orientation;
-
-    // Get the position and orientation
-    if (!pImpl->wearableStorage.baseLinkSensor->getLinkPose(position, orientation)) {
-        yError() << LogPrefix << "Failed to get position and orientation of the base"
-                 << "from the input data";
-        askToStop();
-        return;
-    }
-
-    // Convert them to iDynTree objects since we're going to use them for the IK
-    iDynTree::Position positioniDynTree(position[0], position[1], position[2]);
-    iDynTree::Rotation rotationiDynTree;
-    rotationiDynTree.fromQuaternion({orientation.data(), 4});
-
-    iDynTree::Transform baseTransform(std::move(rotationiDynTree), std::move(positioniDynTree));
-
-    // Initialize the IK problem with joint angles
-    // ===========================================
-
-    if (pImpl->useXsensJointsAngles) {
-        // Use joint angles from the input data
-        if (!pImpl->getJointAnglesFromInputData(pImpl->jointAngles)) {
-            yError() << LogPrefix << "Failed to get joint angles from input data";
-            askToStop();
-            return;
-        }
-    }
-    else {
-        // Use joint angles from the previous solution
-        pImpl->jointAngles = pImpl->jointConfigurationSolution;
-    }
-
-    // Initialize the IK
-    if (!pImpl->ik.setFullJointsInitialCondition(&baseTransform, &pImpl->jointAngles)) {
-        yError() << LogPrefix << "Failed to set the joint configuration for initializing the IK";
-        askToStop();
-        return;
-    }
-
-    // TODO: postural. This can be moved after the IK finds a solution and it could
-    //       substitute setting the initial condition.
-    // if (!pImpl->ik.setDesiredFullJointsConfiguration(pImpl->jointAngles)) {
-    //     yError() << LogPrefix << "Failed to set the postural configuration of the IK";
-    //     askToStop();
-    //     return;
-    // }
-
-    // ======================
-    // PREPARE THE IK PROBLEM
-    // ======================
-
-    // Get the orientation of the links from the input data
-    if (!pImpl->getLinkOrientationFromInputData(pImpl->linkRotationMatrices)) {
-        yError() << LogPrefix << "Failed to get link orientations from input data";
-        askToStop();
-        return;
-    }
-
-    // Set the link orientations as IK targets
-    for (size_t linkIndex = 0; linkIndex < pImpl->humanModel.getNrOfLinks(); ++linkIndex) {
-        std::string linkName = pImpl->humanModel.getLinkName(linkIndex);
-
-        // Do not insert in the cost the rotation of the link used as base
-        if (linkName == pImpl->floatingBaseFrame.model) {
-            continue;
+        if (wearableStorage.linkSensorsMap.find(wearableLinkName)
+                == wearableStorage.linkSensorsMap.end()
+            || !wearableStorage.linkSensorsMap.at(wearableLinkName)) {
+            yError() << LogPrefix << "Failed to get" << wearableLinkName
+                     << "sensor from the device. Something happened after configuring it.";
+            return false;
         }
 
-        // Skip links with no associated measures (use only links from the configuration)
-        if (pImpl->wearableStorage.modelToWearable_LinkName.find(linkName)
-            == pImpl->wearableStorage.modelToWearable_LinkName.end()) {
-            continue;
+        const wearable::SensorPtr<const sensor::IVirtualLinkKinSensor> sensor =
+            wearableStorage.linkSensorsMap.at(wearableLinkName);
+
+        if (!sensor) {
+            yError() << LogPrefix << "Sensor" << wearableLinkName
+                     << "has been added but not properly configured";
+            return false;
         }
 
-        if (pImpl->linkRotationMatrices.find(linkName) == pImpl->linkRotationMatrices.end()) {
-            yError() << LogPrefix << "Failed to find rotation matrix for link" << linkName;
-            askToStop();
-            return;
+        if (sensor->getSensorStatus() != sensor::SensorStatus::Ok) {
+            yError() << LogPrefix << "The sensor status of" << sensor->getSensorName()
+                     << "is not ok (" << static_cast<double>(sensor->getSensorStatus()) << ")";
+            return false;
         }
 
-        if (!pImpl->ik.updateRotationTarget(linkName, pImpl->linkRotationMatrices.at(linkName))) {
-            yError() << LogPrefix << "Failed to update rotation target for link" << linkName;
-            askToStop();
-            return;
+        wearable::Vector3 position;
+        if (!sensor->getLinkPosition(position)) {
+            yError() << LogPrefix << "Failed to read link position from virtual link sensor";
+            return false;
         }
+
+        iDynTree::Position pos(position.at(0),
+                               position.at(1),
+                               position.at(2));
+
+        Quaternion orientation;
+        if (!sensor->getLinkOrientation(orientation)) {
+            yError() << LogPrefix << "Failed to read link orientation from virtual link sensor";
+            return false;
+        }
+
+        iDynTree::Rotation rotation;
+        rotation.fromQuaternion({orientation.data(), 4});
+
+        iDynTree::Transform transform(rotation, pos);
+
+        // Note that this map is used during the IK step for setting a target orientation to a
+        // link of the model. For this reason the map keys are model names.
+        transforms[modelLinkName] = std::move(transform);
     }
 
-    // ====================
-    // SOLVE THE IK PROBLEM
-    // ====================
-
-    // TODO: add benchmarking capabilities. Using PeriodicThread utilities?
-    auto tick = std::chrono::high_resolution_clock::now();
-
-    if (!pImpl->ik.solve()) {
-        if (pImpl->allowIKFailures) {
-            yWarning() << LogPrefix << "IK failed, keeping the previous solution";
-            return;
-        }
-        else {
-            yError() << LogPrefix << "Failed to solve IK";
-            askToStop();
-            return;
-        }
-    }
-
-    auto tock = std::chrono::high_resolution_clock::now();
-    yDebug() << LogPrefix << "IK took"
-             << std::chrono::duration_cast<std::chrono::milliseconds>(tock - tick).count() << "ms";
-
-    // ===========================
-    // EXPOSE DATA FOR IHUMANSTATE
-    // ===========================
-
-    {
-        std::lock_guard<std::mutex> lock(pImpl->mutex);
-
-        // Move the solution to the struct used from exposing the data through the interface
-        iDynTree::Transform baseTransformSolution;
-        pImpl->ik.getFullJointsSolution(baseTransformSolution, pImpl->jointConfigurationSolution);
-
-        for (unsigned i = 0; i < pImpl->jointConfigurationSolution.size(); ++i) {
-            pImpl->solution.jointPositions[i] = pImpl->jointConfigurationSolution.getVal(i);
-        }
-
-        pImpl->solution.basePosition = {baseTransformSolution.getPosition().getVal(0),
-                                        baseTransformSolution.getPosition().getVal(1),
-                                        baseTransformSolution.getPosition().getVal(2)};
-
-        pImpl->solution.baseOrientation = {
-            baseTransformSolution.getRotation().asQuaternion().getVal(0),
-            baseTransformSolution.getRotation().asQuaternion().getVal(1),
-            baseTransformSolution.getRotation().asQuaternion().getVal(2),
-            baseTransformSolution.getRotation().asQuaternion().getVal(3),
-        };
-
-        // TODO: base velocity
-        // TODO: joint velocities
-        pImpl->solution.jointVelocities.resize(pImpl->solution.jointPositions.size(), 0);
-    }
+    return true;
 }
 
 bool HumanStateProvider::impl::getLinkOrientationFromInputData(
