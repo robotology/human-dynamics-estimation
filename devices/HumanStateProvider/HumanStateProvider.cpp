@@ -200,7 +200,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         return false;
     }
 
-    if (!(config.check("ikPoolOption") && (config.find("ikPoolOption").isString() || config.find("ikPoolOption").isInt()))) {
+    if (!(config.check("ikPoolSizeOption") && (config.find("ikPoolSizeOption").isString() || config.find("ikPoolSizeOption").isInt()))) {
         yError() << LogPrefix << "ikPoolOption option not found or not valid";
 >>>>>>> Update config with ik worker pool
         return false;
@@ -389,8 +389,12 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
 
         // Allocate the solver
         pairInfo.ikSolver = std::unique_ptr<iDynTree::InverseKinematics>(new iDynTree::InverseKinematics());
+        pairInfo.ikSolver->setLinearSolverName(pImpl->solverName);
 
+        // TODO Verify these  options
         pairInfo.ikSolver->setVerbosity(1);
+        pairInfo.ikSolver->setRotationParametrization(iDynTree::InverseKinematicsRotationParametrizationRollPitchYaw);
+        pairInfo.ikSolver->setCostTolerance(1E-10);
 
         // Get the reduced model
         iDynTree::Model pairModel;
@@ -406,6 +410,9 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
                                   << ", " << pairInfo.childFrameName.c_str() <<  " Skipping pair";
             continue;
         }
+
+        // TODO Verify this option
+        pairInfo.ikSolver->setDefaultTargetResolutionMode(iDynTree::InverseKinematicsTreatTargetAsConstraintNone);
 
         //now we have to obtain the information needed to map the IK solution
         //back to the total Dofs vector we need to output
@@ -436,7 +443,6 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         //same size and initialization
         pairInfo.jointVelocities = pairInfo.jointConfigurations;
 
-
         //Now configure the kinDynComputation objects
         modelLoader.loadReducedModelFromFullModel(pairModel, solverJoints);
         const iDynTree::Model &reducedModel = modelLoader.model();
@@ -463,22 +469,15 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     // INITIALIZE IK WORKER POOL
     // =========================
 
-    yInfo() << LogPrefix << "Available logical threads are %u : " << std::thread::hardware_concurrency();
-    int ikPoolSize = -1;
+    int ikPoolSize = 1; //default value
 
-    // TODO: Verify this option
     // Get ikPoolOption
-    pImpl->ikPoolOption = rf.check("ikPoolOption", yarp::os::Value(1), "Checking size of pool");
-
-    if (pImpl->ikPoolOption.isString()) {
-        if (pImpl->ikPoolOption.asString() != "auto") {
-            yWarning() << LogPrefix << "IK pool option not recognized. Not using IK worker pool";
-        } else {
-            ikPoolSize = static_cast<int>(std::thread::hardware_concurrency());
-        }
-
-    } else {
-        ikPoolSize = pImpl->ikPoolOption.asInt();
+    if (config.find("ikPoolSizeOption").isString() || config.find("ikPoolSizeOption").asString() == "auto" ) {
+        yInfo() << LogPrefix << "Using " << std::thread::hardware_concurrency() << " available logical threads for ik pool";
+        ikPoolSize = static_cast<int>(std::thread::hardware_concurrency());
+    }
+    else if(config.find("ikPoolSizeOption").isInt()) {
+        ikPoolSize = config.find("ikPoolSizeOption").asInt();
     }
 
     pImpl->ikPool = std::unique_ptr<HumanIKWorkerPool>(new HumanIKWorkerPool(ikPoolSize,
@@ -604,7 +603,7 @@ static bool getReducedModel(const iDynTree::Model& modelInput,
 {
     iDynTree::FrameIndex parentFrameIndex;
     iDynTree::FrameIndex endEffectorFrameIndex;
-    std::vector< std::string> consideredJoints;
+    std::vector<std::string> consideredJoints;
     iDynTree::Traversal traversal;
     iDynTree::LinkIndex parentLinkIdx;
     iDynTree::IJointConstPtr joint;
@@ -612,7 +611,6 @@ static bool getReducedModel(const iDynTree::Model& modelInput,
 
     // TODO: Check if autoSelectJointsFromTraversal and removeUnsupportedJoints methods
     // are needed
-
 
     // Get frame indices
     parentFrameIndex = modelInput.getFrameIndex(parentFrame);
@@ -637,7 +635,14 @@ static bool getReducedModel(const iDynTree::Model& modelInput,
         parentLinkIdx = traversal.getParentLinkFromLinkIndex(visitedLink)->getIndex();
         joint = traversal.getParentJointFromLinkIndex(visitedLink);
 
-        consideredJoints.insert(consideredJoints.begin(), modelInput.getJointName(joint->getIndex()));
+        // Check if the joint is supported
+        if(modelInput.getJoint(joint->getIndex())->getNrOfDOFs() == 1)
+        {
+            consideredJoints.insert(consideredJoints.begin(), modelInput.getJointName(joint->getIndex()));
+        }
+        else {
+            yWarning() << LogPrefix << "Joint " << modelInput.getJointName(joint->getIndex()) << " is ignored as it has (" << modelInput.getJoint(joint->getIndex())->getNrOfDOFs() << " DOFs)";
+        }
 
         visitedLink = parentLinkIdx;
     }
@@ -651,17 +656,6 @@ static bool getReducedModel(const iDynTree::Model& modelInput,
         return false;
 
     }
-
-    // Remove unsupported joints
-    // TODO: Check if this is needed
-    for(int i=0; i < loader.model().getNrOfJoints(); ++i){
-        if(loader.model().getJoint(i)->getNrOfDOFs() == 1){
-            consideredJoints.push_back(loader.model().getJointName(i));
-        }
-        else std::cerr << "Joint " << loader.model().getJointName(i) << " ignored (" << loader.model().getJoint(i)->getNrOfDOFs() << " DOF)" << std::endl;
-    }
-
-    loader.loadReducedModelFromFullModel(loader.model(), consideredJoints);
 
     modelOutput = loader.model();
 
