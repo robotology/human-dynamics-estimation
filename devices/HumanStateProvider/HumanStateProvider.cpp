@@ -426,14 +426,14 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         }
 
         pairInfo.consideredJointLocations.reserve(solverJoints.size());
-        for (std::vector<std::string>::const_iterator jointName(solverJoints.begin());
-             jointName != solverJoints.end(); ++jointName) {
-            iDynTree::JointIndex jointIndex = pairModel.getJointIndex(*jointName);
+        for (auto &jointName: solverJoints) {
+            iDynTree::JointIndex jointIndex = pImpl->humanModel.getJointIndex(jointName);
             if (jointIndex == iDynTree::JOINT_INVALID_INDEX) {
-                yWarning("IK considered joint %s not found in the complete model", jointName->c_str());
+                yWarning() << LogPrefix << "IK considered joint " << jointName << " not found in the complete model";
                 continue;
             }
-            iDynTree::IJointConstPtr joint = pairModel.getJoint(jointIndex);
+            iDynTree::IJointConstPtr joint = pImpl->humanModel.getJoint(jointIndex);
+
             //Save location and length of each DoFs
             pairInfo.consideredJointLocations.push_back(std::pair<size_t, size_t>(joint->getDOFsOffset(), joint->getNrOfDOFs()));
         }
@@ -675,14 +675,10 @@ void HumanStateProvider::run()
 
     // Join ik solutions saved in jointsConfiguration and jointsVelocity of various pairInfo variables
     for (auto &pair : pImpl->linkPairs) {
-        yInfo() << LogPrefix << pair.jointConfigurations.toString();
         size_t jointIndex = 0;
         for (auto &pairJoint : pair.consideredJointLocations) {
-
             // Initialize joint quantities with zero values and size
             // TODO: How is the map.segment variable work?
-            // TODO: The pairJoint should contain first = offset in the full model , second = dofs of joint
-            // TODO: Verify this
             Eigen::Map<Eigen::VectorXd> jointPositions(pImpl->jointConfigurationSolution.data(), pImpl->jointConfigurationSolution.size());
             jointPositions.segment(pairJoint.first, pairJoint.second) = iDynTree::toEigen(pair.jointConfigurations).segment(jointIndex, pairJoint.second);
 
