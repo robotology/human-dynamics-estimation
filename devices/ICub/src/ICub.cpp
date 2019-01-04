@@ -81,7 +81,7 @@ public:
 
     std::map<std::string, ICubDeviceSensors<ICubForceTorque6DSensor>> ftSensorsMap;
 
-    const WearableName wearableName = "ICub" + wearable::Separator;
+    const WearableName wearableName = "ICub";
 
     WrenchPort leftHandFTPort;
     WrenchPort rightHandFTPort;
@@ -127,13 +127,13 @@ public:
         std::vector<double> wrench;
 
         // Reading wrench from WBD ports
-        if (this->m_name == icubImpl->wearableName + sensor::IForceTorque6DSensor::getPrefix() + "leftWBDFTSensor") {
+        if (this->m_name == icubImpl->wearableName + wearable::Separator + sensor::IForceTorque6DSensor::getPrefix() + "leftWBDFTSensor") {
             icubImpl->leftHandFTPort.useCallback();
             wrench = icubImpl->leftHandFTPort.wrench();
 
             icubImpl->timeStamp.time = yarp::os::Time::now();
         }
-        else if(this->m_name == icubImpl->wearableName + sensor::IForceTorque6DSensor::getPrefix() + "rightWBDFTSensor") {
+        else if(this->m_name == icubImpl->wearableName + wearable::Separator + sensor::IForceTorque6DSensor::getPrefix() + "rightWBDFTSensor") {
             icubImpl->rightHandFTPort.useCallback();
             wrench = icubImpl->rightHandFTPort.wrench();
 
@@ -249,7 +249,7 @@ bool ICub::open(yarp::os::Searchable& config)
 
      pImpl->sensorNames.push_back("rightWBDFTSensor");
 
-    std::string ft6dPrefix = getWearableName() + sensor::IForceTorque6DSensor::getPrefix();
+    std::string ft6dPrefix = getWearableName() + wearable::Separator + sensor::IForceTorque6DSensor::getPrefix();
 
     for (size_t s = 0; s < pImpl->sensorNames.size(); ++s) {
         // Create the new sensors
