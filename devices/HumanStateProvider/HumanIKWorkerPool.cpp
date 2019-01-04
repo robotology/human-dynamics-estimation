@@ -93,6 +93,8 @@ int HumanIKWorkerPool::computeIK(WorkerTaskData& task)
     int result = task.pairInfo.ikSolver->solve();
 
     // Get the last solution
+    // TODO: Verify if relativeTransformation is stored correctly,
+    // It gets baseTransformSolution	solution for the base position from getReducedSolution()
     task.pairInfo.ikSolver->getReducedSolution(task.pairInfo.relativeTransformation, task.pairInfo.jointConfigurations);
     return result;
 }

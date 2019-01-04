@@ -32,24 +32,24 @@
  * Needed to compute inverse kinematics, velocities, etc
  */
 struct LinkPairInfo {
-    //variables representing the DoFs between the two frames
+    // Variables representing the DoFs between the two frames
     iDynTree::VectorDynSize jointConfigurations;
     iDynTree::VectorDynSize jointVelocities;
 
     // Transformation variable
     iDynTree::Transform relativeTransformation; // TODO: If this is wrt global frame
 
-    //IK elements (i.e. compute joints)
+    // IK elements (i.e. compute joints)
     std::unique_ptr<iDynTree::InverseKinematics> ikSolver;
 
-    //Velocity-related elements
+    // Velocity-related elements
     iDynTree::MatrixDynSize parentJacobian;
     iDynTree::MatrixDynSize childJacobian;
     iDynTree::MatrixDynSize relativeJacobian;
     std::unique_ptr<iDynTree::KinDynComputations> kinDynComputations;
     Eigen::ColPivHouseholderQR<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> > jacobianDecomposition;
 
-    //Mapping from link pair to full model. Needed to map from small to complete problem
+    // Mapping from link pair to full model. Needed to map from small to complete problem
     std::string parentFrameName; //name of the parent frame
     iDynTree::FrameIndex parentFrameModelIndex; //index of the frame in the iDynTree Model
     iDynTree::FrameIndex parentFrameSegmentsIndex; //index of the parent frame in the segment list
@@ -86,16 +86,14 @@ struct LinkPairInfo {
 
 };
 
-/*!
- * Relevant information on the segment input
- * This saves the information coming from a FrameProvider
- */
+// Relevant information on the segment input
 struct SegmentInfo {
     std::string segmentName;
 
     iDynTree::Transform poseWRTWorld;
     iDynTree::VectorDynSize velocities;
-    //TODO if not needed acceleration delete them
+
+    // TODO: if not needed acceleration delete them
     yarp::sig::Vector accelerations;
 };
 
@@ -125,11 +123,11 @@ class HumanIKWorkerPool {
     //                   - vector of poses read from the Xsens
 
 
-    //References to work data
+    // References to work data
     std::vector<LinkPairInfo> &m_linkPairs;
     std::vector<SegmentInfo> &m_segments;
 
-    //objects to manage the pool
+    // Objects to manage the pool
     std::queue<WorkerTaskData> m_tasks;
     std::condition_variable m_inputSynchronizer;
     std::mutex m_inputMutex;
@@ -140,7 +138,7 @@ class HumanIKWorkerPool {
     std::mutex m_outputMutex;
 
 
-    //This is synchronized with inputMutex
+    // This is synchronized with inputMutex
     bool m_shouldTerminate;
     std::vector<bool> m_terminateCounter;
 

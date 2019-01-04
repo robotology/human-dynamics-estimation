@@ -415,8 +415,8 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         // TODO Verify this option
         pairInfo.ikSolver->setDefaultTargetResolutionMode(iDynTree::InverseKinematicsTreatTargetAsConstraintNone);
 
-        //now we have to obtain the information needed to map the IK solution
-        //back to the total Dofs vector we need to output
+        // Now we have to obtain the information needed to map the IK solution
+        // back to the total Dofs vector we need to output
         std::vector<std::string> solverJoints;
 
         solverJoints.resize(pairModel.getNrOfJoints());
@@ -434,21 +434,22 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
             }
             iDynTree::IJointConstPtr joint = pImpl->humanModel.getJoint(jointIndex);
 
-            //Save location and length of each DoFs
+            // Save location and length of each DoFs
             pairInfo.consideredJointLocations.push_back(std::pair<size_t, size_t>(joint->getDOFsOffset(), joint->getNrOfDOFs()));
         }
 
         pairInfo.jointConfigurations.resize(solverJoints.size());
         pairInfo.jointConfigurations.zero();
 
-        //same size and initialization
+        // Same size and initialization
         pairInfo.jointVelocities = pairInfo.jointConfigurations;
 
-        //Now configure the kinDynComputation objects
+        // Now configure the kinDynComputation objects
         modelLoader.loadReducedModelFromFullModel(pairModel, solverJoints);
         const iDynTree::Model &reducedModel = modelLoader.model();
-        //save the indeces
-        //TODO: check if link or frame
+
+        // Save the indeces
+        // TODO: check if link or frame
         pairInfo.parentFrameModelIndex = reducedModel.getFrameIndex(pairInfo.parentFrameName);
         pairInfo.childFrameModelIndex = reducedModel.getFrameIndex(pairInfo.childFrameName);
 
@@ -459,7 +460,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         pairInfo.parentJacobian.zero();
         pairInfo.childJacobian = pairInfo.relativeJacobian = pairInfo.parentJacobian;
 
-        //overwriting the default contructed object
+        // Overwriting the default contructed object
         pairInfo.jacobianDecomposition = Eigen::ColPivHouseholderQR<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> >(pairInfo.relativeJacobian.rows(), pairInfo.relativeJacobian.cols());
 
         pImpl->linkPairs.push_back(std::move(pairInfo));
@@ -471,7 +472,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
 
     int ikPoolSize = 1; //default value
 
-    // Get ikPoolOption
+    // Get ikPoolSizeOption
     if (config.find("ikPoolSizeOption").isString() || config.find("ikPoolSizeOption").asString() == "auto" ) {
         yInfo() << LogPrefix << "Using " << std::thread::hardware_concurrency() << " available logical threads for ik pool";
         ikPoolSize = static_cast<int>(std::thread::hardware_concurrency());
