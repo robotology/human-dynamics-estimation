@@ -225,47 +225,29 @@ bool ICub::open(yarp::os::Searchable& config)
      // OPEN AND CONNECT YARP PORTS
      // ===========================
 
-     // Connect to wbd left hand ft port
-     if(pImpl->leftHandFTPort.open("/ICub/leftHantFTSensor:i"))
-     {
-         if(!yarp::os::Network::connect(leftHandFTPortName,pImpl->leftHandFTPort.getName().c_str()))
-         {
-             yError() << LogPrefix << "Failed to connect " << leftHandFTPortName << " and " << pImpl->leftHandFTPort.getName().c_str();
-             return false;
-         }
-         else {
-             while (pImpl->leftHandFTPort.firstRunFlag()) {
-                 pImpl->leftHandFTPort.useCallback();
-             }
-             pImpl->sensorNames.push_back("leftWBDFTSensor");
-         }
-     }
-     else
-     {
-         yError() << LogPrefix << "Failed to open " << pImpl->leftHandFTPort.getName().c_str();
+     if (! pImpl->leftHandFTPort.open("/ICub/leftHantFTSensor:i") ||
+             !yarp::os::Network::connect(leftHandFTPortName,pImpl->leftHandFTPort.getName().c_str())) {
+         yError() << LogPrefix << "Failed to open or connect to " << pImpl->leftHandFTPort.getName().c_str();
          return false;
      }
 
-     // Connect to wbd right hand ft port
-     if(pImpl->rightHandFTPort.open("/ICub/rightHantFTSensor:i"))
-     {
-         if(!yarp::os::Network::connect(rightHandFTPortName,pImpl->rightHandFTPort.getName().c_str()))
-         {
-             yError() << LogPrefix << "Failed to connect " << rightHandFTPortName << " and " << pImpl->rightHandFTPort.getName().c_str();
-             return false;
-         }
-         else {
-             while (pImpl->rightHandFTPort.firstRunFlag()) {
-                 pImpl->rightHandFTPort.useCallback();
-             }
-             pImpl->sensorNames.push_back("rightWBDFTSensor");
-         }
+     while (pImpl->leftHandFTPort.firstRunFlag()) {
+         pImpl->leftHandFTPort.useCallback();
      }
-     else
-     {
-         yError() << LogPrefix << "Failed to open " << pImpl->rightHandFTPort.getName().c_str();
+
+     pImpl->sensorNames.push_back("leftWBDFTSensor");
+
+     if (!pImpl->rightHandFTPort.open("/ICub/rightHantFTSensor:i") ||
+             !yarp::os::Network::connect(rightHandFTPortName,pImpl->rightHandFTPort.getName().c_str())) {
+         yError() << LogPrefix << "Failed to open or connect to " << pImpl->rightHandFTPort.getName().c_str();
          return false;
      }
+
+     while (pImpl->rightHandFTPort.firstRunFlag()) {
+         pImpl->rightHandFTPort.useCallback();
+     }
+
+     pImpl->sensorNames.push_back("rightWBDFTSensor");
 
     std::string ft6dPrefix = getWearableName() + sensor::IForceTorque6DSensor::getPrefix();
 
