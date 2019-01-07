@@ -359,15 +359,26 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     pImpl->jointVelocitiesSolution.resize(nrOfJoints);
     pImpl->jointVelocitiesSolution.zero();
 
-    // Get the model link names from the attached IWear interface
-    const size_t nrOfSegments = pImpl->humanModel.getNrOfLinks();
+    // Get the model link names according to the modelToWearable link sensor map
+    const size_t nrOfSegments = pImpl->wearableStorage.modelToWearable_LinkName.size();
     pImpl->segments.resize(nrOfSegments);
-    for (size_t linkIndex = 0; linkIndex < nrOfSegments; ++linkIndex) {
-        pImpl->segments[linkIndex].velocities.resize(6);
-        pImpl->segments[linkIndex].velocities.zero();
+    int segmentIndex = 0;
 
+    for (size_t linkIndex = 0; linkIndex < pImpl->humanModel.getNrOfLinks(); ++linkIndex) {
         // Get the name of the link from the model and its prefix from iWear
-        pImpl->segments[linkIndex].segmentName =  pImpl->humanModel.getLinkName(linkIndex);
+        std::string modelLinkName = pImpl->humanModel.getLinkName(linkIndex);
+
+        if (pImpl->wearableStorage.modelToWearable_LinkName.find(modelLinkName)
+            == pImpl->wearableStorage.modelToWearable_LinkName.end()) {
+            continue;
+        }
+
+        pImpl->segments[segmentIndex].velocities.resize(6);
+        pImpl->segments[segmentIndex].velocities.zero();
+
+        // Store the name of the link as segment name
+        pImpl->segments[segmentIndex].segmentName =  modelLinkName;
+        segmentIndex++;
     }
 
     // Get all the possible pairs composing the model
@@ -376,7 +387,6 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
 
     // Get the pairNames
     createEndEffectorsPairs(pImpl->humanModel, pImpl->segments, pairNames, pairSegmentIndeces);
-
     pImpl->linkPairs.reserve(pairNames.size());
 
     for (unsigned index = 0; index < pairNames.size(); ++index) {
@@ -391,11 +401,12 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         // Allocate the solver
         pairInfo.ikSolver = std::unique_ptr<iDynTree::InverseKinematics>(new iDynTree::InverseKinematics());
         pairInfo.ikSolver->setLinearSolverName(pImpl->solverName);
+        //yInfo() << " ik solver : " << pairInfo.ikSolver->linearSolverName();
 
         // TODO Verify these  options
         pairInfo.ikSolver->setVerbosity(1);
-        pairInfo.ikSolver->setRotationParametrization(iDynTree::InverseKinematicsRotationParametrizationRollPitchYaw);
-        pairInfo.ikSolver->setCostTolerance(1E-10);
+        //pairInfo.ikSolver->setRotationParametrization(iDynTree::InverseKinematicsRotationParametrizationRollPitchYaw);
+        //pairInfo.ikSolver->setCostTolerance(1E-10);
 
         // Get the reduced model
         iDynTree::Model pairModel;
@@ -413,12 +424,13 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         }
 
         // TODO Verify this option
-        pairInfo.ikSolver->setDefaultTargetResolutionMode(iDynTree::InverseKinematicsTreatTargetAsConstraintNone);
+        //pairInfo.ikSolver->setDefaultTargetResolutionMode(iDynTree::InverseKinematicsTreatTargetAsConstraintNone);
 
         // Now we have to obtain the information needed to map the IK solution
         // back to the total Dofs vector we need to output
         std::vector<std::string> solverJoints;
 
+        // The size is typically 3 for the 3 DoFs between the links in linkPair
         solverJoints.resize(pairModel.getNrOfJoints());
 
         for (int i=0; i < pairModel.getNrOfJoints(); i++) {
@@ -445,7 +457,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         pairInfo.jointVelocities = pairInfo.jointConfigurations;
 
         // Now configure the kinDynComputation objects
-        modelLoader.loadReducedModelFromFullModel(pairModel, solverJoints);
+        modelLoader.loadReducedModelFromFullModel(pImpl->humanModel, solverJoints);
         const iDynTree::Model &reducedModel = modelLoader.model();
 
         // Save the indeces
@@ -501,8 +513,7 @@ static void createEndEffectorsPairs(const iDynTree::Model& model,
 {
     //for each element in human segments
     //extract it from the vector (to avoid duplications)
-    //Look for it in the model and get neighbours.
-
+    //Look for it in the model and get neighbours
     std::vector<SegmentInfo> segments(humanSegments);
     size_t segmentCount = segments.size();
 
@@ -640,30 +651,16 @@ void HumanStateProvider::run()
 {
     // Get the orientation of the links from the input data
     if (!pImpl->getLinkTransformFromInputData(pImpl->linkTransformMatrices)) {
-        yError() << LogPrefix << "Failed to get link orientations from input data";
+        yError() << LogPrefix << "Failed to get link transforms from input data";
         askToStop();
         return;
     }
 
     // Process incoming data
-    for (unsigned linkIndex = 0; linkIndex < pImpl->humanModel.getNrOfLinks(); linkIndex++) {
-        std::string linkName = pImpl->humanModel.getLinkName(linkIndex);
-
-        // Skip links with no associated measures (use only links from the configuration)
-        if (pImpl->wearableStorage.modelToWearable_LinkName.find(linkName)
-                == pImpl->wearableStorage.modelToWearable_LinkName.end()) {
-            continue;
-        }
-
-        if (pImpl->linkTransformMatrices.find(linkName) == pImpl->linkTransformMatrices.end()) {
-            yError() << LogPrefix << "Failed to find transformation matrix for link" << linkName;
-            askToStop();
-            return;
-        }
-
+    for (size_t segmentIndex = 0; segmentIndex < pImpl->segments.size(); segmentIndex++) {
         // Fill the link data into segements
-        SegmentInfo& segmentInfo = pImpl->segments.at(linkIndex);
-        segmentInfo.poseWRTWorld = pImpl->linkTransformMatrices.at(linkName); //TODO verify if this is wrt world
+        SegmentInfo& segmentInfo = pImpl->segments.at(segmentIndex);
+        segmentInfo.poseWRTWorld = pImpl->linkTransformMatrices.at(segmentInfo.segmentName);
 
         // TODO: Change the velocites from zero to data from the suit
         for (unsigned i = 0; i < 6; ++i) {
