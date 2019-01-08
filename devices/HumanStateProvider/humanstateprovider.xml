@@ -21,8 +21,8 @@
         <param name="floatingBaseFrame">(Pelvis, XsensSuit::vLink::Pelvis)</param>
         <param name="allowIKFailures">true</param>
         <param name="maxIterationsIK">300</param>
-        <param name="ikLinearSolver">MA27</param>
-        <param name="ikPoolSizeOption">auto</param>
+        <param name="ikLinearSolver">ma27</param>
+        <param name="ikPoolSizeOption">1</param>
         <param name="costTolerance">0.4</param>
         <param name="useXsensJointsAngles">false</param>
         <!-- TODO: How to use a reduced model in the entire HDE? (Starting from HumanStateProvider) -->

@@ -19,7 +19,9 @@
 #include <iDynTree/Core/MatrixDynSize.h>
 #include <iDynTree/Core/VectorDynSize.h>
 #include <iDynTree/Core/Transform.h>
+#include <iDynTree/Model/Model.h>
 #include <iDynTree/Model/Indices.h>
+#include <iDynTree/Model/JointState.h>
 #include <iDynTree/KinDynComputations.h>
 #include <iDynTree/InverseKinematics.h>
 
@@ -40,7 +42,13 @@ struct LinkPairInfo {
     iDynTree::Transform relativeTransformation; // TODO: If this is wrt global frame
 
     // IK elements (i.e. compute joints)
-    std::unique_ptr<iDynTree::InverseKinematics> ikSolver;
+    std::shared_ptr<iDynTree::InverseKinematics> ikSolver;
+
+    // Initial joint positions
+    iDynTree::VectorDynSize sInitial;
+
+    // Reduced model of link pair
+    iDynTree::Model pairModel;
 
     // Velocity-related elements
     iDynTree::MatrixDynSize parentJacobian;
@@ -109,6 +117,7 @@ class HumanIKWorkerPool {
         LinkPairInfo& pairInfo;
         SegmentInfo& parentFrameInfo;
         SegmentInfo& childFrameInfo;
+        iDynTree::VectorDynSize& sInitial;
         long identifier;
     };
 
@@ -131,7 +140,6 @@ class HumanIKWorkerPool {
     std::queue<WorkerTaskData> m_tasks;
     std::condition_variable m_inputSynchronizer;
     std::mutex m_inputMutex;
-
 
     std::unordered_map<long, bool> m_results;
     std::condition_variable m_outputSynchronizer;

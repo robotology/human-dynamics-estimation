@@ -108,9 +108,9 @@ struct WearableStorage
 
     // Maps [wearable virtual sensor name] ==> [virtual sensor]
     std::unordered_map<WearableLinkName, SensorPtr<const sensor::IVirtualLinkKinSensor>>
-        linkSensorsMap;
+    linkSensorsMap;
     std::unordered_map<WearableJointName, SensorPtr<const sensor::IVirtualSphericalJointKinSensor>>
-        jointSensorsMap;
+    jointSensorsMap;
 };
 
 class HumanStateProvider::impl
@@ -369,7 +369,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         std::string modelLinkName = pImpl->humanModel.getLinkName(linkIndex);
 
         if (pImpl->wearableStorage.modelToWearable_LinkName.find(modelLinkName)
-            == pImpl->wearableStorage.modelToWearable_LinkName.end()) {
+                == pImpl->wearableStorage.modelToWearable_LinkName.end()) {
             continue;
         }
 
@@ -399,42 +399,55 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         pairInfo.childFrameSegmentsIndex = pairSegmentIndeces[index].second;
 
         // Allocate the solver
-        pairInfo.ikSolver = std::unique_ptr<iDynTree::InverseKinematics>(new iDynTree::InverseKinematics());
-        pairInfo.ikSolver->setLinearSolverName(pImpl->solverName);
-        //yInfo() << " ik solver : " << pairInfo.ikSolver->linearSolverName();
+        pairInfo.ikSolver = std::make_unique<iDynTree::InverseKinematics>();
 
+        // Set IK options
         // TODO Verify these  options
         pairInfo.ikSolver->setVerbosity(1);
+        //pairInfo.ikSolver->setMaxIterations(maxIterationsIK);
         //pairInfo.ikSolver->setRotationParametrization(iDynTree::InverseKinematicsRotationParametrizationRollPitchYaw);
         //pairInfo.ikSolver->setCostTolerance(1E-10);
 
+        pairInfo.ikSolver->setLinearSolverName(pImpl->solverName);
+        //yInfo() << " ik solver : " << pairInfo.ikSolver->linearSolverName();
+
         // Get the reduced model
-        iDynTree::Model pairModel;
-        if (!getReducedModel(pImpl->humanModel, pairInfo.parentFrameName, pairInfo.childFrameName, pairModel)) {
+        if (!getReducedModel(pImpl->humanModel, pairInfo.parentFrameName, pairInfo.childFrameName, pairInfo.pairModel)) {
 
             yWarning() << LogPrefix << "failed to get reduced model for the segment pair " << pairInfo.parentFrameName.c_str()
-                                    << ", " << pairInfo.childFrameName.c_str();
+                       << ", " << pairInfo.childFrameName.c_str();
             continue;
         }
 
-        if (!pairInfo.ikSolver->setModel(pairModel)) {
+        if (!pairInfo.ikSolver->setModel(pairInfo.pairModel)) {
             yWarning() << LogPrefix << "failed to configure IK solver for the segment pair" << pairInfo.parentFrameName.c_str()
-                                  << ", " << pairInfo.childFrameName.c_str() <<  " Skipping pair";
+                       << ", " << pairInfo.childFrameName.c_str() <<  " Skipping pair";
             continue;
         }
 
         // TODO Verify this option
-        //pairInfo.ikSolver->setDefaultTargetResolutionMode(iDynTree::InverseKinematicsTreatTargetAsConstraintNone);
+        pairInfo.ikSolver->setDefaultTargetResolutionMode(iDynTree::InverseKinematicsTreatTargetAsConstraintNone);
+
+        // Add parent as fixed base constraint
+        // TODO: Verify this
+        pairInfo.ikSolver->addFrameConstraint(pairInfo.parentFrameName, iDynTree::Transform::Identity());
+
+        // Get random initial joint positions
+        // TODO: Verify this
+        pairInfo.sInitial.resize(pairInfo.pairModel.getNrOfJoints());
 
         // Now we have to obtain the information needed to map the IK solution
         // back to the total Dofs vector we need to output
         std::vector<std::string> solverJoints;
 
-        // The size is typically 3 for the 3 DoFs between the links in linkPair
-        solverJoints.resize(pairModel.getNrOfJoints());
+        // Set dummy Identiry transform as target
+        pairInfo.ikSolver->addTarget(pairInfo.childFrameName, iDynTree::Transform::Identity());
 
-        for (int i=0; i < pairModel.getNrOfJoints(); i++) {
-            solverJoints[i] = pairModel.getJointName(i);
+        // The size is typically 3 for the 3 DoFs between the links in linkPair
+        solverJoints.resize(pairInfo.pairModel.getNrOfJoints());
+
+        for (int i=0; i < pairInfo.pairModel.getNrOfJoints(); i++) {
+            solverJoints[i] = pairInfo.pairModel.getJointName(i);
         }
 
         pairInfo.consideredJointLocations.reserve(solverJoints.size());
@@ -456,7 +469,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         // Same size and initialization
         pairInfo.jointVelocities = pairInfo.jointConfigurations;
 
-        // Now configure the kinDynComputation objects
+        // Now configure the kinDynComputation object
         modelLoader.loadReducedModelFromFullModel(pImpl->humanModel, solverJoints);
         const iDynTree::Model &reducedModel = modelLoader.model();
 
@@ -468,6 +481,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         pairInfo.kinDynComputations = std::unique_ptr<iDynTree::KinDynComputations>(new iDynTree::KinDynComputations());
 
         pairInfo.kinDynComputations->loadRobotModel(modelLoader.model());
+
         pairInfo.parentJacobian.resize(6, modelLoader.model().getNrOfDOFs());
         pairInfo.parentJacobian.zero();
         pairInfo.childJacobian = pairInfo.relativeJacobian = pairInfo.parentJacobian;
@@ -649,22 +663,39 @@ bool HumanStateProvider::close()
 
 void HumanStateProvider::run()
 {
-    // Get the orientation of the links from the input data
+    // Get the transformation of the links from the input data
     if (!pImpl->getLinkTransformFromInputData(pImpl->linkTransformMatrices)) {
         yError() << LogPrefix << "Failed to get link transforms from input data";
         askToStop();
         return;
     }
 
-    // Process incoming data
-    for (size_t segmentIndex = 0; segmentIndex < pImpl->segments.size(); segmentIndex++) {
-        // Fill the link data into segements
-        SegmentInfo& segmentInfo = pImpl->segments.at(segmentIndex);
-        segmentInfo.poseWRTWorld = pImpl->linkTransformMatrices.at(segmentInfo.segmentName);
+    {
+        std::lock_guard<std::mutex> lock(pImpl->mutex);
 
-        // TODO: Change the velocites from zero to data from the suit
-        for (unsigned i = 0; i < 6; ++i) {
-            segmentInfo.velocities(i) = 0;
+        // Use the previous solution of joint configuration as new joint initial position
+        for (auto& linkPair : pImpl->linkPairs) {
+            linkPair.sInitial = linkPair.jointConfigurations;
+            //yInfo() << "sInitial, parent name : " << linkPair.parentFrameName << ", child name : " << linkPair.childFrameName;
+            //yInfo() << "initial joint pos : " << linkPair.sInitial.toString();
+        }
+
+    }
+
+    {
+        std::lock_guard<std::mutex> lock(pImpl->mutex);
+
+        // Process incoming data
+        for (size_t segmentIndex = 0; segmentIndex < pImpl->segments.size(); segmentIndex++) {
+            // Fill the link data into segements
+            SegmentInfo& segmentInfo = pImpl->segments.at(segmentIndex);
+            segmentInfo.poseWRTWorld = pImpl->linkTransformMatrices.at(segmentInfo.segmentName);
+            //yInfo() << "segment name : " << segmentInfo.segmentName;
+            //yInfo() << "transform : " << segmentInfo.poseWRTWorld.toString();
+            // TODO: Change the velocites from zero to data from the suit
+            for (unsigned i = 0; i < 6; ++i) {
+                segmentInfo.velocities(i) = 0;
+            }
         }
     }
 
@@ -686,10 +717,41 @@ void HumanStateProvider::run()
             jointIndex += pairJoint.second;
         }
     }
+
+    // ===========================
+    // EXPOSE DATA FOR IHUMANSTATE
+    // ===========================
+
+    /*{
+        std::lock_guard<std::mutex> lock(pImpl->mutex);
+
+        // Move the solution to the struct used from exposing the data through the interface
+        iDynTree::Transform baseTransformSolution;
+        pImpl->ik.getFullJointsSolution(baseTransformSolution, pImpl->jointConfigurationSolution);
+
+        for (unsigned i = 0; i < pImpl->jointConfigurationSolution.size(); ++i) {
+            pImpl->solution.jointPositions[i] = pImpl->jointConfigurationSolution.getVal(i);
+        }
+
+        pImpl->solution.basePosition = {baseTransformSolution.getPosition().getVal(0),
+                                        baseTransformSolution.getPosition().getVal(1),
+                                        baseTransformSolution.getPosition().getVal(2)};
+
+        pImpl->solution.baseOrientation = {
+            baseTransformSolution.getRotation().asQuaternion().getVal(0),
+            baseTransformSolution.getRotation().asQuaternion().getVal(1),
+            baseTransformSolution.getRotation().asQuaternion().getVal(2),
+            baseTransformSolution.getRotation().asQuaternion().getVal(3),
+        };
+
+        // TODO: base velocity
+        // TODO: joint velocities
+        pImpl->solution.jointVelocities.resize(pImpl->solution.jointPositions.size(), 0);
+    }*/
 }
 
 bool HumanStateProvider::impl::getLinkTransformFromInputData(
-    std::unordered_map<std::string, iDynTree::Transform>& transforms)
+        std::unordered_map<std::string, iDynTree::Transform>& transforms)
 {
     for (const auto& linkMapEntry : wearableStorage.modelToWearable_LinkName) {
         const ModelLinkName& modelLinkName = linkMapEntry.first;
@@ -697,14 +759,14 @@ bool HumanStateProvider::impl::getLinkTransformFromInputData(
 
         if (wearableStorage.linkSensorsMap.find(wearableLinkName)
                 == wearableStorage.linkSensorsMap.end()
-            || !wearableStorage.linkSensorsMap.at(wearableLinkName)) {
+                || !wearableStorage.linkSensorsMap.at(wearableLinkName)) {
             yError() << LogPrefix << "Failed to get" << wearableLinkName
                      << "sensor from the device. Something happened after configuring it.";
             return false;
         }
 
         const wearable::SensorPtr<const sensor::IVirtualLinkKinSensor> sensor =
-            wearableStorage.linkSensorsMap.at(wearableLinkName);
+                wearableStorage.linkSensorsMap.at(wearableLinkName);
 
         if (!sensor) {
             yError() << LogPrefix << "Sensor" << wearableLinkName
@@ -739,7 +801,7 @@ bool HumanStateProvider::impl::getLinkTransformFromInputData(
 
         iDynTree::Transform transform(rotation, pos);
 
-        // Note that this map is used during the IK step for setting a target orientation to a
+        // Note that this map is used during the IK step for setting a target transform to a
         // link of the model. For this reason the map keys are model names.
         transforms[modelLinkName] = std::move(transform);
     }
@@ -748,7 +810,7 @@ bool HumanStateProvider::impl::getLinkTransformFromInputData(
 }
 
 bool HumanStateProvider::impl::getLinkOrientationFromInputData(
-    std::unordered_map<std::string, iDynTree::Rotation>& transforms)
+        std::unordered_map<std::string, iDynTree::Rotation>& transforms)
 {
     for (const auto& linkMapEntry : wearableStorage.modelToWearable_LinkName) {
         const ModelLinkName& modelLinkName = linkMapEntry.first;
@@ -756,14 +818,14 @@ bool HumanStateProvider::impl::getLinkOrientationFromInputData(
 
         if (wearableStorage.linkSensorsMap.find(wearableLinkName)
                 == wearableStorage.linkSensorsMap.end()
-            || !wearableStorage.linkSensorsMap.at(wearableLinkName)) {
+                || !wearableStorage.linkSensorsMap.at(wearableLinkName)) {
             yError() << LogPrefix << "Failed to get" << wearableLinkName
                      << "sensor from the device. Something happened after configuring it.";
             return false;
         }
 
         const wearable::SensorPtr<const sensor::IVirtualLinkKinSensor> sensor =
-            wearableStorage.linkSensorsMap.at(wearableLinkName);
+                wearableStorage.linkSensorsMap.at(wearableLinkName);
 
         if (!sensor) {
             yError() << LogPrefix << "Sensor" << wearableLinkName
@@ -802,14 +864,14 @@ bool HumanStateProvider::impl::getJointAnglesFromInputData(iDynTree::VectorDynSi
 
         if (wearableStorage.jointSensorsMap.find(wearableJointInfo.name)
                 == wearableStorage.jointSensorsMap.end()
-            || !wearableStorage.jointSensorsMap.at(wearableJointInfo.name)) {
+                || !wearableStorage.jointSensorsMap.at(wearableJointInfo.name)) {
             yError() << LogPrefix << "Failed to get" << wearableJointInfo.name
                      << "sensor from the device. Something happened after configuring it.";
             return false;
         }
 
         const wearable::SensorPtr<const sensor::IVirtualSphericalJointKinSensor> sensor =
-            wearableStorage.jointSensorsMap.at(wearableJointInfo.name);
+                wearableStorage.jointSensorsMap.at(wearableJointInfo.name);
 
         if (!sensor) {
             yError() << LogPrefix << "Sensor" << wearableJointInfo.name
@@ -873,33 +935,33 @@ bool HumanStateProvider::attach(yarp::dev::PolyDriver* poly)
         std::string modelLinkName = pImpl->humanModel.getLinkName(linkIndex);
 
         if (pImpl->wearableStorage.modelToWearable_LinkName.find(modelLinkName)
-            == pImpl->wearableStorage.modelToWearable_LinkName.end()) {
-            yWarning() << LogPrefix << "Failed to find" << modelLinkName
-                       << "entry in the configuration map. Skipping this link.";
+                == pImpl->wearableStorage.modelToWearable_LinkName.end()) {
+            //yWarning() << LogPrefix << "Failed to find" << modelLinkName
+            //           << "entry in the configuration map. Skipping this link.";
             continue;
         }
 
         // Get the name of the sensor associated to the link
         std::string wearableLinkName =
-            pImpl->wearableStorage.modelToWearable_LinkName.at(modelLinkName);
+                pImpl->wearableStorage.modelToWearable_LinkName.at(modelLinkName);
 
         // Try to get the sensor
         auto sensor = pImpl->iWear->getVirtualLinkKinSensor(wearableLinkName);
         if (!sensor) {
-            yError() << LogPrefix << "Failed to find sensor associated to link" << wearableLinkName
-                     << "from the IWear interface";
+            //yError() << LogPrefix << "Failed to find sensor associated to link" << wearableLinkName
+            //<< "from the IWear interface";
             return false;
         }
 
         // Create a sensor map entry using the wearable sensor name as key
         pImpl->wearableStorage.linkSensorsMap[wearableLinkName] =
-            pImpl->iWear->getVirtualLinkKinSensor(wearableLinkName);
+                pImpl->iWear->getVirtualLinkKinSensor(wearableLinkName);
     }
 
     // Store the sensor associated as base
     std::string baseLinkSensorName = pImpl->floatingBaseFrame.wearable;
     if (pImpl->wearableStorage.linkSensorsMap.find(baseLinkSensorName)
-        == pImpl->wearableStorage.linkSensorsMap.end()) {
+            == pImpl->wearableStorage.linkSensorsMap.end()) {
         yError() << LogPrefix
                  << "Failed to find sensor associated with the base passed in the configuration"
                  << baseLinkSensorName;
@@ -907,7 +969,7 @@ bool HumanStateProvider::attach(yarp::dev::PolyDriver* poly)
     }
 
     pImpl->wearableStorage.baseLinkSensor =
-        pImpl->wearableStorage.linkSensorsMap.at(baseLinkSensorName);
+            pImpl->wearableStorage.linkSensorsMap.at(baseLinkSensorName);
 
     // ============
     // CHECK JOINTS
@@ -923,7 +985,7 @@ bool HumanStateProvider::attach(yarp::dev::PolyDriver* poly)
             // Urdfs don't have support of spherical joints, IWear instead does.
             // We use the configuration for addressing this mismatch.
             if (pImpl->wearableStorage.modelToWearable_JointInfo.find(modelJointName)
-                == pImpl->wearableStorage.modelToWearable_JointInfo.end()) {
+                    == pImpl->wearableStorage.modelToWearable_JointInfo.end()) {
                 yWarning() << LogPrefix << "Failed to find" << modelJointName
                            << "entry in the configuration map. Skipping this joint.";
                 continue;
@@ -931,7 +993,7 @@ bool HumanStateProvider::attach(yarp::dev::PolyDriver* poly)
 
             // Get the name of the sensor associate to the joint
             std::string wearableJointName =
-                pImpl->wearableStorage.modelToWearable_JointInfo.at(modelJointName).name;
+                    pImpl->wearableStorage.modelToWearable_JointInfo.at(modelJointName).name;
 
             // Try to get the sensor
             auto sensor = pImpl->iWear->getVirtualSphericalJointKinSensor(wearableJointName);
