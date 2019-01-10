@@ -44,9 +44,11 @@ if(MSVC)
 else()
     option(BUILD_SHARED_LIBS "Build libraries as shared as opposed to static" ON)
 endif()
-if (NOT BUILD_SHARED_LIBS)
-    set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-endif()
+
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+# Plugins are force to be Shared/Dynamic Library 
+set(YARP_FORCE_DYNAMIC_PLUGINS ON)
 
 # Control where binaries and libraries are placed in the build folder.
 # This simplifies tests running in Windows.
