@@ -405,7 +405,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         // TODO Verify these  options
         pairInfo.ikSolver->setVerbosity(1);
         //pairInfo.ikSolver->setMaxIterations(maxIterationsIK);
-        //pairInfo.ikSolver->setRotationParametrization(iDynTree::InverseKinematicsRotationParametrizationRollPitchYaw);
+        pairInfo.ikSolver->setRotationParametrization(iDynTree::InverseKinematicsRotationParametrizationRollPitchYaw);
         //pairInfo.ikSolver->setCostTolerance(1E-10);
 
         pairInfo.ikSolver->setLinearSolverName(pImpl->solverName);
