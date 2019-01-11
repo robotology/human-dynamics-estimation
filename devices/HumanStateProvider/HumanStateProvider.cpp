@@ -139,15 +139,18 @@ public:
     iDynTree::VectorDynSize jointAngles;
     std::unordered_map<std::string, iDynTree::Rotation> linkRotationMatrices;
     std::unordered_map<std::string, iDynTree::Transform> linkTransformMatrices;
-    iDynTree::VectorDynSize jointConfigurationSolution;
+    iDynTree::VectorDynSize linkPairsJointConfigurationSolution;
+    iDynTree::VectorDynSize globalJointConfigurationSolution;
     iDynTree::VectorDynSize jointVelocitiesSolution;
 
     // IK stuff
+    std::string solverName;
     yarp::os::Value ikPoolOption;
     std::unique_ptr<HumanIKWorkerPool> ikPool;
     SolutionIK solution;
-    iDynTree::InverseKinematics ik;
-    std::string solverName;
+
+    bool useGlobalIK;
+    iDynTree::InverseKinematics globalIK;
 
     bool getJointAnglesFromInputData(iDynTree::VectorDynSize& jointAngles);
     bool getLinkOrientationFromInputData(std::unordered_map<std::string, iDynTree::Rotation>& r);
@@ -205,6 +208,11 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     if (!(config.check("ikPoolSizeOption") && (config.find("ikPoolSizeOption").isString() || config.find("ikPoolSizeOption").isInt()))) {
         yError() << LogPrefix << "ikPoolOption option not found or not valid";
 >>>>>>> Update config with ik worker pool
+        return false;
+    }
+
+    if (!(config.check("useGlobalIK") && config.find("useGlobalIK").isBool())) {
+        yError() << LogPrefix << "useGlobalIK option not found or not valid";
         return false;
     }
 
@@ -276,7 +284,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     double costTolerance = config.find("costTolerance").asFloat64();
 =======
     pImpl->solverName = config.find("ikLinearSolver").asString();
->>>>>>> Update config with ik worker pool
+    pImpl->useGlobalIK = config.find("useGlobalIK").asBool();
     pImpl->useXsensJointsAngles = config.find("useXsensJointsAngles").asBool();
     const std::string urdfFileName = config.find("urdf").asString();
     pImpl->floatingBaseFrame.model = floatingBaseFrameList->get(0).asString();
@@ -353,8 +361,11 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     pImpl->jointAngles.resize(nrOfJoints);
     pImpl->jointAngles.zero();
 
-    pImpl->jointConfigurationSolution.resize(nrOfJoints);
-    pImpl->jointConfigurationSolution.zero();
+    pImpl->linkPairsJointConfigurationSolution.resize(nrOfJoints);
+    pImpl->linkPairsJointConfigurationSolution.zero();
+
+    pImpl->globalJointConfigurationSolution.resize(nrOfJoints);
+    pImpl->globalJointConfigurationSolution.zero();
 
     pImpl->jointVelocitiesSolution.resize(nrOfJoints);
     pImpl->jointVelocitiesSolution.zero();
@@ -527,6 +538,49 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     if (!pImpl->ikPool) {
         yError() << LogPrefix << "failed to create IK worker pool";
         return false;
+    }
+
+    // ====================
+    // INITIALIZE GLOBAL IK
+    // ====================
+
+    if (pImpl->useGlobalIK) {
+
+        // Set global ik parameters
+        pImpl->globalIK.setVerbosity(1);
+        pImpl->globalIK.setLinearSolverName(pImpl->solverName);
+        pImpl->globalIK.setMaxIterations(maxIterationsIK);
+        pImpl->globalIK.setCostTolerance(1E-10);
+        pImpl->globalIK.setDefaultTargetResolutionMode(iDynTree::InverseKinematicsTreatTargetAsConstraintNone);
+        pImpl->globalIK.setRotationParametrization(iDynTree::InverseKinematicsRotationParametrizationRollPitchYaw);
+
+        if (!pImpl->globalIK.setModel(pImpl->humanModel)) {
+            yError() << LogPrefix << "globalIK: failed to load the model";
+            return false;
+        }
+
+        if (!pImpl->globalIK.setFloatingBaseOnFrameNamed(pImpl->floatingBaseFrame.model)) {
+            yError() << LogPrefix << "Failed to set the globalIK floating base frame on link"
+                     << pImpl->floatingBaseFrame.model;
+            return false;
+        }
+
+        for (size_t linkIndex = 0; linkIndex < pImpl->humanModel.getNrOfLinks(); ++linkIndex) {
+            std::string linkName = pImpl->humanModel.getLinkName(linkIndex);
+
+            // Do not insert in the cost the rotation of the link used as base
+            if (linkName == pImpl->floatingBaseFrame.model) {
+                continue;
+            }
+
+            // Add ik targets and set to identity
+            if (!pImpl->globalIK.addTarget(linkName, iDynTree::Transform::Identity())) {
+                yError() << LogPrefix << "Failed to add target for link" << linkName;
+                askToStop();
+                return false;
+            }
+        }
+
     }
 
     return true;
@@ -734,10 +788,16 @@ void HumanStateProvider::run()
                 // Check if it is a valid 1 DoF joint
                 if (pairJoint.second == 1) {
 
-                    pImpl->solution.jointPositions[pairJoint.first] = linkPair.jointConfigurations.getVal(jointIndex);
+                    // If global ik is false, use link pair joint solutions
+                    if (!pImpl->useGlobalIK) {
+                        pImpl->solution.jointPositions[pairJoint.first] = linkPair.jointConfigurations.getVal(jointIndex);
 
-                    //TODO: Set the correct velocities values
-                    pImpl->solution.jointVelocities[pairJoint.first] = 0;
+                        //TODO: Set the correct velocities values
+                        pImpl->solution.jointVelocities[pairJoint.first] = 0;
+                    }
+                    else {
+                        pImpl->linkPairsJointConfigurationSolution.setVal(pairJoint.first, linkPair.jointConfigurations.getVal(jointIndex));
+                    }
 
                     jointIndex++;
                 }
@@ -749,25 +809,102 @@ void HumanStateProvider::run()
             }
         }
 
-        // TODO: Currently using the base link measurement from suit directly
-        // Check how the ik optimized base solution can be used instead
-        iDynTree::Transform baseTransformSolution;
-        baseTransformSolution = pImpl->linkTransformMatrices.at(pImpl->floatingBaseFrame.model);
+        // Get base transform from the suit
+        iDynTree::Transform measuredBaseTransform;
+        measuredBaseTransform = pImpl->linkTransformMatrices.at(pImpl->floatingBaseFrame.model);
 
-        pImpl->solution.basePosition = {baseTransformSolution.getPosition().getVal(0),
-                                        baseTransformSolution.getPosition().getVal(1),
-                                        baseTransformSolution.getPosition().getVal(2)};
+        // If global ik is false, use measured pose for base frame
+        if (!pImpl->useGlobalIK) {
+            pImpl->solution.basePosition = {measuredBaseTransform.getPosition().getVal(0),
+                                            measuredBaseTransform.getPosition().getVal(1),
+                                            measuredBaseTransform.getPosition().getVal(2)};
 
-        pImpl->solution.baseOrientation = {
-            baseTransformSolution.getRotation().asQuaternion().getVal(0),
-            baseTransformSolution.getRotation().asQuaternion().getVal(1),
-            baseTransformSolution.getRotation().asQuaternion().getVal(2),
-            baseTransformSolution.getRotation().asQuaternion().getVal(3),
-        };
+            pImpl->solution.baseOrientation = {
+                measuredBaseTransform.getRotation().asQuaternion().getVal(0),
+                measuredBaseTransform.getRotation().asQuaternion().getVal(1),
+                measuredBaseTransform.getRotation().asQuaternion().getVal(2),
+                measuredBaseTransform.getRotation().asQuaternion().getVal(3),
+            };
+        }
+        else {
 
-        // TODO: base velocity
-        // TODO: joint velocities
-        pImpl->solution.jointVelocities.resize(pImpl->solution.jointPositions.size(), 0);
+            // Set global IK initial condition
+            if (!pImpl->globalIK.setFullJointsInitialCondition(&measuredBaseTransform, &pImpl->linkPairsJointConfigurationSolution)) {
+                yError() << LogPrefix << "Failed to set the joint configuration for initializing the global IK";
+                askToStop();
+                return;
+            }
+
+            // Update ik targets based on wearable input data
+            for (size_t linkIndex = 0; linkIndex < pImpl->humanModel.getNrOfLinks(); ++linkIndex) {
+                std::string linkName = pImpl->humanModel.getLinkName(linkIndex);
+
+                // Do not insert in the cost the rotation of the link used as base
+                if (linkName == pImpl->floatingBaseFrame.model) {
+                    continue;
+                }
+
+                // Skip links with no associated measures (use only links from the configuration)
+                if (pImpl->wearableStorage.modelToWearable_LinkName.find(linkName)
+                        == pImpl->wearableStorage.modelToWearable_LinkName.end()) {
+                    continue;
+                }
+
+                if (pImpl->linkTransformMatrices.find(linkName) == pImpl->linkTransformMatrices.end()) {
+                    yError() << LogPrefix << "Failed to find transformation matrix for link" << linkName;
+                    askToStop();
+                    return;
+                }
+
+                if (!pImpl->globalIK.updateTarget(linkName, pImpl->linkTransformMatrices.at(linkName))) {
+                    yError() << LogPrefix << "Failed to update target for link" << linkName;
+                    askToStop();
+                    return;
+                }
+            }
+
+            // Set link pairs ik solution as desired joint configuration for global ik
+            pImpl->globalIK.setDesiredFullJointsConfiguration(pImpl->linkPairsJointConfigurationSolution, 1000);
+
+            auto tick = std::chrono::high_resolution_clock::now();
+
+            // TODO: Double check the logic if this fails
+            if (!pImpl->globalIK.solve()) {
+                    yError() << LogPrefix << "Failed to solve global IK";
+            }
+
+            auto tock = std::chrono::high_resolution_clock::now();
+            yDebug() << LogPrefix << "Global IK took"
+                     << std::chrono::duration_cast<std::chrono::milliseconds>(tock - tick).count() << "ms";
+
+            // Get the optimized base from global ik solution
+            iDynTree::Transform optimizedBaseTransform;
+
+            pImpl->globalIK.getFullJointsSolution(optimizedBaseTransform, pImpl->globalJointConfigurationSolution);
+
+            for (unsigned i = 0; i < pImpl->globalJointConfigurationSolution.size(); ++i) {
+                pImpl->solution.jointPositions[i] = pImpl->globalJointConfigurationSolution.getVal(i);
+            }
+
+            pImpl->solution.basePosition = {optimizedBaseTransform.getPosition().getVal(0),
+                                            optimizedBaseTransform.getPosition().getVal(1),
+                                            optimizedBaseTransform.getPosition().getVal(2)};
+
+            pImpl->solution.baseOrientation = {
+                optimizedBaseTransform.getRotation().asQuaternion().getVal(0),
+                optimizedBaseTransform.getRotation().asQuaternion().getVal(1),
+                optimizedBaseTransform.getRotation().asQuaternion().getVal(2),
+                optimizedBaseTransform.getRotation().asQuaternion().getVal(3),
+            };
+
+            // TODO: base velocity
+            // TODO: joint velocities
+            pImpl->solution.jointVelocities.resize(pImpl->solution.jointPositions.size(), 0);
+
+        }
+
+        //yInfo() << "Link pairs solutions : " << pImpl->linkPairsJointConfigurationSolution.toString();
+        //yInfo() << "global solutions : " << pImpl->globalJointConfigurationSolution.toString();
     }
 }
 

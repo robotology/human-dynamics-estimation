@@ -116,9 +116,9 @@ int HumanIKWorkerPool::computeIK(WorkerTaskData& task)
     // It gets baseTransformSolution	solution for the base position from getReducedSolution()
     task.pairInfo.ikSolver->getFullJointsSolution(task.pairInfo.relativeTransformation, task.pairInfo.jointConfigurations);
 
-    yDebug() << "IK took"
-             << std::chrono::duration_cast<std::chrono::milliseconds>(tock - tick).count() << "ms"
-             << " Joint configuration solution is : " << task.pairInfo.jointConfigurations.toString();
+    //yDebug() << "IK took"
+    //         << std::chrono::duration_cast<std::chrono::milliseconds>(tock - tick).count() << "ms"
+    //         << " Joint configuration solution is : " << task.pairInfo.jointConfigurations.toString();
 
     return result;
 }
