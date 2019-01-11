@@ -23,6 +23,8 @@
         <param name="maxIterationsIK">1000</param>
         <param name="ikLinearSolver">ma27</param>
         <param name="ikPoolSizeOption">2</param>
+        <param name="posTargetWeight">1</param>
+        <param name="rotTargetWeight">1</param>
         <param name="costTolerance">0.4</param>
         <param name="useGlobalIK">false</param>
         <param name="useXsensJointsAngles">false</param>

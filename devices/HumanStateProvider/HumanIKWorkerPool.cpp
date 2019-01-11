@@ -97,7 +97,7 @@ int HumanIKWorkerPool::computeIK(WorkerTaskData& task)
     iDynTree::Transform parent_H_target = task.parentFrameInfo.poseWRTWorld.inverse() * task.childFrameInfo.poseWRTWorld;
 
     // Update ik target
-    task.pairInfo.ikSolver->updateTarget(task.childFrameInfo.segmentName, parent_H_target);
+    task.pairInfo.ikSolver->updateTarget(task.childFrameInfo.segmentName, parent_H_target, task.pairInfo.positionTargetWeight, task.pairInfo.rotationTargetWeight);
 
     // Solve ik problem
     auto tick = std::chrono::high_resolution_clock::now();

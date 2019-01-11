@@ -149,6 +149,9 @@ public:
     std::unique_ptr<HumanIKWorkerPool> ikPool;
     SolutionIK solution;
 
+    int posTargetWeight;
+    int rotTargetWeight;
+
     bool useGlobalIK;
     iDynTree::InverseKinematics globalIK;
 
@@ -208,6 +211,16 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     if (!(config.check("ikPoolSizeOption") && (config.find("ikPoolSizeOption").isString() || config.find("ikPoolSizeOption").isInt()))) {
         yError() << LogPrefix << "ikPoolOption option not found or not valid";
 >>>>>>> Update config with ik worker pool
+        return false;
+    }
+
+    if (!(config.check("posTargetWeight") && config.find("posTargetWeight").isInt())) {
+        yError() << LogPrefix << "posTargetWeight option not found or not valid";
+        return false;
+    }
+
+    if (!(config.check("rotTargetWeight") && config.find("rotTargetWeight").isInt())) {
+        yError() << LogPrefix << "rotTargetWeight option not found or not valid";
         return false;
     }
 
@@ -284,6 +297,8 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     double costTolerance = config.find("costTolerance").asFloat64();
 =======
     pImpl->solverName = config.find("ikLinearSolver").asString();
+    pImpl->posTargetWeight = config.find("posTargetWeight").asInt();
+    pImpl->rotTargetWeight = config.find("rotTargetWeight").asInt();
     pImpl->useGlobalIK = config.find("useGlobalIK").asBool();
     pImpl->useXsensJointsAngles = config.find("useXsensJointsAngles").asBool();
     const std::string urdfFileName = config.find("urdf").asString();
@@ -325,7 +340,9 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     yInfo() << LogPrefix << "*** Cost Tolerance         :" << costTolerance;
 =======
     yInfo() << LogPrefix << "*** IK Solver Name         :" << pImpl->solverName;
->>>>>>> Update config with ik worker pool
+    yInfo() << LogPrefix << "*** Position target weight :" << pImpl->posTargetWeight;
+    yInfo() << LogPrefix << "*** Rotation target weight :" << pImpl->rotTargetWeight;
+    yInfo() << LogPrefix << "*** Global IK status       :" << pImpl->useGlobalIK;
     yInfo() << LogPrefix << "*** Use Xsens joint angles :" << pImpl->useXsensJointsAngles;
     yInfo() << LogPrefix << "*** ========================";
 
@@ -444,6 +461,10 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
 
         // Add child link as a target and set initial transform to be identity
         pairInfo.ikSolver->addTarget(pairInfo.childFrameName, iDynTree::Transform::Identity());
+
+        // Add target position and rotation weights
+        pairInfo.positionTargetWeight = pImpl->posTargetWeight;
+        pairInfo.rotationTargetWeight = pImpl->rotTargetWeight;
 
         // Get floating base for the pair model
         pairInfo.floatingBaseIndex = pairInfo.pairModel.getFrameLink(pairInfo.pairModel.getFrameIndex(pairInfo.parentFrameName));
