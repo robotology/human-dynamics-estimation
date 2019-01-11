@@ -381,11 +381,15 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         segmentIndex++;
     }
 
+    // =====================
+    // INITIALIZE LINK PAIRS
+    // =====================
+
     // Get all the possible pairs composing the model
     std::vector<std::pair<std::string, std::string>> pairNames;
     std::vector<std::pair<iDynTree::FrameIndex, iDynTree::FrameIndex> > pairSegmentIndeces;
 
-    // Get the pairNames
+    // Get the link pair names
     createEndEffectorsPairs(pImpl->humanModel, pImpl->segments, pairNames, pairSegmentIndeces);
     pImpl->linkPairs.reserve(pairNames.size());
 
@@ -398,20 +402,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         pairInfo.childFrameName = pairNames[index].second;
         pairInfo.childFrameSegmentsIndex = pairSegmentIndeces[index].second;
 
-        // Allocate the solver
-        pairInfo.ikSolver = std::make_unique<iDynTree::InverseKinematics>();
-
-        // Set IK options
-        // TODO Verify these  options
-        pairInfo.ikSolver->setVerbosity(1);
-        //pairInfo.ikSolver->setMaxIterations(maxIterationsIK);
-        pairInfo.ikSolver->setRotationParametrization(iDynTree::InverseKinematicsRotationParametrizationRollPitchYaw);
-        //pairInfo.ikSolver->setCostTolerance(1E-10);
-
-        pairInfo.ikSolver->setLinearSolverName(pImpl->solverName);
-        //yInfo() << " ik solver : " << pairInfo.ikSolver->linearSolverName();
-
-        // Get the reduced model
+        // Get the reduced pair model
         if (!getReducedModel(pImpl->humanModel, pairInfo.parentFrameName, pairInfo.childFrameName, pairInfo.pairModel)) {
 
             yWarning() << LogPrefix << "failed to get reduced model for the segment pair " << pairInfo.parentFrameName.c_str()
@@ -419,31 +410,38 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
             continue;
         }
 
+        // Allocate the ik solver
+        pairInfo.ikSolver = std::make_unique<iDynTree::InverseKinematics>();
+
+        // Set ik parameters
+        pairInfo.ikSolver->setVerbosity(1);
+        pairInfo.ikSolver->setLinearSolverName(pImpl->solverName);
+        pairInfo.ikSolver->setMaxIterations(maxIterationsIK);
+        pairInfo.ikSolver->setCostTolerance(1E-10);
+        pairInfo.ikSolver->setDefaultTargetResolutionMode(iDynTree::InverseKinematicsTreatTargetAsConstraintNone);
+        pairInfo.ikSolver->setRotationParametrization(iDynTree::InverseKinematicsRotationParametrizationRollPitchYaw);
+
+        // Set ik model
         if (!pairInfo.ikSolver->setModel(pairInfo.pairModel)) {
             yWarning() << LogPrefix << "failed to configure IK solver for the segment pair" << pairInfo.parentFrameName.c_str()
                        << ", " << pairInfo.childFrameName.c_str() <<  " Skipping pair";
             continue;
         }
 
-        // TODO Verify this option
-        pairInfo.ikSolver->setDefaultTargetResolutionMode(iDynTree::InverseKinematicsTreatTargetAsConstraintNone);
-
-        // Add parent as fixed base constraint
-        // TODO: Verify this
+        // Add parent link as fixed base constraint with identity transform
         pairInfo.ikSolver->addFrameConstraint(pairInfo.parentFrameName, iDynTree::Transform::Identity());
 
-        // Get random initial joint positions
-        // TODO: Verify this
-        pairInfo.sInitial.resize(pairInfo.pairModel.getNrOfJoints());
-
-        // Now we have to obtain the information needed to map the IK solution
-        // back to the total Dofs vector we need to output
-        std::vector<std::string> solverJoints;
-
-        // Set dummy Identiry transform as target
+        // Add child link as a target and set initial transform to be identity
         pairInfo.ikSolver->addTarget(pairInfo.childFrameName, iDynTree::Transform::Identity());
 
-        // The size is typically 3 for the 3 DoFs between the links in linkPair
+        // Set initial joint positions size
+        pairInfo.sInitial.resize(pairInfo.pairModel.getNrOfJoints());
+
+        // Obtain the joint location index in full model and the lenght of DoFs
+        // This information will be used to put the IK solutions together for the full model
+        std::vector<std::string> solverJoints;
+
+        // Resize to number of joints in the pair model
         solverJoints.resize(pairInfo.pairModel.getNrOfJoints());
 
         for (int i=0; i < pairInfo.pairModel.getNrOfJoints(); i++) {
@@ -459,16 +457,19 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
             }
             iDynTree::IJointConstPtr joint = pImpl->humanModel.getJoint(jointIndex);
 
-            // Save location and length of each DoFs
+            // Save location index and length of each DoFs
             pairInfo.consideredJointLocations.push_back(std::pair<size_t, size_t>(joint->getDOFsOffset(), joint->getNrOfDOFs()));
         }
 
+        // Set the joint configurations size and initialize to zero
         pairInfo.jointConfigurations.resize(solverJoints.size());
         pairInfo.jointConfigurations.zero();
 
-        // Same size and initialization
-        pairInfo.jointVelocities = pairInfo.jointConfigurations;
+        // Set the joint velocities size and initialize to zero
+        pairInfo.jointVelocities.resize(solverJoints.size());
+        pairInfo.jointVelocities.zero();
 
+        // TODO: Check if KinDyn is needed
         // Now configure the kinDynComputation object
         modelLoader.loadReducedModelFromFullModel(pImpl->humanModel, solverJoints);
         const iDynTree::Model &reducedModel = modelLoader.model();
@@ -489,6 +490,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         // Overwriting the default contructed object
         pairInfo.jacobianDecomposition = Eigen::ColPivHouseholderQR<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> >(pairInfo.relativeJacobian.rows(), pairInfo.relativeJacobian.cols());
 
+        // Move the link pair instance into the vector
         pImpl->linkPairs.push_back(std::move(pairInfo));
     }
 
@@ -496,7 +498,8 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     // INITIALIZE IK WORKER POOL
     // =========================
 
-    int ikPoolSize = 1; //default value
+    // Set default ik pool size
+    int ikPoolSize = 1;
 
     // Get ikPoolSizeOption
     if (config.find("ikPoolSizeOption").isString() || config.find("ikPoolSizeOption").asString() == "auto" ) {
@@ -519,7 +522,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     return true;
 }
 
-// This method returns the link pari names from the human model
+// This method returns the all link pair names from the full human model
 static void createEndEffectorsPairs(const iDynTree::Model& model,
                                     std::vector<SegmentInfo>& humanSegments,
                                     std::vector<std::pair<std::string, std::string> > &framePairs,
@@ -663,7 +666,7 @@ bool HumanStateProvider::close()
 
 void HumanStateProvider::run()
 {
-    // Get the transformation of the links from the input data
+    // Get the link transformations from input data
     if (!pImpl->getLinkTransformFromInputData(pImpl->linkTransformMatrices)) {
         yError() << LogPrefix << "Failed to get link transforms from input data";
         askToStop();
@@ -673,7 +676,7 @@ void HumanStateProvider::run()
     {
         std::lock_guard<std::mutex> lock(pImpl->mutex);
 
-        // Use the previous solution of joint configuration as new joint initial position
+        // Set previous solution as the new initial joint positions
         for (auto& linkPair : pImpl->linkPairs) {
             linkPair.sInitial = linkPair.jointConfigurations;
             //yInfo() << "sInitial, parent name : " << linkPair.parentFrameName << ", child name : " << linkPair.childFrameName;
@@ -685,13 +688,14 @@ void HumanStateProvider::run()
     {
         std::lock_guard<std::mutex> lock(pImpl->mutex);
 
-        // Process incoming data
+        // Set link segments transformation
         for (size_t segmentIndex = 0; segmentIndex < pImpl->segments.size(); segmentIndex++) {
-            // Fill the link data into segements
+
             SegmentInfo& segmentInfo = pImpl->segments.at(segmentIndex);
             segmentInfo.poseWRTWorld = pImpl->linkTransformMatrices.at(segmentInfo.segmentName);
             //yInfo() << "segment name : " << segmentInfo.segmentName;
             //yInfo() << "transform : " << segmentInfo.poseWRTWorld.toString();
+
             // TODO: Change the velocites from zero to data from the suit
             for (unsigned i = 0; i < 6; ++i) {
                 segmentInfo.velocities(i) = 0;
@@ -702,7 +706,7 @@ void HumanStateProvider::run()
     // Call IK worker pool to solve
     pImpl->ikPool->runAndWait();
 
-    // Join ik solutions saved in jointsConfiguration and jointsVelocity of various pairInfo variables
+    // Join link pair ik solutions
     for (auto &pair : pImpl->linkPairs) {
         size_t jointIndex = 0;
         for (auto &pairJoint : pair.consideredJointLocations) {
