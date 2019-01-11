@@ -95,7 +95,16 @@ int HumanIKWorkerPool::computeIK(WorkerTaskData& task)
     iDynTree::Transform parent_H_target = task.parentFrameInfo.poseWRTWorld.inverse() * task.childFrameInfo.poseWRTWorld;
     task.pairInfo.ikSolver->updateTarget(task.childFrameInfo.segmentName, parent_H_target);
 
+    auto tick = std::chrono::high_resolution_clock::now();
+
     int result = task.pairInfo.ikSolver->solve();
+
+    if (!result) {
+        yError() << "Failed to solve IK";
+        return -1;
+    }
+
+    auto tock = std::chrono::high_resolution_clock::now();
 
     //yInfo() << "parent name : " << task.parentFrameInfo.segmentName;
     //yInfo() << "transform : " << task.parentFrameInfo.poseWRTWorld.toString();
@@ -110,7 +119,9 @@ int HumanIKWorkerPool::computeIK(WorkerTaskData& task)
     //yInfo() << "Relative transformation : " << task.pairInfo.relativeTransformation.toString();
     //yInfo() << "computeIK linkPair, parent name : " << task.pairInfo.parentFrameName << ", child name : " << task.pairInfo.childFrameName;
     //yInfo() << "ComputeIK segment, parent name : " << task.parentFrameInfo.segmentName << ", child name : " << task.childFrameInfo.segmentName;
-    yInfo() << "IK Result : " << result << " ,Joint configuration : " << task.pairInfo.jointConfigurations.toString();
+    yDebug() << "IK took"
+             << std::chrono::duration_cast<std::chrono::milliseconds>(tock - tick).count() << "ms"
+             << " Joint configuration solution is : " << task.pairInfo.jointConfigurations.toString();
     return result;
 }
 
@@ -176,7 +187,7 @@ void HumanIKWorkerPool::worker() {
 
         if (ikResult < 0) {
             yError() << IKLogPrefix << "Failed to compute IK for " << task.pairInfo.parentFrameName.c_str() << ", "
-                                    << task.pairInfo.childFrameName.c_str() << " with error " << ikResult;
+                     << task.pairInfo.childFrameName.c_str() << " with error " << ikResult;
         }
         computeJointVelocities(task, relativeVelocity);
 

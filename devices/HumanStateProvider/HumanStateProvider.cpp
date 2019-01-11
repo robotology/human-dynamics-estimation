@@ -437,7 +437,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         // Set initial joint positions size
         pairInfo.sInitial.resize(pairInfo.pairModel.getNrOfJoints());
 
-        // Obtain the joint location index in full model and the lenght of DoFs
+        // Obtain the joint location index in full model and the lenght of DoFs i.e joints map
         // This information will be used to put the IK solutions together for the full model
         std::vector<std::string> solverJoints;
 
@@ -661,6 +661,8 @@ static bool getReducedModel(const iDynTree::Model& modelInput,
 
 bool HumanStateProvider::close()
 {
+    stop();
+    detachAll();
     return true;
 }
 
@@ -706,36 +708,41 @@ void HumanStateProvider::run()
     // Call IK worker pool to solve
     pImpl->ikPool->runAndWait();
 
-    // Join link pair ik solutions
-    for (auto &pair : pImpl->linkPairs) {
-        size_t jointIndex = 0;
-        for (auto &pairJoint : pair.consideredJointLocations) {
-            // Initialize joint quantities with zero values and size
-            // TODO: How is the map.segment variable work?
-            Eigen::Map<Eigen::VectorXd> jointPositions(pImpl->jointConfigurationSolution.data(), pImpl->jointConfigurationSolution.size());
-            jointPositions.segment(pairJoint.first, pairJoint.second) = iDynTree::toEigen(pair.jointConfigurations).segment(jointIndex, pairJoint.second);
+    // =================================================
+    // JOIN IK SOLUTIONS AND EXPOSE DATA FOR IHUMANSTATE
+    // =================================================
 
-            Eigen::Map<Eigen::VectorXd> jointVelocities(pImpl->jointVelocitiesSolution.data(),pImpl->jointVelocitiesSolution.size());
-            jointVelocities.segment(pairJoint.first, pairJoint.second) = iDynTree::toEigen(pair.jointVelocities).segment(jointIndex, pairJoint.second);
-
-            jointIndex += pairJoint.second;
-        }
-    }
-
-    // ===========================
-    // EXPOSE DATA FOR IHUMANSTATE
-    // ===========================
-
-    /*{
+    {
         std::lock_guard<std::mutex> lock(pImpl->mutex);
 
-        // Move the solution to the struct used from exposing the data through the interface
-        iDynTree::Transform baseTransformSolution;
-        pImpl->ik.getFullJointsSolution(baseTransformSolution, pImpl->jointConfigurationSolution);
+        // Joint link pair ik solutions using joints map from link pairs initialization
+        // to solution struct for exposing data through interface
+        for (auto& linkPair : pImpl->linkPairs) {
+            size_t jointIndex = 0;
+            for (auto& pairJoint : linkPair.consideredJointLocations) {
 
-        for (unsigned i = 0; i < pImpl->jointConfigurationSolution.size(); ++i) {
-            pImpl->solution.jointPositions[i] = pImpl->jointConfigurationSolution.getVal(i);
+                // Check if it is a valid 1 DoF joint
+                if (pairJoint.second == 1) {
+
+                    pImpl->solution.jointPositions[pairJoint.first] = linkPair.jointConfigurations.getVal(jointIndex);
+
+                    //TODO: Set the correct velocities values
+                    pImpl->solution.jointVelocities[pairJoint.first] = 0;
+
+                    jointIndex++;
+                }
+                else {
+                    yWarning() << LogPrefix << " Invalid DoFs for the joint, skipping the ik solution for this joint";
+                    continue;
+                }
+
+            }
         }
+
+        // TODO: Currently using the base link measurement from suit directly
+        // Check how the ik optimized base solution can be used instead
+        iDynTree::Transform baseTransformSolution;
+        baseTransformSolution = pImpl->linkTransformMatrices.at(pImpl->floatingBaseFrame.model);
 
         pImpl->solution.basePosition = {baseTransformSolution.getPosition().getVal(0),
                                         baseTransformSolution.getPosition().getVal(1),
@@ -751,7 +758,7 @@ void HumanStateProvider::run()
         // TODO: base velocity
         // TODO: joint velocities
         pImpl->solution.jointVelocities.resize(pImpl->solution.jointPositions.size(), 0);
-    }*/
+    }
 }
 
 bool HumanStateProvider::impl::getLinkTransformFromInputData(

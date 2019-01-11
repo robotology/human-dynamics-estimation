@@ -66,7 +66,7 @@ struct LinkPairInfo {
     iDynTree::FrameIndex childFrameModelIndex; //index of the frame in the iDynTree Model
     iDynTree::FrameIndex childFrameSegmentsIndex; //index of the child frame in the segment list
 
-    std::vector<std::pair<size_t, size_t> > consideredJointLocations; /*!< For each joint connecting the pair: first = offset in the full model , second = dofs of joint */
+    std::vector<std::pair<size_t, size_t>> consideredJointLocations; /*!< For each joint connecting the pair: first = offset in the full model , second = dofs of joint */
 
     LinkPairInfo() = default;
 #if defined(_MSC_VER) && _MSC_VER < 1900
