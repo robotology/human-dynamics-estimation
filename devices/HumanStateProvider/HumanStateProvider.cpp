@@ -434,6 +434,16 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         // Add child link as a target and set initial transform to be identity
         pairInfo.ikSolver->addTarget(pairInfo.childFrameName, iDynTree::Transform::Identity());
 
+        // Get floating base for the pair model
+        pairInfo.floatingBaseIndex = pairInfo.pairModel.getFrameLink(pairInfo.pairModel.getFrameIndex(pairInfo.parentFrameName));
+
+        // Set ik floating base
+        if (!pairInfo.ikSolver->setFloatingBaseOnFrameNamed(pairInfo.pairModel.getLinkName(pairInfo.floatingBaseIndex))) {
+            yError() << "Failed to set floating base frame for the segment pair" << pairInfo.parentFrameName.c_str()
+                     << ", " << pairInfo.childFrameName.c_str() <<  " Skipping pair";
+            return false;
+        }
+
         // Set initial joint positions size
         pairInfo.sInitial.resize(pairInfo.pairModel.getNrOfJoints());
 

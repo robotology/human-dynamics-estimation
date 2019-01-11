@@ -87,14 +87,19 @@ void HumanIKWorkerPool::runAndWait()
 
 int HumanIKWorkerPool::computeIK(WorkerTaskData& task)
 {
-    // TODO: Update the parent child frame transformation handling
-    // This should be updateTarget(?)
-    // Double check with UnitTest
-    task.pairInfo.ikSolver->setFullJointsInitialCondition(&(task.parentFrameInfo.poseWRTWorld), &(task.sInitial));
+    // Get floating base transformation from the pair model
+    task.pairInfo.floatingBaseTransform = task.pairInfo.pairModel.getFrameTransform(task.pairInfo.floatingBaseIndex).inverse();
 
+    // Set full initial condition for the pair model
+    task.pairInfo.ikSolver->setFullJointsInitialCondition(&(task.pairInfo.floatingBaseTransform), &(task.sInitial));
+
+    // Get the relative transformation between the parent and child frames
     iDynTree::Transform parent_H_target = task.parentFrameInfo.poseWRTWorld.inverse() * task.childFrameInfo.poseWRTWorld;
+
+    // Update ik target
     task.pairInfo.ikSolver->updateTarget(task.childFrameInfo.segmentName, parent_H_target);
 
+    // Solve ik problem
     auto tick = std::chrono::high_resolution_clock::now();
 
     int result = task.pairInfo.ikSolver->solve();
@@ -106,22 +111,15 @@ int HumanIKWorkerPool::computeIK(WorkerTaskData& task)
 
     auto tock = std::chrono::high_resolution_clock::now();
 
-    //yInfo() << "parent name : " << task.parentFrameInfo.segmentName;
-    //yInfo() << "transform : " << task.parentFrameInfo.poseWRTWorld.toString();
-
-    //yInfo() << "child name : " << task.childFrameInfo.segmentName;
-    //yInfo() << "transform : " << task.childFrameInfo.poseWRTWorld.toString();
-
-    // Get the last solution
+    // Get the last ik solution
     // TODO: Verify if relativeTransformation is stored correctly,
     // It gets baseTransformSolution	solution for the base position from getReducedSolution()
     task.pairInfo.ikSolver->getFullJointsSolution(task.pairInfo.relativeTransformation, task.pairInfo.jointConfigurations);
-    //yInfo() << "Relative transformation : " << task.pairInfo.relativeTransformation.toString();
-    //yInfo() << "computeIK linkPair, parent name : " << task.pairInfo.parentFrameName << ", child name : " << task.pairInfo.childFrameName;
-    //yInfo() << "ComputeIK segment, parent name : " << task.parentFrameInfo.segmentName << ", child name : " << task.childFrameInfo.segmentName;
+
     yDebug() << "IK took"
              << std::chrono::duration_cast<std::chrono::milliseconds>(tock - tick).count() << "ms"
              << " Joint configuration solution is : " << task.pairInfo.jointConfigurations.toString();
+
     return result;
 }
 

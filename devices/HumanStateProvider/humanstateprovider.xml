@@ -144,4 +144,16 @@
         <action phase="shutdown" level="5" type="detach"/>
     </device>
 
+    <device type="human_state_publisher" name="HumanStatePublisher">
+        <param name="period">0.020</param>
+        <param name="baseTFName">/Human/Pelvis</param>
+        <param name="humanJointsTopic">/Human/joint_states</param>
+        <action phase="startup" level="5" type="attach">
+            <paramlist name="networks">
+                <elem name="HumanStatePublisherLabel">HumanStateProvider</elem>
+            </paramlist>
+        </action>
+        <action phase="shutdown" level="5" type="detach"/>
+    </device>
+
 </robot>

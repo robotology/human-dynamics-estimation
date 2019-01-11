@@ -50,6 +50,11 @@ struct LinkPairInfo {
     // Reduced model of link pair
     iDynTree::Model pairModel;
 
+    // Floating base variables
+    iDynTree::LinkIndex floatingBaseIndex;
+    iDynTree::Transform floatingBaseTransform;
+
+
     // Velocity-related elements
     iDynTree::MatrixDynSize parentJacobian;
     iDynTree::MatrixDynSize childJacobian;
