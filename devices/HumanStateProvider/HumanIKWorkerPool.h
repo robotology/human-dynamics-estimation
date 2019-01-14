@@ -45,6 +45,7 @@ struct LinkPairInfo {
     std::shared_ptr<iDynTree::InverseKinematics> ikSolver;
     int positionTargetWeight;
     int rotationTargetWeight;
+    double costRegularization;
 
     // Initial joint positions
     iDynTree::VectorDynSize sInitial;

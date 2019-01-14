@@ -93,6 +93,10 @@ int HumanIKWorkerPool::computeIK(WorkerTaskData& task)
     // Set full initial condition for the pair model
     task.pairInfo.ikSolver->setFullJointsInitialCondition(&(task.pairInfo.floatingBaseTransform), &(task.sInitial));
 
+    // Set regularization term
+    yInfo() << "Cost regularization : " << task.pairInfo.costRegularization;
+    task.pairInfo.ikSolver->setDesiredFullJointsConfiguration(task.sInitial, task.pairInfo.costRegularization);
+
     // Get the relative transformation between the parent and child frames
     iDynTree::Transform parent_H_target = task.parentFrameInfo.poseWRTWorld.inverse() * task.childFrameInfo.poseWRTWorld;
 
@@ -116,9 +120,9 @@ int HumanIKWorkerPool::computeIK(WorkerTaskData& task)
     // It gets baseTransformSolution	solution for the base position from getReducedSolution()
     task.pairInfo.ikSolver->getFullJointsSolution(task.pairInfo.relativeTransformation, task.pairInfo.jointConfigurations);
 
-    yDebug() << "link pair IK took"
-             << std::chrono::duration_cast<std::chrono::milliseconds>(tock - tick).count() << "ms"
-             << " Joint configuration solution is : " << task.pairInfo.jointConfigurations.toString();
+    //yDebug() << "link pair IK took"
+    //         << std::chrono::duration_cast<std::chrono::milliseconds>(tock - tick).count() << "ms"
+    //         << " Joint configuration solution is : " << task.pairInfo.jointConfigurations.toString();
 
     return result;
 }

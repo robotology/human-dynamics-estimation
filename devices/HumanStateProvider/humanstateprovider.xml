@@ -17,14 +17,15 @@
 
     <device type="human_state_provider" name="HumanStateProvider">
         <param name="period">0.100</param>
-        <param name="urdf">Claudia66DoF.urdf</param>
+        <param name="urdf">Claudia66DoF_PILimit.urdf</param>
         <param name="floatingBaseFrame">(Pelvis, XsensSuit::vLink::Pelvis)</param>
         <param name="allowIKFailures">true</param>
-        <param name="maxIterationsIK">1000</param>
+        <param name="maxIterationsIK">300</param>
         <param name="ikLinearSolver">ma27</param>
         <param name="ikPoolSizeOption">2</param>
-        <param name="posTargetWeight">1</param>
-        <param name="rotTargetWeight">1</param>
+        <param name="posTargetWeight">0</param>
+        <param name="rotTargetWeight">100</param>
+        <param name="costRegularization">0.25</param>
         <param name="costTolerance">0.4</param>
         <param name="useGlobalIK">false</param>
         <param name="useXsensJointsAngles">false</param>

@@ -151,6 +151,7 @@ public:
 
     int posTargetWeight;
     int rotTargetWeight;
+    double costRegularization;
 
     bool useGlobalIK;
     iDynTree::InverseKinematics globalIK;
@@ -221,6 +222,11 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
 
     if (!(config.check("rotTargetWeight") && config.find("rotTargetWeight").isInt())) {
         yError() << LogPrefix << "rotTargetWeight option not found or not valid";
+        return false;
+    }
+
+    if (!(config.check("costRegularization") && config.find("costRegularization").isDouble())) {
+        yError() << LogPrefix << "costRegularization option not found or not valid";
         return false;
     }
 
@@ -299,6 +305,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     pImpl->solverName = config.find("ikLinearSolver").asString();
     pImpl->posTargetWeight = config.find("posTargetWeight").asInt();
     pImpl->rotTargetWeight = config.find("rotTargetWeight").asInt();
+    pImpl->costRegularization = config.find("costRegularization").asDouble();
     pImpl->useGlobalIK = config.find("useGlobalIK").asBool();
     pImpl->useXsensJointsAngles = config.find("useXsensJointsAngles").asBool();
     const std::string urdfFileName = config.find("urdf").asString();
@@ -342,6 +349,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     yInfo() << LogPrefix << "*** IK Solver Name         :" << pImpl->solverName;
     yInfo() << LogPrefix << "*** Position target weight :" << pImpl->posTargetWeight;
     yInfo() << LogPrefix << "*** Rotation target weight :" << pImpl->rotTargetWeight;
+    yInfo() << LogPrefix << "*** Cost regularization     :" << pImpl->costRegularization;
     yInfo() << LogPrefix << "*** Global IK status       :" << pImpl->useGlobalIK;
     yInfo() << LogPrefix << "*** Use Xsens joint angles :" << pImpl->useXsensJointsAngles;
     yInfo() << LogPrefix << "*** ========================";
@@ -465,6 +473,9 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         // Add target position and rotation weights
         pairInfo.positionTargetWeight = pImpl->posTargetWeight;
         pairInfo.rotationTargetWeight = pImpl->rotTargetWeight;
+
+        // Add cost regularization term
+        pairInfo.costRegularization = pImpl->costRegularization;
 
         // Get floating base for the pair model
         pairInfo.floatingBaseIndex = pairInfo.pairModel.getFrameLink(pairInfo.pairModel.getFrameIndex(pairInfo.parentFrameName));
@@ -765,7 +776,8 @@ void HumanStateProvider::run()
 
         // Set previous solution as the new initial joint positions
         for (auto& linkPair : pImpl->linkPairs) {
-            linkPair.sInitial = linkPair.jointConfigurations;
+            //linkPair.sInitial = linkPair.jointConfigurations;
+            linkPair.sInitial.zero();
             //yInfo() << "sInitial, parent name : " << linkPair.parentFrameName << ", child name : " << linkPair.childFrameName;
             //yInfo() << "initial joint pos : " << linkPair.sInitial.toString();
         }
@@ -790,8 +802,16 @@ void HumanStateProvider::run()
         }
     }
 
+    auto tick = std::chrono::high_resolution_clock::now();
+
     // Call IK worker pool to solve
     pImpl->ikPool->runAndWait();
+
+    auto tock = std::chrono::high_resolution_clock::now();
+
+    yDebug() << "IK took"
+             << std::chrono::duration_cast<std::chrono::milliseconds>(tock - tick).count() << "ms";
+
 
     // =================================================
     // JOIN IK SOLUTIONS AND EXPOSE DATA FOR IHUMANSTATE
