@@ -71,8 +71,6 @@ void HumanIKWorkerPool::runAndWait()
                 std::distance(&*(m_linkPairs.begin()), &linkPair) //this is not properly clear with the range-based iterators
             };
             m_tasks.push(taskData);
-            //yInfo() << "task, parent name : " << taskData.pairInfo.parentFrameName << ", child name : " << taskData.pairInfo.childFrameName;
-            //yInfo() << "initial positions : " << taskData.sInitial.toString();
         }
         m_inputSynchronizer.notify_all();
     }
@@ -94,7 +92,6 @@ int HumanIKWorkerPool::computeIK(WorkerTaskData& task)
     task.pairInfo.ikSolver->setFullJointsInitialCondition(&(task.pairInfo.floatingBaseTransform), &(task.sInitial));
 
     // Set regularization term
-    yInfo() << "Cost regularization : " << task.pairInfo.costRegularization;
     task.pairInfo.ikSolver->setDesiredFullJointsConfiguration(task.sInitial, task.pairInfo.costRegularization);
 
     // Get the relative transformation between the parent and child frames

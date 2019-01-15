@@ -774,12 +774,9 @@ void HumanStateProvider::run()
     {
         std::lock_guard<std::mutex> lock(pImpl->mutex);
 
-        // Set previous solution as the new initial joint positions
+        // Set the initial solution to zero
         for (auto& linkPair : pImpl->linkPairs) {
-            //linkPair.sInitial = linkPair.jointConfigurations;
             linkPair.sInitial.zero();
-            //yInfo() << "sInitial, parent name : " << linkPair.parentFrameName << ", child name : " << linkPair.childFrameName;
-            //yInfo() << "initial joint pos : " << linkPair.sInitial.toString();
         }
 
     }
@@ -792,8 +789,6 @@ void HumanStateProvider::run()
 
             SegmentInfo& segmentInfo = pImpl->segments.at(segmentIndex);
             segmentInfo.poseWRTWorld = pImpl->linkTransformMatrices.at(segmentInfo.segmentName);
-            //yInfo() << "segment name : " << segmentInfo.segmentName;
-            //yInfo() << "transform : " << segmentInfo.poseWRTWorld.toString();
 
             // TODO: Change the velocites from zero to data from the suit
             for (unsigned i = 0; i < 6; ++i) {
@@ -943,9 +938,6 @@ void HumanStateProvider::run()
             pImpl->solution.jointVelocities.resize(pImpl->solution.jointPositions.size(), 0);
 
         }
-
-        //yInfo() << "Link pairs solutions : " << pImpl->linkPairsJointConfigurationSolution.toString();
-        //yInfo() << "global solutions : " << pImpl->globalJointConfigurationSolution.toString();
     }
 }
 
