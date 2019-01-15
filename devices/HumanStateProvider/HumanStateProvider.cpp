@@ -200,10 +200,11 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         return false;
     }
 
-<<<<<<< refs/remotes/yeshifork/yeshi-release/HDEv2
     if (!(config.check("costTolerance") && config.find("costTolerance").isFloat64())) {
         yError() << LogPrefix << "costTolerance option not found or not valid";
-=======
+        return false;
+    }
+
     if (!(config.check("ikLinearSolver") && config.find("ikLinearSolver").isString())) {
         yError() << LogPrefix << "ikLinearSolver option not found or not valid";
         return false;
@@ -211,7 +212,6 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
 
     if (!(config.check("ikPoolSizeOption") && (config.find("ikPoolSizeOption").isString() || config.find("ikPoolSizeOption").isInt()))) {
         yError() << LogPrefix << "ikPoolOption option not found or not valid";
->>>>>>> Update config with ik worker pool
         return false;
     }
 
@@ -299,9 +299,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
 
     pImpl->allowIKFailures = config.find("allowIKFailures").asBool();
     int maxIterationsIK = config.find("maxIterationsIK").asInt();
-<<<<<<< refs/remotes/yeshifork/yeshi-release/HDEv2
     double costTolerance = config.find("costTolerance").asFloat64();
-=======
     pImpl->solverName = config.find("ikLinearSolver").asString();
     pImpl->posTargetWeight = config.find("posTargetWeight").asInt();
     pImpl->rotTargetWeight = config.find("rotTargetWeight").asInt();
@@ -343,9 +341,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     yInfo() << LogPrefix << "*** Urdf file name         :" << urdfFileName;
     yInfo() << LogPrefix << "*** Allow IK failures      :" << pImpl->allowIKFailures;
     yInfo() << LogPrefix << "*** Max IK iterations      :" << maxIterationsIK;
-<<<<<<< refs/remotes/yeshifork/yeshi-release/HDEv2
     yInfo() << LogPrefix << "*** Cost Tolerance         :" << costTolerance;
-=======
     yInfo() << LogPrefix << "*** IK Solver Name         :" << pImpl->solverName;
     yInfo() << LogPrefix << "*** Position target weight :" << pImpl->posTargetWeight;
     yInfo() << LogPrefix << "*** Rotation target weight :" << pImpl->rotTargetWeight;

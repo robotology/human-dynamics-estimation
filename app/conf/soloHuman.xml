@@ -17,13 +17,17 @@
 
     <device type="human_state_provider" name="HumanStateProvider">
         <param name="period">0.100</param>
-        <!-- <param name="urdf">Claudia66DoF_noLimit.urdf</param> -->
-        <param name="urdf">Claudia66DoF_2PILimit.urdf</param>
-        <!-- <param name="urdf">Claudia66DoF_e16Limit.urdf</param> -->
+        <param name="urdf">Claudia66DoF_PILimit.urdf</param>
         <param name="floatingBaseFrame">(Pelvis, XsensSuit::vLink::Pelvis)</param>
         <param name="allowIKFailures">true</param>
         <param name="maxIterationsIK">300</param>
+        <param name="ikLinearSolver">ma27</param>
+        <param name="ikPoolSizeOption">2</param>
+        <param name="posTargetWeight">0</param>
+        <param name="rotTargetWeight">100</param>
+        <param name="costRegularization">0.25</param>
         <param name="costTolerance">0.4</param>
+        <param name="useGlobalIK">false</param>
         <param name="useXsensJointsAngles">false</param>
         <!-- TODO: How to use a reduced model in the entire HDE? (Starting from HumanStateProvider) -->
         <group name="MODEL_TO_DATA_LINK_NAMES">
@@ -170,7 +174,7 @@
         <param name="number_of_sources">2</param>
         <param name="sources">(FTShoeLeft FTShoeRight)</param>
         <group name="FTShoeLeft">
-            <param name="sensorName">FTShoes::ft6D::LeftFTShoe</param>
+            <param name="sensorName">FTShoeLeftFTSensors</param>
             <param name="outputFrame">LeftFoot</param>
             <param name="type">fixed</param>
             <param name="rotation">(1.0 0.0 0.0
@@ -179,7 +183,7 @@
             <param name="position">(-0.0026 0.0 -0.1208)</param>
         </group>
         <group name="FTShoeRight">
-            <param name="sensorName">FTShoes::ft6D::RightFTShoe</param>
+            <param name="sensorName">FTShoeRightFTSensors</param>
             <param name="outputFrame">RightFoot</param>
             <param name="type">fixed</param>
             <param name="rotation">(1.0 0.0 0.0
