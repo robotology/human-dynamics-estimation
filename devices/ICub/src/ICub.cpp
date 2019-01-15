@@ -207,12 +207,6 @@ bool ICub::open(yarp::os::Searchable& config)
         return false;
     }
 
-    // Check YARP network
-    if(!yarp::os::Network::initialized())
-    {
-        yarp::os::Network::init();
-    }
-
     // ===============================
     // PARSE THE CONFIGURATION OPTIONS
     // ===============================
