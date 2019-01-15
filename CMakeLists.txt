@@ -86,18 +86,12 @@ include(AddUninstallTarget)
 #  add_subdirectory(inverse-kinematics)
 #endif()
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-=======
->>>>>>> remove dependency from robotology-playground/xsens-mvn
 # add_subdirectory(human-state-provider)
 # add_subdirectory(human-forces-provider)
 # add_subdirectory(human-dynamics-estimator)
 # add_subdirectory(human-viz-bridge)
 #add_subdirectory(human-robot-pose)
 
->>>>>>> remove dependency from robotology-playground/xsens-mvn
 add_subdirectory(app)
 
 add_subdirectory(yarp)
