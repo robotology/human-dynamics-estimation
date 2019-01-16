@@ -132,6 +132,11 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
     // INITIALIZE THE HUMAN MODEL
     // ==========================
 
+    if (!(config.check("human_urdf") && config.find("human_urdf").isString())) {
+        yError() << LogPrefix << "Option 'human_urdf' not found or not a valid Integer";
+        return false;
+    }
+
     const std::string humanURDFFileName = config.find("human_urdf").asString();
     auto& human_rf = yarp::os::ResourceFinder::getResourceFinderSingleton();
     std::string humanURDFFilePath = human_rf.findFile(humanURDFFileName);
@@ -152,21 +157,28 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
     // INITIALIZE THE ROBOT MODEL
     // ==========================
 
-    const std::string robotURDFFileName = config.find("robot_urdf").asString();
-    auto& robot_rf = yarp::os::ResourceFinder::getResourceFinderSingleton();
-    std::string robotURDFFilePath = robot_rf.findFile(robotURDFFileName);
-    if (robotURDFFilePath.empty()) {
-        yError() << LogPrefix << "Failed to find file" << config.find("robot_urdf").asString();
-        return false;
+    if (!(config.check("robot_urdf") && config.find("robot_urdf").isString())) {
+        yInfo() << LogPrefix << "Option 'robot_urdf' not found, ignoring robot model";
     }
+    else {
 
-    iDynTree::ModelLoader robotModelLoader;
-    if (!robotModelLoader.loadModelFromFile(robotURDFFilePath) || !robotModelLoader.isValid()) {
-        yError() << LogPrefix << "Failed to load model" << robotURDFFilePath;
-        return false;
+        const std::string robotURDFFileName = config.find("robot_urdf").asString();
+        auto& robot_rf = yarp::os::ResourceFinder::getResourceFinderSingleton();
+        std::string robotURDFFilePath = robot_rf.findFile(robotURDFFileName);
+        if (robotURDFFilePath.empty()) {
+            yError() << LogPrefix << "Failed to find file" << config.find("robot_urdf").asString();
+            return false;
+        }
+
+        iDynTree::ModelLoader robotModelLoader;
+        if (!robotModelLoader.loadModelFromFile(robotURDFFilePath) || !robotModelLoader.isValid()) {
+            yError() << LogPrefix << "Failed to load model" << robotURDFFilePath;
+            return false;
+        }
+
+        pImpl->robotModel = robotModelLoader.model();
+
     }
-
-    pImpl->robotModel = robotModelLoader.model();
 
     // =============================
     // INITIALIZE THE WRENCH SOURCES
