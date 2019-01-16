@@ -130,6 +130,7 @@ class ForceTorque6DSensor : public IForceTorque6DSensor
 {
 public:
     unsigned offset = 0;
+    bool groundReactionFT;
 
     ForceTorque6DSensor(SensorName name, SensorStatus status = SensorStatus::Unknown)
         : IForceTorque6DSensor(name, status)
@@ -149,7 +150,17 @@ public:
 
         // TODO: The positions of force and torques are hardcoded. Forces should be the first
         //       triplet of elements of the read vector and torques the second one.
-        return handler.getData(force3D, offset) && handler.getData(torque3D, offset + 3);
+        bool ok = handler.getData(force3D, offset) && handler.getData(torque3D, offset + 3);
+        if (groundReactionFT) {
+            force3D[0] = -1 * force3D[0];
+            force3D[1] = -1 * force3D[1];
+            force3D[2] = -1 * force3D[2];
+
+            torque3D[0] = -1 * torque3D[0];
+            torque3D[1] = -1 * torque3D[1];
+            torque3D[2] = -1 * torque3D[2];
+        }
+        return ok;
     }
 };
 
@@ -281,6 +292,8 @@ struct ParsedOptions
 
     size_t numberOfChannels;
     size_t channelOffset;
+
+    bool getGroundReactionFT;
 };
 
 class IAnalogSensorToIWear::Impl
@@ -337,6 +350,11 @@ bool IAnalogSensorToIWear::open(yarp::os::Searchable& config)
         return false;
     }
 
+    if (!(config.check("getGroundReactionFT") && config.find("getGroundReactionFT").isBool())) {
+        yError() << LogPrefix << "Parameter 'getGroundReactionFT' missing or invalid";
+        return false;
+    }
+
     // ===============
     // READ PARAMETERS
     // ===============
@@ -346,6 +364,7 @@ bool IAnalogSensorToIWear::open(yarp::os::Searchable& config)
     pImpl->options.numberOfChannels = config.find("numberOfChannels").asInt();
     pImpl->options.channelOffset = config.find("channelOffset").asInt();
     std::string sensorType = config.find("wearableSensorType").asString();
+    pImpl->options.getGroundReactionFT = config.find("getGroundReactionFT").asBool();
     pImpl->options.wearableSensorType = sensorTypeFromString(sensorType);
 
     yInfo() << LogPrefix << "*** ====================";
@@ -354,6 +373,7 @@ bool IAnalogSensorToIWear::open(yarp::os::Searchable& config)
     yInfo() << LogPrefix << "*** Wearable name      :" << pImpl->options.wearableName;
     yInfo() << LogPrefix << "*** Number of channels :" << pImpl->options.numberOfChannels;
     yInfo() << LogPrefix << "*** Channel offset     :" << pImpl->options.channelOffset;
+    yInfo() << LogPrefix << "*** Ground reaction FT :" << pImpl->options.getGroundReactionFT;
     yInfo() << LogPrefix << "*** ====================";
 
     // =====================
@@ -393,6 +413,7 @@ bool IAnalogSensorToIWear::Impl::allocateSensor(const wearable::sensor::SensorTy
         case wearable::sensor::SensorType::ForceTorque6DSensor: {
             auto sensor = std::make_shared<ForceTorque6DSensor>(name, SensorStatus::Ok);
             sensor->offset = options.channelOffset;
+            sensor->groundReactionFT = options.getGroundReactionFT;
             iSensor = std::dynamic_pointer_cast<ISensor>(sensor);
             break;
         }

@@ -124,6 +124,7 @@
     <param name="numberOfChannels">6</param>
     <param name="channelOffset">0</param>
     <param name="wearableSensorType">ForceTorque6DSensor</param>
+    <param name="getGroundReactionFT">true</param>
     <action phase="startup" level="5" type="attach">
         <paramlist name="networks">
             <elem name="FTShoeLeftIAnalogSensorToIWearLabel">ftShoe_l</elem>
