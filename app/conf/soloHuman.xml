@@ -168,7 +168,7 @@
 
     <device type="human_wrench_provider" name="HumanWrenchProvider">
         <param name="period">0.100</param>
-        <param name="human_urdf">Claudia66DoF.urdf</param>
+        <param name="human_urdf">Claudia66DoF_PILimit.urdf</param>
         <param name="number_of_sources">2</param>
         <param name="sources">(FTShoeLeft FTShoeRight)</param>
         <group name="FTShoeLeft">
@@ -239,9 +239,9 @@
         <param name="number_of_wrench_sensors">2</param>
         <param name="wrench_sensors_link_name">(LeftFoot RightFoot)</param>
         <group name="PRIORS">
+            <param name="mu_dyn_variables">0.0001</param>
             <param name="cov_dyn_variables">10000.0</param>
             <param name="cov_dyn_constraints">0.0001</param>
-            <param name="mu_dyn_variables">0.0001</param>
             <param name="cov_measurements_ACCELEROMETER_SENSOR">(0.0011 0.0011 0.0011)</param>
             <param name="cov_measurements_DOF_ACCELERATION_SENSOR">0.666e-5</param>
             <group name="cov_measurements_NET_EXT_WRENCH_SENSOR">
