@@ -204,12 +204,22 @@ bool HumanRobotPosePublisher::open(yarp::os::Searchable& config)
     }
 
     // Check if transforms are available in the transformServer for the input frames from the config file
-    bool ok = pImpl->iFrameTransform->canTransform(pImpl->robotTFPrefix + "/" + pImpl->robotFloatingBaseFrame,
-                                                   pImpl->robotTFPrefix + "/" + pImpl->robotLeftFootFrame);
-    ok = ok && pImpl->iFrameTransform->canTransform(pImpl->humanLeftFootFrame, pImpl->humanFloatingBaseFrame);
+    bool ok = pImpl->iFrameTransform->canTransform(pImpl->humanLeftFootFrame, pImpl->humanFloatingBaseFrame);
 
     if (!ok) {
-        yError() << LogPrefix << "tranforms do not exist for the given frames in the transformServer";
+        yError() << LogPrefix << "frame tranform do not exist for the given frames"
+                                 << pImpl->humanLeftFootFrame << " and "
+                                 << pImpl->humanFloatingBaseFrame << " in the transformServer";
+        return false;
+    }
+
+    ok = ok && pImpl->iFrameTransform->canTransform(pImpl->robotTFPrefix + "/" + pImpl->robotFloatingBaseFrame,
+                                                    pImpl->robotTFPrefix + "/" + pImpl->robotLeftFootFrame);
+
+    if (!ok) {
+        yError() << LogPrefix << "frame tranform do not exist for the given frames "
+                                 << pImpl->robotTFPrefix + "/" + pImpl->robotFloatingBaseFrame << " and "
+                                 << pImpl->robotTFPrefix + "/" + pImpl->robotLeftFootFrame << "in the transformServer";
         return false;
     }
 
@@ -240,20 +250,25 @@ void HumanRobotPosePublisher::run()
 {
     // Read the homogeneous tf from ground to human left foot using IFrameTransform interface
     yarp::sig::Matrix humanLeftFoot_H_humanBase;
-    pImpl->iFrameTransform->getTransform(pImpl->humanLeftFootFrame, pImpl->humanFloatingBaseFrame, humanLeftFoot_H_humanBase);
+    bool ok = pImpl->iFrameTransform->getTransform(pImpl->humanLeftFootFrame, pImpl->humanFloatingBaseFrame, humanLeftFoot_H_humanBase);
 
     // Read the homogenous tf from robot left foot to robot base using IFrameTransform interface
     yarp::sig::Matrix robotBase_H_robotLeftFoot;
-    pImpl->iFrameTransform->getTransform(pImpl->robotTFPrefix + "/" + pImpl->robotFloatingBaseFrame,
+    ok = ok && pImpl->iFrameTransform->getTransform(pImpl->robotTFPrefix + "/" + pImpl->robotFloatingBaseFrame,
                                          pImpl->robotTFPrefix + "/" + pImpl->robotLeftFootFrame, robotBase_H_robotLeftFoot);
 
-    // Compute groud to robot base frame transform
-    yarp::sig::Matrix robotBase_H_humanBase;
-    robotBase_H_humanBase = robotBase_H_robotLeftFoot * pImpl->robotLeftFoot_H_humanLeftFoot * humanLeftFoot_H_humanBase;
+    if (ok) {
+        // Compute groud to robot base frame transform
+        yarp::sig::Matrix robotBase_H_humanBase;
+        robotBase_H_humanBase = robotBase_H_robotLeftFoot * pImpl->robotLeftFoot_H_humanLeftFoot * humanLeftFoot_H_humanBase;
 
-    // Send the final transform to transformServer
-    pImpl->iFrameTransform->setTransform(pImpl->robotTFPrefix + "/" + pImpl->robotFloatingBaseFrame,
-                                         pImpl->humanFloatingBaseFrame, robotBase_H_humanBase);
+        // Send the final transform to transformServer
+        pImpl->iFrameTransform->setTransform(pImpl->robotTFPrefix + "/" + pImpl->robotFloatingBaseFrame,
+                                             pImpl->humanFloatingBaseFrame, robotBase_H_humanBase);
+    }
+    else {
+        yWarning() << "Failed to get human or robot transforms from transform server";
+    }
 }
 
 
