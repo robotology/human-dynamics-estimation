@@ -6,7 +6,15 @@
   <module>
     <name>yarprobotinterface</name>
     <description>Run HDE for only human</description>
-    <parameters>--config /home/yeshi/human-dynamics-estimation/app/conf/Human.xml</parameters>
+    <parameters>--config Human.xml</parameters>
+    <node>localhost</node>
+  </module>
+
+  <!--yarpscope-->
+  <module>
+    <name>yarpscope</name>
+    <description>yarpscope to visualize human joint torque estimates</description>
+    <parameters>--xml HumanJointTorquesYarpScope.xml</parameters>
     <node>localhost</node>
   </module>
 
@@ -22,7 +30,7 @@
   <module>
     <name>yarprobotinterface</name>
     <description>Run HDE for pHRI, ensure robot is up and running in real or simulation before running this</description>
-    <parameters>--config /home/yeshi/human-dynamics-estimation/app/conf/pHRI.xml</parameters>
+    <parameters>--config pHRI.xml</parameters>
     <node>localhost</node>
   </module>
 
@@ -38,7 +46,7 @@
   <module>
     <name>yarprobotinterface</name>
     <description>Run robot pose publisher, ensure robot is up and running in real or simulation before running this</description>
-    <parameters>--config /home/yeshi/human-dynamics-estimation/app/conf/RobotPosePublisher.xml</parameters>
+    <parameters>--config RobotPosePublisher.xml</parameters>
     <node>localhost</node>
   </module>
 

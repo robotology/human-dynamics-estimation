@@ -1,3 +1,14 @@
+#HDE xml files installation
+set (HDE_PROJECT_NAME HumanDynamicsEstimation)
+set (HDE_XML_FILES xml/Human.xml
+                   xml/pHRI.xml
+                   xml/RobotPosePublisher.xml
+                   xml/HumanJointTorquesYarpScope.xml
+                   xml/HumanDynamicsEstimation.xml)
+
+install(FILES ${HDE_XML_FILES}
+             DESTINATION ${CMAKE_INSTALL_PREFIX}/share/${HDE_PROJECT_NAME}/)
+
 # install urdf files
 set(URDF_FILES urdfs/iCubGenova02.urdf
                urdfs/iCubGenova04.urdf
