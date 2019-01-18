@@ -935,11 +935,6 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
     size_t numberOfDynEquations = pImpl->berdyData.helper.getNrOfDynamicEquations();
     size_t numberOfMeasurements = pImpl->berdyData.helper.getNrOfSensorsMeasurements();
 
-    // Debug Code
-    yInfo() << "Number of dynamic variables (d) : " << numberOfDynVariables;
-    yInfo() << "Number of dynamic equations (D) : " << numberOfDynEquations;
-    yInfo() << "Number of measurements (y)      : " << numberOfMeasurements;
-
     // Set measurements size and initialize to zero
     pImpl->berdyData.buffers.measurements.resize(numberOfMeasurements);
     pImpl->berdyData.buffers.measurements.zero();
@@ -1005,12 +1000,6 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
         yInfo() << LogPrefix << "PRIORS group parsed correctly";
     }
 
-    // Debug code
-    yInfo() << "dynamicsRegularizationExpectedValueVector vector : " << pImpl->berdyData.priors.dynamicsRegularizationExpectedValueVector.toString();
-    yInfo() << "dynamicsRegularizationCovarianceMatrix matrix : " << pImpl->berdyData.priors.dynamicsRegularizationCovarianceMatrix.description(false);
-    yInfo() << "dynamicsConstraintsCovarianceMatrix matrix : " << pImpl->berdyData.priors.dynamicsConstraintsCovarianceMatrix.description(false);
-    yInfo() << "measurementsCovarianceMatrix matrix : " << pImpl->berdyData.priors.measurementsCovarianceMatrix.description(false);
-
     // Set the priors to berdy solver
     pImpl->berdyData.solver->setDynamicsRegularizationPriorExpectedValue(pImpl->berdyData.priors.dynamicsRegularizationExpectedValueVector);
     yInfo() << LogPrefix << "Berdy solver DynamicsRegularizationPriorExpectedValue set successfully";
@@ -1055,15 +1044,6 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
     pImpl->berdyData.helper.extractJointTorquesFromDynamicVariables(estimatedDynamicVariables,
                                                                     pImpl->berdyData.state.jointsPosition,
                                                                     pImpl->berdyData.estimates.jointTorqueEstimates);
-
-    yInfo() << "Random measurements : " << pImpl->berdyData.buffers.measurements.toString();
-    yInfo() << "Torque estimates : " << pImpl->berdyData.estimates.jointTorqueEstimates.toString();
-
-    /*iDynTree::LinkWrenches netExtWrenches;
-    netExtWrenches.resize(pImpl->humanModel);
-    netExtWrenches.zero();
-    pImpl->berdyData.helper.extractLinkNetExternalWrenchesFromDynamicVariables(estimatedDynamicVariables, netExtWrenches);
-    yInfo() << "Net ext wrenches : " << netExtWrenches.toString(pImpl->humanModel);*/
 
     return true;
 }

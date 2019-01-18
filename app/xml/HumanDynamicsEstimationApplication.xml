@@ -1,0 +1,53 @@
+<application>
+  <name>HumanDynamicsEstimation</name>
+  <description>An application for running Human Dynamics Estimation (HDE) for only human or physical Human-Robot interaction (pHRI) experiments</description>
+
+  <!--yarprobotinterface with HDE config file for only human-->
+  <module>
+    <name>yarprobotinterface</name>
+    <description>Run HDE for only human</description>
+    <parameters>--config /home/yeshi/human-dynamics-estimation/app/conf/Human.xml</parameters>
+    <node>localhost</node>
+  </module>
+
+  <!--yarprobotstatepublisher for human-->
+  <module>
+    <name>yarprobotstatepublisher</name>
+    <description>Run yarprobotstatepublisher with correct human model</description>
+    <parameters>--namePrefix Human --tfPrefix /Human/ --model Claudia66DoF.urdf --base-frame Pelvis --jointstates-topic "/Human/joint_states"</parameters>
+    <node>localhost</node>
+  </module>
+
+  <!--yarprobotinterface with HDE config file for pHRI-->
+  <module>
+    <name>yarprobotinterface</name>
+    <description>Run HDE for pHRI, ensure robot is up and running in real or simulation before running this</description>
+    <parameters>--config /home/yeshi/human-dynamics-estimation/app/conf/pHRI.xml</parameters>
+    <node>localhost</node>
+  </module>
+
+  <!--yarprobotstatepublisher for robot-->
+  <module>
+    <name>yarprobotstatepublisher</name>
+    <description>Run yarprobotstatepublisher with correct robot model</description>
+    <parameters>--namePrefix Robot --tfPrefix /icubSim/ --model model.urdf --base-frame root_link --jointstates-topic "/icubSim/joint_states"</parameters>
+    <node>localhost</node>
+  </module>
+
+  <!--yarprobotinterface with HDE config file for pHRI-->
+  <module>
+    <name>yarprobotinterface</name>
+    <description>Run robot pose publisher, ensure robot is up and running in real or simulation before running this</description>
+    <parameters>--config /home/yeshi/human-dynamics-estimation/app/conf/RobotPosePublisher.xml</parameters>
+    <node>localhost</node>
+  </module>
+
+  <!--Rviz-->
+  <module>
+    <name>roslaunch</name>
+    <description>Run rviz</description>
+    <parameters>HDERviz HDERviz.launch</parameters>
+    <node>localhost</node>
+  </module>
+
+</application>
