@@ -33,9 +33,8 @@ public:
         if (!wrench.isNull()) {
             std::lock_guard<std::mutex> lock (mtx);
 
-            this->wrenchValues.clear(); // Clear the vector of previous values
-
             this->wrenchValues.resize(wrench.size());
+
             for (size_t i = 0; i < wrench.size(); ++i) {
                 this->wrenchValues.at(i) = wrench.get(i).asDouble();
             }
@@ -48,15 +47,6 @@ public:
         else {
             yWarning() << LogPrefix << "[WrenchPort] read an invalid wrench bottle";
         }
-    }
-
-    std::vector<double> wrench() {
-        std::lock_guard<std::mutex> lck (mtx);
-        return this->wrenchValues;
-    }
-
-    bool firstRunFlag() {
-        return this->firstRun;
     }
 };
 
@@ -73,13 +63,7 @@ public:
     bool leftHandFTDataReceived  = false;
     bool rightHandFTDataReceived = false;
 
-    template<typename T>
-    struct ICubDeviceSensors
-    {
-        std::shared_ptr<T> icubSensor;
-    };
-
-    std::map<std::string, ICubDeviceSensors<ICubForceTorque6DSensor>> ftSensorsMap;
+    std::map<std::string, std::shared_ptr<ICubForceTorque6DSensor>> ftSensorsMap;
 
     const WearableName wearableName = "ICub";
 
@@ -106,8 +90,8 @@ public:
             : IForceTorque6DSensor(name, status)
             , icubImpl(impl)
     {
-        //Set the sensor status Ok after receiving the first data on the wrench ports
-        if (!icubImpl->leftHandFTPort.firstRunFlag() || !icubImpl->rightHandFTPort.firstRunFlag()) {
+        // Set the sensor status Ok after receiving the first data on the wrench ports
+        if (!icubImpl->leftHandFTPort.firstRun || !icubImpl->rightHandFTPort.firstRun) {
             auto nonConstThis = const_cast<ICubForceTorque6DSensor*>(this);
             nonConstThis->setStatus(wearable::sensor::SensorStatus::Ok);
         }
@@ -128,14 +112,16 @@ public:
 
         // Reading wrench from WBD ports
         if (this->m_name == icubImpl->wearableName + wearable::Separator + sensor::IForceTorque6DSensor::getPrefix() + "leftWBDFTSensor") {
-            icubImpl->leftHandFTPort.useCallback();
-            wrench = icubImpl->leftHandFTPort.wrench();
+
+            std::lock_guard<std::mutex> lck (icubImpl->leftHandFTPort.mtx);
+            wrench = icubImpl->leftHandFTPort.wrenchValues;
 
             icubImpl->timeStamp.time = yarp::os::Time::now();
         }
         else if(this->m_name == icubImpl->wearableName + wearable::Separator + sensor::IForceTorque6DSensor::getPrefix() + "rightWBDFTSensor") {
-            icubImpl->rightHandFTPort.useCallback();
-            wrench = icubImpl->rightHandFTPort.wrench();
+
+            std::lock_guard<std::mutex> lck (icubImpl->rightHandFTPort.mtx);
+            wrench = icubImpl->rightHandFTPort.wrenchValues;
 
             icubImpl->timeStamp.time = yarp::os::Time::now();
         }
@@ -197,11 +183,6 @@ bool ICub::open(yarp::os::Searchable& config)
         return false;
     }
 
-    if (!wbdHandsFTSensorsGroup.check("nSensors")) {
-        yError() << LogPrefix << "REQUIRED parameter <nSensors> NOT found";
-        return false;
-    }
-
     if (!wbdHandsFTSensorsGroup.check("leftHand") || !wbdHandsFTSensorsGroup.check("rightHand")) {
         yError() << LogPrefix << "REQUIRED parameter <leftHand> or <rightHand> NOT found";
         return false;
@@ -211,7 +192,7 @@ bool ICub::open(yarp::os::Searchable& config)
     // PARSE THE CONFIGURATION OPTIONS
     // ===============================
 
-     pImpl->nSensors = wbdHandsFTSensorsGroup.check("nSensors",yarp::os::Value(false)).asInt();
+     pImpl->nSensors = wbdHandsFTSensorsGroup.size()-1;
      std::string leftHandFTPortName = wbdHandsFTSensorsGroup.check("leftHand",yarp::os::Value(false)).asString();
      std::string rightHandFTPortName = wbdHandsFTSensorsGroup.check("rightHand",yarp::os::Value(false)).asString();
 
@@ -219,25 +200,23 @@ bool ICub::open(yarp::os::Searchable& config)
      // OPEN AND CONNECT YARP PORTS
      // ===========================
 
-     if (! pImpl->leftHandFTPort.open("/ICub/leftHantFTSensor:i") ||
-             !yarp::os::Network::connect(leftHandFTPortName,pImpl->leftHandFTPort.getName().c_str())) {
+     if (!( pImpl->leftHandFTPort.open("/ICub/leftHantFTSensor:i") && yarp::os::Network::connect(leftHandFTPortName,pImpl->leftHandFTPort.getName().c_str()) ) ) {
          yError() << LogPrefix << "Failed to open or connect to " << pImpl->leftHandFTPort.getName().c_str();
          return false;
      }
 
-     while (pImpl->leftHandFTPort.firstRunFlag()) {
+     while (pImpl->leftHandFTPort.firstRun) {
          pImpl->leftHandFTPort.useCallback();
      }
 
      pImpl->sensorNames.push_back("leftWBDFTSensor");
 
-     if (!pImpl->rightHandFTPort.open("/ICub/rightHantFTSensor:i") ||
-             !yarp::os::Network::connect(rightHandFTPortName,pImpl->rightHandFTPort.getName().c_str())) {
+     if (!( pImpl->rightHandFTPort.open("/ICub/rightHantFTSensor:i") && yarp::os::Network::connect(rightHandFTPortName,pImpl->rightHandFTPort.getName().c_str()) ) ) {
          yError() << LogPrefix << "Failed to open or connect to " << pImpl->rightHandFTPort.getName().c_str();
          return false;
      }
 
-     while (pImpl->rightHandFTPort.firstRunFlag()) {
+     while (pImpl->rightHandFTPort.firstRun) {
          pImpl->rightHandFTPort.useCallback();
      }
 
@@ -252,7 +231,7 @@ bool ICub::open(yarp::os::Searchable& config)
 
          pImpl->ftSensorsMap.emplace(
                      ft6dPrefix + pImpl->sensorNames[s],
-                     ICubImpl::ICubDeviceSensors<ICubImpl::ICubForceTorque6DSensor>{ft6d});
+                     std::shared_ptr<ICubImpl::ICubForceTorque6DSensor>{ft6d});
     }
 
     return true;
@@ -273,8 +252,6 @@ wearable::WearStatus ICub::getStatus() const
 
     for (const auto& s : getAllSensors()) {
         if (s->getSensorStatus() != sensor::SensorStatus::Ok) {
-            yError() << LogPrefix << "The status of" << s->getSensorName() << "is not Ok ("
-                     << static_cast<int>(s->getSensorStatus()) << ")";
             status = wearable::WearStatus::Error;
         }
     }
@@ -327,10 +304,10 @@ ICub::getSensors(const wearable::sensor::SensorType type) const
     wearable::VectorOfSensorPtr<const wearable::sensor::ISensor> outVec;
     switch (type) {
         case sensor::SensorType::ForceTorque6DSensor: {
-            outVec.reserve(pImpl->nSensors);
+            outVec.reserve(pImpl->ftSensorsMap.size());
             for (const auto& ft6d : pImpl->ftSensorsMap) {
                 outVec.push_back(
-                    static_cast<std::shared_ptr<sensor::ISensor>>(ft6d.second.icubSensor));
+                    static_cast<std::shared_ptr<sensor::ISensor>>(ft6d.second));
             }
 
             break;
@@ -355,7 +332,7 @@ ICub::getForceTorque6DSensor(const wearable::sensor::SensorName name) const
         return nullptr;
     }
 
-    //return a shared point to the required sensor
+    // Return a shared point to the required sensor
     return static_cast<std::shared_ptr<sensor::IForceTorque6DSensor>>(
-        pImpl->ftSensorsMap.at(static_cast<std::string>(name)).icubSensor);
+        pImpl->ftSensorsMap.at(name));
 }
