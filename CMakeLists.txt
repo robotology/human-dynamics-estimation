@@ -21,12 +21,9 @@ endif()
 
 # Libraries type
 if(MSVC)
-    option(BUILD_SHARED_LIBS "Compile WBToolbox as a shared library" OFF)
+    option(BUILD_SHARED_LIBS "Build libraries as shared as opposed to static" OFF)
 else()
-    option(BUILD_SHARED_LIBS "Compile WBToolbox as a shared library" ON)
-endif()
-if(NOT BUILD_SHARED_LIBS)
-    set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+    option(BUILD_SHARED_LIBS "Build libraries as shared as opposed to static" ON)
 endif()
 
 # Control where binaries and libraries are placed in the build folder.
@@ -63,9 +60,10 @@ add_subdirectory(impl)
 
 # Prepare YARP wrapper and devices
 find_package(YARP 3.0 REQUIRED)
-set(BUILD_SHARED_LIBS ON)
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+set(YARP_FORCE_DYNAMIC_PLUGINS ON)
 yarp_configure_plugins_installation(wearable)
+
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 add_subdirectory(msgs)
 add_subdirectory(devices)
