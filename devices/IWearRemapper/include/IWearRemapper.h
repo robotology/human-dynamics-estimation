@@ -12,6 +12,7 @@
 #include "Wearable/IWear/IWear.h"
 
 #include <yarp/dev/DeviceDriver.h>
+#include <yarp/dev/PreciselyTimed.h>
 #include <yarp/os/PeriodicThread.h>
 #include <yarp/os/TypedReaderCallback.h>
 
@@ -31,6 +32,7 @@ class wearable::devices::IWearRemapper
     , public wearable::IWear
     , public yarp::os::TypedReaderCallback<msg::WearableData>
     , public yarp::os::PeriodicThread
+    , public yarp::dev::IPreciselyTimed
 {
 private:
     class impl;
@@ -50,6 +52,10 @@ public:
     // TypedReaderCallback
     void onRead(msg::WearableData& wearData) override;
 
+    // PreciselyTimed interface
+    yarp::os::Stamp getLastInputStamp() override;
+
+    // IWear interface
     WearableName getWearableName() const override;
     WearStatus getStatus() const override;
     TimeStamp getTimeStamp() const override;
@@ -102,6 +108,7 @@ public:
 
     SensorPtr<const sensor::IVirtualSphericalJointKinSensor>
     getVirtualSphericalJointKinSensor(const sensor::SensorName /*name*/) const override;
+
 };
 
 #endif // IWEARREMAPPER_H
