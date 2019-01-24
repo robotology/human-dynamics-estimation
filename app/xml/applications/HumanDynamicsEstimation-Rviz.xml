@@ -1,0 +1,13 @@
+<application>
+  <name>HumanDynamicsEstimation-Rviz</name>
+  <description>An application for running rviz</description>
+
+  <!--Rviz-->
+  <module>
+    <name>roslaunch</name>
+    <description>Run rviz</description>
+    <parameters>HDERviz HDERviz.launch</parameters>
+    <node>localhost</node>
+  </module>
+  
+</application>

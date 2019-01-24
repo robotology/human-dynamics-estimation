@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<robot name="Transform-Server" build=0 portprefix="">
+
+    <device type="transformServer" name="TransformServer">
+        <param name="transforms_lifetime">0.2</param>
+        <group name="ROS">
+            <param name="enable_ros_publisher">true</param>
+            <param name="enable_ros_subscriber">false</param>
+        </group>
+    </device>
+
+</robot>

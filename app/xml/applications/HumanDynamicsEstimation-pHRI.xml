@@ -1,0 +1,61 @@
+<application>
+  <name>HumanDynamicsEstimation-pHRI</name>
+  <description>An application for running Human Dynamics Estimation (HDE) for physical Human-Robot interaction (pHRI) experiments</description>
+
+  <!--Gazebo simulator-->
+  <module>
+    <name>gazebo</name>
+    <parameters>--verbose</parameters>
+    <description>Gazebo simulation to spawn icub model</description>
+    <node>localhost</node>
+  </module>
+
+  <!--WholeBodyDynamics-->
+  <module>
+    <name>yarprobotinterface</name>
+    <parameters>--config launch-wholebodydynamics.xml</parameters>
+    <description>Run wholebodydynamics</description>
+    <node>localhost</node>
+  </module>
+
+  <!--ICub wearable device-->
+  <module>
+    <name>yarprobotinterface</name>
+    <parameters>--config ICub.xml</parameters>
+    <description>Run ICub wearable device</description>
+    <node>localhost</node>
+  </module>
+
+  <!--yarprobotstatepublisher for robot-->
+  <module>
+    <name>yarprobotstatepublisher</name>
+    <parameters>--namePrefix Robot --tfPrefix /icubSim/ --model model.urdf --base-frame root_link --jointstates-topic "/icubSim/joint_states"</parameters>
+    <description>Run yarprobotstatepublisher with correct robot model</description>
+    <node>localhost</node>
+  </module>
+
+  <!--yarprobotinterface with HDE config file for pHRI-->
+  <module>
+    <name>yarprobotinterface</name>
+    <parameters>--config pHRI.xml</parameters>
+    <description>Run HDE for pHRI, ensure robot is up and running in real or simulation before running this</description>
+    <node>localhost</node>
+  </module>
+
+  <!--yarprobotstatepublisher for human-->
+  <module>
+    <name>yarprobotstatepublisher</name>
+    <parameters>--namePrefix Human --tfPrefix /Human/ --model Claudia66DoF.urdf --base-frame Pelvis --jointstates-topic "/Human/joint_states"</parameters>
+    <description>Run yarprobotstatepublisher with correct human model</description>
+    <node>localhost</node>
+  </module>
+
+  <!--yarprobotinterface with HDE config file for pHRI-->
+  <module>
+    <name>yarprobotinterface</name>
+    <parameters>--config RobotPosePublisher.xml</parameters>
+    <description>Run robot pose publisher, ensure robot is up and running in real or simulation before running this</description>
+    <node>localhost</node>
+  </module>
+
+</application>

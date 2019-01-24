@@ -1,0 +1,13 @@
+<application>
+  <name>HumanDynamicsEstimation-TransformServer</name>
+  <description>An application for running transform server</description>
+
+  <!--yarprobotinterface for transform server-->
+  <module>
+    <name>yarprobotinterface</name>
+    <parameters>--config TransformServer.xml</parameters>
+    <description>Run transform server</description>
+    <node>localhost</node>
+  </module>
+  
+</application>
