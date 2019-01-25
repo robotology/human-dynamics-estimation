@@ -1,10 +1,10 @@
 #HDE xml files installation
 set (HDE_PROJECT_NAME HumanDynamicsEstimation)
-set (HDE_XML_FILES xml/Human.xml
+set (HDE_XML_FILES xml/TransformServer.xml
+                   xml/Human.xml
                    xml/pHRI.xml
                    xml/RobotPosePublisher.xml
-                   xml/HumanJointTorquesYarpScope.xml
-                   xml/HumanDynamicsEstimation.xml)
+                   xml/HumanJointTorquesYarpScope.xml)
 
 install(FILES ${HDE_XML_FILES}
              DESTINATION ${CMAKE_INSTALL_PREFIX}/share/${HDE_PROJECT_NAME}/)

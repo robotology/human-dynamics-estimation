@@ -10,6 +10,7 @@
     <dependencies>
       <port timeout="5.0">/HDE/HumanDynamicsWrapper/torques:o</port>
     </dependencies>
+    <environment>YARP_FORWARD_LOG_ENABLE=1</environment>
     <node>localhost</node>
   </module>
 

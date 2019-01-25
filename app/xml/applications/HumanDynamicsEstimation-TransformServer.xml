@@ -2,6 +2,13 @@
   <name>HumanDynamicsEstimation-TransformServer</name>
   <description>An application for running transform server</description>
 
+  <module>
+    <name>yarplogger</name>
+    <parameters>--start --no_stop</parameters>
+    <description>Run yarplogger</description>
+    <node>localhost</node>
+  </module>
+
   <!--yarprobotinterface for transform server-->
   <module>
     <name>yarprobotinterface</name>
@@ -9,6 +16,7 @@
     <dependencies>
           <port timeout="5.0">/ros</port>
     </dependencies>
+    <environment>YARP_FORWARD_LOG_ENABLE=1</environment>
     <description>Run transform server</description>
     <node>localhost</node>
   </module>

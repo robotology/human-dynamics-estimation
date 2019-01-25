@@ -6,6 +6,7 @@
   <module>
     <name>gazebo</name>
     <parameters>--verbose</parameters>
+    <environment>YARP_FORWARD_LOG_ENABLE=1</environment>
     <description>Gazebo simulation to spawn icub model</description>
     <node>localhost</node>
   </module>
@@ -14,6 +15,7 @@
   <module>
     <name>yarprobotinterface</name>
     <parameters>--config launch-wholebodydynamics.xml</parameters>
+    <environment>YARP_FORWARD_LOG_ENABLE=1</environment>
     <description>Run wholebodydynamics</description>
     <node>localhost</node>
   </module>
@@ -26,6 +28,7 @@
       <port timeout="5.0">/wholeBodyDynamics/left_arm/endEffectorWrench:o</port>
       <port timeout="5.0">/wholeBodyDynamics/right_arm/endEffectorWrench:o</port>
     </dependencies>
+    <environment>YARP_FORWARD_LOG_ENABLE=1</environment>
     <description>Run ICub wearable device</description>
     <node>localhost</node>
   </module>
@@ -37,6 +40,7 @@
     <dependencies>
       <port timeout="5.0">/icubSim/joint_states+@/icubSim/joint_state_publisher</port>
     </dependencies>
+    <environment>YARP_FORWARD_LOG_ENABLE=1</environment>
     <description>Run yarprobotstatepublisher with correct robot model</description>
     <node>localhost</node>
   </module>
@@ -53,6 +57,7 @@
           <port timeout="5.0">/FTShoeLeft/WearableData/data:o</port>
           <port timeout="5.0">/FTShoeRight/WearableData/data:o</port>
     </dependencies>
+    <environment>YARP_FORWARD_LOG_ENABLE=1</environment>
     <description>Run HDE for pHRI, ensure robot is up and running in real or simulation before running this</description>
     <node>localhost</node>
   </module>
@@ -66,6 +71,7 @@
       <port timeout="5.0">/Human/joint_states+@/HumanStatePublisher</port>
       <port timeout="5.0">/tf+@/HumanStatePublisher</port>
     </dependencies>
+    <environment>YARP_FORWARD_LOG_ENABLE=1</environment>
     <description>Run yarprobotstatepublisher with correct human model</description>
     <node>localhost</node>
   </module>
@@ -74,6 +80,7 @@
   <module>
     <name>yarprobotinterface</name>
     <parameters>--config RobotPosePublisher.xml</parameters>
+    <environment>YARP_FORWARD_LOG_ENABLE=1</environment>
     <description>Run robot pose publisher, ensure robot is up and running in real or simulation before running this</description>
     <node>localhost</node>
   </module>
