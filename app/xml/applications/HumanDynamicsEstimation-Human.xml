@@ -6,6 +6,13 @@
   <module>
     <name>yarprobotinterface</name>
     <parameters>--config Human.xml</parameters>
+    <dependencies>
+          <port timeout="5.0">/transformServer/rpc</port>
+          <port timeout="5.0">/transformServer/transforms:o</port>
+          <port timeout="5.0">/XSensSuit/WearableData/data:o</port>
+          <port timeout="5.0">/FTShoeLeft/WearableData/data:o</port>
+          <port timeout="5.0">/FTShoeRight/WearableData/data:o</port>
+    </dependencies>
     <description>Run HDE for only human</description>
     <node>localhost</node>
   </module>
@@ -14,6 +21,11 @@
   <module>
     <name>yarprobotstatepublisher</name>
     <parameters>--namePrefix Human --tfPrefix /Human/ --model Claudia66DoF.urdf --base-frame Pelvis --jointstates-topic "/Human/joint_states"</parameters>
+    <dependencies>
+      <port timeout="5.0">/HumanDynamicsPublisher</port>
+      <port timeout="5.0">/Human/joint_states+@/HumanStatePublisher</port>
+      <port timeout="5.0">/tf+@/HumanStatePublisher</port>
+    </dependencies>
     <description>Run yarprobotstatepublisher with correct human model</description>
     <node>localhost</node>
   </module>

@@ -22,6 +22,10 @@
   <module>
     <name>yarprobotinterface</name>
     <parameters>--config ICub.xml</parameters>
+    <dependencies>
+      <port timeout="5.0">/wholeBodyDynamics/left_arm/endEffectorWrench:o</port>
+      <port timeout="5.0">/wholeBodyDynamics/right_arm/endEffectorWrench:o</port>
+    </dependencies>
     <description>Run ICub wearable device</description>
     <node>localhost</node>
   </module>
@@ -30,6 +34,9 @@
   <module>
     <name>yarprobotstatepublisher</name>
     <parameters>--namePrefix Robot --tfPrefix /icubSim/ --model model.urdf --base-frame root_link --jointstates-topic "/icubSim/joint_states"</parameters>
+    <dependencies>
+      <port timeout="5.0">/icubSim/joint_states+@/icubSim/joint_state_publisher</port>
+    </dependencies>
     <description>Run yarprobotstatepublisher with correct robot model</description>
     <node>localhost</node>
   </module>
@@ -38,6 +45,14 @@
   <module>
     <name>yarprobotinterface</name>
     <parameters>--config pHRI.xml</parameters>
+    <dependencies>
+          <port timeout="5.0">/transformServer/rpc</port>
+          <port timeout="5.0">/transformServer/transforms:o</port>
+          <port timeout="5.0">/XSensSuit/WearableData/data:o</port>
+          <port timeout="5.0">/ICub/WearableData/data:o</port>
+          <port timeout="5.0">/FTShoeLeft/WearableData/data:o</port>
+          <port timeout="5.0">/FTShoeRight/WearableData/data:o</port>
+    </dependencies>
     <description>Run HDE for pHRI, ensure robot is up and running in real or simulation before running this</description>
     <node>localhost</node>
   </module>
@@ -46,6 +61,11 @@
   <module>
     <name>yarprobotstatepublisher</name>
     <parameters>--namePrefix Human --tfPrefix /Human/ --model Claudia66DoF.urdf --base-frame Pelvis --jointstates-topic "/Human/joint_states"</parameters>
+    <dependencies>
+      <port timeout="5.0">/HumanDynamicsPublisher</port>
+      <port timeout="5.0">/Human/joint_states+@/HumanStatePublisher</port>
+      <port timeout="5.0">/tf+@/HumanStatePublisher</port>
+    </dependencies>
     <description>Run yarprobotstatepublisher with correct human model</description>
     <node>localhost</node>
   </module>

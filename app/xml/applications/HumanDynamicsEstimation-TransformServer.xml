@@ -6,8 +6,11 @@
   <module>
     <name>yarprobotinterface</name>
     <parameters>--config TransformServer.xml</parameters>
+    <dependencies>
+          <port timeout="5.0">/ros</port>
+    </dependencies>
     <description>Run transform server</description>
     <node>localhost</node>
   </module>
-  
+
 </application>

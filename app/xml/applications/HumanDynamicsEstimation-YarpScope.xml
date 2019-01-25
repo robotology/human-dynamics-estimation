@@ -7,7 +7,10 @@
     <name>yarpscope</name>
     <parameters>--xml HumanJointTorquesYarpScope.xml</parameters>
     <description>yarpscope to visualize human joint torque estimates</description>
+    <dependencies>
+      <port timeout="5.0">/HDE/HumanDynamicsWrapper/torques:o</port>
+    </dependencies>
     <node>localhost</node>
   </module>
-  
+
 </application>
