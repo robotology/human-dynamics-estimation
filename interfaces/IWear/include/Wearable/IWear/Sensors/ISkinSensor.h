@@ -10,6 +10,7 @@
 #define WEARABLE_ISKIN_SENSOR_H
 
 #include "Wearable/IWear/Sensors/ISensor.h"
+#include <vector>
 
 namespace wearable {
     namespace sensor {
@@ -28,8 +29,9 @@ public:
 
     virtual ~ISkinSensor() = default;
 
+    virtual bool getPressure(std::vector<double>& pressure) const = 0;
+
     inline static const std::string getPrefix();
-    // TODO: to be implemented
 };
 
 inline const std::string wearable::sensor::ISkinSensor::getPrefix()
@@ -37,5 +39,4 @@ inline const std::string wearable::sensor::ISkinSensor::getPrefix()
     return "skin" + wearable::Separator;
 }
 
-// const wearable::sensor::SensorPrefix wearable::sensor::ISkinSensor::namePrefix = "skin_";
 #endif // WEARABLE_ISKIN_SENSOR_H
