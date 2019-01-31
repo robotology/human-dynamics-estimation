@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<robot name="Human-Control-Board" build=0 portprefix="">
+
+    <device type="human_control_board" name="HumanControlBoard">
+        <param name="period">0.100</param>
+        <param name="dynamicsDataPortName">/HDE/HumanDynamicsWrapper/torques:o</param>
+        <action phase="startup" level="5" type="attach">
+            <paramlist name="networks">
+                <elem name="HumanControlBoardLabel">HumanStateProvider</elem>
+            </paramlist>
+        </action>
+        <action phase="shutdown" level="5" type="detach"/>
+    </device>
+
+</robot>
