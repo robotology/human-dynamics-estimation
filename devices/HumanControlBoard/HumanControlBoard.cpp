@@ -186,11 +186,6 @@ bool HumanControlBoard::getAxisName(int axis, std::string& name)
     return true;
 }
 
-bool HumanControlBoard::getJointType(int axis, yarp::dev::JointTypeEnum& type)
-{
-    return true;
-}
-
 // IEncoders interface
 bool HumanControlBoard::getEncoder(int j, double* v)
 {
@@ -208,26 +203,6 @@ bool HumanControlBoard::getEncoders(double* encs)
         encs[i] = pImpl->jointPositions[i];
     }
     return true;
-}
-
-bool HumanControlBoard::resetEncoder(int j)
-{
-    return false;
-}
-
-bool HumanControlBoard::resetEncoders()
-{
-    return false;
-}
-
-bool HumanControlBoard::setEncoder(int j, double val)
-{
-    return false;
-}
-
-bool HumanControlBoard::setEncoders(const double* vals)
-{
-    return false;
 }
 
 bool HumanControlBoard::getEncoderSpeed(int j, double* sp)
@@ -268,27 +243,7 @@ bool HumanControlBoard::getEncoderAccelerations(double* accs)
     return true;
 }
 
-bool HumanControlBoard::getEncoderTimed(int j, double* encs, double* time)
-{
-    return false;
-}
-
-bool HumanControlBoard::getEncodersTimed(double* encs, double* time)
-{
-    return false;
-}
-
-/*// IPositionControl interface
-bool HumanControlBoard::stop()
-{
-    return false;
-}
-
-bool HumanControlBoard::stop(int j)
-{
-    return false;
-}
-
+// IPositionControl interface
 bool HumanControlBoard::getAxes(int* ax)
 {
     if (!ax)
@@ -297,118 +252,7 @@ bool HumanControlBoard::getAxes(int* ax)
     return true;
 }
 
-bool HumanControlBoard::positionMove(int j, double ref)
-{
-    return false;
-}
-
-bool HumanControlBoard::positionMove(const double* refs)
-{
-    return false;
-}
-
-bool HumanControlBoard::setRefSpeed(int j, double sp)
-{
-    return false;
-}
-
-bool HumanControlBoard::setRefSpeeds(const double* spds)
-{
-    return false;
-}
-
-bool HumanControlBoard::getRefSpeed(int j, double* ref)
-{
-    return false;
-}
-
-bool HumanControlBoard::getRefSpeeds(double* spds)
-{
-    return false;
-}
-
-bool HumanControlBoard::relativeMove(int j, double delta)
-{
-    return false;
-}
-
-bool HumanControlBoard::relativeMove(const double* deltas)
-{
-    return false;
-}
-
-bool HumanControlBoard::checkMotionDone(int j, bool* flag)
-{
-    return false;
-}
-
-bool HumanControlBoard::checkMotionDone(bool* flag)
-{
-    return false;
-}
-
-// IVelocityControl interface
-bool HumanControlBoard::velocityMove(int j, double sp)
-{
-    return false;
-}
-
-bool HumanControlBoard::velocityMove(const double* sp)
-{
-    return false;
-}
-
-bool HumanControlBoard::setRefAcceleration(int j, double acc)
-{
-    return false;
-}
-
-bool HumanControlBoard::setRefAccelerations(const double* accs)
-{
-    return false;
-}
-
-bool HumanControlBoard::getRefAcceleration(int j, double* acc)
-{
-    return false;
-}
-
-bool HumanControlBoard::getRefAccelerations(double* accs)
-{
-    return false;
-}
-
 // ITorqueControl interface
-bool HumanControlBoard::setRefTorque(int j, double t)
-{
-    return false;
-}
-
-bool HumanControlBoard::setRefTorques(const double* t)
-{
-    return false;
-}
-
-bool HumanControlBoard::setRefTorques(const int n_joint, const int* joints, const double* t)
-{
-    return false;
-}
-
-bool HumanControlBoard::setTorqueMode()
-{
-    return false;
-}
-
-bool HumanControlBoard::getRefTorque(int j, double* t)
-{
-    return false;
-}
-
-bool HumanControlBoard::getRefTorques(double* t)
-{
-    return false;
-}
-
 bool HumanControlBoard::getTorque(int j, double* t)
 {
     if (t && j >= 0 && static_cast<size_t>(j) < pImpl->nJoints) {
@@ -428,33 +272,3 @@ bool HumanControlBoard::getTorques(double* t)
     }
     return true;
 }
-
-bool HumanControlBoard::getTorqueRange(int, double*, double*)
-{
-    return false;
-}
-
-bool HumanControlBoard::getTorqueRanges(double*, double*)
-{
-    return false;
-}
-
-bool HumanControlBoard::getBemfParam(int, double*)
-{
-    return false;
-}
-
-bool HumanControlBoard::setBemfParam(int, double)
-{
-    return false;
-}
-
-bool HumanControlBoard::getMotorTorqueParams(int, yarp::dev::MotorTorqueParameters*)
-{
-    return false;
-}
-
-bool HumanControlBoard::setMotorTorqueParams(int, const yarp::dev::MotorTorqueParameters)
-{
-    return false;
-}*/

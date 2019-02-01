@@ -33,9 +33,9 @@ class hde::devices::HumanControlBoard final
     , public yarp::os::PeriodicThread
     , public yarp::dev::IAxisInfo
     , public yarp::dev::IEncodersTimed
-//    , public yarp::dev::IPositionControl
-//, public yarp::dev::IVelocityControl
-//, public yarp::dev::ITorqueControl
+    , public yarp::dev::IPositionControl
+    , public yarp::dev::IVelocityControl
+    , public yarp::dev::ITorqueControl
 {
 private:
     class impl;
@@ -81,10 +81,9 @@ public:
     bool getEncoderTimed(int j, double* encs, double* time) override;
     bool getEncodersTimed(double* encs, double* time) override;
 
-    /*// IPositionControl Interface
+    // IPositionControl Interface
     bool stop() override;
     bool stop(int j) override;
-    // bool getAxes(int* ax) override;
     bool positionMove(int j, double ref) override;
     bool positionMove(const double* refs) override;
     bool setRefSpeed(int j, double sp) override;
@@ -96,9 +95,20 @@ public:
     bool checkMotionDone(int j, bool* flag) override;
     bool checkMotionDone(bool* flag) override;
 
+    bool positionMove(const int n_joint, const int *joints, const double *refs) override;
+    bool relativeMove(const int n_joint, const int *joints, const double *deltas) override;
+    bool checkMotionDone(const int n_joint, const int *joints, bool *flags) override;
+    bool setRefSpeeds(const int n_joint, const int *joints, const double *spds) override;
+    bool setRefAccelerations(const int n_joint, const int *joints, const double *accs) override;
+    bool getRefSpeeds(const int n_joint, const int *joints, double *spds) override;
+    bool getRefAccelerations(const int n_joint, const int *joints, double *accs) override;
+    bool stop(const int n_joint, const int *joints) override;
+
+
     // IVelocityControl interface
     bool velocityMove(int j, double sp) override;
     bool velocityMove(const double* sp) override;
+    bool velocityMove(const int n_joint, const int *joints, const double *spds) override;
     bool setRefAcceleration(int j, double acc) override;
     bool setRefAccelerations(const double* accs) override;
     bool getRefAcceleration(int j, double* acc) override;
@@ -119,7 +129,7 @@ public:
     bool getTorqueRange(int j, double* min, double* max) override;
     bool getTorqueRanges(double* min, double* max) override;
     bool getMotorTorqueParams(int j, yarp::dev::MotorTorqueParameters* params) override;
-    bool setMotorTorqueParams(int j, const yarp::dev::MotorTorqueParameters params) override;*/
+    bool setMotorTorqueParams(int j, const yarp::dev::MotorTorqueParameters params) override;
 };
 
 #endif // HDE_DEVICES_HUMANCONTROLBOARD
