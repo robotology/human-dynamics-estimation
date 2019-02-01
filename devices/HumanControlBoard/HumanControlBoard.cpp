@@ -8,10 +8,17 @@
 
 #include "HumanControlBoard.h"
 #include "IHumanState.h"
+#include "IHumanDynamics.h"
+
+#include <mutex>
+#include <cmath>
 
 #include <yarp/os/LogStream.h>
 #include <yarp/os/ResourceFinder.h>
 #include <yarp/sig/Vector.h>
+
+#include <iDynTree/Model/Model.h>
+#include <iDynTree/ModelIO/ModelLoader.h>
 
 const std::string DeviceName = "HumanControlBoard";
 const std::string LogPrefix = DeviceName + " :";
@@ -23,10 +30,18 @@ class HumanControlBoard::impl
 {
 public:
     // Attached interface
-    hde::interfaces::IHumanState* humanState = nullptr;
+    hde::interfaces::IHumanState* iHumanState = nullptr;
+    hde::interfaces::IHumanDynamics* iHumanDynamics = nullptr;
+
+    mutable std::mutex mtx;
+
+    // Human model
+    iDynTree::Model humanModel;
 
     // Buffered ports
     yarp::os::BufferedPort<yarp::os::Bottle> dynamicsPort;
+
+    // Joint torques port
 
     // Data variables
     int nJoints;
@@ -35,10 +50,6 @@ public:
     yarp::sig::Vector jointPositions;
     yarp::sig::Vector jointVelocities;
     yarp::sig::Vector jointAccelerations;
-
-    yarp::sig::Vector jointPositionsRad;
-    yarp::sig::Vector jointVelocitiesRad;
-    yarp::sig::Vector jointAccelerationsRad;
 
     yarp::sig::Vector jointTorques;
 };
@@ -67,8 +78,8 @@ bool HumanControlBoard::open(yarp::os::Searchable& config)
         yInfo() << LogPrefix << "Using default period:" << DefaultPeriod << "s";
     }
 
-    if (!(config.check("dynamicsDataPortName") && config.find("dynamicsDataPortName").isString())) {
-        yError() << LogPrefix << "dynamicsDataPortName option not found or not valid";
+    if (!(config.check("urdf") && config.find("urdf").isString())) {
+        yError() << LogPrefix << "urdf option not found or not valid";
         return false;
     }
 
@@ -77,19 +88,36 @@ bool HumanControlBoard::open(yarp::os::Searchable& config)
     // ===============================
 
     double period = config.check("period", yarp::os::Value(DefaultPeriod)).asDouble();
-    std::string dynamicsDataPortName = config.find("dynamicsDataPortName").asString();
+    const std::string urdfFileName = config.find("urdf").asString();
 
-    // =============
-    // OPEN THE PORT
-    // =============
+    // ==========================
+    // INITIALIZE THE HUMAN MODEL
+    // ==========================
 
-    if (!(pImpl->dynamicsPort.open("/HumanControlBoard/dynamics:i")
-          && yarp::os::Network::connect(dynamicsDataPortName,
-                                        pImpl->dynamicsPort.getName().c_str()))) {
-        yError() << LogPrefix << "Failed to open or connect to "
-                 << pImpl->dynamicsPort.getName().c_str();
+    auto& rf = yarp::os::ResourceFinder::getResourceFinderSingleton();
+    std::string urdfFilePath = rf.findFile(urdfFileName);
+    if (urdfFilePath.empty()) {
+        yError() << LogPrefix << "Failed to find file" << config.find("urdf").asString();
         return false;
     }
+
+    iDynTree::ModelLoader modelLoader;
+    if (!modelLoader.loadModelFromFile(urdfFilePath) || !modelLoader.isValid()) {
+        yError() << LogPrefix << "Failed to load model" << urdfFilePath;
+        return false;
+    }
+
+    // Get the model from the loader
+    pImpl->humanModel = modelLoader.model();
+
+    // Initialize data variables
+    pImpl->nJoints = pImpl->humanModel.getNrOfJoints();
+    pImpl->jointNameList.resize(pImpl->nJoints);
+
+    pImpl->jointPositions.resize(pImpl->nJoints);
+    pImpl->jointVelocities.resize(pImpl->nJoints);
+    pImpl->jointAccelerations.resize(pImpl->nJoints);
+    pImpl->jointTorques.resize(pImpl->nJoints);
 
     // ================
     // SETUP THE THREAD
@@ -108,7 +136,35 @@ bool HumanControlBoard::close()
     return true;
 }
 
-void HumanControlBoard::run() {}
+void HumanControlBoard::run()
+{
+    // Get data from IHumanState interface
+    pImpl->nJoints = pImpl->iHumanState->getNumberOfJoints();
+    pImpl->jointNameList = pImpl->iHumanState->getJointNames();
+
+    std::vector<double> jointPositionsInterface = pImpl->iHumanState->getJointPositions();
+    std::vector<double> jointVelocitiesInterface = pImpl->iHumanState->getJointVelocities();
+
+    // Get data from IHumanDynamics interface
+    // TODO: Acceleration is currently not given from IHumanDynamics interface
+    std::vector<double> jointTorquesInterface = pImpl->iHumanDynamics->getJointTorques();
+
+    for (size_t j = 0; j < jointPositionsInterface.size(); j++) {
+
+        std::unique_lock<std::mutex> lock(pImpl->mtx);
+        pImpl->jointPositions[j] = jointPositionsInterface.at(j)*(180/M_PI);
+        pImpl->jointVelocities[j] = jointVelocitiesInterface.at(j)*(180/M_PI);
+
+        //TODO: setting to zero
+        pImpl->jointAccelerations[j] = 0;
+
+        // The joint order from the two interfaces
+        // IHumanState and IHumanDynamics are the same
+        // Set the joint torques
+        pImpl->jointTorques[j] = jointTorquesInterface.at(j);
+    }
+
+}
 
 bool HumanControlBoard::attach(yarp::dev::PolyDriver* poly)
 {
@@ -117,22 +173,44 @@ bool HumanControlBoard::attach(yarp::dev::PolyDriver* poly)
         return false;
     }
 
-    if (pImpl->humanState || !poly->view(pImpl->humanState) || !pImpl->humanState) {
-        yError() << LogPrefix << "Failed to view the IHumanState interface from the PolyDriver";
-        return false;
+    // Get the device name from the driver
+    const std::string deviceName = poly->getValue("device").asString();
+
+    if (deviceName == "human_state_provider" || deviceName == "xsens_human_state_provider") {
+
+        // Attach IHumanState interface from HumanStateProvider
+        if (pImpl->iHumanState || !poly->view(pImpl->iHumanState) || !pImpl->iHumanState) {
+            yError() << LogPrefix << "Failed to view IHumanState interface from the polydriver";
+            return false;
+        }
+
+        // Check the interface
+        if (pImpl->iHumanState->getNumberOfJoints() == 0
+                || pImpl->iHumanState->getNumberOfJoints() != pImpl->iHumanState->getJointNames().size()) {
+            yError() << "The IHumanState interface might not be ready";
+            return false;
+        }
+
+        yInfo() << LogPrefix << deviceName << "attach() successful";
     }
 
-    // ===================
-    // CHECK THE INTERFACE
-    // ===================
+    if (deviceName == "human_dynamics_estimator") {
+        // Attach IHumanDynamics interfaces coming from HumanDynamicsEstimator
+        if (pImpl->iHumanDynamics || !poly->view(pImpl->iHumanDynamics) || !pImpl->iHumanDynamics) {
+            yError() << LogPrefix << "Failed to view IHumanDynamics interface from the polydriver";
+            return false;
+        }
 
-    if (pImpl->humanState->getNumberOfJoints() == 0
-        || pImpl->humanState->getNumberOfJoints() != pImpl->humanState->getJointNames().size()) {
-        yError() << "The IHumanState interface might not be ready";
-        return false;
+        // Check the interface
+        if (pImpl->iHumanDynamics->getNumberOfJoints() != 0
+            && (pImpl->iHumanDynamics->getNumberOfJoints() != pImpl->iHumanDynamics->getJointNames().size())) {
+            yError() << LogPrefix << "The IHumanDynamics interface is not valid."
+                     << "The number of joints should match the number of joint names.";
+            return false;
+        }
+
+        yInfo() << LogPrefix << deviceName << "attach() successful";
     }
-
-    yDebug() << LogPrefix << "Read" << pImpl->humanState->getNumberOfJoints() << "joints";
 
     // ====
     // MISC
@@ -150,25 +228,31 @@ bool HumanControlBoard::attach(yarp::dev::PolyDriver* poly)
 bool HumanControlBoard::detach()
 {
     askToStop();
-    pImpl->humanState = nullptr;
+    pImpl->iHumanState = nullptr;
+    pImpl->iHumanDynamics = nullptr;
     return true;
 }
 
 bool HumanControlBoard::attachAll(const yarp::dev::PolyDriverList& driverList)
 {
-    if (driverList.size() > 1) {
-        yError() << LogPrefix << "This wrapper accepts only one attached PolyDriver";
+    bool attachStatus = false;
+    if (driverList.size() > 2) {
+        yError() << LogPrefix << "This wrapper accepts only two attached PolyDriver";
         return false;
     }
 
-    const yarp::dev::PolyDriverDescriptor* driver = driverList[0];
+    for (size_t i = 0; i < driverList.size(); i++) {
+        const yarp::dev::PolyDriverDescriptor* driver = driverList[i];
 
-    if (!driver) {
-        yError() << LogPrefix << "Passed PolyDriverDescriptor is nullptr";
-        return false;
+        if (!driver) {
+            yError() << LogPrefix << "Passed PolyDriverDescriptor is nullptr";
+            return false;
+        }
+
+        attachStatus = attach(driver->poly);
     }
 
-    return attach(driver->poly);
+    return attachStatus;
 }
 
 bool HumanControlBoard::detachAll()
@@ -187,6 +271,14 @@ bool HumanControlBoard::getAxisName(int axis, std::string& name)
 }
 
 // IEncoders interface
+bool HumanControlBoard::getAxes(int* ax)
+{
+    if (!ax)
+        return false;
+    *ax = pImpl->nJoints;
+    return true;
+}
+
 bool HumanControlBoard::getEncoder(int j, double* v)
 {
     if (v && j >= 0 && static_cast<std::size_t>(j) < pImpl->nJoints) {
@@ -240,15 +332,6 @@ bool HumanControlBoard::getEncoderAccelerations(double* accs)
     for (size_t i = 0; i < pImpl->nJoints; ++i) {
         accs[i] = pImpl->jointAccelerations[i];
     }
-    return true;
-}
-
-// IPositionControl interface
-bool HumanControlBoard::getAxes(int* ax)
-{
-    if (!ax)
-        return false;
-    *ax = pImpl->nJoints;
     return true;
 }
 

@@ -21,6 +21,7 @@ target_include_directories(HumanControlBoard PUBLIC
 
 target_link_libraries(HumanControlBoard PUBLIC
     IHumanState
+    IHumanDynamics
     YARP::YARP_OS
     YARP::YARP_dev
     YARP::YARP_init

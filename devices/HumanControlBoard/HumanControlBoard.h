@@ -62,74 +62,73 @@ public:
 
     // IAxisInfo interace
     bool getAxisName(int axis, std::string& name) override;
-    bool getJointType(int axis, yarp::dev::JointTypeEnum& type) override;
+    bool getJointType(int axis, yarp::dev::JointTypeEnum& type) override { return false; }
 
     // IEncoders interface
     bool getAxes(int* ax) override;
     bool getEncoder(int j, double* v) override;
     bool getEncoders(double* encs) override;
-    bool resetEncoder(int j) override;
-    bool resetEncoders() override;
-    bool setEncoder(int j, double val) override;
-    bool setEncoders(const double* vals) override;
     bool getEncoderSpeed(int j, double* sp) override;
     bool getEncoderSpeeds(double* spds) override;
     bool getEncoderAcceleration(int j, double* spds) override;
     bool getEncoderAccelerations(double* accs) override;
 
+    bool resetEncoder(int j) override { return false; }
+    bool resetEncoders() override { return false; }
+    bool setEncoder(int j, double val) override { return false; }
+    bool setEncoders(const double* vals) override { return false; }
+
     // IEncodersTimed interface
-    bool getEncoderTimed(int j, double* encs, double* time) override;
-    bool getEncodersTimed(double* encs, double* time) override;
+    bool getEncoderTimed(int j, double* encs, double* time) override { return false; }
+    bool getEncodersTimed(double* encs, double* time) override { return false; }
 
     // IPositionControl Interface
-    bool stop() override;
-    bool stop(int j) override;
-    bool positionMove(int j, double ref) override;
-    bool positionMove(const double* refs) override;
-    bool setRefSpeed(int j, double sp) override;
-    bool setRefSpeeds(const double* spds) override;
-    bool getRefSpeed(int j, double* ref) override;
-    bool getRefSpeeds(double* spds) override;
-    bool relativeMove(int j, double delta) override;
-    bool relativeMove(const double* deltas) override;
-    bool checkMotionDone(int j, bool* flag) override;
-    bool checkMotionDone(bool* flag) override;
-
-    bool positionMove(const int n_joint, const int *joints, const double *refs) override;
-    bool relativeMove(const int n_joint, const int *joints, const double *deltas) override;
-    bool checkMotionDone(const int n_joint, const int *joints, bool *flags) override;
-    bool setRefSpeeds(const int n_joint, const int *joints, const double *spds) override;
-    bool setRefAccelerations(const int n_joint, const int *joints, const double *accs) override;
-    bool getRefSpeeds(const int n_joint, const int *joints, double *spds) override;
-    bool getRefAccelerations(const int n_joint, const int *joints, double *accs) override;
-    bool stop(const int n_joint, const int *joints) override;
-
+    bool stop() override { return false; }
+    bool stop(int j) override { return false; }
+    bool stop(const int n_joint, const int *joints) override { return false; }
+    bool positionMove(int j, double ref) override { return false; }
+    bool positionMove(const double* refs) override { return false; }
+    bool positionMove(const int n_joint, const int *joints, const double *refs) override { return false; }
+    bool setRefSpeed(int j, double sp) override { return false; }
+    bool setRefSpeeds(const double* spds) override { return false; }
+    bool setRefSpeeds(const int n_joint, const int *joints, const double *spds) override { return false; }
+    bool getRefSpeed(int j, double* ref) override { return false; }
+    bool getRefSpeeds(double* spds) override { return false; }
+    bool getRefSpeeds(const int n_joint, const int *joints, double *spds) override { return false; }
+    bool relativeMove(int j, double delta) override { return false; }
+    bool relativeMove(const double* deltas) override { return false; }
+    bool relativeMove(const int n_joint, const int *joints, const double *deltas) override { return false; }
+    bool checkMotionDone(int j, bool* flag) override { return false; }
+    bool checkMotionDone(bool* flag) override { return false; }
+    bool checkMotionDone(const int n_joint, const int *joints, bool *flags) override { return false; }
+    bool setRefAccelerations(const int n_joint, const int *joints, const double *accs) override { return false; }
+    bool getRefAccelerations(const int n_joint, const int *joints, double *accs) override { return false; }
 
     // IVelocityControl interface
-    bool velocityMove(int j, double sp) override;
-    bool velocityMove(const double* sp) override;
-    bool velocityMove(const int n_joint, const int *joints, const double *spds) override;
-    bool setRefAcceleration(int j, double acc) override;
-    bool setRefAccelerations(const double* accs) override;
-    bool getRefAcceleration(int j, double* acc) override;
-    bool getRefAccelerations(double* accs) override;
+    bool velocityMove(int j, double sp) override { return false; }
+    bool velocityMove(const double* sp) override { return false; }
+    bool velocityMove(const int n_joint, const int *joints, const double *spds) override { return false; }
+    bool setRefAcceleration(int j, double acc) override { return false; }
+    bool setRefAccelerations(const double* accs) override { return false; }
+    bool getRefAcceleration(int j, double* acc) override { return false; }
+    bool getRefAccelerations(double* accs) override { return false; }
 
     // ITorqueControl interface
-    bool setRefTorque(int j, double t) override;
-    bool setRefTorques(const double* t) override;
-    bool setTorqueMode();
-    bool getRefTorque(int j, double* t) override;
-    bool getRefTorques(double* t) override;
-    bool setRefTorques(const int n_joint, const int* joints, const double* t) override;
     bool getTorque(int j, double* t) override;
     bool getTorques(double* t) override;
 
-    bool getBemfParam(int j, double* bemf);
-    bool setBemfParam(int j, double bemf);
-    bool getTorqueRange(int j, double* min, double* max) override;
-    bool getTorqueRanges(double* min, double* max) override;
-    bool getMotorTorqueParams(int j, yarp::dev::MotorTorqueParameters* params) override;
-    bool setMotorTorqueParams(int j, const yarp::dev::MotorTorqueParameters params) override;
+    bool setTorqueMode() { return false; }
+    bool setRefTorque(int j, double t) override { return false; }
+    bool setRefTorques(const double* t) override { return false; }
+    bool getRefTorque(int j, double* t) override { return false; }
+    bool getRefTorques(double* t) override { return false; }
+    bool setRefTorques(const int n_joint, const int* joints, const double* t) override { return false; }
+    bool getBemfParam(int j, double* bemf) { return false; }
+    bool setBemfParam(int j, double bemf) { return false; }
+    bool getTorqueRange(int j, double* min, double* max) override { return false; }
+    bool getTorqueRanges(double* min, double* max) override { return false; }
+    bool getMotorTorqueParams(int j, yarp::dev::MotorTorqueParameters* params) override { return false; }
+    bool setMotorTorqueParams(int j, const yarp::dev::MotorTorqueParameters params) override { return false; }
 };
 
 #endif // HDE_DEVICES_HUMANCONTROLBOARD

@@ -288,4 +288,31 @@
         <action phase="shutdown" level="5" type="detach"/>
     </device>
 
+    <device type="human_control_board" name="HumanControlBoard">
+        <param name="period">0.100</param>
+        <param name="urdf">Claudia66DoF_PILimit.urdf</param>
+        <action phase="startup" level="5" type="attach">
+            <paramlist name="networks">
+                <elem name="HumanControlBoardLabel1">HumanStateProvider</elem>
+                <elem name="HumanControlBoardLabel2">HumanDynamicsEstimator</elem>
+            </paramlist>
+        </action>
+        <action phase="shutdown" level="5" type="detach"/>
+    </device>
+
+    <device type="controlboardwrapper2" name="HumanControlBoardWrapper">
+        <param name="period">20</param>
+        <param name="name">/Human/HumanControlBoardData</param>
+        <param name="joints">66</param>
+        <paramlist name="networks">
+            <elem name="HumanJoints">0 65 0 65</elem>
+        </paramlist>
+        <action phase="startup" level="5" type="attach">
+            <paramlist name="networks">
+                <elem name="HumanJoints">HumanControlBoard</elem>
+            </paramlist>
+        </action>
+        <action phase="shutdown" level="5" type="detach"/>
+    </device>
+
 </robot>
