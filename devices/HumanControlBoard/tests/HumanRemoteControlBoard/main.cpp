@@ -20,7 +20,7 @@ int main(int argc, const char **argv)
     Property options;
     options.put("device", "remote_controlboard");
     options.put("local", "/motortest");
-    options.put("remote", "/Human/HumanControlBoardData");
+    options.put("remote", "/Human/HumanControlBoard");
 
     PolyDriver device;
     device.open(options);
@@ -73,4 +73,3 @@ int main(int argc, const char **argv)
 
     return 0;
 }
-

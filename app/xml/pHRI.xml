@@ -328,7 +328,7 @@
 
     <device type="controlboardwrapper2" name="HumanControlBoardWrapper">
         <param name="period">20</param>
-        <param name="name">/Human/HumanControlBoardData</param>
+        <param name="name">/Human/HumanControlBoard</param>
         <param name="joints">66</param>
         <paramlist name="networks">
             <elem name="HumanJoints">0 65 0 65</elem>

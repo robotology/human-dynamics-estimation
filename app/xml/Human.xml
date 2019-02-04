@@ -11,7 +11,7 @@
 
     <device type="iwear_remapper" name="XSenseIWearRemapper">
         <param name="wearableDataPorts">(/XSensSuit/WearableData/data:o)</param>
-        <param name="wearableRPCPorts">(/XSensSuit/WearableData/metadataRpc:o)</param>
+        <!--param name="wearableRPCPorts">(/XSensSuit/WearableData/metadataRpc:o)</param-->
         <param name="outputPortName">/HDE/XsensIWearRemapper/data:o</param>
     </device>
 
@@ -162,7 +162,7 @@
 
     <device type="iwear_remapper" name="FTSourcesIWearRemapper">
         <param name="wearableDataPorts">(/FTShoeLeft/WearableData/data:o /FTShoeRight/WearableData/data:o)</param>
-        <param name="wearableRPCPorts">(/FTShoeLeft/WearableData/metadataRpc:o /FTShoeRight/WearableData/metadataRpc:o)</param>
+        <!--param name="wearableRPCPorts">(/FTShoeLeft/WearableData/metadataRpc:o /FTShoeRight/WearableData/metadataRpc:o)</param-->
         <param name="outputPortName">/HDE/FTSourcesIWearRemapper/data:o</param>
     </device>
 
@@ -302,7 +302,7 @@
 
     <device type="controlboardwrapper2" name="HumanControlBoardWrapper">
         <param name="period">20</param>
-        <param name="name">/Human/HumanControlBoardData</param>
+        <param name="name">/Human/HumanControlBoard</param>
         <param name="joints">66</param>
         <paramlist name="networks">
             <elem name="HumanJoints">0 65 0 65</elem>

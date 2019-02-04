@@ -55,7 +55,7 @@ right_ball_foot         =    {'jRightBallFoot_rotx','jRightBallFoot_roty','jRigh
 
 if (~HUMAN_ON_GAZEBO)
     HUMAN.WBTConfigRobot.RobotName          = 'Human';
-    HUMAN.WBTConfigRobot.ControlBoardsNames = {'HumanControlBoardData'};
+    HUMAN.WBTConfigRobot.ControlBoardsNames = {'HumanControlBoard'};
 else
     HUMAN.WBTConfigRobot.RobotName          = 'sub0';
     HUMAN.WBTConfigRobot.ControlBoardsNames = {'head','neck','torso_1','torso_2','torso_3','torso_4',...
@@ -89,14 +89,14 @@ HUMAN.WBTConfigRobot.ControlledJoints         =  {   torso_4{:},...
                                                      left_ankle{:},...
                                                      left_ball_foot{:},...
                                                  };
-                                             
+
 % Frames list
-HUMAN_Frames.BASE              = 'Pelvis'; 
+HUMAN_Frames.BASE              = 'Pelvis';
 HUMAN_Frames.LEFT_FOOT         = 'LeftFoot';
 HUMAN_Frames.RIGHT_FOOT        = 'RightFoot';
-                                             
+
 %% Controller period [s]
-Config.Ts              = 0.01; 
+Config.Ts              = 0.01;
 
 %% Checking Configuration Success
 if ~HUMAN.WBTConfigRobot.ValidConfiguration
