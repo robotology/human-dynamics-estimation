@@ -124,7 +124,7 @@ public:
     // This is for skin data
     bool getData(std::vector<double>& vector, const size_t offset = 0)
     {
-        std::copy(buffer.data() + offset, buffer.end() + offset, vector.data());
+        std::copy(buffer.data() + offset, buffer.data() + buffer.size() + offset, vector.data());
         return true;
     }
 
