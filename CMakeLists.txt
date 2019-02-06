@@ -92,7 +92,7 @@ include(AddUninstallTarget)
 # add_subdirectory(human-viz-bridge)
 #add_subdirectory(human-robot-pose)
 
-add_subdirectory(app)
+add_subdirectory(conf)
 
 add_subdirectory(yarp)
 
