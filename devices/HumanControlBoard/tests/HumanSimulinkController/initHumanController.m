@@ -22,7 +22,7 @@ HUMAN_ON_GAZEBO          = false;
 
 % Human configuration for WBT3.0
 HUMAN.WBTConfigRobot                          = WBToolbox.Configuration;
-HUMAN.WBTConfigRobot.UrdfFile                 = 'Claudia66DoF.urdf';
+HUMAN.WBTConfigRobot.UrdfFile                 = 'humanSubject03_66dof.urdf';
 HUMAN.WBTConfigRobot.LocalName                = 'HUMAN_WBT';
 
 head                    =    {'jC1Head_rotx','jC1Head_roty','jC1Head_rotz'};
