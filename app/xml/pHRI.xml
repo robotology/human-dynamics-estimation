@@ -11,6 +11,7 @@
 
     <device type="iwear_remapper" name="XSenseIWearRemapper">
         <param name="wearableDataPorts">(/XSensSuit/WearableData/data:o)</param>
+        <param name="useRPC">true</param>
         <param name="wearableRPCPorts">(/XSensSuit/WearableData/metadataRpc:o)</param>
         <param name="outputPortName">/HDE/XsensIWearRemapper/data:o</param>
     </device>
@@ -162,6 +163,7 @@
 
     <device type="iwear_remapper" name="FTSourcesIWearRemapper">
         <param name="wearableDataPorts">(/FTShoeLeft/WearableData/data:o /FTShoeRight/WearableData/data:o /ICub/WearableData/data:o)</param>
+        <param name="useRPC">true</param>
         <param name="wearableRPCPorts">(/FTShoeLeft/WearableData/metadataRpc:o /FTShoeRight/WearableData/metadataRpc:o /ICub/WearableData/metadataRpc:o)</param>
         <param name="outputPortName">/HDE/FTSourcesIWearRemapper/data:o</param>
     </device>

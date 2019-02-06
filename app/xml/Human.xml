@@ -11,13 +11,14 @@
 
     <device type="iwear_remapper" name="XSenseIWearRemapper">
         <param name="wearableDataPorts">(/XSensSuit/WearableData/data:o)</param>
-        <!--param name="wearableRPCPorts">(/XSensSuit/WearableData/metadataRpc:o)</param-->
+        <param name="useRPC">true</param>
+        <param name="wearableRPCPorts">(/XSensSuit/WearableData/metadataRpc:o)</param>
         <param name="outputPortName">/HDE/XsensIWearRemapper/data:o</param>
     </device>
 
     <device type="human_state_provider" name="HumanStateProvider">
         <param name="period">0.100</param>
-        <param name="urdf">Claudia66DoF_PILimit.urdf</param>
+        <param name="urdf">humanSubject03_66dof.urdf</param>
         <param name="floatingBaseFrame">(Pelvis, XsensSuit::vLink::Pelvis)</param>
         <param name="allowIKFailures">true</param>
         <param name="maxIterationsIK">300</param>
@@ -162,13 +163,14 @@
 
     <device type="iwear_remapper" name="FTSourcesIWearRemapper">
         <param name="wearableDataPorts">(/FTShoeLeft/WearableData/data:o /FTShoeRight/WearableData/data:o)</param>
-        <!--param name="wearableRPCPorts">(/FTShoeLeft/WearableData/metadataRpc:o /FTShoeRight/WearableData/metadataRpc:o)</param-->
+        <param name="useRPC">true</param>
+        <param name="wearableRPCPorts">(/FTShoeLeft/WearableData/metadataRpc:o /FTShoeRight/WearableData/metadataRpc:o)</param>
         <param name="outputPortName">/HDE/FTSourcesIWearRemapper/data:o</param>
     </device>
 
     <device type="human_wrench_provider" name="HumanWrenchProvider">
         <param name="period">0.100</param>
-        <param name="human_urdf">Claudia66DoF_PILimit.urdf</param>
+        <param name="human_urdf">humanSubject03_66dof.urdf</param>
         <param name="number_of_sources">2</param>
         <param name="sources">(FTShoeLeft FTShoeRight)</param>
         <group name="FTShoeLeft">
@@ -234,7 +236,7 @@
 
     <device type="human_dynamics_estimator" name="HumanDynamicsEstimator">
         <param name="period">0.100</param>
-        <param name="urdf">Claudia66DoF_PILimit.urdf</param>
+        <param name="urdf">humanSubject03_66dof.urdf</param>
         <param name="baseLink">Pelvis</param>
         <param name="number_of_wrench_sensors">2</param>
         <param name="wrench_sensors_link_name">(LeftFoot RightFoot)</param>
@@ -290,7 +292,7 @@
 
     <device type="human_control_board" name="HumanControlBoard">
         <param name="period">0.100</param>
-        <param name="urdf">Claudia66DoF_PILimit.urdf</param>
+        <param name="urdf">humanSubject03_66dof.urdf</param>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
                 <elem name="HumanControlBoardLabel1">HumanStateProvider</elem>

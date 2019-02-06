@@ -4,7 +4,7 @@
         <arg name="gui" default="False"/>
         <arg name="vel" default="True"/>
         <arg name="eff" default="True"/>
-        <arg name="humanModel" default="$(find HDERviz)/urdfs/Claudia66DoF.urdf"/>
+        <arg name="humanModel" default="$(find HDERviz)/urdfs/humanSubject03_66dof.urdf"/>
         <arg name="rvizconfig" default="$(find HDERviz)/rviz/HDERviz.rviz" />
 
         <param name="robot_description" command="$(find xacro)/xacro.py $(arg humanModel)" />
@@ -15,7 +15,7 @@
         <!-- Configure the robot_state_publisher node -->
         <!-- This is the old method. Now we use the idyntree module -->
         <!--
-              yarprobotstatepublisher - -tfPrefix /Human/ - -model Claudia66DoF_Dec2017.urdf
+              yarprobotstatepublisher - -tfPrefix /Human/ - -model humanSubject01_66dof.urdf
                   - -base-frame Pelvis - -jointstates-topic "/Human/joint_states"
         -->
     </group>
