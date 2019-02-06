@@ -77,26 +77,9 @@ include(AddUninstallTarget)
 # PROJECT DIRECTORIES
 # ===================
 
-# add_subdirectory(ros-msgs)
-
-#Add IK solver
-#find_package(IPOPT)
-#option(HDE_USE_IPOPT "Set if compile IPOPT dependent projects" ${IPOPT_FOUND})
-#if (HDE_USE_IPOPT)
-#  add_subdirectory(inverse-kinematics)
-#endif()
-
-# add_subdirectory(human-state-provider)
-# add_subdirectory(human-forces-provider)
-# add_subdirectory(human-dynamics-estimator)
-# add_subdirectory(human-viz-bridge)
-#add_subdirectory(human-robot-pose)
-
 add_subdirectory(conf)
 
-add_subdirectory(yarp)
-
-# HDE v2:
+# HDEv2
 yarp_configure_plugins_installation(hde)
 add_subdirectory(msgs)
 add_subdirectory(interfaces)
