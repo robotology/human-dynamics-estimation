@@ -19,7 +19,8 @@ yarp_add_plugin(HumanStateProvider
     HumanIKWorkerPool.h)
 
 target_include_directories(HumanStateProvider PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+    SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIR})
 
 target_link_libraries(HumanStateProvider PUBLIC
     IHumanState
