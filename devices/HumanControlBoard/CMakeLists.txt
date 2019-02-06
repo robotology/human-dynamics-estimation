@@ -25,7 +25,8 @@ target_link_libraries(HumanControlBoard PUBLIC
     YARP::YARP_OS
     YARP::YARP_dev
     YARP::YARP_init
-    iDynTree::idyntree-model)
+    iDynTree::idyntree-model
+    iDynTree::idyntree-estimation)
 
 yarp_install(
     TARGETS HumanControlBoard
