@@ -169,7 +169,7 @@ namespace xsensmvn {
         }
 
         // Wait for the discard operation to be completed
-        while (!m_operationCompleted && !m_calibrationAborted) {
+        while (m_suitsConnector.isCalibrationPerformed(calibrationType) && !m_calibrationAborted) {
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
         if (m_calibrationAborted) {
@@ -183,8 +183,9 @@ namespace xsensmvn {
         // Get the phases of the selected calibration type
         XsIntArray calibPhases = m_suitsConnector.calibrationPhaseList();
 
-        // Start the calibration data collection
+        // Start the calibration data collection (Wait three seconds to give the subject enough time to take position)
         xsInfo << "Starting " << calibrationType << " calibration" << std::endl;
+        std::this_thread::sleep_for(std::chrono::milliseconds(3000));
         m_suitsConnector.startCalibration();
 
         // Follow step-by-step the calibration phases of the selected type
@@ -270,14 +271,7 @@ namespace xsensmvn {
         }
         else {
             // Notify the user the calibration can be applied
-            xsInfo << "Ready to apply the obtained calibration. Stand still in starting position. "
-                      "Applying in: ";
-
-            // Wait three seconds to give the subject enough time to take position
-            for (int s = 5; s >= 0; --s) {
-                xsInfo << s << " s";
-                std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            }
+            xsInfo << "Ready to apply the obtained calibration";
 
             // Apply the calibration to the MVN Engine and wait for a positive feedback
             m_suitsConnector.finalizeCalibration();
