@@ -557,7 +557,7 @@ IAnalogSensorToIWear::getSensors(const SensorType type) const
 
 wearable::WearableName IAnalogSensorToIWear::getWearableName() const
 {
-    return pImpl->options.wearableName + "::";
+    return pImpl->options.wearableName + wearable::Separator;
 }
 
 wearable::WearStatus IAnalogSensorToIWear::getStatus() const
