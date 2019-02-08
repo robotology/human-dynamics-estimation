@@ -11,6 +11,7 @@
 
 #include "Wearable/IWear/IWear.h"
 #include <mutex>
+#include <vector>
 
 namespace wearable {
     namespace sensor {
@@ -201,11 +202,15 @@ class wearable::sensor::impl::SkinSensor : public wearable::sensor::ISkinSensor
 {
 public:
     mutable std::mutex m_mutex;
+    std::vector<double> m_values;
 
     SkinSensor(wearable::sensor::SensorName n = {},
                wearable::sensor::SensorStatus s = wearable::sensor::SensorStatus::Unknown);
     ~SkinSensor() override = default;
 
+    bool getPressure(std::vector<double>& pressure) const override;
+
+    void setBuffer(const std::vector<double> values);
     inline void setStatus(const wearable::sensor::SensorStatus status) { m_status = status; }
 };
 

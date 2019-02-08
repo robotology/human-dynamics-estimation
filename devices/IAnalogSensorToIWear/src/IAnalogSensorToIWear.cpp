@@ -120,6 +120,14 @@ public:
         std::copy(buffer.data() + offset, buffer.data() + offset + 4, array.data());
         return true;
     }
+
+    // This is for skin data
+    bool getData(std::vector<double>& vector, const size_t offset = 0)
+    {
+        std::copy(buffer.data() + offset, buffer.data() + buffer.size() + offset, vector.data());
+        return true;
+    }
+
 } handler;
 
 // ================================
@@ -236,6 +244,31 @@ public:
         nonConstThis->setStatus(handler.getStatus());
 
         return handler.getData(temperature, offset);
+    }
+};
+
+class SkinSensor : public ISkinSensor
+{
+public:
+    unsigned offset = 0;
+
+    SkinSensor(SensorName name, SensorStatus status = SensorStatus::Unknown)
+        : ISkinSensor(name, status)
+    {}
+
+    void setStatus(const SensorStatus status) { m_status = status; }
+
+    bool getPressure(std::vector<double>& pressure) const override
+    {
+        if (!handler.readData()) {
+            return false;
+        }
+
+        // Dirty workaround to set the status from a const method
+        auto nonConstThis = const_cast<SkinSensor*>(this);
+        nonConstThis->setStatus(handler.getStatus());
+
+        return handler.getData(pressure, offset);
     }
 };
 
@@ -429,6 +462,12 @@ bool IAnalogSensorToIWear::Impl::allocateSensor(const wearable::sensor::SensorTy
             iSensor = std::dynamic_pointer_cast<ISensor>(sensor);
             break;
         }
+        case wearable::sensor::SensorType::SkinSensor: {
+            auto sensor = std::make_shared<SkinSensor>(name, SensorStatus::Ok);
+            sensor->offset = options.channelOffset;
+            iSensor = std::dynamic_pointer_cast<ISensor>(sensor);
+            break;
+        }
         default:
             // TODO: implement the remaining sensors
             return false;
@@ -539,7 +578,7 @@ IAnalogSensorToIWear::getSensors(const SensorType type) const
 
 wearable::WearableName IAnalogSensorToIWear::getWearableName() const
 {
-    return pImpl->options.wearableName + "::";
+    return pImpl->options.wearableName + wearable::Separator;
 }
 
 wearable::WearStatus IAnalogSensorToIWear::getStatus() const
@@ -662,9 +701,14 @@ IAnalogSensorToIWear::getPositionSensor(const wearable::sensor::SensorName /*nam
 }
 
 wearable::SensorPtr<const wearable::sensor::ISkinSensor>
-IAnalogSensorToIWear::getSkinSensor(const wearable::sensor::SensorName /*name*/) const
+IAnalogSensorToIWear::getSkinSensor(const wearable::sensor::SensorName name) const
 {
-    return nullptr;
+    if (!(pImpl->iSensor && (pImpl->iSensor->getSensorName() == name))) {
+        yError() << LogPrefix << "Failed to get sensor" << name;
+        return nullptr;
+    }
+
+    return std::dynamic_pointer_cast<const wearable::sensor::ISkinSensor>(pImpl->iSensor);
 }
 
 wearable::SensorPtr<const wearable::sensor::IVirtualLinkKinSensor>

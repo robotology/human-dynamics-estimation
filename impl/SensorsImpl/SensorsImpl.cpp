@@ -246,6 +246,19 @@ SkinSensor::SkinSensor(wearable::sensor::SensorName n, wearable::sensor::SensorS
     : wearable::sensor::ISkinSensor(n, s)
 {}
 
+bool SkinSensor::getPressure(std::vector<double>& pressure) const
+{
+    std::lock_guard<std::mutex> lock(m_mutex);
+    pressure = m_values;
+    return true;
+}
+
+void SkinSensor::setBuffer(const std::vector<double> values)
+{
+    std::lock_guard<std::mutex> lock(m_mutex);
+    m_values = values;
+}
+
 // =================
 // TemperatureSensor
 // =================
