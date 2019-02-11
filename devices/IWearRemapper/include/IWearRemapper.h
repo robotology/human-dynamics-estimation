@@ -108,7 +108,6 @@ public:
 
     SensorPtr<const sensor::IVirtualSphericalJointKinSensor>
     getVirtualSphericalJointKinSensor(const sensor::SensorName /*name*/) const override;
-
 };
 
 #endif // IWEARREMAPPER_H

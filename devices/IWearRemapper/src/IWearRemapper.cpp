@@ -136,15 +136,11 @@ bool IWearRemapper::open(yarp::os::Searchable& config)
     }
 
     // RPC ports
-    if (!(config.check("useRPC"))) {
-        yWarning() << logPrefix << "OPTIONAL parameter useRPC NOT found";
-    }
-    else {
+    if (config.check("useRPC")) {
         if (!config.find("useRPC").isBool()) {
             yError() << logPrefix << "useRPC option is not a bool";
         }
         pImpl->useRPC = config.find("useRPC").asBool();
-        yWarning() << "useRPC set to" << pImpl->useRPC;
     }
 
     yarp::os::Bottle* inputRPCPortsNamesList = nullptr;
@@ -848,7 +844,7 @@ yarp::os::Stamp IWearRemapper::getLastInputStamp()
 WearableName IWearRemapper::getWearableName() const
 {
     std::lock_guard<std::recursive_mutex> lock(pImpl->mutex);
-    return WrapperName + "::";
+    return WrapperName + wearable::Separator;
 }
 
 WearStatus IWearRemapper::getStatus() const
