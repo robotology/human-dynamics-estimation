@@ -11,6 +11,7 @@
 #include <yarp/os/BufferedPort.h>
 #include <yarp/os/LogStream.h>
 #include <yarp/os/Network.h>
+#include <yarp/os/Time.h>
 
 #include <assert.h>
 #include <map>
@@ -60,9 +61,6 @@ public:
 
     size_t nSensors;
     std::vector<std::string> sensorNames;
-
-    bool leftHandFTDataReceived = false;
-    bool rightHandFTDataReceived = false;
 
     std::map<std::string, std::shared_ptr<ICubForceTorque6DSensor>> ftSensorsMap;
 
@@ -213,10 +211,6 @@ bool ICub::open(yarp::os::Searchable& config)
         return false;
     }
 
-    while (pImpl->leftHandFTPort.firstRun) {
-        pImpl->leftHandFTPort.useCallback();
-    }
-
     pImpl->sensorNames.push_back("leftWBDFTSensor");
 
     if (!(pImpl->rightHandFTPort.open("/ICub/rightHantFTSensor:i")
@@ -227,11 +221,16 @@ bool ICub::open(yarp::os::Searchable& config)
         return false;
     }
 
-    while (pImpl->rightHandFTPort.firstRun) {
-        pImpl->rightHandFTPort.useCallback();
-    }
-
     pImpl->sensorNames.push_back("rightWBDFTSensor");
+
+    // Enable the callback of the ports
+    pImpl->leftHandFTPort.useCallback();
+    pImpl->rightHandFTPort.useCallback();
+
+    // Wait to receive first data
+    while (pImpl->leftHandFTPort.firstRun && pImpl->rightHandFTPort.firstRun) {
+        yarp::os::Time::delay(10);
+    }
 
     std::string ft6dPrefix =
         getWearableName() + wearable::Separator + sensor::IForceTorque6DSensor::getPrefix();
@@ -322,8 +321,6 @@ ICub::getSensors(const wearable::sensor::SensorType type) const
             break;
         }
         default: {
-            // yWarning() << LogPrefix << "Selected sensor type (" << static_cast<int>(type)
-            //           << ") is not supported by ICub";
             return {};
         }
     }
@@ -341,5 +338,5 @@ ICub::getForceTorque6DSensor(const wearable::sensor::SensorName name) const
     }
 
     // Return a shared point to the required sensor
-    return static_cast<std::shared_ptr<sensor::IForceTorque6DSensor>>(pImpl->ftSensorsMap.at(name));
+    return dynamic_cast<wearable::SensorPtr<const wearable::sensor::IForceTorque6DSensor>&>(*pImpl->ftSensorsMap.at(name));
 }

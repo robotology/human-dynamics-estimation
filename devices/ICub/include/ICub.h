@@ -6,8 +6,8 @@
  * GNU Lesser General Public License v2.1 or any later version.
  */
 
-#ifndef ICUB_H
-#define ICUB_H
+#ifndef WEARABLE_DEVICES_ICUB_H
+#define WEARABLE_DEVICES_ICUB_H
 
 #include "Wearable/IWear/IWear.h"
 
@@ -205,4 +205,4 @@ wearable::devices::ICub::getTorque3DSensor(const sensor::SensorName /*name*/) co
     return nullptr;
 }
 
-#endif // ICUB_H
+#endif // WEARABLE_DEVICES_ICUB_H
