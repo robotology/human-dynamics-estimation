@@ -317,4 +317,11 @@
         <action phase="shutdown" level="5" type="detach"/>
     </device>
 
+    <device type="iwear_remapper" name="WearableData">
+        <param name="wearableDataPorts">(/FTShoeLeft/WearableData/data:o /FTShoeRight/WearableData/data:o /XSensSuit/WearableData/data:o)</param>
+        <param name="useRPC">false</param>
+        <param name="wearableRPCPorts">(/FTShoeLeft/WearableData/metadataRpc:o /FTShoeRight/WearableData/metadataRpc:o /XSensSuit/WearableData/metadataRpc:o)</param>
+        <param name="outputPortName">/IWearRemapper/data:o</param>
+    </device>
+
 </robot>
