@@ -40,6 +40,13 @@
         <tag>yarpdatadumper</tag>
   </module>
 
+  <module>
+        <name>yarpdatadumper</name>
+        <parameters>--name /hde_dump/dynamics --type bottle --txTime --rxTime</parameters>
+        <node>${generic_node}</node>
+        <tag>yarpdatadumper</tag>
+  </module>
+
 	
 	<connection>
         <from>/HDE/HumanStateWrapper/state:o</from>
@@ -68,6 +75,12 @@
   <connection>
         <from>/XSensSuit/WearableData/data:o</from>
         <to>/hde_dump/xsens</to>
+        <protocol>udp</protocol>
+  </connection>
+
+  <connection>
+        <from>/HDE/HumanDynamicsWrapper/torques:o</from>
+        <to>/hde_dump/dynamics</to>
         <protocol>udp</protocol>
   </connection>
 
