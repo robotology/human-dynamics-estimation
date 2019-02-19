@@ -133,6 +133,7 @@ public:
     // Model variables
     iDynTree::Model humanModel;
     FloatingBaseName floatingBaseFrame;
+    int totalRealJointsForIK;
 
     std::vector<SegmentInfo> segments;
     std::vector<LinkPairInfo> linkPairs;
@@ -521,8 +522,6 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     // Get the number of joints accordingly to the model
     const size_t nrOfJoints = pImpl->humanModel.getNrOfJoints();
 
-    pImpl->solution.jointPositions.resize(nrOfJoints);
-    pImpl->solution.jointVelocities.resize(nrOfJoints);
 
     pImpl->jointConfigurationSolution.resize(nrOfJoints);
     pImpl->jointConfigurationSolution.zero();
@@ -677,14 +676,38 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
             pImpl->linkPairs.push_back(std::move(pairInfo));
         }
 
-        // Initialize IK Worker Pool
-        pImpl->ikPool = std::unique_ptr<IKWorkerPool>(new IKWorkerPool(pImpl->ikPoolSize,
+		pImpl->totalRealJointsForIK=0;
+   		for(auto& linkPair : pImpl->linkPairs)
+   		{
+       		pImpl->totalRealJointsForIK=pImpl->totalRealJointsForIK+linkPair.pairModel.getNrOfJoints();
+       		yInfo() << "Parent link : " << linkPair.parentFrameName << " , Child link : " <<  linkPair.childFrameName << " , joints :"                                       << linkPair.pairModel.getNrOfJoints();
+   		}
+   		yInfo()<< "Total Real Joints:"<<pImpl->totalRealJointsForIK;
+
+	// =========================
+        // INITIALIZE IK WORKER POOL
+    	// =========================
+
+        // Set default ik pool size
+    	int ikPoolSize = 1;
+
+    	// Get ikPoolSizeOption
+    	if (config.find("ikPoolSizeOption").isString() || config.find("ikPoolSizeOption").asString() == "auto" ) {
+        	yInfo() << LogPrefix << "Using " << std::thread::hardware_concurrency() << " available logical threads for ik pool";
+        	ikPoolSize = static_cast<int>(std::thread::hardware_concurrency());
+    	}
+    	else if(config.find("ikPoolSizeOption").isInt()) {
+        	ikPoolSize = config.find("ikPoolSizeOption").asInt();
+    	}
+
+    	pImpl->ikPool = std::unique_ptr<HumanIKWorkerPool>(new HumanIKWorkerPool(ikPoolSize,
                                                                                  pImpl->linkPairs,
                                                                                  pImpl->segments));
-        if (!pImpl->ikPool) {
-            yError() << LogPrefix << "failed to create IK worker pool";
-            return false;
-        }
+
+    	if (!pImpl->ikPool) {
+        	yError() << LogPrefix << "failed to create IK worker pool";
+        	return false;
+    	}
 
     }
 
@@ -864,6 +887,7 @@ void HumanStateProvider::run()
             for (auto& pairJoint : linkPair.consideredJointLocations) {
 
                 // Check if it is a valid 1 DoF joint
+
                 if (pairJoint.second == 1) {
                     pImpl->jointConfigurationSolution.setVal(pairJoint.first, linkPair.jointConfigurations.getVal(jointIndex));
                     pImpl->jointVelocitiesSolution.setVal(pairJoint.first, linkPair.jointVelocities.getVal(jointIndex));
@@ -1591,7 +1615,9 @@ std::vector<std::string> HumanStateProvider::getJointNames() const
     std::vector<std::string> jointNames;
 
     for (size_t jointIndex = 0; jointIndex < pImpl->humanModel.getNrOfJoints(); ++jointIndex) {
+        if(pImpl->humanModel.getJoint(jointIndex)->getNrOfDOFs()==1){
         jointNames.emplace_back(pImpl->humanModel.getJointName(jointIndex));
+        }
     }
 
     return jointNames;
@@ -1600,7 +1626,7 @@ std::vector<std::string> HumanStateProvider::getJointNames() const
 size_t HumanStateProvider::getNumberOfJoints() const
 {
     std::lock_guard<std::mutex> lock(pImpl->mutex);
-    return pImpl->humanModel.getNrOfJoints();
+    return pImpl->totalRealJointsForIK;
 }
 
 std::string HumanStateProvider::getBaseName() const
