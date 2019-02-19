@@ -26,7 +26,7 @@ install(TARGETS HumanStateMsg
 yarp_add_idl(HUMANDYNAMICS_FILES thrift/HumanDynamics.thrift)
 
 add_library(HumanDynamicsMsg ${HUMANDYNAMICS_FILES} thrift/HumanDynamics.thrift)
-target_link_libraries(HumanDynamicsMsg YARP::YARP_OS YARP::YARP_sig)
+target_link_libraries(HumanDynamicsMsg YARP::YARP_OS)
 
 target_include_directories(HumanDynamicsMsg PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>)
