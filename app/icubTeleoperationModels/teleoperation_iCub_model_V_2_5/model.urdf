@@ -3491,13 +3491,26 @@
 <link name="root_link_fake"/>
 <joint name="j_root_link_fake" type="fixed">
 <origin xyz="0 0 0" rpy="0 0 3.14159265"/>
-<axis xyz="1 0 0"/>
+<axis xyz="0 0 0"/>
 <parent link="root_link"/>
 <child link="root_link_fake"/>
 </joint>
+<link name="chest_fake"/>
+<joint name="j_chest_fake" type="fixed">
+<origin xyz="0 0 0" rpy="-1.57079632679 -1.57079632679 0"/>
+<axis xyz="0 0 0"/>
+<parent link="chest"/>
+<child link="chest_fake"/>
+</joint>
+<link name="head_fake"/>
+<joint name="j_head_fake" type="fixed">
+<origin xyz="0 0 0" rpy="-1.57079632679 -1.57079632679 0"/>
+<axis xyz="0 0 0"/>
+<parent link="head"/>
+<child link="head_fake"/>
+</joint>
 
-
-<link name="chest_fake">
+<link name="head_fake">
    <inertial>
      <origin xyz="0.00000 0.00000 0.00000" rpy="0 0 0"/>
      <mass value="0.00001"/>
@@ -3513,10 +3526,10 @@
      </material>
    </visual>
  </link>
- <joint name="j_chest_fake" type="revolute">
- <origin xyz="0.01 0.01 0.01" rpy="1.57079632679 0 1.57079632679"/>
- <parent link="chest"/>
- <child link="chest_fake"/>
+ <joint name="j_head_fake" type="revolute">
+ <origin xyz="0.01 0.01 0.01" rpy="-1.57079632679 -1.57079632679 0"/>
+ <parent link="head"/>
+ <child link="head_fake"/>
  <dynamics damping="0.1" friction="0.0"/>
  <limit effort="30" velocity="1.0" lower="-3.141592" upper="3.141592" />
  <axis xyz="1 0 0" />
