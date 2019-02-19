@@ -93,6 +93,7 @@ void HumanStateWrapper::run()
     std::vector<double> jointPositionsInterface = pImpl->humanState->getJointPositions();
     std::vector<double> jointVelocitiesInterface = pImpl->humanState->getJointVelocities();
     std::vector<std::string> jointNames = pImpl->humanState->getJointNames();
+    std::string baseName = pImpl->humanState->getBaseName();
 
     // Prepare the message
     human::HumanState& humanStateData = pImpl->outputPort.prepare();
@@ -132,6 +133,9 @@ void HumanStateWrapper::run()
     for (unsigned i = 0; i < jointVelocitiesInterface.size(); ++i) {
         humanStateData.velocities[i] = jointVelocitiesInterface[i];
     }
+
+    // Store the name of the base link
+    humanStateData.baseName = baseName;
 
     // Send the data
     pImpl->outputPort.write(/*forceStrict=*/true);

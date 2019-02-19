@@ -25,8 +25,8 @@ struct HumanState {
     2: list<double> positions;
     3: list<double> velocities;
 
-    4: Vector3 baseOriginWRTGlobal;
-    5: Quaternion baseOrientationWRTGlobal;
-    6: list<double> baseVelocityWRTGlobal;
-    //TODO add the name of the base link
+    4: string baseName;
+    5: Vector3 baseOriginWRTGlobal;
+    6: Quaternion baseOrientationWRTGlobal;
+    7: list<double> baseVelocityWRTGlobal;
 }

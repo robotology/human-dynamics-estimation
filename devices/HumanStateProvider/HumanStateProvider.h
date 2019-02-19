@@ -56,6 +56,7 @@ public:
     // IHumanState
     std::vector<std::string> getJointNames() const override;
     size_t getNumberOfJoints() const override;
+    std::string getBaseName() const override;
     std::vector<double> getJointPositions() const override;
     std::vector<double> getJointVelocities() const override;
     std::array<double, 3> getBasePosition() const override;
