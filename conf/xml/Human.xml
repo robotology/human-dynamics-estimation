@@ -139,7 +139,7 @@
     </device>
 
     <device type="human_state_wrapper" name="HumanStateWrapper">
-        <param name="period">0.5</param>
+        <param name="period">0.1</param>
         <param name="outputPort">/HDE/HumanStateWrapper/state:o</param>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
