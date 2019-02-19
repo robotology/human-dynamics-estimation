@@ -1,12 +1,5 @@
 namespace yarp human
 
-struct Vector {
-  1: list<double> content;
-} (
-  yarp.name = "yarp::sig::Vector"
-  yarp.includefile="yarp/sig/Vector.h"
-)
-
 /**
  * Representation of a 3D vector
  */
@@ -25,16 +18,15 @@ struct Quaternion {
 }
 
 /**
- * Information about generalized coordinates of human
- * The name of the object is for "compatibility" with YARP
- * even if this is not properly a state of a dynamic system.
- * \todo decide if put the base pose as explicit or not
+ * Representation of the IHumanState interface
  */
 struct HumanState {
-    1: Vector positions;
-    2: Vector velocities;
+    1: list<string> jointNames;
+    2: list<double> positions;
+    3: list<double> velocities;
 
-    3: Vector3 baseOriginWRTGlobal;
-    4: Quaternion baseOrientationWRTGlobal;
-    5: Vector baseVelocityWRTGlobal;
+    4: Vector3 baseOriginWRTGlobal;
+    5: Quaternion baseOrientationWRTGlobal;
+    6: list<double> baseVelocityWRTGlobal;
+    //TODO add the name of the base link
 }
