@@ -680,7 +680,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
    		for(auto& linkPair : pImpl->linkPairs)
    		{
        		pImpl->totalRealJointsForIK=pImpl->totalRealJointsForIK+linkPair.pairModel.getNrOfJoints();
-       		yInfo() << "Parent link : " << linkPair.parentFrameName << " , Child link : " <<  linkPair.childFrameName << " , joints :"                                       << linkPair.pairModel.getNrOfJoints();
+       		yInfo() << "Parent link : " << linkPair.parentFrameName << " , Child link : " <<  linkPair.childFrameName << " , joints :" << linkPair.pairModel.getNrOfJoints();
    		}
    		yInfo()<< "Total Real Joints:"<<pImpl->totalRealJointsForIK;
 
@@ -1682,7 +1682,6 @@ static void createEndEffectorsPairs(const iDynTree::Model& model,
         segments.pop_back();
         segmentCount--;
 
-        // check if the segment exists in the model
         iDynTree::LinkIndex linkIndex = model.getLinkIndex(segment.segmentName);
         if (linkIndex < 0 || static_cast<unsigned>(linkIndex) >= model.getNrOfLinks()) {
             yWarning("Segment %s not found in the URDF model", segment.segmentName.c_str());
@@ -1693,22 +1692,25 @@ static void createEndEffectorsPairs(const iDynTree::Model& model,
         //as we do not assume that we can go back further that this node
         for (unsigned neighbourIndex = 0; neighbourIndex < model.getNrOfNeighbors(linkIndex); ++neighbourIndex) {
             //remember the "biforcations"
-            std::stack<iDynTree::LinkIndex> backtrace;
+            std::vector<iDynTree::LinkIndex> backtrace;
+            std::vector<iDynTree::LinkIndex>::iterator Iterator_backtrace;
+
             //and the visited nodes
             std::vector<iDynTree::LinkIndex> visited;
 
             //I've already visited the starting node
             visited.push_back(linkIndex);
             iDynTree::Neighbor neighbour = model.getNeighbor(linkIndex, neighbourIndex);
-            backtrace.push(neighbour.neighborLink);
+            backtrace.push_back(neighbour.neighborLink);
 
             while (!backtrace.empty()) {
-                iDynTree::LinkIndex currentLink = backtrace.top();
-                backtrace.pop();
+                iDynTree::LinkIndex currentLink = backtrace.back();
+                backtrace.pop_back();
                 //add the current link to the visited
                 visited.push_back(currentLink);
 
                 std::string linkName = model.getLinkName(currentLink);
+
 
                 // check if this is a human segment
                 std::vector<SegmentInfo>::iterator foundSegment = std::find_if(segments.begin(),
@@ -1719,24 +1721,28 @@ static void createEndEffectorsPairs(const iDynTree::Model& model,
                     //Found! This is a segment
                     framePairs.push_back(std::pair<std::string, std::string>(segment.segmentName, linkName));
                     framePairIndeces.push_back(std::pair<iDynTree::FrameIndex, iDynTree::FrameIndex>(segmentCount, foundLinkIndex));
+                    yInfo()<< "Segment : " << segment.segmentName << " , associated neighbor : " <<  linkName <<" , found segment: "<<foundSegment->segmentName<<" , distance: "<<foundLinkIndex ;
                     break;
                 }
-                //insert all non-visited neighbours
-                for (unsigned i = 0; i < model.getNrOfNeighbors(currentLink); ++i) {
-                    iDynTree::LinkIndex link = model.getNeighbor(currentLink, i).neighborLink;
-                    //check if we already visited this segment
-                    if (std::find(visited.begin(), visited.end(), link) != visited.end()) {
-                        //Yes => skip
-                        continue;
+
+                    for (unsigned i = 0; i < model.getNrOfNeighbors(currentLink); ++i) {
+                        iDynTree::LinkIndex link = model.getNeighbor(currentLink, i).neighborLink;
+                        //check if we already visited this segment
+                        if (std::find(visited.begin(), visited.end(), link) != visited.end()) {
+                            //Yes => skip
+                            continue;
+                        }
+                        Iterator_backtrace=backtrace.begin();
+                        backtrace.insert(Iterator_backtrace,link);
+
                     }
-                    backtrace.push(link);
-                }
             }
 
         }
     }
 
 }
+
 
 static bool getReducedModel(const iDynTree::Model& modelInput,
                             const std::string& parentFrame,
