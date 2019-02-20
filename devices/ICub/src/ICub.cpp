@@ -29,6 +29,7 @@ public:
     std::vector<double> wrenchValues;
     bool firstRun = true;
     mutable std::mutex mtx;
+    yarp::os::Network yarpNetwork;
 
     using yarp::os::BufferedPort<yarp::os::Bottle>::onRead;
     virtual void onRead(yarp::os::Bottle& wrench)
