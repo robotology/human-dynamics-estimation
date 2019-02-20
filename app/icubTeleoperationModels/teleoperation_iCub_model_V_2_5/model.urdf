@@ -3332,32 +3332,55 @@
   <gazebo>
     <pose>0.0 0.0 0.63 0.0 0.0 3.14</pose>
   </gazebo>
+
+<!-- ************************  Fictatious Frames  ********************** -->
+<link name="root_link_fake"/>
+<joint name="j_root_link_fake" type="fixed">
+<origin xyz="0 0 0" rpy="0 0 3.14159265"/>
+<axis xyz="0 0 0"/>
+<parent link="root_link"/>
+<child link="root_link_fake"/>
+</joint>
+<link name="chest_fake"/>
+<joint name="j_chest_fake" type="fixed">
+<origin xyz="0 0 0" rpy="-1.57079632679 -1.57079632679 0"/>
+<axis xyz="0 0 0"/>
+<parent link="chest"/>
+<child link="chest_fake"/>
+</joint>
+<link name="head_fake"/>
+<joint name="j_head_fake" type="fixed">
+<origin xyz="0 0 0" rpy="-1.57079632679 -1.57079632679 0"/>
+<axis xyz="0 0 0"/>
+<parent link="head"/>
+<child link="head_fake"/>
+</joint>
   <!-- ********************************************** -->
   <!-- Sensor  1-->
   <sensor name="Pelvis_gyro" type="gyroscope">
-  <parent link="root_link"/>
+  <parent link="root_link_fake"/>
   <origin xyz="-0.055881  0.00020678    0.095148" rpy="0.094617      1.0086     -3.0304"/>
   </sensor>
   <sensor name="Pelvis_accelerometer" type="accelerometer">
-  <parent link="root_link"/>
+  <parent link="root_link_fake"/>
   <origin xyz="-0.055881  0.00020678    0.095148" rpy="0.094617      1.0086     -3.0304"/>
   </sensor>
   <!-- Sensor  2-->
   <sensor name="T8_gyro" type="gyroscope">
-  <parent link="chest"/>
+  <parent link="chest_fake"/>
   <origin xyz="0.14068  6.2838e-06    0.077433" rpy="-0.077161      1.1064    -0.17687"/>
   </sensor>
   <sensor name="T8_accelerometer" type="accelerometer">
-  <parent link="chest"/>
+  <parent link="chest_fake"/>
   <origin xyz="0.14068  6.2838e-06    0.077433" rpy="-0.077161      1.1064    -0.17687"/>
   </sensor>
   <!-- Sensor  3-->
   <sensor name="Head_gyro" type="gyroscope">
-  <parent link="head"/>
+  <parent link="head_fake"/>
   <origin xyz="-0.06975 -2.1628e-05    0.076683" rpy="2.3836  -0.0032688     -1.7942"/>
   </sensor>
   <sensor name="Head_accelerometer" type="accelerometer">
-  <parent link="head"/>
+  <parent link="head_fake"/>
   <origin xyz="-0.06975 -2.1628e-05    0.076683" rpy="2.3836  -0.0032688     -1.7942"/>
   </sensor>
   <!-- Sensor  4-->
@@ -3488,6 +3511,8 @@
   </sensor>
 
 <!-- ************************  Fictatious Frames  ********************** -->
+<!--
+
 <link name="root_link_fake"/>
 <joint name="j_root_link_fake" type="fixed">
 <origin xyz="0 0 0" rpy="0 0 3.14159265"/>
@@ -3534,7 +3559,7 @@
  <limit effort="30" velocity="1.0" lower="-3.141592" upper="3.141592" />
  <axis xyz="1 0 0" />
 </joint>
-
+-->
 
 </robot>
 
