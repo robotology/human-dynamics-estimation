@@ -25,6 +25,7 @@ public:
     virtual ~IHumanState() = default;
 
     virtual std::vector<std::string> getJointNames() const = 0;
+    virtual std::string getBaseName() const = 0;
     virtual size_t getNumberOfJoints() const = 0;
 
     virtual std::vector<double> getJointPositions() const = 0;

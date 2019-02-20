@@ -92,6 +92,8 @@ void HumanStateWrapper::run()
     std::array<double, 6> baseVelocity = pImpl->humanState->getBaseVelocity();
     std::vector<double> jointPositionsInterface = pImpl->humanState->getJointPositions();
     std::vector<double> jointVelocitiesInterface = pImpl->humanState->getJointVelocities();
+    std::vector<std::string> jointNames = pImpl->humanState->getJointNames();
+    std::string baseName = pImpl->humanState->getBaseName();
 
     // Prepare the message
     human::HumanState& humanStateData = pImpl->outputPort.prepare();
@@ -114,6 +116,12 @@ void HumanStateWrapper::run()
     humanStateData.baseVelocityWRTGlobal[4] = baseVelocity[4];
     humanStateData.baseVelocityWRTGlobal[5] = baseVelocity[5];
 
+    // Convert the joint names
+    humanStateData.jointNames.resize(jointPositionsInterface.size());
+    for (unsigned i = 0; i < jointPositionsInterface.size(); ++i) {
+        humanStateData.jointNames[i] = jointNames[i];
+    }
+
     // Convert the joint positions
     humanStateData.positions.resize(jointPositionsInterface.size());
     for (unsigned i = 0; i < jointPositionsInterface.size(); ++i) {
@@ -125,6 +133,9 @@ void HumanStateWrapper::run()
     for (unsigned i = 0; i < jointVelocitiesInterface.size(); ++i) {
         humanStateData.velocities[i] = jointVelocitiesInterface[i];
     }
+
+    // Store the name of the base link
+    humanStateData.baseName = baseName;
 
     // Send the data
     pImpl->outputPort.write(/*forceStrict=*/true);

@@ -1262,6 +1262,12 @@ size_t HumanStateProvider::getNumberOfJoints() const
     return pImpl->humanModel.getNrOfJoints();
 }
 
+std::string HumanStateProvider::getBaseName() const
+{
+    std::lock_guard<std::mutex> lock(pImpl->mutex);
+    return pImpl->floatingBaseFrame.model;
+}
+
 std::vector<double> HumanStateProvider::getJointPositions() const
 {
     std::lock_guard<std::mutex> lock(pImpl->mutex);

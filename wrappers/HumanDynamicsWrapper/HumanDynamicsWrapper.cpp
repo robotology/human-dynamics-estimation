@@ -8,6 +8,7 @@
 
 #include "HumanDynamicsWrapper.h"
 #include "IHumanDynamics.h"
+#include "thrift/HumanDynamics.h"
 
 #include <yarp/os/BufferedPort.h>
 #include <yarp/os/LogStream.h>
@@ -26,12 +27,7 @@ class HumanDynamicsWrapper::impl
 public:
     mutable std::mutex mutex;
     hde::interfaces::IHumanDynamics* humanDynamics = nullptr;
-
-    // TODO: Currently as only joint torques are streamed,
-    // yarp bottle is sent on the output port
-    // An ideal is to stream the human::HumanDynamics thrift
-    // format message
-    yarp::os::BufferedPort<yarp::os::Bottle> outputPort;
+    yarp::os::BufferedPort<human::HumanDynamics> outputPort;
 };
 
 HumanDynamicsWrapper::HumanDynamicsWrapper()
@@ -95,22 +91,24 @@ void HumanDynamicsWrapper::run()
 {
     // Get data from the interface
     std::vector<double> jointTorques = pImpl->humanDynamics->getJointTorques();
+    std::vector<std::string> jointNames = pImpl->humanDynamics->getJointNames();
 
-    // Prepare the human dynamics data bottle
-    yarp::os::Bottle& humanDynamicsData = pImpl->outputPort.prepare();
+    // Prepare the message
+    human::HumanDynamics& humanDynamicsData = pImpl->outputPort.prepare();
 
-    if (humanDynamicsData.size() != 0) {
-        // Clear the human dynamics data bottle
-        humanDynamicsData.clear();
+    // Convert the joint names
+    humanDynamicsData.jointNames.resize(jointTorques.size());
+    for (unsigned i = 0; i < jointTorques.size(); ++i) {
+        humanDynamicsData.jointNames[i] = jointNames[i];
     }
 
-    // Add joint torques to human dynamics data bottle
-    for (size_t index = 0; index < jointTorques.size(); index++) {
-        humanDynamicsData.addDouble(jointTorques.at(index));
+    // Convert the joint torques
+    humanDynamicsData.torques.resize(jointTorques.size());
+    for (unsigned i = 0; i < jointTorques.size(); ++i) {
+        humanDynamicsData.torques[i] = jointTorques[i];
     }
 
     // Send the data
-    std::lock_guard<std::mutex> lock(pImpl->mutex);
     pImpl->outputPort.write(/*forceStrict=*/true);
 }
 
