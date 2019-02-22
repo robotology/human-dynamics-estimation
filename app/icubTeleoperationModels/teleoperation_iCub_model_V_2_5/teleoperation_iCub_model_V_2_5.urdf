@@ -3385,7 +3385,7 @@
 </inertial>
 </link>
 <joint name="j_r_upper_arm_fake" type="fixed">
-<origin xyz="0 0 0" rpy="3.14159 0 0"/>
+<origin xyz="0 0 0" rpy="-1.57079632679 0 0"/>
 <axis xyz="0 0 0"/>
 <parent link="r_upper_arm"/>
 <child link="r_upper_arm_fake"/>
@@ -3399,7 +3399,7 @@
 </inertial>
 </link>
 <joint name="j_r_forearm_fake" type="fixed">
-<origin xyz="0 0 0" rpy="3.14159 -1.57079632679 0"/>
+<origin xyz="0 0 0" rpy="-1.57079632679 -1.57079632679 0"/>
 <axis xyz="0 0 0"/>
 <parent link="r_forearm"/>
 <child link="r_forearm_fake"/>
@@ -3413,7 +3413,7 @@
 </inertial>
 </link>
 <joint name="j_r_hand_fake" type="fixed">
-<origin xyz="0 0 0" rpy="3.14159 -1.57079632679 0"/>
+<origin xyz="0 0 0" rpy="-1.57079632679 -1.57079632679 0"/>
 <axis xyz="0 0 0"/>
 <parent link="r_hand"/>
 <child link="r_hand_fake"/>
@@ -3427,7 +3427,7 @@
 </inertial>
 </link>
 <joint name="j_l_upper_arm_fake" type="fixed">
-<origin xyz="0 0 0" rpy="3.14159 0 0"/>
+<origin xyz="0 0 0" rpy="1.57079632679 0 0"/>
 <axis xyz="0 0 0"/>
 <parent link="l_upper_arm"/>
 <child link="l_upper_arm_fake"/>
@@ -3441,7 +3441,7 @@
 </inertial>
 </link>
 <joint name="j_l_forearm_fake" type="fixed">
-<origin xyz="0 0 0" rpy="0 -1.57079632679 0"/>
+<origin xyz="0 0 0" rpy="-1.57079632679 -1.57079632679 0"/>
 <axis xyz="0 0 0"/>
 <parent link="l_forearm"/>
 <child link="l_forearm_fake"/>
@@ -3455,7 +3455,7 @@
 </inertial>
 </link>
 <joint name="j_l_hand_fake" type="fixed">
-<origin xyz="0 0 0" rpy="0 -1.57079632679 0"/>
+<origin xyz="0 0 0" rpy="-1.57079632679 -1.57079632679 0"/>
 <axis xyz="0 0 0"/>
 <parent link="l_hand"/>
 <child link="l_hand_fake"/>
