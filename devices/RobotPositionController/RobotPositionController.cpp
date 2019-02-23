@@ -164,7 +164,7 @@ bool RobotPositionController::open(yarp::os::Searchable& config)
 
         }
 
-        if (pImpl->controlMode == "position direct") {
+        if (pImpl->controlMode == "positionDirect") {
 
             // Check position control direct interface
             if (!pImpl->remoteControlBoards.at(boardCount)->view(pImpl->iPosDirectControl) || !pImpl->iPosDirectControl) {
@@ -237,7 +237,6 @@ void RobotPositionController::run()
         }
     }
 
-
     // Set the desired joint positions and ask to move
     if (pImpl->controlMode == "position") {
         pImpl->iPosControl->positionMove(jointPositionsArray);
@@ -250,7 +249,7 @@ void RobotPositionController::run()
         pImpl->checkMotion = nullptr;
     }
 
-    if (pImpl->controlMode == "position direct") {
+    if (pImpl->controlMode == "positionDirecr") {
         pImpl->iPosDirectControl->setPositions(jointPositionsArray);
     }
 }
