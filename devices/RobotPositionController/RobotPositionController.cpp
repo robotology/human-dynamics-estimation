@@ -31,8 +31,12 @@ public:
 
     // Polydriver device
     std::vector<yarp::dev::PolyDriver*> remoteControlBoards;
+    yarp::dev::IControlMode* iControlMode = nullptr;
     yarp::dev::IPositionControl* iPosControl = nullptr;
+    yarp::dev::IPositionDirect* iPosDirectControl = nullptr;
     yarp::os::Property options;
+
+    std::string controlMode;
 
     // Joint variables
     std::vector<int> nJointsVector;
@@ -70,6 +74,11 @@ bool RobotPositionController::open(yarp::os::Searchable& config)
         yInfo() << LogPrefix << "Using default period:" << DefaultPeriod << "s";
     }
 
+    if (!(config.check("controlMode") && config.find("controlMode").isString())) {
+        yError() << LogPrefix << "controlMode option not found or not valid";
+        return false;
+    }
+
     if (!(config.check("controlBoardsList") && config.find("controlBoardsList").isList())) {
         yError() << LogPrefix << "controlBoardsList option not found or not valid";
         return false;
@@ -90,13 +99,14 @@ bool RobotPositionController::open(yarp::os::Searchable& config)
     // ===============================
 
     double period = config.check("period", yarp::os::Value(DefaultPeriod)).asDouble();
-    const std::string device = config.find("device").asString();
+    pImpl->controlMode = config.find("controlMode").asString();
     yarp::os::Bottle* controlBoardsList = config.find("controlBoardsList").asList();
     const std::string remotePrefix  = config.find("remotePrefix").asString();
     const std::string localPrefix  = config.find("localPrefix").asString();
 
     yInfo() << LogPrefix << "*** ========================";
     yInfo() << LogPrefix << "*** Period                 :" << period;
+    yInfo() << LogPrefix << "*** Control mode           :" << pImpl->controlMode;
     yInfo() << LogPrefix << "*** Control boards list    :" << controlBoardsList->toString();
     yInfo() << LogPrefix << "*** Remote prefix          :" << remotePrefix;
     yInfo() << LogPrefix << "*** Local prefix           :" << localPrefix;
@@ -131,14 +141,47 @@ bool RobotPositionController::open(yarp::os::Searchable& config)
             return false;
         }
 
-        // Check position control interface
-        if (!pImpl->remoteControlBoards.at(boardCount)->view(pImpl->iPosControl) || !pImpl->iPosControl) {
-            yError() << LogPrefix << "Failed to view the IPositionControl interface from the remote control board device";
+        // Get control mode interface
+
+        if (!pImpl->remoteControlBoards.at(boardCount)->view(pImpl->iControlMode) || !pImpl->iControlMode) {
+            yError() << LogPrefix << "Failed to view the IControlMode interface from the remote control board device";
             return false;
         }
 
-        // Get number of joints from control boards
-        pImpl->iPosControl->getAxes(&pImpl->nJointsVector.at(boardCount));
+        if (pImpl->controlMode == "position") {
+
+            // Check position control interface
+            if (!pImpl->remoteControlBoards.at(boardCount)->view(pImpl->iPosControl) || !pImpl->iPosControl) {
+                yError() << LogPrefix << "Failed to view the IPositionControl interface from the remote control board device";
+                return false;
+            }
+
+            // Get number of joints from control boards
+            pImpl->iPosControl->getAxes(&pImpl->nJointsVector.at(boardCount));
+
+            // Set control mode
+            for (unsigned i = 0; i < pImpl->nJointsVector.at(boardCount); i++) {
+                pImpl->iControlMode->setControlMode(i,VOCAB_CM_POSITION);
+            }
+
+        }
+
+        if (pImpl->controlMode == "position direct") {
+
+            // Check position control direct interface
+            if (!pImpl->remoteControlBoards.at(boardCount)->view(pImpl->iPosDirectControl) || !pImpl->iPosDirectControl) {
+                yError() << LogPrefix << "Failed to view the IPositionDirectControl interface from the remote control board device";
+                return false;
+            }
+
+            // Get number of joints from control boards
+            pImpl->iPosDirectControl->getAxes(&pImpl->nJointsVector.at(boardCount));
+
+            // Set control mode
+            for (unsigned i = 0; i < pImpl->nJointsVector.at(boardCount); i++) {
+                pImpl->iControlMode->setControlMode(i,VOCAB_CM_POSITION_DIRECT);
+            }
+        }
 
         // Get joint names of the control board from configuration
         if (!(config.check(controlBoard) && config.find(controlBoard).isList())) {
@@ -197,15 +240,22 @@ void RobotPositionController::run()
         }
     }
 
-    // Set the desired joint positions and ask to move
-    pImpl->iPosControl->positionMove(jointPositionsArray);
 
-    while(!pImpl->checkMotion) {
-        pImpl->iPosControl->checkMotionDone(pImpl->checkMotion);
-        yInfo() << LogPrefix << "Moving robot joints...";
+    // Set the desired joint positions and ask to move
+    if (pImpl->controlMode == "position") {
+        pImpl->iPosControl->positionMove(jointPositionsArray);
+
+        while(!pImpl->checkMotion) {
+            pImpl->iPosControl->checkMotionDone(pImpl->checkMotion);
+            yInfo() << LogPrefix << "Moving robot joints...";
+        }
+
+        pImpl->checkMotion = nullptr;
     }
 
-    pImpl->checkMotion = nullptr;
+    if (pImpl->controlMode == "position direct") {
+        pImpl->iPosDirectControl->setPositions(jointPositionsArray);
+    }
 }
 
 bool RobotPositionController::attach(yarp::dev::PolyDriver* poly)
