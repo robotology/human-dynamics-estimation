@@ -47,7 +47,7 @@ public:
     std::vector<std::string> jointNameListFromHumanState;
 
     // Motion variable
-    bool* checkMotion = nullptr;
+    bool checkMotion = false;
 };
 
 // =============================
@@ -245,11 +245,11 @@ void RobotPositionController::run()
         pImpl->iPosControl->positionMove(jointPositionsArray);
 
         while(!pImpl->checkMotion) {
-            pImpl->iPosControl->checkMotionDone(pImpl->checkMotion);
+            pImpl->iPosControl->checkMotionDone(&pImpl->checkMotion);
             yInfo() << LogPrefix << "Moving robot joints...";
         }
 
-        pImpl->checkMotion = nullptr;
+        pImpl->checkMotion = false;
     }
 
     if (pImpl->controlMode == "positionDirecr") {
