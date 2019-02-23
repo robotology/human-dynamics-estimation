@@ -12,7 +12,6 @@
 #include <yarp/dev/DeviceDriver.h>
 #include <yarp/os/PeriodicThread.h>
 #include <yarp/dev/Wrapper.h>
-#include <vector>
 
 #include <memory>
 
@@ -31,8 +30,6 @@ class hde::devices::RobotPositionController final
 private:
     class impl;
     std::unique_ptr<impl> pImpl;
-    std::vector<double> m_prevJointValues;
-    int m_count;
 
 public:
     RobotPositionController();

@@ -24,8 +24,7 @@ target_link_libraries(RobotPositionController PUBLIC
     YARP::YARP_OS
     YARP::YARP_dev
     YARP::YARP_init
-    iDynTree::idyntree-model
-    ctrlLib)
+    iDynTree::idyntree-model)
 
 yarp_install(
     TARGETS RobotPositionController
