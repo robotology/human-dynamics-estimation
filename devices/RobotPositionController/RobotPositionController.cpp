@@ -11,6 +11,7 @@
 
 #include <array>
 #include <numeric>
+#include <cmath>
 
 #include <yarp/os/LogStream.h>
 #include <yarp/os/ResourceFinder.h>
@@ -36,6 +37,7 @@ public:
     yarp::dev::IPositionDirect* iPosDirectControl = nullptr;
     yarp::os::Property options;
 
+    double refSpeed;
     std::string controlMode;
 
     // Joint variables
@@ -72,6 +74,10 @@ bool RobotPositionController::open(yarp::os::Searchable& config)
         yInfo() << LogPrefix << "Using default period:" << DefaultPeriod << "s";
     }
 
+    if (!(config.check("refSpeed") && config.find("refSpeed").isDouble())) {
+        yInfo() << LogPrefix << "refSpeed option not found or not valid";
+    }
+
     if (!(config.check("controlMode") && config.find("controlMode").isString())) {
         yError() << LogPrefix << "controlMode option not found or not valid";
         return false;
@@ -98,6 +104,7 @@ bool RobotPositionController::open(yarp::os::Searchable& config)
 
     double period = config.check("period", yarp::os::Value(DefaultPeriod)).asDouble();
     pImpl->controlMode = config.find("controlMode").asString();
+    pImpl->refSpeed = config.find("refSpeed").asDouble();
     yarp::os::Bottle* controlBoardsList = config.find("controlBoardsList").asList();
     const std::string remotePrefix  = config.find("remotePrefix").asString();
     const std::string localPrefix  = config.find("localPrefix").asString();
@@ -105,6 +112,7 @@ bool RobotPositionController::open(yarp::os::Searchable& config)
     yInfo() << LogPrefix << "*** ========================";
     yInfo() << LogPrefix << "*** Period                 :" << period;
     yInfo() << LogPrefix << "*** Control mode           :" << pImpl->controlMode;
+    yInfo() << LogPrefix << "*** Reference speed        :" << pImpl->refSpeed;
     yInfo() << LogPrefix << "*** Control boards list    :" << controlBoardsList->toString();
     yInfo() << LogPrefix << "*** Remote prefix          :" << remotePrefix;
     yInfo() << LogPrefix << "*** Local prefix           :" << localPrefix;
@@ -160,6 +168,7 @@ bool RobotPositionController::open(yarp::os::Searchable& config)
             // Set control mode
             for (unsigned i = 0; i < pImpl->nJointsVector.at(boardCount); i++) {
                 pImpl->iControlMode->setControlMode(i,VOCAB_CM_POSITION);
+                pImpl->iPosControl->setRefSpeed(i, pImpl->refSpeed);
             }
 
         }
@@ -232,26 +241,46 @@ void RobotPositionController::run()
     for (unsigned controlBoardJointIndex = 0; controlBoardJointIndex < pImpl->jointNameListFromControlBoards.size(); controlBoardJointIndex++) {
         for (unsigned humanStateJointIndex = 0; humanStateJointIndex < pImpl->jointNameListFromHumanState.size(); humanStateJointIndex++) {
             if (pImpl->jointNameListFromControlBoards.at(controlBoardJointIndex) == pImpl->jointNameListFromHumanState.at(humanStateJointIndex)) {
-                jointPositionsArray[controlBoardJointIndex] = pImpl->jointPositionsVector.at(humanStateJointIndex);
+                jointPositionsArray[controlBoardJointIndex] = pImpl->jointPositionsVector.at(humanStateJointIndex)*(180/M_PI);
             }
         }
     }
 
     // Set the desired joint positions and ask to move
-    if (pImpl->controlMode == "position") {
-        pImpl->iPosControl->positionMove(jointPositionsArray);
+    int jointNumber = 0;
+    for (size_t i = 0; i < pImpl->remoteControlBoards.size(); i++) {
 
-        while(!pImpl->checkMotion) {
-            pImpl->iPosControl->checkMotionDone(&pImpl->checkMotion);
-            yInfo() << LogPrefix << "Moving robot joints...";
+        if (pImpl->controlMode == "position") {
+            pImpl->remoteControlBoards.at(i)->view(pImpl->iPosControl);
         }
 
-        pImpl->checkMotion = false;
+        if (pImpl->controlMode == "positionDirect") {
+            pImpl->remoteControlBoards.at(i)->view(pImpl->iPosControl);
+        }
+
+        int joints;
+        pImpl->iPosControl->getAxes(&joints);
+
+        for (int j = 0; j < joints; j++) {
+
+            if (pImpl->controlMode == "position") {
+                pImpl->iPosControl->positionMove(j, jointPositionsArray[jointNumber]);
+            }
+
+            if (pImpl->controlMode == "positionDirect") {
+                pImpl->iPosDirectControl->setPosition(j, jointPositionsArray[jointNumber]);
+            }
+
+            jointNumber++;
+        }
+
     }
 
-    if (pImpl->controlMode == "positionDirecr") {
-        pImpl->iPosDirectControl->setPositions(jointPositionsArray);
+    while(!pImpl->checkMotion) {
+        pImpl->iPosControl->checkMotionDone(&pImpl->checkMotion);
     }
+
+    pImpl->checkMotion = false;
 }
 
 bool RobotPositionController::attach(yarp::dev::PolyDriver* poly)
