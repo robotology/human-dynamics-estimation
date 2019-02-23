@@ -179,13 +179,19 @@ bool RobotPositionController::close()
 void RobotPositionController::run()
 {
     // Get joint positions from iHumanState interface
-    /*pImpl->jointPositionsVector = pImpl->iHumanState->getJointPositions();
-    pImpl->jointNameList = pImpl->iHumanState->getJointNames();
+    pImpl->jointPositionsVector = pImpl->iHumanState->getJointPositions();
+    pImpl->jointNameListFromHumanState = pImpl->iHumanState->getJointNames();
 
-    double jointPositionsArray[pImpl->nJoints];
+    // Initialize joint position array
+    double jointPositionsArray[pImpl->totalControlBoardJoints];
 
-    for (int jointIndex = 0; jointIndex < pImpl->nJoints; jointIndex++) {
-        jointPositionsArray[jointIndex] = pImpl->jointPositions.at(jointIndex);
+    // Set the joint position values array for iPositionControl interface
+    for (unsigned controlBoardJointIndex = 0; controlBoardJointIndex < pImpl->jointNameListFromControlBoards.size(); controlBoardJointIndex++) {
+        for (unsigned humanStateJointIndex = 0; humanStateJointIndex < pImpl->jointNameListFromHumanState.size(); humanStateJointIndex++) {
+            if (pImpl->jointNameListFromControlBoards.at(controlBoardJointIndex) == pImpl->jointNameListFromHumanState.at(humanStateJointIndex)) {
+                jointPositionsArray[controlBoardJointIndex] = pImpl->jointPositionsVector.at(humanStateJointIndex);
+            }
+        }
     }
 
     // Set the desired joint positions and ask to move
@@ -196,7 +202,7 @@ void RobotPositionController::run()
         yInfo() << LogPrefix << "Moving robot joints...";
     }
 
-    pImpl->checkMotion = nullptr;*/
+    pImpl->checkMotion = nullptr;
 }
 
 bool RobotPositionController::attach(yarp::dev::PolyDriver* poly)
