@@ -40,7 +40,7 @@ public:
     yarp::os::Network network;
     TimeStamp timestamp;
     bool firstRun = true;
-    bool useRPC = true;
+    bool useRPC = false;
 
     mutable std::recursive_mutex mutex;
 
@@ -139,6 +139,7 @@ bool IWearRemapper::open(yarp::os::Searchable& config)
     if (config.check("useRPC")) {
         if (!config.find("useRPC").isBool()) {
             yError() << logPrefix << "useRPC option is not a bool";
+            return false;
         }
         pImpl->useRPC = config.find("useRPC").asBool();
     }
@@ -146,23 +147,16 @@ bool IWearRemapper::open(yarp::os::Searchable& config)
     yarp::os::Bottle* inputRPCPortsNamesList = nullptr;
     if (pImpl->useRPC)
     {
-        if (!config.check("wearableRPCPorts"))
+        if (!(config.check("wearableRPCPorts") && config.find("wearableRPCPorts").isList()))
         {
-            yInfo() << logPrefix << "wearableRPCPorts parameter does not exist. RPC port will not be used";
-            pImpl->useRPC = false;
+            yError() << logPrefix << "wearableRPCPorts parameter does not exist or it is not a list";
+            return false;
         }
-        else
-        {
-            if (!config.find("wearableRPCPorts").isList()) {
-                yError() << logPrefix << "wearableRPCPorts option is not a list";
+        inputRPCPortsNamesList = config.find("wearableRPCPorts").asList();
+        for (unsigned i = 0; i < inputRPCPortsNamesList->size(); ++i) {
+            if (!inputRPCPortsNamesList->get(i).isString()) {
+                yError() << logPrefix << "ith entry of wearableRPCPorts list is not a string";
                 return false;
-            }
-            inputRPCPortsNamesList = config.find("wearableRPCPorts").asList();
-            for (unsigned i = 0; i < inputRPCPortsNamesList->size(); ++i) {
-                if (!inputRPCPortsNamesList->get(i).isString()) {
-                    yError() << logPrefix << "ith entry of wearableRPCPorts list is not a string";
-                    return false;
-                }
             }
         }
     }
