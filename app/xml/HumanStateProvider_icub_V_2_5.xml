@@ -26,8 +26,9 @@
         <param name="ikPoolSizeOption">4</param>
         <param name="posTargetWeight">0</param>
         <param name="rotTargetWeight">10</param>
-        <param name="costRegularization">0.25</param>
-        <param name="costTolerance">0.5</param>
+        <param name="costRegularization">1.0</param>
+        <!-- 0.25 -->
+        <param name="costTolerance">0.01</param>
         <param name="useGlobalIK">false</param>
         <param name="useXsensJointsAngles">false</param>
         <!-- TODO: How to use a reduced model in the entire HDE? (Starting from HumanStateProvider) -->
@@ -140,7 +141,7 @@
 
 
     <device type="human_state_wrapper" name="HumanStateWrapper">
-        <param name="period">0.5</param>
+        <param name="period">0.05</param>
         <param name="outputPort">/HDE/HumanStateWrapper/state:o</param>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
@@ -161,5 +162,25 @@
         </action>
         <action phase="shutdown" level="5" type="detach"/>
     </device>
+
+    <!--device type="robot_position_controller" name="RobotPositionController">
+        <param name="period">0.100</param>
+        <param name="controlMode">position</param>
+        <param name="controlBoardsList">(head torso left_arm right_arm left_leg right_leg)</param>
+        <param name="remotePrefix">/icubSim</param>
+        <param name="localPrefix">/robotPositionController</param>
+        <param name="head">(neck_pitch neck_roll neck_yaw)</param>
+        <param name="torso">(torso_yaw torso_roll torso_pitch)</param>
+        <param name="left_arm">(l_shoulder_pitch l_shoulder_roll l_shoulder_yaw l_elbow l_wrist_prosup l_wrist_pitch l_wrist_yaw)</param>
+        <param name="right_arm">(r_shoulder_pitch r_shoulder_roll r_shoulder_yaw r_elbow r_wrist_prosup r_wrist_pitch r_wrist_yaw)</param>
+        <param name="left_leg">(l_hip_pitch l_hip_roll l_hip_yaw l_knee l_ankle_pitch l_ankle_roll)</param>
+        <param name="right_leg">(r_hip_pitch r_hip_roll r_hip_yaw r_knee r_ankle_pitch r_ankle_roll)</param>
+        <action phase="startup" level="5" type="attach">
+            <paramlist name="networks">
+                <elem name="RobotPositionController">HumanStateProvider</elem>
+            </paramlist>
+        </action>
+        <action phase="shutdown" level="5" type="detach"/>
+    </device-->
 
 </robot>

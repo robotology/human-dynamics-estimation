@@ -1,8 +1,0 @@
-<?xml version='1.0'?>
-<database>
-<name>Teleoperation iCub Gazebo Database</name>
-<license>Creative Commons Attribution 3.0 Unported</license>
-<models>
-<uri>file://teleoperation_iCub_model_V_2_5</uri>
-</models>
-</database>

@@ -859,10 +859,16 @@ void HumanStateProvider::run()
             std::lock_guard<std::mutex> lock(pImpl->mutex);
 
             // Set the initial solution to zero
-            for (auto& linkPair : pImpl->linkPairs) {
-                linkPair.sInitial.zero();
-            }
-
+            /*for (auto& linkPair : pImpl->linkPairs) {
+            	//linkPair.sInitial.zero();
+            	for(int i=0; i<linkPair.pairModel.getNrOfJoints();i++)
+            	{
+            	    double minJointLimit=linkPair.pairModel.getJoint(i)->getMinPosLimit(i);
+            	    double maxJointLimit=linkPair.pairModel.getJoint(i)->getMaxPosLimit(i);
+            	    double averageJointLimit=(minJointLimit+maxJointLimit)/2.0;
+            	    linkPair.sInitial.setVal(i,averageJointLimit );
+            	}
+            }*/
         }
 
         {
@@ -891,6 +897,18 @@ void HumanStateProvider::run()
                 if (pairJoint.second == 1) {
                     pImpl->jointConfigurationSolution.setVal(pairJoint.first, linkPair.jointConfigurations.getVal(jointIndex));
                     pImpl->jointVelocitiesSolution.setVal(pairJoint.first, linkPair.jointVelocities.getVal(jointIndex));
+
+                    // If global ik is false, use link pair joint solutions
+                    if (!pImpl->useGlobalIK) {
+                        pImpl->solution.jointPositions[pairJoint.first] = linkPair.jointConfigurations.getVal(jointIndex);
+                        linkPair.sInitial.setVal(jointIndex, linkPair.jointConfigurations.getVal(jointIndex));
+
+                        //TODO: Set the correct velocities values
+                        pImpl->solution.jointVelocities[pairJoint.first] = 0;
+                    }
+                    else {
+                        pImpl->linkPairsJointConfigurationSolution.setVal(pairJoint.first, linkPair.jointConfigurations.getVal(jointIndex));
+                    }
 
                     jointIndex++;
                 }
