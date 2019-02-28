@@ -32,6 +32,7 @@ public:
 
     // Polydriver device
     std::vector<yarp::dev::PolyDriver*> remoteControlBoards;
+    yarp::dev::IEncoders* iEncoders = nullptr;
     yarp::dev::IControlMode* iControlMode = nullptr;
     yarp::dev::IPositionControl* iPosControl = nullptr;
     yarp::dev::IPositionDirect* iPosDirectControl = nullptr;
@@ -150,22 +151,27 @@ bool RobotPositionController::open(yarp::os::Searchable& config)
         }
 
         // Get control mode interface
-
         if (!pImpl->remoteControlBoards.at(boardCount)->view(pImpl->iControlMode) || !pImpl->iControlMode) {
-            yError() << LogPrefix << "Failed to view the IControlMode interface from the remote control board device";
+            yError() << LogPrefix << "Failed to view the IControlMode interface from the " << controlBoard << " remote control board device";
             return false;
         }
+
+        // Get encoder interface
+        if (!pImpl->remoteControlBoards.at(boardCount)->view(pImpl->iEncoders) || !pImpl->iEncoders) {
+            yError() << LogPrefix << "Failed to view the IEncoder interface from the " << controlBoard << " remote control board device";
+            return false;
+        }
+
+        // Get the number of joint from IEncoder interface
+        pImpl->iEncoders->getAxes(&pImpl->nJointsVector.at(boardCount));
 
         if (pImpl->controlMode == "position") {
 
             // Check position control interface
             if (!pImpl->remoteControlBoards.at(boardCount)->view(pImpl->iPosControl) || !pImpl->iPosControl) {
-                yError() << LogPrefix << "Failed to view the IPositionControl interface from the remote control board device";
+                yError() << LogPrefix << "Failed to view the IPositionControl interface from the " << controlBoard << " remote control board device";
                 return false;
             }
-
-            // Get number of joints from control boards
-            pImpl->iPosControl->getAxes(&pImpl->nJointsVector.at(boardCount));
 
             // Set control mode
             for (unsigned i = 0; i < pImpl->nJointsVector.at(boardCount); i++) {
@@ -175,16 +181,13 @@ bool RobotPositionController::open(yarp::os::Searchable& config)
 
         }
 
-        if (pImpl->controlMode == "positionDirect") {
+        else if (pImpl->controlMode == "positionDirect") {
 
             // Check position control direct interface
             if (!pImpl->remoteControlBoards.at(boardCount)->view(pImpl->iPosDirectControl) || !pImpl->iPosDirectControl) {
-                yError() << LogPrefix << "Failed to view the IPositionDirectControl interface from the remote control board device";
+                yError() << LogPrefix << "Failed to view the IPositionDirectControl interface from the " << controlBoard << " remote control board device";
                 return false;
             }
-
-            // Get number of joints from control boards
-            pImpl->iPosDirectControl->getAxes(&pImpl->nJointsVector.at(boardCount));
 
             // Set control mode
             for (unsigned i = 0; i < pImpl->nJointsVector.at(boardCount); i++) {
@@ -237,14 +240,19 @@ void RobotPositionController::run()
     pImpl->jointPositionsVector = pImpl->iHumanState->getJointPositions();
     pImpl->jointNameListFromHumanState = pImpl->iHumanState->getJointNames();
 
-    // Initialize joint position array
+    // Initialize joint position array with a dummy value
     double jointPositionsArray[pImpl->totalControlBoardJoints];
+
+    for (unsigned i = 0; i < pImpl->totalControlBoardJoints; i++) {
+        jointPositionsArray[i] = -100000; //this is a dummy value
+    }
 
     // Set the joint position values array for iPositionControl interface
     for (unsigned controlBoardJointIndex = 0; controlBoardJointIndex < pImpl->jointNameListFromControlBoards.size(); controlBoardJointIndex++) {
         for (unsigned humanStateJointIndex = 0; humanStateJointIndex < pImpl->jointNameListFromHumanState.size(); humanStateJointIndex++) {
             if (pImpl->jointNameListFromControlBoards.at(controlBoardJointIndex) == pImpl->jointNameListFromHumanState.at(humanStateJointIndex)) {
                 jointPositionsArray[controlBoardJointIndex] = pImpl->jointPositionsVector.at(humanStateJointIndex)*(180/M_PI);
+                break;
             }
         }
     }
@@ -253,25 +261,42 @@ void RobotPositionController::run()
     int jointNumber = 0;
     for (size_t i = 0; i < pImpl->remoteControlBoards.size(); i++) {
 
+        pImpl->remoteControlBoards.at(i)->view(pImpl->iEncoders);
+
+        // Get joints from iEncoder interface
+        int joints;
+        pImpl->iEncoders->getAxes(&joints);
+
+        // Read joint position through IEncoder interface
+        double encoderJointPositions[joints];
+        pImpl->iEncoders->getEncoders(encoderJointPositions);
+
         if (pImpl->controlMode == "position") {
             pImpl->remoteControlBoards.at(i)->view(pImpl->iPosControl);
         }
 
         if (pImpl->controlMode == "positionDirect") {
-            pImpl->remoteControlBoards.at(i)->view(pImpl->iPosControl);
+            pImpl->remoteControlBoards.at(i)->view(pImpl->iPosDirectControl);
         }
-
-        int joints;
-        pImpl->iPosControl->getAxes(&joints);
 
         for (int j = 0; j < joints; j++) {
 
             if (pImpl->controlMode == "position") {
-                pImpl->iPosControl->positionMove(j, jointPositionsArray[jointNumber]);
+                if (jointPositionsArray[jointNumber] != -100000) {
+                    pImpl->iPosControl->positionMove(j, jointPositionsArray[jointNumber]);
+                }
+                else {
+                    pImpl->iPosControl->positionMove(j, encoderJointPositions[jointNumber]);
+                }
             }
 
             if (pImpl->controlMode == "positionDirect") {
-                pImpl->iPosDirectControl->setPosition(j, jointPositionsArray[jointNumber]);
+                if (jointPositionsArray[jointNumber] != -100000) {
+                    pImpl->iPosDirectControl->setPosition(j, jointPositionsArray[jointNumber]);
+                }
+                else {
+                    pImpl->iPosDirectControl->setPosition(j, encoderJointPositions[jointNumber]);
+                }
             }
 
             jointNumber++;
@@ -332,8 +357,12 @@ bool RobotPositionController::attach(yarp::dev::PolyDriver* poly)
 
 bool RobotPositionController::detach()
 {
-    pImpl->iHumanState = nullptr;
-    pImpl->iPosControl = nullptr;
+    pImpl->iHumanState       = nullptr;
+    pImpl->iEncoders         = nullptr;
+    pImpl->iControlMode      = nullptr;
+    pImpl->iPosControl       = nullptr;
+    pImpl->iPosDirectControl = nullptr;
+
     return true;
 }
 
