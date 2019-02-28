@@ -449,7 +449,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         pairInfo.ikSolver->setVerbosity(1);
         pairInfo.ikSolver->setLinearSolverName(pImpl->solverName);
         pairInfo.ikSolver->setMaxIterations(maxIterationsIK);
-        pairInfo.ikSolver->setCostTolerance(1E-10);
+        pairInfo.ikSolver->setCostTolerance(costTolerance);
         pairInfo.ikSolver->setDefaultTargetResolutionMode(iDynTree::InverseKinematicsTreatTargetAsConstraintNone);
         pairInfo.ikSolver->setRotationParametrization(iDynTree::InverseKinematicsRotationParametrizationRollPitchYaw);
 
