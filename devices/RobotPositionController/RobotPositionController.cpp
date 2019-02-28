@@ -42,15 +42,18 @@ public:
     std::string controlMode;
 
     // Joint variables
-    std::vector<int> nJointsVector;
+    std::vector<int> nJointsVectorFromConfig;
     int totalControlBoardJoints;
     std::vector<double> jointPositionsVector;
 
-    std::vector<std::string> jointNameListFromControlBoards;
+    std::vector<std::string> jointNameListFromConfigControlBoards;
     std::vector<std::string> jointNameListFromHumanState;
 
     // Motion variable
     bool checkMotion = false;
+
+    bool firstDataCheck = false;
+    double jointPosVectorSum = 0; //Variabe to check first zero data
 };
 
 // =============================
@@ -133,7 +136,7 @@ bool RobotPositionController::open(yarp::os::Searchable& config)
 
     // Set the size of remote control boards vector
     pImpl->remoteControlBoards.resize(controlBoards.size());
-    pImpl->nJointsVector.resize(controlBoards.size());
+    pImpl->nJointsVectorFromConfig.resize(controlBoards.size());
 
     // Open the control boards
     size_t boardCount = 0;
@@ -162,9 +165,6 @@ bool RobotPositionController::open(yarp::os::Searchable& config)
             return false;
         }
 
-        // Get the number of joint from IEncoder interface
-        pImpl->iEncoders->getAxes(&pImpl->nJointsVector.at(boardCount));
-
         if (pImpl->controlMode == "position") {
 
             // Check position control interface
@@ -174,7 +174,7 @@ bool RobotPositionController::open(yarp::os::Searchable& config)
             }
 
             // Set control mode
-            for (unsigned i = 0; i < pImpl->nJointsVector.at(boardCount); i++) {
+            for (unsigned i = 0; i < pImpl->nJointsVectorFromConfig.at(boardCount); i++) {
                 pImpl->iControlMode->setControlMode(i,VOCAB_CM_POSITION);
                 pImpl->iPosControl->setRefSpeed(i, pImpl->refSpeed);
             }
@@ -190,7 +190,7 @@ bool RobotPositionController::open(yarp::os::Searchable& config)
             }
 
             // Set control mode
-            for (unsigned i = 0; i < pImpl->nJointsVector.at(boardCount); i++) {
+            for (unsigned i = 0; i < pImpl->nJointsVectorFromConfig.at(boardCount); i++) {
                 pImpl->iControlMode->setControlMode(i,VOCAB_CM_POSITION_DIRECT);
             }
         }
@@ -203,8 +203,12 @@ bool RobotPositionController::open(yarp::os::Searchable& config)
 
         yarp::os::Bottle* jointsList = config.find(controlBoard).asList();
 
+        // Set the number of joints from config file
+        pImpl->nJointsVectorFromConfig.at(boardCount) = jointsList->size();
+        yInfo() << LogPrefix << controlBoard << " control board joints : " << pImpl->nJointsVectorFromConfig.at(boardCount);
+
         for (unsigned index = 0; index < jointsList->size(); index++) {
-            pImpl->jointNameListFromControlBoards.push_back(jointsList->get(index).asString());
+            pImpl->jointNameListFromConfigControlBoards.push_back(jointsList->get(index).asString());
         }
 
         pImpl->options.clear();
@@ -212,13 +216,14 @@ bool RobotPositionController::open(yarp::os::Searchable& config)
     }
 
     // Compute total joints from control boards
-    pImpl->totalControlBoardJoints = std::accumulate(pImpl->nJointsVector.begin(), pImpl->nJointsVector.end(), 0);
+    pImpl->totalControlBoardJoints = std::accumulate(pImpl->nJointsVectorFromConfig.begin(), pImpl->nJointsVectorFromConfig.end(), 0);
 
-    if (pImpl->totalControlBoardJoints != pImpl->jointNameListFromControlBoards.size()) {
+    /*if (pImpl->totalControlBoardJoints != pImpl->jointNameListFromConfigControlBoards.size()) {
         yError() << LogPrefix << "Control board joints number and names mismatch";
         return false;
-    }
+    }*/
 
+    yInfo() << LogPrefix << "Control boards joint names size : " << pImpl->jointNameListFromConfigControlBoards.size();
     yInfo() << LogPrefix << "Total number of joints from control boards : " << pImpl->totalControlBoardJoints;
 
     return true;
@@ -240,75 +245,85 @@ void RobotPositionController::run()
     pImpl->jointPositionsVector = pImpl->iHumanState->getJointPositions();
     pImpl->jointNameListFromHumanState = pImpl->iHumanState->getJointNames();
 
-    // Initialize joint position array with a dummy value
-    double jointPositionsArray[pImpl->totalControlBoardJoints];
+    // Check for first data
+    pImpl->jointPosVectorSum = std::accumulate(pImpl->jointPositionsVector.begin(), pImpl->jointPositionsVector.end(), 0.0);
 
-    for (unsigned i = 0; i < pImpl->totalControlBoardJoints; i++) {
-        jointPositionsArray[i] = -100000; //this is a dummy value
+    yInfo() << LogPrefix << "Joint position vector sum : " << pImpl->jointPosVectorSum;
+
+    // TODO: This is not the best way to check
+    // This check is to see if the first data read from the  IHumanState interface is all zero angles
+    if (pImpl->jointPosVectorSum != 0 && !pImpl->firstDataCheck) {
+        pImpl->firstDataCheck = true;
     }
 
-    // Set the joint position values array for iPositionControl interface
-    for (unsigned controlBoardJointIndex = 0; controlBoardJointIndex < pImpl->jointNameListFromControlBoards.size(); controlBoardJointIndex++) {
-        for (unsigned humanStateJointIndex = 0; humanStateJointIndex < pImpl->jointNameListFromHumanState.size(); humanStateJointIndex++) {
-            if (pImpl->jointNameListFromControlBoards.at(controlBoardJointIndex) == pImpl->jointNameListFromHumanState.at(humanStateJointIndex)) {
-                jointPositionsArray[controlBoardJointIndex] = pImpl->jointPositionsVector.at(humanStateJointIndex)*(180/M_PI);
-                break;
+    yInfo() << LogPrefix << "First data check : " << pImpl->firstDataCheck;
+
+    if (pImpl->firstDataCheck) {
+
+        // Initialize joint position array with a dummy value
+        double jointPositionsArray[pImpl->jointNameListFromConfigControlBoards.size()];
+
+        // Set the joint position values array for iPositionControl interface
+        for (unsigned controlBoardJointIndex = 0; controlBoardJointIndex < pImpl->jointNameListFromConfigControlBoards.size(); controlBoardJointIndex++) {
+            for (unsigned humanStateJointIndex = 0; humanStateJointIndex < pImpl->jointNameListFromHumanState.size(); humanStateJointIndex++) {
+                if (pImpl->jointNameListFromConfigControlBoards.at(controlBoardJointIndex) == pImpl->jointNameListFromHumanState.at(humanStateJointIndex)) {
+                    jointPositionsArray[controlBoardJointIndex] = pImpl->jointPositionsVector.at(humanStateJointIndex)*(180/M_PI);
+                    break;
+                }
             }
         }
-    }
 
-    // Set the desired joint positions and ask to move
-    int jointNumber = 0;
-    for (size_t i = 0; i < pImpl->remoteControlBoards.size(); i++) {
+        // Set the desired joint positions and ask to move
+        int jointNumber = 0;
+        for (size_t i = 0; i < pImpl->remoteControlBoards.size(); i++) {
 
-        pImpl->remoteControlBoards.at(i)->view(pImpl->iEncoders);
+            pImpl->remoteControlBoards.at(i)->view(pImpl->iEncoders);
 
-        // Get joints from iEncoder interface
-        int joints;
-        pImpl->iEncoders->getAxes(&joints);
+            // Get joints from iEncoder interface
+            int joints;
+            pImpl->iEncoders->getAxes(&joints);
 
-        // Read joint position through IEncoder interface
-        double encoderJointPositions[joints];
-        pImpl->iEncoders->getEncoders(encoderJointPositions);
+            // Read joint position through IEncoder interface
+            double encoderJointPositions[joints];
+            pImpl->iEncoders->getEncoders(encoderJointPositions);
 
-        if (pImpl->controlMode == "position") {
-            pImpl->remoteControlBoards.at(i)->view(pImpl->iPosControl);
-        }
-
-        if (pImpl->controlMode == "positionDirect") {
-            pImpl->remoteControlBoards.at(i)->view(pImpl->iPosDirectControl);
-        }
-
-        for (int j = 0; j < joints; j++) {
+            yInfo() << LogPrefix << "Control board (" << i << ") number of joints : " << joints;
 
             if (pImpl->controlMode == "position") {
-                if (jointPositionsArray[jointNumber] != -100000) {
-                    pImpl->iPosControl->positionMove(j, jointPositionsArray[jointNumber]);
-                }
-                else {
-                    pImpl->iPosControl->positionMove(j, encoderJointPositions[jointNumber]);
-                }
+                pImpl->remoteControlBoards.at(i)->view(pImpl->iPosControl);
             }
 
-            if (pImpl->controlMode == "positionDirect") {
-                if (jointPositionsArray[jointNumber] != -100000) {
-                    pImpl->iPosDirectControl->setPosition(j, jointPositionsArray[jointNumber]);
-                }
-                else {
-                    pImpl->iPosDirectControl->setPosition(j, encoderJointPositions[jointNumber]);
-                }
+            else if (pImpl->controlMode == "positionDirect") {
+                pImpl->remoteControlBoards.at(i)->view(pImpl->iPosDirectControl);
             }
 
-            jointNumber++;
+            for (int j = 0; j < joints; j++) {
+
+                if (pImpl->controlMode == "position") {
+                    if (j < pImpl->nJointsVectorFromConfig.at(i)) {
+                        pImpl->iPosControl->positionMove(j, jointPositionsArray[jointNumber]);
+                        yInfo() << LogPrefix << "Joint (" << j << ") reference : " << jointPositionsArray[jointNumber];
+                        jointNumber++;
+                    }
+                }
+
+                else if (pImpl->controlMode == "positionDirect") {
+                    if (j < pImpl->nJointsVectorFromConfig.at(i))  {
+                        pImpl->iPosDirectControl->setPosition(j, jointPositionsArray[jointNumber]);
+                        jointNumber++;
+                    }
+                }
+
+            }
+
         }
 
-    }
+        while(!pImpl->checkMotion) {
+            pImpl->iPosControl->checkMotionDone(&pImpl->checkMotion);
+        }
 
-    while(!pImpl->checkMotion) {
-        pImpl->iPosControl->checkMotionDone(&pImpl->checkMotion);
+        pImpl->checkMotion = false;
     }
-
-    pImpl->checkMotion = false;
 }
 
 bool RobotPositionController::attach(yarp::dev::PolyDriver* poly)
@@ -334,10 +349,10 @@ bool RobotPositionController::attach(yarp::dev::PolyDriver* poly)
     }
 
     // Check the joint numbers match
-    if (pImpl->iHumanState->getNumberOfJoints() != pImpl->totalControlBoardJoints) {
+    /*if (pImpl->iHumanState->getNumberOfJoints() != pImpl->totalControlBoardJoints) {
         yError() << "Number of joints mismatch between the control boards and IHumanState interface";
         return false;
-    }
+    }*/
 
     yDebug() << LogPrefix << "Read" << pImpl->iHumanState->getNumberOfJoints() << "joints";
 
