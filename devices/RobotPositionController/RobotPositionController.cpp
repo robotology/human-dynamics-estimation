@@ -425,6 +425,32 @@ bool RobotPositionController::attach(yarp::dev::PolyDriver* poly)
 
 bool RobotPositionController::detach()
 {
+    // Set the position control mode
+    for (size_t boardCount = 0; boardCount < pImpl->remoteControlBoards.size(); boardCount++) {
+
+        // Get encoder interface
+        if (!pImpl->remoteControlBoards.at(boardCount)->view(pImpl->iEncoders) || !pImpl->iEncoders) {
+            yError() << LogPrefix << "Failed to view the IEncoder interface from the (" << boardCount << ") remote control board device";
+            return false;
+        }
+
+        // Get joint axes from encoder interface
+        int remoteControlBoardJoints;
+        pImpl->iEncoders->getAxes(&remoteControlBoardJoints);
+
+        // Get control mode interface
+        if (!pImpl->remoteControlBoards.at(boardCount)->view(pImpl->iControlMode) || !pImpl->iControlMode) {
+            yError() << LogPrefix << "Failed to view the IControlMode interface from the (" << boardCount << ") remote control board device";
+            return false;
+        }
+
+        // Set control mode
+        for (unsigned joint = 0; joint < remoteControlBoardJoints; joint++) {
+            pImpl->iControlMode->setControlMode(joint,VOCAB_CM_POSITION);
+        }
+
+    }
+
     pImpl->iHumanState       = nullptr;
     pImpl->iEncoders         = nullptr;
     pImpl->iControlMode      = nullptr;
