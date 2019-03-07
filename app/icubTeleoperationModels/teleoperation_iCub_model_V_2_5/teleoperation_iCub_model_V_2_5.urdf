@@ -73,12 +73,14 @@
       </geometry>
     </collision>
   </link>
+
+  <!--limit effort="37.0" lower="-0.349065850399" upper="2.09439510239" velocity="7.64"/-->
   <joint name="r_hip_roll" type="revolute">
     <origin xyz="0 -0.0441 0" rpy="0 0 0"/>
     <axis xyz="-1.0 0.0 -2.22044604925e-16"/>
     <parent link="r_hip_1"/>
     <child link="r_hip_2"/>
-    <limit effort="37.0" lower="-0.349065850399" upper="2.09439510239" velocity="7.64"/>
+    <limit effort="37.0" lower="0.261799000003794" upper="2.09439510239" velocity="7.64"/>
     <dynamics damping="1.0" friction="0.0"/>
   </joint>
   <link name="r_hip_3">
@@ -771,12 +773,13 @@
       </geometry>
     </collision>
   </link>
+  <!--limit effort="37.0" lower="-0.349065850399" upper="2.09439510239" velocity="7.64"/-->
   <joint name="l_hip_roll" type="revolute">
     <origin xyz="0 0.0441 0" rpy="0 0 0"/>
     <axis xyz="1.0 0.0 2.22044604925e-16"/>
     <parent link="l_hip_1"/>
     <child link="l_hip_2"/>
-    <limit effort="37.0" lower="-0.349065850399" upper="2.09439510239" velocity="7.64"/>
+    <limit effort="37.0" lower="0.261799000003794" upper="2.09439510239" velocity="7.64"/>
     <dynamics damping="1.0" friction="0.0"/>
   </joint>
   <link name="l_hip_3">

@@ -163,11 +163,14 @@
         <action phase="shutdown" level="5" type="detach"/>
     </device>
 
-    <!--device type="robot_position_controller" name="RobotPositionController">
+    <device type="robot_position_controller" name="RobotPositionController">
         <param name="period">0.100</param>
-        <param name="controlMode">position</param>
+        <param name="controlMode">positionDirect</param>
+        <param name="refSpeed">15</param>
+        <param name="samplingTime">0.05</param>
+        <param name="smoothingTime">1</param>
         <param name="controlBoardsList">(head torso left_arm right_arm left_leg right_leg)</param>
-        <param name="remotePrefix">/icubSim</param>
+        <param name="remotePrefix">/icub</param>
         <param name="localPrefix">/robotPositionController</param>
         <param name="head">(neck_pitch neck_roll neck_yaw)</param>
         <param name="torso">(torso_yaw torso_roll torso_pitch)</param>
@@ -181,6 +184,7 @@
             </paramlist>
         </action>
         <action phase="shutdown" level="5" type="detach"/>
-    </device-->
+    </device>
+
 
 </robot>
