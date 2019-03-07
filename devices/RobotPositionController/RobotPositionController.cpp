@@ -48,6 +48,7 @@ public:
     std::vector<int> nJointsVectorFromConfig;
     int totalControlBoardJoints;
     std::vector<double> jointPositionsVector;
+    std::vector<double> previousJointPositionsVector;
 
     // Min jerk trajectory
     double samplingTime;
@@ -293,6 +294,9 @@ void RobotPositionController::run()
     // This check is to see if the first data read from the  IHumanState interface is all zero angles
     if (pImpl->jointPosVectorSum != 0 && !pImpl->firstDataCheck) {
         pImpl->firstDataCheck = true;
+
+        // Set the previous joint positions vector first time
+        pImpl->previousJointPositionsVector = pImpl->iHumanState->getJointPositions();
     }
 
     if (pImpl->firstDataCheck) {
@@ -304,8 +308,13 @@ void RobotPositionController::run()
         for (unsigned controlBoardJointIndex = 0; controlBoardJointIndex < pImpl->jointNameListFromConfigControlBoards.size(); controlBoardJointIndex++) {
             for (unsigned humanStateJointIndex = 0; humanStateJointIndex < pImpl->jointNameListFromHumanState.size(); humanStateJointIndex++) {
                 if (pImpl->jointNameListFromConfigControlBoards.at(controlBoardJointIndex) == pImpl->jointNameListFromHumanState.at(humanStateJointIndex)) {
-                    jointPositionsArray[controlBoardJointIndex] = pImpl->jointPositionsVector.at(humanStateJointIndex)*(180/M_PI);
-                    break;
+                    if (std::fabs(pImpl->jointPositionsVector.at(humanStateJointIndex) - pImpl->previousJointPositionsVector.at(humanStateJointIndex)) < 10) {
+                        jointPositionsArray[controlBoardJointIndex] = pImpl->jointPositionsVector.at(humanStateJointIndex)*(180/M_PI);
+                    }
+                    else {
+                        jointPositionsArray[controlBoardJointIndex] =  pImpl->previousJointPositionsVector.at(humanStateJointIndex)*(180/M_PI);
+                    }
+                     break;
                 }
             }
         }
