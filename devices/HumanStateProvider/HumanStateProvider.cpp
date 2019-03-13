@@ -904,7 +904,7 @@ void HumanStateProvider::run()
                         linkPair.sInitial.setVal(jointIndex, linkPair.jointConfigurations.getVal(jointIndex));
 
                         //TODO: Set the correct velocities values
-                        pImpl->solution.jointVelocities[pairJoint.first] = 0;
+                        pImpl->solution.jointVelocities[pairJoint.first] = linkPair.jointVelocities.getVal(jointIndex);
                     }
                     else {
                         pImpl->linkPairsJointConfigurationSolution.setVal(pairJoint.first, linkPair.jointConfigurations.getVal(jointIndex));
