@@ -139,6 +139,7 @@ public:
     iDynTree::VectorDynSize jointAngles;
     std::unordered_map<std::string, iDynTree::Rotation> linkRotationMatrices;
     std::unordered_map<std::string, iDynTree::Transform> linkTransformMatrices;
+    std::unordered_map<std::string, iDynTree::Vector6> linkVelocities;
     iDynTree::VectorDynSize linkPairsJointConfigurationSolution;
     iDynTree::VectorDynSize globalJointConfigurationSolution;
     iDynTree::VectorDynSize jointVelocitiesSolution;
@@ -159,6 +160,7 @@ public:
     bool getJointAnglesFromInputData(iDynTree::VectorDynSize& jointAngles);
     bool getLinkOrientationFromInputData(std::unordered_map<std::string, iDynTree::Rotation>& r);
     bool getLinkTransformFromInputData(std::unordered_map<std::string, iDynTree::Transform>& t);
+    bool getLinkVelocityFromInputData(std::unordered_map<std::string, iDynTree::Vector6>& t);
 };
 
 // =========================
@@ -767,6 +769,13 @@ void HumanStateProvider::run()
         return;
     }
 
+    // Get the link velocity from input data
+    if (!pImpl->getLinkVelocityFromInputData(pImpl->linkVelocities)) {
+        yError() << LogPrefix << "Failed to get link velocity from input data";
+        askToStop();
+        return;
+    }
+
     {
         std::lock_guard<std::mutex> lock(pImpl->mutex);
 
@@ -786,10 +795,7 @@ void HumanStateProvider::run()
             SegmentInfo& segmentInfo = pImpl->segments.at(segmentIndex);
             segmentInfo.poseWRTWorld = pImpl->linkTransformMatrices.at(segmentInfo.segmentName);
 
-            // TODO: Change the velocites from zero to data from the suit
-            for (unsigned i = 0; i < 6; ++i) {
-                segmentInfo.velocities(i) = 0;
-            }
+            segmentInfo.velocities = pImpl->linkVelocities.at(segmentInfo.segmentName);
         }
     }
 
@@ -825,7 +831,7 @@ void HumanStateProvider::run()
                         pImpl->solution.jointPositions[pairJoint.first] = linkPair.jointConfigurations.getVal(jointIndex);
 
                         //TODO: Set the correct velocities values
-                        pImpl->solution.jointVelocities[pairJoint.first] = 0;
+                        pImpl->solution.jointVelocities[pairJoint.first] = linkPair.jointVelocities.getVal(jointIndex);
                     }
                     else {
                         pImpl->linkPairsJointConfigurationSolution.setVal(pairJoint.first, linkPair.jointConfigurations.getVal(jointIndex));
@@ -845,6 +851,10 @@ void HumanStateProvider::run()
         iDynTree::Transform measuredBaseTransform;
         measuredBaseTransform = pImpl->linkTransformMatrices.at(pImpl->floatingBaseFrame.model);
 
+        // Get base velocity from the suit
+        iDynTree::Vector6 measuredBaseVelocity;
+        measuredBaseVelocity = pImpl->linkVelocities.at(pImpl->floatingBaseFrame.model);
+
         // If global ik is false, use measured pose for base frame
         if (!pImpl->useGlobalIK) {
             pImpl->solution.basePosition = {measuredBaseTransform.getPosition().getVal(0),
@@ -856,6 +866,15 @@ void HumanStateProvider::run()
                 measuredBaseTransform.getRotation().asQuaternion().getVal(1),
                 measuredBaseTransform.getRotation().asQuaternion().getVal(2),
                 measuredBaseTransform.getRotation().asQuaternion().getVal(3),
+            };
+
+            pImpl->solution.baseVelocity = {
+                measuredBaseVelocity.getVal(0),
+                measuredBaseVelocity.getVal(1),
+                measuredBaseVelocity.getVal(2),
+                measuredBaseVelocity.getVal(3),
+                measuredBaseVelocity.getVal(4),
+                measuredBaseVelocity.getVal(5)
             };
         }
         else {
@@ -991,6 +1010,60 @@ bool HumanStateProvider::impl::getLinkTransformFromInputData(
         // Note that this map is used during the IK step for setting a target transform to a
         // link of the model. For this reason the map keys are model names.
         transforms[modelLinkName] = std::move(transform);
+    }
+
+    return true;
+}
+
+bool HumanStateProvider::impl::getLinkVelocityFromInputData(
+        std::unordered_map<std::string, iDynTree::Vector6>& velocities)
+{
+    for (const auto& linkMapEntry : wearableStorage.modelToWearable_LinkName) {
+        const ModelLinkName& modelLinkName = linkMapEntry.first;
+        const WearableLinkName& wearableLinkName = linkMapEntry.second;
+
+        if (wearableStorage.linkSensorsMap.find(wearableLinkName)
+                == wearableStorage.linkSensorsMap.end()
+                || !wearableStorage.linkSensorsMap.at(wearableLinkName)) {
+            yError() << LogPrefix << "Failed to get" << wearableLinkName
+                     << "sensor from the device. Something happened after configuring it.";
+            return false;
+        }
+
+        const wearable::SensorPtr<const sensor::IVirtualLinkKinSensor> sensor =
+                wearableStorage.linkSensorsMap.at(wearableLinkName);
+
+        if (!sensor) {
+            yError() << LogPrefix << "Sensor" << wearableLinkName
+                     << "has been added but not properly configured";
+            return false;
+        }
+
+        if (sensor->getSensorStatus() != sensor::SensorStatus::Ok) {
+            yError() << LogPrefix << "The sensor status of" << sensor->getSensorName()
+                     << "is not ok (" << static_cast<double>(sensor->getSensorStatus()) << ")";
+            return false;
+        }
+
+
+        wearable::Vector3 linearVelocity;
+        if (!sensor->getLinkLinearVelocity(linearVelocity)) {
+            yError() << LogPrefix << "Failed to read link linear velocity from virtual link sensor";
+            return false;
+        }
+
+        wearable::Vector3 angularVelocity;
+        if (!sensor->getLinkAngularVelocity(angularVelocity)) {
+            yError() << LogPrefix << "Failed to read link angular velocity from virtual link sensor";
+            return false;
+        }
+
+        velocities[modelLinkName].setVal(0, linearVelocity.at(0));
+        velocities[modelLinkName].setVal(1, linearVelocity.at(1));
+        velocities[modelLinkName].setVal(2, linearVelocity.at(2));
+        velocities[modelLinkName].setVal(3, angularVelocity.at(0));
+        velocities[modelLinkName].setVal(4, angularVelocity.at(1));
+        velocities[modelLinkName].setVal(5, angularVelocity.at(2));
     }
 
     return true;
