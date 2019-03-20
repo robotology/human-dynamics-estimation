@@ -4,7 +4,8 @@ set (HDE_XML_FILES xml/TransformServer.xml
                    xml/Human.xml
                    xml/pHRI.xml
                    xml/RobotPosePublisher.xml
-                   xml/HumanJointTorquesYarpScope.xml)
+                   xml/HumanJointTorquesYarpScope.xml
+                   xml/applications/HumanDynamicsEstimation-HumanDumper.xml)
 
 install(FILES ${HDE_XML_FILES}
              DESTINATION ${CMAKE_INSTALL_PREFIX}/share/${HDE_PROJECT_NAME}/)

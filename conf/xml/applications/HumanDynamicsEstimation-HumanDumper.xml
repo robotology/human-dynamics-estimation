@@ -4,6 +4,13 @@
 	
 	<var name="generic_node">localhost</var>
 
+    <module>
+        <name>yarpdatadumper</name>
+        <parameters>--name /human_dump/wearable --type bottle --txTime --rxTime</parameters>
+        <node>${generic_node}</node>
+        <tag>yarpdatadumper</tag>
+  </module>
+
   <module>
         <name>yarpdatadumper</name>
         <parameters>--name /human_dump/humanState --type bottle --txTime --rxTime</parameters>
@@ -14,7 +21,7 @@
 		
   <module>
         <name>yarpdatadumper</name>
-        <parameters>--name /human_dump/wearable --type bottle --txTime --rxTime</parameters>
+        <parameters>--name /human_dump/iWearRemapper --type bottle --txTime --rxTime</parameters>
         <node>${generic_node}</node>
         <tag>yarpdatadumper</tag>
   </module>
@@ -47,6 +54,26 @@
         <tag>yarpdatadumper</tag>
   </module>
 
+  <module>
+      <name>yarpdatadumper</name>
+      <parameters>--name /human_dump/FTshoesSkin/left --type bottle --txTime --rxTime</parameters>
+      <node>${generic_node}</node>
+      <tag>yarpdatadumper</tag>
+  </module>
+
+  <module>
+      <name>yarpdatadumper</name>
+      <parameters>--name /human_dump/FTshoesSkin/right --type bottle --txTime --rxTime</parameters>
+      <node>${generic_node}</node>
+      <tag>yarpdatadumper</tag>
+  </module>
+
+
+  <connection>
+        <from>/WearableData/data:o</from>
+        <to>/human_dump/wearable</to>
+        <protocol>udp</protocol>
+  </connection>
 	
 	<connection>
         <from>/HDE/HumanStateWrapper/state:o</from>
@@ -56,7 +83,7 @@
 
   <connection>
         <from>/IWearRemapper/data:o</from>
-        <to>/human_dump/wearable</to>
+        <to>/human_dump/iWearRemapper</to>
         <protocol>udp</protocol>
   </connection>
 
@@ -84,5 +111,16 @@
         <protocol>udp</protocol>
   </connection>
 
+  <connection>
+      <from>/icub/skin/left_skin_insole</from>
+      <to>/human_dump/FTshoesSkin/left</to>
+      <protocol>udp</protocol>
+  </connection>
+
+  <connection>
+      <from>/icub/skin/right_skin_insole</from>
+      <to>/human_dump/FTshoesSkin/right</to>
+      <protocol>udp</protocol>
+  </connection>
 
 </application>
