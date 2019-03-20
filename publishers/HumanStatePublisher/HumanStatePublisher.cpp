@@ -63,7 +63,7 @@ public:
     HumanStateBuffers humanStateBuffers;
 
     // ROS Publishers
-    yarp::os::Node node = {"/" + DeviceName};
+    yarp::os::Node* node = nullptr;
     BasePosePublisherResources humanBasePoseROS;
     HumanJointStatePublisherResources humanJointStateROS;
 };
@@ -103,6 +103,17 @@ bool HumanStatePublisher::open(yarp::os::Searchable& config)
         return false;
     }
 
+    // PORT PREFIX
+    // ==========
+    bool hasPortPrefix = false;
+    if (config.check("portprefix")) {
+        if (!config.find("portprefix").isString()) {
+            yError() << LogPrefix << "Parameter 'portprefix' is invalid";
+            return false;
+        }
+        hasPortPrefix = true;
+    }
+
     // ===============
     // READ PARAMETERS
     // ===============
@@ -115,8 +126,20 @@ bool HumanStatePublisher::open(yarp::os::Searchable& config)
     pImpl->baseTFName = config.find("baseTFName").asString(); // e.g. /Human/Pelvis
     std::string humanJointsTopicName = config.find("humanJointsTopic").asString();
 
+    std::string portPrefix = "";
+    if (hasPortPrefix) {
+        portPrefix = config.find("portprefix").asString();
+        pImpl->node = new yarp::os::Node({"/" + portPrefix + "/" + DeviceName});
+    }
+    else {
+        pImpl->node = new yarp::os::Node({"/" + DeviceName});
+    }
+
     yInfo() << LogPrefix << "*** =====================";
     yInfo() << LogPrefix << "*** Period              :" << period;
+    if (hasPortPrefix) {
+        yInfo() << LogPrefix << "*** Prefix              :" << portPrefix;
+    }
     yInfo() << LogPrefix << "*** Base transform name :" << pImpl->baseTFName;
     yInfo() << LogPrefix << "*** Joint topic name    :" << humanJointsTopicName;
     yInfo() << LogPrefix << "*** =====================";
@@ -153,7 +176,7 @@ bool HumanStatePublisher::close()
 {
     pImpl->humanBasePoseROS.publisher.close();
     pImpl->humanJointStateROS.publisher.close();
-    pImpl->node.interrupt();
+    pImpl->node->interrupt();
 
     return true;
 }
