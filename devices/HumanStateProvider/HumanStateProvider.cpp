@@ -141,10 +141,12 @@ public:
     std::unordered_map<std::string, iDynTree::Transform> linkTransformMatrices;
     std::unordered_map<std::string, iDynTree::Rotation> linkOrientationMatrices;
     std::unordered_map<std::string, iDynTree::Vector6> linkVelocities;
-    iDynTree::VectorDynSize linkPairsJointConfigurationSolution;
-    iDynTree::VectorDynSize globalJointConfigurationSolution;
+    std::unordered_map<std::string, iDynTree::MatrixDynSize> linkJacobiansRelativeToBase;
+    iDynTree::VectorDynSize jointConfigurationSolution;
     iDynTree::VectorDynSize jointVelocitiesSolution;
+    iDynTree::VectorDynSize jointVelocitiesSolutionOld;
     iDynTree::Transform baseTransformSolution;
+    iDynTree::Vector6 baseVelocitySolution;
 
     // IK stuff
     std::string solverName;
@@ -158,12 +160,25 @@ public:
 
     bool useGlobalIK;
     bool usePairWisedIK;
+    bool useIntegrationBasedIK;
     iDynTree::InverseKinematics globalIK;
+
+    double lastTime{-1.0};
+
+    std::unique_ptr<iDynTree::KinDynComputations> kinDynComputations;
+    Eigen::ColPivHouseholderQR<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> > jacobianDecomposition;
+    iDynTree::MatrixDynSize fullLinkJacobian;
+    iDynTree::VectorDynSize fullLinkVelocities;
 
     bool getJointAnglesFromInputData(iDynTree::VectorDynSize& jointAngles);
     bool getLinkOrientationFromInputData(std::unordered_map<std::string, iDynTree::Rotation>& r);
     bool getLinkTransformFromInputData(std::unordered_map<std::string, iDynTree::Transform>& t);
     bool getLinkVelocityFromInputData(std::unordered_map<std::string, iDynTree::Vector6>& t);
+
+    bool skewVee(iDynTree::Matrix3x3 rotation, iDynTree::Vector3& vector);
+
+    bool getRealLinkJacobiansRelativeToBase(iDynTree::VectorDynSize& jointAngles, std::unordered_map<std::string, iDynTree::MatrixDynSize>& J);
+    bool computeJointVelocities(iDynTree::VectorDynSize jointConfiguration, std::unordered_map<std::string, iDynTree::Vector6> linkVelocitiesMap, iDynTree::VectorDynSize& jointVelocities);
 };
 
 // =========================
@@ -314,6 +329,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     pImpl->costRegularization = config.find("costRegularization").asDouble();
     pImpl->useGlobalIK = config.find("useGlobalIK").asBool();
     pImpl->usePairWisedIK = config.find("usePairWisedIK").asBool();
+    pImpl->useIntegrationBasedIK = config.find("useIntegrationBasedIK").asBool();
     pImpl->useXsensJointsAngles = config.find("useXsensJointsAngles").asBool();
     const std::string urdfFileName = config.find("urdf").asString();
     pImpl->floatingBaseFrame.model = floatingBaseFrameList->get(0).asString();
@@ -355,8 +371,9 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     yInfo() << LogPrefix << "*** Position target weight :" << pImpl->posTargetWeight;
     yInfo() << LogPrefix << "*** Rotation target weight :" << pImpl->rotTargetWeight;
     yInfo() << LogPrefix << "*** Cost regularization    :" << pImpl->costRegularization;
-    yInfo() << LogPrefix << "*** Global IK status       :" << pImpl->useGlobalIK;
-    yInfo() << LogPrefix << "*** Pair-Wised IK status   :" << pImpl->usePairWisedIK;
+    yInfo() << LogPrefix << "*** Global IK              :" << pImpl->useGlobalIK;
+    yInfo() << LogPrefix << "*** Pair-Wised IK          :" << pImpl->usePairWisedIK;
+    yInfo() << LogPrefix << "*** Integration Based IK   :" << pImpl->useIntegrationBasedIK;
     yInfo() << LogPrefix << "*** Use Xsens joint angles :" << pImpl->useXsensJointsAngles;
     yInfo() << LogPrefix << "*** ========================";
 
@@ -385,6 +402,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     // ================================
 
     const size_t nrOfJoints = pImpl->humanModel.getNrOfJoints();
+    // const size_t nrOfJoints = pImpl->humanModel.getNrOfLinks();
 
     pImpl->solution.jointPositions.resize(nrOfJoints);
     pImpl->solution.jointVelocities.resize(nrOfJoints);
@@ -392,14 +410,20 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     pImpl->jointAngles.resize(nrOfJoints);
     pImpl->jointAngles.zero();
 
-    pImpl->linkPairsJointConfigurationSolution.resize(nrOfJoints);
-    pImpl->linkPairsJointConfigurationSolution.zero();
-
-    pImpl->globalJointConfigurationSolution.resize(nrOfJoints);
-    pImpl->globalJointConfigurationSolution.zero();
+    pImpl->jointConfigurationSolution.resize(nrOfJoints);
+    pImpl->jointConfigurationSolution.zero();
 
     pImpl->jointVelocitiesSolution.resize(nrOfJoints);
     pImpl->jointVelocitiesSolution.zero();
+
+    pImpl->jointVelocitiesSolutionOld.resize(nrOfJoints);
+    pImpl->jointVelocitiesSolutionOld.zero();
+
+    pImpl->fullLinkJacobian.resize(3 * pImpl->wearableStorage.modelToWearable_LinkName.size(), nrOfJoints);
+    pImpl->fullLinkJacobian.zero();
+
+    pImpl->fullLinkVelocities.resize(3 * pImpl->wearableStorage.modelToWearable_LinkName.size());
+    pImpl->fullLinkVelocities.zero();
 
     // Get the model link names according to the modelToWearable link sensor map
     const size_t nrOfSegments = pImpl->wearableStorage.modelToWearable_LinkName.size();
@@ -423,11 +447,17 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         segmentIndex++;
     }
 
+    // Initialize kinDyn computation
+    pImpl->kinDynComputations = std::unique_ptr<iDynTree::KinDynComputations>(new iDynTree::KinDynComputations());
+    pImpl->kinDynComputations->loadRobotModel(modelLoader.model());
+
+    pImpl->jacobianDecomposition = Eigen::ColPivHouseholderQR<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> >(pImpl->fullLinkJacobian.rows(), pImpl->fullLinkJacobian.cols());
+
     // ========================
     // INITIALIZE PAIR-WISED IK
     // ========================
 
-    if (pImpl->usePairWisedIK) {
+    if (pImpl->usePairWisedIK || pImpl->useIntegrationBasedIK) {
 
         // Get all the possible pairs composing the model
         std::vector<std::pair<std::string, std::string>> pairNames;
@@ -530,7 +560,6 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
             pairInfo.jointVelocities.resize(solverJoints.size());
             pairInfo.jointVelocities.zero();
 
-            // TODO: Check if KinDyn is needed
             // Now configure the kinDynComputation object
             modelLoader.loadReducedModelFromFullModel(pImpl->humanModel, solverJoints);
             const iDynTree::Model &reducedModel = modelLoader.model();
@@ -627,7 +656,6 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
                 return false;
             }
         }
-
     }
 
     return true;
@@ -804,7 +832,7 @@ void HumanStateProvider::run()
     iDynTree::Vector6 measuredBaseVelocity;
     measuredBaseVelocity = pImpl->linkVelocities.at(pImpl->floatingBaseFrame.model);
 
-    if(pImpl->usePairWisedIK) {
+    if(pImpl->usePairWisedIK || (pImpl->useIntegrationBasedIK && pImpl->firstRun)) {
 
         {
             std::lock_guard<std::mutex> lock(pImpl->mutex);
@@ -839,67 +867,36 @@ void HumanStateProvider::run()
         yDebug() << "IK took"
                  << std::chrono::duration_cast<std::chrono::milliseconds>(tock - tick).count() << "ms";
 
-        // Expose IK solution for IHumanState
-        {
-            std::lock_guard<std::mutex> lock(pImpl->mutex);
+        // Joint link pair ik solutions using joints map from link pairs initialization
+        // to solution struct for exposing data through interface
+        for (auto& linkPair : pImpl->linkPairs) {
+            size_t jointIndex = 0;
+            for (auto& pairJoint : linkPair.consideredJointLocations) {
 
-            // Joint link pair ik solutions using joints map from link pairs initialization
-            // to solution struct for exposing data through interface
-            for (auto& linkPair : pImpl->linkPairs) {
-                size_t jointIndex = 0;
-                for (auto& pairJoint : linkPair.consideredJointLocations) {
+                // Check if it is a valid 1 DoF joint
+                if (pairJoint.second == 1) {
+                    pImpl->jointConfigurationSolution.setVal(pairJoint.first, linkPair.jointConfigurations.getVal(jointIndex));
+                    pImpl->jointVelocitiesSolution.setVal(pairJoint.first, linkPair.jointVelocities.getVal(jointIndex));
 
-                    // Check if it is a valid 1 DoF joint
-                    if (pairJoint.second == 1) {
-
-                        // If global ik is false, use link pair joint solutions
-                        if (!pImpl->useGlobalIK) {
-                            pImpl->solution.jointPositions[pairJoint.first] = linkPair.jointConfigurations.getVal(jointIndex);
-
-                            //TODO: Set the correct velocities values
-                            pImpl->solution.jointVelocities[pairJoint.first] = linkPair.jointVelocities.getVal(jointIndex);
-                        }
-                        else {
-                            pImpl->linkPairsJointConfigurationSolution.setVal(pairJoint.first, linkPair.jointConfigurations.getVal(jointIndex));
-                        }
-
-                        jointIndex++;
-                    }
-                    else {
-                        yWarning() << LogPrefix << " Invalid DoFs for the joint, skipping the ik solution for this joint";
-                        continue;
-                    }
-
+                    jointIndex++;
                 }
+                else {
+                    yWarning() << LogPrefix << " Invalid DoFs for the joint, skipping the ik solution for this joint";
+                    continue;
+                }
+
             }
-
-            // Use measured pose and velocity for the base frame
-            pImpl->solution.basePosition = {measuredBaseTransform.getPosition().getVal(0),
-                                            measuredBaseTransform.getPosition().getVal(1),
-                                            measuredBaseTransform.getPosition().getVal(2)};
-
-            pImpl->solution.baseOrientation = {
-                measuredBaseTransform.getRotation().asQuaternion().getVal(0),
-                measuredBaseTransform.getRotation().asQuaternion().getVal(1),
-                measuredBaseTransform.getRotation().asQuaternion().getVal(2),
-                measuredBaseTransform.getRotation().asQuaternion().getVal(3),
-            };
-
-            pImpl->solution.baseVelocity = {
-                measuredBaseVelocity.getVal(0),
-                measuredBaseVelocity.getVal(1),
-                measuredBaseVelocity.getVal(2),
-                measuredBaseVelocity.getVal(3),
-                measuredBaseVelocity.getVal(4),
-                measuredBaseVelocity.getVal(5)
-            };
         }
+
+        // Use measured pose and velocity for the base frame
+        pImpl->baseTransformSolution = measuredBaseTransform;
+        pImpl->baseVelocitySolution = measuredBaseVelocity;
     }
 
     if (pImpl->useGlobalIK) {
 
         // Set global IK initial condition
-        if (!pImpl->globalIK.setFullJointsInitialCondition(&pImpl->baseTransformSolution, &pImpl->globalJointConfigurationSolution)) {
+        if (!pImpl->globalIK.setFullJointsInitialCondition(&pImpl->baseTransformSolution, &pImpl->jointConfigurationSolution)) {
             yError() << LogPrefix << "Failed to set the joint configuration for initializing the global IK";
             askToStop();
             return;
@@ -960,39 +957,123 @@ void HumanStateProvider::run()
                  << std::chrono::duration_cast<std::chrono::milliseconds>(tock - tick).count() << "ms";
 
         // Get the global inverse kinematics solution
-        pImpl->globalIK.getFullJointsSolution(pImpl->baseTransformSolution, pImpl->globalJointConfigurationSolution);
+        pImpl->globalIK.getFullJointsSolution(pImpl->baseTransformSolution, pImpl->jointConfigurationSolution);
 
-        // Expose IK solution for IHumanState
+        tick = std::chrono::high_resolution_clock::now();
+
+        // Get the joint velocities solution
+        pImpl->computeJointVelocities(pImpl->jointConfigurationSolution, pImpl->linkVelocities, pImpl->jointVelocitiesSolution);
+
+        tock = std::chrono::high_resolution_clock::now();
+                yDebug() << LogPrefix << "Velocity computation took"
+                         << std::chrono::duration_cast<std::chrono::milliseconds>(tock - tick).count() << "ms";
+
+        // Use measured base frame velocity
+        pImpl->baseVelocitySolution = measuredBaseVelocity;
+    }
+
+    if (pImpl->useIntegrationBasedIK)
+    {
+
+        //compute timestep
+        double dt;
+            if (pImpl->lastTime < 0.0)
         {
-            std::lock_guard<std::mutex> lock(pImpl->mutex);
+            dt = this->getPeriod();
+        }
+        else
+        {
+            dt = yarp::os::Time::now()-pImpl->lastTime;
+        };
+        pImpl->lastTime = yarp::os::Time::now();
 
-            for (unsigned i = 0; i < pImpl->globalJointConfigurationSolution.size(); ++i) {
-                pImpl->solution.jointPositions[i] = pImpl->globalJointConfigurationSolution.getVal(i);
+        // correction term for link velocities
+        iDynTree::KinDynComputations *computations = pImpl->kinDynComputations.get();
+        iDynTree::Vector3 worldGravity;
+        worldGravity.zero();
+        worldGravity(2) = -9.81;
+        computations->setRobotState(pImpl->jointConfigurationSolution, pImpl->jointVelocitiesSolution, worldGravity);
+
+        // TODO
+        for (size_t linkIndex = 0; linkIndex < pImpl->humanModel.getNrOfLinks(); ++linkIndex) {
+            std::string linkName = pImpl->humanModel.getLinkName(linkIndex);
+
+            // skip fake links
+            if (pImpl->wearableStorage.modelToWearable_LinkName.find(linkName)
+                    == pImpl->wearableStorage.modelToWearable_LinkName.end()) {
+                continue;
             }
 
-            pImpl->solution.basePosition = {pImpl->baseTransformSolution.getPosition().getVal(0),
-                                            pImpl->baseTransformSolution.getPosition().getVal(1),
-                                            pImpl->baseTransformSolution.getPosition().getVal(2)};
+            // skip floating base link
+            if (linkName == pImpl->floatingBaseFrame.model) {
+                continue;
+            }
 
-            pImpl->solution.baseOrientation = {
-                pImpl->baseTransformSolution.getRotation().asQuaternion().getVal(0),
-                pImpl->baseTransformSolution.getRotation().asQuaternion().getVal(1),
-                pImpl->baseTransformSolution.getRotation().asQuaternion().getVal(2),
-                pImpl->baseTransformSolution.getRotation().asQuaternion().getVal(3),
-            };
+            iDynTree::Rotation rotationError = computations->getWorldTransform(pImpl->humanModel.getFrameIndex(linkName)).getRotation() * pImpl->linkTransformMatrices[linkName].getRotation().inverse();
+            iDynTree::Vector3 velocityCorrection;
 
-            // Use measured base frame velocity
-            pImpl->solution.baseVelocity = {
-                measuredBaseVelocity.getVal(0),
-                measuredBaseVelocity.getVal(1),
-                measuredBaseVelocity.getVal(2),
-                measuredBaseVelocity.getVal(3),
-                measuredBaseVelocity.getVal(4),
-                measuredBaseVelocity.getVal(5)
-            };
-            // TODO: joint velocities
-            pImpl->solution.jointVelocities.resize(pImpl->solution.jointPositions.size(), 0);
+            pImpl->skewVee(rotationError, velocityCorrection);
+
+            for (int i=3; i<6; i++) {
+                pImpl->linkVelocities[linkName].setVal(i, pImpl->linkVelocities[linkName].getVal(i) - 0.2 * velocityCorrection.getVal(i-3));
+            }
+
         }
+
+        // compute joint velocities
+        auto tick_IB = std::chrono::high_resolution_clock::now();
+
+        pImpl->computeJointVelocities(pImpl->jointConfigurationSolution, pImpl->linkVelocities, pImpl->jointVelocitiesSolution);
+
+        // integrate joint velocities to obtain joint position
+        if (pImpl->firstRun) { pImpl->jointVelocitiesSolutionOld = pImpl->jointVelocitiesSolution; }
+        for (unsigned i = 0; i < pImpl->jointConfigurationSolution.size(); ++i) {
+            pImpl->jointConfigurationSolution.setVal(i, pImpl->jointConfigurationSolution.getVal(i) + (pImpl->jointVelocitiesSolution.getVal(i) + pImpl->jointVelocitiesSolutionOld.getVal(i)) * dt / 2);
+        }
+        pImpl->jointVelocitiesSolutionOld = pImpl->jointVelocitiesSolution;
+
+        auto tock_IB = std::chrono::high_resolution_clock::now();
+        yDebug() << LogPrefix << "Integral Based IK took"
+                 << std::chrono::duration_cast<std::chrono::milliseconds>(tock_IB - tick_IB).count() << "ms";
+
+        pImpl->baseTransformSolution = measuredBaseTransform;
+        pImpl->baseVelocitySolution = measuredBaseVelocity;
+    }
+
+    // Expose IK solution for IHumanState
+    {
+        std::lock_guard<std::mutex> lock(pImpl->mutex);
+
+        for (unsigned i = 0; i < pImpl->jointConfigurationSolution.size(); ++i) {
+            pImpl->solution.jointPositions[i] = pImpl->jointConfigurationSolution.getVal(i);
+            pImpl->solution.jointVelocities[i] = pImpl->jointVelocitiesSolution.getVal(i);
+        }
+
+        pImpl->solution.basePosition = {pImpl->baseTransformSolution.getPosition().getVal(0),
+                                        pImpl->baseTransformSolution.getPosition().getVal(1),
+                                        pImpl->baseTransformSolution.getPosition().getVal(2)};
+
+        pImpl->solution.baseOrientation = {
+            pImpl->baseTransformSolution.getRotation().asQuaternion().getVal(0),
+            pImpl->baseTransformSolution.getRotation().asQuaternion().getVal(1),
+            pImpl->baseTransformSolution.getRotation().asQuaternion().getVal(2),
+            pImpl->baseTransformSolution.getRotation().asQuaternion().getVal(3),
+        };
+
+        // Use measured base frame velocity
+        pImpl->solution.baseVelocity = {
+            pImpl->baseVelocitySolution.getVal(0),
+            pImpl->baseVelocitySolution.getVal(1),
+            pImpl->baseVelocitySolution.getVal(2),
+            pImpl->baseVelocitySolution.getVal(3),
+            pImpl->baseVelocitySolution.getVal(4),
+            pImpl->baseVelocitySolution.getVal(5)
+        };
+    }
+
+    if (pImpl->firstRun)
+    {
+        pImpl->firstRun = false;
     }
 }
 
@@ -1084,7 +1165,6 @@ bool HumanStateProvider::impl::getLinkVelocityFromInputData(
                      << "is not ok (" << static_cast<double>(sensor->getSensorStatus()) << ")";
             return false;
         }
-
 
         wearable::Vector3 linearVelocity;
         if (!sensor->getLinkLinearVelocity(linearVelocity)) {
@@ -1198,6 +1278,82 @@ bool HumanStateProvider::impl::getJointAnglesFromInputData(iDynTree::VectorDynSi
         jointAngles.setVal(humanModel.getJointIndex(modelJointName),
                            anglesXYZ[wearableJointInfo.index]);
     }
+
+    return true;
+}
+
+bool HumanStateProvider::impl::getRealLinkJacobiansRelativeToBase(iDynTree::VectorDynSize& jointAngles, std::unordered_map<std::string, iDynTree::MatrixDynSize>& jacobians)
+{
+    iDynTree::Vector3 worldGravity;
+    worldGravity.zero();
+    worldGravity(2) = -9.81;
+
+    iDynTree::VectorDynSize& zeroJointVelocities = jointVelocitiesSolution;
+    zeroJointVelocities.zero();
+
+    iDynTree::KinDynComputations *computations = kinDynComputations.get();
+    computations->setRobotState(jointAngles, zeroJointVelocities, worldGravity);
+
+    for (size_t linkIndex = 0; linkIndex < humanModel.getNrOfLinks(); ++linkIndex) {
+        std::string linkName = humanModel.getLinkName(linkIndex);
+
+        // skip fake links
+        if (wearableStorage.modelToWearable_LinkName.find(linkName)
+                == wearableStorage.modelToWearable_LinkName.end()) {
+            continue;
+        }
+
+        // skip floating base link
+        if (linkName == floatingBaseFrame.model) {
+            continue;
+        }
+
+        iDynTree::MatrixDynSize relativeJacobian(6, humanModel.getNrOfLinks());
+        computations->getRelativeJacobian(humanModel.getFrameIndex(floatingBaseFrame.model), linkIndex, relativeJacobian);
+
+        jacobians[linkName] = std::move(relativeJacobian);
+    }
+
+    return true;
+}
+
+bool HumanStateProvider::impl::computeJointVelocities(iDynTree::VectorDynSize jointConfiguration, std::unordered_map<std::string, iDynTree::Vector6> linkVelocitiesMap, iDynTree::VectorDynSize& jointVelocities)
+{
+    if(!getRealLinkJacobiansRelativeToBase(jointConfigurationSolution, linkJacobiansRelativeToBase))
+    {
+        yError() << LogPrefix << "Failed to compute the link Jacobians";
+        return false;
+    }
+
+    int linkCount = 0;
+    for (const auto& linkMapEntry : linkJacobiansRelativeToBase) {
+        const ModelLinkName& linkName = linkMapEntry.first;
+        for (int i=3; i<6; i++)
+        {
+            for (int j=0; j<humanModel.getNrOfJoints(); j++)
+            {
+                fullLinkJacobian.setVal(3 * linkCount + i, j, linkJacobiansRelativeToBase[linkName].getVal(i, j));
+            }
+            fullLinkVelocities.setVal(3 * linkCount + i, linkVelocitiesMap[linkName].getVal(i) - linkVelocitiesMap[floatingBaseFrame.model].getVal(i));
+        }
+        linkCount = linkCount + 1;
+    }
+
+    //Pseudo-invert the Full Jacobian
+    //Compute the QR decomposition
+    jacobianDecomposition.compute(iDynTree::toEigen(fullLinkJacobian));
+    // the solve method on the decomposition directly solves the associated least-squares problem
+    iDynTree::toEigen(jointVelocities) = jacobianDecomposition.solve(iDynTree::toEigen(fullLinkVelocities));
+
+    return true;
+}
+
+bool HumanStateProvider::impl::skewVee(iDynTree::Matrix3x3 rotation, iDynTree::Vector3& vector)
+{
+    iDynTree::Matrix3x3 skewSymmetric;
+    iDynTree::toEigen(skewSymmetric) = 0.5 * (iDynTree::toEigen(rotation) - iDynTree::toEigen(rotation).transpose());
+
+    iDynTree::toEigen(vector) = iDynTree::unskew(iDynTree::toEigen(skewSymmetric));
 
     return true;
 }
