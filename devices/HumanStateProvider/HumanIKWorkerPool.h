@@ -107,7 +107,7 @@ struct SegmentInfo {
     std::string segmentName;
 
     iDynTree::Transform poseWRTWorld;
-    iDynTree::VectorDynSize velocities;
+    iDynTree::Twist velocities;
 
     // TODO: if not needed acceleration delete them
     yarp::sig::Vector accelerations;
@@ -161,7 +161,7 @@ class HumanIKWorkerPool {
     unsigned m_poolSize;
 
     int computeIK(WorkerTaskData& task);
-    void computeJointVelocities(WorkerTaskData& task, iDynTree::VectorDynSize& relativeVelocity);
+    void computeJointVelocities(WorkerTaskData& task, iDynTree::Twist& relativeVelocity);
 
     void worker();
 

@@ -130,7 +130,7 @@ int HumanIKWorkerPool::computeIK(WorkerTaskData& task)
     return result;
 }
 
-void HumanIKWorkerPool::computeJointVelocities(WorkerTaskData& task, iDynTree::VectorDynSize& relativeVelocity)
+void HumanIKWorkerPool::computeJointVelocities(WorkerTaskData& task, iDynTree::Twist& relativeVelocity)
 {
     // Update kinDynComputations object
     iDynTree::Vector3 worldGravity;
@@ -155,14 +155,13 @@ void HumanIKWorkerPool::computeJointVelocities(WorkerTaskData& task, iDynTree::V
     //Compute the QR decomposition
     task.pairInfo.jacobianDecomposition.compute(iDynTree::toEigen(relativeJacobian));
     //the solve method on the decomposition directly solves the associated least-squares problem
-    relativeVelocity = task.childFrameInfo.velocities;
-    iDynTree::toEigen(relativeVelocity) -= iDynTree::toEigen(task.parentFrameInfo.velocities);
+    relativeVelocity = task.childFrameInfo.velocities - task.parentFrameInfo.velocities;
     iDynTree::toEigen(task.pairInfo.jointVelocities) = task.pairInfo.jacobianDecomposition.solve(iDynTree::toEigen(relativeVelocity));
 }
 
 void HumanIKWorkerPool::worker() {
     //Preallocate some thread-local variables to be used in the computation
-    iDynTree::VectorDynSize relativeVelocity(6);
+    iDynTree::Twist relativeVelocity;
 
     while (true) {
 #ifdef EIGEN_RUNTIME_NO_MALLOC
