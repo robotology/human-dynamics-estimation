@@ -150,13 +150,16 @@ public:
     iDynTree::Twist baseVelocitySolutionOld;
 
     // IK stuff
+    int ikPoolSize{1};
+    int maxIterationsIK;
+    double costTolerance;
     std::string solverName;
     yarp::os::Value ikPoolOption;
     std::unique_ptr<HumanIKWorkerPool> ikPool;
     SolutionIK solution;
 
-    int posTargetWeight;
-    int rotTargetWeight;
+    double posTargetWeight;
+    double rotTargetWeight;
     double costRegularization;
 
     double integrationBasedIKLinearCorrectionGain;
@@ -212,46 +215,6 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         return false;
     }
 
-    if (!(config.check("allowIKFailures") && config.find("allowIKFailures").isBool())) {
-        yError() << LogPrefix << "allowFailures option not found or not valid";
-        return false;
-    }
-
-    if (!(config.check("maxIterationsIK") && config.find("maxIterationsIK").isInt())) {
-        yError() << LogPrefix << "maxIterationsIK option not found or not valid";
-        return false;
-    }
-
-    if (!(config.check("costTolerance") && config.find("costTolerance").isFloat64())) {
-        yError() << LogPrefix << "costTolerance option not found or not valid";
-        return false;
-    }
-
-    if (!(config.check("ikLinearSolver") && config.find("ikLinearSolver").isString())) {
-        yError() << LogPrefix << "ikLinearSolver option not found or not valid";
-        return false;
-    }
-
-    if (!(config.check("ikPoolSizeOption") && (config.find("ikPoolSizeOption").isString() || config.find("ikPoolSizeOption").isInt()))) {
-        yError() << LogPrefix << "ikPoolOption option not found or not valid";
-        return false;
-    }
-
-    if (!(config.check("posTargetWeight") && config.find("posTargetWeight").isInt())) {
-        yError() << LogPrefix << "posTargetWeight option not found or not valid";
-        return false;
-    }
-
-    if (!(config.check("rotTargetWeight") && config.find("rotTargetWeight").isInt())) {
-        yError() << LogPrefix << "rotTargetWeight option not found or not valid";
-        return false;
-    }
-
-    if (!(config.check("costRegularization") && config.find("costRegularization").isDouble())) {
-        yError() << LogPrefix << "costRegularization option not found or not valid";
-        return false;
-    }
-
     if (!(config.check("useGlobalIK") && config.find("useGlobalIK").isBool())) {
         yError() << LogPrefix << "useGlobalIK option not found or not valid";
         return false;
@@ -264,12 +227,6 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
 
     if (!(config.check("useXsensJointsAngles") && config.find("useXsensJointsAngles").isBool())) {
         yError() << LogPrefix << "useXsensJointsAngles option not found or not valid";
-        return false;
-    }
-
-    if (!(config.check("integrationBasedIKCorrectionGains") && config.find("integrationBasedIKCorrectionGains").isList()
-          && config.find("integrationBasedIKCorrectionGains").asList()->size() == 2)) {
-        yError() << LogPrefix << "integrationBasedIKCorrectionGains option not found or not valid";
         return false;
     }
 
@@ -302,49 +259,16 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         }
     }
 
-    yarp::os::Bottle& jointsGroup = config.findGroup("MODEL_TO_DATA_JOINT_NAMES");
-    if (jointsGroup.isNull()) {
-        yError() << LogPrefix << "Failed to find group MODEL_TO_DATA_JOINT_NAMES";
-        return false;
-    }
-
-    for (size_t i = 1; i < jointsGroup.size(); ++i) {
-        if (!(jointsGroup.get(i).isList() && jointsGroup.get(i).asList()->size() == 2)) {
-            yError() << LogPrefix << "Childs of MODEL_TO_DATA_JOINT_NAMES must be lists";
-            return false;
-        }
-        yarp::os::Bottle* list = jointsGroup.get(i).asList();
-        std::string key = list->get(0).asString();
-        yarp::os::Bottle* listContent = list->get(1).asList();
-
-        if (!((listContent->size() == 3) && (listContent->get(0).isString())
-              && (listContent->get(1).isString()) && (listContent->get(2).isInt()))) {
-            yError() << LogPrefix << "Joint list must have two strings and one integer";
-            return false;
-        }
-    }
-
-    // ===============================
-    // PARSE THE CONFIGURATION OPTIONS
-    // ===============================
+    // =======================================
+    // PARSE THE GENERAL CONFIGURATION OPTIONS
+    // =======================================
 
     yarp::os::Bottle* floatingBaseFrameList = config.find("floatingBaseFrame").asList();
-    yarp::os::Bottle* integrationBasedIKCorrectionGains = config.find("integrationBasedIKCorrectionGains").asList();
-
-    pImpl->allowIKFailures = config.find("allowIKFailures").asBool();
-    int maxIterationsIK = config.find("maxIterationsIK").asInt();
-    double costTolerance = config.find("costTolerance").asFloat64();
-    pImpl->solverName = config.find("ikLinearSolver").asString();
-    pImpl->posTargetWeight = config.find("posTargetWeight").asInt();
-    pImpl->rotTargetWeight = config.find("rotTargetWeight").asInt();
-    pImpl->costRegularization = config.find("costRegularization").asDouble();
     pImpl->useGlobalIK = config.find("useGlobalIK").asBool();
     pImpl->usePairWisedIK = config.find("usePairWisedIK").asBool();
     pImpl->useIntegrationBasedIK = config.find("useIntegrationBasedIK").asBool();
     pImpl->useXsensJointsAngles = config.find("useXsensJointsAngles").asBool();
     const std::string urdfFileName = config.find("urdf").asString();
-    pImpl->integrationBasedIKLinearCorrectionGain = integrationBasedIKCorrectionGains->get(0).asFloat64();
-    pImpl->integrationBasedIKAngularCorrectionGain = integrationBasedIKCorrectionGains->get(1).asFloat64();
     pImpl->floatingBaseFrame.model = floatingBaseFrameList->get(0).asString();
     pImpl->floatingBaseFrame.wearable = floatingBaseFrameList->get(1).asString();
     const double period = config.check("period", yarp::os::Value(DefaultPeriod)).asFloat64();
@@ -361,34 +285,148 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         pImpl->wearableStorage.modelToWearable_LinkName[modelLinkName] = wearableLinkName;
     }
 
-    for (size_t i = 1; i < jointsGroup.size(); ++i) {
-        yarp::os::Bottle* listContent = jointsGroup.get(i).asList()->get(1).asList();
+    // ==========================================
+    // PARSE THE DEPENDENDT CONFIGURATION OPTIONS
+    // ==========================================
 
-        std::string modelJointName = listContent->get(0).asString();
-        std::string wearableJointName = listContent->get(1).asString();
-        size_t wearableJointComponent = listContent->get(2).asInt();
+    if (pImpl->useXsensJointsAngles)
+    {
+        yarp::os::Bottle& jointsGroup = config.findGroup("MODEL_TO_DATA_JOINT_NAMES");
+        if (jointsGroup.isNull()) {
+            yError() << LogPrefix << "Failed to find group MODEL_TO_DATA_JOINT_NAMES";
+            return false;
+        }
 
-        yInfo() << LogPrefix << "Read joint map:" << modelJointName << "==> (" << wearableJointName
-                << "," << wearableJointComponent << ")";
-        pImpl->wearableStorage.modelToWearable_JointInfo[modelJointName] = {wearableJointName,
-                                                                            wearableJointComponent};
+        for (size_t i = 1; i < jointsGroup.size(); ++i) {
+            if (!(jointsGroup.get(i).isList() && jointsGroup.get(i).asList()->size() == 2)) {
+                yError() << LogPrefix << "Childs of MODEL_TO_DATA_JOINT_NAMES must be lists";
+                return false;
+            }
+            yarp::os::Bottle* list = jointsGroup.get(i).asList();
+            std::string key = list->get(0).asString();
+            yarp::os::Bottle* listContent = list->get(1).asList();
+
+            if (!((listContent->size() == 3) && (listContent->get(0).isString())
+                  && (listContent->get(1).isString()) && (listContent->get(2).isInt()))) {
+                yError() << LogPrefix << "Joint list must have two strings and one integer";
+                return false;
+            }
+        }
+
+        for (size_t i = 1; i < jointsGroup.size(); ++i) {
+            yarp::os::Bottle* listContent = jointsGroup.get(i).asList()->get(1).asList();
+
+            std::string modelJointName = listContent->get(0).asString();
+            std::string wearableJointName = listContent->get(1).asString();
+            size_t wearableJointComponent = listContent->get(2).asInt();
+
+            yInfo() << LogPrefix << "Read joint map:" << modelJointName << "==> (" << wearableJointName
+                    << "," << wearableJointComponent << ")";
+            pImpl->wearableStorage.modelToWearable_JointInfo[modelJointName] = {wearableJointName,
+                                                                                wearableJointComponent};
+        }
     }
 
-    yInfo() << LogPrefix << "*** ========================";
-    yInfo() << LogPrefix << "*** Period                 :" << period;
-    yInfo() << LogPrefix << "*** Urdf file name         :" << urdfFileName;
-    yInfo() << LogPrefix << "*** Allow IK failures      :" << pImpl->allowIKFailures;
-    yInfo() << LogPrefix << "*** Max IK iterations      :" << maxIterationsIK;
-    yInfo() << LogPrefix << "*** Cost Tolerance         :" << costTolerance;
-    yInfo() << LogPrefix << "*** IK Solver Name         :" << pImpl->solverName;
-    yInfo() << LogPrefix << "*** Position target weight :" << pImpl->posTargetWeight;
-    yInfo() << LogPrefix << "*** Rotation target weight :" << pImpl->rotTargetWeight;
-    yInfo() << LogPrefix << "*** Cost regularization    :" << pImpl->costRegularization;
-    yInfo() << LogPrefix << "*** Global IK              :" << pImpl->useGlobalIK;
-    yInfo() << LogPrefix << "*** Pair-Wised IK          :" << pImpl->usePairWisedIK;
-    yInfo() << LogPrefix << "*** Integration Based IK   :" << pImpl->useIntegrationBasedIK;
-    yInfo() << LogPrefix << "*** Use Xsens joint angles :" << pImpl->useXsensJointsAngles;
-    yInfo() << LogPrefix << "*** ========================";
+    if (pImpl->usePairWisedIK || pImpl->useGlobalIK)
+    {
+        if (!(config.check("allowIKFailures") && config.find("allowIKFailures").isBool())) {
+            yError() << LogPrefix << "allowFailures option not found or not valid";
+            return false;
+        }
+        if (!(config.check("maxIterationsIK") && config.find("maxIterationsIK").isInt())) {
+            yError() << LogPrefix << "maxIterationsIK option not found or not valid";
+            return false;
+        }
+
+        if (!(config.check("costTolerance") && config.find("costTolerance").isFloat64())) {
+            yError() << LogPrefix << "costTolerance option not found or not valid";
+            return false;
+        }
+        if (!(config.check("ikLinearSolver") && config.find("ikLinearSolver").isString())) {
+            yError() << LogPrefix << "ikLinearSolver option not found or not valid";
+            return false;
+        }
+        if (!(config.check("posTargetWeight") && config.find("posTargetWeight").isFloat64())) {
+            yError() << LogPrefix << "posTargetWeight option not found or not valid";
+            return false;
+        }
+
+        if (!(config.check("rotTargetWeight") && config.find("rotTargetWeight").isFloat64())) {
+            yError() << LogPrefix << "rotTargetWeight option not found or not valid";
+            return false;
+        }
+        if (!(config.check("costRegularization") && config.find("costRegularization").isDouble())) {
+            yError() << LogPrefix << "costRegularization option not found or not valid";
+            return false;
+        }
+
+        pImpl->allowIKFailures = config.find("allowIKFailures").asBool();
+        pImpl->maxIterationsIK = config.find("maxIterationsIK").asInt();
+        pImpl->costTolerance = config.find("costTolerance").asFloat64();
+        pImpl->solverName = config.find("ikLinearSolver").asString();
+        pImpl->posTargetWeight = config.find("posTargetWeight").asFloat64();
+        pImpl->rotTargetWeight = config.find("rotTargetWeight").asFloat64();
+        pImpl->costRegularization = config.find("costRegularization").asDouble();
+    }
+
+    if (pImpl->usePairWisedIK)
+    {
+        if (!(config.check("ikPoolSizeOption") && (config.find("ikPoolSizeOption").isString() || config.find("ikPoolSizeOption").isInt()))) {
+            yError() << LogPrefix << "ikPoolOption option not found or not valid";
+            return false;
+        }
+
+        // Get ikPoolSizeOption
+        if (config.find("ikPoolSizeOption").isString() && config.find("ikPoolSizeOption").asString() == "auto" ) {
+            yInfo() << LogPrefix << "Using " << std::thread::hardware_concurrency() << " available logical threads for ik pool";
+            pImpl->ikPoolSize = static_cast<int>(std::thread::hardware_concurrency());
+        }
+        else if(config.find("ikPoolSizeOption").isInt()) {
+            pImpl->ikPoolSize = config.find("ikPoolSizeOption").asInt();
+        }
+    }
+
+    if (pImpl->useIntegrationBasedIK)
+    {
+        if (!(config.check("integrationBasedIKCorrectionGains") && config.find("integrationBasedIKCorrectionGains").isList()
+              && config.find("integrationBasedIKCorrectionGains").asList()->size() == 2)) {
+            yError() << LogPrefix << "integrationBasedIKCorrectionGains option not found or not valid";
+            return false;
+        }
+
+        yarp::os::Bottle* integrationBasedIKCorrectionGains = config.find("integrationBasedIKCorrectionGains").asList();
+        pImpl->integrationBasedIKLinearCorrectionGain = integrationBasedIKCorrectionGains->get(0).asFloat64();
+        pImpl->integrationBasedIKAngularCorrectionGain = integrationBasedIKCorrectionGains->get(1).asFloat64();
+    }
+
+    // ===================================
+    // PRINT CURRENT CONFIGURATION OPTIONS
+    // ===================================
+
+    yInfo() << LogPrefix << "*** =========================";
+    yInfo() << LogPrefix << "*** Period                  :" << period;
+    yInfo() << LogPrefix << "*** Urdf file name          :" << urdfFileName;
+    yInfo() << LogPrefix << "*** Global IK               :" << pImpl->useGlobalIK;
+    yInfo() << LogPrefix << "*** Pair-Wised IK           :" << pImpl->usePairWisedIK;
+    yInfo() << LogPrefix << "*** Integration Based IK    :" << pImpl->useIntegrationBasedIK;
+    yInfo() << LogPrefix << "*** Use Xsens joint angles  :" << pImpl->useXsensJointsAngles;
+    if (pImpl->usePairWisedIK || pImpl->useGlobalIK)
+    {
+        yInfo() << LogPrefix << "*** Allow IK failures       :" << pImpl->allowIKFailures;
+        yInfo() << LogPrefix << "*** Max IK iterations       :" << pImpl->maxIterationsIK;
+        yInfo() << LogPrefix << "*** Cost Tolerance          :" << pImpl->costTolerance;
+        yInfo() << LogPrefix << "*** IK Solver Name          :" << pImpl->solverName;
+        yInfo() << LogPrefix << "*** Position target weight  :" << pImpl->posTargetWeight;
+        yInfo() << LogPrefix << "*** Rotation target weight  :" << pImpl->rotTargetWeight;
+        yInfo() << LogPrefix << "*** Cost regularization     :" << pImpl->costRegularization;
+        yInfo() << LogPrefix << "*** Size of thread pool     :" << pImpl->ikPoolSize;
+    }
+    if (pImpl->useIntegrationBasedIK)
+    {
+        yInfo() << LogPrefix << "*** Linear correction gain  :" << pImpl->integrationBasedIKLinearCorrectionGain;
+        yInfo() << LogPrefix << "*** Angular correction gain :" << pImpl->integrationBasedIKAngularCorrectionGain;
+    }
+    yInfo() << LogPrefix << "*** =========================";
 
     // ==========================
     // INITIALIZE THE HUMAN MODEL
@@ -461,7 +499,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     // INITIALIZE PAIR-WISED IK
     // ========================
 
-    if (pImpl->usePairWisedIK || pImpl->useIntegrationBasedIK) {
+    if (pImpl->usePairWisedIK) {
 
         // Get all the possible pairs composing the model
         std::vector<std::pair<std::string, std::string>> pairNames;
@@ -494,8 +532,8 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
             // Set ik parameters
             pairInfo.ikSolver->setVerbosity(1);
             pairInfo.ikSolver->setLinearSolverName(pImpl->solverName);
-            pairInfo.ikSolver->setMaxIterations(maxIterationsIK);
-            pairInfo.ikSolver->setCostTolerance(costTolerance);
+            pairInfo.ikSolver->setMaxIterations(pImpl->maxIterationsIK);
+            pairInfo.ikSolver->setCostTolerance(pImpl->costTolerance);
             pairInfo.ikSolver->setDefaultTargetResolutionMode(iDynTree::InverseKinematicsTreatTargetAsConstraintNone);
             pairInfo.ikSolver->setRotationParametrization(iDynTree::InverseKinematicsRotationParametrizationRollPitchYaw);
 
@@ -592,19 +630,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         // INITIALIZE IK WORKER POOL
         // =========================
 
-        // Set default ik pool size
-        int ikPoolSize = 1;
-
-        // Get ikPoolSizeOption
-        if (config.find("ikPoolSizeOption").isString() || config.find("ikPoolSizeOption").asString() == "auto" ) {
-            yInfo() << LogPrefix << "Using " << std::thread::hardware_concurrency() << " available logical threads for ik pool";
-            ikPoolSize = static_cast<int>(std::thread::hardware_concurrency());
-        }
-        else if(config.find("ikPoolSizeOption").isInt()) {
-            ikPoolSize = config.find("ikPoolSizeOption").asInt();
-        }
-
-        pImpl->ikPool = std::unique_ptr<HumanIKWorkerPool>(new HumanIKWorkerPool(ikPoolSize,
+        pImpl->ikPool = std::unique_ptr<HumanIKWorkerPool>(new HumanIKWorkerPool(pImpl->ikPoolSize,
                                                                                  pImpl->linkPairs,
                                                                                  pImpl->segments));
 
@@ -624,8 +650,8 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         // Set global ik parameters
         pImpl->globalIK.setVerbosity(1);
         pImpl->globalIK.setLinearSolverName(pImpl->solverName);
-        pImpl->globalIK.setMaxIterations(maxIterationsIK);
-        pImpl->globalIK.setCostTolerance(costTolerance);
+        pImpl->globalIK.setMaxIterations(pImpl->maxIterationsIK);
+        pImpl->globalIK.setCostTolerance(pImpl->costTolerance);
         pImpl->globalIK.setDefaultTargetResolutionMode(iDynTree::InverseKinematicsTreatTargetAsConstraintNone);
         pImpl->globalIK.setRotationParametrization(iDynTree::InverseKinematicsRotationParametrizationRollPitchYaw);
 
@@ -838,7 +864,7 @@ void HumanStateProvider::run()
     iDynTree::Twist measuredBaseVelocity;
     measuredBaseVelocity = pImpl->linkVelocities.at(pImpl->floatingBaseFrame.model);
 
-    if(pImpl->usePairWisedIK || (pImpl->useIntegrationBasedIK && pImpl->firstRun)) {
+    if(pImpl->usePairWisedIK && !(pImpl->useIntegrationBasedIK && !(pImpl->firstRun))) {
 
         {
             std::lock_guard<std::mutex> lock(pImpl->mutex);
@@ -896,7 +922,7 @@ void HumanStateProvider::run()
                  << std::chrono::duration_cast<std::chrono::milliseconds>(tock_PW - tick_PW).count() << "ms";
     }
 
-    if (pImpl->useGlobalIK) {
+    if (pImpl->useGlobalIK && !(pImpl->useIntegrationBasedIK && !(pImpl->firstRun))) {
 
         auto tick_G = std::chrono::high_resolution_clock::now();
 
@@ -960,7 +986,6 @@ void HumanStateProvider::run()
 
         // Get the joint velocities solution
         pImpl->computeVelocities(pImpl->jointConfigurationSolution, pImpl->baseTransformSolution, pImpl->linkVelocities, pImpl->jointVelocitiesSolution, pImpl->baseVelocitySolution);
-        pImpl->computeJointVelocities(pImpl->jointConfigurationSolution, pImpl->linkVelocities, pImpl->jointVelocitiesSolution);
 
         auto tock_G = std::chrono::high_resolution_clock::now();
         yDebug() << LogPrefix << "Global IK took"
@@ -1018,7 +1043,7 @@ void HumanStateProvider::run()
             }
         }
 
-        // compute joint velocities
+        // compute velocities
         pImpl->computeVelocities(pImpl->jointConfigurationSolution, pImpl->baseTransformSolution, pImpl->linkVelocities, pImpl->jointVelocitiesSolution, pImpl->baseVelocitySolution);
 
         // initialize integrator
@@ -1026,12 +1051,12 @@ void HumanStateProvider::run()
             pImpl->jointVelocitiesSolutionOld = pImpl->jointVelocitiesSolution;
             pImpl->baseVelocitySolutionOld = pImpl->baseVelocitySolution;
         }
-        // integrate joint velocities to obtain joint position
+        // integrate joint velocities to obtain joint position using Tustin formula
         for (unsigned i = 0; i < pImpl->jointConfigurationSolution.size(); ++i) {
             pImpl->jointConfigurationSolution.setVal(i, pImpl->jointConfigurationSolution.getVal(i) + (pImpl->jointVelocitiesSolution.getVal(i) + pImpl->jointVelocitiesSolutionOld.getVal(i)) * dt / 2);
         }
 
-        // integrate base linear velocity to obtain base position
+        // integrate base linear velocity to obtain base position using Tustin formula
         iDynTree::Position basePositionSolution;
         for (unsigned i = 0; i < 3; i++) {
             iDynTree::toEigen(basePositionSolution) = iDynTree::toEigen(pImpl->baseTransformSolution.getPosition()) + (iDynTree::toEigen(pImpl->baseVelocitySolution.getLinearVec3()) + iDynTree::toEigen(pImpl->baseVelocitySolutionOld.getLinearVec3())) * dt / 2;

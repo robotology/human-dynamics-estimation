@@ -43,8 +43,8 @@ struct LinkPairInfo {
 
     // IK elements (i.e. compute joints)
     std::shared_ptr<iDynTree::InverseKinematics> ikSolver;
-    int positionTargetWeight;
-    int rotationTargetWeight;
+    double positionTargetWeight;
+    double rotationTargetWeight;
     double costRegularization;
 
     // Initial joint positions
