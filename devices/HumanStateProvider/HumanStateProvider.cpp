@@ -141,13 +141,15 @@ public:
     std::unordered_map<std::string, iDynTree::Transform> linkTransformMatrices;
     std::unordered_map<std::string, iDynTree::Rotation> linkOrientationMatrices;
     std::unordered_map<std::string, iDynTree::Twist> linkVelocities;
-    // std::unordered_map<std::string, iDynTree::MatrixDynSize> linkJacobiansRelativeToBase;
     iDynTree::VectorDynSize jointConfigurationSolution;
     iDynTree::VectorDynSize jointVelocitiesSolution;
     iDynTree::VectorDynSize jointVelocitiesSolutionOld;
     iDynTree::Transform baseTransformSolution;
     iDynTree::Twist baseVelocitySolution;
     iDynTree::Twist baseVelocitySolutionOld;
+
+    std::unordered_map<std::string, iDynTree::Rotation> linkErrorOrientations;
+    std::unordered_map<std::string, iDynTree::Vector3> linkErrorAngularVelocities;
 
     // IK stuff
     int ikPoolSize{1};
@@ -186,6 +188,9 @@ public:
 
     bool getRealLinkJacobians(iDynTree::VectorDynSize jointConfigurations, iDynTree::Transform floatingBasePose, std::unordered_map<std::string, iDynTree::MatrixDynSize>& J);
     bool computeVelocities(iDynTree::VectorDynSize jointConfigurations, iDynTree::Transform floatingBasePose, std::unordered_map<std::string, iDynTree::Twist> linkVelocitiesMap, iDynTree::VectorDynSize& jointVelocities, iDynTree::Twist& baseVelocity);
+
+    bool computeLinksOrientationErrors(std::unordered_map<std::string, iDynTree::Rotation> linkDesiredOrientations, iDynTree::VectorDynSize jointConfigurations, iDynTree::Transform floatingBasePose, std::unordered_map<std::string, iDynTree::Rotation>& linkErrorOrientations);
+    bool computeLinksAngularVelocityErrors(std::unordered_map<std::string, iDynTree::Twist> linkDesiredVelocities, iDynTree::VectorDynSize jointConfigurations, iDynTree::Transform floatingBasePose, iDynTree::VectorDynSize jointVelocities, iDynTree::Twist baseVelocity, std::unordered_map<std::string, iDynTree::Vector3>& linkAngularVelocityError);
 };
 
 // =========================
@@ -1110,6 +1115,10 @@ void HumanStateProvider::run()
         };
     }
 
+    // compute the inverse kinematic errors
+    pImpl->computeLinksOrientationErrors(pImpl->linkOrientationMatrices, pImpl->jointConfigurationSolution, pImpl->baseTransformSolution, pImpl->linkErrorOrientations);
+    pImpl->computeLinksAngularVelocityErrors(pImpl->linkVelocities, pImpl->jointConfigurationSolution, pImpl->baseTransformSolution, pImpl->jointVelocitiesSolution, pImpl->baseVelocitySolution, pImpl->linkErrorAngularVelocities);
+
     if (pImpl->firstRun)
     {
         pImpl->firstRun = false;
@@ -1499,6 +1508,45 @@ bool HumanStateProvider::impl::computeVelocities(iDynTree::VectorDynSize jointCo
         jointVelocities.setVal(k-6, nu.getVal(k));
     }
 
+    return true;
+}
+
+bool HumanStateProvider::impl::computeLinksOrientationErrors(std::unordered_map<std::string, iDynTree::Rotation> linkDesiredOrientations, iDynTree::VectorDynSize jointConfigurations, iDynTree::Transform floatingBasePose, std::unordered_map<std::string, iDynTree::Rotation>& linkErrorOrientations)
+{
+    iDynTree::Vector3 worldGravity;
+    worldGravity.zero();
+    worldGravity(2) = -9.81;
+
+    iDynTree::VectorDynSize zeroJointVelocities = jointConfigurations;
+    zeroJointVelocities.zero();
+
+    iDynTree::Twist zeroBaseVelocity;
+    zeroBaseVelocity.zero();
+
+    iDynTree::KinDynComputations *computations = kinDynComputations.get();
+    computations->setRobotState(floatingBasePose, jointConfigurations, zeroBaseVelocity, zeroJointVelocities, worldGravity);
+
+    for (const auto& linkMapEntry : linkDesiredOrientations) {
+        const ModelLinkName& linkName = linkMapEntry.first;
+        linkErrorOrientations[linkName] = computations->getWorldTransform(linkName).getRotation() * linkDesiredOrientations[linkName].inverse();
+    }
+
+    return true;
+}
+
+bool HumanStateProvider::impl::computeLinksAngularVelocityErrors(std::unordered_map<std::string, iDynTree::Twist> linkDesiredVelocities, iDynTree::VectorDynSize jointConfigurations, iDynTree::Transform floatingBasePose, iDynTree::VectorDynSize jointVelocities, iDynTree::Twist baseVelocity, std::unordered_map<std::string, iDynTree::Vector3>& linkAngularVelocityError)
+{
+    iDynTree::Vector3 worldGravity;
+    worldGravity.zero();
+    worldGravity(2) = -9.81;
+
+    iDynTree::KinDynComputations *computations = kinDynComputations.get();
+    computations->setRobotState(floatingBasePose, jointConfigurations, baseVelocity, jointVelocities, worldGravity);
+
+    for (const auto& linkMapEntry : linkDesiredVelocities) {
+        const ModelLinkName& linkName = linkMapEntry.first;
+        iDynTree::toEigen(linkAngularVelocityError[linkName]) = iDynTree::toEigen(linkDesiredVelocities[linkName].getLinearVec3()) - iDynTree::toEigen(computations->getFrameVel(linkName).getLinearVec3());
+    }
 
     return true;
 }
