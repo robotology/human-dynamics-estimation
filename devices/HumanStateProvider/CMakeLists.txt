@@ -30,7 +30,8 @@ target_link_libraries(HumanStateProvider PUBLIC
     IWear::IWear
     iDynTree::idyntree-model
     iDynTree::idyntree-inverse-kinematics
-    iDynTree::idyntree-high-level)
+    iDynTree::idyntree-high-level
+    UtilityLibrary)
 
 yarp_install(
     TARGETS HumanStateProvider

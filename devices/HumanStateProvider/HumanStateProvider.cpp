@@ -28,6 +28,8 @@
 #include <stack>
 #include <unordered_map>
 
+#include <Utils.hpp>
+
 /*!
  * @brief analyze model and list of segments to create all possible segment pairs
  *
@@ -148,7 +150,7 @@ public:
     iDynTree::Twist baseVelocitySolution;
     iDynTree::Twist baseVelocitySolutionOld;
 
-    std::unordered_map<std::string, iDynTree::Rotation> linkErrorOrientations;
+    std::unordered_map<std::string, iDynTreeHelper::Rotation::rotationDistance> linkErrorOrientations;
     std::unordered_map<std::string, iDynTree::Vector3> linkErrorAngularVelocities;
 
     // IK stuff
@@ -181,15 +183,13 @@ public:
     bool getLinkTransformFromInputData(std::unordered_map<std::string, iDynTree::Transform>& t);
     bool getLinkVelocityFromInputData(std::unordered_map<std::string, iDynTree::Twist>& t);
 
-    bool skewVee(iDynTree::Matrix3x3 rotation, iDynTree::Vector3& vector);
-
     bool getRealLinkJacobiansRelativeToBase(iDynTree::VectorDynSize jointConfigurations, std::unordered_map<std::string, iDynTree::MatrixDynSize>& J);
     bool computeJointVelocities(iDynTree::VectorDynSize jointConfigurations, std::unordered_map<std::string, iDynTree::Twist> linkVelocitiesMap, iDynTree::VectorDynSize& jointVelocities);
 
     bool getRealLinkJacobians(iDynTree::VectorDynSize jointConfigurations, iDynTree::Transform floatingBasePose, std::unordered_map<std::string, iDynTree::MatrixDynSize>& J);
     bool computeVelocities(iDynTree::VectorDynSize jointConfigurations, iDynTree::Transform floatingBasePose, std::unordered_map<std::string, iDynTree::Twist> linkVelocitiesMap, iDynTree::VectorDynSize& jointVelocities, iDynTree::Twist& baseVelocity);
 
-    bool computeLinksOrientationErrors(std::unordered_map<std::string, iDynTree::Rotation> linkDesiredOrientations, iDynTree::VectorDynSize jointConfigurations, iDynTree::Transform floatingBasePose, std::unordered_map<std::string, iDynTree::Rotation>& linkErrorOrientations);
+    bool computeLinksOrientationErrors(std::unordered_map<std::string, iDynTree::Rotation> linkDesiredOrientations, iDynTree::VectorDynSize jointConfigurations, iDynTree::Transform floatingBasePose, std::unordered_map<std::string, iDynTreeHelper::Rotation::rotationDistance>& linkErrorOrientations);
     bool computeLinksAngularVelocityErrors(std::unordered_map<std::string, iDynTree::Twist> linkDesiredVelocities, iDynTree::VectorDynSize jointConfigurations, iDynTree::Transform floatingBasePose, iDynTree::VectorDynSize jointVelocities, iDynTree::Twist baseVelocity, std::unordered_map<std::string, iDynTree::Vector3>& linkAngularVelocityError);
 };
 
@@ -1032,7 +1032,7 @@ void HumanStateProvider::run()
             iDynTree::Rotation rotationError = computations->getWorldTransform(pImpl->humanModel.getFrameIndex(linkName)).getRotation() * pImpl->linkTransformMatrices[linkName].getRotation().inverse();
             iDynTree::Vector3 angularVelocityCorrection;
 
-            pImpl->skewVee(rotationError, angularVelocityCorrection);
+            angularVelocityCorrection = iDynTreeHelper::Rotation::skewVee(rotationError);
 
             for (int i=3; i<6; i++) {
                 pImpl->linkVelocities[linkName].setVal(i, pImpl->linkVelocities[linkName].getVal(i) - pImpl->integrationBasedIKAngularCorrectionGain * angularVelocityCorrection.getVal(i-3));
@@ -1119,6 +1119,7 @@ void HumanStateProvider::run()
     pImpl->computeLinksOrientationErrors(pImpl->linkOrientationMatrices, pImpl->jointConfigurationSolution, pImpl->baseTransformSolution, pImpl->linkErrorOrientations);
     pImpl->computeLinksAngularVelocityErrors(pImpl->linkVelocities, pImpl->jointConfigurationSolution, pImpl->baseTransformSolution, pImpl->jointVelocitiesSolution, pImpl->baseVelocitySolution, pImpl->linkErrorAngularVelocities);
 
+    // iDynTreeHelper::Rotation::rotationDistance distance;
     if (pImpl->firstRun)
     {
         pImpl->firstRun = false;
@@ -1511,7 +1512,7 @@ bool HumanStateProvider::impl::computeVelocities(iDynTree::VectorDynSize jointCo
     return true;
 }
 
-bool HumanStateProvider::impl::computeLinksOrientationErrors(std::unordered_map<std::string, iDynTree::Rotation> linkDesiredOrientations, iDynTree::VectorDynSize jointConfigurations, iDynTree::Transform floatingBasePose, std::unordered_map<std::string, iDynTree::Rotation>& linkErrorOrientations)
+bool HumanStateProvider::impl::computeLinksOrientationErrors(std::unordered_map<std::string, iDynTree::Rotation> linkDesiredOrientations, iDynTree::VectorDynSize jointConfigurations, iDynTree::Transform floatingBasePose, std::unordered_map<std::string, iDynTreeHelper::Rotation::rotationDistance>& linkErrorOrientations)
 {
     iDynTree::Vector3 worldGravity;
     worldGravity.zero();
@@ -1528,7 +1529,7 @@ bool HumanStateProvider::impl::computeLinksOrientationErrors(std::unordered_map<
 
     for (const auto& linkMapEntry : linkDesiredOrientations) {
         const ModelLinkName& linkName = linkMapEntry.first;
-        linkErrorOrientations[linkName] = computations->getWorldTransform(linkName).getRotation() * linkDesiredOrientations[linkName].inverse();
+        linkErrorOrientations[linkName] = iDynTreeHelper::Rotation::rotationDistance(computations->getWorldTransform(linkName).getRotation(), linkDesiredOrientations[linkName]); // computations->getWorldTransform(linkName).getRotation() * linkDesiredOrientations[linkName].inverse();
     }
 
     return true;
@@ -1547,16 +1548,6 @@ bool HumanStateProvider::impl::computeLinksAngularVelocityErrors(std::unordered_
         const ModelLinkName& linkName = linkMapEntry.first;
         iDynTree::toEigen(linkAngularVelocityError[linkName]) = iDynTree::toEigen(linkDesiredVelocities[linkName].getLinearVec3()) - iDynTree::toEigen(computations->getFrameVel(linkName).getLinearVec3());
     }
-
-    return true;
-}
-
-bool HumanStateProvider::impl::skewVee(iDynTree::Matrix3x3 rotation, iDynTree::Vector3& vector)
-{
-    iDynTree::Matrix3x3 skewSymmetric;
-    iDynTree::toEigen(skewSymmetric) = 0.5 * (iDynTree::toEigen(rotation) - iDynTree::toEigen(rotation).transpose());
-
-    iDynTree::toEigen(vector) = iDynTree::unskew(iDynTree::toEigen(skewSymmetric));
 
     return true;
 }
