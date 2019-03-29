@@ -6,8 +6,8 @@
  * GNU Lesser General Public License v2.1 or any later version.
  */
 
-#ifndef HUMANIKWORKERPOOL_H
-#define HUMANIKWORKERPOOL_H
+#ifndef IKWORKERPOOL_H
+#define IKWORKERPOOL_H
 
 #include <vector>
 #include <memory>
@@ -119,7 +119,7 @@ struct SegmentInfo {
  * - IK given the relative transform
  * - joint velocities given the relative (angular) velocity
  */
-class HumanIKWorkerPool {
+class IKWorkerPool {
 
     struct WorkerTaskData {
         LinkPairInfo& pairInfo;
@@ -166,11 +166,11 @@ class HumanIKWorkerPool {
     void worker();
 
 public:
-    HumanIKWorkerPool(int size,
+    IKWorkerPool(int size,
                       std::vector<LinkPairInfo> &linkPairs,
                       std::vector<SegmentInfo> &segments);
 
-    ~HumanIKWorkerPool();
+    ~IKWorkerPool();
 
     /*!
      * Perform a "full" run of the implemented operations.
@@ -185,4 +185,4 @@ public:
 
 };
 
-#endif // HUMANIKWORKERPOOL_H
+#endif // IKWORKERPOOL_H
