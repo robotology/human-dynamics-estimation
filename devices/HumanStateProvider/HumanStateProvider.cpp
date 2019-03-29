@@ -7,7 +7,8 @@
  */
 
 #include "HumanStateProvider.h"
-#include "HumanIKWorkerPool.h"
+#include "IKWorkerPool.h"
+#include "InverseVelocityKinematics.hpp"
 
 #include <Wearable/IWear/IWear.h>
 #include <iDynTree/InverseKinematics.h>
@@ -159,7 +160,7 @@ public:
     double costTolerance;
     std::string solverName;
     yarp::os::Value ikPoolOption;
-    std::unique_ptr<HumanIKWorkerPool> ikPool;
+    std::unique_ptr<IKWorkerPool> ikPool;
     SolutionIK solution;
 
     double posTargetWeight;
@@ -172,9 +173,11 @@ public:
     bool useGlobalIK;
     bool usePairWisedIK;
     bool useIntegrationBasedIK;
+    bool useBaseMeasurementDirectlyFromXsens;
     iDynTree::InverseKinematics globalIK;
 
     double lastTime{-1.0};
+    double startTime{0};
 
     std::unique_ptr<iDynTree::KinDynComputations> kinDynComputations;
 
@@ -240,6 +243,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         yError() << LogPrefix << "floatingBaseFrame option not found or not valid";
         return false;
     }
+
 
     yarp::os::Bottle& linksGroup = config.findGroup("MODEL_TO_DATA_LINK_NAMES");
     if (linksGroup.isNull()) {
@@ -372,6 +376,16 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         pImpl->posTargetWeight = config.find("posTargetWeight").asFloat64();
         pImpl->rotTargetWeight = config.find("rotTargetWeight").asFloat64();
         pImpl->costRegularization = config.find("costRegularization").asDouble();
+    }
+
+    if (pImpl->useGlobalIK || pImpl->useIntegrationBasedIK)
+    {
+        if (!(config.check("useBaseMeasurementDirectlyFromXsens") && config.find("useBaseMeasurementDirectlyFromXsens").isBool())) {
+            yError() << LogPrefix << "useBaseMeasurementDirectlyFromXsens option not found or not valid";
+            return false;
+        }
+
+        pImpl->useBaseMeasurementDirectlyFromXsens = config.find("useBaseMeasurementDirectlyFromXsens").asBool();
     }
 
     if (pImpl->usePairWisedIK)
@@ -635,7 +649,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         // INITIALIZE IK WORKER POOL
         // =========================
 
-        pImpl->ikPool = std::unique_ptr<HumanIKWorkerPool>(new HumanIKWorkerPool(pImpl->ikPoolSize,
+        pImpl->ikPool = std::unique_ptr<IKWorkerPool>(new IKWorkerPool(pImpl->ikPoolSize,
                                                                                  pImpl->linkPairs,
                                                                                  pImpl->segments));
 
@@ -674,9 +688,9 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         for (size_t linkIndex = 0; linkIndex < pImpl->humanModel.getNrOfLinks(); ++linkIndex) {
             std::string linkName = pImpl->humanModel.getLinkName(linkIndex);
 
-            // Insert in the cost the rotation of the link used as base
+            // Insert in the cost the rotation and position of the link used as base
             if (linkName == pImpl->floatingBaseFrame.model) {
-                if (!pImpl->globalIK.addTarget(linkName, iDynTree::Transform::Identity())) {
+                if (!pImpl->useBaseMeasurementDirectlyFromXsens && !pImpl->globalIK.addTarget(linkName, iDynTree::Transform::Identity(), 1.0, 1.0)) {
                     yError() << LogPrefix << "Failed to add target for floating base link" << linkName;
                     askToStop();
                     return false;
@@ -938,13 +952,15 @@ void HumanStateProvider::run()
             return;
         }
 
+        iDynTree::Transform linkTransform;
+
         // Update ik targets based on wearable input data
         for (size_t linkIndex = 0; linkIndex < pImpl->humanModel.getNrOfLinks(); ++linkIndex) {
             std::string linkName = pImpl->humanModel.getLinkName(linkIndex);
 
-            // For the link used as base insert both the rotation and position cost
+            // For the link used as base insert both the rotation and position cost if not using direcly measurement from xsens
             if (linkName == pImpl->floatingBaseFrame.model) {
-                if (!pImpl->globalIK.updateTarget(linkName, pImpl->linkTransformMatrices.at(linkName))) {
+                if (!pImpl->useBaseMeasurementDirectlyFromXsens && !pImpl->globalIK.updateTarget(linkName, pImpl->linkTransformMatrices.at(linkName), 1.0, 1.0)) {
                     yError() << LogPrefix << "Failed to update target for floating base" << linkName;
                     askToStop();
                     return;
@@ -958,14 +974,20 @@ void HumanStateProvider::run()
                 continue;
             }
 
-
             if (pImpl->linkTransformMatrices.find(linkName) == pImpl->linkTransformMatrices.end()) {
                 yError() << LogPrefix << "Failed to find transformation matrix for link" << linkName;
                 askToStop();
                 return;
             }
 
-            if (!pImpl->globalIK.updateTarget(linkName, pImpl->linkTransformMatrices.at(linkName), pImpl->posTargetWeight, pImpl->rotTargetWeight)) {
+            linkTransform = pImpl->linkTransformMatrices.at(linkName);
+            // if useBaseMeasurementDirectlyFromXsens, use the link transform relative to the base
+            if (pImpl->useBaseMeasurementDirectlyFromXsens)
+            {
+                linkTransform = measuredBaseTransform.inverse() * linkTransform;
+            }
+
+            if (!pImpl->globalIK.updateTarget(linkName, linkTransform, pImpl->posTargetWeight, pImpl->rotTargetWeight)) {
                 yError() << LogPrefix << "Failed to update target for link" << linkName;
                 askToStop();
                 return;
@@ -989,15 +1011,24 @@ void HumanStateProvider::run()
         // Get the global inverse kinematics solution
         pImpl->globalIK.getFullJointsSolution(pImpl->baseTransformSolution, pImpl->jointConfigurationSolution);
 
-        // Get the joint velocities solution
-        pImpl->computeVelocities(pImpl->jointConfigurationSolution, pImpl->baseTransformSolution, pImpl->linkVelocities, pImpl->jointVelocitiesSolution, pImpl->baseVelocitySolution);
+        // if useBaseMeasurementDirectlyFromXsens use directly the measurement of the base pose from the base link coming from Xsens and compute only the joint velocities solution
+        if (pImpl->useBaseMeasurementDirectlyFromXsens)
+        {
+            pImpl->baseTransformSolution = measuredBaseTransform;
+            pImpl->computeJointVelocities(pImpl->jointConfigurationSolution, pImpl->linkVelocities, pImpl->jointVelocitiesSolution);
+            pImpl->baseVelocitySolution = measuredBaseVelocity;
+        }
+        else
+        {
+            pImpl->computeVelocities(pImpl->jointConfigurationSolution, pImpl->baseTransformSolution, pImpl->linkVelocities, pImpl->jointVelocitiesSolution, pImpl->baseVelocitySolution);
+        }
 
         auto tock_G = std::chrono::high_resolution_clock::now();
         yDebug() << LogPrefix << "Global IK took"
                  << std::chrono::duration_cast<std::chrono::milliseconds>(tock_G - tick_G).count() << "ms";
     }
 
-    if (pImpl->useIntegrationBasedIK)
+    if (pImpl->useIntegrationBasedIK && !(pImpl->firstRun))
     {
 
         auto tick_IB = std::chrono::high_resolution_clock::now();
@@ -1018,7 +1049,14 @@ void HumanStateProvider::run()
         iDynTree::Vector3 worldGravity;
         worldGravity.zero();
         worldGravity(2) = -9.81;
-        computations->setRobotState(pImpl->jointConfigurationSolution, pImpl->jointVelocitiesSolution, worldGravity);
+        if (pImpl->useBaseMeasurementDirectlyFromXsens)
+        {
+            computations->setRobotState(pImpl->jointConfigurationSolution, pImpl->jointVelocitiesSolution, worldGravity);
+        }
+        else
+        {
+            computations->setRobotState(pImpl->baseTransformSolution, pImpl->jointConfigurationSolution, pImpl->baseVelocitySolution, pImpl->jointVelocitiesSolution, worldGravity);
+        }
 
         for (size_t linkIndex = 0; linkIndex < pImpl->humanModel.getNrOfLinks(); ++linkIndex) {
             std::string linkName = pImpl->humanModel.getLinkName(linkIndex);
@@ -1034,46 +1072,83 @@ void HumanStateProvider::run()
 
             angularVelocityCorrection = iDynTreeHelper::Rotation::skewVee(rotationError);
 
-            for (int i=3; i<6; i++) {
-                pImpl->linkVelocities[linkName].setVal(i, pImpl->linkVelocities[linkName].getVal(i) - pImpl->integrationBasedIKAngularCorrectionGain * angularVelocityCorrection.getVal(i-3));
-            }
-
-            // for floating base link use error also on position
+            // for floating base link use error also on position if not useBaseMeasurementDirectlyFromXsens, otherwise skip the link
             if (linkName == pImpl->floatingBaseFrame.model) {
+               if (pImpl->useBaseMeasurementDirectlyFromXsens)
+               {
+                   continue;
+               }
+
                iDynTree::Vector3 linearVelocityCorrection;
                linearVelocityCorrection = computations->getWorldTransform(pImpl->humanModel.getFrameIndex(linkName)).getPosition() - pImpl->linkTransformMatrices[linkName].getPosition();
                for (int i=0; i<3; i++) {
                    pImpl->linkVelocities[linkName].setVal(i, pImpl->linkVelocities[linkName].getVal(i) - pImpl->integrationBasedIKLinearCorrectionGain * linearVelocityCorrection.getVal(i));
                }
             }
+
+            // correct the links angular velocities
+            for (int i=3; i<6; i++) {
+                pImpl->linkVelocities[linkName].setVal(i, pImpl->linkVelocities[linkName].getVal(i) - pImpl->integrationBasedIKAngularCorrectionGain * angularVelocityCorrection.getVal(i-3));
+            }
         }
 
-        // compute velocities
-        pImpl->computeVelocities(pImpl->jointConfigurationSolution, pImpl->baseTransformSolution, pImpl->linkVelocities, pImpl->jointVelocitiesSolution, pImpl->baseVelocitySolution);
-
-        // initialize integrator
-        if (pImpl->firstRun) {
-            pImpl->jointVelocitiesSolutionOld = pImpl->jointVelocitiesSolution;
-            pImpl->baseVelocitySolutionOld = pImpl->baseVelocitySolution;
+        // if useBaseMeasurementDirectlyFromXsens use directly the measurement of the base pose from the base link coming from Xsens and compute only the joint velocities solution
+        if (pImpl->useBaseMeasurementDirectlyFromXsens)
+        {
+            pImpl->computeJointVelocities(pImpl->jointConfigurationSolution, pImpl->linkVelocities, pImpl->jointVelocitiesSolution);
+            pImpl->baseVelocitySolution = measuredBaseVelocity;
         }
+        else
+        {
+            pImpl->computeVelocities(pImpl->jointConfigurationSolution, pImpl->baseTransformSolution, pImpl->linkVelocities, pImpl->jointVelocitiesSolution, pImpl->baseVelocitySolution);
+        }
+
         // integrate joint velocities to obtain joint position using Tustin formula
         for (unsigned i = 0; i < pImpl->jointConfigurationSolution.size(); ++i) {
             pImpl->jointConfigurationSolution.setVal(i, pImpl->jointConfigurationSolution.getVal(i) + (pImpl->jointVelocitiesSolution.getVal(i) + pImpl->jointVelocitiesSolutionOld.getVal(i)) * dt / 2);
         }
 
-        // integrate base linear velocity to obtain base position using Tustin formula
-        iDynTree::Position basePositionSolution;
-        for (unsigned i = 0; i < 3; i++) {
-            iDynTree::toEigen(basePositionSolution) = iDynTree::toEigen(pImpl->baseTransformSolution.getPosition()) + (iDynTree::toEigen(pImpl->baseVelocitySolution.getLinearVec3()) + iDynTree::toEigen(pImpl->baseVelocitySolutionOld.getLinearVec3())) * dt / 2;
-        }
-        pImpl->baseTransformSolution.setPosition(basePositionSolution);
+        if (!pImpl->useBaseMeasurementDirectlyFromXsens)
+        {
+            // integrate base linear velocity to obtain base position using Tustin formula
+            iDynTree::Position basePositionSolution;
+            for (unsigned i = 0; i < 3; i++) {
+               iDynTree::toEigen(basePositionSolution) = iDynTree::toEigen(pImpl->baseTransformSolution.getPosition()) + (iDynTree::toEigen(pImpl->baseVelocitySolution.getLinearVec3()) + iDynTree::toEigen(pImpl->baseVelocitySolutionOld.getLinearVec3())) * dt / 2;
+            }
+            pImpl->baseTransformSolution.setPosition(basePositionSolution);
 
-        // integrato base angular velocity to obtain base rotation
-        iDynTree::Matrix3x3 dBaseRotation;
-        iDynTree::Rotation baseRotation = pImpl->baseTransformSolution.getRotation();
-        iDynTree::toEigen(dBaseRotation) = iDynTree::skew(iDynTree::toEigen(pImpl->baseVelocitySolution.getAngularVec3())) * iDynTree::toEigen(baseRotation) + (iDynTree::toEigen(iDynTree::Rotation::Identity()) - iDynTree::toEigen(baseRotation) * iDynTree::toEigen(baseRotation).inverse()) * iDynTree::toEigen(baseRotation);
-        iDynTree::toEigen(baseRotation) = iDynTree::toEigen(baseRotation) + iDynTree::toEigen(dBaseRotation) * dt;
-        pImpl->baseTransformSolution.setRotation(baseRotation);
+            // integrato base angular velocity to obtain base rotation
+            iDynTree::Rotation baseRotation = pImpl->baseTransformSolution.getRotation();
+
+            iDynTree::Matrix3x3 dBaseRotation;
+            iDynTree::toEigen(dBaseRotation) = iDynTree::skew(iDynTree::toEigen(pImpl->baseVelocitySolution.getAngularVec3())) * iDynTree::toEigen(baseRotation);
+
+            iDynTree::Matrix3x3 dBaseRotationCorrection;
+            // first order approximation correction
+            iDynTree::toEigen(dBaseRotationCorrection) = (iDynTree::toEigen(iDynTree::Rotation::Identity()) - iDynTree::toEigen(baseRotation) * iDynTree::toEigen(baseRotation).transpose()) * iDynTree::toEigen(baseRotation) / (2 * dt);
+            // second order approximation correction
+            // iDynTree::toEigen(dBaseRotationCorrection) = (iDynTree::toEigen(baseRotation) + iDynTree::toEigen(dBaseRotation)) * (iDynTree::toEigen(iDynTree::Rotation::Identity()) - iDynTree::toEigen(baseRotation).transpose() * iDynTree::toEigen(baseRotation) - iDynTree::toEigen(baseRotation) * iDynTree::toEigen(dBaseRotation).transpose() * iDynTree::toEigen(dBaseRotation) * dt * dt) / (2 * dt);
+
+
+            iDynTree::toEigen(dBaseRotation) = iDynTree::toEigen(dBaseRotation) + iDynTree::toEigen(dBaseRotationCorrection);
+            iDynTree::toEigen(baseRotation) = iDynTree::toEigen(baseRotation) + iDynTree::toEigen(dBaseRotation) * dt;
+
+
+            float baseRotationDeterminant = baseRotation.getVal(0,0) * (baseRotation.getVal(1,1) * baseRotation.getVal(2,2) - baseRotation.getVal(1,2) * baseRotation.getVal(2,1)) + baseRotation.getVal(0, 1) * (baseRotation.getVal(1,2) * baseRotation.getVal(2,0) - baseRotation.getVal(1,0) * baseRotation.getVal(2,2)) +
+                     baseRotation.getVal(0, 2) * (baseRotation.getVal(1,0) * baseRotation.getVal(2,1) - baseRotation.getVal(1,1) * baseRotation.getVal(2,0));
+
+            iDynTree::Vector4 quaternion = baseRotation.asQuaternion();
+
+            baseRotation.fromQuaternion(quaternion);
+            baseRotationDeterminant = baseRotation.getVal(0,0) * (baseRotation.getVal(1,1) * baseRotation.getVal(2,2) - baseRotation.getVal(1,2) * baseRotation.getVal(2,1)) + baseRotation.getVal(0, 1) * (baseRotation.getVal(1,2) * baseRotation.getVal(2,0) - baseRotation.getVal(1,0) * baseRotation.getVal(2,2)) +
+                                 baseRotation.getVal(0, 2) * (baseRotation.getVal(1,0) * baseRotation.getVal(2,1) - baseRotation.getVal(1,1) * baseRotation.getVal(2,0));
+
+            pImpl->baseTransformSolution.setRotation(baseRotation);
+        }
+        else
+        {
+            pImpl->baseTransformSolution = measuredBaseTransform;
+        }
 
         // store velocities
         pImpl->baseVelocitySolutionOld = pImpl->baseVelocitySolution;
@@ -1122,8 +1197,21 @@ void HumanStateProvider::run()
     // iDynTreeHelper::Rotation::rotationDistance distance;
     if (pImpl->firstRun)
     {
+        // initialize integrator
+        if (pImpl->useIntegrationBasedIK) {
+            pImpl->jointVelocitiesSolutionOld = pImpl->jointVelocitiesSolution;
+            pImpl->baseVelocitySolutionOld = pImpl->baseVelocitySolution;
+        }
         pImpl->firstRun = false;
+        pImpl->startTime = yarp::os::Time::now();
     }
+
+    // reset integral after 2 seconds
+//    if (pImpl->lastTime - pImpl->startTime > 2.0)
+//    {
+//        pImpl->firstRun = true;
+//        pImpl->lastTime = -1.0;
+//    }
 }
 
 bool HumanStateProvider::impl::getLinkTransformFromInputData(
@@ -1368,16 +1456,16 @@ bool HumanStateProvider::impl::getRealLinkJacobiansRelativeToBase(iDynTree::Vect
 
 bool HumanStateProvider::impl::computeJointVelocities(iDynTree::VectorDynSize jointConfigurations, std::unordered_map<std::string, iDynTree::Twist> linkVelocitiesMap, iDynTree::VectorDynSize& jointVelocities)
 {
-    iDynTree::VectorDynSize fullLinkVelocities(3 * linkVelocitiesMap.size());
-    fullLinkVelocities.zero();
+    iDynTree::VectorDynSize fullLinkVelocitiesRelativeToBase(3 * linkVelocitiesMap.size());
+    fullLinkVelocitiesRelativeToBase.zero();
 
-    iDynTree::MatrixDynSize fullLinkJacobian(3 * linkVelocitiesMap.size(), jointConfigurations.size());
-    fullLinkJacobian.zero();
+    iDynTree::MatrixDynSize fullLinkJacobianRelativeToBase(3 * linkVelocitiesMap.size(), jointConfigurations.size());
+    fullLinkJacobianRelativeToBase.zero();
 
     std::unordered_map<std::string, iDynTree::MatrixDynSize> linkJacobiansRelativeToBase;
 
     Eigen::ColPivHouseholderQR<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> > jacobianDecomposition;
-    jacobianDecomposition = Eigen::ColPivHouseholderQR<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> >(fullLinkJacobian.rows(), fullLinkJacobian.cols());
+    jacobianDecomposition = Eigen::ColPivHouseholderQR<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> >(fullLinkJacobianRelativeToBase.rows(), fullLinkJacobianRelativeToBase.cols());
 
     if(!getRealLinkJacobiansRelativeToBase(jointConfigurations, linkJacobiansRelativeToBase))
     {
@@ -1392,18 +1480,18 @@ bool HumanStateProvider::impl::computeJointVelocities(iDynTree::VectorDynSize jo
         {
             for (int j=0; j<humanModel.getNrOfJoints(); j++)
             {
-                fullLinkJacobian.setVal(3 * linkCount + i, j, linkJacobiansRelativeToBase[linkName].getVal(i, j));
+                fullLinkJacobianRelativeToBase.setVal(3 * linkCount + i, j, linkJacobiansRelativeToBase[linkName].getVal(i, j));
             }
-            fullLinkVelocities.setVal(3 * linkCount + i, linkVelocitiesMap[linkName].getVal(i) - linkVelocitiesMap[floatingBaseFrame.model].getVal(i));
+            fullLinkVelocitiesRelativeToBase.setVal(3 * linkCount + i, linkVelocitiesMap[linkName].getVal(i) - linkVelocitiesMap[floatingBaseFrame.model].getVal(i));
         }
         linkCount = linkCount + 1;
     }
 
     //Pseudo-invert the Full Jacobian
     //Compute the QR decomposition
-    jacobianDecomposition.compute(iDynTree::toEigen(fullLinkJacobian));
+    jacobianDecomposition.compute(iDynTree::toEigen(fullLinkJacobianRelativeToBase));
     // the solve method on the decomposition directly solves the associated least-squares problem
-    iDynTree::toEigen(jointVelocities) = jacobianDecomposition.solve(iDynTree::toEigen(fullLinkVelocities));
+    iDynTree::toEigen(jointVelocities) = jacobianDecomposition.solve(iDynTree::toEigen(fullLinkVelocitiesRelativeToBase));
 
     return true;
 }
@@ -1451,8 +1539,11 @@ bool HumanStateProvider::impl::computeVelocities(iDynTree::VectorDynSize jointCo
 
     std::unordered_map<std::string, iDynTree::MatrixDynSize> linkJacobians;
 
-    Eigen::ColPivHouseholderQR<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> > jacobianDecomposition;
-    jacobianDecomposition = Eigen::ColPivHouseholderQR<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> >(fullLinkJacobian.rows(), fullLinkJacobian.cols());
+    Eigen::FullPivHouseholderQR<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> > jacobianDecomposition;
+    jacobianDecomposition = Eigen::FullPivHouseholderQR<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> >(fullLinkJacobian.rows(), fullLinkJacobian.cols());
+
+    // Eigen::CompleteOrthogonalDecomposition<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>> jacobianDecomposition;
+    // jacobianDecomposition = Eigen::CompleteOrthogonalDecomposition<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>>(fullLinkJacobian.rows(), fullLinkJacobian.cols());
 
     if(!getRealLinkJacobians(jointConfigurations, floatingBasePose, linkJacobians))
     {
@@ -1470,7 +1561,14 @@ bool HumanStateProvider::impl::computeVelocities(iDynTree::VectorDynSize jointCo
             {
                 for (int j=0; j<(humanModel.getNrOfJoints() + 6); j++)
                 {
-                    fullLinkJacobian.setVal(i, j, linkJacobians[linkName].getVal(i, j));
+                    if ( i==j )
+                    {
+                        fullLinkJacobian.setVal(i, j, 1);
+                    }
+                    else
+                    {
+                        fullLinkJacobian.setVal(i, j, 0);
+                    }
                 }
                 fullLinkVelocities.setVal(i, linkVelocitiesMap[linkName].getVal(i));
             }
@@ -1485,6 +1583,8 @@ bool HumanStateProvider::impl::computeVelocities(iDynTree::VectorDynSize jointCo
                     fullLinkJacobian.setVal(6 + 3 * linkCount + i, j, linkJacobians[linkName].getVal(i + 3, j));
                 }
                 fullLinkVelocities.setVal(6 + 3 * linkCount + i, linkVelocitiesMap[linkName].getVal(i + 3));
+
+
             }
             linkCount = linkCount + 1;
         }
