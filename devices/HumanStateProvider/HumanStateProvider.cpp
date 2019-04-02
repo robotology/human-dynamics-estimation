@@ -151,6 +151,9 @@ public:
     iDynTree::Twist baseVelocitySolution;
     iDynTree::Twist baseVelocitySolutionOld;
 
+    iDynTree::Vector3 integralOrientationError;
+    iDynTree::Vector3 integralLinearVelocityError;
+
     std::unordered_map<std::string, iDynTreeHelper::Rotation::rotationDistance> linkErrorOrientations;
     std::unordered_map<std::string, iDynTree::Vector3> linkErrorAngularVelocities;
 
@@ -169,6 +172,8 @@ public:
 
     double integrationBasedIKLinearCorrectionGain;
     double integrationBasedIKAngularCorrectionGain;
+    double integrationBasedIKIntegralLinearCorrectionGain;
+    double integrationBasedIKIntegralAngularCorrectionGain;
 
     bool useGlobalIK;
     bool usePairWisedIK;
@@ -413,39 +418,50 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
             return false;
         }
 
+        if (!(config.check("integrationBasedIKIntegralCorrectionGains") && config.find("integrationBasedIKIntegralCorrectionGains").isList()
+              && config.find("integrationBasedIKIntegralCorrectionGains").asList()->size() == 2)) {
+            yError() << LogPrefix << "integrationBasedIKIntegralCorrectionGains option not found or not valid";
+            return false;
+        }
+
         yarp::os::Bottle* integrationBasedIKCorrectionGains = config.find("integrationBasedIKCorrectionGains").asList();
+        yarp::os::Bottle* integrationBasedIKIntegralCorrectionGains = config.find("integrationBasedIKIntegralCorrectionGains").asList();
         pImpl->integrationBasedIKLinearCorrectionGain = integrationBasedIKCorrectionGains->get(0).asFloat64();
         pImpl->integrationBasedIKAngularCorrectionGain = integrationBasedIKCorrectionGains->get(1).asFloat64();
+        pImpl->integrationBasedIKIntegralLinearCorrectionGain = integrationBasedIKIntegralCorrectionGains->get(0).asFloat64();
+        pImpl->integrationBasedIKIntegralAngularCorrectionGain = integrationBasedIKIntegralCorrectionGains->get(1).asFloat64();
     }
 
     // ===================================
     // PRINT CURRENT CONFIGURATION OPTIONS
     // ===================================
 
-    yInfo() << LogPrefix << "*** =========================";
-    yInfo() << LogPrefix << "*** Period                  :" << period;
-    yInfo() << LogPrefix << "*** Urdf file name          :" << urdfFileName;
-    yInfo() << LogPrefix << "*** Global IK               :" << pImpl->useGlobalIK;
-    yInfo() << LogPrefix << "*** Pair-Wised IK           :" << pImpl->usePairWisedIK;
-    yInfo() << LogPrefix << "*** Integration Based IK    :" << pImpl->useIntegrationBasedIK;
-    yInfo() << LogPrefix << "*** Use Xsens joint angles  :" << pImpl->useXsensJointsAngles;
+    yInfo() << LogPrefix << "*** ==================================";
+    yInfo() << LogPrefix << "*** Period                           :" << period;
+    yInfo() << LogPrefix << "*** Urdf file name                   :" << urdfFileName;
+    yInfo() << LogPrefix << "*** Global IK                        :" << pImpl->useGlobalIK;
+    yInfo() << LogPrefix << "*** Pair-Wised IK                    :" << pImpl->usePairWisedIK;
+    yInfo() << LogPrefix << "*** Integration Based IK             :" << pImpl->useIntegrationBasedIK;
+    yInfo() << LogPrefix << "*** Use Xsens joint angles           :" << pImpl->useXsensJointsAngles;
     if (pImpl->usePairWisedIK || pImpl->useGlobalIK)
     {
-        yInfo() << LogPrefix << "*** Allow IK failures       :" << pImpl->allowIKFailures;
-        yInfo() << LogPrefix << "*** Max IK iterations       :" << pImpl->maxIterationsIK;
-        yInfo() << LogPrefix << "*** Cost Tolerance          :" << pImpl->costTolerance;
-        yInfo() << LogPrefix << "*** IK Solver Name          :" << pImpl->solverName;
-        yInfo() << LogPrefix << "*** Position target weight  :" << pImpl->posTargetWeight;
-        yInfo() << LogPrefix << "*** Rotation target weight  :" << pImpl->rotTargetWeight;
-        yInfo() << LogPrefix << "*** Cost regularization     :" << pImpl->costRegularization;
-        yInfo() << LogPrefix << "*** Size of thread pool     :" << pImpl->ikPoolSize;
+        yInfo() << LogPrefix << "*** Allow IK failures                :" << pImpl->allowIKFailures;
+        yInfo() << LogPrefix << "*** Max IK iterations                :" << pImpl->maxIterationsIK;
+        yInfo() << LogPrefix << "*** Cost Tolerance                   :" << pImpl->costTolerance;
+        yInfo() << LogPrefix << "*** IK Solver Name                   :" << pImpl->solverName;
+        yInfo() << LogPrefix << "*** Position target weight           :" << pImpl->posTargetWeight;
+        yInfo() << LogPrefix << "*** Rotation target weight           :" << pImpl->rotTargetWeight;
+        yInfo() << LogPrefix << "*** Cost regularization              :" << pImpl->costRegularization;
+        yInfo() << LogPrefix << "*** Size of thread pool              :" << pImpl->ikPoolSize;
     }
     if (pImpl->useIntegrationBasedIK)
     {
-        yInfo() << LogPrefix << "*** Linear correction gain  :" << pImpl->integrationBasedIKLinearCorrectionGain;
-        yInfo() << LogPrefix << "*** Angular correction gain :" << pImpl->integrationBasedIKAngularCorrectionGain;
+        yInfo() << LogPrefix << "*** Linear correction gain           :" << pImpl->integrationBasedIKLinearCorrectionGain;
+        yInfo() << LogPrefix << "*** Angular correction gain          :" << pImpl->integrationBasedIKAngularCorrectionGain;
+        yInfo() << LogPrefix << "*** Linear integral correction gain  :" << pImpl->integrationBasedIKIntegralLinearCorrectionGain;
+        yInfo() << LogPrefix << "*** Angular integral correction gain :" << pImpl->integrationBasedIKIntegralAngularCorrectionGain;
     }
-    yInfo() << LogPrefix << "*** =========================";
+    yInfo() << LogPrefix << "*** ==================================";
 
     // ==========================
     // INITIALIZE THE HUMAN MODEL
@@ -1068,9 +1084,10 @@ void HumanStateProvider::run()
             }
 
             iDynTree::Rotation rotationError = computations->getWorldTransform(pImpl->humanModel.getFrameIndex(linkName)).getRotation() * pImpl->linkTransformMatrices[linkName].getRotation().inverse();
-            iDynTree::Vector3 angularVelocityCorrection;
+            iDynTree::Vector3 angularVelocityError;
 
-            angularVelocityCorrection = iDynTreeHelper::Rotation::skewVee(rotationError);
+            angularVelocityError = iDynTreeHelper::Rotation::skewVee(rotationError);
+            iDynTree::toEigen(pImpl->integralOrientationError) = iDynTree::toEigen(pImpl->integralOrientationError) +  iDynTree::toEigen(angularVelocityError) * dt;
 
             // for floating base link use error also on position if not useBaseMeasurementDirectlyFromXsens, otherwise skip the link
             if (linkName == pImpl->floatingBaseFrame.model) {
@@ -1079,16 +1096,17 @@ void HumanStateProvider::run()
                    continue;
                }
 
-               iDynTree::Vector3 linearVelocityCorrection;
-               linearVelocityCorrection = computations->getWorldTransform(pImpl->humanModel.getFrameIndex(linkName)).getPosition() - pImpl->linkTransformMatrices[linkName].getPosition();
+               iDynTree::Vector3 linearVelocityError;
+               linearVelocityError = computations->getWorldTransform(pImpl->humanModel.getFrameIndex(linkName)).getPosition() - pImpl->linkTransformMatrices[linkName].getPosition();
+               iDynTree::toEigen(pImpl->integralLinearVelocityError) = iDynTree::toEigen(pImpl->integralLinearVelocityError) +  iDynTree::toEigen(linearVelocityError) * dt;
                for (int i=0; i<3; i++) {
-                   pImpl->linkVelocities[linkName].setVal(i, pImpl->linkVelocities[linkName].getVal(i) - pImpl->integrationBasedIKLinearCorrectionGain * linearVelocityCorrection.getVal(i));
+                   pImpl->linkVelocities[linkName].setVal(i, 0 * pImpl->linkVelocities[linkName].getVal(i) - pImpl->integrationBasedIKLinearCorrectionGain * linearVelocityError.getVal(i) - pImpl->integrationBasedIKIntegralLinearCorrectionGain * pImpl->integralLinearVelocityError.getVal(i));
                }
             }
 
             // correct the links angular velocities
             for (int i=3; i<6; i++) {
-                pImpl->linkVelocities[linkName].setVal(i, pImpl->linkVelocities[linkName].getVal(i) - pImpl->integrationBasedIKAngularCorrectionGain * angularVelocityCorrection.getVal(i-3));
+                pImpl->linkVelocities[linkName].setVal(i, 0 * pImpl->linkVelocities[linkName].getVal(i) -  pImpl->integrationBasedIKAngularCorrectionGain * angularVelocityError.getVal(i-3) -  pImpl->integrationBasedIKIntegralAngularCorrectionGain  * pImpl->integralOrientationError.getVal(i-3));
             }
         }
 
@@ -1201,6 +1219,7 @@ void HumanStateProvider::run()
         if (pImpl->useIntegrationBasedIK) {
             pImpl->jointVelocitiesSolutionOld = pImpl->jointVelocitiesSolution;
             pImpl->baseVelocitySolutionOld = pImpl->baseVelocitySolution;
+            pImpl->integralOrientationError.zero();
         }
         pImpl->firstRun = false;
         pImpl->startTime = yarp::os::Time::now();
