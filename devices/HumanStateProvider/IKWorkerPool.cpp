@@ -153,10 +153,12 @@ void IKWorkerPool::computeJointVelocities(WorkerTaskData& task, iDynTree::Twist&
 
     //Pseudo-invert the Jacobian.
     //Compute the QR decomposition
-    task.pairInfo.jacobianDecomposition.compute(iDynTree::toEigen(relativeJacobian));
+    Eigen::ColPivHouseholderQR<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> > jacobianDecomposition;
+    jacobianDecomposition = Eigen::ColPivHouseholderQR<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> >(relativeJacobian.rows(), relativeJacobian.cols());
+    jacobianDecomposition.compute(iDynTree::toEigen(relativeJacobian));
     //the solve method on the decomposition directly solves the associated least-squares problem
     relativeVelocity = task.childFrameInfo.velocities - task.parentFrameInfo.velocities;
-    iDynTree::toEigen(task.pairInfo.jointVelocities) = task.pairInfo.jacobianDecomposition.solve(iDynTree::toEigen(relativeVelocity));
+    iDynTree::toEigen(task.pairInfo.jointVelocities) = jacobianDecomposition.solve(iDynTree::toEigen(relativeVelocity));
 }
 
 void IKWorkerPool::worker() {

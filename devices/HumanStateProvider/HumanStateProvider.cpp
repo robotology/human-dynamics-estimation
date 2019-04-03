@@ -8,7 +8,6 @@
 
 #include "HumanStateProvider.h"
 #include "IKWorkerPool.h"
-#include "InverseVelocityKinematics.hpp"
 
 #include <Wearable/IWear/IWear.h>
 #include <iDynTree/InverseKinematics.h>
@@ -125,7 +124,6 @@ public:
     bool allowIKFailures;
     bool useXsensJointsAngles;
 
-    bool firstRun = true;
     mutable std::mutex mutex;
 
     // Wearable variables
@@ -139,7 +137,6 @@ public:
     std::vector<LinkPairInfo> linkPairs;
 
     // Buffers
-    iDynTree::VectorDynSize jointAngles;
     std::unordered_map<std::string, iDynTree::Rotation> linkRotationMatrices;
     std::unordered_map<std::string, iDynTree::Transform> linkTransformMatrices;
     std::unordered_map<std::string, iDynTree::Rotation> linkOrientationMatrices;
@@ -178,16 +175,17 @@ public:
     bool useGlobalIK;
     bool usePairWisedIK;
     bool useIntegrationBasedIK;
-    bool useBaseMeasurementDirectlyFromXsens;
+    bool useDirectBaseMeasurement;
     iDynTree::InverseKinematics globalIK;
 
+    // clock
     double lastTime{-1.0};
-    double startTime{0};
 
+    // kinDynComputation
     std::unique_ptr<iDynTree::KinDynComputations> kinDynComputations;
+    iDynTree::Vector3 worldGravity;
 
     bool getJointAnglesFromInputData(iDynTree::VectorDynSize& jointAngles);
-    bool getLinkOrientationFromInputData(std::unordered_map<std::string, iDynTree::Rotation>& r);
     bool getLinkTransformFromInputData(std::unordered_map<std::string, iDynTree::Transform>& t);
     bool getLinkVelocityFromInputData(std::unordered_map<std::string, iDynTree::Twist>& t);
 
@@ -197,7 +195,7 @@ public:
     bool getRealLinkJacobians(iDynTree::VectorDynSize jointConfigurations, iDynTree::Transform floatingBasePose, std::unordered_map<std::string, iDynTree::MatrixDynSize>& J);
     bool computeVelocities(iDynTree::VectorDynSize jointConfigurations, iDynTree::Transform floatingBasePose, std::unordered_map<std::string, iDynTree::Twist> linkVelocitiesMap, iDynTree::VectorDynSize& jointVelocities, iDynTree::Twist& baseVelocity);
 
-    bool computeLinksOrientationErrors(std::unordered_map<std::string, iDynTree::Rotation> linkDesiredOrientations, iDynTree::VectorDynSize jointConfigurations, iDynTree::Transform floatingBasePose, std::unordered_map<std::string, iDynTreeHelper::Rotation::rotationDistance>& linkErrorOrientations);
+    bool computeLinksOrientationErrors(std::unordered_map<std::string, iDynTree::Transform> linkDesiredOrientations, iDynTree::VectorDynSize jointConfigurations, iDynTree::Transform floatingBasePose, std::unordered_map<std::string, iDynTreeHelper::Rotation::rotationDistance>& linkErrorOrientations);
     bool computeLinksAngularVelocityErrors(std::unordered_map<std::string, iDynTree::Twist> linkDesiredVelocities, iDynTree::VectorDynSize jointConfigurations, iDynTree::Transform floatingBasePose, iDynTree::VectorDynSize jointVelocities, iDynTree::Twist baseVelocity, std::unordered_map<std::string, iDynTree::Vector3>& linkAngularVelocityError);
 };
 
@@ -248,7 +246,6 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         yError() << LogPrefix << "floatingBaseFrame option not found or not valid";
         return false;
     }
-
 
     yarp::os::Bottle& linksGroup = config.findGroup("MODEL_TO_DATA_LINK_NAMES");
     if (linksGroup.isNull()) {
@@ -385,12 +382,12 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
 
     if (pImpl->useGlobalIK || pImpl->useIntegrationBasedIK)
     {
-        if (!(config.check("useBaseMeasurementDirectlyFromXsens") && config.find("useBaseMeasurementDirectlyFromXsens").isBool())) {
-            yError() << LogPrefix << "useBaseMeasurementDirectlyFromXsens option not found or not valid";
+        if (!(config.check("useDirectBaseMeasurement") && config.find("useDirectBaseMeasurement").isBool())) {
+            yError() << LogPrefix << "useDirectBaseMeasurement option not found or not valid";
             return false;
         }
 
-        pImpl->useBaseMeasurementDirectlyFromXsens = config.find("useBaseMeasurementDirectlyFromXsens").asBool();
+        pImpl->useDirectBaseMeasurement = config.find("useDirectBaseMeasurement").asBool();
     }
 
     if (pImpl->usePairWisedIK)
@@ -408,28 +405,34 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         else if(config.find("ikPoolSizeOption").isInt()) {
             pImpl->ikPoolSize = config.find("ikPoolSizeOption").asInt();
         }
+
+        // The pairwised IK will always use the measured base pose and velocity for the base link
+        if (config.check("useDirectBaseMeasurement") && config.find("useDirectBaseMeasurement").isBool() && !config.find("useDirectBaseMeasurement").asBool()) {
+            yWarning() << LogPrefix << "useDirectBaseMeasurement is required from Pair-Wised IK. Assuming its value to be true";
+        }
+        pImpl->useDirectBaseMeasurement = true;
     }
 
     if (pImpl->useIntegrationBasedIK)
     {
-        if (!(config.check("integrationBasedIKCorrectionGains") && config.find("integrationBasedIKCorrectionGains").isList()
-              && config.find("integrationBasedIKCorrectionGains").asList()->size() == 2)) {
-            yError() << LogPrefix << "integrationBasedIKCorrectionGains option not found or not valid";
+        if (!(config.check("integrationBasedIKCorrectionGainsLinRot") && config.find("integrationBasedIKCorrectionGainsLinRot").isList()
+              && config.find("integrationBasedIKCorrectionGainsLinRot").asList()->size() == 2)) {
+            yError() << LogPrefix << "integrationBasedIKCorrectionGainsLinRot option not found or not valid";
             return false;
         }
 
-        if (!(config.check("integrationBasedIKIntegralCorrectionGains") && config.find("integrationBasedIKIntegralCorrectionGains").isList()
-              && config.find("integrationBasedIKIntegralCorrectionGains").asList()->size() == 2)) {
-            yError() << LogPrefix << "integrationBasedIKIntegralCorrectionGains option not found or not valid";
+        if (!(config.check("integrationBasedIKIntegralCorrectionGainsLinRot") && config.find("integrationBasedIKIntegralCorrectionGainsLinRot").isList()
+              && config.find("integrationBasedIKIntegralCorrectionGainsLinRot").asList()->size() == 2)) {
+            yError() << LogPrefix << "integrationBasedIKIntegralCorrectionGainsLinRot option not found or not valid";
             return false;
         }
 
-        yarp::os::Bottle* integrationBasedIKCorrectionGains = config.find("integrationBasedIKCorrectionGains").asList();
-        yarp::os::Bottle* integrationBasedIKIntegralCorrectionGains = config.find("integrationBasedIKIntegralCorrectionGains").asList();
-        pImpl->integrationBasedIKLinearCorrectionGain = integrationBasedIKCorrectionGains->get(0).asFloat64();
-        pImpl->integrationBasedIKAngularCorrectionGain = integrationBasedIKCorrectionGains->get(1).asFloat64();
-        pImpl->integrationBasedIKIntegralLinearCorrectionGain = integrationBasedIKIntegralCorrectionGains->get(0).asFloat64();
-        pImpl->integrationBasedIKIntegralAngularCorrectionGain = integrationBasedIKIntegralCorrectionGains->get(1).asFloat64();
+        yarp::os::Bottle* integrationBasedIKCorrectionGainsLinRot = config.find("integrationBasedIKCorrectionGainsLinRot").asList();
+        yarp::os::Bottle* integrationBasedIKIntegralCorrectionGainsLinRot = config.find("integrationBasedIKIntegralCorrectionGainsLinRot").asList();
+        pImpl->integrationBasedIKLinearCorrectionGain = integrationBasedIKCorrectionGainsLinRot->get(0).asFloat64();
+        pImpl->integrationBasedIKAngularCorrectionGain = integrationBasedIKCorrectionGainsLinRot->get(1).asFloat64();
+        pImpl->integrationBasedIKIntegralLinearCorrectionGain = integrationBasedIKIntegralCorrectionGainsLinRot->get(0).asFloat64();
+        pImpl->integrationBasedIKIntegralAngularCorrectionGain = integrationBasedIKIntegralCorrectionGainsLinRot->get(1).asFloat64();
     }
 
     // ===================================
@@ -443,6 +446,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     yInfo() << LogPrefix << "*** Pair-Wised IK                    :" << pImpl->usePairWisedIK;
     yInfo() << LogPrefix << "*** Integration Based IK             :" << pImpl->useIntegrationBasedIK;
     yInfo() << LogPrefix << "*** Use Xsens joint angles           :" << pImpl->useXsensJointsAngles;
+    yInfo() << LogPrefix << "*** Use Directly base measurement    :" << pImpl->useDirectBaseMeasurement;
     if (pImpl->usePairWisedIK || pImpl->useGlobalIK)
     {
         yInfo() << LogPrefix << "*** Allow IK failures                :" << pImpl->allowIKFailures;
@@ -480,21 +484,30 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         return false;
     }
 
+    // ====================
+    // INITIALIZE VARIABLES
+    // ====================
+
     // Get the model from the loader
     pImpl->humanModel = modelLoader.model();
 
-    // ================================
-    // INITIALIZE LINK / JOINTS BUFFERS
-    // ================================
+    // Set gravity
+    pImpl->worldGravity.zero();
+    pImpl->worldGravity(2) = -9.81;
 
+    // Initialize kinDyn computation
+    pImpl->kinDynComputations = std::unique_ptr<iDynTree::KinDynComputations>(new iDynTree::KinDynComputations());
+    pImpl->kinDynComputations->loadRobotModel(modelLoader.model());
+
+    // =========================
+    // INITIALIZE JOINTS BUFFERS
+    // =========================
+
+    // Get the number of joints accordingly to the model
     const size_t nrOfJoints = pImpl->humanModel.getNrOfJoints();
-    // const size_t nrOfJoints = pImpl->humanModel.getNrOfLinks();
 
     pImpl->solution.jointPositions.resize(nrOfJoints);
     pImpl->solution.jointVelocities.resize(nrOfJoints);
-
-    pImpl->jointAngles.resize(nrOfJoints);
-    pImpl->jointAngles.zero();
 
     pImpl->jointConfigurationSolution.resize(nrOfJoints);
     pImpl->jointConfigurationSolution.zero();
@@ -505,36 +518,34 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     pImpl->jointVelocitiesSolutionOld.resize(nrOfJoints);
     pImpl->jointVelocitiesSolutionOld.zero();
 
-    // Get the model link names according to the modelToWearable link sensor map
-    const size_t nrOfSegments = pImpl->wearableStorage.modelToWearable_LinkName.size();
-    pImpl->segments.resize(nrOfSegments);
-    int segmentIndex = 0;
-
-    for (size_t linkIndex = 0; linkIndex < pImpl->humanModel.getNrOfLinks(); ++linkIndex) {
-        // Get the name of the link from the model and its prefix from iWear
-        std::string modelLinkName = pImpl->humanModel.getLinkName(linkIndex);
-
-        if (pImpl->wearableStorage.modelToWearable_LinkName.find(modelLinkName)
-                == pImpl->wearableStorage.modelToWearable_LinkName.end()) {
-            continue;
-        }
-
-        pImpl->segments[segmentIndex].velocities.zero();
-
-        // Store the name of the link as segment name
-        pImpl->segments[segmentIndex].segmentName =  modelLinkName;
-        segmentIndex++;
-    }
-
-    // Initialize kinDyn computation
-    pImpl->kinDynComputations = std::unique_ptr<iDynTree::KinDynComputations>(new iDynTree::KinDynComputations());
-    pImpl->kinDynComputations->loadRobotModel(modelLoader.model());
-
     // ========================
     // INITIALIZE PAIR-WISED IK
     // ========================
 
     if (pImpl->usePairWisedIK) {
+
+        // Get the model link names according to the modelToWearable link sensor map
+        const size_t nrOfSegments = pImpl->wearableStorage.modelToWearable_LinkName.size();
+
+        pImpl->segments.resize(nrOfSegments);
+
+        unsigned segmentIndex = 0;
+        for (size_t linkIndex = 0; linkIndex < pImpl->humanModel.getNrOfLinks(); ++linkIndex) {
+            // Get the name of the link from the model and its prefix from iWear
+            std::string modelLinkName = pImpl->humanModel.getLinkName(linkIndex);
+
+            if (pImpl->wearableStorage.modelToWearable_LinkName.find(modelLinkName)
+                    == pImpl->wearableStorage.modelToWearable_LinkName.end()) {
+                continue;
+            }
+
+            // TODO check if we need this initialization
+            // pImpl->segments[segmentIndex].velocities.zero();
+
+            // Store the name of the link as segment name
+            pImpl->segments[segmentIndex].segmentName =  modelLinkName;
+            segmentIndex++;
+        }
 
         // Get all the possible pairs composing the model
         std::vector<std::pair<std::string, std::string>> pairNames;
@@ -637,38 +648,27 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
             pairInfo.jointVelocities.resize(solverJoints.size());
             pairInfo.jointVelocities.zero();
 
-            // Now configure the kinDynComputation object
-            modelLoader.loadReducedModelFromFullModel(pImpl->humanModel, solverJoints);
-            const iDynTree::Model &reducedModel = modelLoader.model();
-
             // Save the indeces
             // TODO: check if link or frame
-            pairInfo.parentFrameModelIndex = reducedModel.getFrameIndex(pairInfo.parentFrameName);
-            pairInfo.childFrameModelIndex = reducedModel.getFrameIndex(pairInfo.childFrameName);
+            pairInfo.parentFrameModelIndex = pairInfo.pairModel.getFrameIndex(pairInfo.parentFrameName);
+            pairInfo.childFrameModelIndex = pairInfo.pairModel.getFrameIndex(pairInfo.childFrameName);
 
+            // Configure KinDynComputation
             pairInfo.kinDynComputations = std::unique_ptr<iDynTree::KinDynComputations>(new iDynTree::KinDynComputations());
+            pairInfo.kinDynComputations->loadRobotModel(pairInfo.pairModel);
 
-            pairInfo.kinDynComputations->loadRobotModel(modelLoader.model());
-
-            pairInfo.parentJacobian.resize(6, modelLoader.model().getNrOfDOFs());
-            pairInfo.parentJacobian.zero();
-            pairInfo.childJacobian = pairInfo.relativeJacobian = pairInfo.parentJacobian;
-
-            // Overwriting the default contructed object
-            pairInfo.jacobianDecomposition = Eigen::ColPivHouseholderQR<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> >(pairInfo.relativeJacobian.rows(), pairInfo.relativeJacobian.cols());
+            // Configure relative Jacobian
+            pairInfo.relativeJacobian.resize(6, pairInfo.pairModel.getNrOfDOFs());
+            pairInfo.relativeJacobian.zero();
 
             // Move the link pair instance into the vector
             pImpl->linkPairs.push_back(std::move(pairInfo));
         }
 
-        // =========================
-        // INITIALIZE IK WORKER POOL
-        // =========================
-
+        // Initialize IK Worker Pool
         pImpl->ikPool = std::unique_ptr<IKWorkerPool>(new IKWorkerPool(pImpl->ikPoolSize,
                                                                                  pImpl->linkPairs,
                                                                                  pImpl->segments));
-
         if (!pImpl->ikPool) {
             yError() << LogPrefix << "failed to create IK worker pool";
             return false;
@@ -706,8 +706,14 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
 
             // Insert in the cost the rotation and position of the link used as base
             if (linkName == pImpl->floatingBaseFrame.model) {
-                if (!pImpl->useBaseMeasurementDirectlyFromXsens && !pImpl->globalIK.addTarget(linkName, iDynTree::Transform::Identity(), 1.0, 1.0)) {
+                if (!pImpl->useDirectBaseMeasurement && !pImpl->globalIK.addTarget(linkName, iDynTree::Transform::Identity(), 1.0, 1.0)) {
                     yError() << LogPrefix << "Failed to add target for floating base link" << linkName;
+                    askToStop();
+                    return false;
+                }
+                else if (pImpl->useDirectBaseMeasurement && !pImpl->globalIK.addFrameConstraint(linkName, iDynTree::Transform::Identity()))
+                {
+                    yError() << LogPrefix << "Failed to add constraint for base link" << linkName;
                     askToStop();
                     return false;
                 }
@@ -723,6 +729,19 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         }
     }
 
+    // ===============================
+    // INITIALIZE INTEGRATION BASED IK
+    // ===============================
+
+    if (pImpl->useIntegrationBasedIK) {
+
+        // Initialize state integrator
+        pImpl->jointVelocitiesSolutionOld = pImpl->jointVelocitiesSolution;
+        pImpl->baseVelocitySolutionOld = pImpl->baseVelocitySolution;
+        pImpl->baseTransformSolution.setRotation(iDynTree::Rotation::Identity());
+        pImpl->integralOrientationError.zero();
+    }
+
     return true;
 }
 
@@ -731,154 +750,21 @@ bool HumanStateProvider::close()
     return true;
 }
 
-// This method returns the all link pair names from the full human model
-static void createEndEffectorsPairs(const iDynTree::Model& model,
-                                    std::vector<SegmentInfo>& humanSegments,
-                                    std::vector<std::pair<std::string, std::string> > &framePairs,
-                                    std::vector<std::pair<iDynTree::FrameIndex, iDynTree::FrameIndex> > &framePairIndeces)
-{
-    //for each element in human segments
-    //extract it from the vector (to avoid duplications)
-    //Look for it in the model and get neighbours
-    std::vector<SegmentInfo> segments(humanSegments);
-    size_t segmentCount = segments.size();
-
-    while (!segments.empty()) {
-        SegmentInfo segment = segments.back();
-        segments.pop_back();
-        segmentCount--;
-
-        iDynTree::LinkIndex linkIndex = model.getLinkIndex(segment.segmentName);
-        if (linkIndex < 0 || static_cast<unsigned>(linkIndex) >= model.getNrOfLinks()) {
-            yWarning("Segment %s not found in the URDF model", segment.segmentName.c_str());
-            continue;
-        }
-
-        //this for loop should not be necessary, but this can help keeps the backtrace short
-        //as we do not assume that we can go back further that this node
-        for (unsigned neighbourIndex = 0; neighbourIndex < model.getNrOfNeighbors(linkIndex); ++neighbourIndex) {
-            //remember the "biforcations"
-            std::stack<iDynTree::LinkIndex> backtrace;
-            //and the visited nodes
-            std::vector<iDynTree::LinkIndex> visited;
-
-            //I've already visited the starting node
-            visited.push_back(linkIndex);
-            iDynTree::Neighbor neighbour = model.getNeighbor(linkIndex, neighbourIndex);
-            backtrace.push(neighbour.neighborLink);
-
-            while (!backtrace.empty()) {
-                iDynTree::LinkIndex currentLink = backtrace.top();
-                backtrace.pop();
-                //add the current link to the visited
-                visited.push_back(currentLink);
-
-                std::string linkName = model.getLinkName(currentLink);
-
-                // check if this is a human segment
-                std::vector<SegmentInfo>::iterator foundSegment = std::find_if(segments.begin(),
-                                                                               segments.end(),
-                                                                               [&](SegmentInfo& frame){ return frame.segmentName == linkName; });
-                if (foundSegment != segments.end()) {
-                    std::vector<SegmentInfo>::difference_type foundLinkIndex = std::distance(segments.begin(), foundSegment);
-                    //Found! This is a segment
-                    framePairs.push_back(std::pair<std::string, std::string>(segment.segmentName, linkName));
-                    framePairIndeces.push_back(std::pair<iDynTree::FrameIndex, iDynTree::FrameIndex>(segmentCount, foundLinkIndex));
-                    break;
-                }
-                //insert all non-visited neighbours
-                for (unsigned i = 0; i < model.getNrOfNeighbors(currentLink); ++i) {
-                    iDynTree::LinkIndex link = model.getNeighbor(currentLink, i).neighborLink;
-                    //check if we already visited this segment
-                    if (std::find(visited.begin(), visited.end(), link) != visited.end()) {
-                        //Yes => skip
-                        continue;
-                    }
-                    backtrace.push(link);
-                }
-            }
-
-        }
-    }
-
-}
-
-static bool getReducedModel(const iDynTree::Model& modelInput,
-                            const std::string& parentFrame,
-                            const std::string& endEffectorFrame,
-                            iDynTree::Model& modelOutput)
-{
-    iDynTree::FrameIndex parentFrameIndex;
-    iDynTree::FrameIndex endEffectorFrameIndex;
-    std::vector<std::string> consideredJoints;
-    iDynTree::Traversal traversal;
-    iDynTree::LinkIndex parentLinkIdx;
-    iDynTree::IJointConstPtr joint;
-    iDynTree::ModelLoader loader;
-
-    // Get frame indices
-    parentFrameIndex = modelInput.getFrameIndex(parentFrame);
-    endEffectorFrameIndex = modelInput.getFrameIndex(endEffectorFrame);
-
-    if(parentFrameIndex == iDynTree::FRAME_INVALID_INDEX){
-        yError() << LogPrefix << " Invalid parent frame: "<< parentFrame;
-        return false;
-    }
-    else if(endEffectorFrameIndex == iDynTree::FRAME_INVALID_INDEX){
-        yError() << LogPrefix << " Invalid End Effector Frame: "<< endEffectorFrame;
-        return false;
-    }
-
-    // Select joint from traversal
-    modelInput.computeFullTreeTraversal(traversal, modelInput.getFrameLink(parentFrameIndex));
-
-    iDynTree::LinkIndex visitedLink = modelInput.getFrameLink(endEffectorFrameIndex);
-
-    while (visitedLink != traversal.getBaseLink()->getIndex())
-    {
-        parentLinkIdx = traversal.getParentLinkFromLinkIndex(visitedLink)->getIndex();
-        joint = traversal.getParentJointFromLinkIndex(visitedLink);
-
-        // Check if the joint is supported
-        if(modelInput.getJoint(joint->getIndex())->getNrOfDOFs() == 1)
-        {
-            consideredJoints.insert(consideredJoints.begin(), modelInput.getJointName(joint->getIndex()));
-        }
-        else {
-            yWarning() << LogPrefix << "Joint " << modelInput.getJointName(joint->getIndex()) << " is ignored as it has (" << modelInput.getJoint(joint->getIndex())->getNrOfDOFs() << " DOFs)";
-        }
-
-        visitedLink = parentLinkIdx;
-    }
-
-    if (!loader.loadReducedModelFromFullModel(modelInput, consideredJoints)) {
-        std::cerr << LogPrefix << " failed to select joints: " ;
-        for (std::vector< std::string >::const_iterator i = consideredJoints.begin(); i != consideredJoints.end(); ++i){
-            std::cerr << *i << ' ';
-        }
-        std::cerr << std::endl;
-        return false;
-
-    }
-
-    modelOutput = loader.model();
-
-    return true;
-}
-
 void HumanStateProvider::run()
 {
-    auto tick_PW = std::chrono::high_resolution_clock::now();
+    //compute timestep
+    double dt;
+    if (pImpl->lastTime < 0.0)
+    {
+        dt = this->getPeriod();
+    }
+    else
+    {
+        dt = yarp::os::Time::now()-pImpl->lastTime;
+    };
 
     // Get the link transformations from input data
     if (!pImpl->getLinkTransformFromInputData(pImpl->linkTransformMatrices)) {
-        yError() << LogPrefix << "Failed to get link transforms from input data";
-        askToStop();
-        return;
-    }
-
-    // Get link orientation from input data
-    if (!pImpl->getLinkOrientationFromInputData(pImpl->linkOrientationMatrices)) {
         yError() << LogPrefix << "Failed to get link transforms from input data";
         askToStop();
         return;
@@ -899,7 +785,19 @@ void HumanStateProvider::run()
     iDynTree::Twist measuredBaseVelocity;
     measuredBaseVelocity = pImpl->linkVelocities.at(pImpl->floatingBaseFrame.model);
 
-    if(pImpl->usePairWisedIK && !(pImpl->useIntegrationBasedIK && !(pImpl->firstRun))) {
+    // If useXsensJointAngles is true get joint angles from input data
+    if (pImpl->useXsensJointsAngles)
+    {
+        if (pImpl->getJointAnglesFromInputData(pImpl->jointConfigurationSolution)) {
+            yError() << LogPrefix << "Failed to get joint angles from input data";
+            askToStop();
+            return;
+        }
+    }
+
+    if (pImpl->usePairWisedIK) {
+
+        auto tick_PW = std::chrono::high_resolution_clock::now();
 
         {
             std::lock_guard<std::mutex> lock(pImpl->mutex);
@@ -914,12 +812,11 @@ void HumanStateProvider::run()
         {
             std::lock_guard<std::mutex> lock(pImpl->mutex);
 
-            // Set link segments transformation
+            // Set link segments transformation and velocity
             for (size_t segmentIndex = 0; segmentIndex < pImpl->segments.size(); segmentIndex++) {
 
                 SegmentInfo& segmentInfo = pImpl->segments.at(segmentIndex);
                 segmentInfo.poseWRTWorld = pImpl->linkTransformMatrices.at(segmentInfo.segmentName);
-
                 segmentInfo.velocities = pImpl->linkVelocities.at(segmentInfo.segmentName);
             }
         }
@@ -948,16 +845,12 @@ void HumanStateProvider::run()
             }
         }
 
-        // Use measured pose and velocity for the base frame
-        pImpl->baseTransformSolution = measuredBaseTransform;
-        pImpl->baseVelocitySolution = measuredBaseVelocity;
-
         auto tock_PW = std::chrono::high_resolution_clock::now();
         yDebug() << LogPrefix << "Pair-Wised IK took"
                  << std::chrono::duration_cast<std::chrono::milliseconds>(tock_PW - tick_PW).count() << "ms";
     }
 
-    if (pImpl->useGlobalIK && !(pImpl->useIntegrationBasedIK && !(pImpl->firstRun))) {
+    if (pImpl->useGlobalIK) {
 
         auto tick_G = std::chrono::high_resolution_clock::now();
 
@@ -974,19 +867,19 @@ void HumanStateProvider::run()
         for (size_t linkIndex = 0; linkIndex < pImpl->humanModel.getNrOfLinks(); ++linkIndex) {
             std::string linkName = pImpl->humanModel.getLinkName(linkIndex);
 
+            // Skip links with no associated measures (use only links from the configuration)
+            if (pImpl->wearableStorage.modelToWearable_LinkName.find(linkName)
+                    == pImpl->wearableStorage.modelToWearable_LinkName.end()) {
+                continue;
+            }
+
             // For the link used as base insert both the rotation and position cost if not using direcly measurement from xsens
             if (linkName == pImpl->floatingBaseFrame.model) {
-                if (!pImpl->useBaseMeasurementDirectlyFromXsens && !pImpl->globalIK.updateTarget(linkName, pImpl->linkTransformMatrices.at(linkName), 1.0, 1.0)) {
+                if (!pImpl->useDirectBaseMeasurement && !pImpl->globalIK.updateTarget(linkName, pImpl->linkTransformMatrices.at(linkName), 1.0, 1.0)) {
                     yError() << LogPrefix << "Failed to update target for floating base" << linkName;
                     askToStop();
                     return;
                 }
-                continue;
-            }
-
-            // Skip links with no associated measures (use only links from the configuration)
-            if (pImpl->wearableStorage.modelToWearable_LinkName.find(linkName)
-                    == pImpl->wearableStorage.modelToWearable_LinkName.end()) {
                 continue;
             }
 
@@ -997,8 +890,8 @@ void HumanStateProvider::run()
             }
 
             linkTransform = pImpl->linkTransformMatrices.at(linkName);
-            // if useBaseMeasurementDirectlyFromXsens, use the link transform relative to the base
-            if (pImpl->useBaseMeasurementDirectlyFromXsens)
+            // if useDirectBaseMeasurement, use the link transform relative to the base
+            if (pImpl->useDirectBaseMeasurement)
             {
                 linkTransform = measuredBaseTransform.inverse() * linkTransform;
             }
@@ -1012,9 +905,9 @@ void HumanStateProvider::run()
 
         // Use a postural task for regularization
         iDynTree::VectorDynSize posturalTaskJointAngles;
-        posturalTaskJointAngles.resize(pImpl->jointAngles.size());
+        posturalTaskJointAngles.resize(pImpl->jointConfigurationSolution.size());
         posturalTaskJointAngles.zero();
-        if (!pImpl->globalIK.setDesiredFullJointsConfiguration(posturalTaskJointAngles,pImpl->costRegularization)) {
+        if (!pImpl->globalIK.setDesiredFullJointsConfiguration(posturalTaskJointAngles, pImpl->costRegularization)) {
              yError() << LogPrefix << "Failed to set the postural configuration of the IK";
              askToStop();
              return;
@@ -1027,12 +920,10 @@ void HumanStateProvider::run()
         // Get the global inverse kinematics solution
         pImpl->globalIK.getFullJointsSolution(pImpl->baseTransformSolution, pImpl->jointConfigurationSolution);
 
-        // if useBaseMeasurementDirectlyFromXsens use directly the measurement of the base pose from the base link coming from Xsens and compute only the joint velocities solution
-        if (pImpl->useBaseMeasurementDirectlyFromXsens)
+        // if useDirectBaseMeasurement use directly the measurement of the base pose from the base link coming from Xsens and compute only the joint velocities solution
+        if (pImpl->useDirectBaseMeasurement)
         {
-            pImpl->baseTransformSolution = measuredBaseTransform;
             pImpl->computeJointVelocities(pImpl->jointConfigurationSolution, pImpl->linkVelocities, pImpl->jointVelocitiesSolution);
-            pImpl->baseVelocitySolution = measuredBaseVelocity;
         }
         else
         {
@@ -1044,34 +935,21 @@ void HumanStateProvider::run()
                  << std::chrono::duration_cast<std::chrono::milliseconds>(tock_G - tick_G).count() << "ms";
     }
 
-    if (pImpl->useIntegrationBasedIK && !(pImpl->firstRun))
-    {
+    if (pImpl->useIntegrationBasedIK) {
 
         auto tick_IB = std::chrono::high_resolution_clock::now();
-        //compute timestep
-        double dt;
-            if (pImpl->lastTime < 0.0)
-        {
-            dt = this->getPeriod();
-        }
-        else
-        {
-            dt = yarp::os::Time::now()-pImpl->lastTime;
-        };
         pImpl->lastTime = yarp::os::Time::now();
 
         // correction term for link velocities
         iDynTree::KinDynComputations *computations = pImpl->kinDynComputations.get();
-        iDynTree::Vector3 worldGravity;
-        worldGravity.zero();
-        worldGravity(2) = -9.81;
-        if (pImpl->useBaseMeasurementDirectlyFromXsens)
+
+        if (pImpl->useDirectBaseMeasurement)
         {
-            computations->setRobotState(pImpl->jointConfigurationSolution, pImpl->jointVelocitiesSolution, worldGravity);
+            computations->setRobotState(pImpl->jointConfigurationSolution, pImpl->jointVelocitiesSolution, pImpl->worldGravity);
         }
         else
         {
-            computations->setRobotState(pImpl->baseTransformSolution, pImpl->jointConfigurationSolution, pImpl->baseVelocitySolution, pImpl->jointVelocitiesSolution, worldGravity);
+            computations->setRobotState(pImpl->baseTransformSolution, pImpl->jointConfigurationSolution, pImpl->baseVelocitySolution, pImpl->jointVelocitiesSolution, pImpl->worldGravity);
         }
 
         for (size_t linkIndex = 0; linkIndex < pImpl->humanModel.getNrOfLinks(); ++linkIndex) {
@@ -1089,9 +967,9 @@ void HumanStateProvider::run()
             angularVelocityError = iDynTreeHelper::Rotation::skewVee(rotationError);
             iDynTree::toEigen(pImpl->integralOrientationError) = iDynTree::toEigen(pImpl->integralOrientationError) +  iDynTree::toEigen(angularVelocityError) * dt;
 
-            // for floating base link use error also on position if not useBaseMeasurementDirectlyFromXsens, otherwise skip the link
+            // for floating base link use error also on position if not useDirectBaseMeasurement, otherwise skip the link
             if (linkName == pImpl->floatingBaseFrame.model) {
-               if (pImpl->useBaseMeasurementDirectlyFromXsens)
+               if (pImpl->useDirectBaseMeasurement)
                {
                    continue;
                }
@@ -1110,11 +988,10 @@ void HumanStateProvider::run()
             }
         }
 
-        // if useBaseMeasurementDirectlyFromXsens use directly the measurement of the base pose from the base link coming from Xsens and compute only the joint velocities solution
-        if (pImpl->useBaseMeasurementDirectlyFromXsens)
+        // if useDirectBaseMeasurement use directly the measurement of the base pose from the base link coming from Xsens and compute only the joint velocities solution
+        if (pImpl->useDirectBaseMeasurement)
         {
             pImpl->computeJointVelocities(pImpl->jointConfigurationSolution, pImpl->linkVelocities, pImpl->jointVelocitiesSolution);
-            pImpl->baseVelocitySolution = measuredBaseVelocity;
         }
         else
         {
@@ -1126,7 +1003,7 @@ void HumanStateProvider::run()
             pImpl->jointConfigurationSolution.setVal(i, pImpl->jointConfigurationSolution.getVal(i) + (pImpl->jointVelocitiesSolution.getVal(i) + pImpl->jointVelocitiesSolutionOld.getVal(i)) * dt / 2);
         }
 
-        if (!pImpl->useBaseMeasurementDirectlyFromXsens)
+        if (!pImpl->useDirectBaseMeasurement)
         {
             // integrate base linear velocity to obtain base position using Tustin formula
             iDynTree::Position basePositionSolution;
@@ -1147,25 +1024,15 @@ void HumanStateProvider::run()
             // second order approximation correction
             // iDynTree::toEigen(dBaseRotationCorrection) = (iDynTree::toEigen(baseRotation) + iDynTree::toEigen(dBaseRotation)) * (iDynTree::toEigen(iDynTree::Rotation::Identity()) - iDynTree::toEigen(baseRotation).transpose() * iDynTree::toEigen(baseRotation) - iDynTree::toEigen(baseRotation) * iDynTree::toEigen(dBaseRotation).transpose() * iDynTree::toEigen(dBaseRotation) * dt * dt) / (2 * dt);
 
-
             iDynTree::toEigen(dBaseRotation) = iDynTree::toEigen(dBaseRotation) + iDynTree::toEigen(dBaseRotationCorrection);
             iDynTree::toEigen(baseRotation) = iDynTree::toEigen(baseRotation) + iDynTree::toEigen(dBaseRotation) * dt;
 
-
-            float baseRotationDeterminant = baseRotation.getVal(0,0) * (baseRotation.getVal(1,1) * baseRotation.getVal(2,2) - baseRotation.getVal(1,2) * baseRotation.getVal(2,1)) + baseRotation.getVal(0, 1) * (baseRotation.getVal(1,2) * baseRotation.getVal(2,0) - baseRotation.getVal(1,0) * baseRotation.getVal(2,2)) +
-                     baseRotation.getVal(0, 2) * (baseRotation.getVal(1,0) * baseRotation.getVal(2,1) - baseRotation.getVal(1,1) * baseRotation.getVal(2,0));
-
+            // in order to ensure the solution is inside SO(3) we pass trough the unit quaternion.
+            //TODO check if we can remove the passage trough the quaternion representation or the dBaseRotationCorrection
             iDynTree::Vector4 quaternion = baseRotation.asQuaternion();
-
             baseRotation.fromQuaternion(quaternion);
-            baseRotationDeterminant = baseRotation.getVal(0,0) * (baseRotation.getVal(1,1) * baseRotation.getVal(2,2) - baseRotation.getVal(1,2) * baseRotation.getVal(2,1)) + baseRotation.getVal(0, 1) * (baseRotation.getVal(1,2) * baseRotation.getVal(2,0) - baseRotation.getVal(1,0) * baseRotation.getVal(2,2)) +
-                                 baseRotation.getVal(0, 2) * (baseRotation.getVal(1,0) * baseRotation.getVal(2,1) - baseRotation.getVal(1,1) * baseRotation.getVal(2,0));
 
             pImpl->baseTransformSolution.setRotation(baseRotation);
-        }
-        else
-        {
-            pImpl->baseTransformSolution = measuredBaseTransform;
         }
 
         // store velocities
@@ -1175,6 +1042,13 @@ void HumanStateProvider::run()
         auto tock_IB = std::chrono::high_resolution_clock::now();
         yDebug() << LogPrefix << "Integral Based IK took"
                  << std::chrono::duration_cast<std::chrono::milliseconds>(tock_IB - tick_IB).count() << "ms";
+    }
+
+    // If useDirectBaseMeasurement is true, set the measured base pose and velocity as solution
+    if (pImpl->useDirectBaseMeasurement)
+    {
+        pImpl->baseTransformSolution = measuredBaseTransform;
+        pImpl->baseVelocitySolution = measuredBaseVelocity;
     }
 
     // Expose IK solution for IHumanState
@@ -1209,28 +1083,9 @@ void HumanStateProvider::run()
     }
 
     // compute the inverse kinematic errors
-    pImpl->computeLinksOrientationErrors(pImpl->linkOrientationMatrices, pImpl->jointConfigurationSolution, pImpl->baseTransformSolution, pImpl->linkErrorOrientations);
+    pImpl->computeLinksOrientationErrors(pImpl->linkTransformMatrices, pImpl->jointConfigurationSolution, pImpl->baseTransformSolution, pImpl->linkErrorOrientations);
     pImpl->computeLinksAngularVelocityErrors(pImpl->linkVelocities, pImpl->jointConfigurationSolution, pImpl->baseTransformSolution, pImpl->jointVelocitiesSolution, pImpl->baseVelocitySolution, pImpl->linkErrorAngularVelocities);
 
-    // iDynTreeHelper::Rotation::rotationDistance distance;
-    if (pImpl->firstRun)
-    {
-        // initialize integrator
-        if (pImpl->useIntegrationBasedIK) {
-            pImpl->jointVelocitiesSolutionOld = pImpl->jointVelocitiesSolution;
-            pImpl->baseVelocitySolutionOld = pImpl->baseVelocitySolution;
-            pImpl->integralOrientationError.zero();
-        }
-        pImpl->firstRun = false;
-        pImpl->startTime = yarp::os::Time::now();
-    }
-
-    // reset integral after 2 seconds
-//    if (pImpl->lastTime - pImpl->startTime > 2.0)
-//    {
-//        pImpl->firstRun = true;
-//        pImpl->lastTime = -1.0;
-//    }
 }
 
 bool HumanStateProvider::impl::getLinkTransformFromInputData(
@@ -1345,53 +1200,6 @@ bool HumanStateProvider::impl::getLinkVelocityFromInputData(
     return true;
 }
 
-bool HumanStateProvider::impl::getLinkOrientationFromInputData(
-        std::unordered_map<std::string, iDynTree::Rotation>& transforms)
-{
-    for (const auto& linkMapEntry : wearableStorage.modelToWearable_LinkName) {
-        const ModelLinkName& modelLinkName = linkMapEntry.first;
-        const WearableLinkName& wearableLinkName = linkMapEntry.second;
-
-        if (wearableStorage.linkSensorsMap.find(wearableLinkName)
-                == wearableStorage.linkSensorsMap.end()
-                || !wearableStorage.linkSensorsMap.at(wearableLinkName)) {
-            yError() << LogPrefix << "Failed to get" << wearableLinkName
-                     << "sensor from the device. Something happened after configuring it.";
-            return false;
-        }
-
-        const wearable::SensorPtr<const sensor::IVirtualLinkKinSensor> sensor =
-                wearableStorage.linkSensorsMap.at(wearableLinkName);
-
-        if (!sensor) {
-            yError() << LogPrefix << "Sensor" << wearableLinkName
-                     << "has been added but not properly configured";
-            return false;
-        }
-
-        if (sensor->getSensorStatus() != sensor::SensorStatus::Ok) {
-            yError() << LogPrefix << "The sensor status of" << sensor->getSensorName()
-                     << "is not ok (" << static_cast<double>(sensor->getSensorStatus()) << ")";
-            return false;
-        }
-
-        Quaternion orientation;
-        if (!sensor->getLinkOrientation(orientation)) {
-            yError() << LogPrefix << "Failed to read link orientation from virtual link sensor";
-            return false;
-        }
-
-        iDynTree::Rotation rotation;
-        rotation.fromQuaternion({orientation.data(), 4});
-
-        // Note that this map is used during the IK step for setting a target orientation to a
-        // link of the model. For this reason the map keys are model names.
-        transforms[modelLinkName] = std::move(rotation);
-    }
-
-    return true;
-}
-
 bool HumanStateProvider::impl::getJointAnglesFromInputData(iDynTree::VectorDynSize& jointAngles)
 {
     for (const auto& jointMapEntry : wearableStorage.modelToWearable_JointInfo) {
@@ -1440,10 +1248,6 @@ bool HumanStateProvider::impl::getJointAnglesFromInputData(iDynTree::VectorDynSi
 
 bool HumanStateProvider::impl::getRealLinkJacobiansRelativeToBase(iDynTree::VectorDynSize jointConfigurations, std::unordered_map<std::string, iDynTree::MatrixDynSize>& jacobians)
 {
-    iDynTree::Vector3 worldGravity;
-    worldGravity.zero();
-    worldGravity(2) = -9.81;
-
     iDynTree::VectorDynSize zeroJointVelocities = jointConfigurations;
     zeroJointVelocities.zero();
 
@@ -1517,10 +1321,6 @@ bool HumanStateProvider::impl::computeJointVelocities(iDynTree::VectorDynSize jo
 
 bool HumanStateProvider::impl::getRealLinkJacobians(iDynTree::VectorDynSize jointConfigurations, iDynTree::Transform floatingBasePose, std::unordered_map<std::string, iDynTree::MatrixDynSize>& jacobians)
 {
-    iDynTree::Vector3 worldGravity;
-    worldGravity.zero();
-    worldGravity(2) = -9.81;
-
     iDynTree::VectorDynSize zeroJointVelocities = jointConfigurations;
     zeroJointVelocities.zero();
 
@@ -1580,14 +1380,7 @@ bool HumanStateProvider::impl::computeVelocities(iDynTree::VectorDynSize jointCo
             {
                 for (int j=0; j<(humanModel.getNrOfJoints() + 6); j++)
                 {
-                    if ( i==j )
-                    {
-                        fullLinkJacobian.setVal(i, j, 1);
-                    }
-                    else
-                    {
-                        fullLinkJacobian.setVal(i, j, 0);
-                    }
+                    fullLinkJacobian.setVal(i, j, linkJacobians[linkName].getVal(i, j));
                 }
                 fullLinkVelocities.setVal(i, linkVelocitiesMap[linkName].getVal(i));
             }
@@ -1631,12 +1424,8 @@ bool HumanStateProvider::impl::computeVelocities(iDynTree::VectorDynSize jointCo
     return true;
 }
 
-bool HumanStateProvider::impl::computeLinksOrientationErrors(std::unordered_map<std::string, iDynTree::Rotation> linkDesiredOrientations, iDynTree::VectorDynSize jointConfigurations, iDynTree::Transform floatingBasePose, std::unordered_map<std::string, iDynTreeHelper::Rotation::rotationDistance>& linkErrorOrientations)
+bool HumanStateProvider::impl::computeLinksOrientationErrors(std::unordered_map<std::string, iDynTree::Transform> linkDesiredTransforms, iDynTree::VectorDynSize jointConfigurations, iDynTree::Transform floatingBasePose, std::unordered_map<std::string, iDynTreeHelper::Rotation::rotationDistance>& linkErrorOrientations)
 {
-    iDynTree::Vector3 worldGravity;
-    worldGravity.zero();
-    worldGravity(2) = -9.81;
-
     iDynTree::VectorDynSize zeroJointVelocities = jointConfigurations;
     zeroJointVelocities.zero();
 
@@ -1646,9 +1435,9 @@ bool HumanStateProvider::impl::computeLinksOrientationErrors(std::unordered_map<
     iDynTree::KinDynComputations *computations = kinDynComputations.get();
     computations->setRobotState(floatingBasePose, jointConfigurations, zeroBaseVelocity, zeroJointVelocities, worldGravity);
 
-    for (const auto& linkMapEntry : linkDesiredOrientations) {
+    for (const auto& linkMapEntry : linkDesiredTransforms) {
         const ModelLinkName& linkName = linkMapEntry.first;
-        linkErrorOrientations[linkName] = iDynTreeHelper::Rotation::rotationDistance(computations->getWorldTransform(linkName).getRotation(), linkDesiredOrientations[linkName]); // computations->getWorldTransform(linkName).getRotation() * linkDesiredOrientations[linkName].inverse();
+        linkErrorOrientations[linkName] = iDynTreeHelper::Rotation::rotationDistance(computations->getWorldTransform(linkName).getRotation(), linkDesiredTransforms[linkName].getRotation()); // computations->getWorldTransform(linkName).getRotation() * linkDesiredOrientations[linkName].inverse();
     }
 
     return true;
@@ -1656,10 +1445,6 @@ bool HumanStateProvider::impl::computeLinksOrientationErrors(std::unordered_map<
 
 bool HumanStateProvider::impl::computeLinksAngularVelocityErrors(std::unordered_map<std::string, iDynTree::Twist> linkDesiredVelocities, iDynTree::VectorDynSize jointConfigurations, iDynTree::Transform floatingBasePose, iDynTree::VectorDynSize jointVelocities, iDynTree::Twist baseVelocity, std::unordered_map<std::string, iDynTree::Vector3>& linkAngularVelocityError)
 {
-    iDynTree::Vector3 worldGravity;
-    worldGravity.zero();
-    worldGravity(2) = -9.81;
-
     iDynTree::KinDynComputations *computations = kinDynComputations.get();
     computations->setRobotState(floatingBasePose, jointConfigurations, baseVelocity, jointVelocities, worldGravity);
 
@@ -1887,4 +1672,140 @@ std::array<double, 3> HumanStateProvider::getBasePosition() const
 {
     std::lock_guard<std::mutex> lock(pImpl->mutex);
     return pImpl->solution.basePosition;
+}
+
+// This method returns the all link pair names from the full human model
+static void createEndEffectorsPairs(const iDynTree::Model& model,
+                                    std::vector<SegmentInfo>& humanSegments,
+                                    std::vector<std::pair<std::string, std::string> > &framePairs,
+                                    std::vector<std::pair<iDynTree::FrameIndex, iDynTree::FrameIndex> > &framePairIndeces)
+{
+    //for each element in human segments
+    //extract it from the vector (to avoid duplications)
+    //Look for it in the model and get neighbours
+    std::vector<SegmentInfo> segments(humanSegments);
+    size_t segmentCount = segments.size();
+
+    while (!segments.empty()) {
+        SegmentInfo segment = segments.back();
+        segments.pop_back();
+        segmentCount--;
+
+        // check if the segment exists in the model
+        iDynTree::LinkIndex linkIndex = model.getLinkIndex(segment.segmentName);
+        if (linkIndex < 0 || static_cast<unsigned>(linkIndex) >= model.getNrOfLinks()) {
+            yWarning("Segment %s not found in the URDF model", segment.segmentName.c_str());
+            continue;
+        }
+
+        //this for loop should not be necessary, but this can help keeps the backtrace short
+        //as we do not assume that we can go back further that this node
+        for (unsigned neighbourIndex = 0; neighbourIndex < model.getNrOfNeighbors(linkIndex); ++neighbourIndex) {
+            //remember the "biforcations"
+            std::stack<iDynTree::LinkIndex> backtrace;
+            //and the visited nodes
+            std::vector<iDynTree::LinkIndex> visited;
+
+            //I've already visited the starting node
+            visited.push_back(linkIndex);
+            iDynTree::Neighbor neighbour = model.getNeighbor(linkIndex, neighbourIndex);
+            backtrace.push(neighbour.neighborLink);
+
+            while (!backtrace.empty()) {
+                iDynTree::LinkIndex currentLink = backtrace.top();
+                backtrace.pop();
+                //add the current link to the visited
+                visited.push_back(currentLink);
+
+                std::string linkName = model.getLinkName(currentLink);
+
+                // check if this is a human segment
+                std::vector<SegmentInfo>::iterator foundSegment = std::find_if(segments.begin(),
+                                                                               segments.end(),
+                                                                               [&](SegmentInfo& frame){ return frame.segmentName == linkName; });
+                if (foundSegment != segments.end()) {
+                    std::vector<SegmentInfo>::difference_type foundLinkIndex = std::distance(segments.begin(), foundSegment);
+                    //Found! This is a segment
+                    framePairs.push_back(std::pair<std::string, std::string>(segment.segmentName, linkName));
+                    framePairIndeces.push_back(std::pair<iDynTree::FrameIndex, iDynTree::FrameIndex>(segmentCount, foundLinkIndex));
+                    break;
+                }
+                //insert all non-visited neighbours
+                for (unsigned i = 0; i < model.getNrOfNeighbors(currentLink); ++i) {
+                    iDynTree::LinkIndex link = model.getNeighbor(currentLink, i).neighborLink;
+                    //check if we already visited this segment
+                    if (std::find(visited.begin(), visited.end(), link) != visited.end()) {
+                        //Yes => skip
+                        continue;
+                    }
+                    backtrace.push(link);
+                }
+            }
+
+        }
+    }
+
+}
+
+static bool getReducedModel(const iDynTree::Model& modelInput,
+                            const std::string& parentFrame,
+                            const std::string& endEffectorFrame,
+                            iDynTree::Model& modelOutput)
+{
+    iDynTree::FrameIndex parentFrameIndex;
+    iDynTree::FrameIndex endEffectorFrameIndex;
+    std::vector<std::string> consideredJoints;
+    iDynTree::Traversal traversal;
+    iDynTree::LinkIndex parentLinkIdx;
+    iDynTree::IJointConstPtr joint;
+    iDynTree::ModelLoader loader;
+
+    // Get frame indices
+    parentFrameIndex = modelInput.getFrameIndex(parentFrame);
+    endEffectorFrameIndex = modelInput.getFrameIndex(endEffectorFrame);
+
+    if(parentFrameIndex == iDynTree::FRAME_INVALID_INDEX){
+        yError() << LogPrefix << " Invalid parent frame: "<< parentFrame;
+        return false;
+    }
+    else if(endEffectorFrameIndex == iDynTree::FRAME_INVALID_INDEX){
+        yError() << LogPrefix << " Invalid End Effector Frame: "<< endEffectorFrame;
+        return false;
+    }
+
+    // Select joint from traversal
+    modelInput.computeFullTreeTraversal(traversal, modelInput.getFrameLink(parentFrameIndex));
+
+    iDynTree::LinkIndex visitedLink = modelInput.getFrameLink(endEffectorFrameIndex);
+
+    while (visitedLink != traversal.getBaseLink()->getIndex())
+    {
+        parentLinkIdx = traversal.getParentLinkFromLinkIndex(visitedLink)->getIndex();
+        joint = traversal.getParentJointFromLinkIndex(visitedLink);
+
+        // Check if the joint is supported
+        if(modelInput.getJoint(joint->getIndex())->getNrOfDOFs() == 1)
+        {
+            consideredJoints.insert(consideredJoints.begin(), modelInput.getJointName(joint->getIndex()));
+        }
+        else {
+            yWarning() << LogPrefix << "Joint " << modelInput.getJointName(joint->getIndex()) << " is ignored as it has (" << modelInput.getJoint(joint->getIndex())->getNrOfDOFs() << " DOFs)";
+        }
+
+        visitedLink = parentLinkIdx;
+    }
+
+    if (!loader.loadReducedModelFromFullModel(modelInput, consideredJoints)) {
+        std::cerr << LogPrefix << " failed to select joints: " ;
+        for (std::vector< std::string >::const_iterator i = consideredJoints.begin(); i != consideredJoints.end(); ++i){
+            std::cerr << *i << ' ';
+        }
+        std::cerr << std::endl;
+        return false;
+
+    }
+
+    modelOutput = loader.model();
+
+    return true;
 }

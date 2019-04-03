@@ -59,11 +59,8 @@ struct LinkPairInfo {
 
 
     // Velocity-related elements
-    iDynTree::MatrixDynSize parentJacobian;
-    iDynTree::MatrixDynSize childJacobian;
     iDynTree::MatrixDynSize relativeJacobian;
     std::unique_ptr<iDynTree::KinDynComputations> kinDynComputations;
-    Eigen::ColPivHouseholderQR<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> > jacobianDecomposition;
 
     // Mapping from link pair to full model. Needed to map from small to complete problem
     std::string parentFrameName; //name of the parent frame
@@ -82,11 +79,8 @@ struct LinkPairInfo {
     : jointConfigurations(std::move(rvalue.jointConfigurations))
     , jointVelocities(std::move(rvalue.jointVelocities))
     , ikSolver(std::move(rvalue.ikSolver))
-    , parentJacobian(std::move(rvalue.parentJacobian))
-    , childJacobian(std::move(rvalue.childJacobian))
     , relativeJacobian(std::move(rvalue.relativeJacobian))
     , kinDynComputations(std::move(rvalue.kinDynComputations))
-    , jacobianDecomposition(std::move(rvalue.jacobianDecomposition))
     , parentFrameName(std::move(rvalue.parentFrameName))
     , parentFrameModelIndex(rvalue.parentFrameModelIndex)
     , parentFrameSegmentsIndex(rvalue.parentFrameSegmentsIndex)

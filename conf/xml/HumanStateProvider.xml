@@ -24,13 +24,17 @@
         <param name="maxIterationsIK">300</param>
         <param name="ikLinearSolver">ma27</param>
         <param name="ikPoolSizeOption">2</param>
-        <param name="posTargetWeight">0</param>
-        <param name="rotTargetWeight">10</param>
-        <param name="costRegularization">0.25</param>
-        <param name="costTolerance">0.4</param>
+        <param name="posTargetWeight">0.0</param>
+        <param name="rotTargetWeight">1.0</param>
+        <param name="costRegularization">0.0</param>
+        <param name="costTolerance">0.05</param>
         <param name="useGlobalIK">false</param>
+        <param name="usePairWisedIK">false</param>
+        <param name="useIntegrationBasedIK">true</param>
         <param name="useXsensJointsAngles">false</param>
-        <!-- TODO: How to use a reduced model in the entire HDE? (Starting from HumanStateProvider) -->
+        <param name="useDirectBaseMeasurement">false</param>
+        <param name="integrationBasedIKCorrectionGainsLinRot">(8.0 8.0)</param>
+        <param name="integrationBasedIKIntegralCorrectionGainsLinRot">(0.0 0.0)</param>
         <group name="MODEL_TO_DATA_LINK_NAMES">
             <param name="map_Pelvis">(Pelvis, XsensSuit::vLink::Pelvis)</param>
             <param name="map_L5">(L5, XsensSuit::vLink::L5)</param>
