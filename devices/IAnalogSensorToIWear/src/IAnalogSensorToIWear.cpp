@@ -298,6 +298,8 @@ wearable::sensor::SensorType sensorTypeFromString(std::string sensorTypeString)
         return wearable::sensor::SensorType::Torque3DSensor;
     else if (sensorTypeString == "VirtualLinkKinSensor")
         return wearable::sensor::SensorType::VirtualLinkKinSensor;
+    else if (sensorTypeString == "VirtualJointKinSensor")
+        return wearable::sensor::SensorType::VirtualJointKinSensor;
     else if (sensorTypeString == "VirtualSphericalJointKinSensor")
         return wearable::sensor::SensorType::VirtualSphericalJointKinSensor;
     else {
@@ -703,6 +705,13 @@ IAnalogSensorToIWear::getSkinSensor(const wearable::sensor::SensorName name) con
 
 wearable::SensorPtr<const wearable::sensor::IVirtualLinkKinSensor>
 IAnalogSensorToIWear::getVirtualLinkKinSensor(const wearable::sensor::SensorName /*name*/) const
+{
+    return nullptr;
+}
+
+wearable::SensorPtr<const wearable::sensor::IVirtualJointKinSensor>
+IAnalogSensorToIWear::getVirtualJointKinSensor(
+    const wearable::sensor::SensorName /*name*/) const
 {
     return nullptr;
 }

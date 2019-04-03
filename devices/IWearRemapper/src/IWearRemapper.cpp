@@ -66,6 +66,8 @@ public:
     std::map<std::string, std::shared_ptr<sensor::impl::Torque3DSensor>> torque3DSensors;
     std::map<std::string, std::shared_ptr<sensor::impl::VirtualLinkKinSensor>>
         virtualLinkKinSensors;
+    std::map<std::string, std::shared_ptr<sensor::impl::VirtualJointKinSensor>>
+        virtualJointKinSensors;
     std::map<std::string, std::shared_ptr<sensor::impl::VirtualSphericalJointKinSensor>>
         virtualSphericalJointKinSensors;
 
@@ -101,6 +103,8 @@ const std::map<wearable::msg::SensorType, wearable::sensor::SensorType> MapSenso
     {wearable::msg::SensorType::TORQUE_3D_SENSOR, wearable::sensor::SensorType::Torque3DSensor},
     {wearable::msg::SensorType::VIRTUAL_LINK_KIN_SENSOR,
      wearable::sensor::SensorType::VirtualLinkKinSensor},
+    {wearable::msg::SensorType::VIRTUAL_JOINT_KIN_SENSOR,
+     wearable::sensor::SensorType::VirtualJointKinSensor},
     {wearable::msg::SensorType::VIRTUAL_SPHERICAL_JOINT_KIN_SENSOR,
      wearable::sensor::SensorType::VirtualSphericalJointKinSensor}};
 
@@ -703,6 +707,35 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
         sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
     }
 
+    for (auto& s : receivedWearData.virtualJointKinSensors) {
+        const auto& inputSensorName = s.first;
+        const auto& wearDataInputSensor = s.second;
+        // ==========================
+        // FORWARD TO THE OUTPUT PORT
+        // ==========================
+        auto& wearData = pImpl->outputPortWearData.prepare();
+        wearData.virtualJointKinSensors[inputSensorName] = wearDataInputSensor;
+        // ====================
+        // EXPOSE THE INTERFACE
+        // ====================
+        auto isensor = getVirtualJointKinSensor(inputSensorName);
+        if (!isensor) {
+            yError() << logPrefix << "Failed to get VirtualJointKinSensor"
+                     << inputSensorName;
+            askToStop();
+            return;
+        }
+        const auto* constSensor =
+            static_cast<const sensor::impl::VirtualJointKinSensor*>(isensor.get());
+        auto* sensor = const_cast<sensor::impl::VirtualJointKinSensor*>(constSensor);
+        // Copy its data to the buffer used for exposing the IWear interface
+        sensor->setBuffer({wearDataInputSensor.data.angle},
+                          {wearDataInputSensor.data.velocity},
+                          {wearDataInputSensor.data.acceleration});
+        // Set the status
+        sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
+    }
+
     for (auto& s : receivedWearData.virtualSphericalJointKinSensors) {
         const auto& inputSensorName = s.first;
         const auto& wearDataInputSensor = s.second;
@@ -896,6 +929,11 @@ IWearRemapper::getSensors(const sensor::SensorType type) const
                 sensors.push_back(s.second);
             }
             break;
+        case sensor::SensorType::VirtualJointKinSensor:
+            for (const auto& s : pImpl->virtualJointKinSensors) {
+                sensors.push_back(s.second);
+            }
+        break;
         case sensor::SensorType::VirtualSphericalJointKinSensor:
             for (const auto& s : pImpl->virtualSphericalJointKinSensors) {
                 sensors.push_back(s.second);
@@ -1048,6 +1086,17 @@ IWearRemapper::getVirtualLinkKinSensor(const sensor::SensorName name) const
     return pImpl
         ->getSensor<const sensor::IVirtualLinkKinSensor, sensor::impl::VirtualLinkKinSensor>(
             name, sensor::SensorType::VirtualLinkKinSensor, pImpl->virtualLinkKinSensors);
+}
+
+wearable::SensorPtr<const sensor::IVirtualJointKinSensor>
+IWearRemapper::getVirtualJointKinSensor(const sensor::SensorName name) const
+{
+    std::lock_guard<std::recursive_mutex> lock(pImpl->mutex);
+    return pImpl->getSensor<const sensor::IVirtualJointKinSensor,
+                            sensor::impl::VirtualJointKinSensor>(
+        name,
+        sensor::SensorType::VirtualJointKinSensor,
+        pImpl->virtualJointKinSensors);
 }
 
 wearable::SensorPtr<const sensor::IVirtualSphericalJointKinSensor>

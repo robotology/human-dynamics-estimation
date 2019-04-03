@@ -135,6 +135,9 @@ public:
 
     inline SensorPtr<const sensor::ITorque3DSensor>
     getTorque3DSensor(const sensor::SensorName /*name*/) const override;
+
+    inline SensorPtr<const sensor::IVirtualJointKinSensor>
+    getVirtualJointKinSensor(const sensor::SensorName /*name*/) const override;
 };
 
 inline wearable::SensorPtr<const wearable::sensor::IAccelerometer>
@@ -181,6 +184,12 @@ wearable::devices::XsensSuit::getTemperatureSensor(const sensor::SensorName /*na
 
 inline wearable::SensorPtr<const wearable::sensor::ITorque3DSensor>
 wearable::devices::XsensSuit::getTorque3DSensor(const sensor::SensorName /*name*/) const
+{
+    return nullptr;
+}
+
+inline wearable::SensorPtr<const wearable::sensor::IVirtualJointKinSensor>
+wearable::devices::XsensSuit::getVirtualJointKinSensor(const sensor::SensorName /*name*/) const
 {
     return nullptr;
 }

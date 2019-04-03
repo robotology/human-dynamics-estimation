@@ -106,6 +106,9 @@ public:
     SensorPtr<const sensor::IVirtualLinkKinSensor>
     getVirtualLinkKinSensor(const sensor::SensorName /*name*/) const override;
 
+    SensorPtr<const sensor::IVirtualJointKinSensor>
+    getVirtualJointKinSensor(const sensor::SensorName /*name*/) const override;
+
     SensorPtr<const sensor::IVirtualSphericalJointKinSensor>
     getVirtualSphericalJointKinSensor(const sensor::SensorName /*name*/) const override;
 };
