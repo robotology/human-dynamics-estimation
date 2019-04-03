@@ -29,7 +29,7 @@ public:
 
     virtual ~IVirtualSphericalJointKinSensor() = default;
 
-    // CONVENTION: RPY are defined as rotationa about X-Y-Z wrt fix frame
+    // CONVENTION: RPY are defined as rotations about X-Y-Z wrt fixed frame
     virtual bool getJointAnglesAsRPY(Vector3& angleAsRPY) const = 0;
     virtual bool getJointVelocities(Vector3& velocities) const = 0;
     virtual bool getJointAccelerations(Vector3& accelerations) const = 0;

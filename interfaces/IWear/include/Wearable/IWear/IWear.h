@@ -25,6 +25,7 @@
 #include "Wearable/IWear/Sensors/ITemperatureSensor.h"
 #include "Wearable/IWear/Sensors/ITorque3DSensor.h"
 #include "Wearable/IWear/Sensors/IVirtualLinkKinSensor.h"
+#include "Wearable/IWear/Sensors/IVirtualJointKinSensor.h"
 #include "Wearable/IWear/Sensors/IVirtualSphericalJointKinSensor.h"
 
 #include <memory>
@@ -133,6 +134,9 @@ public:
     virtual SensorPtr<const sensor::IVirtualLinkKinSensor>
     getVirtualLinkKinSensor(const sensor::SensorName /*name*/) const = 0;
 
+    virtual SensorPtr<const sensor::IVirtualJointKinSensor>
+    getVirtualJointKinSensor(const sensor::SensorName /*name*/) const = 0;
+
     virtual SensorPtr<const sensor::IVirtualSphericalJointKinSensor>
     getVirtualSphericalJointKinSensor(const sensor::SensorName /*name*/) const = 0;
 
@@ -178,6 +182,8 @@ public:
     inline VectorOfSensorPtr<const sensor::ITorque3DSensor> getTorque3DSensors() const;
 
     inline VectorOfSensorPtr<const sensor::IVirtualLinkKinSensor> getVirtualLinkKinSensors() const;
+
+    inline VectorOfSensorPtr<const sensor::IVirtualJointKinSensor> getVirtualJointKinSensors() const;
 
     inline VectorOfSensorPtr<const sensor::IVirtualSphericalJointKinSensor>
     getVirtualSphericalJointKinSensors() const;
@@ -226,6 +232,7 @@ wearable::IWear::getAllSensors() const
         sensor::SensorType::TemperatureSensor,
         sensor::SensorType::Torque3DSensor,
         sensor::SensorType::VirtualLinkKinSensor,
+        sensor::SensorType::VirtualJointKinSensor,
         sensor::SensorType::VirtualSphericalJointKinSensor,
     };
 
@@ -360,6 +367,13 @@ wearable::IWear::getVirtualLinkKinSensors() const
 {
     return castVectorOfSensorPtr<sensor::IVirtualLinkKinSensor>(
         getSensors(sensor::SensorType::VirtualLinkKinSensor));
+}
+
+inline wearable::VectorOfSensorPtr<const wearable::sensor::IVirtualJointKinSensor>
+wearable::IWear::getVirtualJointKinSensors() const
+{
+    return castVectorOfSensorPtr<sensor::IVirtualJointKinSensor>(
+        getSensors(sensor::SensorType::VirtualJointKinSensor));
 }
 
 inline wearable::VectorOfSensorPtr<const wearable::sensor::IVirtualSphericalJointKinSensor>

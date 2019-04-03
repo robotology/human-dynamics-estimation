@@ -52,6 +52,7 @@ namespace wearable {
             TemperatureSensor,
             Torque3DSensor,
             VirtualLinkKinSensor,
+            VirtualJointKinSensor,
             VirtualSphericalJointKinSensor,
         };
 

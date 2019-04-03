@@ -360,6 +360,47 @@ void VirtualLinkKinSensor::setBuffer(const wearable::Vector3& linearAcc,
 }
 
 // ==============================
+// VirtualJointKinSensor
+// ==============================
+
+VirtualJointKinSensor::VirtualJointKinSensor(wearable::sensor::SensorName n,
+                                             wearable::sensor::SensorStatus s)
+    : wearable::sensor::IVirtualJointKinSensor(n, s)
+{}
+
+bool VirtualJointKinSensor::getJointAngleAsRad(double& angleAsRad) const
+{
+    std::lock_guard<std::mutex> lock(m_mutex);
+    angleAsRad = m_angleAsRad;
+    return true;
+}
+
+bool VirtualJointKinSensor::getJointVelocity(double& velocity) const
+{
+    std::lock_guard<std::mutex> lock(m_mutex);
+    velocity = m_velocity;
+    return true;
+}
+
+bool VirtualJointKinSensor::getJointAcceleration(double& acceleration) const
+{
+    std::lock_guard<std::mutex> lock(m_mutex);
+    acceleration = m_acceleration;
+    return true;
+}
+
+void VirtualJointKinSensor::setBuffer(const double& angleAsRad,
+                                      const double& velocity,
+                                      const double& acceleration)
+{
+    std::lock_guard<std::mutex> lock(m_mutex);
+    m_angleAsRad = angleAsRad;
+    m_velocity = velocity;
+    m_acceleration = acceleration;
+}
+
+
+// ==============================
 // VirtualSphericalJointKinSensor
 // ==============================
 

@@ -65,6 +65,12 @@ struct VirtualLinkKinSensorData {
   6: VectorXYZ angularAcceleration;
 }
 
+struct VirtualJointKinSensorData {
+  1: double angle;
+  2: double velocity;
+  3: double acceleration;
+}
+
 struct VirtualSphericalJointKinSensorData {
   1: VectorRPY angle;
   2: VectorXYZ velocity;
@@ -150,6 +156,11 @@ struct VirtualLinkKinSensor {
   2: VirtualLinkKinSensorData data;
 }
 
+struct VirtualJointKinSensor {
+  1: SensorInfo info;
+  2: VirtualJointKinSensorData data;
+}
+
 struct VirtualSphericalJointKinSensor {
   1: SensorInfo info;
   2: VirtualSphericalJointKinSensorData data;
@@ -175,7 +186,8 @@ struct WearableData {
 13: optional map<string,TemperatureSensor> temperatureSensors;
 14: optional map<string,Torque3DSensor> torque3DSensors;
 15: optional map<string,VirtualLinkKinSensor> virtualLinkKinSensors;
-16: optional map<string,VirtualSphericalJointKinSensor> virtualSphericalJointKinSensors;
+16: optional map<string,VirtualJointKinSensor> virtualJointKinSensors;
+17: optional map<string,VirtualSphericalJointKinSensor> virtualSphericalJointKinSensors;
 }
 
 // ============
@@ -201,6 +213,7 @@ enum SensorType{
   TEMPERATURE_SENSOR,
   TORQUE_3D_SENSOR,
   VIRTUAL_LINK_KIN_SENSOR,
+  VIRTUAL_JOINT_KIN_SENSOR,
   VIRTUAL_SPHERICAL_JOINT_KIN_SENSOR,
 }
 

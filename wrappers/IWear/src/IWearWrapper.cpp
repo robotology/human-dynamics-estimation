@@ -56,6 +56,8 @@ public:
     wearable::VectorOfSensorPtr<const wearable::sensor::ITorque3DSensor> torque3DSensors;
     wearable::VectorOfSensorPtr<const wearable::sensor::IVirtualLinkKinSensor>
         virtualLinkKinSensors;
+    wearable::VectorOfSensorPtr<const wearable::sensor::IVirtualJointKinSensor>
+        virtualJointKinSensors;
     wearable::VectorOfSensorPtr<const wearable::sensor::IVirtualSphericalJointKinSensor>
         virtualSphericalJointKinSensors;
 
@@ -169,6 +171,7 @@ void IWearWrapper::run()
         pImpl->temperatureSensors = pImpl->iWear->getTemperatureSensors();
         pImpl->torque3DSensors = pImpl->iWear->getTorque3DSensors();
         pImpl->virtualLinkKinSensors = pImpl->iWear->getVirtualLinkKinSensors();
+        pImpl->virtualJointKinSensors = pImpl->iWear->getVirtualJointKinSensors();
         pImpl->virtualSphericalJointKinSensors = pImpl->iWear->getVirtualSphericalJointKinSensors();
     }
 
@@ -382,6 +385,25 @@ void IWearWrapper::run()
         }
     }
     {
+        for (const auto& sensor : pImpl->virtualJointKinSensors) {
+            double jointAngle;
+            double jointVel;
+            double jointAcc;
+            if (!sensor->getJointAngleAsRad(jointAngle) || !sensor->getJointVelocity(jointVel)
+                || !sensor->getJointAcceleration(jointAcc)) {
+                yError() << logPrefix << "[VirtualJointKinSensors] "
+                         << "Failed to read data";
+                askToStop();
+                return;
+            }
+            data.virtualJointKinSensors[sensor->getSensorName()] = {
+                generateSensorStatus(sensor.get()),
+                {jointAngle,
+                jointVel,
+                jointAcc}};
+        }
+    }
+    {
         for (const auto& sensor : pImpl->virtualSphericalJointKinSensors) {
             wearable::Vector3 jointAngles;
             wearable::Vector3 jointVel;
@@ -524,6 +546,11 @@ bool IWearWrapper::attach(yarp::dev::PolyDriver* poly)
     for (const auto& s : pImpl->iWear->getVirtualLinkKinSensors()) {
         yInfo() << logPrefix << "Adding sensor" << s->getSensorName();
         pImpl->wearableMetadata[msg::SensorType::VIRTUAL_LINK_KIN_SENSOR].push_back(
+            s->getSensorName());
+    }
+    for (const auto& s : pImpl->iWear->getVirtualJointKinSensors()) {
+        yInfo() << logPrefix << "Adding sensor" << s->getSensorName();
+        pImpl->wearableMetadata[msg::SensorType::VIRTUAL_JOINT_KIN_SENSOR].push_back(
             s->getSensorName());
     }
     for (const auto& s : pImpl->iWear->getVirtualSphericalJointKinSensors()) {
