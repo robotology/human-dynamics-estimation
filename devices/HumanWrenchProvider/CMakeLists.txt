@@ -24,6 +24,7 @@ target_include_directories(HumanWrenchProvider PUBLIC
     SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIR})
 
 target_link_libraries(HumanWrenchProvider PUBLIC
+    IHumanState
     IHumanWrench
     YARP::YARP_OS
     YARP::YARP_dev

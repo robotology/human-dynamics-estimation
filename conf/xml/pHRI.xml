@@ -11,7 +11,7 @@
 
     <device type="iwear_remapper" name="XSenseIWearRemapper">
         <param name="wearableDataPorts">(/XSensSuit/WearableData/data:o)</param>
-        <param name="useRPC">true</param>
+        <param name="useRPC">false</param>
         <param name="wearableRPCPorts">(/XSensSuit/WearableData/metadataRpc:o)</param>
         <param name="outputPortName">/HDE/XsensIWearRemapper/data:o</param>
     </device>
@@ -163,7 +163,7 @@
 
     <device type="iwear_remapper" name="FTSourcesIWearRemapper">
         <param name="wearableDataPorts">(/FTShoeLeft/WearableData/data:o /FTShoeRight/WearableData/data:o /ICub/WearableData/data:o)</param>
-        <param name="useRPC">true</param>
+        <param name="useRPC">false</param>
         <param name="wearableRPCPorts">(/FTShoeLeft/WearableData/metadataRpc:o /FTShoeRight/WearableData/metadataRpc:o /ICub/WearableData/metadataRpc:o)</param>
         <param name="outputPortName">/HDE/FTSourcesIWearRemapper/data:o</param>
     </device>
@@ -171,6 +171,7 @@
     <device type="human_wrench_provider" name="HumanWrenchProvider">
         <param name="period">0.100</param>
         <param name="human_urdf">humanSubject03_66dof.urdf</param>
+        <param name="pHRIScenario">true</param>
         <param name="robot_urdf">model.urdf</param>
         <param name="number_of_source_devices">3</param>
         <param name="number_of_sources">4</param>
@@ -195,23 +196,33 @@
         </group>
         <group name="RobotLeftHandFT">
             <param name="sensorName">ICub::ft6D::leftWBDFTSensor</param>
-            <param name="outputFrame">l_hand_dh_frame</param>
+            <param name="outputFrame">RightHand</param>
             <param name="type">robot</param>
             <param name="rotation">(-1.0 0.0 0.0 0.0 -1.0 0.0 0.0 0.0 1.0)</param>
             <param name="position">(0.59 -0.2549 0.0)</param>
             <param name="humanLinkingFrame">LeftFoot</param>
             <param name="robotLinkingFrame">l_sole</param>
+            <param name="robotSourceFrame">l_hand_dh_frame</param>
             <param name="humanFootPosition">(0.0 0.0 0.0918)</param>
         </group>
         <group name="RobotRightHandFT">
             <param name="sensorName">ICub::ft6D::rightWBDFTSensor</param>
-            <param name="outputFrame">r_hand_dh_frame</param>
+            <param name="outputFrame">LeftHand</param>
             <param name="type">robot</param>
             <param name="rotation">(-1.0 0.0 0.0 0.0 -1.0 0.0 0.0 0.0 1.0)</param>
             <param name="position">(0.59 -0.2549 0.0)</param>
             <param name="humanLinkingFrame">LeftFoot</param>
             <param name="robotLinkingFrame">l_sole</param>
+            <param name="robotSourceFrame">r_hand_dh_frame</param>
             <param name="humanFootPosition">(0.0 0.0 0.0918)</param>
+        </group>
+        <group name="RobotJoints">
+            <param name="head">(neck_pitch neck_roll neck_yaw)</param>
+            <param name="torso">(torso_yaw torso_roll torso_pitch)</param>
+            <param name="left_arm">(l_shoulder_pitch l_shoulder_roll l_shoulder_yaw l_elbow l_wrist_prosup l_wrist_pitch l_wrist_yaw)</param>
+            <param name="right_arm">(r_shoulder_pitch r_shoulder_roll r_shoulder_yaw r_elbow r_wrist_prosup r_wrist_pitch r_wrist_yaw)</param>
+            <param name="left_leg">(l_hip_pitch l_hip_roll l_hip_yaw l_knee l_ankle_pitch l_ankle_roll)</param>
+            <param name="right_leg">(r_hip_pitch r_hip_roll r_hip_yaw r_knee r_ankle_pitch r_ankle_roll)</param>
         </group>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
@@ -245,10 +256,10 @@
         </paramlist>
         <group name="ROS">
             <param name="useROS">true</param>
-            <param name="ROS_topicName">(/HDE/WrenchStamped/LeftFoot /HDE/WrenchStamped/RightFoot /HDE/WrenchStamped/LeftHand /HDE/WrenchStamped/RightHand)</param>
+            <param name="ROS_topicName">(/HDE/WrenchStamped/LeftFoot /HDE/WrenchStamped/RightFoot /HDE/WrenchStamped/RightHand /HDE/WrenchStamped/LeftHand)</param>
             <param name="ROS_nodeName">/HDE/HumanWrenchPublisherNode</param>
             <param name="ROS_msgType">geometry_msgs/WrenchStamped</param>
-            <param name="frame_id">(Human/LeftFoot Human/RightFoot Human/LeftHand Human/RightHand)</param>
+            <param name="frame_id">(Human/LeftFoot Human/RightFoot Human/RightHand Human/LeftHand)</param>
         </group>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
@@ -263,7 +274,7 @@
         <param name="urdf">humanSubject03_66dof.urdf</param>
         <param name="baseLink">Pelvis</param>
         <param name="number_of_wrench_sensors">4</param>
-        <param name="wrench_sensors_link_name">(LeftFoot RightFoot LeftHand RightHand)</param>
+        <param name="wrench_sensors_link_name">(LeftFoot RightFoot RightHand LeftHand)</param>
         <group name="PRIORS">
             <param name="cov_dyn_variables">10000.0</param>
             <param name="cov_dyn_constraints">0.0001</param>
@@ -272,11 +283,11 @@
             <param name="cov_measurements_DOF_ACCELERATION_SENSOR">0.666e-5</param>
             <group name="cov_measurements_NET_EXT_WRENCH_SENSOR">
                 <param name="value">1e-6</param>
-                <param name="specific_elements">(LeftFoot RightFoot LeftHand RightHand)</param>
+                <param name="specific_elements">(LeftFoot RightFoot RightHand LeftHand)</param>
                 <param name="LeftFoot">(0.0589998348 0.0589998348 0.0359999712 0.002250000225 0.002250000225 0.56e-3)</param>
                 <param name="RightFoot">(0.0589998348 0.0589998348 0.0359999712 0.002250000225 0.002250000225 0.56e-3)</param>
-                <param name="LeftHand">(0.0589998348 0.0589998348 0.0359999712 0.002250000225 0.002250000225 0.56e-3)</param>
                 <param name="RightHand">(0.0589998348 0.0589998348 0.0359999712 0.002250000225 0.002250000225 0.56e-3)</param>
+                <param name="LeftHand">(0.0589998348 0.0589998348 0.0359999712 0.002250000225 0.002250000225 0.56e-3)</param>
             </group>
         </group>
         <group name="SENSORS_REMOVAL">

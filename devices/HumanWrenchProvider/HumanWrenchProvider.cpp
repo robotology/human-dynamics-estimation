@@ -9,6 +9,7 @@
 #include "HumanWrenchProvider.h"
 #include "WrenchFrameTransformers.h"
 
+#include "IHumanState.h"
 #include "IHumanWrench.h"
 
 #include <Wearable/IWear/IWear.h>
@@ -55,11 +56,12 @@ struct WrenchSourceData
     std::unique_ptr<IWrenchFrameTransformer> frameTransformer;
 
     wearable::sensor::SensorName sensorName;
-    wearable::SensorPtr<const wearable::sensor::IForceTorque6DSensor> wearableSensor;
+    wearable::SensorPtr<const wearable::sensor::IForceTorque6DSensor> ftWearableSensor;
 
     // Variables for Robot Human Transformation
     std::string humanLinkingFrame;
     std::string robotLinkingFrame;
+    std::string robotSourceFrame;
 
     iDynTree::Position humanFootPosition;
 };
@@ -68,14 +70,32 @@ class HumanWrenchProvider::Impl
 {
 public:
     mutable std::mutex mutex;
+
+    //pHRI scenario flag
+    bool pHRIScenario;
+
+    //Gravity variable
+    iDynTree::Vector3 world_gravity;
+
+    //Attached interfaces
     wearable::IWear* iWear = nullptr;
+    hde::interfaces::IHumanState* iHumanState = nullptr;
 
     AnalogSensorData analogSensorData;
     std::vector<WrenchSourceData> wrenchSources;
 
-    // Model variables
+    // Human variables
     iDynTree::Model humanModel;
+    iDynTree::VectorDynSize humanJointPositionsVec;
+    iDynTree::VectorDynSize humanJointVelocitiesVec;
+
+    // Robot variables
     iDynTree::Model robotModel;
+    std::vector<std::string> robotJointsName;
+    iDynTree::VectorDynSize robotJointPositionsVec;
+    iDynTree::VectorDynSize robotJointVelocitiesVec;
+    std::vector<std::string> robotJointNamesListFromConfig;
+    wearable::VectorOfSensorPtr<const wearable::sensor::IVirtualJointKinSensor> robotJointWearableSensors;
 };
 
 HumanWrenchProvider::HumanWrenchProvider()
@@ -120,6 +140,11 @@ bool parsePosition(yarp::os::Bottle* list, iDynTree::Position& position)
 
 bool HumanWrenchProvider::open(yarp::os::Searchable& config)
 {
+    //Set gravity vector
+    pImpl->world_gravity.setVal(0, 0);
+    pImpl->world_gravity.setVal(1, 0);
+    pImpl->world_gravity.setVal(2, -9.81);
+
     // ===============================
     // CHECK THE CONFIGURATION OPTIONS
     // ===============================
@@ -128,12 +153,20 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
         yInfo() << LogPrefix << "Using default period:" << DefaultPeriod << "s";
     }
 
+    if (!(config.check("pHRIScenario") && config.find("pHRIScenario").isBool())) {
+        yError() << LogPrefix << "Option 'pHRIScenario' not found or not a valid bool";
+        return false;
+    }
+
+    // Get pHRI scenario flag
+    pImpl->pHRIScenario = config.find("pHRIScenario").asBool();
+
     // ==========================
     // INITIALIZE THE HUMAN MODEL
     // ==========================
 
     if (!(config.check("human_urdf") && config.find("human_urdf").isString())) {
-        yError() << LogPrefix << "Option 'human_urdf' not found or not a valid Integer";
+        yError() << LogPrefix << "Option 'human_urdf' not found or not a valid file name";
         return false;
     }
 
@@ -157,10 +190,11 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
     // INITIALIZE THE ROBOT MODEL
     // ==========================
 
-    if (!(config.check("robot_urdf") && config.find("robot_urdf").isString())) {
-        yInfo() << LogPrefix << "Option 'robot_urdf' not found, ignoring robot model";
-    }
-    else {
+    if (pImpl->pHRIScenario) {
+        if (!(config.check("robot_urdf") && config.find("robot_urdf").isString())) {
+            yError() << LogPrefix << "Option 'robot_urdf' not found or not a valid file name";
+            return false;
+        }
 
         const std::string robotURDFFileName = config.find("robot_urdf").asString();
         auto& robot_rf = yarp::os::ResourceFinder::getResourceFinderSingleton();
@@ -177,6 +211,37 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
         }
 
         pImpl->robotModel = robotModelLoader.model();
+    }
+
+    // ==================================
+    // INITIALIZE THE ROBOT JOINT SOURCES
+    // ==================================
+
+    if (pImpl->pHRIScenario) {
+        yarp::os::Bottle& robotJointsGroup = config.findGroup("RobotJoints");
+        if (robotJointsGroup.isNull()) {
+            yError() << LogPrefix << "Failed to find RobotJoints group in the configuration file";
+            return false;
+        }
+
+        for (size_t i = 1; i < robotJointsGroup.size(); i++) {
+            if (!(robotJointsGroup.get(i).isList() && robotJointsGroup.get(i).asList()->size() == 2)) {
+                yError() << LogPrefix << "Failed to load the robot part list";
+                return false;
+            }
+
+            yarp::os::Bottle* partList = robotJointsGroup.get(i).asList();
+            yarp::os::Bottle* jointsNameList = partList->get(1).asList();
+
+            for (int j = 0; j < jointsNameList->size(); j++) {
+                if (!jointsNameList->get(j).isString()) {
+                    yError() << LogPrefix << "Failed to read the robot joint name, expecting a string";
+                    return false;
+                }
+                pImpl->robotJointNamesListFromConfig.push_back(jointsNameList->get(j).asString());
+            }
+
+        }
 
     }
 
@@ -349,6 +414,14 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
 
                 WrenchSourceData.robotLinkingFrame = sourceGroup.find("robotLinkingFrame").asString();
 
+                if (!(sourceGroup.check("robotSourceFrame") && sourceGroup.find("robotSourceFrame").isString())) {
+                    yError() << LogPrefix << "Option" << sourceName
+                             << ":: robotSourceFrame not found or not a valid string";
+                    return false;
+                }
+
+                WrenchSourceData.robotSourceFrame = sourceGroup.find("robotSourceFrame").asString();
+
                 if (!(sourceGroup.check("humanFootPosition") && sourceGroup.find("humanFootPosition").isList())) {
                     yError() << LogPrefix << "Option" << sourceName
                              << ":: humanFootPosition not found or not a valid list";
@@ -384,6 +457,7 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
                             "Human foot position :" << sourceGroup.find("humanFootPosition").asList()->toString();
                 yDebug() << LogPrefix << "Human linking frame :" << WrenchSourceData.humanLinkingFrame;
                 yDebug() << LogPrefix << "Robot linking frame :" << WrenchSourceData.robotLinkingFrame;
+                yDebug() << LogPrefix << "Robot source frame  :" << WrenchSourceData.robotSourceFrame;
                 yDebug() << LogPrefix << "=============:";
 
                 break;
@@ -407,6 +481,54 @@ bool HumanWrenchProvider::close()
 
 void HumanWrenchProvider::run()
 {
+    if (pImpl->pHRIScenario) {
+
+        // Get human joint quantities from IHumanState interface
+        std::vector<std::string> humanJointsName = pImpl->iHumanState->getJointNames();
+        std::vector<double> humanJointsPosition = pImpl->iHumanState->getJointPositions();
+        std::vector<double> humanJointsVelocity = pImpl->iHumanState->getJointVelocities();
+
+        pImpl->humanJointPositionsVec.resize(pImpl->humanModel.getNrOfJoints());
+        pImpl->humanJointVelocitiesVec.resize(pImpl->humanModel.getNrOfJoints());
+
+        for (int j = 0; j < pImpl->humanModel.getNrOfJoints(); j++) {
+            for (int i = 0; i < humanJointsName.size(); i++) {
+                if (pImpl->humanModel.getJointName(j) == humanJointsName.at(i)) {
+                    pImpl->humanJointPositionsVec.setVal(j, humanJointsPosition.at(i));
+                    pImpl->humanJointVelocitiesVec.setVal(j, humanJointsVelocity.at(i));
+                    break;
+                }
+            }
+        }
+
+        // Get robot joint quantities from joint wearable sensors
+        std::vector<double> robotJointsPosition;
+        std::vector<double> robotJointsVeclocity;
+
+        for (auto& jointSensor : pImpl->robotJointWearableSensors) {
+
+            // Get joint position
+            double jointPosition;
+            jointSensor->getJointPosition(jointPosition);
+            robotJointsPosition.push_back(jointPosition);
+
+            // Get joint velocity
+            double jointVelocity;
+            jointSensor->getJointVelocity(jointVelocity);
+            robotJointsVeclocity.push_back(jointVelocity);
+        }
+
+        for (int j = 0; j < pImpl->robotModel.getNrOfJoints(); j++) {
+            for (int i = 0; i < pImpl->robotJointsName.size(); i++) {
+                if (pImpl->robotModel.getJointName(j) == pImpl->robotJointsName.at(i)) {
+                    pImpl->robotJointPositionsVec.setVal(j, robotJointsPosition.at(i));
+                    pImpl->robotJointVelocitiesVec.setVal(j, robotJointsVeclocity.at(i));
+                }
+            }
+        }
+
+    }
+
     for (unsigned i = 0; i < pImpl->wrenchSources.size(); ++i) {
         auto& forceSource = pImpl->wrenchSources[i];
 
@@ -416,15 +538,15 @@ void HumanWrenchProvider::run()
         wearable::Vector3 forces;
         wearable::Vector3 torques;
 
-        if (!forceSource.wearableSensor) {
+        if (!forceSource.ftWearableSensor) {
             yError() << LogPrefix << "Failed to get wearable sensor for source" << forceSource.name;
             askToStop();
             return;
         }
 
-        if (!forceSource.wearableSensor->getForceTorque6D(forces, torques)) {
+        if (!forceSource.ftWearableSensor->getForceTorque6D(forces, torques)) {
             yError() << LogPrefix << "Failed to get measurement from sensor"
-                     << forceSource.wearableSensor->getSensorName();
+                     << forceSource.ftWearableSensor->getSensorName();
             askToStop();
             return;
         }
@@ -439,11 +561,27 @@ void HumanWrenchProvider::run()
 
         if (forceSource.type == WrenchSourceType::Robot) {
 
+            iDynTree::Transform humanFeetToHandsTransform = iDynTree::Transform::Identity();
+            iDynTree::KinDynComputations humanKinDynComp;
+
+            humanKinDynComp.loadRobotModel(pImpl->humanModel);
+            humanKinDynComp.setRobotState(iDynTree::Transform::Identity(),
+                                          pImpl->humanJointPositionsVec,
+                                          iDynTree::Twist::Zero(),
+                                          pImpl->humanJointVelocitiesVec,
+                                          pImpl->world_gravity);
+            humanFeetToHandsTransform = humanKinDynComp.getRelativeTransform(forceSource.outputFrame,forceSource.humanLinkingFrame);
+
             iDynTree::Transform robotFeetToHandsTransform = iDynTree::Transform::Identity();
             iDynTree::KinDynComputations robotKinDynComp;
 
             robotKinDynComp.loadRobotModel(pImpl->robotModel);
-            robotFeetToHandsTransform = robotKinDynComp.getRelativeTransform(forceSource.robotLinkingFrame,forceSource.outputFrame);
+            robotKinDynComp.setRobotState(iDynTree::Transform::Identity(),
+                                          pImpl->robotJointPositionsVec,
+                                          iDynTree::Twist::Zero(),
+                                          pImpl->robotJointVelocitiesVec,
+                                          pImpl->world_gravity);
+            robotFeetToHandsTransform = robotKinDynComp.getRelativeTransform(forceSource.robotLinkingFrame,forceSource.robotSourceFrame);
 
             // TODO: Move this logic to WrenchFrameTransformers.cpp file
 
@@ -462,9 +600,9 @@ void HumanWrenchProvider::run()
             iDynTree::Transform robotToHumanTransform;
 
             robotToHumanTransform = iDynTree::Transform::Identity() *
-                                    iDynTree::Transform(iDynTree::Rotation::Identity(), forceSource.humanFootPosition) *
-                                    robotHumanFeetFixedTransform *
-                                    robotFeetToHandsTransform;
+                                    humanFeetToHandsTransform * //HumanHand_H_HumanFoot
+                                    robotHumanFeetFixedTransform * //HumanFoot_H_RobotFoot
+                                    robotFeetToHandsTransform; //RobotFoot_H_RobotHand
 
             // Update the stored transform
             newTransformer->transform = robotToHumanTransform;
@@ -501,43 +639,100 @@ bool HumanWrenchProvider::attach(yarp::dev::PolyDriver* poly)
         return false;
     }
 
-    if (pImpl->iWear || !poly->view(pImpl->iWear) || !pImpl->iWear) {
-        yError() << LogPrefix << "Failed to view the IWear interface from the PolyDriver";
-        return false;
-    }
+    // Get the device name from the driver
+    const std::string deviceName = poly->getValue("device").asString();
 
-    while (pImpl->iWear->getStatus() == wearable::WearStatus::WaitingForFirstRead) {
-        yInfo() << LogPrefix << "IWear interface waiting for first data. Waiting...";
-        yarp::os::Time::delay(5);
-    }
+    if (deviceName == "human_state_provider") {
 
-    if (pImpl->iWear->getStatus() != wearable::WearStatus::Ok) {
-        yError() << LogPrefix << "The status of the attached IWear interface is not ok ("
-                 << static_cast<int>(pImpl->iWear->getStatus()) << ")";
-        return false;
-    }
-
-    // TODO: switch to FourceSourceData
-
-    // Get the wearable sensors containing the input measurements
-    for (auto& sensorSourceData : pImpl->wrenchSources) {
-        auto sensor = pImpl->iWear->getForceTorque6DSensor(sensorSourceData.sensorName);
-
-        if (!sensor) {
-            yError() << LogPrefix << "Failed to get sensor" << sensorSourceData.sensorName
-                     << "from the attached IWear interface";
+        // Attach IHumanState interface from HumanStateProvider
+        if (pImpl->iHumanState || !poly->view(pImpl->iHumanState) || !pImpl->iHumanState) {
+            yError() << LogPrefix << "Failed to view IHumanState interface from the polydriver";
             return false;
         }
 
-        sensorSourceData.wearableSensor = sensor;
+        // Check the interface
+        if (pImpl->iHumanState->getNumberOfJoints() == 0
+                || pImpl->iHumanState->getNumberOfJoints() != pImpl->iHumanState->getJointNames().size()) {
+            yError() << "The IHumanState interface might not be ready";
+            return false;
+        }
+
+        yInfo() << LogPrefix << deviceName << "attach() successful";
     }
 
-    // Initialize the number of channels of the equivalent IAnalogSensor
-    const size_t numberOfFTSensors = pImpl->wrenchSources.size();
-    {
-        std::lock_guard<std::mutex> lock(pImpl->mutex);
-        pImpl->analogSensorData.measurements.resize(6 * numberOfFTSensors, 0);
-        pImpl->analogSensorData.numberOfChannels = 6 * numberOfFTSensors;
+    if (deviceName == "iwear_remapper") {
+
+        if (pImpl->iWear || !poly->view(pImpl->iWear) || !pImpl->iWear) {
+            yError() << LogPrefix << "Failed to view the IWear interface from the PolyDriver";
+            return false;
+        }
+
+        while (pImpl->iWear->getStatus() == wearable::WearStatus::WaitingForFirstRead) {
+            yInfo() << LogPrefix << "IWear interface waiting for first data. Waiting...";
+            yarp::os::Time::delay(5);
+        }
+
+        if (pImpl->iWear->getStatus() != wearable::WearStatus::Ok) {
+            yError() << LogPrefix << "The status of the attached IWear interface is not ok ("
+                     << static_cast<int>(pImpl->iWear->getStatus()) << ")";
+            return false;
+        }
+
+        // Get the ft wearable sensors containing the input measurements
+        for (auto& ftSensorSourceData : pImpl->wrenchSources) {
+            auto sensor = pImpl->iWear->getForceTorque6DSensor(ftSensorSourceData.sensorName);
+
+            if (!sensor) {
+                yError() << LogPrefix << "Failed to get sensor" << ftSensorSourceData.sensorName
+                         << "from the attached IWear interface";
+                return false;
+            }
+
+            ftSensorSourceData.ftWearableSensor = sensor;
+        }
+
+        // Initialize the number of channels of the equivalent IAnalogSensor
+        const size_t numberOfFTSensors = pImpl->wrenchSources.size();
+        {
+            std::lock_guard<std::mutex> lock(pImpl->mutex);
+            pImpl->analogSensorData.measurements.resize(6 * numberOfFTSensors, 0);
+            pImpl->analogSensorData.numberOfChannels = 6 * numberOfFTSensors;
+        }
+
+        // Check the size is at least as much as the one required by the config joints list
+        if (pImpl->iWear->getVirtualJointKinSensors().size() != pImpl->robotJointNamesListFromConfig.size()) {
+            yError() << LogPrefix << "Mismatch between the number of joints from the IWear interface and the configuration file";
+            return false;
+        }
+
+        // Get the joing position sensors containing the joint data
+        pImpl->robotJointWearableSensors = pImpl->iWear->getVirtualJointKinSensors();
+
+        for (auto& robotJointWearableSensor : pImpl->robotJointWearableSensors) {
+            if (!robotJointWearableSensor) {
+                yError() << LogPrefix << "Failed to get robot joint wearabke sensor pointer from the attached IWear interface";
+                return false;
+            }
+
+            // Get joint name from the sensor name
+            std::string sensorName = robotJointWearableSensor->getSensorName();
+            size_t found = sensorName.find_last_of(":");
+
+            std::string jointName = sensorName.substr(found+1);
+
+            std::vector<std::string>::iterator jointVecIterator
+                                        = std::find(pImpl->robotJointNamesListFromConfig.begin(),
+                                                    pImpl->robotJointNamesListFromConfig.end(),
+                                                    jointName);
+
+            if (jointVecIterator != pImpl->robotJointNamesListFromConfig.end()) {
+                 pImpl->robotJointsName.push_back(jointName);
+            }
+             else {
+                yWarning() << LogPrefix << "Ignoring sensor " << sensorName
+                                        << " as it is not asked in the configuration file";
+            }
+        }
     }
 
     // ====
@@ -558,25 +753,31 @@ bool HumanWrenchProvider::detach()
 {
     askToStop();
 
+    pImpl->iHumanState = nullptr;
     pImpl->iWear = nullptr;
     return true;
 }
 
 bool HumanWrenchProvider::attachAll(const yarp::dev::PolyDriverList& driverList)
 {
-    if (driverList.size() > 1) {
-        yError() << LogPrefix << "This wrapper accepts only one attached PolyDriver";
+    bool attachStatus = false;
+    if (driverList.size() > 2) {
+        yError() << LogPrefix << "This wrapper accepts only two attached PolyDriver";
         return false;
     }
 
-    const yarp::dev::PolyDriverDescriptor* driver = driverList[0];
+    for (size_t i = 0; i < driverList.size(); i++) {
+        const yarp::dev::PolyDriverDescriptor* driver = driverList[i];
 
-    if (!driver) {
-        yError() << LogPrefix << "Passed PolyDriverDescriptor is nullptr";
-        return false;
+        if (!driver) {
+            yError() << LogPrefix << "Passed PolyDriverDescriptor is nullptr";
+            return false;
+        }
+
+        attachStatus = attach(driver->poly);
     }
 
-    return attach(driver->poly);
+    return attachStatus;
 }
 
 bool HumanWrenchProvider::detachAll()
@@ -615,13 +816,13 @@ int HumanWrenchProvider::getState(int ch)
     // Get the sensor associated with the channel
     const auto& sensorData = pImpl->wrenchSources[ch];
 
-    if (!sensorData.wearableSensor) {
+    if (!sensorData.ftWearableSensor) {
         yError() << "The wearable sensor for this channel was not allocated";
         return IAnalogSensor::AS_ERROR;
     }
 
     // Map the wearable sensor status to IAnalogSensor status
-    switch (sensorData.wearableSensor->getSensorStatus()) {
+    switch (sensorData.ftWearableSensor->getSensorStatus()) {
         case wearable::WearStatus::Error:
             return IAnalogSensor::AS_ERROR;
         case wearable::WearStatus::Ok:

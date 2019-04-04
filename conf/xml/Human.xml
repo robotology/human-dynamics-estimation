@@ -171,6 +171,7 @@
     <device type="human_wrench_provider" name="HumanWrenchProvider">
         <param name="period">0.100</param>
         <param name="human_urdf">humanSubject03_66dof.urdf</param>
+        <param name="pHRIScenario">false</param>
         <param name="number_of_sources">2</param>
         <param name="sources">(FTShoeLeft FTShoeRight)</param>
         <group name="FTShoeLeft">
