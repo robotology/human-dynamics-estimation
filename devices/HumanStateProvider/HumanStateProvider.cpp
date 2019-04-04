@@ -143,10 +143,8 @@ public:
     std::unordered_map<std::string, iDynTree::Twist> linkVelocities;
     iDynTree::VectorDynSize jointConfigurationSolution;
     iDynTree::VectorDynSize jointVelocitiesSolution;
-    iDynTree::VectorDynSize jointVelocitiesSolutionOld;
     iDynTree::Transform baseTransformSolution;
     iDynTree::Twist baseVelocitySolution;
-    iDynTree::Twist baseVelocitySolutionOld;
 
     iDynTree::Vector3 integralOrientationError;
     iDynTree::Vector3 integralLinearVelocityError;
@@ -177,6 +175,8 @@ public:
     bool useIntegrationBasedIK;
     bool useDirectBaseMeasurement;
     iDynTree::InverseKinematics globalIK;
+
+    iDynTreeHelper::State::integrator stateIntegrator;
 
     // clock
     double lastTime{-1.0};
@@ -515,9 +515,6 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     pImpl->jointVelocitiesSolution.resize(nrOfJoints);
     pImpl->jointVelocitiesSolution.zero();
 
-    pImpl->jointVelocitiesSolutionOld.resize(nrOfJoints);
-    pImpl->jointVelocitiesSolutionOld.zero();
-
     // ========================
     // INITIALIZE PAIR-WISED IK
     // ========================
@@ -736,9 +733,10 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     if (pImpl->useIntegrationBasedIK) {
 
         // Initialize state integrator
-        pImpl->jointVelocitiesSolutionOld = pImpl->jointVelocitiesSolution;
-        pImpl->baseVelocitySolutionOld = pImpl->baseVelocitySolution;
-        pImpl->baseTransformSolution.setRotation(iDynTree::Rotation::Identity());
+        pImpl->stateIntegrator.setInterpolatorType(iDynTreeHelper::State::integrator::trapezoidal);
+        pImpl->stateIntegrator.setNJoints(nrOfJoints);
+        pImpl->stateIntegrator.resetState();
+
         pImpl->integralOrientationError.zero();
     }
 
@@ -998,46 +996,26 @@ void HumanStateProvider::run()
             pImpl->computeVelocities(pImpl->jointConfigurationSolution, pImpl->baseTransformSolution, pImpl->linkVelocities, pImpl->jointVelocitiesSolution, pImpl->baseVelocitySolution);
         }
 
-        // integrate joint velocities to obtain joint position using Tustin formula
-        for (unsigned i = 0; i < pImpl->jointConfigurationSolution.size(); ++i) {
-            pImpl->jointConfigurationSolution.setVal(i, pImpl->jointConfigurationSolution.getVal(i) + (pImpl->jointVelocitiesSolution.getVal(i) + pImpl->jointVelocitiesSolutionOld.getVal(i)) * dt / 2);
-        }
-
+        // integrate velocities measurements
         if (!pImpl->useDirectBaseMeasurement)
         {
-            // integrate base linear velocity to obtain base position using Tustin formula
-            iDynTree::Position basePositionSolution;
-            for (unsigned i = 0; i < 3; i++) {
-               iDynTree::toEigen(basePositionSolution) = iDynTree::toEigen(pImpl->baseTransformSolution.getPosition()) + (iDynTree::toEigen(pImpl->baseVelocitySolution.getLinearVec3()) + iDynTree::toEigen(pImpl->baseVelocitySolutionOld.getLinearVec3())) * dt / 2;
-            }
-            pImpl->baseTransformSolution.setPosition(basePositionSolution);
+            pImpl->stateIntegrator.integrate(pImpl->jointVelocitiesSolution, pImpl->baseVelocitySolution.getLinearVec3(), pImpl->baseVelocitySolution.getAngularVec3(), dt);
 
-            // integrato base angular velocity to obtain base rotation
-            iDynTree::Rotation baseRotation = pImpl->baseTransformSolution.getRotation();
+            pImpl->stateIntegrator.getJointConfiguration(pImpl->jointConfigurationSolution);
+            pImpl->stateIntegrator.getBasePose(pImpl->baseTransformSolution);
 
-            iDynTree::Matrix3x3 dBaseRotation;
-            iDynTree::toEigen(dBaseRotation) = iDynTree::skew(iDynTree::toEigen(pImpl->baseVelocitySolution.getAngularVec3())) * iDynTree::toEigen(baseRotation);
-
-            iDynTree::Matrix3x3 dBaseRotationCorrection;
-            // first order approximation correction
-            iDynTree::toEigen(dBaseRotationCorrection) = (iDynTree::toEigen(iDynTree::Rotation::Identity()) - iDynTree::toEigen(baseRotation) * iDynTree::toEigen(baseRotation).transpose()) * iDynTree::toEigen(baseRotation) / (2 * dt);
-            // second order approximation correction
-            // iDynTree::toEigen(dBaseRotationCorrection) = (iDynTree::toEigen(baseRotation) + iDynTree::toEigen(dBaseRotation)) * (iDynTree::toEigen(iDynTree::Rotation::Identity()) - iDynTree::toEigen(baseRotation).transpose() * iDynTree::toEigen(baseRotation) - iDynTree::toEigen(baseRotation) * iDynTree::toEigen(dBaseRotation).transpose() * iDynTree::toEigen(dBaseRotation) * dt * dt) / (2 * dt);
-
-            iDynTree::toEigen(dBaseRotation) = iDynTree::toEigen(dBaseRotation) + iDynTree::toEigen(dBaseRotationCorrection);
-            iDynTree::toEigen(baseRotation) = iDynTree::toEigen(baseRotation) + iDynTree::toEigen(dBaseRotation) * dt;
-
-            // in order to ensure the solution is inside SO(3) we pass trough the unit quaternion.
-            //TODO check if we can remove the passage trough the quaternion representation or the dBaseRotationCorrection
-            iDynTree::Vector4 quaternion = baseRotation.asQuaternion();
-            baseRotation.fromQuaternion(quaternion);
-
-            pImpl->baseTransformSolution.setRotation(baseRotation);
+//            iDynTree::Position basePositionSolution;
+//            iDynTree::Rotation baseRotationSolution;
+//            pImpl->stateIntegrator.getBasePose(basePositionSolution, baseRotationSolution);
+//            pImpl->baseTransformSolution.setPosition(basePositionSolution);
+//            pImpl->baseTransformSolution.setRotation(baseRotationSolution);
         }
+        else
+        {
+            pImpl->stateIntegrator.integrate(pImpl->jointVelocitiesSolution, dt);
 
-        // store velocities
-        pImpl->baseVelocitySolutionOld = pImpl->baseVelocitySolution;
-        pImpl->jointVelocitiesSolutionOld = pImpl->jointVelocitiesSolution;
+            pImpl->stateIntegrator.getJointConfiguration(pImpl->jointConfigurationSolution);
+        }
 
         auto tock_IB = std::chrono::high_resolution_clock::now();
         yDebug() << LogPrefix << "Integral Based IK took"

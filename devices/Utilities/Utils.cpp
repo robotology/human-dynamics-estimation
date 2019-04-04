@@ -131,14 +131,9 @@ iDynTreeHelper::State::integrator::integrator(unsigned int nJoints, interpolatio
     interpolator(interpolator)
 {
     oldState.s.resize(nJoints);
-    oldState.s.zero();
     oldState.dot_s.resize(nJoints);
-    oldState.dot_s.zero();
 
-    oldState.W_p_B.zero();
-    oldState.dot_W_p_B.zero();
-    oldState.W_R_B = iDynTree::Rotation::Identity();
-    oldState.omega_B.zero();
+    resetState();
 }
 
 iDynTreeHelper::State::integrator::integrator(state initialState, interpolationType interpolator):
@@ -182,6 +177,16 @@ void iDynTreeHelper::State::integrator::setNJoints(unsigned int _nJoints)
     nJoints = _nJoints;
     oldState.s.resize(nJoints);
     oldState.dot_s.resize(nJoints);
+}
+
+void iDynTreeHelper::State::integrator::resetState()
+{
+    oldState.s.zero();
+    oldState.dot_s.zero();
+    oldState.W_p_B.zero();
+    oldState.dot_W_p_B.zero();
+    oldState.W_R_B = iDynTree::Rotation::Identity();
+    oldState.omega_B.zero();
 }
 
 void iDynTreeHelper::State::integrator::setState(state newState)
@@ -239,6 +244,49 @@ void iDynTreeHelper::State::integrator::getState(iDynTree::VectorDynSize& s,
     W_R_B = oldState.W_R_B;
     omega_B = oldState.omega_B;
 }
+
+void iDynTreeHelper::State::integrator::getJointState(iDynTree::VectorDynSize& s,
+                                                      iDynTree::VectorDynSize& dot_s)
+{
+    s.resize(nJoints);
+    dot_s.resize(nJoints);
+    s = oldState.s;
+    dot_s = oldState.dot_s;
+}
+
+void iDynTreeHelper::State::integrator::getBaseState(iDynTree::Vector3& W_p_B,
+                                                     iDynTree::Vector3& dot_W_p_B,
+                                                     iDynTree::Rotation& W_R_B,
+                                                     iDynTree::Vector3& omega_B)
+{
+    W_p_B = oldState.W_p_B;
+    dot_W_p_B = oldState.dot_W_p_B;
+    W_R_B = oldState.W_R_B;
+    omega_B = oldState.omega_B;
+}
+
+void iDynTreeHelper::State::integrator::getJointConfiguration(iDynTree::VectorDynSize& s)
+{
+    s.resize(nJoints);
+    s = oldState.s;
+}
+
+void iDynTreeHelper::State::integrator::getBasePose(iDynTree::Vector3& W_p_B,
+                                                    iDynTree::Rotation& W_R_B)
+{
+    W_p_B = oldState.W_p_B;
+    W_R_B = oldState.W_R_B;
+}
+
+void iDynTreeHelper::State::integrator::getBasePose(iDynTree::Transform& W_T_B)
+{
+    iDynTree::Position basePosition;
+    iDynTree::toEigen(basePosition) = iDynTree::toEigen(oldState.W_p_B);
+    W_T_B.setPosition(basePosition);
+    W_T_B.setRotation(oldState.W_R_B);
+}
+
+
 
 void iDynTreeHelper::State::integrator::integrate(iDynTree::VectorDynSize new_dot_s, double dt)
 {

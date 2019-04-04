@@ -75,15 +75,11 @@ public:
 
 class iDynTreeHelper::State::integrator
 {
-private:
-    unsigned int nJoints;
-    state oldState;
+public:
 
     typedef enum  {rectangular,
                    trapezoidal} interpolationType;
-    interpolationType interpolator;
 
-public:
     integrator();
     integrator(unsigned int nJoints, interpolationType interpolator=rectangular);
     integrator(state initialState, interpolationType interpolator=rectangular);
@@ -97,6 +93,7 @@ public:
 
     void setInterpolatorType(interpolationType interpolator);
     void setNJoints(unsigned int nJoints);
+    void resetState();
 
     void setState(state state);
     void setState(iDynTree::VectorDynSize s,
@@ -113,12 +110,27 @@ public:
                   iDynTree::Vector3& dot_W_p_B,
                   iDynTree::Rotation& W_R_B,
                   iDynTree::Vector3& omega_B);
+    void getJointState(iDynTree::VectorDynSize& s,
+                       iDynTree::VectorDynSize& dot_s);
+    void getBaseState(iDynTree::Vector3& W_p_B,
+                      iDynTree::Vector3& dot_W_p_B,
+                      iDynTree::Rotation& W_R_B,
+                      iDynTree::Vector3& omega_B);
+    void getJointConfiguration(iDynTree::VectorDynSize& s);
+    void getBasePose(iDynTree::Vector3& W_p_B,
+                     iDynTree::Rotation& W_R_B);
+    void getBasePose(iDynTree::Transform& W_T_B);
 
     void integrate(iDynTree::VectorDynSize dot_s, double dt);
     void integrate(iDynTree::VectorDynSize dot_s,
                    iDynTree::Vector3 dot_W_p_B,
                    iDynTree::Vector3 omega_B,
                    double dt);
+
+private:
+    unsigned int nJoints;
+    state oldState;
+    interpolationType interpolator;
 };
 
 
