@@ -32,4 +32,5 @@ add_library(${UTILITY_LIBRARY_NAME} ${${UTILITY_LIBRARY_NAME}_SRC} ${${UTILITY_L
 target_include_directories(${UTILITY_LIBRARY_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 target_link_libraries(${UTILITY_LIBRARY_NAME}
-  iDynTree::idyntree-high-level)
+  iDynTree::idyntree-high-level
+  YARP::YARP_OS)

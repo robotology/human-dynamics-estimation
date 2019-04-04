@@ -11,6 +11,7 @@
 
 // iDynTree
 #include <iDynTree/Core/VectorFixSize.h>
+#include <iDynTree/Core/VectorDynSize.h>
 #include <iDynTree/Core/Rotation.h>
 #include <iDynTree/Core/Transform.h>
 
@@ -33,6 +34,22 @@ namespace iDynTreeHelper
 
         class rotationDistance;
     }
+
+    namespace State
+    {
+        struct state {
+            iDynTree::VectorDynSize s;
+            iDynTree::VectorDynSize dot_s;
+            iDynTree::VectorDynSize dot_dot_s;
+            iDynTree::Vector3 W_p_B;
+            iDynTree::Vector3 dot_W_p_B;
+            iDynTree::Vector3 dot_dot_W_p_B;
+            iDynTree::Rotation W_R_B;
+            iDynTree::Vector3 omega_B;
+            iDynTree::Vector3 dot_omega_B;
+        };
+        class integrator;
+    }
 }
 
 
@@ -54,6 +71,54 @@ public:
 
     double asEuclideanDistanceOfEulerAngles();
     double asTrace();
+};
+
+class iDynTreeHelper::State::integrator
+{
+private:
+    unsigned int nJoints;
+    state oldState;
+
+    typedef enum  {rectangular,
+                   trapezoidal} interpolationType;
+    interpolationType interpolator;
+
+public:
+    integrator();
+    integrator(unsigned int nJoints, interpolationType interpolator=rectangular);
+    integrator(state initialState, interpolationType interpolator=rectangular);
+    integrator(iDynTree::VectorDynSize s,
+               iDynTree::VectorDynSize dot_s,
+               iDynTree::Vector3 W_p_B,
+               iDynTree::Vector3 dot_W_p_B,
+               iDynTree::Rotation W_R_B,
+               iDynTree::Vector3 omega_B,
+               interpolationType interpolator=rectangular);
+
+    void setInterpolatorType(interpolationType interpolator);
+    void setNJoints(unsigned int nJoints);
+
+    void setState(state state);
+    void setState(iDynTree::VectorDynSize s,
+                  iDynTree::VectorDynSize dot_s,
+                  iDynTree::Vector3 W_p_B,
+                  iDynTree::Vector3 dot_W_p_B,
+                  iDynTree::Rotation W_R_B,
+                  iDynTree::Vector3 omega_B);
+
+    void getState(state& state);
+    void getState(iDynTree::VectorDynSize& s,
+                  iDynTree::VectorDynSize& dot_s,
+                  iDynTree::Vector3& W_p_B,
+                  iDynTree::Vector3& dot_W_p_B,
+                  iDynTree::Rotation& W_R_B,
+                  iDynTree::Vector3& omega_B);
+
+    void integrate(iDynTree::VectorDynSize dot_s, double dt);
+    void integrate(iDynTree::VectorDynSize dot_s,
+                   iDynTree::Vector3 dot_W_p_B,
+                   iDynTree::Vector3 omega_B,
+                   double dt);
 };
 
 
