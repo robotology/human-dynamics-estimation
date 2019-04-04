@@ -68,7 +68,7 @@ public:
     std::map<std::string, driverToDeviceSensors<XsensVirtualLinkKinSensor>>
         virtualLinkKinSensorsMap;
     std::map<std::string, driverToDeviceSensors<XsensVirtualSphericalJointKinSensor>>
-        virtualJointKinSensorsMap;
+        virtualSphericalJointKinSensorsMap;
 
     // ------------------------
     // Custom utility functions
@@ -515,8 +515,8 @@ public:
     // -----------------------------------------
     bool getJointAnglesAsRPY(Vector3& angleAsRPY) const override
     {
-        if (m_suitImpl->virtualJointKinSensorsMap.find(this->m_name)
-            == m_suitImpl->virtualJointKinSensorsMap.end()) {
+        if (m_suitImpl->virtualSphericalJointKinSensorsMap.find(this->m_name)
+            == m_suitImpl->virtualSphericalJointKinSensorsMap.end()) {
             yError() << logPrefix << "Sensor" << this->m_name << "NOT found";
             angleAsRPY.fill(0.0);
             return false;
@@ -524,7 +524,7 @@ public:
 
         // Retrieve data sample directly form XSens Driver
         const xsensmvn::JointData jointData = m_suitImpl->driver->getJointDataSample().data.at(
-            m_suitImpl->virtualJointKinSensorsMap.at(this->m_name).driverIndex);
+            m_suitImpl->virtualSphericalJointKinSensorsMap.at(this->m_name).driverIndex);
 
         // TODO: This should be guaranteed, runtime check should be removed
         // Check if suit sensor and driver data sample have the same name
@@ -542,8 +542,8 @@ public:
 
     bool getJointVelocities(Vector3& velocities) const override
     {
-        if (m_suitImpl->virtualJointKinSensorsMap.find(this->m_name)
-            == m_suitImpl->virtualJointKinSensorsMap.end()) {
+        if (m_suitImpl->virtualSphericalJointKinSensorsMap.find(this->m_name)
+            == m_suitImpl->virtualSphericalJointKinSensorsMap.end()) {
             yError() << logPrefix << "Sensor" << this->m_name << "NOT found";
             velocities.fill(0.0);
             return false;
@@ -551,7 +551,7 @@ public:
 
         // Retrieve data sample directly form XSens Driver
         const auto jointData = m_suitImpl->driver->getJointDataSample().data.at(
-            m_suitImpl->virtualJointKinSensorsMap.at(this->m_name).driverIndex);
+            m_suitImpl->virtualSphericalJointKinSensorsMap.at(this->m_name).driverIndex);
 
         // TODO: This should be guaranteed, runtime check should be removed
         // Check if suit sensor and driver data sample have the same name
@@ -569,8 +569,8 @@ public:
 
     bool getJointAccelerations(Vector3& accelerations) const override
     {
-        if (m_suitImpl->virtualJointKinSensorsMap.find(this->m_name)
-            == m_suitImpl->virtualJointKinSensorsMap.end()) {
+        if (m_suitImpl->virtualSphericalJointKinSensorsMap.find(this->m_name)
+            == m_suitImpl->virtualSphericalJointKinSensorsMap.end()) {
             yError() << logPrefix << "Sensor" << this->m_name << "NOT found";
             accelerations.fill(0.0);
             return false;
@@ -578,7 +578,7 @@ public:
 
         // Retrieve data sample directly form XSens Driver
         const auto jointData = m_suitImpl->driver->getJointDataSample().data.at(
-            m_suitImpl->virtualJointKinSensorsMap.at(this->m_name).driverIndex);
+            m_suitImpl->virtualSphericalJointKinSensorsMap.at(this->m_name).driverIndex);
 
         // TODO: This should be guaranteed, runtime check should be removed
         // Check if suit sensor and driver data sample have the same name
@@ -626,8 +626,8 @@ void XsensSuit::XsensSuitImpl::setAllSensorStates(wearable::sensor::SensorStatus
     for (const auto& vlks : virtualLinkKinSensorsMap) {
         vlks.second.xsSensor->setStatus(aStatus);
     }
-    for (const auto& vjks : virtualJointKinSensorsMap) {
-        vjks.second.xsSensor->setStatus(aStatus);
+    for (const auto& vsjks : virtualSphericalJointKinSensorsMap) {
+        vsjks.second.xsSensor->setStatus(aStatus);
     }
 }
 
@@ -785,7 +785,7 @@ bool XsensSuit::open(yarp::os::Searchable& config)
     std::string posePrefix = getWearableName() + sensor::IPoseSensor::getPrefix();
     std::string magPrefix = getWearableName() + sensor::IMagnetometer::getPrefix();
     std::string vlksPrefix = getWearableName() + sensor::IVirtualLinkKinSensor::getPrefix();
-    std::string vjksPrefix =
+    std::string vsjksPrefix =
         getWearableName() + sensor::IVirtualSphericalJointKinSensor::getPrefix();
 
     if (pImpl->driver->getDriverConfiguration().dataStreamConfiguration.enableSensorData) {
@@ -852,10 +852,10 @@ bool XsensSuit::open(yarp::os::Searchable& config)
         for (size_t s = 0; s < jointNames.size(); ++s) {
             // Create the new sensor
             auto sensor = std::make_shared<XsensSuitImpl::XsensVirtualSphericalJointKinSensor>(
-                pImpl.get(), vjksPrefix + jointNames[s]);
+                pImpl.get(), vsjksPrefix + jointNames[s]);
             // Insert it in the output structure
-            pImpl->virtualJointKinSensorsMap.emplace(
-                vjksPrefix + jointNames[s],
+            pImpl->virtualSphericalJointKinSensorsMap.emplace(
+                vsjksPrefix + jointNames[s],
                 XsensSuitImpl::driverToDeviceSensors<
                     XsensSuitImpl::XsensVirtualSphericalJointKinSensor>{sensor, s});
         }
@@ -1078,10 +1078,10 @@ XsensSuit::getSensors(const wearable::sensor::SensorType aType) const
             break;
         }
         case sensor::SensorType::VirtualSphericalJointKinSensor: {
-            outVec.reserve(pImpl->virtualJointKinSensorsMap.size());
-            for (const auto& vjks : pImpl->virtualJointKinSensorsMap) {
+            outVec.reserve(pImpl->virtualSphericalJointKinSensorsMap.size());
+            for (const auto& vsjks : pImpl->virtualSphericalJointKinSensorsMap) {
                 outVec.push_back(
-                    static_cast<std::shared_ptr<sensor::ISensor>>(vjks.second.xsSensor));
+                    static_cast<std::shared_ptr<sensor::ISensor>>(vsjks.second.xsSensor));
             }
 
             break;
@@ -1189,13 +1189,13 @@ wearable::SensorPtr<const wearable::sensor::IVirtualSphericalJointKinSensor>
 XsensSuit::getVirtualSphericalJointKinSensor(const wearable::sensor::SensorName name) const
 {
     // Check if user-provided name corresponds to an available sensor
-    if (pImpl->virtualJointKinSensorsMap.find(static_cast<std::string>(name))
-        == pImpl->virtualJointKinSensorsMap.end()) {
+    if (pImpl->virtualSphericalJointKinSensorsMap.find(static_cast<std::string>(name))
+        == pImpl->virtualSphericalJointKinSensorsMap.end()) {
         yError() << logPrefix << "Invalid sensor name";
         return nullptr;
     }
 
     // Return a shared pointer to the required sensor
     return static_cast<std::shared_ptr<sensor::IVirtualSphericalJointKinSensor>>(
-        pImpl->virtualJointKinSensorsMap.at(static_cast<std::string>(name)).xsSensor);
+        pImpl->virtualSphericalJointKinSensorsMap.at(static_cast<std::string>(name)).xsSensor);
 }

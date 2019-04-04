@@ -5,6 +5,11 @@
             <param name="leftHand">/wholeBodyDynamics/left_arm/endEffectorWrench:o</param>
             <param name="rightHand">/wholeBodyDynamics/right_arm/endEffectorWrench:o</param>
         </group>
+        <group name="icub-joint-sensors">
+            <param name="controlBoardsList">(head torso left_arm right_arm left_leg right_leg)</param>
+            <param name="remotePrefix">/icubSim</param>
+            <param name="localPrefix">/ICubWearableRemoteClient</param>
+        </group>
     </device>
 
     <device type="iwear_wrapper" name="ICubWearableDeviceWrapper">

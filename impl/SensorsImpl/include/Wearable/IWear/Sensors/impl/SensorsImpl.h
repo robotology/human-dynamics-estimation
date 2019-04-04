@@ -281,7 +281,7 @@ class wearable::sensor::impl::VirtualJointKinSensor
     : public wearable::sensor::IVirtualJointKinSensor
 {
 public:
-    double m_angleAsRad;
+    double m_position;
     double m_velocity;
     double m_acceleration;
     mutable std::mutex m_mutex;
@@ -291,11 +291,11 @@ public:
         wearable::sensor::SensorStatus s = wearable::sensor::SensorStatus::Unknown);
     ~VirtualJointKinSensor() override = default;
 
-    bool getJointAngleAsRad(double& angleAsRad) const override;
+    bool getJointPosition(double& position) const override;
     bool getJointVelocity(double& velocity) const override;
     bool getJointAcceleration(double& acceleration) const override;
 
-    void setBuffer(const double& angleAsRad,
+    void setBuffer(const double& position,
                    const double& velocity,
                    const double& acceleration);
 

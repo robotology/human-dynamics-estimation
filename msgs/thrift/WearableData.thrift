@@ -66,7 +66,7 @@ struct VirtualLinkKinSensorData {
 }
 
 struct VirtualJointKinSensorData {
-  1: double angle;
+  1: double position;
   2: double velocity;
   3: double acceleration;
 }

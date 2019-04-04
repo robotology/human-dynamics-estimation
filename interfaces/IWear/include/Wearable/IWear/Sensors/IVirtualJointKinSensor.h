@@ -27,8 +27,7 @@ public:
         m_type = SensorType::VirtualJointKinSensor;
     }
 
-    // Angle in radians
-    virtual bool getJointAngleAsRad(double& angleAsRad) const = 0;
+    virtual bool getJointPosition(double& position) const = 0;
     virtual bool getJointVelocity(double& velocity) const = 0;
     virtual bool getJointAcceleration(double& acceleration) const = 0;
 

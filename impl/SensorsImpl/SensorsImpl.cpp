@@ -368,10 +368,10 @@ VirtualJointKinSensor::VirtualJointKinSensor(wearable::sensor::SensorName n,
     : wearable::sensor::IVirtualJointKinSensor(n, s)
 {}
 
-bool VirtualJointKinSensor::getJointAngleAsRad(double& angleAsRad) const
+bool VirtualJointKinSensor::getJointPosition(double& position) const
 {
     std::lock_guard<std::mutex> lock(m_mutex);
-    angleAsRad = m_angleAsRad;
+    position = m_position;
     return true;
 }
 
@@ -389,12 +389,12 @@ bool VirtualJointKinSensor::getJointAcceleration(double& acceleration) const
     return true;
 }
 
-void VirtualJointKinSensor::setBuffer(const double& angleAsRad,
+void VirtualJointKinSensor::setBuffer(const double& position,
                                       const double& velocity,
                                       const double& acceleration)
 {
     std::lock_guard<std::mutex> lock(m_mutex);
-    m_angleAsRad = angleAsRad;
+    m_position = position;
     m_velocity = velocity;
     m_acceleration = acceleration;
 }

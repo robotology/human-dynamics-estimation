@@ -74,6 +74,9 @@ public:
     SensorPtr<const sensor::IForceTorque6DSensor>
     getForceTorque6DSensor(const sensor::SensorName name) const override;
 
+    inline SensorPtr<const sensor::IVirtualJointKinSensor>
+    getVirtualJointKinSensor(const sensor::SensorName /*name*/) const override;
+
     // UNIMPLEMENTED SENSORS
     // ---------------------
 

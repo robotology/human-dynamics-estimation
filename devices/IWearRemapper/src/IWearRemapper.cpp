@@ -729,7 +729,7 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
             static_cast<const sensor::impl::VirtualJointKinSensor*>(isensor.get());
         auto* sensor = const_cast<sensor::impl::VirtualJointKinSensor*>(constSensor);
         // Copy its data to the buffer used for exposing the IWear interface
-        sensor->setBuffer({wearDataInputSensor.data.angle},
+        sensor->setBuffer({wearDataInputSensor.data.position},
                           {wearDataInputSensor.data.velocity},
                           {wearDataInputSensor.data.acceleration});
         // Set the status
