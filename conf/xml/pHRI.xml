@@ -227,6 +227,7 @@
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
                  <elem name="HumanWrenchProviderLabelFTShoeLeft">FTSourcesIWearRemapper</elem>
+                 <elem name="HumanWrenchProviderLabelHumanStateProvider">HumanStateProvider</elem>
             </paramlist>
         </action>
         <action phase="shutdown" level="5" type="detach" />

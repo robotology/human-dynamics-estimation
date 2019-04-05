@@ -483,15 +483,18 @@ void HumanWrenchProvider::run()
 {
     if (pImpl->pHRIScenario) {
 
+        yInfo() << LogPrefix << "Inside run()";
+
         // Get human joint quantities from IHumanState interface
         std::vector<std::string> humanJointsName = pImpl->iHumanState->getJointNames();
         std::vector<double> humanJointsPosition = pImpl->iHumanState->getJointPositions();
         std::vector<double> humanJointsVelocity = pImpl->iHumanState->getJointVelocities();
 
-        pImpl->humanJointPositionsVec.resize(pImpl->humanModel.getNrOfJoints());
-        pImpl->humanJointVelocitiesVec.resize(pImpl->humanModel.getNrOfJoints());
+        // Resize human joint quantities buffer
+        pImpl->humanJointPositionsVec.resize(pImpl->humanModel.getNrOfDOFs());
+        pImpl->humanJointVelocitiesVec.resize(pImpl->humanModel.getNrOfDOFs());
 
-        for (int j = 0; j < pImpl->humanModel.getNrOfJoints(); j++) {
+        for (int j = 0; j < pImpl->humanModel.getNrOfDOFs(); j++) {
             for (int i = 0; i < humanJointsName.size(); i++) {
                 if (pImpl->humanModel.getJointName(j) == humanJointsName.at(i)) {
                     pImpl->humanJointPositionsVec.setVal(j, humanJointsPosition.at(i));
@@ -507,18 +510,36 @@ void HumanWrenchProvider::run()
 
         for (auto& jointSensor : pImpl->robotJointWearableSensors) {
 
-            // Get joint position
-            double jointPosition;
-            jointSensor->getJointPosition(jointPosition);
-            robotJointsPosition.push_back(jointPosition);
+            std::string sensorName = jointSensor->getSensorName();
+            size_t found = sensorName.find_last_of(":");
 
-            // Get joint velocity
-            double jointVelocity;
-            jointSensor->getJointVelocity(jointVelocity);
-            robotJointsVeclocity.push_back(jointVelocity);
+            std::string jointName = sensorName.substr(found+1);
+
+            std::vector<std::string>::iterator jointVecIterator
+                                        = std::find(pImpl->robotJointNamesListFromConfig.begin(),
+                                                    pImpl->robotJointNamesListFromConfig.end(),
+                                                    jointName);
+
+            if (jointVecIterator != pImpl->robotJointNamesListFromConfig.end()) {
+
+                // Get joint position
+                double jointPosition;
+                jointSensor->getJointPosition(jointPosition);
+                robotJointsPosition.push_back(jointPosition);
+
+                // Get joint velocity
+                double jointVelocity;
+                jointSensor->getJointVelocity(jointVelocity);
+                robotJointsVeclocity.push_back(jointVelocity);
+
+            }
         }
 
-        for (int j = 0; j < pImpl->robotModel.getNrOfJoints(); j++) {
+        // Resize robot joint quantities buffer
+        pImpl->robotJointPositionsVec.resize(pImpl->robotModel.getNrOfDOFs());
+        pImpl->robotJointVelocitiesVec.resize(pImpl->robotModel.getNrOfDOFs());
+
+        for (int j = 0; j < pImpl->robotModel.getNrOfDOFs(); j++) {
             for (int i = 0; i < pImpl->robotJointsName.size(); i++) {
                 if (pImpl->robotModel.getJointName(j) == pImpl->robotJointsName.at(i)) {
                     pImpl->robotJointPositionsVec.setVal(j, robotJointsPosition.at(i));
@@ -699,38 +720,42 @@ bool HumanWrenchProvider::attach(yarp::dev::PolyDriver* poly)
             pImpl->analogSensorData.numberOfChannels = 6 * numberOfFTSensors;
         }
 
-        // Check the size is at least as much as the one required by the config joints list
-        if (pImpl->iWear->getVirtualJointKinSensors().size() != pImpl->robotJointNamesListFromConfig.size()) {
-            yError() << LogPrefix << "Mismatch between the number of joints from the IWear interface and the configuration file";
-            return false;
-        }
 
-        // Get the joing position sensors containing the joint data
-        pImpl->robotJointWearableSensors = pImpl->iWear->getVirtualJointKinSensors();
+        if (pImpl->pHRIScenario) {
 
-        for (auto& robotJointWearableSensor : pImpl->robotJointWearableSensors) {
-            if (!robotJointWearableSensor) {
-                yError() << LogPrefix << "Failed to get robot joint wearabke sensor pointer from the attached IWear interface";
+            // Check the size is at least as much as the one required by the config joints list
+            if (pImpl->iWear->getVirtualJointKinSensors().size() <= pImpl->robotJointNamesListFromConfig.size()) {
+                yError() << LogPrefix << "The number of joints from the IWear interface are less than the number of joints needed as defined in the configuration file";
                 return false;
             }
 
-            // Get joint name from the sensor name
-            std::string sensorName = robotJointWearableSensor->getSensorName();
-            size_t found = sensorName.find_last_of(":");
+            // Get the joing position sensors containing the joint data
+            pImpl->robotJointWearableSensors = pImpl->iWear->getVirtualJointKinSensors();
 
-            std::string jointName = sensorName.substr(found+1);
+            for (auto& robotJointWearableSensor : pImpl->robotJointWearableSensors) {
+                if (!robotJointWearableSensor) {
+                    yError() << LogPrefix << "Failed to get robot joint wearabke sensor pointer from the attached IWear interface";
+                    return false;
+                }
 
-            std::vector<std::string>::iterator jointVecIterator
-                                        = std::find(pImpl->robotJointNamesListFromConfig.begin(),
-                                                    pImpl->robotJointNamesListFromConfig.end(),
-                                                    jointName);
+                // Get joint name from the sensor name
+                std::string sensorName = robotJointWearableSensor->getSensorName();
+                size_t found = sensorName.find_last_of(":");
 
-            if (jointVecIterator != pImpl->robotJointNamesListFromConfig.end()) {
-                 pImpl->robotJointsName.push_back(jointName);
-            }
-             else {
-                yWarning() << LogPrefix << "Ignoring sensor " << sensorName
-                                        << " as it is not asked in the configuration file";
+                std::string jointName = sensorName.substr(found+1);
+
+                std::vector<std::string>::iterator jointVecIterator
+                                            = std::find(pImpl->robotJointNamesListFromConfig.begin(),
+                                                        pImpl->robotJointNamesListFromConfig.end(),
+                                                        jointName);
+
+                if (jointVecIterator != pImpl->robotJointNamesListFromConfig.end()) {
+                     pImpl->robotJointsName.push_back(jointName);
+                }
+                 else {
+                    yWarning() << LogPrefix << "Ignoring sensor " << sensorName
+                                            << " as it is not asked in the configuration file";
+                }
             }
         }
     }
