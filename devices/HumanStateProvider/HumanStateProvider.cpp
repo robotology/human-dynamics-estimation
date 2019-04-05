@@ -191,11 +191,8 @@ public:
     bool getLinkTransformFromInputData(std::unordered_map<std::string, iDynTree::Transform>& t);
     bool getLinkVelocityFromInputData(std::unordered_map<std::string, iDynTree::Twist>& t);
 
-    bool getRealLinkJacobiansRelativeToBase(iDynTree::VectorDynSize jointConfigurations, std::unordered_map<std::string, iDynTree::MatrixDynSize>& J);
-    bool computeJointVelocities(iDynTree::VectorDynSize jointConfigurations, std::unordered_map<std::string, iDynTree::Twist> linkVelocitiesMap, iDynTree::VectorDynSize& jointVelocities);
-
-    bool getRealLinkJacobians(iDynTree::VectorDynSize jointConfigurations, iDynTree::Transform floatingBasePose, std::unordered_map<std::string, iDynTree::MatrixDynSize>& J);
-    bool computeVelocities(iDynTree::VectorDynSize jointConfigurations, iDynTree::Transform floatingBasePose, std::unordered_map<std::string, iDynTree::Twist> linkVelocitiesMap, iDynTree::VectorDynSize& jointVelocities, iDynTree::Twist& baseVelocity);
+    bool updateInverseKinematicTargets();
+    bool updateInverseVelocityKinematicTargets();
 
     bool computeLinksOrientationErrors(std::unordered_map<std::string, iDynTree::Transform> linkDesiredOrientations, iDynTree::VectorDynSize jointConfigurations, iDynTree::Transform floatingBasePose, std::unordered_map<std::string, iDynTreeHelper::Rotation::rotationDistance>& linkErrorOrientations);
     bool computeLinksAngularVelocityErrors(std::unordered_map<std::string, iDynTree::Twist> linkDesiredVelocities, iDynTree::VectorDynSize jointConfigurations, iDynTree::Transform floatingBasePose, iDynTree::VectorDynSize jointVelocities, iDynTree::Twist baseVelocity, std::unordered_map<std::string, iDynTree::Vector3>& linkAngularVelocityError);
@@ -732,6 +729,49 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
                 return false;
             }
         }
+
+        // Set global Inverse Velocity Kinematics parameters
+        pImpl->inverseVelocityKinematics.setResolutionMode(InverseVelocityKinematics::pseudoinverse);
+
+        if (!pImpl->inverseVelocityKinematics.setModel(pImpl->humanModel)) {
+            yError() << LogPrefix << "IBIK: failed to load the model";
+            return false;
+        }
+
+        if (!pImpl->inverseVelocityKinematics.setFloatingBaseOnFrameNamed(pImpl->floatingBaseFrame.model)) {
+            yError() << LogPrefix << "Failed to set the IBIK floating base frame on link"
+                     << pImpl->floatingBaseFrame.model;
+            return false;
+        }
+
+        for (size_t linkIndex = 0; linkIndex < pImpl->humanModel.getNrOfLinks(); ++linkIndex) {
+            std::string linkName = pImpl->humanModel.getLinkName(linkIndex);
+
+            // skip the fake links
+            if (pImpl->wearableStorage.modelToWearable_LinkName.find(linkName)
+                    == pImpl->wearableStorage.modelToWearable_LinkName.end()) {
+                continue;
+            }
+
+            // Insert in the cost the twist of the link used as base
+            if (linkName == pImpl->floatingBaseFrame.model) {
+                if (!pImpl->useDirectBaseMeasurement && !pImpl->inverseVelocityKinematics.addTarget(linkName, iDynTree::Twist::Zero(), 1.0, 1.0)) {
+                    yError() << LogPrefix << "Failed to add velocity target for floating base link" << linkName;
+                    askToStop();
+                    return false;
+                }
+                continue;
+            }
+
+            // Add ik targets and set to identity
+            iDynTree::Vector3 initializationAngularVelocity;
+            initializationAngularVelocity.zero();
+            if (!pImpl->inverseVelocityKinematics.addAngularVelocityTarget(linkName, initializationAngularVelocity, 1.0)) {
+                yError() << LogPrefix << "Failed to add velocity target for link" << linkName;
+                askToStop();
+                return false;
+            }
+        }
     }
 
     // ===============================
@@ -911,46 +951,12 @@ void HumanStateProvider::run()
             return;
         }
 
-        iDynTree::Transform linkTransform;
+
 
         // Update ik targets based on wearable input data
-        for (size_t linkIndex = 0; linkIndex < pImpl->humanModel.getNrOfLinks(); ++linkIndex) {
-            std::string linkName = pImpl->humanModel.getLinkName(linkIndex);
-
-            // Skip links with no associated measures (use only links from the configuration)
-            if (pImpl->wearableStorage.modelToWearable_LinkName.find(linkName)
-                    == pImpl->wearableStorage.modelToWearable_LinkName.end()) {
-                continue;
-            }
-
-            // For the link used as base insert both the rotation and position cost if not using direcly measurement from xsens
-            if (linkName == pImpl->floatingBaseFrame.model) {
-                if (!pImpl->useDirectBaseMeasurement && !pImpl->globalIK.updateTarget(linkName, pImpl->linkTransformMatrices.at(linkName), 1.0, 1.0)) {
-                    yError() << LogPrefix << "Failed to update target for floating base" << linkName;
-                    askToStop();
-                    return;
-                }
-                continue;
-            }
-
-            if (pImpl->linkTransformMatrices.find(linkName) == pImpl->linkTransformMatrices.end()) {
-                yError() << LogPrefix << "Failed to find transformation matrix for link" << linkName;
-                askToStop();
-                return;
-            }
-
-            linkTransform = pImpl->linkTransformMatrices.at(linkName);
-            // if useDirectBaseMeasurement, use the link transform relative to the base
-            if (pImpl->useDirectBaseMeasurement)
-            {
-                linkTransform = measuredBaseTransform.inverse() * linkTransform;
-            }
-
-            if (!pImpl->globalIK.updateTarget(linkName, linkTransform, pImpl->posTargetWeight, pImpl->rotTargetWeight)) {
-                yError() << LogPrefix << "Failed to update target for link" << linkName;
-                askToStop();
-                return;
-            }
+        if (!pImpl->updateInverseKinematicTargets()) {
+            askToStop();
+            return;
         }
 
         // Use a postural task for regularization
@@ -970,15 +976,25 @@ void HumanStateProvider::run()
         // Get the global inverse kinematics solution
         pImpl->globalIK.getFullJointsSolution(pImpl->baseTransformSolution, pImpl->jointConfigurationSolution);
 
-        // if useDirectBaseMeasurement use directly the measurement of the base pose from the base link coming from Xsens and compute only the joint velocities solution
-        if (pImpl->useDirectBaseMeasurement)
-        {
-            pImpl->computeJointVelocities(pImpl->jointConfigurationSolution, pImpl->linkVelocities, pImpl->jointVelocitiesSolution);
+        // INVERSE VELOCITY KINEMATICS
+        // Set joint configuration
+        if (!pImpl->inverseVelocityKinematics.setConfiguration(pImpl->baseTransformSolution, pImpl->jointConfigurationSolution)) {
+            yError() << LogPrefix << "Failed to set the joint configuration for initializing the global IK";
+            askToStop();
+            return;
         }
-        else
-        {
-            pImpl->computeVelocities(pImpl->jointConfigurationSolution, pImpl->baseTransformSolution, pImpl->linkVelocities, pImpl->jointVelocitiesSolution, pImpl->baseVelocitySolution);
+
+        // Update ivk velocity targets based on wearable input data
+        if(!pImpl->updateInverseVelocityKinematicTargets()) {
+            askToStop();
+            return;
         }
+
+        if (!pImpl->inverseVelocityKinematics.solve()) {
+                yError() << LogPrefix << "Failed to solve inverse velocity kinematics";
+        }
+
+        pImpl->inverseVelocityKinematics.getVelocitySolution(pImpl->baseVelocitySolution, pImpl->jointVelocitiesSolution);
 
         auto tock_G = std::chrono::high_resolution_clock::now();
         yDebug() << LogPrefix << "Global IK took"
@@ -1039,53 +1055,17 @@ void HumanStateProvider::run()
         }
 
         // INVERSE VELOCITY KINEMATICS
-        // Set global IK initial condition
+        // Set joint configuration
         if (!pImpl->inverseVelocityKinematics.setConfiguration(pImpl->baseTransformSolution, pImpl->jointConfigurationSolution)) {
             yError() << LogPrefix << "Failed to set the joint configuration for initializing the global IK";
             askToStop();
             return;
         }
 
-        iDynTree::Twist linkTwist;
-
         // Update ivk velocity targets based on wearable input data
-        for (size_t linkIndex = 0; linkIndex < pImpl->humanModel.getNrOfLinks(); ++linkIndex) {
-            std::string linkName = pImpl->humanModel.getLinkName(linkIndex);
-
-            // Skip links with no associated measures (use only links from the configuration)
-            if (pImpl->wearableStorage.modelToWearable_LinkName.find(linkName)
-                    == pImpl->wearableStorage.modelToWearable_LinkName.end()) {
-                continue;
-            }
-
-            // For the link used as base insert both the rotation and position cost if not using direcly measurement from xsens
-            if (linkName == pImpl->floatingBaseFrame.model) {
-                if (!pImpl->useDirectBaseMeasurement && !pImpl->inverseVelocityKinematics.updateTarget(linkName, pImpl->linkVelocities.at(linkName), 1.0, 1.0)) {
-                    yError() << LogPrefix << "Failed to update velocity target for floating base" << linkName;
-                    askToStop();
-                    return;
-                }
-                continue;
-            }
-
-            if (pImpl->linkVelocities.find(linkName) == pImpl->linkVelocities.end()) {
-                yError() << LogPrefix << "Failed to find twist for link" << linkName;
-                askToStop();
-                return;
-            }
-
-            linkTwist = pImpl->linkVelocities.at(linkName);
-            // if useDirectBaseMeasurement, use the link transform relative to the base
-            if (pImpl->useDirectBaseMeasurement)
-            {
-                linkTwist = linkTwist - measuredBaseVelocity;
-            }
-
-            if (!pImpl->inverseVelocityKinematics.updateTarget(linkName, linkTwist, pImpl->posTargetWeight, pImpl->rotTargetWeight)) {
-                yError() << LogPrefix << "Failed to update velocity target for link" << linkName;
-                askToStop();
-                return;
-            }
+        if(!pImpl->updateInverseVelocityKinematicTargets()) {
+            askToStop();
+            return;
         }
 
         if (!pImpl->inverseVelocityKinematics.solve()) {
@@ -1317,179 +1297,86 @@ bool HumanStateProvider::impl::getJointAnglesFromInputData(iDynTree::VectorDynSi
     return true;
 }
 
-bool HumanStateProvider::impl::getRealLinkJacobiansRelativeToBase(iDynTree::VectorDynSize jointConfigurations, std::unordered_map<std::string, iDynTree::MatrixDynSize>& jacobians)
+bool HumanStateProvider::impl::updateInverseKinematicTargets()
 {
-    iDynTree::VectorDynSize zeroJointVelocities = jointConfigurations;
-    zeroJointVelocities.zero();
-
-    iDynTree::KinDynComputations *computations = kinDynComputations.get();
-    computations->setRobotState(jointConfigurations, zeroJointVelocities, worldGravity);
+    iDynTree::Transform linkTransform;
 
     for (size_t linkIndex = 0; linkIndex < humanModel.getNrOfLinks(); ++linkIndex) {
         std::string linkName = humanModel.getLinkName(linkIndex);
 
-        // skip fake links
+        // Skip links with no associated measures (use only links from the configuration)
         if (wearableStorage.modelToWearable_LinkName.find(linkName)
                 == wearableStorage.modelToWearable_LinkName.end()) {
             continue;
         }
 
-        // skip floating base link
+        // For the link used as base insert both the rotation and position cost if not using direcly measurement from xsens
         if (linkName == floatingBaseFrame.model) {
+            if (!useDirectBaseMeasurement && !globalIK.updateTarget(linkName, linkTransformMatrices.at(linkName), 1.0, 1.0)) {
+                yError() << LogPrefix << "Failed to update target for floating base" << linkName;
+                return false;
+            }
             continue;
         }
 
-        iDynTree::MatrixDynSize relativeJacobian(6, humanModel.getNrOfLinks());
-        computations->getRelativeJacobian(humanModel.getFrameIndex(floatingBaseFrame.model), linkIndex, relativeJacobian);
-
-        jacobians[linkName] = std::move(relativeJacobian);
-    }
-
-    return true;
-}
-
-bool HumanStateProvider::impl::computeJointVelocities(iDynTree::VectorDynSize jointConfigurations, std::unordered_map<std::string, iDynTree::Twist> linkVelocitiesMap, iDynTree::VectorDynSize& jointVelocities)
-{
-    iDynTree::VectorDynSize fullLinkVelocitiesRelativeToBase(3 * linkVelocitiesMap.size());
-    fullLinkVelocitiesRelativeToBase.zero();
-
-    iDynTree::MatrixDynSize fullLinkJacobianRelativeToBase(3 * linkVelocitiesMap.size(), jointConfigurations.size());
-    fullLinkJacobianRelativeToBase.zero();
-
-    std::unordered_map<std::string, iDynTree::MatrixDynSize> linkJacobiansRelativeToBase;
-
-    Eigen::ColPivHouseholderQR<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> > jacobianDecomposition;
-    jacobianDecomposition = Eigen::ColPivHouseholderQR<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> >(fullLinkJacobianRelativeToBase.rows(), fullLinkJacobianRelativeToBase.cols());
-
-    if(!getRealLinkJacobiansRelativeToBase(jointConfigurations, linkJacobiansRelativeToBase))
-    {
-        yError() << LogPrefix << "Failed to compute the link Jacobians";
-        return false;
-    }
-
-    int linkCount = 0;
-    for (const auto& linkMapEntry : linkJacobiansRelativeToBase) {
-        const ModelLinkName& linkName = linkMapEntry.first;
-        for (int i=3; i<6; i++)
-        {
-            for (int j=0; j<humanModel.getNrOfJoints(); j++)
-            {
-                fullLinkJacobianRelativeToBase.setVal(3 * linkCount + i, j, linkJacobiansRelativeToBase[linkName].getVal(i, j));
-            }
-            fullLinkVelocitiesRelativeToBase.setVal(3 * linkCount + i, linkVelocitiesMap[linkName].getVal(i) - linkVelocitiesMap[floatingBaseFrame.model].getVal(i));
+        if (linkTransformMatrices.find(linkName) == linkTransformMatrices.end()) {
+            yError() << LogPrefix << "Failed to find transformation matrix for link" << linkName;
+            return false;
         }
-        linkCount = linkCount + 1;
-    }
 
-    //Pseudo-invert the Full Jacobian
-    //Compute the QR decomposition
-    jacobianDecomposition.compute(iDynTree::toEigen(fullLinkJacobianRelativeToBase));
-    // the solve method on the decomposition directly solves the associated least-squares problem
-    iDynTree::toEigen(jointVelocities) = jacobianDecomposition.solve(iDynTree::toEigen(fullLinkVelocitiesRelativeToBase));
+        linkTransform = linkTransformMatrices.at(linkName);
+        // if useDirectBaseMeasurement, use the link transform relative to the base
+        if (useDirectBaseMeasurement)
+        {
+            linkTransform = linkTransformMatrices.at(floatingBaseFrame.model).inverse() * linkTransform;
+        }
+
+        if (!globalIK.updateTarget(linkName, linkTransform, posTargetWeight, rotTargetWeight)) {
+            yError() << LogPrefix << "Failed to update target for link" << linkName;
+            return false;
+        }
+    }
 
     return true;
 }
 
-bool HumanStateProvider::impl::getRealLinkJacobians(iDynTree::VectorDynSize jointConfigurations, iDynTree::Transform floatingBasePose, std::unordered_map<std::string, iDynTree::MatrixDynSize>& jacobians)
+bool HumanStateProvider::impl::updateInverseVelocityKinematicTargets()
 {
-    iDynTree::VectorDynSize zeroJointVelocities = jointConfigurations;
-    zeroJointVelocities.zero();
-
-    iDynTree::Twist zeroBaseVelocity;
-    zeroBaseVelocity.zero();
-
-    iDynTree::KinDynComputations *computations = kinDynComputations.get();
-    computations->setRobotState(floatingBasePose, jointConfigurations, zeroBaseVelocity, zeroJointVelocities, worldGravity);
+    iDynTree::Twist linkTwist;
 
     for (size_t linkIndex = 0; linkIndex < humanModel.getNrOfLinks(); ++linkIndex) {
         std::string linkName = humanModel.getLinkName(linkIndex);
 
-        // skip fake links
+        // Skip links with no associated measures (use only links from the configuration)
         if (wearableStorage.modelToWearable_LinkName.find(linkName)
                 == wearableStorage.modelToWearable_LinkName.end()) {
             continue;
         }
 
-        iDynTree::MatrixDynSize jacobian(6, humanModel.getNrOfLinks() + 6);
-        computations->getFrameFreeFloatingJacobian(linkName, jacobian);
-
-        jacobians[linkName] = std::move(jacobian);
-    }
-
-    return true;
-}
-
-bool HumanStateProvider::impl::computeVelocities(iDynTree::VectorDynSize jointConfigurations, iDynTree::Transform floatingBasePose, std::unordered_map<std::string, iDynTree::Twist> linkVelocitiesMap, iDynTree::VectorDynSize& jointVelocities, iDynTree::Twist& baseVelocity)
-{
-    iDynTree::VectorDynSize fullLinkVelocities(3 + 3 * linkVelocitiesMap.size());
-    fullLinkVelocities.zero();
-
-    iDynTree::MatrixDynSize fullLinkJacobian(3 + 3 * linkVelocitiesMap.size(), jointConfigurations.size() + 6);
-    fullLinkJacobian.zero();
-
-    std::unordered_map<std::string, iDynTree::MatrixDynSize> linkJacobians;
-
-    Eigen::FullPivHouseholderQR<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> > jacobianDecomposition;
-    jacobianDecomposition = Eigen::FullPivHouseholderQR<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> >(fullLinkJacobian.rows(), fullLinkJacobian.cols());
-
-    // Eigen::CompleteOrthogonalDecomposition<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>> jacobianDecomposition;
-    // jacobianDecomposition = Eigen::CompleteOrthogonalDecomposition<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>>(fullLinkJacobian.rows(), fullLinkJacobian.cols());
-
-    if(!getRealLinkJacobians(jointConfigurations, floatingBasePose, linkJacobians))
-    {
-        yError() << LogPrefix << "Failed to compute the link Jacobians";
-        return false;
-    }
-
-    int linkCount = 0;
-    for (const auto& linkMapEntry : linkJacobians) {
-        const ModelLinkName& linkName = linkMapEntry.first;
-
-        if (linkName == floatingBaseFrame.model)
-        {
-            for (int i=0; i<6; i++)
-            {
-                for (int j=0; j<(humanModel.getNrOfJoints() + 6); j++)
-                {
-                    fullLinkJacobian.setVal(i, j, linkJacobians[linkName].getVal(i, j));
-                }
-                fullLinkVelocities.setVal(i, linkVelocitiesMap[linkName].getVal(i));
+        // For the link used as base insert both the rotation and position cost if not using direcly measurement from xsens
+        if (linkName == floatingBaseFrame.model) {
+            if (!useDirectBaseMeasurement && !inverseVelocityKinematics.updateTarget(linkName, linkVelocities.at(linkName), 1.0, 1.0)) {
+                yError() << LogPrefix << "Failed to update velocity target for floating base" << linkName;
+                return false;
             }
+            continue;
         }
-        else
+
+        if (linkVelocities.find(linkName) == linkVelocities.end()) {
+            yError() << LogPrefix << "Failed to find twist for link" << linkName;
+            return false;
+        }
+
+        linkTwist = linkVelocities.at(linkName);
+        if (useDirectBaseMeasurement)
         {
-            for (int i=0; i<3; i++)
-            {
-                for (int j=0; j<(humanModel.getNrOfJoints() + 6); j++)
-                {
-
-                    fullLinkJacobian.setVal(6 + 3 * linkCount + i, j, linkJacobians[linkName].getVal(i + 3, j));
-                }
-                fullLinkVelocities.setVal(6 + 3 * linkCount + i, linkVelocitiesMap[linkName].getVal(i + 3));
-
-
-            }
-            linkCount = linkCount + 1;
+            linkTwist = linkTwist - linkVelocities.at(floatingBaseFrame.model);
         }
-    }
 
-    //Pseudo-invert the Full Jacobian
-    //Compute the QR decomposition
-    jacobianDecomposition.compute(iDynTree::toEigen(fullLinkJacobian));
-    // the solve method on the decomposition directly solves the associated least-squares problem
-    iDynTree::VectorDynSize nu(jointConfigurations.size() + 6);
-    iDynTree::toEigen(nu) = jacobianDecomposition.solve(iDynTree::toEigen(fullLinkVelocities));
-
-    baseVelocity.setVal(0, nu.getVal(0));
-    baseVelocity.setVal(1, nu.getVal(1));
-    baseVelocity.setVal(2, nu.getVal(2));
-    baseVelocity.setVal(3, nu.getVal(3));
-    baseVelocity.setVal(4, nu.getVal(4));
-    baseVelocity.setVal(5, nu.getVal(5));
-
-    for (int k=6; k< jointConfigurations.size(); k++)
-    {
-        jointVelocities.setVal(k-6, nu.getVal(k));
+        if (!inverseVelocityKinematics.updateTarget(linkName, linkTwist, posTargetWeight, rotTargetWeight)) {
+            yError() << LogPrefix << "Failed to update velocity target for link" << linkName;
+            return false;
+        }
     }
 
     return true;
