@@ -192,7 +192,10 @@ public:
     bool getLinkVelocityFromInputData(std::unordered_map<std::string, iDynTree::Twist>& t);
 
     bool updateInverseKinematicTargets();
+    bool addInverseKinematicTargets();
+
     bool updateInverseVelocityKinematicTargets();
+    bool addInverseVelocityKinematicsTargets();
 
     bool computeLinksOrientationErrors(std::unordered_map<std::string, iDynTree::Transform> linkDesiredOrientations, iDynTree::VectorDynSize jointConfigurations, iDynTree::Transform floatingBasePose, std::unordered_map<std::string, iDynTreeHelper::Rotation::rotationDistance>& linkErrorOrientations);
     bool computeLinksAngularVelocityErrors(std::unordered_map<std::string, iDynTree::Twist> linkDesiredVelocities, iDynTree::VectorDynSize jointConfigurations, iDynTree::Transform floatingBasePose, iDynTree::VectorDynSize jointVelocities, iDynTree::Twist baseVelocity, std::unordered_map<std::string, iDynTree::Vector3>& linkAngularVelocityError);
@@ -697,37 +700,10 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
             return false;
         }
 
-        for (size_t linkIndex = 0; linkIndex < pImpl->humanModel.getNrOfLinks(); ++linkIndex) {
-            std::string linkName = pImpl->humanModel.getLinkName(linkIndex);
-
-            // Skip the fake links
-            if (pImpl->wearableStorage.modelToWearable_LinkName.find(linkName)
-                    == pImpl->wearableStorage.modelToWearable_LinkName.end()) {
-                continue;
-            }
-
-            // Insert in the cost the rotation and position of the link used as base
-            if (linkName == pImpl->floatingBaseFrame.model) {
-                if (!pImpl->useDirectBaseMeasurement && !pImpl->globalIK.addTarget(linkName, iDynTree::Transform::Identity(), 1.0, 1.0)) {
-                    yError() << LogPrefix << "Failed to add target for floating base link" << linkName;
-                    askToStop();
-                    return false;
-                }
-                else if (pImpl->useDirectBaseMeasurement && !pImpl->globalIK.addFrameConstraint(linkName, iDynTree::Transform::Identity()))
-                {
-                    yError() << LogPrefix << "Failed to add constraint for base link" << linkName;
-                    askToStop();
-                    return false;
-                }
-                continue;
-            }
-
-            // Add ik targets and set to identity
-            if (!pImpl->globalIK.addTarget(linkName, iDynTree::Transform::Identity(), pImpl->posTargetWeight, pImpl->rotTargetWeight)) {
-                yError() << LogPrefix << "Failed to add target for link" << linkName;
-                askToStop();
-                return false;
-            }
+        if (!pImpl->addInverseKinematicTargets()) {
+            yError() << LogPrefix << "Failed to set the globalIK targets";
+            askToStop();
+            return false;
         }
 
         // Set global Inverse Velocity Kinematics parameters
@@ -744,31 +720,10 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
             return false;
         }
 
-        for (size_t linkIndex = 0; linkIndex < pImpl->humanModel.getNrOfLinks(); ++linkIndex) {
-            std::string linkName = pImpl->humanModel.getLinkName(linkIndex);
-
-            // skip the fake links
-            if (pImpl->wearableStorage.modelToWearable_LinkName.find(linkName)
-                    == pImpl->wearableStorage.modelToWearable_LinkName.end()) {
-                continue;
-            }
-
-            // Insert in the cost the twist of the link used as base
-            if (linkName == pImpl->floatingBaseFrame.model) {
-                if (!pImpl->useDirectBaseMeasurement && !pImpl->inverseVelocityKinematics.addTarget(linkName, iDynTree::Twist::Zero(), 1.0, 1.0)) {
-                    yError() << LogPrefix << "Failed to add velocity target for floating base link" << linkName;
-                    askToStop();
-                    return false;
-                }
-                continue;
-            }
-
-            // Add ivk targets and set to zero
-            if (!pImpl->inverseVelocityKinematics.addAngularVelocityTarget(linkName, iDynTree::Twist::Zero(), 1.0)) {
-                yError() << LogPrefix << "Failed to add velocity target for link" << linkName;
-                askToStop();
-                return false;
-            }
+        if (!pImpl->addInverseVelocityKinematicsTargets()) {
+            yError() << LogPrefix << "Failed to set the inverse velocity kinematics targets";
+            askToStop();
+            return false;
         }
     }
 
@@ -799,33 +754,11 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
             return false;
         }
 
-        for (size_t linkIndex = 0; linkIndex < pImpl->humanModel.getNrOfLinks(); ++linkIndex) {
-            std::string linkName = pImpl->humanModel.getLinkName(linkIndex);
-
-            // skip the fake links
-            if (pImpl->wearableStorage.modelToWearable_LinkName.find(linkName)
-                    == pImpl->wearableStorage.modelToWearable_LinkName.end()) {
-                continue;
-            }
-
-            // Insert in the cost the twist of the link used as base
-            if (linkName == pImpl->floatingBaseFrame.model) {
-                if (!pImpl->useDirectBaseMeasurement && !pImpl->inverseVelocityKinematics.addTarget(linkName, iDynTree::Twist::Zero(), 1.0, 1.0)) {
-                    yError() << LogPrefix << "Failed to add velocity target for floating base link" << linkName;
-                    askToStop();
-                    return false;
-                }
-                continue;
-            }
-
-            // Add ivk targets and set to zero
-            if (!pImpl->inverseVelocityKinematics.addAngularVelocityTarget(linkName, iDynTree::Twist::Zero(), 1.0)) {
-                yError() << LogPrefix << "Failed to add velocity target for link" << linkName;
-                askToStop();
-                return false;
-            }
+        if (!pImpl->addInverseVelocityKinematicsTargets()) {
+            yError() << LogPrefix << "Failed to set the inverse velocity kinematics targets";
+            askToStop();
+            return false;
         }
-
     }
 
     return true;
@@ -947,10 +880,9 @@ void HumanStateProvider::run()
             return;
         }
 
-
-
         // Update ik targets based on wearable input data
         if (!pImpl->updateInverseKinematicTargets()) {
+            yError() << LogPrefix << "Failed to update the targets for the global IK";
             askToStop();
             return;
         }
@@ -975,13 +907,14 @@ void HumanStateProvider::run()
         // INVERSE VELOCITY KINEMATICS
         // Set joint configuration
         if (!pImpl->inverseVelocityKinematics.setConfiguration(pImpl->baseTransformSolution, pImpl->jointConfigurationSolution)) {
-            yError() << LogPrefix << "Failed to set the joint configuration for initializing the global IK";
+            yError() << LogPrefix << "Failed to set the joint configuration for initializing the inverse velocity kinematics";
             askToStop();
             return;
         }
 
         // Update ivk velocity targets based on wearable input data
         if(!pImpl->updateInverseVelocityKinematicTargets()) {
+            yError() << LogPrefix << "Failed to update the targets for the inverse velocity kinematics";
             askToStop();
             return;
         }
@@ -1336,6 +1269,40 @@ bool HumanStateProvider::impl::updateInverseKinematicTargets()
     return true;
 }
 
+bool HumanStateProvider::impl::addInverseKinematicTargets()
+{
+    for (size_t linkIndex = 0; linkIndex < humanModel.getNrOfLinks(); ++linkIndex) {
+        std::string linkName = humanModel.getLinkName(linkIndex);
+
+        // Skip the fake links
+        if (wearableStorage.modelToWearable_LinkName.find(linkName)
+                == wearableStorage.modelToWearable_LinkName.end()) {
+            continue;
+        }
+
+        // Insert in the cost the rotation and position of the link used as base
+        if (linkName == floatingBaseFrame.model) {
+            if (!useDirectBaseMeasurement && !globalIK.addTarget(linkName, iDynTree::Transform::Identity(), 1.0, 1.0)) {
+                yError() << LogPrefix << "Failed to add target for floating base link" << linkName;
+                return false;
+            }
+            else if (useDirectBaseMeasurement && !globalIK.addFrameConstraint(linkName, iDynTree::Transform::Identity()))
+            {
+                yError() << LogPrefix << "Failed to add constraint for base link" << linkName;
+                return false;
+            }
+            continue;
+        }
+
+        // Add ik targets and set to identity
+        if (!globalIK.addTarget(linkName, iDynTree::Transform::Identity(), posTargetWeight, rotTargetWeight)) {
+            yError() << LogPrefix << "Failed to add target for link" << linkName;
+            return false;
+        }
+    }
+    return true;
+}
+
 bool HumanStateProvider::impl::updateInverseVelocityKinematicTargets()
 {
     iDynTree::Twist linkTwist;
@@ -1371,6 +1338,36 @@ bool HumanStateProvider::impl::updateInverseVelocityKinematicTargets()
 
         if (!inverseVelocityKinematics.updateTarget(linkName, linkTwist, posTargetWeight, rotTargetWeight)) {
             yError() << LogPrefix << "Failed to update velocity target for link" << linkName;
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool HumanStateProvider::impl::addInverseVelocityKinematicsTargets()
+{
+    for (size_t linkIndex = 0; linkIndex < humanModel.getNrOfLinks(); ++linkIndex) {
+        std::string linkName = humanModel.getLinkName(linkIndex);
+
+        // skip the fake links
+        if (wearableStorage.modelToWearable_LinkName.find(linkName)
+                == wearableStorage.modelToWearable_LinkName.end()) {
+            continue;
+        }
+
+        // Insert in the cost the twist of the link used as base
+        if (linkName == floatingBaseFrame.model) {
+            if (!useDirectBaseMeasurement && !inverseVelocityKinematics.addTarget(linkName, iDynTree::Twist::Zero(), 1.0, 1.0)) {
+                yError() << LogPrefix << "Failed to add velocity target for floating base link" << linkName;
+                return false;
+            }
+            continue;
+        }
+
+        // Add ivk targets and set to zero
+        if (!inverseVelocityKinematics.addAngularVelocityTarget(linkName, iDynTree::Twist::Zero(), 1.0)) {
+            yError() << LogPrefix << "Failed to add velocity target for link" << linkName;
             return false;
         }
     }
