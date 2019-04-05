@@ -8,6 +8,7 @@
 
 #include "HumanStateProvider.h"
 #include "IKWorkerPool.h"
+#include "InverseVelocityKinematics.hpp"
 
 #include <Wearable/IWear/IWear.h>
 #include <iDynTree/InverseKinematics.h>
@@ -175,6 +176,7 @@ public:
     bool useIntegrationBasedIK;
     bool useDirectBaseMeasurement;
     iDynTree::InverseKinematics globalIK;
+    InverseVelocityKinematics inverseVelocityKinematics;
 
     iDynTreeHelper::State::integrator stateIntegrator;
 
@@ -701,6 +703,12 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         for (size_t linkIndex = 0; linkIndex < pImpl->humanModel.getNrOfLinks(); ++linkIndex) {
             std::string linkName = pImpl->humanModel.getLinkName(linkIndex);
 
+            // Skip the fake links
+            if (pImpl->wearableStorage.modelToWearable_LinkName.find(linkName)
+                    == pImpl->wearableStorage.modelToWearable_LinkName.end()) {
+                continue;
+            }
+
             // Insert in the cost the rotation and position of the link used as base
             if (linkName == pImpl->floatingBaseFrame.model) {
                 if (!pImpl->useDirectBaseMeasurement && !pImpl->globalIK.addTarget(linkName, iDynTree::Transform::Identity(), 1.0, 1.0)) {
@@ -738,6 +746,50 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         pImpl->stateIntegrator.resetState();
 
         pImpl->integralOrientationError.zero();
+
+        // Set global Inverse Velocity Kinematics parameters
+        pImpl->inverseVelocityKinematics.setResolutionMode(InverseVelocityKinematics::pseudoinverse);
+
+        if (!pImpl->inverseVelocityKinematics.setModel(pImpl->humanModel)) {
+            yError() << LogPrefix << "IBIK: failed to load the model";
+            return false;
+        }
+
+        if (!pImpl->inverseVelocityKinematics.setFloatingBaseOnFrameNamed(pImpl->floatingBaseFrame.model)) {
+            yError() << LogPrefix << "Failed to set the IBIK floating base frame on link"
+                     << pImpl->floatingBaseFrame.model;
+            return false;
+        }
+
+        for (size_t linkIndex = 0; linkIndex < pImpl->humanModel.getNrOfLinks(); ++linkIndex) {
+            std::string linkName = pImpl->humanModel.getLinkName(linkIndex);
+
+            // skip the fake links
+            if (pImpl->wearableStorage.modelToWearable_LinkName.find(linkName)
+                    == pImpl->wearableStorage.modelToWearable_LinkName.end()) {
+                continue;
+            }
+
+            // Insert in the cost the twist of the link used as base
+            if (linkName == pImpl->floatingBaseFrame.model) {
+                if (!pImpl->useDirectBaseMeasurement && !pImpl->inverseVelocityKinematics.addTarget(linkName, iDynTree::Twist::Zero(), 1.0, 1.0)) {
+                    yError() << LogPrefix << "Failed to add velocity target for floating base link" << linkName;
+                    askToStop();
+                    return false;
+                }
+                continue;
+            }
+
+            // Add ik targets and set to identity
+            iDynTree::Vector3 initializationAngularVelocity;
+            initializationAngularVelocity.zero();
+            if (!pImpl->inverseVelocityKinematics.addAngularVelocityTarget(linkName, initializationAngularVelocity, 1.0)) {
+                yError() << LogPrefix << "Failed to add velocity target for link" << linkName;
+                askToStop();
+                return false;
+            }
+        }
+
     }
 
     return true;
@@ -987,15 +1039,60 @@ void HumanStateProvider::run()
         }
 
         // INVERSE VELOCITY KINEMATICS
-        // if useDirectBaseMeasurement use directly the measurement of the base pose from the base link coming from Xsens and compute only the joint velocities solution
-        if (pImpl->useDirectBaseMeasurement)
-        {
-            pImpl->computeJointVelocities(pImpl->jointConfigurationSolution, pImpl->linkVelocities, pImpl->jointVelocitiesSolution);
+        // Set global IK initial condition
+        if (!pImpl->inverseVelocityKinematics.setConfiguration(pImpl->baseTransformSolution, pImpl->jointConfigurationSolution)) {
+            yError() << LogPrefix << "Failed to set the joint configuration for initializing the global IK";
+            askToStop();
+            return;
         }
-        else
-        {
-            pImpl->computeVelocities(pImpl->jointConfigurationSolution, pImpl->baseTransformSolution, pImpl->linkVelocities, pImpl->jointVelocitiesSolution, pImpl->baseVelocitySolution);
+
+        iDynTree::Twist linkTwist;
+
+        // Update ivk velocity targets based on wearable input data
+        for (size_t linkIndex = 0; linkIndex < pImpl->humanModel.getNrOfLinks(); ++linkIndex) {
+            std::string linkName = pImpl->humanModel.getLinkName(linkIndex);
+
+            // Skip links with no associated measures (use only links from the configuration)
+            if (pImpl->wearableStorage.modelToWearable_LinkName.find(linkName)
+                    == pImpl->wearableStorage.modelToWearable_LinkName.end()) {
+                continue;
+            }
+
+            // For the link used as base insert both the rotation and position cost if not using direcly measurement from xsens
+            if (linkName == pImpl->floatingBaseFrame.model) {
+                if (!pImpl->useDirectBaseMeasurement && !pImpl->inverseVelocityKinematics.updateTarget(linkName, pImpl->linkVelocities.at(linkName), 1.0, 1.0)) {
+                    yError() << LogPrefix << "Failed to update velocity target for floating base" << linkName;
+                    askToStop();
+                    return;
+                }
+                continue;
+            }
+
+            if (pImpl->linkVelocities.find(linkName) == pImpl->linkVelocities.end()) {
+                yError() << LogPrefix << "Failed to find twist for link" << linkName;
+                askToStop();
+                return;
+            }
+
+            linkTwist = pImpl->linkVelocities.at(linkName);
+            // if useDirectBaseMeasurement, use the link transform relative to the base
+            if (pImpl->useDirectBaseMeasurement)
+            {
+                linkTwist = linkTwist - measuredBaseVelocity;
+            }
+
+            if (!pImpl->inverseVelocityKinematics.updateTarget(linkName, linkTwist, pImpl->posTargetWeight, pImpl->rotTargetWeight)) {
+                yError() << LogPrefix << "Failed to update velocity target for link" << linkName;
+                askToStop();
+                return;
+            }
         }
+
+        if (!pImpl->inverseVelocityKinematics.solve()) {
+                yError() << LogPrefix << "Failed to solve inverse velocity kinematics";
+        }
+
+        pImpl->inverseVelocityKinematics.getVelocitySolution(pImpl->baseVelocitySolution, pImpl->jointVelocitiesSolution);
 
         // VELOCITY INTEGRATION
         // integrate velocities measurements
@@ -1390,7 +1487,7 @@ bool HumanStateProvider::impl::computeVelocities(iDynTree::VectorDynSize jointCo
     baseVelocity.setVal(4, nu.getVal(4));
     baseVelocity.setVal(5, nu.getVal(5));
 
-    for (int k=6; k< jointConfigurations.size() + 6; k++)
+    for (int k=6; k< jointConfigurations.size(); k++)
     {
         jointVelocities.setVal(k-6, nu.getVal(k));
     }
