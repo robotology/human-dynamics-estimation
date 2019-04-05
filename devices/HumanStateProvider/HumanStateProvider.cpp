@@ -938,7 +938,7 @@ void HumanStateProvider::run()
         auto tick_IB = std::chrono::high_resolution_clock::now();
         pImpl->lastTime = yarp::os::Time::now();
 
-        // correction term for link velocities
+        // LINK VELOCITY CORRECTION
         iDynTree::KinDynComputations *computations = pImpl->kinDynComputations.get();
 
         if (pImpl->useDirectBaseMeasurement)
@@ -986,6 +986,7 @@ void HumanStateProvider::run()
             }
         }
 
+        // INVERSE VELOCITY KINEMATICS
         // if useDirectBaseMeasurement use directly the measurement of the base pose from the base link coming from Xsens and compute only the joint velocities solution
         if (pImpl->useDirectBaseMeasurement)
         {
@@ -996,6 +997,7 @@ void HumanStateProvider::run()
             pImpl->computeVelocities(pImpl->jointConfigurationSolution, pImpl->baseTransformSolution, pImpl->linkVelocities, pImpl->jointVelocitiesSolution, pImpl->baseVelocitySolution);
         }
 
+        // VELOCITY INTEGRATION
         // integrate velocities measurements
         if (!pImpl->useDirectBaseMeasurement)
         {
@@ -1003,12 +1005,6 @@ void HumanStateProvider::run()
 
             pImpl->stateIntegrator.getJointConfiguration(pImpl->jointConfigurationSolution);
             pImpl->stateIntegrator.getBasePose(pImpl->baseTransformSolution);
-
-//            iDynTree::Position basePositionSolution;
-//            iDynTree::Rotation baseRotationSolution;
-//            pImpl->stateIntegrator.getBasePose(basePositionSolution, baseRotationSolution);
-//            pImpl->baseTransformSolution.setPosition(basePositionSolution);
-//            pImpl->baseTransformSolution.setRotation(baseRotationSolution);
         }
         else
         {
