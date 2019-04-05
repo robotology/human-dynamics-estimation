@@ -34,7 +34,9 @@ public:
     bool addTarget(std::string linkName, iDynTree::Vector3 linearVelocity, iDynTree::Vector3  angularVelocity, double linearWeight=1.0, double angularWeight=1.0);
     bool addTarget(std::string linkName, iDynTree::Twist twist, double linearWeight=1.0, double angularWeight=1.0);
     bool addLinearVelocityTarget(std::string linkName, iDynTree::Vector3 linearVelocity, double linearWeight=1.0);
+    bool addLinearVelocityTarget(std::string linkName, iDynTree::Twist twist, double linearWeight=1.0);
     bool addAngularVelocityTarget(std::string linkName, iDynTree::Vector3  angularVelocity, double angularWeight=1.0);
+    bool addAngularVelocityTarget(std::string linkName, iDynTree::Twist  twist, double angularWeight=1.0);
 
     //TODO
     // addFrameVelocityConstraint

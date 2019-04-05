@@ -487,9 +487,19 @@ bool InverseVelocityKinematics::addLinearVelocityTarget(std::string linkName, iD
     return pImpl->addTarget(InverseVelocityKinematics::impl::VelocityConstraint::linearVelocityConstraint(linkName, linearVelocity, linearWeight));
 }
 
+bool InverseVelocityKinematics::addLinearVelocityTarget(std::string linkName, iDynTree::Twist twist, double linearWeight)
+{
+    return pImpl->addTarget(InverseVelocityKinematics::impl::VelocityConstraint::linearVelocityConstraint(linkName, twist.getLinearVec3(), linearWeight));
+}
+
 bool InverseVelocityKinematics::addAngularVelocityTarget(std::string linkName, iDynTree::Vector3  angularVelocity, double angularWeight)
 {
     return pImpl->addTarget(InverseVelocityKinematics::impl::VelocityConstraint::angularVelocityConstraint(linkName, angularVelocity, angularWeight));
+}
+
+bool InverseVelocityKinematics::addAngularVelocityTarget(std::string linkName, iDynTree::Twist twist, double angularWeight)
+{
+    return pImpl->addTarget(InverseVelocityKinematics::impl::VelocityConstraint::angularVelocityConstraint(linkName, twist.getAngularVec3(), angularWeight));
 }
 
 bool InverseVelocityKinematics::setJointConfiguration(std::string jointName, double jointConfiguration)

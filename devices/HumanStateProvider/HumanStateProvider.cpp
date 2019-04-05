@@ -763,10 +763,8 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
                 continue;
             }
 
-            // Add ik targets and set to identity
-            iDynTree::Vector3 initializationAngularVelocity;
-            initializationAngularVelocity.zero();
-            if (!pImpl->inverseVelocityKinematics.addAngularVelocityTarget(linkName, initializationAngularVelocity, 1.0)) {
+            // Add ivk targets and set to zero
+            if (!pImpl->inverseVelocityKinematics.addAngularVelocityTarget(linkName, iDynTree::Twist::Zero(), 1.0)) {
                 yError() << LogPrefix << "Failed to add velocity target for link" << linkName;
                 askToStop();
                 return false;
@@ -820,10 +818,8 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
                 continue;
             }
 
-            // Add ik targets and set to identity
-            iDynTree::Vector3 initializationAngularVelocity;
-            initializationAngularVelocity.zero();
-            if (!pImpl->inverseVelocityKinematics.addAngularVelocityTarget(linkName, initializationAngularVelocity, 1.0)) {
+            // Add ivk targets and set to zero
+            if (!pImpl->inverseVelocityKinematics.addAngularVelocityTarget(linkName, iDynTree::Twist::Zero(), 1.0)) {
                 yError() << LogPrefix << "Failed to add velocity target for link" << linkName;
                 askToStop();
                 return false;
