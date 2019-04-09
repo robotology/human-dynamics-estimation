@@ -164,6 +164,8 @@ public:
 
     double posTargetWeight;
     double rotTargetWeight;
+    double linVelTargetWeight;
+    double angVelTargetWeight;
     double costRegularization;
 
     double integrationBasedIKLinearCorrectionGain;
@@ -388,8 +390,19 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
             yError() << LogPrefix << "useDirectBaseMeasurement option not found or not valid";
             return false;
         }
+        if (!(config.check("linVelTargetWeight") && config.find("linVelTargetWeight").isFloat64())) {
+            yError() << LogPrefix << "linVelTargetWeight option not found or not valid";
+            return false;
+        }
+
+        if (!(config.check("angVelTargetWeight") && config.find("angVelTargetWeight").isFloat64())) {
+            yError() << LogPrefix << "angVelTargetWeight option not found or not valid";
+            return false;
+        }
 
         pImpl->useDirectBaseMeasurement = config.find("useDirectBaseMeasurement").asBool();
+        pImpl->linVelTargetWeight = config.find("linVelTargetWeight").asFloat64();
+        pImpl->angVelTargetWeight = config.find("angVelTargetWeight").asFloat64();
     }
 
     if (pImpl->usePairWisedIK)
@@ -708,6 +721,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
 
         // Set global Inverse Velocity Kinematics parameters
         pImpl->inverseVelocityKinematics.setResolutionMode(InverseVelocityKinematics::pseudoinverse);
+        pImpl->inverseVelocityKinematics.setRegularization(pImpl->costRegularization);
 
         if (!pImpl->inverseVelocityKinematics.setModel(pImpl->humanModel)) {
             yError() << LogPrefix << "IBIK: failed to load the model";
@@ -1336,7 +1350,7 @@ bool HumanStateProvider::impl::updateInverseVelocityKinematicTargets()
             linkTwist = linkTwist - linkVelocities.at(floatingBaseFrame.model);
         }
 
-        if (!inverseVelocityKinematics.updateTarget(linkName, linkTwist, posTargetWeight, rotTargetWeight)) {
+        if (!inverseVelocityKinematics.updateTarget(linkName, linkTwist, linVelTargetWeight, angVelTargetWeight)) {
             yError() << LogPrefix << "Failed to update velocity target for link" << linkName;
             return false;
         }
@@ -1366,7 +1380,7 @@ bool HumanStateProvider::impl::addInverseVelocityKinematicsTargets()
         }
 
         // Add ivk targets and set to zero
-        if (!inverseVelocityKinematics.addAngularVelocityTarget(linkName, iDynTree::Twist::Zero(), 1.0)) {
+        if (!inverseVelocityKinematics.addAngularVelocityTarget(linkName, iDynTree::Twist::Zero(), angVelTargetWeight)) {
             yError() << LogPrefix << "Failed to add velocity target for link" << linkName;
             return false;
         }

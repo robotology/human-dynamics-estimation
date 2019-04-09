@@ -38,12 +38,15 @@ public:
     VelocityMap velocityTargets;
 
     size_t numberOfTargetVariables;
+    double regularizationWeight;
 
     iDynTree::Twist baseVelocityResult;
     iDynTree::VectorDynSize jointVelocityResult;
 
     iDynTree::MatrixDynSize fullJacobianBuffer;
     iDynTree::VectorDynSize fullVelocityBuffer;
+    iDynTree::VectorDynSize weightVectorBuffer;
+    iDynTree::MatrixDynSize regularizationMatrixBuffer;
 
     bool problemInitialized;
 
@@ -60,11 +63,14 @@ public:
 
     bool solveProblem();
 
+    bool solveWeightedPseudoInverse(iDynTree::MatrixDynSize matrix, iDynTree::VectorDynSize inputVector, iDynTree::VectorDynSize& outputVector, iDynTree::VectorDynSize weightVector, iDynTree::MatrixDynSize regularizationMatrix);
+
     void computeTargetSize();
     void computeProblemSizeAndResizeBuffers();
 
     void prepareFullVelocityVector();
     void prepareFullJacobianMatrix();
+    void prepareWeightVector();
 };
 
 // ===================
@@ -131,6 +137,7 @@ InverseVelocityKinematics::impl::impl():
     dofs(0),
     resolutionMode(pseudoinverse),
     numberOfTargetVariables(0),
+    regularizationWeight(1E-8),
     problemInitialized(false)
 {
     //These variables are touched only once.
@@ -191,14 +198,10 @@ bool InverseVelocityKinematics::impl::solveProblem()
 
     prepareFullVelocityVector();
     prepareFullJacobianMatrix();
+    prepareWeightVector();
 
-    Eigen::FullPivHouseholderQR<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> > jacobianDecomposition;
-    jacobianDecomposition = Eigen::FullPivHouseholderQR<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> >(fullJacobianBuffer.rows(), fullJacobianBuffer.cols());
-
-    jacobianDecomposition.compute(iDynTree::toEigen(fullJacobianBuffer));
-    // the solve method on the decomposition directly solves the associated least-squares problem
-    iDynTree::VectorDynSize nu(dofs + 6);
-    iDynTree::toEigen(nu) = jacobianDecomposition.solve(iDynTree::toEigen(fullVelocityBuffer));
+    iDynTree::VectorDynSize nu;
+    solveWeightedPseudoInverse(fullJacobianBuffer, fullVelocityBuffer, nu, weightVectorBuffer, regularizationMatrixBuffer);
 
     baseVelocityResult.setVal(0, nu.getVal(0));
     baseVelocityResult.setVal(1, nu.getVal(1));
@@ -211,6 +214,21 @@ bool InverseVelocityKinematics::impl::solveProblem()
     {
         jointVelocityResult.setVal(k, nu.getVal(k + 6));
     }
+
+    return true;
+}
+
+bool InverseVelocityKinematics::impl::solveWeightedPseudoInverse(iDynTree::MatrixDynSize matrix, iDynTree::VectorDynSize inputVector, iDynTree::VectorDynSize& outputVector, iDynTree::VectorDynSize weightVector, iDynTree::MatrixDynSize regularizationMatrix)
+{
+    if (inputVector.size() != matrix.rows() || inputVector.size() != regularizationMatrix.rows() || inputVector.size() != regularizationMatrix.cols())
+        return false;
+
+    outputVector.resize(matrix.cols());
+
+    Eigen::DiagonalMatrix<double,Eigen::Dynamic> weightInverse(weightVector.size());
+    weightInverse = Eigen::DiagonalMatrix<double,Eigen::Dynamic>(iDynTree::toEigen(weightVector)).inverse();
+
+    iDynTree::toEigen(outputVector) = (iDynTree::toEigen(matrix).transpose() * weightInverse.toDenseMatrix() * iDynTree::toEigen(matrix) + iDynTree::toEigen(regularizationMatrix)).inverse() * iDynTree::toEigen(matrix).transpose() * weightInverse.toDenseMatrix() * iDynTree::toEigen(inputVector);
 
     return true;
 }
@@ -239,6 +257,13 @@ void InverseVelocityKinematics::impl::computeProblemSizeAndResizeBuffers()
     fullJacobianBuffer.zero();
     fullVelocityBuffer.resize(numberOfTargetVariables);
     fullVelocityBuffer.zero();
+    weightVectorBuffer.resize(numberOfTargetVariables);
+    weightVectorBuffer.zero();
+
+    Eigen::DiagonalMatrix<double,Eigen::Dynamic> identityMatrix(numberOfTargetVariables);
+    identityMatrix.setIdentity();
+    regularizationMatrixBuffer.resize(numberOfTargetVariables, numberOfTargetVariables);
+    iDynTree::toEigen(regularizationMatrixBuffer) = identityMatrix.toDenseMatrix() * regularizationWeight;
 
     problemInitialized = true;
 }
@@ -303,6 +328,40 @@ void InverseVelocityKinematics::impl::prepareFullJacobianMatrix()
         {
             fullJacobian.block(rowIndex, 0, 3, 6 + dofs) = iDynTree::toEigen(frameJacobian).bottomRows(3);
             rowIndex += 3;
+        }
+    }
+}
+
+void InverseVelocityKinematics::impl::prepareWeightVector()
+{
+    unsigned int vectorIndex = 0;
+
+    //TODO this should be done by filling the sub-blocks trough Eigen maps
+    for (VelocityMap::const_iterator target = velocityTargets.begin();
+                 target != velocityTargets.end(); ++target) {
+        if (target->second.type == VelocityConstraint::VelocityConstraintTypeTwist)
+        {
+            weightVectorBuffer.setVal(vectorIndex    , target->second.linearVelocityWeight);
+            weightVectorBuffer.setVal(vectorIndex + 1, target->second.linearVelocityWeight);
+            weightVectorBuffer.setVal(vectorIndex + 2, target->second.linearVelocityWeight);
+            weightVectorBuffer.setVal(vectorIndex + 3, target->second.angularVelocityWeight);
+            weightVectorBuffer.setVal(vectorIndex + 4, target->second.angularVelocityWeight);
+            weightVectorBuffer.setVal(vectorIndex + 5, target->second.angularVelocityWeight);
+            vectorIndex += 6;
+        }
+        else if (target->second.type == VelocityConstraint::VelocityConstraintTypeLinearVelocity)
+        {
+            weightVectorBuffer.setVal(vectorIndex    , target->second.linearVelocityWeight);
+            weightVectorBuffer.setVal(vectorIndex + 1, target->second.linearVelocityWeight);
+            weightVectorBuffer.setVal(vectorIndex + 2, target->second.linearVelocityWeight);
+            vectorIndex += 3;
+        }
+        else if (target->second.type == VelocityConstraint::VelocityConstraintTypeAngularVelocity)
+        {
+            weightVectorBuffer.setVal(vectorIndex    , target->second.angularVelocityWeight);
+            weightVectorBuffer.setVal(vectorIndex + 1, target->second.angularVelocityWeight);
+            weightVectorBuffer.setVal(vectorIndex + 2, target->second.angularVelocityWeight);
+            vectorIndex += 3;
         }
     }
 }
@@ -468,6 +527,11 @@ bool InverseVelocityKinematics::setFloatingBaseOnFrameNamed(std::string floating
 void InverseVelocityKinematics::setResolutionMode(InverseVelocityKinematicsResolutionMode resolutionMode)
 {
     pImpl->resolutionMode = resolutionMode;
+}
+
+void InverseVelocityKinematics::setRegularization(double regularizationWeight)
+{
+    pImpl->regularizationWeight = regularizationWeight;
 }
 
 bool InverseVelocityKinematics::addTarget(std::string linkName, iDynTree::Vector3 linearVelocity, iDynTree::Vector3  angularVelocity, double linearWeight, double angularWeight)

@@ -30,6 +30,7 @@ public:
     bool setModel(iDynTree::Model model);
     bool setFloatingBaseOnFrameNamed(std::string floatingBaseFrameName);
     void setResolutionMode(InverseVelocityKinematicsResolutionMode resolutionMode);
+    void setRegularization(double regularizationWeight);
 
     bool addTarget(std::string linkName, iDynTree::Vector3 linearVelocity, iDynTree::Vector3  angularVelocity, double linearWeight=1.0, double angularWeight=1.0);
     bool addTarget(std::string linkName, iDynTree::Twist twist, double linearWeight=1.0, double angularWeight=1.0);
