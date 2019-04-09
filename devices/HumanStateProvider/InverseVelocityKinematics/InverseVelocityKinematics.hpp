@@ -16,7 +16,7 @@
 
 class InverseVelocityKinematics
 {
-private:
+protected:
 	class impl;
     std::unique_ptr<impl> pImpl;
 

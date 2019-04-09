@@ -17,8 +17,8 @@ yarp_add_plugin(HumanStateProvider
     HumanStateProvider.h
     IKWorkerPool.cpp
     IKWorkerPool.h
-    InverseVelocityKinematics.cpp
-    InverseVelocityKinematics.hpp)
+    InverseVelocityKinematics/InverseVelocityKinematics.cpp
+    InverseVelocityKinematics/InverseVelocityKinematics.hpp)
 
 target_include_directories(HumanStateProvider PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
