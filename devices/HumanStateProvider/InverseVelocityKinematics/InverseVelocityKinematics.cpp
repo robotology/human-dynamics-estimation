@@ -414,8 +414,8 @@ InverseVelocityKinematics::impl::VelocityConstraint InverseVelocityKinematics::i
 {
     VelocityConstraint velocityConstraint(frameName, VelocityConstraintTypeTwist);
     velocityConstraint.setTwist(twist);
-    velocityConstraint.setLinearVelocityWeight(angularVelocityWeight);
-    velocityConstraint.setLinearVelocityWeight(angularVelocityWeight);
+    velocityConstraint.setLinearVelocityWeight(linearVelocityWeight);
+    velocityConstraint.setAngularVelocityWeight(angularVelocityWeight);
     return velocityConstraint;
 }
 
