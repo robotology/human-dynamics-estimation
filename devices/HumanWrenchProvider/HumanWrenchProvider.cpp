@@ -483,8 +483,6 @@ void HumanWrenchProvider::run()
 {
     if (pImpl->pHRIScenario) {
 
-        yInfo() << LogPrefix << "Inside run()";
-
         // Get human joint quantities from IHumanState interface
         std::vector<std::string> humanJointsName = pImpl->iHumanState->getJointNames();
         std::vector<double> humanJointsPosition = pImpl->iHumanState->getJointPositions();
@@ -494,6 +492,7 @@ void HumanWrenchProvider::run()
         pImpl->humanJointPositionsVec.resize(pImpl->humanModel.getNrOfDOFs());
         pImpl->humanJointVelocitiesVec.resize(pImpl->humanModel.getNrOfDOFs());
 
+        // Human joint quantities are in radians
         for (int j = 0; j < pImpl->humanModel.getNrOfDOFs(); j++) {
             for (int i = 0; i < humanJointsName.size(); i++) {
                 if (pImpl->humanModel.getJointName(j) == humanJointsName.at(i)) {
@@ -539,11 +538,12 @@ void HumanWrenchProvider::run()
         pImpl->robotJointPositionsVec.resize(pImpl->robotModel.getNrOfDOFs());
         pImpl->robotJointVelocitiesVec.resize(pImpl->robotModel.getNrOfDOFs());
 
+        // Robot joint quantities are in degree and are converted to radians
         for (int j = 0; j < pImpl->robotModel.getNrOfDOFs(); j++) {
             for (int i = 0; i < pImpl->robotJointsName.size(); i++) {
                 if (pImpl->robotModel.getJointName(j) == pImpl->robotJointsName.at(i)) {
-                    pImpl->robotJointPositionsVec.setVal(j, robotJointsPosition.at(i));
-                    pImpl->robotJointVelocitiesVec.setVal(j, robotJointsVeclocity.at(i));
+                    pImpl->robotJointPositionsVec.setVal(j, robotJointsPosition.at(i)*(M_PI/180));
+                    pImpl->robotJointVelocitiesVec.setVal(j, robotJointsVeclocity.at(i)*(M_PI/180));
                 }
             }
         }
@@ -623,10 +623,13 @@ void HumanWrenchProvider::run()
             robotToHumanTransform = iDynTree::Transform::Identity() *
                                     humanFeetToHandsTransform * //HumanHand_H_HumanFoot
                                     robotHumanFeetFixedTransform * //HumanFoot_H_RobotFoot
-                                    robotFeetToHandsTransform; //RobotFoot_H_RobotHand
+                                    robotFeetToHandsTransform; //RobotFoot_H_RobotRootLink
 
             // Update the stored transform
             newTransformer->transform = robotToHumanTransform;
+
+            // Get reaction wrenches for the robot
+            inputWrench = inputWrench * -1;
 
             // Downcast it and move the pointer ownership into the object containing the source data
             auto ptr = static_cast<IWrenchFrameTransformer*>(newTransformer.release());
@@ -758,6 +761,8 @@ bool HumanWrenchProvider::attach(yarp::dev::PolyDriver* poly)
                 }
             }
         }
+
+        yInfo() << LogPrefix << deviceName << "attach() successful";
     }
 
     // ====

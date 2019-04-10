@@ -27,7 +27,7 @@
         <param name="posTargetWeight">0</param>
         <param name="rotTargetWeight">10</param>
         <param name="costRegularization">0.25</param>
-        <param name="costTolerance">1E-10</param>
+        <param name="costTolerance">1E-2</param>
         <param name="useGlobalIK">false</param>
         <param name="useXsensJointsAngles">false</param>
         <!-- TODO: How to use a reduced model in the entire HDE? (Starting from HumanStateProvider) -->
@@ -199,10 +199,10 @@
             <param name="outputFrame">RightHand</param>
             <param name="type">robot</param>
             <param name="rotation">(-1.0 0.0 0.0 0.0 -1.0 0.0 0.0 0.0 1.0)</param>
-            <param name="position">(0.59 -0.2549 0.0)</param>
-            <param name="humanLinkingFrame">LeftFoot</param>
+            <param name="position">(0.59 0.0 0.0)</param>
+            <param name="humanLinkingFrame">RightFoot</param>
             <param name="robotLinkingFrame">l_sole</param>
-            <param name="robotSourceFrame">l_hand_dh_frame</param>
+            <param name="robotSourceFrame">root_link</param>
             <param name="humanFootPosition">(0.0 0.0 0.0918)</param>
         </group>
         <group name="RobotRightHandFT">
@@ -210,10 +210,10 @@
             <param name="outputFrame">LeftHand</param>
             <param name="type">robot</param>
             <param name="rotation">(-1.0 0.0 0.0 0.0 -1.0 0.0 0.0 0.0 1.0)</param>
-            <param name="position">(0.59 -0.2549 0.0)</param>
+            <param name="position">(0.59 0.0 0.0)</param>
             <param name="humanLinkingFrame">LeftFoot</param>
-            <param name="robotLinkingFrame">l_sole</param>
-            <param name="robotSourceFrame">r_hand_dh_frame</param>
+            <param name="robotLinkingFrame">r_sole</param>
+            <param name="robotSourceFrame">root_link</param>
             <param name="humanFootPosition">(0.0 0.0 0.0918)</param>
         </group>
         <group name="RobotJoints">
@@ -226,8 +226,8 @@
         </group>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
-                 <elem name="HumanWrenchProviderLabelFTShoeLeft">FTSourcesIWearRemapper</elem>
-                 <elem name="HumanWrenchProviderLabelHumanStateProvider">HumanStateProvider</elem>
+                <elem name="HumanWrenchProviderLabelHumanStateProvider">HumanStateProvider</elem>
+                <elem name="HumanWrenchProviderLabelFTShoeLeft">FTSourcesIWearRemapper</elem>
             </paramlist>
         </action>
         <action phase="shutdown" level="5" type="detach" />
