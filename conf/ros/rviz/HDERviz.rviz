@@ -4,8 +4,6 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
-        - /LeftHand_ExtWrenches1
-        - /RightHand_ExtWrenches1
         - /iCubModel1/Links1
       Splitter Ratio: 0.5099999904632568
     Tree Height: 700
@@ -843,7 +841,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 4.297119617462158
+      Distance: 30.290464401245117
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -858,10 +856,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.6756504774093628
+      Pitch: 0.010650658048689365
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 4.983115196228027
+      Yaw: 2.9881107807159424
     Saved: ~
 Window Geometry:
   Displays:
