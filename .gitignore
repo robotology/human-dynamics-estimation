@@ -2,4 +2,4 @@
 build*
 *kdev4
 *~
-*.txt.user
+*.txt.user*

@@ -9,9 +9,12 @@ mkdir -p $GIT_FOLDER
 if [ "${TRAVIS_OS_NAME}" = "osx" ] ; then
      # Build and install ycm
     cd $GIT_FOLDER
+
+    rm -rf ycm
     git clone --depth 1 -b $DEPS_BRANCH https://github.com/robotology/ycm.git
     cd ycm
-    mkdir build && cd build
+    mkdir -p build && cd build
+
     cmake .. \
         -G"$TRAVIS_CMAKE_GENERATOR" \
         -DCMAKE_INSTALL_PREFIX=$DEPS_INSTALL_PREFIX
@@ -19,9 +22,12 @@ if [ "${TRAVIS_OS_NAME}" = "osx" ] ; then
 
     # Build and install yarp
     cd $GIT_FOLDER
+
+    rm -rf yarp
     git clone --depth 1 -b $DEPS_BRANCH https://github.com/robotology/yarp.git
     cd yarp
-    mkdir build && cd build
+    mkdir -p build && cd build
+
     cmake .. \
         -G"$TRAVIS_CMAKE_GENERATOR" \
         -DCMAKE_BUILD_TYPE=$TRAVIS_BUILD_TYPE \
@@ -31,9 +37,10 @@ if [ "${TRAVIS_OS_NAME}" = "osx" ] ; then
 
     # Build and install idyntree
     cd $GIT_FOLDER
+    rm -rf idyntree
     git clone --depth 1 -b $DEPS_BRANCH https://github.com/robotology/idyntree.git
     cd idyntree
-    mkdir build && cd build
+    mkdir -p build && cd build
     cmake .. \
         -G"$TRAVIS_CMAKE_GENERATOR" \
         -DCMAKE_BUILD_TYPE=$TRAVIS_BUILD_TYPE \
@@ -41,15 +48,29 @@ if [ "${TRAVIS_OS_NAME}" = "osx" ] ; then
     cmake --build . --config $TRAVIS_BUILD_TYPE --target install
 fi
 
-# Build and install xsense-mvn
+# Build and install xsens-mvn
 cd $GIT_FOLDER
+rm -rf xsens-mvn
+
 git clone https://github.com/robotology-playground/xsens-mvn
 cd xsens-mvn
-mkdir build && cd build
+mkdir -p build && cd build
 cmake -G"${TRAVIS_CMAKE_GENERATOR}" \
       -DCMAKE_BUILD_TYPE=${TRAVIS_BUILD_TYPE} \
       -DENABLE_xsens_mvn=OFF \
       -DENABLE_xsens_mvn_wrapper=OFF \
       -DENABLE_xsens_mvn_remote=OFF \
+      ..
+cmake --build . --config ${TRAVIS_BUILD_TYPE} --target install
+
+# Build and install wearables
+cd $GIT_FOLDER
+rm -rf wearables
+git clone https://github.com/robotology-playground/wearables.git
+cd wearables
+git checkout feature/cleanup
+mkdir -p build && cd build
+cmake -G"${TRAVIS_CMAKE_GENERATOR}" \
+      -DCMAKE_BUILD_TYPE=${TRAVIS_BUILD_TYPE} \
       ..
 cmake --build . --config ${TRAVIS_BUILD_TYPE} --target install

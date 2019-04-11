@@ -1,0 +1,9 @@
+<cluster name="HDE" user="yeshi">
+
+<nameserver namespace="/Xsens" node="localhost"> </nameserver>
+
+<!-- specify nodes, if you want to enable display on desktop please specify which desktop to use
+this is usually the value of the DISPLAY variable when logged on -->
+<node display=":0.0">localhost</node>
+
+</cluster>

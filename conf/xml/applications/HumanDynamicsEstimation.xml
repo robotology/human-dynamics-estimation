@@ -1,0 +1,25 @@
+<application>
+  <name>HumanDynamicsEstimation</name>
+  <description>An application for running Human Dynamics Estimation (HDE) for only human or for physical Human-Robot interaction (pHRI) experiments</description>
+
+  <application>
+    <name>HumanDynamicsEstimation-TransformServer</name>
+  </application>
+
+  <application>
+    <name>HumanDynamicsEstimation-Human</name>
+  </application>
+
+  <application>
+    <name>HumanDynamicsEstimation-pHRI</name>
+  </application>
+
+  <application>
+    <name>HumanDynamicsEstimation-Rviz</name>
+  </application>
+
+  <application>
+    <name>HumanDynamicsEstimation-YarpScope</name>
+  </application>
+
+</application>

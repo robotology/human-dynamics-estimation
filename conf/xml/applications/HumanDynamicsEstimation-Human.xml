@@ -1,0 +1,35 @@
+<application>
+  <name>HumanDynamicsEstimation-Human</name>
+  <description>An application for running Human Dynamics Estimation (HDE) for only human</description>
+
+  <!--yarprobotinterface with HDE config file for only human-->
+  <module>
+    <name>yarprobotinterface</name>
+    <parameters>--config Human.xml</parameters>
+    <dependencies>
+          <port timeout="5.0">/transformServer/rpc</port>
+          <port timeout="5.0">/transformServer/transforms:o</port>
+          <port timeout="5.0">/XSensSuit/WearableData/data:o</port>
+          <port timeout="5.0">/FTShoeLeft/WearableData/data:o</port>
+          <port timeout="5.0">/FTShoeRight/WearableData/data:o</port>
+    </dependencies>
+    <environment>YARP_FORWARD_LOG_ENABLE=1</environment>
+    <description>Run HDE for only human</description>
+    <node>localhost</node>
+  </module>
+
+  <!--yarprobotstatepublisher for human-->
+  <module>
+    <name>yarprobotstatepublisher</name>
+    <parameters>--namePrefix Human --tfPrefix /Human/ --model Claudia66DoF.urdf --base-frame Pelvis --jointstates-topic "/Human/joint_states"</parameters>
+    <dependencies>
+      <port timeout="5.0">/HumanDynamicsPublisher</port>
+      <port timeout="5.0">/Human/joint_states+@/HumanStatePublisher</port>
+      <port timeout="5.0">/tf+@/HumanStatePublisher</port>
+    </dependencies>
+    <environment>YARP_FORWARD_LOG_ENABLE=1</environment>
+    <description>Run yarprobotstatepublisher with correct human model</description>
+    <node>localhost</node>
+  </module>
+
+</application>

@@ -1,0 +1,6 @@
+<package>
+  <name>HDERviz</name>
+  <description>
+    This is a simple package.xml file for configuring HDE rviz files.
+  </description>
+</package>

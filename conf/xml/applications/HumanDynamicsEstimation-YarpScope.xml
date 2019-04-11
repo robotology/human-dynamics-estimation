@@ -1,0 +1,17 @@
+<application>
+  <name>HumanDynamicsEstimation-YarpScope</name>
+  <description>An application for running yarpscope</description>
+
+  <!--yarpscope-->
+  <module>
+    <name>yarpscope</name>
+    <parameters>--xml HumanJointTorquesYarpScope.xml</parameters>
+    <description>yarpscope to visualize human joint torque estimates</description>
+    <dependencies>
+      <port timeout="5.0">/HDE/HumanDynamicsWrapper/torques:o</port>
+    </dependencies>
+    <environment>YARP_FORWARD_LOG_ENABLE=1</environment>
+    <node>localhost</node>
+  </module>
+
+</application>
