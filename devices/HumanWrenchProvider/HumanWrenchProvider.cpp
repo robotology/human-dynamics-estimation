@@ -61,7 +61,8 @@ struct WrenchSourceData
     // Variables for Robot Human Transformation
     std::string humanLinkingFrame;
     std::string robotLinkingFrame;
-    std::string robotSourceFrame;
+    std::string robotSourceOriginFrame;
+    std::string robotSourceOrientationFrame;
 
     iDynTree::Position humanFootPosition;
 };
@@ -362,10 +363,8 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
                 yDebug() << LogPrefix << "Sensor name  :" << WrenchSourceData.sensorName;
                 yDebug() << LogPrefix << "Type         :" << sourceType;
                 yDebug() << LogPrefix << "Output frame :" << WrenchSourceData.outputFrame;
-                yDebug() << LogPrefix
-                         << "Rotation     :" << sourceGroup.find("rotation").asList()->toString();
-                yDebug() << LogPrefix
-                         << "Position     :" << sourceGroup.find("position").asList()->toString();
+                yDebug() << LogPrefix << "Rotation     :" << sourceGroup.find("rotation").asList()->toString();
+                yDebug() << LogPrefix << "Position     :" << sourceGroup.find("position").asList()->toString();
                 yDebug() << LogPrefix << "=============:";
 
                 break;
@@ -414,13 +413,21 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
 
                 WrenchSourceData.robotLinkingFrame = sourceGroup.find("robotLinkingFrame").asString();
 
-                if (!(sourceGroup.check("robotSourceFrame") && sourceGroup.find("robotSourceFrame").isString())) {
+                if (!(sourceGroup.check("robotSourceOriginFrame") && sourceGroup.find("robotSourceOriginFrame").isString())) {
                     yError() << LogPrefix << "Option" << sourceName
-                             << ":: robotSourceFrame not found or not a valid string";
+                             << ":: robotSourceOriginFrame not found or not a valid string";
                     return false;
                 }
 
-                WrenchSourceData.robotSourceFrame = sourceGroup.find("robotSourceFrame").asString();
+                WrenchSourceData.robotSourceOriginFrame = sourceGroup.find("robotSourceOriginFrame").asString();
+
+                if (!(sourceGroup.check("robotSourceOrientationFrame") && sourceGroup.find("robotSourceOrientationFrame").isString())) {
+                    yError() << LogPrefix << "Option" << sourceName
+                             << ":: robotSourceOrientationFrame not found or not a valid string";
+                    return false;
+                }
+
+                WrenchSourceData.robotSourceOrientationFrame = sourceGroup.find("robotSourceOrientationFrame").asString();
 
                 if (!(sourceGroup.check("humanFootPosition") && sourceGroup.find("humanFootPosition").isList())) {
                     yError() << LogPrefix << "Option" << sourceName
@@ -444,21 +451,19 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
                 auto ptr = static_cast<IWrenchFrameTransformer*>(transformer.release());
                 WrenchSourceData.frameTransformer.reset(ptr);
 
-                yDebug() << LogPrefix << "=============:";
-                yDebug() << LogPrefix << "New source   :" << WrenchSourceData.name;
-                yDebug() << LogPrefix << "Sensor name  :" << WrenchSourceData.sensorName;
-                yDebug() << LogPrefix << "Type         :" << sourceType;
-                yDebug() << LogPrefix << "Output frame :" << WrenchSourceData.outputFrame;
-                yDebug() << LogPrefix
-                         << "Rotation     :" << sourceGroup.find("rotation").asList()->toString();
-                yDebug() << LogPrefix
-                         << "Position     :" << sourceGroup.find("position").asList()->toString();
-                yDebug() << LogPrefix <<
-                            "Human foot position :" << sourceGroup.find("humanFootPosition").asList()->toString();
-                yDebug() << LogPrefix << "Human linking frame :" << WrenchSourceData.humanLinkingFrame;
-                yDebug() << LogPrefix << "Robot linking frame :" << WrenchSourceData.robotLinkingFrame;
-                yDebug() << LogPrefix << "Robot source frame  :" << WrenchSourceData.robotSourceFrame;
-                yDebug() << LogPrefix << "=============:";
+                yDebug() << LogPrefix << "================================:";
+                yDebug() << LogPrefix << "New source                      :" << WrenchSourceData.name;
+                yDebug() << LogPrefix << "Sensor name                     :" << WrenchSourceData.sensorName;
+                yDebug() << LogPrefix << "Type                            :" << sourceType;
+                yDebug() << LogPrefix << "Output frame                    :" << WrenchSourceData.outputFrame;
+                yDebug() << LogPrefix << "Rotation                        :" << sourceGroup.find("rotation").asList()->toString();
+                yDebug() << LogPrefix << "Position                        :" << sourceGroup.find("position").asList()->toString();
+                yDebug() << LogPrefix << "Human foot position             :" << sourceGroup.find("humanFootPosition").asList()->toString();
+                yDebug() << LogPrefix << "Human linking frame             :" << WrenchSourceData.humanLinkingFrame;
+                yDebug() << LogPrefix << "Robot linking frame             :" << WrenchSourceData.robotLinkingFrame;
+                yDebug() << LogPrefix << "Robot source origin frame       :" << WrenchSourceData.robotSourceOriginFrame;
+                yDebug() << LogPrefix << "Robot source orientation frame  :" << WrenchSourceData.robotSourceOrientationFrame;
+                yDebug() << LogPrefix << "================================:";
 
                 break;
             }
@@ -602,7 +607,10 @@ void HumanWrenchProvider::run()
                                           iDynTree::Twist::Zero(),
                                           pImpl->robotJointVelocitiesVec,
                                           pImpl->world_gravity);
-            robotFeetToHandsTransform = robotKinDynComp.getRelativeTransform(forceSource.robotLinkingFrame,forceSource.robotSourceFrame);
+            robotFeetToHandsTransform = robotKinDynComp.getRelativeTransformExplicit(pImpl->robotModel.getLinkIndex(forceSource.robotLinkingFrame),
+                                                                                     pImpl->robotModel.getLinkIndex(forceSource.robotLinkingFrame),
+                                                                                     pImpl->robotModel.getLinkIndex(forceSource.robotSourceOriginFrame),
+                                                                                     pImpl->robotModel.getLinkIndex(forceSource.robotSourceOrientationFrame));
 
             // TODO: Move this logic to WrenchFrameTransformers.cpp file
 
@@ -623,7 +631,7 @@ void HumanWrenchProvider::run()
             robotToHumanTransform = iDynTree::Transform::Identity() *
                                     humanFeetToHandsTransform * //HumanHand_H_HumanFoot
                                     robotHumanFeetFixedTransform * //HumanFoot_H_RobotFoot
-                                    robotFeetToHandsTransform; //RobotFoot_H_RobotRootLink
+                                    robotFeetToHandsTransform; //RobotFoot_H_RobotHand
 
             // Update the stored transform
             newTransformer->transform = robotToHumanTransform;
@@ -727,7 +735,7 @@ bool HumanWrenchProvider::attach(yarp::dev::PolyDriver* poly)
         if (pImpl->pHRIScenario) {
 
             // Check the size is at least as much as the one required by the config joints list
-            if (pImpl->iWear->getVirtualJointKinSensors().size() <= pImpl->robotJointNamesListFromConfig.size()) {
+            if (pImpl->iWear->getVirtualJointKinSensors().size() < pImpl->robotJointNamesListFromConfig.size()) {
                 yError() << LogPrefix << "The number of joints from the IWear interface are less than the number of joints needed as defined in the configuration file";
                 return false;
             }
