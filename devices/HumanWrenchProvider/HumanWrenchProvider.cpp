@@ -607,10 +607,10 @@ void HumanWrenchProvider::run()
                                           iDynTree::Twist::Zero(),
                                           pImpl->robotJointVelocitiesVec,
                                           pImpl->world_gravity);
-            robotFeetToHandsTransform = robotKinDynComp.getRelativeTransformExplicit(pImpl->robotModel.getLinkIndex(forceSource.robotLinkingFrame),
-                                                                                     pImpl->robotModel.getLinkIndex(forceSource.robotLinkingFrame),
-                                                                                     pImpl->robotModel.getLinkIndex(forceSource.robotSourceOriginFrame),
-                                                                                     pImpl->robotModel.getLinkIndex(forceSource.robotSourceOrientationFrame));
+            robotFeetToHandsTransform = robotKinDynComp.getRelativeTransformExplicit(pImpl->robotModel.getFrameIndex(forceSource.robotLinkingFrame),
+                                                                                     pImpl->robotModel.getFrameIndex(forceSource.robotLinkingFrame),
+                                                                                     pImpl->robotModel.getFrameIndex(forceSource.robotSourceOriginFrame),
+                                                                                     pImpl->robotModel.getFrameIndex(forceSource.robotSourceOrientationFrame));
 
             // TODO: Move this logic to WrenchFrameTransformers.cpp file
 
