@@ -32,6 +32,7 @@ class HumanRobotPosePublisher::impl
 public:
 
     mutable std::mutex mutex;
+    bool first_data = false;
 
     yarp::dev::PolyDriver transformClientDevice;
     yarp::dev::IFrameTransform* iFrameTransform = nullptr;
@@ -202,6 +203,18 @@ bool HumanRobotPosePublisher::open(yarp::os::Searchable& config)
         yError() << "The IFrameTransform is not implemented by the opened device";
         return false;
     }
+
+
+    // Check for first data
+    pImpl->first_data = false;
+    std::string frames;
+    while (!pImpl->first_data) {
+        if(pImpl->iFrameTransform->allFramesAsString(frames)) {
+            pImpl->first_data = true;
+            yInfo() << LogPrefix << "first data received";
+        }
+    }
+    //yInfo() << LogPrefix << pImpl->iFrameTransform->allFramesAsString(frames) << " " << frames;
 
     // Check if transforms are available in the transformServer for the input frames from the config file
     bool ok = pImpl->iFrameTransform->canTransform(pImpl->humanLeftFootFrame, pImpl->humanFloatingBaseFrame);
