@@ -1,4 +1,4 @@
-**NOTE:** The code base in master branch is no longer supported and cannot be used. A big refactoring is being done towards version 2.0 of Human Dynamics Estimation (HDEv2). The details related to the release of HDEv2 can be found in this [issue](https://github.com/robotology/human-dynamics-estimation/issues/91).
+**NOTE:** The code base in master branch is under final development steps. A big refactoring is being done towards version 2.0 of Human Dynamics Estimation (HDEv2). The current documentation available may no longer be relavant to HDEv2 and we advice users to be cautious of it. The new documentation will follow soon.
 
 # YARP module for the Human Dynamics Estimation (HDE)
 
