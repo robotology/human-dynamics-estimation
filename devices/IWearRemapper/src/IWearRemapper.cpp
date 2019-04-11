@@ -45,7 +45,6 @@ public:
     mutable std::recursive_mutex mutex;
 
     msg::WearableData wearableData;
-    yarp::os::BufferedPort<msg::WearableData> outputPortWearData;
     std::vector<std::unique_ptr<yarp::os::BufferedPort<msg::WearableData>>> inputPortsWearData;
 
     std::map<wearable::sensor::SensorName, size_t> sensorNameToIndex;
@@ -161,18 +160,9 @@ bool IWearRemapper::open(yarp::os::Searchable& config)
         }
     }
 
-    // Output port
-    if (!(config.check("outputPortName") && config.find("outputPortName").isString())) {
-        yError() << logPrefix << "outputPortName option does not exist or it is not a string";
-        return false;
-    }
-
     // ===============================
     // PARSE THE CONFIGURATION OPTIONS
     // ===============================
-
-    // Get the values of the options
-    std::string outputPortName = config.find("outputPortName").asString();
 
     // Convert list to vector
     std::vector<std::string> inputDataPortsNamesVector;
@@ -205,7 +195,6 @@ bool IWearRemapper::open(yarp::os::Searchable& config)
     {
         yInfo() << logPrefix << "*** Wearable RPC Port not configured";
     }
-    yInfo() << logPrefix << "*** Output port            :" << outputPortName;
     yInfo() << logPrefix << "*** ========================";
 
     // Initialize the network
@@ -229,16 +218,6 @@ bool IWearRemapper::open(yarp::os::Searchable& config)
             yError() << logPrefix << "Failed to open local input port";
             return false;
         }
-    }
-
-    // ======================
-    // CONFIGURE OUTPUT PORTS
-    // ======================
-    yDebug() << logPrefix << "Configuring output ports";
-
-    if (!pImpl->outputPortWearData.open(outputPortName)) {
-        yError() << logPrefix << "Failed to open port " << outputPortName;
-        return false;
     }
 
     // ====================
@@ -378,17 +357,11 @@ const std::map<msg::SensorStatus, sensor::SensorStatus> MapSensorStatus = {
 
 void IWearRemapper::onRead(msg::WearableData& receivedWearData)
 {
-    auto& wearableData = pImpl->outputPortWearData.prepare();
-    wearableData.producerName = WrapperName;
 
     for (auto& accelerometersMap : receivedWearData.accelerometers) {
         const auto& inputSensorName = accelerometersMap.first;
         const auto& wearDataInputSensor = accelerometersMap.second;
-        // ==========================
-        // FORWARD TO THE OUTPUT PORT
-        // ==========================
-        auto& wearData = pImpl->outputPortWearData.prepare();
-        wearData.accelerometers[inputSensorName] = wearDataInputSensor;
+
         // ====================
         // EXPOSE THE INTERFACE
         // ====================
@@ -410,11 +383,7 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
     for (auto& s : receivedWearData.emgSensors) {
         const auto& inputSensorName = s.first;
         const auto& wearDataInputSensor = s.second;
-        // ==========================
-        // FORWARD TO THE OUTPUT PORT
-        // ==========================
-        auto& wearData = pImpl->outputPortWearData.prepare();
-        wearData.emgSensors[inputSensorName] = wearDataInputSensor;
+
         // ====================
         // EXPOSE THE INTERFACE
         // ====================
@@ -435,11 +404,7 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
     for (auto& s : receivedWearData.force3DSensors) {
         const auto& inputSensorName = s.first;
         const auto& wearDataInputSensor = s.second;
-        // ==========================
-        // FORWARD TO THE OUTPUT PORT
-        // ==========================
-        auto& wearData = pImpl->outputPortWearData.prepare();
-        wearData.force3DSensors[inputSensorName] = wearDataInputSensor;
+
         // ====================
         // EXPOSE THE INTERFACE
         // ====================
@@ -461,11 +426,7 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
     for (auto& s : receivedWearData.forceTorque6DSensors) {
         const auto& inputSensorName = s.first;
         const auto& wearDataInputSensor = s.second;
-        // ==========================
-        // FORWARD TO THE OUTPUT PORT
-        // ==========================
-        auto& wearData = pImpl->outputPortWearData.prepare();
-        wearData.forceTorque6DSensors[inputSensorName] = wearDataInputSensor;
+
         // ====================
         // EXPOSE THE INTERFACE
         // ====================
@@ -492,11 +453,7 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
     for (auto& s : receivedWearData.freeBodyAccelerationSensors) {
         const auto& inputSensorName = s.first;
         const auto& wearDataInputSensor = s.second;
-        // ==========================
-        // FORWARD TO THE OUTPUT PORT
-        // ==========================
-        auto& wearData = pImpl->outputPortWearData.prepare();
-        wearData.freeBodyAccelerationSensors[inputSensorName] = wearDataInputSensor;
+
         // ====================
         // EXPOSE THE INTERFACE
         // ====================
@@ -519,11 +476,7 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
     for (auto& s : receivedWearData.gyroscopes) {
         const auto& inputSensorName = s.first;
         const auto& wearDataInputSensor = s.second;
-        // ==========================
-        // FORWARD TO THE OUTPUT PORT
-        // ==========================
-        auto& wearData = pImpl->outputPortWearData.prepare();
-        wearData.gyroscopes[inputSensorName] = wearDataInputSensor;
+
         // ====================
         // EXPOSE THE INTERFACE
         // ====================
@@ -545,11 +498,7 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
     for (auto& s : receivedWearData.magnetometers) {
         const auto& inputSensorName = s.first;
         const auto& wearDataInputSensor = s.second;
-        // ==========================
-        // FORWARD TO THE OUTPUT PORT
-        // ==========================
-        auto& wearData = pImpl->outputPortWearData.prepare();
-        wearData.magnetometers[inputSensorName] = wearDataInputSensor;
+
         // ====================
         // EXPOSE THE INTERFACE
         // ====================
@@ -571,11 +520,7 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
     for (auto& s : receivedWearData.orientationSensors) {
         const auto& inputSensorName = s.first;
         const auto& wearDataInputSensor = s.second;
-        // ==========================
-        // FORWARD TO THE OUTPUT PORT
-        // ==========================
-        auto& wearData = pImpl->outputPortWearData.prepare();
-        wearData.orientationSensors[inputSensorName] = wearDataInputSensor;
+
         // ====================
         // EXPOSE THE INTERFACE
         // ====================
@@ -600,11 +545,7 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
     for (auto& s : receivedWearData.poseSensors) {
         const auto& inputSensorName = s.first;
         const auto& wearDataInputSensor = s.second;
-        // ==========================
-        // FORWARD TO THE OUTPUT PORT
-        // ==========================
-        auto& wearData = pImpl->outputPortWearData.prepare();
-        wearData.poseSensors[inputSensorName] = wearDataInputSensor;
+
         // ====================
         // EXPOSE THE INTERFACE
         // ====================
@@ -631,11 +572,7 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
     for (auto& s : receivedWearData.positionSensors) {
         const auto& inputSensorName = s.first;
         const auto& wearDataInputSensor = s.second;
-        // ==========================
-        // FORWARD TO THE OUTPUT PORT
-        // ==========================
-        auto& wearData = pImpl->outputPortWearData.prepare();
-        wearData.positionSensors[inputSensorName] = wearDataInputSensor;
+
         // ====================
         // EXPOSE THE INTERFACE
         // ====================
@@ -657,11 +594,7 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
     for (auto& s : receivedWearData.skinSensors) {
         const auto& inputSensorName = s.first;
         const auto& wearDataInputSensor = s.second;
-        // ==========================
-        // FORWARD TO THE OUTPUT PORT
-        // ==========================
-        auto& wearData = pImpl->outputPortWearData.prepare();
-        wearData.skinSensors[inputSensorName] = wearDataInputSensor;
+
         // ====================
         // EXPOSE THE INTERFACE
         // ====================
@@ -686,11 +619,7 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
     for (auto& s : receivedWearData.temperatureSensors) {
         const auto& inputSensorName = s.first;
         const auto& wearDataInputSensor = s.second;
-        // ==========================
-        // FORWARD TO THE OUTPUT PORT
-        // ==========================
-        auto& wearData = pImpl->outputPortWearData.prepare();
-        wearData.temperatureSensors[inputSensorName] = wearDataInputSensor;
+
         // ====================
         // EXPOSE THE INTERFACE
         // ====================
@@ -712,11 +641,7 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
     for (auto& s : receivedWearData.torque3DSensors) {
         const auto& inputSensorName = s.first;
         const auto& wearDataInputSensor = s.second;
-        // ==========================
-        // FORWARD TO THE OUTPUT PORT
-        // ==========================
-        auto& wearData = pImpl->outputPortWearData.prepare();
-        wearData.torque3DSensors[inputSensorName] = wearDataInputSensor;
+
         // ====================
         // EXPOSE THE INTERFACE
         // ====================
@@ -738,11 +663,7 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
     for (auto& s : receivedWearData.virtualLinkKinSensors) {
         const auto& inputSensorName = s.first;
         const auto& wearDataInputSensor = s.second;
-        // ==========================
-        // FORWARD TO THE OUTPUT PORT
-        // ==========================
-        auto& wearData = pImpl->outputPortWearData.prepare();
-        wearData.virtualLinkKinSensors[inputSensorName] = wearDataInputSensor;
+
         // ====================
         // EXPOSE THE INTERFACE
         // ====================
@@ -783,11 +704,7 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
     for (auto& s : receivedWearData.virtualSphericalJointKinSensors) {
         const auto& inputSensorName = s.first;
         const auto& wearDataInputSensor = s.second;
-        // ==========================
-        // FORWARD TO THE OUTPUT PORT
-        // ==========================
-        auto& wearData = pImpl->outputPortWearData.prepare();
-        wearData.virtualSphericalJointKinSensors[inputSensorName] = wearDataInputSensor;
+
         // ====================
         // EXPOSE THE INTERFACE
         // ====================
@@ -818,9 +735,6 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
     // Update the timestamp
     pImpl->timestamp.sequenceNumber++;
     pImpl->timestamp.time = yarp::os::Time::now();
-
-    // Write to the output port
-    pImpl->outputPortWearData.write();
 
     // This is used to handle the overall status of IWear
     if (pImpl->firstRun) {
