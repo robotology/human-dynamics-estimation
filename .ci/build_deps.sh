@@ -9,10 +9,12 @@ mkdir -p $GIT_FOLDER
 if [ "${TRAVIS_OS_NAME}" = "osx" ] ; then
      # Build and install ycm
     cd $GIT_FOLDER
+
     rm -rf ycm
     git clone --depth 1 -b $DEPS_BRANCH https://github.com/robotology/ycm.git
     cd ycm
     mkdir -p build && cd build
+
     cmake .. \
         -G"$TRAVIS_CMAKE_GENERATOR" \
         -DCMAKE_INSTALL_PREFIX=$DEPS_INSTALL_PREFIX
@@ -20,10 +22,12 @@ if [ "${TRAVIS_OS_NAME}" = "osx" ] ; then
 
     # Build and install yarp
     cd $GIT_FOLDER
+
     rm -rf yarp
     git clone --depth 1 -b $DEPS_BRANCH https://github.com/robotology/yarp.git
     cd yarp
     mkdir -p build && cd build
+
     cmake .. \
         -G"$TRAVIS_CMAKE_GENERATOR" \
         -DCMAKE_BUILD_TYPE=$TRAVIS_BUILD_TYPE \
@@ -47,6 +51,7 @@ fi
 # Build and install xsens-mvn
 cd $GIT_FOLDER
 rm -rf xsens-mvn
+
 git clone https://github.com/robotology-playground/xsens-mvn
 cd xsens-mvn
 mkdir -p build && cd build
