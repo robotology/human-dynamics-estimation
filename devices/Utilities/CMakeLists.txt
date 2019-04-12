@@ -26,7 +26,7 @@ set(${UTILITY_LIBRARY_NAME}_HDR
   )
 
 # add an executable to the project using the specified source files.
-add_library(${UTILITY_LIBRARY_NAME} ${${UTILITY_LIBRARY_NAME}_SRC} ${${UTILITY_LIBRARY_NAME}_HDR})
+add_library(${UTILITY_LIBRARY_NAME} STATIC ${${UTILITY_LIBRARY_NAME}_SRC} ${${UTILITY_LIBRARY_NAME}_HDR})
 
 # add include directories to the build.
 target_include_directories(${UTILITY_LIBRARY_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}

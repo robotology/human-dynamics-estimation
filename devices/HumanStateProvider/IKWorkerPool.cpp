@@ -17,8 +17,8 @@
 const std::string IKLogPrefix = "IKWorkerPool :";
 
 IKWorkerPool::IKWorkerPool(int size,
-                                     std::vector<LinkPairInfo> &linkPairs,
-                                     std::vector<SegmentInfo> &segments)
+                           std::vector<LinkPairInfo>& linkPairs,
+                           std::vector<SegmentInfo>& segments)
     : m_linkPairs(linkPairs)
     , m_segments(segments)
     , m_shouldTerminate(false)
@@ -34,10 +34,10 @@ IKWorkerPool::IKWorkerPool(int size,
     m_poolSize = static_cast<unsigned>(size);
     m_terminateCounter.reserve(m_poolSize);
 
-    //TODO: queue reserve memory
-    //queue does not allow to reserve memory.
-    //If we find that allocation is an issue, we should manually move to
-    //another container and manually manage the FIFO behaviour
+    // TODO: queue reserve memory
+    // queue does not allow to reserve memory.
+    // If we find that allocation is an issue, we should manually move to
+    // another container and manually manage the FIFO behaviour
 
     for (unsigned i = 0; i < static_cast<unsigned>(size); ++i) {
         std::thread(&IKWorkerPool::worker, this).detach();
@@ -47,18 +47,19 @@ IKWorkerPool::IKWorkerPool(int size,
 int IKWorkerPool::closeIKWorkerPool()
 {
     m_terminateCounter.resize(m_poolSize);
-    m_terminateCounter.assign(m_poolSize, true); //dummy
+    m_terminateCounter.assign(m_poolSize, true); // dummy
 
     std::unique_lock<std::mutex> lock(m_inputMutex);
     m_shouldTerminate = true;
 
     m_inputSynchronizer.notify_all();
+
     m_inputSynchronizer.wait(lock, [&]() {return m_terminateCounter.empty(); });
 
     return m_shouldTerminate;
 }
 
-HumanIKWorkerPool::~HumanIKWorkerPool()
+IKWorkerPool::~HumanIKWorkerPool()
 {
 }
 
@@ -66,6 +67,7 @@ void IKWorkerPool::runAndWait()
 {
     // Fill data for a thread
     {
+        yInfo() << "runandwait";
         std::unique_lock<std::mutex> guard(m_inputMutex);
         for (auto& linkPair : m_linkPairs) {
             // Create a new struct of type WorkerData and pass it to the pool
@@ -74,16 +76,20 @@ void IKWorkerPool::runAndWait()
                 m_segments[static_cast<size_t>(linkPair.parentFrameSegmentsIndex)],
                 m_segments[static_cast<size_t>(linkPair.childFrameSegmentsIndex)],
                 linkPair.sInitial,
-                std::distance(&*(m_linkPairs.begin()), &linkPair) //this is not properly clear with the range-based iterators
+                std::distance(
+                    &*(m_linkPairs.begin()),
+                    &linkPair) // this is not properly clear with the range-based iterators
             };
             m_tasks.push(taskData);
         }
         m_inputSynchronizer.notify_all();
+        yInfo() << "runandwait end";
     }
 
     // Blocked call
     std::unique_lock<std::mutex> outputGuard(m_outputMutex);
-    m_outputSynchronizer.wait(outputGuard, [&]() { return m_results.size() >= m_linkPairs.size(); });
+    m_outputSynchronizer.wait(outputGuard,
+                              [&]() { return m_results.size() >= m_linkPairs.size(); });
 
     m_results.clear();
     m_outputSynchronizer.notify_all();
@@ -92,19 +98,26 @@ void IKWorkerPool::runAndWait()
 int IKWorkerPool::computeIK(WorkerTaskData& task)
 {
     // Get floating base transformation from the pair model
-    task.pairInfo.floatingBaseTransform = task.pairInfo.pairModel.getFrameTransform(task.pairInfo.floatingBaseIndex).inverse();
+    task.pairInfo.floatingBaseTransform =
+        task.pairInfo.pairModel.getFrameTransform(task.pairInfo.floatingBaseIndex).inverse();
 
     // Set full initial condition for the pair model
-    task.pairInfo.ikSolver->setFullJointsInitialCondition(&(task.pairInfo.floatingBaseTransform), &(task.sInitial));
+    task.pairInfo.ikSolver->setFullJointsInitialCondition(&(task.pairInfo.floatingBaseTransform),
+                                                          &(task.sInitial));
 
     // Set regularization term
-    task.pairInfo.ikSolver->setDesiredFullJointsConfiguration(task.sInitial, task.pairInfo.costRegularization);
+    task.pairInfo.ikSolver->setDesiredFullJointsConfiguration(task.sInitial,
+                                                              task.pairInfo.costRegularization);
 
     // Get the relative transformation between the parent and child frames
-    iDynTree::Transform parent_H_target = task.parentFrameInfo.poseWRTWorld.inverse() * task.childFrameInfo.poseWRTWorld;
+    iDynTree::Transform parent_H_target =
+        task.parentFrameInfo.poseWRTWorld.inverse() * task.childFrameInfo.poseWRTWorld;
 
     // Update ik target
-    task.pairInfo.ikSolver->updateTarget(task.childFrameInfo.segmentName, parent_H_target, task.pairInfo.positionTargetWeight, task.pairInfo.rotationTargetWeight);
+    task.pairInfo.ikSolver->updateTarget(task.childFrameInfo.segmentName,
+                                         parent_H_target,
+                                         task.pairInfo.positionTargetWeight,
+                                         task.pairInfo.rotationTargetWeight);
 
     // Solve ik problem
     auto tick = std::chrono::high_resolution_clock::now();
@@ -121,11 +134,13 @@ int IKWorkerPool::computeIK(WorkerTaskData& task)
     // Get the last ik solution
     // TODO: Verify if relativeTransformation is stored correctly,
     // It gets baseTransformSolution	solution for the base position from getReducedSolution()
-    task.pairInfo.ikSolver->getFullJointsSolution(task.pairInfo.relativeTransformation, task.pairInfo.jointConfigurations);
+    task.pairInfo.ikSolver->getFullJointsSolution(task.pairInfo.relativeTransformation,
+                                                  task.pairInfo.jointConfigurations);
 
-    //yDebug() << "link pair IK took"
+    // yDebug() << "link pair IK took"
     //         << std::chrono::duration_cast<std::chrono::milliseconds>(tock - tick).count() << "ms"
-    //         << " Joint configuration solution is : " << task.pairInfo.jointConfigurations.toString();
+    //         << " Joint configuration solution is : " <<
+    //         task.pairInfo.jointConfigurations.toString();
 
     return result;
 }
@@ -137,32 +152,35 @@ void IKWorkerPool::computeJointVelocities(WorkerTaskData& task, iDynTree::Twist&
     worldGravity.zero();
     worldGravity(2) = -9.81;
 
-    //Obtain the pointer to the kynDyn object, just as an alias
-    iDynTree::KinDynComputations *computations = task.pairInfo.kinDynComputations.get();
-    //As we computed the IK, set the state
+    // Obtain the pointer to the kynDyn object, just as an alias
+    iDynTree::KinDynComputations* computations = task.pairInfo.kinDynComputations.get();
+    // As we computed the IK, set the state
     task.pairInfo.jointVelocities.zero();
-    computations->setRobotState(task.pairInfo.jointConfigurations,
-                                task.pairInfo.jointVelocities,
-                                worldGravity);
+    computations->setRobotState(
+        task.pairInfo.jointConfigurations, task.pairInfo.jointVelocities, worldGravity);
 
-    //Parent, child and relative jacobians
+    // Parent, child and relative jacobians
     iDynTree::MatrixDynSize& relativeJacobian = task.pairInfo.relativeJacobian;
-    computations->getRelativeJacobian(task.pairInfo.parentFrameModelIndex,
-                                      task.pairInfo.childFrameModelIndex,
-                                      relativeJacobian);
+    computations->getRelativeJacobian(
+        task.pairInfo.parentFrameModelIndex, task.pairInfo.childFrameModelIndex, relativeJacobian);
 
-    //Pseudo-invert the Jacobian.
-    //Compute the QR decomposition
-    Eigen::ColPivHouseholderQR<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> > jacobianDecomposition;
-    jacobianDecomposition = Eigen::ColPivHouseholderQR<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> >(relativeJacobian.rows(), relativeJacobian.cols());
+    // Pseudo-invert the Jacobian.
+    // Compute the QR decomposition
+    Eigen::ColPivHouseholderQR<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>>
+        jacobianDecomposition;
+    jacobianDecomposition =
+        Eigen::ColPivHouseholderQR<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>>(
+            relativeJacobian.rows(), relativeJacobian.cols());
     jacobianDecomposition.compute(iDynTree::toEigen(relativeJacobian));
-    //the solve method on the decomposition directly solves the associated least-squares problem
+    // the solve method on the decomposition directly solves the associated least-squares problem
     relativeVelocity = task.childFrameInfo.velocities - task.parentFrameInfo.velocities;
-    iDynTree::toEigen(task.pairInfo.jointVelocities) = jacobianDecomposition.solve(iDynTree::toEigen(relativeVelocity));
+    iDynTree::toEigen(task.pairInfo.jointVelocities) =
+        jacobianDecomposition.solve(iDynTree::toEigen(relativeVelocity));
 }
 
-void IKWorkerPool::worker() {
-    //Preallocate some thread-local variables to be used in the computation
+void IKWorkerPool::worker()
+{
+    // Preallocate some thread-local variables to be used in the computation
     iDynTree::Twist relativeVelocity;
 
     while (true) {
@@ -171,11 +189,13 @@ void IKWorkerPool::worker() {
 #endif
 
         std::unique_lock<std::mutex> guard(m_inputMutex);
-        m_inputSynchronizer.wait(guard, [&](){ return m_shouldTerminate || !m_tasks.empty(); } );
+        m_inputSynchronizer.wait(guard, [&]() { return m_shouldTerminate || !m_tasks.empty(); });
         if (m_shouldTerminate) {
             if (m_terminateCounter.empty()) {
-                yError() << IKLogPrefix << "Trying to remove a thread which was not expected to exist";
-            } else {
+                yError() << IKLogPrefix
+                         << "Trying to remove a thread which was not expected to exist";
+            }
+            else {
                 m_terminateCounter.pop_back();
             }
             m_inputSynchronizer.notify_one();
@@ -186,23 +206,29 @@ void IKWorkerPool::worker() {
         m_tasks.pop();
         guard.unlock();
 
-        //Do computations
-        //std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
+        // Do computations
+        // std::chrono::high_resolution_clock::time_point t1 =
+        // std::chrono::high_resolution_clock::now();
         int ikResult = computeIK(task);
-        //std::cerr << "IK took " <<std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - t1).count() << "ms" << std::endl;
+        // std::cerr << "IK took "
+        // <<std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now()
+        // - t1).count() << "ms" << std::endl;
 
         if (ikResult < 0) {
-            yError() << IKLogPrefix << "Failed to compute IK for " << task.pairInfo.parentFrameName.c_str() << ", "
+            yError() << IKLogPrefix << "Failed to compute IK for "
+                     << task.pairInfo.parentFrameName.c_str() << ", "
                      << task.pairInfo.childFrameName.c_str() << " with error " << ikResult;
         }
         computeJointVelocities(task, relativeVelocity);
 
-        //Notify caller
+        // Notify caller
         std::unique_lock<std::mutex> outputGuard(m_outputMutex);
-        m_outputSynchronizer.wait(outputGuard, [&](){ return m_results.find(task.identifier) == m_results.end(); });
+        m_outputSynchronizer.wait(
+            outputGuard, [&]() { return m_results.find(task.identifier) == m_results.end(); });
 
-        //insert
-        m_results.insert(std::unordered_map<unsigned, int>::value_type(task.identifier, ikResult > 0));
+        // insert
+        m_results.insert(
+            std::unordered_map<unsigned, int>::value_type(task.identifier, ikResult > 0));
         m_outputSynchronizer.notify_all();
 
 #ifdef EIGEN_RUNTIME_NO_MALLOC
@@ -210,5 +236,3 @@ void IKWorkerPool::worker() {
 #endif
     }
 }
-
-

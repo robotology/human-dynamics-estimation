@@ -71,6 +71,7 @@ bool HumanStateWrapper::open(yarp::os::Searchable& config)
     // ================
 
     setPeriod(period);
+    yInfo() << logPrefix << "....................................... debug-1";
 
     return true;
 }
@@ -84,6 +85,8 @@ bool HumanStateWrapper::close()
 
 void HumanStateWrapper::run()
 {
+    yInfo() << logPrefix << "....................................... debug-2";
+
     // Get data from the interface
     std::array<double, 3> basePositionInterface = pImpl->iHumanState->getBasePosition();
     std::array<double, 4> baseOrientationInterface = pImpl->iHumanState->getBaseOrientation();
@@ -137,6 +140,7 @@ void HumanStateWrapper::run()
 
     // Send the data
     pImpl->outputPort.write(/*forceStrict=*/true);
+    yInfo() << logPrefix << "....................................... debug-3";
 }
 
 bool HumanStateWrapper::attach(yarp::dev::PolyDriver* poly)
@@ -155,15 +159,16 @@ bool HumanStateWrapper::attach(yarp::dev::PolyDriver* poly)
     // CHECK THE INTERFACE
     // ===================
 
-    yInfo()<<pImpl->humanState->getNumberOfJoints() <<" "<< pImpl->humanState->getJointNames().size();
-    for(int i=0;i<pImpl->humanState->getJointNames().size();i++)
-    {
-        yInfo()<<"Joint name ("<<i<<"): "<< pImpl->humanState->getJointNames()[i];
+    yInfo() << pImpl->ihumanState->getNumberOfJoints() << " "
+            << pImpl->ihumanState->getJointNames().size();
+
+    // std::vector<std::string> jointNames=pImpl->humanState->getJointNames();
+    for (int i = 0; i < pImpl->ihumanState->getJointNames().size(); i++) {
+        yInfo() << "Joint name (" << i << "): " << pImpl->ihumanState->getJointNames()[i];
     }
 
-
-    if (pImpl->humanState->getNumberOfJoints() == 0
-        || pImpl->humanState->getNumberOfJoints() != pImpl->humanState->getJointNames().size()) {
+    if (pImpl->ihumanState->getNumberOfJoints() == 0
+        || pImpl->ihumanState->getNumberOfJoints() != pImpl->ihumanState->getJointNames().size()) {
         yError() << "The IHumanState interface might not be ready";
         return false;
     }

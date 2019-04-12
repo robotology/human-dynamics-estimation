@@ -24,12 +24,16 @@
         <param name="maxIterationsIK">300</param>
         <param name="ikLinearSolver">ma27</param>
         <param name="ikPoolSizeOption">4</param>
-        <param name="posTargetWeight">0</param>
-        <param name="rotTargetWeight">10</param>
+        <param name="posTargetWeight">0.0</param>
+        <param name="rotTargetWeight">10.0</param>
+        <param name="linVelTargetWeight">0.0</param>
+        <param name="angVelTargetWeight">1.0</param>
         <param name="costRegularization">1.0</param>
         <!-- 0.25 -->
-        <param name="costTolerance">0.01</param>
+        <param name="costTolerance">0.001</param>
         <param name="useGlobalIK">false</param>
+        <param name="usePairWisedIK">true</param>
+        <param name="useIntegrationBasedIK">false</param>
         <param name="useXsensJointsAngles">false</param>
         <!-- TODO: How to use a reduced model in the entire HDE? (Starting from HumanStateProvider) -->
         <group name="MODEL_TO_DATA_LINK_NAMES">
@@ -140,7 +144,7 @@
     </device>
 
 
-    <device type="human_state_wrapper" name="HumanStateWrapper">
+    <!--device type="human_state_wrapper" name="HumanStateWrapper">
         <param name="period">0.05</param>
         <param name="outputPort">/HDE/HumanStateWrapper/state:o</param>
         <action phase="startup" level="5" type="attach">
@@ -184,7 +188,7 @@
             </paramlist>
         </action>
         <action phase="shutdown" level="5" type="detach"/>
-    </device>
+    </device-->
 
 
 </robot>
