@@ -837,7 +837,17 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         // Initialize state integrator
         pImpl->stateIntegrator.setInterpolatorType(iDynTreeHelper::State::integrator::trapezoidal);
         pImpl->stateIntegrator.setNJoints(nrOfDoFs);
-        pImpl->stateIntegrator.resetState();
+
+        iDynTree::VectorDynSize jointLowerLimits;
+        jointLowerLimits.resize(nrOfDoFs);
+        iDynTree::VectorDynSize jointUpperLimits;
+        jointUpperLimits.resize(nrOfDoFs);
+        for (int jointIndex=0; jointIndex<nrOfDoFs; jointIndex++)
+        {
+            jointLowerLimits.setVal(jointIndex, pImpl->humanModel.getJoint(jointIndex)->getMinPosLimit(0));
+            jointUpperLimits.setVal(jointIndex, pImpl->humanModel.getJoint(jointIndex)->getMaxPosLimit(0));
+        }
+        pImpl->stateIntegrator.setJointLimits(jointLowerLimits, jointUpperLimits);
 
         pImpl->integralOrientationError.zero();
 

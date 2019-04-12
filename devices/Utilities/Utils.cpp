@@ -130,14 +130,11 @@ iDynTreeHelper::State::integrator::integrator(unsigned int nJoints, interpolatio
     nJoints(nJoints),
     interpolator(interpolator)
 {
-    oldState.s.resize(nJoints);
-    oldState.dot_s.resize(nJoints);
-
+    resetJointLimits();
     resetState();
 }
 
 iDynTreeHelper::State::integrator::integrator(state initialState, interpolationType interpolator):
-    oldState(initialState),
     interpolator(interpolator)
 {
     if(!(initialState.s.size() == initialState.dot_s.size()))
@@ -146,6 +143,11 @@ iDynTreeHelper::State::integrator::integrator(state initialState, interpolationT
     }
 
     nJoints = initialState.s.size();
+
+    resetJointLimits();
+    resetState();
+
+    oldState = initialState;
 }
 
 iDynTreeHelper::State::integrator::integrator(iDynTree::VectorDynSize s,
@@ -177,16 +179,29 @@ void iDynTreeHelper::State::integrator::setNJoints(unsigned int _nJoints)
     nJoints = _nJoints;
     oldState.s.resize(nJoints);
     oldState.dot_s.resize(nJoints);
+
+    resetState();
+    resetJointLimits();
 }
 
 void iDynTreeHelper::State::integrator::resetState()
 {
+    oldState.s.resize(nJoints);
+    oldState.dot_s.resize(nJoints);
+
     oldState.s.zero();
     oldState.dot_s.zero();
     oldState.W_p_B.zero();
     oldState.dot_W_p_B.zero();
     oldState.W_R_B = iDynTree::Rotation::Identity();
     oldState.omega_B.zero();
+}
+
+void iDynTreeHelper::State::integrator::resetJointLimits()
+{
+    jointLimits.lowerLimits.resize(nJoints);
+    jointLimits.upperLimits.resize(nJoints);
+    jointLimits.active = false;
 }
 
 void iDynTreeHelper::State::integrator::setState(state newState)
@@ -215,6 +230,20 @@ void iDynTreeHelper::State::integrator::setState(iDynTree::VectorDynSize s,
     newState.omega_B = omega_B;
 
     setState(newState);
+}
+
+void iDynTreeHelper::State::integrator::setJointLimits(iDynTree::VectorDynSize lowerLimits,
+                                                       iDynTree::VectorDynSize upperLimits,
+                                                       bool active)
+{
+    if(!((lowerLimits.size() == nJoints) && (upperLimits.size() == nJoints)))
+    {
+        yError() << LogPrefixUtils << "invalid joint limits. lowerLimits and upperLimits should have size " << nJoints;
+    }
+
+    jointLimits.upperLimits = upperLimits;
+    jointLimits.lowerLimits = lowerLimits;
+    jointLimits.active = active;
 }
 
 void iDynTreeHelper::State::integrator::getState(state& _state)
@@ -300,7 +329,12 @@ void iDynTreeHelper::State::integrator::integrate(iDynTree::VectorDynSize new_do
         for(int i; i<new_dot_s.size(); i++)
         {
             oldState.s.setVal(i, oldState.s.getVal(i) + new_dot_s.getVal(i) * dt);
-            oldState.dot_s.setVal(i, new_dot_s.getVal(i));
+            if (jointLimits.active)
+            {
+                oldState.s.setVal(i,saturate(oldState.s.getVal(i),
+                                             jointLimits.lowerLimits.getVal(i),
+                                             jointLimits.upperLimits.getVal(i)));
+            }
         }
     }
     else if (interpolator == trapezoidal)
@@ -308,13 +342,19 @@ void iDynTreeHelper::State::integrator::integrate(iDynTree::VectorDynSize new_do
         for(int i; i<new_dot_s.size(); i++)
         {
             oldState.s.setVal(i, oldState.s.getVal(i) + (oldState.dot_s.getVal(i) + new_dot_s.getVal(i)) * dt /2);
-            oldState.dot_s.setVal(i, new_dot_s.getVal(i));
+            if (jointLimits.active)
+            {
+                oldState.s.setVal(i,saturate(oldState.s.getVal(i),
+                                             jointLimits.lowerLimits.getVal(i),
+                                             jointLimits.upperLimits.getVal(i)));
+            }
         }
     }
     else
     {
         yError() << LogPrefixUtils << "invalid integrator type " << interpolator;
     }
+    oldState.dot_s = new_dot_s;
 }
 
 void iDynTreeHelper::State::integrator::integrate(iDynTree::VectorDynSize new_dot_s,
@@ -331,7 +371,6 @@ void iDynTreeHelper::State::integrator::integrate(iDynTree::VectorDynSize new_do
         for(int i; i<3; i++)
         {
             oldState.W_p_B.setVal(i, oldState.W_p_B.getVal(i) + new_dot_W_p_B.getVal(i) * dt);
-            oldState.dot_W_p_B.setVal(i, new_dot_W_p_B.getVal(i));
         }
     }
     else if (interpolator == trapezoidal)
@@ -339,9 +378,9 @@ void iDynTreeHelper::State::integrator::integrate(iDynTree::VectorDynSize new_do
         for(int i; i<3; i++)
         {
             oldState.W_p_B.setVal(i, oldState.W_p_B.getVal(i) + (oldState.dot_W_p_B.getVal(i) + new_dot_W_p_B.getVal(i)) * dt /2);
-            oldState.dot_W_p_B.setVal(i, new_dot_W_p_B.getVal(i));
         }
     }
+    oldState.dot_W_p_B = new_dot_W_p_B;
 
     // integrate base orientation
     iDynTree::Matrix3x3 dot_W_R_B;
@@ -353,4 +392,14 @@ void iDynTreeHelper::State::integrator::integrate(iDynTree::VectorDynSize new_do
     iDynTree::Vector4 quaternion = oldState.W_R_B.asQuaternion();
     oldState.W_R_B.fromQuaternion(quaternion);
     oldState.dot_omega_B = new_omega_B;
+}
+
+double iDynTreeHelper::State::integrator::saturate(double val, double lowerLimit, double upperLimit)
+{
+    if (val>upperLimit)
+        return upperLimit;
+    else if (val<lowerLimit)
+        return lowerLimit;
+    else
+        return val;
 }

@@ -15,6 +15,8 @@
 #include <iDynTree/Core/Rotation.h>
 #include <iDynTree/Core/Transform.h>
 
+#include <vector>
+
 /**
  * Helper for iDynTree library.
  */
@@ -93,7 +95,6 @@ public:
 
     void setInterpolatorType(interpolationType interpolator);
     void setNJoints(unsigned int nJoints);
-    void resetState();
 
     void setState(state state);
     void setState(iDynTree::VectorDynSize s,
@@ -102,6 +103,10 @@ public:
                   iDynTree::Vector3 dot_W_p_B,
                   iDynTree::Rotation W_R_B,
                   iDynTree::Vector3 omega_B);
+
+    void setJointLimits(iDynTree::VectorDynSize lowerLimits,
+                        iDynTree::VectorDynSize upperLimits,
+                        bool active=true);
 
     void getState(state& state);
     void getState(iDynTree::VectorDynSize& s,
@@ -131,6 +136,17 @@ private:
     unsigned int nJoints;
     state oldState;
     interpolationType interpolator;
+
+    typedef struct {
+        bool active;
+        iDynTree::VectorDynSize lowerLimits;
+        iDynTree::VectorDynSize upperLimits;
+    } JointLimits;
+    JointLimits jointLimits;
+
+    void resetState();
+    void resetJointLimits();
+    double saturate(double val, double lowerLimit, double upperLimit);
 };
 
 
