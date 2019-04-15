@@ -134,6 +134,7 @@ public:
     bool allowIKFailures;
     bool useXsensJointsAngles;
 
+    float period;
     mutable std::mutex mutex;
 
     // Wearable variables
@@ -208,7 +209,9 @@ public:
     bool initializePairwisedInverseKinematicsSolver();
     bool initializeGlobalInverseKinematicsSolver();
     bool initializeIntegrationBasedInverseKinematicsSolver();
-
+    bool solvePairwisedInverseKinematicsSolver();
+    bool solveGlobalInverseKinematicsSolver();
+    bool solveIntegrationBasedInverseKinematics();
 
     // optimization targets
     bool updateInverseKinematicTargets();
@@ -318,9 +321,9 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     const std::string urdfFileName = config.find("urdf").asString();
     pImpl->floatingBaseFrame.model = floatingBaseFrameList->get(0).asString();
     pImpl->floatingBaseFrame.wearable = floatingBaseFrameList->get(1).asString();
-    const double period = config.check("period", yarp::os::Value(DefaultPeriod)).asFloat64();
+    pImpl->period = config.check("period", yarp::os::Value(DefaultPeriod)).asFloat64();
 
-    setPeriod(period);
+    setPeriod(pImpl->period);
 
     for (size_t i = 1; i < linksGroup.size(); ++i) {
         yarp::os::Bottle* listContent = linksGroup.get(i).asList()->get(1).asList();
@@ -505,7 +508,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     // ===================================
 
     yInfo() << LogPrefix << "*** ==================================";
-    yInfo() << LogPrefix << "*** Period                           :" << period;
+    yInfo() << LogPrefix << "*** Period                           :" << pImpl->period;
     yInfo() << LogPrefix << "*** Urdf file name                   :" << urdfFileName;
     yInfo() << LogPrefix << "*** Ik solver                        :" << solverName;
     yInfo() << LogPrefix << "*** Use Xsens joint angles           :" << pImpl->useXsensJointsAngles;
@@ -583,24 +586,19 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     // ====================================
 
     if (pImpl->ikSolver == SolverIK::pairwised) {
-        if (!pImpl->initializePairwisedInverseKinematicsSolver())
-        {
+        if (!pImpl->initializePairwisedInverseKinematicsSolver()) {
             askToStop();
             return false;
         }
     }
-    else if (pImpl->ikSolver == SolverIK::global)
-    {
-        if (!pImpl->initializeGlobalInverseKinematicsSolver())
-        {
+    else if (pImpl->ikSolver == SolverIK::global) {
+        if (!pImpl->initializeGlobalInverseKinematicsSolver()) {
             askToStop();
             return false;
         }
     }
-    else if (pImpl->ikSolver == SolverIK::integrationbased)
-    {
-        if (!pImpl->initializeIntegrationBasedInverseKinematicsSolver())
-        {
+    else if (pImpl->ikSolver == SolverIK::integrationbased) {
+        if (!pImpl->initializeIntegrationBasedInverseKinematicsSolver()) {
             askToStop();
             return false;
         }
@@ -616,16 +614,6 @@ bool HumanStateProvider::close()
 
 void HumanStateProvider::run()
 {
-
-    // compute timestep
-    double dt;
-    if (pImpl->lastTime < 0.0) {
-        dt = this->getPeriod();
-    }
-    else {
-        dt = yarp::os::Time::now() - pImpl->lastTime;
-    };
-
     // Get the link transformations from input data
     if (!pImpl->getLinkTransformFromInputData(pImpl->linkTransformMatrices)) {
         yError() << LogPrefix << "Failed to get link transforms from input data";
@@ -657,282 +645,29 @@ void HumanStateProvider::run()
         }
     }
 
+    // Solve Inverse Kinematics and Inverse Velocity Problems
+    auto tick = std::chrono::high_resolution_clock::now();
     if (pImpl->ikSolver == SolverIK::pairwised) {
-
-        auto tick_PW = std::chrono::high_resolution_clock::now();
-        {
-            std::lock_guard<std::mutex> lock(pImpl->mutex);
-
-            // Set the initial solution to zero
-            for (auto& linkPair : pImpl->linkPairs) {
-                // linkPair.sInitial.zero();
-                for (size_t i = 0; i < linkPair.pairModel.getNrOfJoints(); i++) {
-                    double minJointLimit = linkPair.pairModel.getJoint(i)->getMinPosLimit(i);
-                    double maxJointLimit = linkPair.pairModel.getJoint(i)->getMaxPosLimit(i);
-                    double averageJointLimit = (minJointLimit + maxJointLimit) / 2.0;
-                    linkPair.sInitial.setVal(i, averageJointLimit);
-                }
-            }
+        if (!pImpl->solvePairwisedInverseKinematicsSolver()) {
+            askToStop();
+            return;
         }
-
-        {
-            std::lock_guard<std::mutex> lock(pImpl->mutex);
-
-            // Set link segments transformation and velocity
-            for (size_t segmentIndex = 0; segmentIndex < pImpl->segments.size(); segmentIndex++) {
-
-                SegmentInfo& segmentInfo = pImpl->segments.at(segmentIndex);
-                segmentInfo.poseWRTWorld = pImpl->linkTransformMatrices.at(segmentInfo.segmentName);
-                segmentInfo.velocities = pImpl->linkVelocities.at(segmentInfo.segmentName);
-            }
-        }
-
-        // Call IK worker pool to solve
-        pImpl->ikPool->runAndWait();
-        // Joint link pair ik solutions using joints map from link pairs initialization
-        // to solution struct for exposing data through interface
-        for (auto& linkPair : pImpl->linkPairs) {
-            size_t jointIndex = 0;
-            for (auto& pairJoint : linkPair.consideredJointLocations) {
-
-                // Check if it is a valid 1 DoF joint
-
-                if (pairJoint.second == 1) {
-                    pImpl->jointConfigurationSolution.setVal(
-                        pairJoint.first, linkPair.jointConfigurations.getVal(jointIndex));
-                    pImpl->jointVelocitiesSolution.setVal(
-                        pairJoint.first, linkPair.jointVelocities.getVal(jointIndex));
-                    // If global ik is false, use link pair joint solutions
-                    if (!pImpl->useGlobalIK) {
-
-                        pImpl->solution.jointPositions[pairJoint.first] =
-                            linkPair.jointConfigurations.getVal(jointIndex);
-
-                        linkPair.sInitial.setVal(jointIndex,
-                                                 linkPair.jointConfigurations.getVal(jointIndex));
-
-                        // TODO: Set the correct velocities values
-                        pImpl->solution.jointVelocities[pairJoint.first] =
-                            linkPair.jointVelocities.getVal(jointIndex);
-                    }
-                    else {
-
-                        pImpl->jointConfigurationSolution.setVal(
-                            pairJoint.first, linkPair.jointConfigurations.getVal(jointIndex));
-                    }
-                    jointIndex++;
-                }
-                else {
-                    yWarning()
-                        << LogPrefix
-                        << " Invalid DoFs for the joint, skipping the ik solution for this joint";
-                    continue;
-                }
-            }
-        }
-
-        auto tock_PW = std::chrono::high_resolution_clock::now();
-        yDebug() << LogPrefix << "Pair-Wised IK took"
-                 << std::chrono::duration_cast<std::chrono::milliseconds>(tock_PW - tick_PW).count()
-                 << "ms";
     }
-
     else if (pImpl->ikSolver == SolverIK::global) {
-
-        auto tick_G = std::chrono::high_resolution_clock::now();
-
-        // Set global IK initial condition
-        if (!pImpl->globalIK.setFullJointsInitialCondition(&pImpl->baseTransformSolution,
-                                                           &pImpl->jointConfigurationSolution)) {
-            yError() << LogPrefix
-                     << "Failed to set the joint configuration for initializing the global IK";
+        if (!pImpl->solveGlobalInverseKinematicsSolver()) {
             askToStop();
             return;
         }
-
-        // Update ik targets based on wearable input data
-        if (!pImpl->updateInverseKinematicTargets()) {
-            yError() << LogPrefix << "Failed to update the targets for the global IK";
-            askToStop();
-            return;
-        }
-
-        // Use a postural task for regularization
-        iDynTree::VectorDynSize posturalTaskJointAngles;
-        posturalTaskJointAngles.resize(pImpl->jointConfigurationSolution.size());
-        posturalTaskJointAngles.zero();
-        if (!pImpl->globalIK.setDesiredFullJointsConfiguration(posturalTaskJointAngles,
-                                                               pImpl->costRegularization)) {
-            yError() << LogPrefix << "Failed to set the postural configuration of the IK";
-            askToStop();
-            return;
-        }
-
-        if (!pImpl->globalIK.solve()) {
-            yError() << LogPrefix << "Failed to solve global IK";
-        }
-
-        // Get the global inverse kinematics solution
-        pImpl->globalIK.getFullJointsSolution(pImpl->baseTransformSolution,
-                                              pImpl->jointConfigurationSolution);
-
-        // INVERSE VELOCITY KINEMATICS
-        // Set joint configuration
-        if (!pImpl->inverseVelocityKinematics.setConfiguration(pImpl->baseTransformSolution,
-                                                               pImpl->jointConfigurationSolution)) {
-            yError() << LogPrefix
-                     << "Failed to set the joint configuration for initializing the inverse "
-                        "velocity kinematics";
-            askToStop();
-            return;
-        }
-
-        // Update ivk velocity targets based on wearable input data
-        if (!pImpl->updateInverseVelocityKinematicTargets()) {
-            yError() << LogPrefix
-                     << "Failed to update the targets for the inverse velocity kinematics";
-            askToStop();
-            return;
-        }
-
-        if (!pImpl->inverseVelocityKinematics.solve()) {
-            yError() << LogPrefix << "Failed to solve inverse velocity kinematics";
-        }
-
-        pImpl->inverseVelocityKinematics.getVelocitySolution(pImpl->baseVelocitySolution,
-                                                             pImpl->jointVelocitiesSolution);
-
-        auto tock_G = std::chrono::high_resolution_clock::now();
-        yDebug() << LogPrefix << "Global IK took"
-                 << std::chrono::duration_cast<std::chrono::milliseconds>(tock_G - tick_G).count()
-                 << "ms";
     }
-
     else if (pImpl->ikSolver == SolverIK::integrationbased) {
-
-        auto tick_IB = std::chrono::high_resolution_clock::now();
-        pImpl->lastTime = yarp::os::Time::now();
-
-        // LINK VELOCITY CORRECTION
-        iDynTree::KinDynComputations* computations = pImpl->kinDynComputations.get();
-
-        if (pImpl->useDirectBaseMeasurement) {
-            computations->setRobotState(pImpl->jointConfigurationSolution,
-                                        pImpl->jointVelocitiesSolution,
-                                        pImpl->worldGravity);
-        }
-        else {
-
-            computations->setRobotState(pImpl->baseTransformSolution,
-                                        pImpl->jointConfigurationSolution,
-                                        pImpl->baseVelocitySolution,
-                                        pImpl->jointVelocitiesSolution,
-                                        pImpl->worldGravity);
-        }
-
-        for (size_t linkIndex = 0; linkIndex < pImpl->humanModel.getNrOfLinks(); ++linkIndex) {
-            std::string linkName = pImpl->humanModel.getLinkName(linkIndex);
-
-            // skip fake links
-            if (pImpl->wearableStorage.modelToWearable_LinkName.find(linkName)
-                == pImpl->wearableStorage.modelToWearable_LinkName.end()) {
-                continue;
-            }
-
-            iDynTree::Rotation rotationError =
-                computations->getWorldTransform(pImpl->humanModel.getFrameIndex(linkName))
-                    .getRotation()
-                * pImpl->linkTransformMatrices[linkName].getRotation().inverse();
-            iDynTree::Vector3 angularVelocityError;
-
-            angularVelocityError = iDynTreeHelper::Rotation::skewVee(rotationError);
-            iDynTree::toEigen(pImpl->integralOrientationError) =
-                iDynTree::toEigen(pImpl->integralOrientationError)
-                + iDynTree::toEigen(angularVelocityError) * dt;
-
-            // for floating base link use error also on position if not useDirectBaseMeasurement,
-            // otherwise skip the link
-            if (linkName == pImpl->floatingBaseFrame.model) {
-                if (pImpl->useDirectBaseMeasurement) {
-                    continue;
-                }
-
-                iDynTree::Vector3 linearVelocityError;
-                linearVelocityError =
-                    computations->getWorldTransform(pImpl->humanModel.getFrameIndex(linkName))
-                        .getPosition()
-                    - pImpl->linkTransformMatrices[linkName].getPosition();
-                iDynTree::toEigen(pImpl->integralLinearVelocityError) =
-                    iDynTree::toEigen(pImpl->integralLinearVelocityError)
-                    + iDynTree::toEigen(linearVelocityError) * dt;
-                for (int i = 0; i < 3; i++) {
-                    pImpl->linkVelocities[linkName].setVal(
-                        i,
-                        0 * pImpl->linkVelocities[linkName].getVal(i)
-                            - pImpl->integrationBasedIKLinearCorrectionGain
-                                  * linearVelocityError.getVal(i)
-                            - pImpl->integrationBasedIKIntegralLinearCorrectionGain
-                                  * pImpl->integralLinearVelocityError.getVal(i));
-                }
-            }
-
-            // correct the links angular velocities
-            for (int i = 3; i < 6; i++) {
-                pImpl->linkVelocities[linkName].setVal(
-                    i,
-                    0 * pImpl->linkVelocities[linkName].getVal(i)
-                        - pImpl->integrationBasedIKAngularCorrectionGain
-                              * angularVelocityError.getVal(i - 3)
-                        - pImpl->integrationBasedIKIntegralAngularCorrectionGain
-                              * pImpl->integralOrientationError.getVal(i - 3));
-            }
-        }
-
-        // INVERSE VELOCITY KINEMATICS
-        // Set joint configuration
-        if (!pImpl->inverseVelocityKinematics.setConfiguration(pImpl->baseTransformSolution,
-                                                               pImpl->jointConfigurationSolution)) {
-            yError() << LogPrefix
-                     << "Failed to set the joint configuration for initializing the global IK";
+        if (!pImpl->solveIntegrationBasedInverseKinematics()) {
             askToStop();
             return;
         }
-
-        // Update ivk velocity targets based on wearable input data
-        if (!pImpl->updateInverseVelocityKinematicTargets()) {
-            askToStop();
-            return;
-        }
-
-        if (!pImpl->inverseVelocityKinematics.solve()) {
-            yError() << LogPrefix << "Failed to solve inverse velocity kinematics";
-        }
-
-        pImpl->inverseVelocityKinematics.getVelocitySolution(pImpl->baseVelocitySolution,
-                                                             pImpl->jointVelocitiesSolution);
-
-        // VELOCITY INTEGRATION
-        // integrate velocities measurements
-        if (!pImpl->useDirectBaseMeasurement) {
-            pImpl->stateIntegrator.integrate(pImpl->jointVelocitiesSolution,
-                                             pImpl->baseVelocitySolution.getLinearVec3(),
-                                             pImpl->baseVelocitySolution.getAngularVec3(),
-                                             dt);
-
-            pImpl->stateIntegrator.getJointConfiguration(pImpl->jointConfigurationSolution);
-            pImpl->stateIntegrator.getBasePose(pImpl->baseTransformSolution);
-        }
-        else {
-            pImpl->stateIntegrator.integrate(pImpl->jointVelocitiesSolution, dt);
-
-            pImpl->stateIntegrator.getJointConfiguration(pImpl->jointConfigurationSolution);
-        }
-
-        auto tock_IB = std::chrono::high_resolution_clock::now();
-        yDebug() << LogPrefix << "Integral Based IK took"
-                 << std::chrono::duration_cast<std::chrono::milliseconds>(tock_IB - tick_IB).count()
-                 << "ms";
     }
+    auto tock = std::chrono::high_resolution_clock::now();
+    yDebug() << LogPrefix << "IK took"
+             << std::chrono::duration_cast<std::chrono::milliseconds>(tock - tick).count() << "ms";
 
     // If useDirectBaseMeasurement is true, set the measured base pose and velocity as solution
     if (pImpl->useDirectBaseMeasurement) {
@@ -1379,6 +1114,211 @@ bool HumanStateProvider::impl::initializeIntegrationBasedInverseKinematicsSolver
         yError() << LogPrefix << "Failed to set the inverse velocity kinematics targets";
         return false;
     }
+    return true;
+}
+
+bool HumanStateProvider::impl::solvePairwisedInverseKinematicsSolver()
+{
+    {
+        std::lock_guard<std::mutex> lock(mutex);
+
+        // Set the initial solution to zero
+        for (auto& linkPair : linkPairs) {
+            linkPair.sInitial.zero();
+        }
+
+    }
+
+    {
+        std::lock_guard<std::mutex> lock(mutex);
+
+        // Set link segments transformation and velocity
+        for (size_t segmentIndex = 0; segmentIndex < segments.size(); segmentIndex++) {
+
+            SegmentInfo& segmentInfo = segments.at(segmentIndex);
+            segmentInfo.poseWRTWorld = linkTransformMatrices.at(segmentInfo.segmentName);
+            segmentInfo.velocities = linkVelocities.at(segmentInfo.segmentName);
+        }
+    }
+
+    // Call IK worker pool to solve
+    ikPool->runAndWait();
+
+    // Joint link pair ik solutions using joints map from link pairs initialization
+    // to solution struct for exposing data through interface
+    for (auto& linkPair : linkPairs) {
+        size_t jointIndex = 0;
+        for (auto& pairJoint : linkPair.consideredJointLocations) {
+
+            // Check if it is a valid 1 DoF joint
+            if (pairJoint.second == 1) {
+                jointConfigurationSolution.setVal(pairJoint.first, linkPair.jointConfigurations.getVal(jointIndex));
+                jointVelocitiesSolution.setVal(pairJoint.first, linkPair.jointVelocities.getVal(jointIndex));
+
+                jointIndex++;
+            }
+            else {
+                yWarning() << LogPrefix << " Invalid DoFs for the joint, skipping the ik solution for this joint";
+                continue;
+            }
+
+        }
+    }
+
+    return true;
+}
+
+bool HumanStateProvider::impl::solveGlobalInverseKinematicsSolver()
+{
+    // Set global IK initial condition
+    if (!globalIK.setFullJointsInitialCondition(&baseTransformSolution, &jointConfigurationSolution)) {
+        yError() << LogPrefix << "Failed to set the joint configuration for initializing the global IK";
+        return false;
+    }
+
+    // Update ik targets based on wearable input data
+    if (!updateInverseKinematicTargets()) {
+        yError() << LogPrefix << "Failed to update the targets for the global IK";
+        return false;
+    }
+
+    // Use a postural task for regularization
+    iDynTree::VectorDynSize posturalTaskJointAngles;
+    posturalTaskJointAngles.resize(jointConfigurationSolution.size());
+    posturalTaskJointAngles.zero();
+    if (!globalIK.setDesiredFullJointsConfiguration(posturalTaskJointAngles, costRegularization)) {
+         yError() << LogPrefix << "Failed to set the postural configuration of the IK";
+         return false;
+     }
+
+    if (!globalIK.solve()) {
+            yError() << LogPrefix << "Failed to solve global IK";
+            return false;
+    }
+
+    // Get the global inverse kinematics solution
+    globalIK.getFullJointsSolution(baseTransformSolution, jointConfigurationSolution);
+
+    // INVERSE VELOCITY KINEMATICS
+    // Set joint configuration
+    if (!inverseVelocityKinematics.setConfiguration(baseTransformSolution, jointConfigurationSolution)) {
+        yError() << LogPrefix << "Failed to set the joint configuration for initializing the inverse velocity kinematics";
+        return false;
+    }
+
+    // Update ivk velocity targets based on wearable input data
+    if(!updateInverseVelocityKinematicTargets()) {
+        yError() << LogPrefix << "Failed to update the targets for the inverse velocity kinematics";
+        return false;
+    }
+
+    if (!inverseVelocityKinematics.solve()) {
+            yError() << LogPrefix << "Failed to solve inverse velocity kinematics";
+            return false;
+    }
+
+    inverseVelocityKinematics.getVelocitySolution(baseVelocitySolution, jointVelocitiesSolution);
+
+    return true;
+}
+
+bool HumanStateProvider::impl::solveIntegrationBasedInverseKinematics()
+{
+    //compute timestep
+    double dt;
+    if (lastTime < 0.0)
+    {
+        dt = period;
+    }
+    else
+    {
+        dt = yarp::os::Time::now()-lastTime;
+    };
+    lastTime = yarp::os::Time::now();
+
+    // LINK VELOCITY CORRECTION
+    iDynTree::KinDynComputations *computations = kinDynComputations.get();
+
+    if (useDirectBaseMeasurement)
+    {
+        computations->setRobotState(jointConfigurationSolution, jointVelocitiesSolution, worldGravity);
+    }
+    else
+    {
+        computations->setRobotState(baseTransformSolution, jointConfigurationSolution, baseVelocitySolution, jointVelocitiesSolution, worldGravity);
+    }
+
+    for (size_t linkIndex = 0; linkIndex < humanModel.getNrOfLinks(); ++linkIndex) {
+        std::string linkName = humanModel.getLinkName(linkIndex);
+
+        // skip fake links
+        if (wearableStorage.modelToWearable_LinkName.find(linkName)
+                == wearableStorage.modelToWearable_LinkName.end()) {
+            continue;
+        }
+
+        iDynTree::Rotation rotationError = computations->getWorldTransform(humanModel.getFrameIndex(linkName)).getRotation() * linkTransformMatrices[linkName].getRotation().inverse();
+        iDynTree::Vector3 angularVelocityError;
+
+        angularVelocityError = iDynTreeHelper::Rotation::skewVee(rotationError);
+        iDynTree::toEigen(integralOrientationError) = iDynTree::toEigen(integralOrientationError) +  iDynTree::toEigen(angularVelocityError) * dt;
+
+        // for floating base link use error also on position if not useDirectBaseMeasurement, otherwise skip the link
+        if (linkName == floatingBaseFrame.model) {
+           if (useDirectBaseMeasurement)
+           {
+               continue;
+           }
+
+           iDynTree::Vector3 linearVelocityError;
+           linearVelocityError = computations->getWorldTransform(humanModel.getFrameIndex(linkName)).getPosition() - linkTransformMatrices[linkName].getPosition();
+           iDynTree::toEigen(integralLinearVelocityError) = iDynTree::toEigen(integralLinearVelocityError) +  iDynTree::toEigen(linearVelocityError) * dt;
+           for (int i=0; i<3; i++) {
+               linkVelocities[linkName].setVal(i, 0 * linkVelocities[linkName].getVal(i) - integrationBasedIKLinearCorrectionGain * linearVelocityError.getVal(i) - integrationBasedIKIntegralLinearCorrectionGain * integralLinearVelocityError.getVal(i));
+           }
+        }
+
+        // correct the links angular velocities
+        for (int i=3; i<6; i++) {
+            linkVelocities[linkName].setVal(i, 0 * linkVelocities[linkName].getVal(i) -  integrationBasedIKAngularCorrectionGain * angularVelocityError.getVal(i-3) -  integrationBasedIKIntegralAngularCorrectionGain  * integralOrientationError.getVal(i-3));
+        }
+    }
+
+    // INVERSE VELOCITY KINEMATICS
+    // Set joint configuration
+    if (!inverseVelocityKinematics.setConfiguration(baseTransformSolution, jointConfigurationSolution)) {
+        yError() << LogPrefix << "Failed to set the joint configuration for initializing the global IK";
+        return false;
+    }
+
+    // Update ivk velocity targets based on wearable input data
+    if(!updateInverseVelocityKinematicTargets()) {
+        return false;
+    }
+
+    if (!inverseVelocityKinematics.solve()) {
+            yError() << LogPrefix << "Failed to solve inverse velocity kinematics";
+            return false;
+    }
+
+    inverseVelocityKinematics.getVelocitySolution(baseVelocitySolution, jointVelocitiesSolution);
+
+    // VELOCITY INTEGRATION
+    // integrate velocities measurements
+    if (!useDirectBaseMeasurement)
+    {
+        stateIntegrator.integrate(jointVelocitiesSolution, baseVelocitySolution.getLinearVec3(), baseVelocitySolution.getAngularVec3(), dt);
+
+        stateIntegrator.getJointConfiguration(jointConfigurationSolution);
+        stateIntegrator.getBasePose(baseTransformSolution);
+    }
+    else
+    {
+        stateIntegrator.integrate(jointVelocitiesSolution, dt);
+
+        stateIntegrator.getJointConfiguration(jointConfigurationSolution);
+    }
+
     return true;
 }
 
