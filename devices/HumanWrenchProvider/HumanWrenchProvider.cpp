@@ -930,9 +930,8 @@ size_t HumanWrenchProvider::getNumberOfWrenchSources() const
 
 std::vector<double> HumanWrenchProvider::getWrenches() const
 {
-    std::vector<double> wrenchValues;
-
     std::lock_guard<std::mutex> lock(pImpl->mutex);
+    std::vector<double> wrenchValues;
     size_t vecSize = pImpl->analogSensorData.measurements.size();
     wrenchValues.resize(vecSize);
     for (size_t idx = 0; idx < vecSize; idx++) {

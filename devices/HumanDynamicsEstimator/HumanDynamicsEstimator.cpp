@@ -1082,8 +1082,7 @@ void HumanDynamicsEstimator::run()
     }
 
     // Fill in the y vector with sensor measurements for the FT sensors
-    std::vector<double> wrenchValues;
-    wrenchValues = pImpl->iHumanWrench->getWrenches();
+    std::vector<double> wrenchValues = pImpl->iHumanWrench->getWrenches();
 
     // Get the berdy sensors following its internal order
     std::vector<iDynTree::BerdySensor> berdySensors = pImpl->berdyData.helper.getSensorsOrdering();

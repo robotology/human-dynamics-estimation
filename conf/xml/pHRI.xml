@@ -2,6 +2,7 @@
 <robot name="pHRI-HDE" build=0 portprefix="">
 
     <device type="transformServer" name="TransformServer">
+        <param name="period">0.01</param>
         <param name="transforms_lifetime">0.2</param>
         <group name="ROS">
             <param name="enable_ros_publisher">true</param>
@@ -138,7 +139,7 @@
         <action phase="shutdown" level="5" type="detach"/>
     </device>
 
-    <device type="human_state_wrapper" name="HumanStateWrapper">
+    <!--device type="human_state_wrapper" name="HumanStateWrapper">
         <param name="period">0.5</param>
         <param name="outputPort">/HDE/HumanStateWrapper/state:o</param>
         <action phase="startup" level="5" type="attach">
@@ -147,7 +148,7 @@
             </paramlist>
         </action>
         <action phase="shutdown" level="5" type="detach"/>
-    </device>
+    </device-->
 
     <device type="human_state_publisher" name="HumanStatePublisher">
         <param name="period">0.020</param>
@@ -235,7 +236,7 @@
         <action phase="shutdown" level="5" type="detach" />
     </device>
 
-    <device type="analogServer" name="HumanWrenchWrapper">
+    <!--device type="analogServer" name="HumanWrenchWrapper">
         <param name="name">/HDE/HumanWrenchWrapper/wrench:o</param>
         <param name="period">10</param>
         <action phase="startup" level="5" type="attach">
@@ -244,7 +245,7 @@
             </paramlist>
         </action>
         <action phase="shutdown" level="5" type="detach" />
-    </device>
+    </device-->
 
     <!--Wrapper to publish WrenchStamped message to Rviz-->
     <device type="analogServer" name="HumanWrenchPublisher">
@@ -305,7 +306,7 @@
         <action phase="shutdown" level="5" type="detach"/>
     </device>
 
-    <device type="human_dynamics_wrapper" name="HumanDynamicsWrapper">
+    <!--device type="human_dynamics_wrapper" name="HumanDynamicsWrapper">
         <param name="period">0.1</param>
         <param name="outputPort">/HDE/HumanDynamicsWrapper/torques:o</param>
         <action phase="startup" level="5" type="attach">
@@ -314,7 +315,7 @@
             </paramlist>
         </action>
         <action phase="shutdown" level="5" type="detach"/>
-    </device>
+    </device-->
 
     <device type="human_dynamics_publisher" name="HumanDynamicsPublisher">
         <param name="period">0.020</param>
@@ -331,7 +332,7 @@
     </device>
 
     <device type="human_control_board" name="HumanControlBoard">
-        <param name="period">0.100</param>
+        <param name="period">0.0100</param>
         <param name="urdf">humanSubject03_66dof.urdf</param>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
@@ -343,7 +344,7 @@
     </device>
 
     <device type="controlboardwrapper2" name="HumanControlBoardWrapper">
-        <param name="period">20</param>
+        <param name="period">1</param>
         <param name="name">/Human/HumanControlBoard</param>
         <param name="joints">66</param>
         <paramlist name="networks">
