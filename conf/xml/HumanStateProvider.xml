@@ -30,7 +30,7 @@
         <param name="angVelTargetWeight">1.0</param>
         <param name="costRegularization">0.0001</param>
         <param name="costTolerance">0.001</param>
-        <param name="ikSolver">pairwised</param>
+        <param name="ikSolver">integrationbased</param>
         <param name="useXsensJointsAngles">false</param>
         <param name="useDirectBaseMeasurement">false</param>
         <param name="integrationBasedIKCorrectionGainsLinRot">(8.0 8.0)</param>

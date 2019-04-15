@@ -199,10 +199,18 @@ public:
     std::unique_ptr<iDynTree::KinDynComputations> kinDynComputations;
     iDynTree::Vector3 worldGravity;
 
+    // get input data
     bool getJointAnglesFromInputData(iDynTree::VectorDynSize& jointAngles);
     bool getLinkTransformFromInputData(std::unordered_map<std::string, iDynTree::Transform>& t);
     bool getLinkVelocityFromInputData(std::unordered_map<std::string, iDynTree::Twist>& t);
 
+    // solver initialization and update
+    bool initializePairwisedInverseKinematicsSolver();
+    bool initializeGlobalInverseKinematicsSolver();
+    bool initializeIntegrationBasedInverseKinematicsSolver();
+
+
+    // optimization targets
     bool updateInverseKinematicTargets();
     bool addInverseKinematicTargets();
 
@@ -569,306 +577,30 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
 
     pImpl->jointVelocitiesSolution.resize(nrOfDoFs);
     pImpl->jointVelocitiesSolution.zero();
-    // ========================
-    // INITIALIZE PAIR-WISED IK
-    // ========================
+
+    // ====================================
+    // INITIALIZE INVERSE KINEMATICS SOLVER
+    // ====================================
 
     if (pImpl->ikSolver == SolverIK::pairwised) {
-
-        // Get the model link names according to the modelToWearable link sensor map
-        const size_t nrOfSegments = pImpl->wearableStorage.modelToWearable_LinkName.size();
-
-        pImpl->segments.resize(nrOfSegments);
-
-        unsigned segmentIndex = 0;
-        for (size_t linkIndex = 0; linkIndex < pImpl->humanModel.getNrOfLinks(); ++linkIndex) {
-            // Get the name of the link from the model and its prefix from iWear
-            std::string modelLinkName = pImpl->humanModel.getLinkName(linkIndex);
-
-            if (pImpl->wearableStorage.modelToWearable_LinkName.find(modelLinkName)
-                == pImpl->wearableStorage.modelToWearable_LinkName.end()) {
-                continue;
-            }
-
-            // TODO check if we need this initialization
-            // pImpl->segments[segmentIndex].velocities.zero();
-
-            // Store the name of the link as segment name
-            pImpl->segments[segmentIndex].segmentName = modelLinkName;
-            segmentIndex++;
-        }
-
-        // Get all the possible pairs composing the model
-        std::vector<std::pair<std::string, std::string>> pairNames;
-        std::vector<std::pair<iDynTree::FrameIndex, iDynTree::FrameIndex>> pairSegmentIndeces;
-
-        // Get the link pair names
-        createEndEffectorsPairs(pImpl->humanModel, pImpl->segments, pairNames, pairSegmentIndeces);
-        pImpl->linkPairs.reserve(pairNames.size());
-
-        for (unsigned index = 0; index < pairNames.size(); ++index) {
-            LinkPairInfo pairInfo;
-
-            pairInfo.parentFrameName = pairNames[index].first;
-            pairInfo.parentFrameSegmentsIndex = pairSegmentIndeces[index].first;
-
-            pairInfo.childFrameName = pairNames[index].second;
-            pairInfo.childFrameSegmentsIndex = pairSegmentIndeces[index].second;
-
-            // Get the reduced pair model
-            if (!getReducedModel(pImpl->humanModel,
-                                 pairInfo.parentFrameName,
-                                 pairInfo.childFrameName,
-                                 pairInfo.pairModel)) {
-
-                yWarning() << LogPrefix << "failed to get reduced model for the segment pair "
-                           << pairInfo.parentFrameName.c_str() << ", "
-                           << pairInfo.childFrameName.c_str();
-                continue;
-            }
-
-            // Allocate the ik solver
-            pairInfo.ikSolver = std::make_unique<iDynTree::InverseKinematics>();
-
-            // Set ik parameters
-            pairInfo.ikSolver->setVerbosity(1);
-            pairInfo.ikSolver->setLinearSolverName(pImpl->linearSolverName);
-            pairInfo.ikSolver->setMaxIterations(pImpl->maxIterationsIK);
-            pairInfo.ikSolver->setCostTolerance(pImpl->costTolerance);
-            pairInfo.ikSolver->setDefaultTargetResolutionMode(
-                iDynTree::InverseKinematicsTreatTargetAsConstraintNone);
-            pairInfo.ikSolver->setRotationParametrization(
-                iDynTree::InverseKinematicsRotationParametrizationRollPitchYaw);
-
-            // Set ik model
-            if (!pairInfo.ikSolver->setModel(pairInfo.pairModel)) {
-                yWarning() << LogPrefix << "failed to configure IK solver for the segment pair"
-                           << pairInfo.parentFrameName.c_str() << ", "
-                           << pairInfo.childFrameName.c_str() << " Skipping pair";
-                continue;
-            }
-
-            // Add parent link as fixed base constraint with identity transform
-            pairInfo.ikSolver->addFrameConstraint(pairInfo.parentFrameName,
-                                                  iDynTree::Transform::Identity());
-
-            // Add child link as a target and set initial transform to be identity
-            pairInfo.ikSolver->addTarget(pairInfo.childFrameName, iDynTree::Transform::Identity());
-
-            // Add target position and rotation weights
-            pairInfo.positionTargetWeight = pImpl->posTargetWeight;
-            pairInfo.rotationTargetWeight = pImpl->rotTargetWeight;
-
-            // Add cost regularization term
-            pairInfo.costRegularization = pImpl->costRegularization;
-
-            // Get floating base for the pair model
-            pairInfo.floatingBaseIndex = pairInfo.pairModel.getFrameLink(
-                pairInfo.pairModel.getFrameIndex(pairInfo.parentFrameName));
-
-            // Set ik floating base
-            if (!pairInfo.ikSolver->setFloatingBaseOnFrameNamed(
-                    pairInfo.pairModel.getLinkName(pairInfo.floatingBaseIndex))) {
-                yError() << "Failed to set floating base frame for the segment pair"
-                         << pairInfo.parentFrameName.c_str() << ", "
-                         << pairInfo.childFrameName.c_str() << " Skipping pair";
-                return false;
-            }
-
-            // Set initial joint positions size
-            pairInfo.sInitial.resize(pairInfo.pairModel.getNrOfJoints());
-
-            // Obtain the joint location index in full model and the lenght of DoFs i.e joints map
-            // This information will be used to put the IK solutions together for the full model
-            std::vector<std::string> solverJoints;
-
-            // Resize to number of joints in the pair model
-            solverJoints.resize(pairInfo.pairModel.getNrOfJoints());
-
-            for (int i = 0; i < pairInfo.pairModel.getNrOfJoints(); i++) {
-                solverJoints[i] = pairInfo.pairModel.getJointName(i);
-            }
-
-            pairInfo.consideredJointLocations.reserve(solverJoints.size());
-            for (auto& jointName : solverJoints) {
-                iDynTree::JointIndex jointIndex = pImpl->humanModel.getJointIndex(jointName);
-                if (jointIndex == iDynTree::JOINT_INVALID_INDEX) {
-                    yWarning() << LogPrefix << "IK considered joint " << jointName
-                               << " not found in the complete model";
-                    continue;
-                }
-                iDynTree::IJointConstPtr joint = pImpl->humanModel.getJoint(jointIndex);
-
-                // Save location index and length of each DoFs
-                pairInfo.consideredJointLocations.push_back(
-                    std::pair<size_t, size_t>(joint->getDOFsOffset(), joint->getNrOfDOFs()));
-            }
-
-            // Set the joint configurations size and initialize to zero
-            pairInfo.jointConfigurations.resize(solverJoints.size());
-            pairInfo.jointConfigurations.zero();
-
-            // Set the joint velocities size and initialize to zero
-            pairInfo.jointVelocities.resize(solverJoints.size());
-            pairInfo.jointVelocities.zero();
-
-            // Save the indeces
-            // TODO: check if link or frame
-            pairInfo.parentFrameModelIndex =
-                pairInfo.pairModel.getFrameIndex(pairInfo.parentFrameName);
-            pairInfo.childFrameModelIndex =
-                pairInfo.pairModel.getFrameIndex(pairInfo.childFrameName);
-
-            // Configure KinDynComputation
-            pairInfo.kinDynComputations =
-                std::unique_ptr<iDynTree::KinDynComputations>(new iDynTree::KinDynComputations());
-            pairInfo.kinDynComputations->loadRobotModel(pairInfo.pairModel);
-
-            // Configure relative Jacobian
-            pairInfo.relativeJacobian.resize(6, pairInfo.pairModel.getNrOfDOFs());
-            pairInfo.relativeJacobian.zero();
-
-            // Move the link pair instance into the vector
-            pImpl->linkPairs.push_back(std::move(pairInfo));
-        }
-
-        pImpl->totalRealJointsForIK = 0;
-        for (auto& linkPair : pImpl->linkPairs) {
-            pImpl->totalRealJointsForIK =
-                pImpl->totalRealJointsForIK + linkPair.pairModel.getNrOfJoints();
-            yInfo() << "Parent link : " << linkPair.parentFrameName
-                    << " , Child link : " << linkPair.childFrameName
-                    << " , joints :" << linkPair.pairModel.getNrOfJoints();
-        }
-        yInfo() << "Total Real Joints:" << pImpl->totalRealJointsForIK;
-        pImpl->solution.jointPositions.resize(pImpl->totalRealJointsForIK);
-        pImpl->solution.jointVelocities.resize(pImpl->totalRealJointsForIK);
-
-        // =========================
-        // INITIALIZE IK WORKER POOL
-        // =========================
-
-        // Set default ik pool size
-        int ikPoolSize = 1;
-
-        // Get ikPoolSizeOption
-        if (config.find("ikPoolSizeOption").isString()
-            || config.find("ikPoolSizeOption").asString() == "auto") {
-            yInfo() << LogPrefix << "Using " << std::thread::hardware_concurrency()
-                    << " available logical threads for ik pool";
-            ikPoolSize = static_cast<int>(std::thread::hardware_concurrency());
-        }
-        else if (config.find("ikPoolSizeOption").isInt()) {
-            ikPoolSize = config.find("ikPoolSizeOption").asInt();
-        }
-
-        pImpl->ikPool = std::unique_ptr<IKWorkerPool>(
-            new IKWorkerPool(ikPoolSize, pImpl->linkPairs, pImpl->segments));
-
-        if (!pImpl->ikPool) {
-            yError() << LogPrefix << "failed to create IK worker pool";
-            return false;
-        }
-    }
-
-    // ====================
-    // INITIALIZE GLOBAL IK
-    // ====================
-
-    if (pImpl->ikSolver == SolverIK::global) {
-
-        // Set global ik parameters
-        pImpl->globalIK.setVerbosity(1);
-        pImpl->globalIK.setLinearSolverName(pImpl->linearSolverName);
-        pImpl->globalIK.setMaxIterations(pImpl->maxIterationsIK);
-        pImpl->globalIK.setCostTolerance(pImpl->costTolerance);
-        pImpl->globalIK.setDefaultTargetResolutionMode(
-            iDynTree::InverseKinematicsTreatTargetAsConstraintNone);
-        pImpl->globalIK.setRotationParametrization(
-            iDynTree::InverseKinematicsRotationParametrizationRollPitchYaw);
-
-        if (!pImpl->globalIK.setModel(pImpl->humanModel)) {
-            yError() << LogPrefix << "globalIK: failed to load the model";
-            return false;
-        }
-
-        if (!pImpl->globalIK.setFloatingBaseOnFrameNamed(pImpl->floatingBaseFrame.model)) {
-            yError() << LogPrefix << "Failed to set the globalIK floating base frame on link"
-                     << pImpl->floatingBaseFrame.model;
-            return false;
-        }
-
-        if (!pImpl->addInverseKinematicTargets()) {
-            yError() << LogPrefix << "Failed to set the globalIK targets";
-            askToStop();
-            return false;
-        }
-
-        // Set global Inverse Velocity Kinematics parameters
-        pImpl->inverseVelocityKinematics.setResolutionMode(
-            InverseVelocityKinematics::pseudoinverse);
-        pImpl->inverseVelocityKinematics.setRegularization(pImpl->costRegularization);
-
-        if (!pImpl->inverseVelocityKinematics.setModel(pImpl->humanModel)) {
-            yError() << LogPrefix << "IBIK: failed to load the model";
-            return false;
-        }
-
-        if (!pImpl->inverseVelocityKinematics.setFloatingBaseOnFrameNamed(
-                pImpl->floatingBaseFrame.model)) {
-            yError() << LogPrefix << "Failed to set the IBIK floating base frame on link"
-                     << pImpl->floatingBaseFrame.model;
-            return false;
-        }
-
-        if (!pImpl->addInverseVelocityKinematicsTargets()) {
-            yError() << LogPrefix << "Failed to set the inverse velocity kinematics targets";
-            askToStop();
-            return false;
-        }
-    }
-
-    // ===============================
-    // INITIALIZE INTEGRATION BASED IK
-    // ===============================
-
-    if (pImpl->ikSolver == SolverIK::integrationbased) {
-
-        // Initialize state integrator
-        pImpl->stateIntegrator.setInterpolatorType(iDynTreeHelper::State::integrator::trapezoidal);
-        pImpl->stateIntegrator.setNJoints(nrOfDoFs);
-
-        iDynTree::VectorDynSize jointLowerLimits;
-        jointLowerLimits.resize(nrOfDoFs);
-        iDynTree::VectorDynSize jointUpperLimits;
-        jointUpperLimits.resize(nrOfDoFs);
-        for (int jointIndex=0; jointIndex<nrOfDoFs; jointIndex++)
+        if (!pImpl->initializePairwisedInverseKinematicsSolver())
         {
-            jointLowerLimits.setVal(jointIndex, pImpl->humanModel.getJoint(jointIndex)->getMinPosLimit(0));
-            jointUpperLimits.setVal(jointIndex, pImpl->humanModel.getJoint(jointIndex)->getMaxPosLimit(0));
-        }
-        pImpl->stateIntegrator.setJointLimits(jointLowerLimits, jointUpperLimits);
-
-        pImpl->integralOrientationError.zero();
-
-        // Set global Inverse Velocity Kinematics parameters
-        pImpl->inverseVelocityKinematics.setResolutionMode(
-            InverseVelocityKinematics::pseudoinverse);
-
-        if (!pImpl->inverseVelocityKinematics.setModel(pImpl->humanModel)) {
-            yError() << LogPrefix << "IBIK: failed to load the model";
+            askToStop();
             return false;
         }
-
-        if (!pImpl->inverseVelocityKinematics.setFloatingBaseOnFrameNamed(
-                pImpl->floatingBaseFrame.model)) {
-            yError() << LogPrefix << "Failed to set the IBIK floating base frame on link"
-                     << pImpl->floatingBaseFrame.model;
+    }
+    else if (pImpl->ikSolver == SolverIK::global)
+    {
+        if (!pImpl->initializeGlobalInverseKinematicsSolver())
+        {
+            askToStop();
             return false;
         }
-
-        if (!pImpl->addInverseVelocityKinematicsTargets()) {
-            yError() << LogPrefix << "Failed to set the inverse velocity kinematics targets";
+    }
+    else if (pImpl->ikSolver == SolverIK::integrationbased)
+    {
+        if (!pImpl->initializeIntegrationBasedInverseKinematicsSolver())
+        {
             askToStop();
             return false;
         }
@@ -1005,7 +737,7 @@ void HumanStateProvider::run()
                  << "ms";
     }
 
-    if (pImpl->ikSolver == SolverIK::global) {
+    else if (pImpl->ikSolver == SolverIK::global) {
 
         auto tick_G = std::chrono::high_resolution_clock::now();
 
@@ -1076,7 +808,7 @@ void HumanStateProvider::run()
                  << "ms";
     }
 
-    if (pImpl->ikSolver == SolverIK::integrationbased) {
+    else if (pImpl->ikSolver == SolverIK::integrationbased) {
 
         auto tick_IB = std::chrono::high_resolution_clock::now();
         pImpl->lastTime = yarp::os::Time::now();
@@ -1238,11 +970,11 @@ void HumanStateProvider::run()
     }
 
     // compute the inverse kinematic errors (currently the result is unused, but it may be used for evaluating the IK performance)
-    pImpl->computeLinksOrientationErrors(pImpl->linkTransformMatrices,
+    // pImpl->computeLinksOrientationErrors(pImpl->linkTransformMatrices,
                                          pImpl->jointConfigurationSolution,
                                          pImpl->baseTransformSolution,
                                          pImpl->linkErrorOrientations);
-    pImpl->computeLinksAngularVelocityErrors(pImpl->linkVelocities,
+    // pImpl->computeLinksAngularVelocityErrors(pImpl->linkVelocities,
                                              pImpl->jointConfigurationSolution,
                                              pImpl->baseTransformSolution,
                                              pImpl->jointVelocitiesSolution,
@@ -1407,6 +1139,249 @@ bool HumanStateProvider::impl::getJointAnglesFromInputData(iDynTree::VectorDynSi
     return true;
 }
 
+bool HumanStateProvider::impl::initializePairwisedInverseKinematicsSolver()
+{
+    // Get the model link names according to the modelToWearable link sensor map
+    const size_t nrOfSegments = wearableStorage.modelToWearable_LinkName.size();
+
+    segments.resize(nrOfSegments);
+
+    unsigned segmentIndex = 0;
+    for (size_t linkIndex = 0; linkIndex < humanModel.getNrOfLinks(); ++linkIndex) {
+        // Get the name of the link from the model and its prefix from iWear
+        std::string modelLinkName = humanModel.getLinkName(linkIndex);
+
+        if (wearableStorage.modelToWearable_LinkName.find(modelLinkName)
+                == wearableStorage.modelToWearable_LinkName.end()) {
+            continue;
+        }
+
+        // TODO check if we need this initialization
+        // segments[segmentIndex].velocities.zero();
+
+        // Store the name of the link as segment name
+        segments[segmentIndex].segmentName =  modelLinkName;
+        segmentIndex++;
+    }
+
+    // Get all the possible pairs composing the model
+    std::vector<std::pair<std::string, std::string>> pairNames;
+    std::vector<std::pair<iDynTree::FrameIndex, iDynTree::FrameIndex> > pairSegmentIndeces;
+
+    // Get the link pair names
+    createEndEffectorsPairs(humanModel, segments, pairNames, pairSegmentIndeces);
+    linkPairs.reserve(pairNames.size());
+
+    for (unsigned index = 0; index < pairNames.size(); ++index) {
+        LinkPairInfo pairInfo;
+
+        pairInfo.parentFrameName = pairNames[index].first;
+        pairInfo.parentFrameSegmentsIndex = pairSegmentIndeces[index].first;
+
+        pairInfo.childFrameName = pairNames[index].second;
+        pairInfo.childFrameSegmentsIndex = pairSegmentIndeces[index].second;
+
+        // Get the reduced pair model
+        if (!getReducedModel(humanModel, pairInfo.parentFrameName, pairInfo.childFrameName, pairInfo.pairModel)) {
+
+            yWarning() << LogPrefix << "failed to get reduced model for the segment pair " << pairInfo.parentFrameName.c_str()
+                       << ", " << pairInfo.childFrameName.c_str();
+            continue;
+        }
+
+        // Allocate the ik solver
+        pairInfo.ikSolver = std::make_unique<iDynTree::InverseKinematics>();
+
+        // Set ik parameters
+        pairInfo.ikSolver->setVerbosity(1);
+        pairInfo.ikSolver->setLinearSolverName(linearSolverName);
+        pairInfo.ikSolver->setMaxIterations(maxIterationsIK);
+        pairInfo.ikSolver->setCostTolerance(costTolerance);
+        pairInfo.ikSolver->setDefaultTargetResolutionMode(iDynTree::InverseKinematicsTreatTargetAsConstraintNone);
+        pairInfo.ikSolver->setRotationParametrization(iDynTree::InverseKinematicsRotationParametrizationRollPitchYaw);
+
+        // Set ik model
+        if (!pairInfo.ikSolver->setModel(pairInfo.pairModel)) {
+            yWarning() << LogPrefix << "failed to configure IK solver for the segment pair" << pairInfo.parentFrameName.c_str()
+                       << ", " << pairInfo.childFrameName.c_str() <<  " Skipping pair";
+            continue;
+        }
+
+        // Add parent link as fixed base constraint with identity transform
+        pairInfo.ikSolver->addFrameConstraint(pairInfo.parentFrameName, iDynTree::Transform::Identity());
+
+        // Add child link as a target and set initial transform to be identity
+        pairInfo.ikSolver->addTarget(pairInfo.childFrameName, iDynTree::Transform::Identity());
+
+        // Add target position and rotation weights
+        pairInfo.positionTargetWeight = posTargetWeight;
+        pairInfo.rotationTargetWeight = rotTargetWeight;
+
+        // Add cost regularization term
+        pairInfo.costRegularization = costRegularization;
+
+        // Get floating base for the pair model
+        pairInfo.floatingBaseIndex = pairInfo.pairModel.getFrameLink(pairInfo.pairModel.getFrameIndex(pairInfo.parentFrameName));
+
+        // Set ik floating base
+        if (!pairInfo.ikSolver->setFloatingBaseOnFrameNamed(pairInfo.pairModel.getLinkName(pairInfo.floatingBaseIndex))) {
+            yError() << "Failed to set floating base frame for the segment pair" << pairInfo.parentFrameName.c_str()
+                     << ", " << pairInfo.childFrameName.c_str() <<  " Skipping pair";
+            return false;
+        }
+
+        // Set initial joint positions size
+        pairInfo.sInitial.resize(pairInfo.pairModel.getNrOfJoints());
+
+        // Obtain the joint location index in full model and the lenght of DoFs i.e joints map
+        // This information will be used to put the IK solutions together for the full model
+        std::vector<std::string> solverJoints;
+
+        // Resize to number of joints in the pair model
+        solverJoints.resize(pairInfo.pairModel.getNrOfJoints());
+
+        for (int i=0; i < pairInfo.pairModel.getNrOfJoints(); i++) {
+            solverJoints[i] = pairInfo.pairModel.getJointName(i);
+        }
+
+        pairInfo.consideredJointLocations.reserve(solverJoints.size());
+        for (auto &jointName: solverJoints) {
+            iDynTree::JointIndex jointIndex = humanModel.getJointIndex(jointName);
+            if (jointIndex == iDynTree::JOINT_INVALID_INDEX) {
+                yWarning() << LogPrefix << "IK considered joint " << jointName << " not found in the complete model";
+                continue;
+            }
+            iDynTree::IJointConstPtr joint = humanModel.getJoint(jointIndex);
+
+            // Save location index and length of each DoFs
+            pairInfo.consideredJointLocations.push_back(std::pair<size_t, size_t>(joint->getDOFsOffset(), joint->getNrOfDOFs()));
+        }
+
+        // Set the joint configurations size and initialize to zero
+        pairInfo.jointConfigurations.resize(solverJoints.size());
+        pairInfo.jointConfigurations.zero();
+
+        // Set the joint velocities size and initialize to zero
+        pairInfo.jointVelocities.resize(solverJoints.size());
+        pairInfo.jointVelocities.zero();
+
+        // Save the indeces
+        // TODO: check if link or frame
+        pairInfo.parentFrameModelIndex = pairInfo.pairModel.getFrameIndex(pairInfo.parentFrameName);
+        pairInfo.childFrameModelIndex = pairInfo.pairModel.getFrameIndex(pairInfo.childFrameName);
+
+        // Configure KinDynComputation
+        pairInfo.kinDynComputations = std::unique_ptr<iDynTree::KinDynComputations>(new iDynTree::KinDynComputations());
+        pairInfo.kinDynComputations->loadRobotModel(pairInfo.pairModel);
+
+        // Configure relative Jacobian
+        pairInfo.relativeJacobian.resize(6, pairInfo.pairModel.getNrOfDOFs());
+        pairInfo.relativeJacobian.zero();
+
+        // Move the link pair instance into the vector
+        linkPairs.push_back(std::move(pairInfo));
+    }
+
+    // Initialize IK Worker Pool
+    ikPool = std::unique_ptr<IKWorkerPool>(new IKWorkerPool(ikPoolSize,
+                                                                             linkPairs,
+                                                                             segments));
+    if (!ikPool) {
+        yError() << LogPrefix << "failed to create IK worker pool";
+        return false;
+    }
+
+    return true;
+}
+
+bool HumanStateProvider::impl::initializeGlobalInverseKinematicsSolver()
+{
+    // Set global ik parameters
+    globalIK.setVerbosity(1);
+    globalIK.setLinearSolverName(linearSolverName);
+    globalIK.setMaxIterations(maxIterationsIK);
+    globalIK.setCostTolerance(costTolerance);
+    globalIK.setDefaultTargetResolutionMode(iDynTree::InverseKinematicsTreatTargetAsConstraintNone);
+    globalIK.setRotationParametrization(iDynTree::InverseKinematicsRotationParametrizationRollPitchYaw);
+
+    if (!globalIK.setModel(humanModel)) {
+        yError() << LogPrefix << "globalIK: failed to load the model";
+        return false;
+    }
+
+    if (!globalIK.setFloatingBaseOnFrameNamed(floatingBaseFrame.model)) {
+        yError() << LogPrefix << "Failed to set the globalIK floating base frame on link"
+                 << floatingBaseFrame.model;
+        return false;
+    }
+
+    if (!addInverseKinematicTargets()) {
+        yError() << LogPrefix << "Failed to set the globalIK targets";
+        return false;
+    }
+
+    // Set global Inverse Velocity Kinematics parameters
+    inverseVelocityKinematics.setResolutionMode(InverseVelocityKinematics::pseudoinverse);
+    inverseVelocityKinematics.setRegularization(costRegularization);
+
+    if (!inverseVelocityKinematics.setModel(humanModel)) {
+        yError() << LogPrefix << "IBIK: failed to load the model";
+        return false;
+    }
+
+    if (!inverseVelocityKinematics.setFloatingBaseOnFrameNamed(floatingBaseFrame.model)) {
+        yError() << LogPrefix << "Failed to set the IBIK floating base frame on link"
+                 << floatingBaseFrame.model;
+        return false;
+    }
+
+    if (!addInverseVelocityKinematicsTargets()) {
+        yError() << LogPrefix << "Failed to set the inverse velocity kinematics targets";
+        return false;
+    }
+    return true;
+}
+
+bool HumanStateProvider::impl::initializeIntegrationBasedInverseKinematicsSolver()
+{
+    // Initialize state integrator
+    stateIntegrator.setInterpolatorType(iDynTreeHelper::State::integrator::trapezoidal);
+    stateIntegrator.setNJoints(humanModel.getNrOfJoints());
+
+    iDynTree::VectorDynSize jointLowerLimits;
+    jointLowerLimits.resize(humanModel.getNrOfJoints());
+    iDynTree::VectorDynSize jointUpperLimits;
+    jointUpperLimits.resize(humanModel.getNrOfJoints());
+    for (int jointIndex=0; jointIndex<humanModel.getNrOfJoints(); jointIndex++)
+    {
+        jointLowerLimits.setVal(jointIndex, humanModel.getJoint(jointIndex)->getMinPosLimit(0));
+        jointUpperLimits.setVal(jointIndex, humanModel.getJoint(jointIndex)->getMaxPosLimit(0));
+    }
+    stateIntegrator.setJointLimits(jointLowerLimits, jointUpperLimits);
+
+    integralOrientationError.zero();
+
+    // Set global Inverse Velocity Kinematics parameters
+    inverseVelocityKinematics.setResolutionMode(InverseVelocityKinematics::pseudoinverse);
+
+    if (!inverseVelocityKinematics.setModel(humanModel)) {
+        yError() << LogPrefix << "IBIK: failed to load the model";
+        return false;
+    }
+
+    if (!inverseVelocityKinematics.setFloatingBaseOnFrameNamed(floatingBaseFrame.model)) {
+        yError() << LogPrefix << "Failed to set the IBIK floating base frame on link"
+                 << floatingBaseFrame.model;
+        return false;
+    }
+
+    if (!addInverseVelocityKinematicsTargets()) {
+        yError() << LogPrefix << "Failed to set the inverse velocity kinematics targets";
+        return false;
+    }
+    return true;
+}
+
 bool HumanStateProvider::impl::updateInverseKinematicTargets()
 {
     iDynTree::Transform linkTransform;
@@ -1448,7 +1423,6 @@ bool HumanStateProvider::impl::updateInverseKinematicTargets()
             return false;
         }
     }
-
     return true;
 }
 
