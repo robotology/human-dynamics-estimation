@@ -220,7 +220,7 @@ bool InverseVelocityKinematics::impl::solveProblem()
 
 bool InverseVelocityKinematics::impl::solveWeightedPseudoInverse(iDynTree::MatrixDynSize matrix, iDynTree::VectorDynSize inputVector, iDynTree::VectorDynSize& outputVector, iDynTree::VectorDynSize weightVector, iDynTree::MatrixDynSize regularizationMatrix)
 {
-    if (inputVector.size() != matrix.rows() || inputVector.size() != regularizationMatrix.rows() || inputVector.size() != regularizationMatrix.cols())
+    if (inputVector.size() != matrix.rows() || matrix.cols() != regularizationMatrix.rows())
         return false;
 
     outputVector.resize(matrix.cols());
@@ -260,9 +260,9 @@ void InverseVelocityKinematics::impl::computeProblemSizeAndResizeBuffers()
     weightVectorBuffer.resize(numberOfTargetVariables);
     weightVectorBuffer.zero();
 
-    Eigen::DiagonalMatrix<double,Eigen::Dynamic> identityMatrix(numberOfTargetVariables);
+    Eigen::DiagonalMatrix<double,Eigen::Dynamic> identityMatrix(6 + dofs);
     identityMatrix.setIdentity();
-    regularizationMatrixBuffer.resize(numberOfTargetVariables, numberOfTargetVariables);
+    regularizationMatrixBuffer.resize(6 + dofs, 6 + dofs);
     iDynTree::toEigen(regularizationMatrixBuffer) = identityMatrix.toDenseMatrix() * regularizationWeight;
 
     problemInitialized = true;

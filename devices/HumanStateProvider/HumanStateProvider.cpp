@@ -1040,7 +1040,7 @@ bool HumanStateProvider::impl::initializePairwisedInverseKinematicsSolver()
 }
 
 bool HumanStateProvider::impl::initializeGlobalInverseKinematicsSolver()
-{
+{           
     // Set global ik parameters
     globalIK.setVerbosity(1);
     globalIK.setLinearSolverName(linearSolverName);
@@ -1132,9 +1132,15 @@ bool HumanStateProvider::impl::solvePairwisedInverseKinematicsSolver()
     {
         std::lock_guard<std::mutex> lock(mutex);
 
-        // Set the initial solution to zero
+        // Set the initial solution in the middle between lower and upper limits
         for (auto& linkPair : linkPairs) {
-            linkPair.sInitial.zero();
+            // linkPair.sInitial.zero();
+            for (size_t i = 0; i < linkPair.pairModel.getNrOfJoints(); i++) {
+                double minJointLimit = linkPair.pairModel.getJoint(i)->getMinPosLimit(i);
+                double maxJointLimit = linkPair.pairModel.getJoint(i)->getMaxPosLimit(i);
+                double averageJointLimit = (minJointLimit + maxJointLimit) / 2.0;
+                linkPair.sInitial.setVal(i, averageJointLimit);
+            }
         }
 
     }
@@ -1171,7 +1177,6 @@ bool HumanStateProvider::impl::solvePairwisedInverseKinematicsSolver()
                 yWarning() << LogPrefix << " Invalid DoFs for the joint, skipping the ik solution for this joint";
                 continue;
             }
-
         }
     }
 

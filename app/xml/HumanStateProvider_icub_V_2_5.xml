@@ -20,22 +20,22 @@
         <param name="period">0.100</param>
         <param name="urdf">teleoperation_iCub_model_V_2_5.urdf</param>
         <param name="floatingBaseFrame">(root_link_fake, XsensSuit::vLink::Pelvis)</param>
+        <param name="ikSolver">global</param>
+        <param name="useXsensJointsAngles">false</param>
         <param name="allowIKFailures">true</param>
+        <param name="useDirectBaseMeasurement">false</param>
+        <!-- optimization parameters -->
         <param name="maxIterationsIK">300</param>
         <param name="ikLinearSolver">ma27</param>
-        <param name="ikPoolSizeOption">4</param>
+        <param name="ikPoolSizeOption">2</param>
         <param name="posTargetWeight">0.0</param>
-        <param name="rotTargetWeight">10.0</param>
+        <param name="rotTargetWeight">1.0</param>
+        <param name="costRegularization">0.000001</param>
+        <param name="costTolerance">0.001</param>
+        <!-- inverse velocity kinematics parameters -->
         <param name="linVelTargetWeight">0.0</param>
         <param name="angVelTargetWeight">1.0</param>
-        <param name="costRegularization">1.0</param>
-        <!-- 0.25 -->
-        <param name="costTolerance">0.001</param>
-        <param name="useGlobalIK">false</param>
-        <param name="usePairWisedIK">true</param>
-        <param name="useIntegrationBasedIK">false</param>
-        <param name="useXsensJointsAngles">false</param>
-        <param name="useDirectBaseMeasurement">false</param>
+        <!-- integration based IK parameters -->
         <param name="integrationBasedIKCorrectionGainsLinRot">(5.0 5.0)</param>
         <param name="integrationBasedIKIntegralCorrectionGainsLinRot">(0.0 0.0)</param>
         <!-- TODO: How to use a reduced model in the entire HDE? (Starting from HumanStateProvider) -->
@@ -147,7 +147,7 @@
     </device>
 
 
-    <device type="human_state_wrapper" name="HumanStateWrapper">
+<!--     <device type="human_state_wrapper" name="HumanStateWrapper">
         <param name="period">0.05</param>
         <param name="outputPort">/HDE/HumanStateWrapper/state:o</param>
         <action phase="startup" level="5" type="attach">
@@ -156,7 +156,7 @@
             </paramlist>
         </action>
         <action phase="shutdown" level="5" type="detach"/>
-    </device>
+    </device> -->
 
     <!--device type="human_state_publisher" name="HumanStatePublisher">
         <param name="period">0.020</param>
@@ -170,7 +170,7 @@
         <action phase="shutdown" level="5" type="detach"/>
     </device-->
 
-    <device type="robot_position_controller" name="RobotPositionController">
+<!--     <device type="robot_position_controller" name="RobotPositionController">
         <param name="period">0.100</param>
         <param name="controlMode">positionDirect</param>
         <param name="refSpeed">15.0</param>
@@ -191,7 +191,7 @@
             </paramlist>
         </action>
         <action phase="shutdown" level="5" type="detach"/>
-    </device>
+    </device> -->
 
 
 </robot>
