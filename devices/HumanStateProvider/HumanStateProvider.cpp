@@ -29,7 +29,7 @@
 #include <thread>
 #include <unordered_map>
 
-#include <Utils.hpp>
+#include "Utils.hpp"
 
 /*!
  * @brief analyze model and list of segments to create all possible segment pairs
@@ -143,7 +143,6 @@ public:
     // Model variables
     iDynTree::Model humanModel;
     FloatingBaseName floatingBaseFrame;
-    int totalRealJointsForIK;
 
     std::vector<SegmentInfo> segments;
     std::vector<LinkPairInfo> linkPairs;
@@ -717,15 +716,15 @@ void HumanStateProvider::run()
 
     // compute the inverse kinematic errors (currently the result is unused, but it may be used for evaluating the IK performance)
     // pImpl->computeLinksOrientationErrors(pImpl->linkTransformMatrices,
-                                         pImpl->jointConfigurationSolution,
-                                         pImpl->baseTransformSolution,
-                                         pImpl->linkErrorOrientations);
+    //                                      pImpl->jointConfigurationSolution,
+    //                                      pImpl->baseTransformSolution,
+    //                                      pImpl->linkErrorOrientations);
     // pImpl->computeLinksAngularVelocityErrors(pImpl->linkVelocities,
-                                             pImpl->jointConfigurationSolution,
-                                             pImpl->baseTransformSolution,
-                                             pImpl->jointVelocitiesSolution,
-                                             pImpl->baseVelocitySolution,
-                                             pImpl->linkErrorAngularVelocities);
+    //                                          pImpl->jointConfigurationSolution,
+    //                                          pImpl->baseTransformSolution,
+    //                                          pImpl->jointVelocitiesSolution,
+    //                                          pImpl->baseVelocitySolution,
+    //                                          pImpl->linkErrorAngularVelocities);
 }
 
 bool HumanStateProvider::impl::getLinkTransformFromInputData(

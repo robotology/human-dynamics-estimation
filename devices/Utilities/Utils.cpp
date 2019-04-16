@@ -18,7 +18,7 @@
 // YARP
 #include <yarp/os/LogStream.h>
 
-#include <Utils.hpp>
+#include "Utils.hpp"
 
 const std::string LogPrefixUtils = "HumanDynamicsEstimation::Utils:: ";
 
