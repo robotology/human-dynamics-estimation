@@ -271,7 +271,6 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         yError() << LogPrefix << "Failed to find group MODEL_TO_DATA_LINK_NAMES";
         return false;
     }
-    yInfo() << LogPrefix << "....................................... debug- -3";
     for (size_t i = 1; i < linksGroup.size(); ++i) {
         if (!(linksGroup.get(i).isList() && linksGroup.get(i).asList()->size() == 2)) {
             yError() << LogPrefix
@@ -530,7 +529,6 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         yError() << LogPrefix << "Failed to find file" << config.find("urdf").asString();
         return false;
     }
-    yInfo() << LogPrefix << "....................................... debug- -2 ";
 
     iDynTree::ModelLoader modelLoader;
     if (!modelLoader.loadModelFromFile(urdfFilePath) || !modelLoader.isValid()) {
