@@ -572,13 +572,15 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     // =========================
 
     // Get the number of joints accordingly to the model
-    //    const size_t nrOfJoints = pImpl->humanModel.getNrOfJoints();
-    const size_t nrOfDoFs = pImpl->humanModel.getNrOfDOFs();
+    const size_t nrOfDOFs = pImpl->humanModel.getNrOfDOFs();
 
-    pImpl->jointConfigurationSolution.resize(nrOfDoFs);
+    pImpl->solution.jointPositions.resize(nrOfDOFs);
+    pImpl->solution.jointVelocities.resize(nrOfDOFs);
+
+    pImpl->jointConfigurationSolution.resize(nrOfDOFs);
     pImpl->jointConfigurationSolution.zero();
 
-    pImpl->jointVelocitiesSolution.resize(nrOfDoFs);
+    pImpl->jointVelocitiesSolution.resize(nrOfDOFs);
     pImpl->jointVelocitiesSolution.zero();
 
     // ====================================
@@ -1081,13 +1083,13 @@ bool HumanStateProvider::impl::initializeIntegrationBasedInverseKinematicsSolver
 {
     // Initialize state integrator
     stateIntegrator.setInterpolatorType(iDynTreeHelper::State::integrator::trapezoidal);
-    stateIntegrator.setNJoints(humanModel.getNrOfJoints());
+    stateIntegrator.setNJoints(humanModel.getNrOfDOFs());
 
     iDynTree::VectorDynSize jointLowerLimits;
-    jointLowerLimits.resize(humanModel.getNrOfJoints());
+    jointLowerLimits.resize(humanModel.getNrOfDOFs());
     iDynTree::VectorDynSize jointUpperLimits;
-    jointUpperLimits.resize(humanModel.getNrOfJoints());
-    for (int jointIndex=0; jointIndex<humanModel.getNrOfJoints(); jointIndex++)
+    jointUpperLimits.resize(humanModel.getNrOfDOFs());
+    for (int jointIndex=0; jointIndex<humanModel.getNrOfDOFs(); jointIndex++)
     {
         jointLowerLimits.setVal(jointIndex, humanModel.getJoint(jointIndex)->getMinPosLimit(0));
         jointUpperLimits.setVal(jointIndex, humanModel.getJoint(jointIndex)->getMaxPosLimit(0));
@@ -1605,7 +1607,7 @@ bool HumanStateProvider::attach(yarp::dev::PolyDriver* poly)
     if (pImpl->useXsensJointsAngles) {
         yDebug() << "Checking joints";
 
-        for (size_t jointIndex = 0; jointIndex < pImpl->humanModel.getNrOfJoints(); ++jointIndex) {
+        for (size_t jointIndex = 0; jointIndex < pImpl->humanModel.getNrOfDOFs(); ++jointIndex) {
             // Get the name of the joint from the model and its prefix from iWear
             std::string modelJointName = pImpl->humanModel.getJointName(jointIndex);
 
@@ -1710,7 +1712,7 @@ std::vector<std::string> HumanStateProvider::getJointNames() const
 size_t HumanStateProvider::getNumberOfJoints() const
 {
     std::lock_guard<std::mutex> lock(pImpl->mutex);
-    return pImpl->totalRealJointsForIK;
+    return pImpl->humanModel.getNrOfDOFs();
 }
 
 std::string HumanStateProvider::getBaseName() const
