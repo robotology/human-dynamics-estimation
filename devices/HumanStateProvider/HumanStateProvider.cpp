@@ -649,24 +649,33 @@ void HumanStateProvider::run()
 
     // Solve Inverse Kinematics and Inverse Velocity Problems
     auto tick = std::chrono::high_resolution_clock::now();
+    bool inverseKinematicsFailure;
     if (pImpl->ikSolver == SolverIK::pairwised) {
-        if (!pImpl->solvePairwisedInverseKinematicsSolver()) {
-            askToStop();
-            return;
-        }
+        inverseKinematicsFailure = !(pImpl->solvePairwisedInverseKinematicsSolver());
     }
     else if (pImpl->ikSolver == SolverIK::global) {
-        if (!pImpl->solveGlobalInverseKinematicsSolver()) {
-            askToStop();
-            return;
-        }
+        inverseKinematicsFailure = !pImpl->solveGlobalInverseKinematicsSolver();
     }
     else if (pImpl->ikSolver == SolverIK::integrationbased) {
-        if (!pImpl->solveIntegrationBasedInverseKinematics()) {
-            askToStop();
+        inverseKinematicsFailure = !pImpl->solveIntegrationBasedInverseKinematics();
+    }
+
+    // check if inverse kinematics failed
+    if (inverseKinematicsFailure)
+    {
+        if (pImpl->allowIKFailures)
+        {
+            yWarning() << LogPrefix << "IK failed, keeping the previous solution";
             return;
         }
+        else
+        {
+            yError() << LogPrefix << "Failed to solve IK";
+            askToStop();
+        }
+        return;
     }
+
     auto tock = std::chrono::high_resolution_clock::now();
     yDebug() << LogPrefix << "IK took"
              << std::chrono::duration_cast<std::chrono::milliseconds>(tock - tick).count() << "ms";
