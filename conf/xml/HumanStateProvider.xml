@@ -20,19 +20,22 @@
         <param name="period">0.100</param>
         <param name="urdf">humanSubject03_66dof.urdf</param>
         <param name="floatingBaseFrame">(Pelvis, XsensSuit::vLink::Pelvis)</param>
+        <param name="ikSolver">integrationbased</param>
+        <param name="useXsensJointsAngles">false</param>
         <param name="allowIKFailures">true</param>
+        <param name="useDirectBaseMeasurement">false</param>
+        <!-- optimization parameters -->
         <param name="maxIterationsIK">300</param>
         <param name="ikLinearSolver">ma27</param>
         <param name="ikPoolSizeOption">2</param>
         <param name="posTargetWeight">0.0</param>
         <param name="rotTargetWeight">1.0</param>
-        <param name="linVelTargetWeight">0.0</param>
-        <param name="angVelTargetWeight">1.0</param>
         <param name="costRegularization">0.000001</param>
         <param name="costTolerance">0.001</param>
-        <param name="ikSolver">integrationbased</param>
-        <param name="useXsensJointsAngles">false</param>
-        <param name="useDirectBaseMeasurement">false</param>
+        <!-- inverse velocity kinematics parameters -->
+        <param name="linVelTargetWeight">0.0</param>
+        <param name="angVelTargetWeight">1.0</param>
+        <!-- integration based IK parameters -->
         <param name="integrationBasedIKCorrectionGainsLinRot">(5.0 5.0)</param>
         <param name="integrationBasedIKIntegralCorrectionGainsLinRot">(0.0 0.0)</param>
         <group name="MODEL_TO_DATA_LINK_NAMES">
