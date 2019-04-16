@@ -35,6 +35,9 @@
         <param name="usePairWisedIK">true</param>
         <param name="useIntegrationBasedIK">false</param>
         <param name="useXsensJointsAngles">false</param>
+        <param name="useDirectBaseMeasurement">false</param>
+        <param name="integrationBasedIKCorrectionGainsLinRot">(5.0 5.0)</param>
+        <param name="integrationBasedIKIntegralCorrectionGainsLinRot">(0.0 0.0)</param>
         <!-- TODO: How to use a reduced model in the entire HDE? (Starting from HumanStateProvider) -->
         <group name="MODEL_TO_DATA_LINK_NAMES">
             <param name="map_Pelvis">(root_link_fake, XsensSuit::vLink::Pelvis)</param>
@@ -144,7 +147,7 @@
     </device>
 
 
-    <!--device type="human_state_wrapper" name="HumanStateWrapper">
+    <device type="human_state_wrapper" name="HumanStateWrapper">
         <param name="period">0.05</param>
         <param name="outputPort">/HDE/HumanStateWrapper/state:o</param>
         <action phase="startup" level="5" type="attach">
@@ -155,7 +158,7 @@
         <action phase="shutdown" level="5" type="detach"/>
     </device>
 
-    <device type="human_state_publisher" name="HumanStatePublisher">
+    <!--device type="human_state_publisher" name="HumanStatePublisher">
         <param name="period">0.020</param>
         <param name="baseTFName">/Human/Pelvis</param>
         <param name="humanJointsTopic">/Human/joint_states</param>
@@ -165,16 +168,16 @@
             </paramlist>
         </action>
         <action phase="shutdown" level="5" type="detach"/>
-    </device>
+    </device-->
 
     <device type="robot_position_controller" name="RobotPositionController">
         <param name="period">0.100</param>
         <param name="controlMode">positionDirect</param>
-        <param name="refSpeed">15</param>
+        <param name="refSpeed">15.0</param>
         <param name="samplingTime">0.05</param>
-        <param name="smoothingTime">1</param>
+        <param name="smoothingTime">1.0</param>
         <param name="controlBoardsList">(head torso left_arm right_arm left_leg right_leg)</param>
-        <param name="remotePrefix">/icub</param>
+        <param name="remotePrefix">/icubSim</param>
         <param name="localPrefix">/robotPositionController</param>
         <param name="head">(neck_pitch neck_roll neck_yaw)</param>
         <param name="torso">(torso_yaw torso_roll torso_pitch)</param>
@@ -188,7 +191,7 @@
             </paramlist>
         </action>
         <action phase="shutdown" level="5" type="detach"/>
-    </device-->
+    </device>
 
 
 </robot>

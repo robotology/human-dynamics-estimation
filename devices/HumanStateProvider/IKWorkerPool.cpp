@@ -67,7 +67,6 @@ void IKWorkerPool::runAndWait()
 {
     // Fill data for a thread
     {
-        yInfo() << "runandwait";
         std::unique_lock<std::mutex> guard(m_inputMutex);
         for (auto& linkPair : m_linkPairs) {
             // Create a new struct of type WorkerData and pass it to the pool
@@ -83,7 +82,6 @@ void IKWorkerPool::runAndWait()
             m_tasks.push(taskData);
         }
         m_inputSynchronizer.notify_all();
-        yInfo() << "runandwait end";
     }
 
     // Blocked call

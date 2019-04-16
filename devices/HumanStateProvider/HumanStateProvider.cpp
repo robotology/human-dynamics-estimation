@@ -559,14 +559,14 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     // =========================
 
     // Get the number of joints accordingly to the model
-    const size_t nrOfJoints = pImpl->humanModel.getNrOfJoints();
+    //    const size_t nrOfJoints = pImpl->humanModel.getNrOfJoints();
+    const size_t nrOfDoFs = pImpl->humanModel.getNrOfDOFs();
 
-    pImpl->jointConfigurationSolution.resize(nrOfJoints);
+    pImpl->jointConfigurationSolution.resize(nrOfDoFs);
     pImpl->jointConfigurationSolution.zero();
 
-    pImpl->jointVelocitiesSolution.resize(nrOfJoints);
+    pImpl->jointVelocitiesSolution.resize(nrOfDoFs);
     pImpl->jointVelocitiesSolution.zero();
-    yInfo() << LogPrefix << "....................................... debug- -1";
     // ========================
     // INITIALIZE PAIR-WISED IK
     // ========================
@@ -834,7 +834,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
 
         // Initialize state integrator
         pImpl->stateIntegrator.setInterpolatorType(iDynTreeHelper::State::integrator::trapezoidal);
-        pImpl->stateIntegrator.setNJoints(nrOfJoints);
+        pImpl->stateIntegrator.setNJoints(nrOfDoFs);
         pImpl->stateIntegrator.resetState();
 
         pImpl->integralOrientationError.zero();
@@ -862,8 +862,6 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         }
     }
 
-    yInfo() << LogPrefix << "....................................... debug-0";
-
     return true;
 }
 
@@ -874,7 +872,6 @@ bool HumanStateProvider::close()
 
 void HumanStateProvider::run()
 {
-    yInfo() << LogPrefix << "....................................... debug-0";
 
     // compute timestep
     double dt;
@@ -919,7 +916,6 @@ void HumanStateProvider::run()
     if (pImpl->usePairWisedIK) {
 
         auto tick_PW = std::chrono::high_resolution_clock::now();
-        yInfo() << LogPrefix << "....................................... debug-1";
         {
             std::lock_guard<std::mutex> lock(pImpl->mutex);
 
@@ -934,7 +930,6 @@ void HumanStateProvider::run()
                 }
             }
         }
-        yInfo() << LogPrefix << "....................................... debug-2";
 
         {
             std::lock_guard<std::mutex> lock(pImpl->mutex);
@@ -947,17 +942,14 @@ void HumanStateProvider::run()
                 segmentInfo.velocities = pImpl->linkVelocities.at(segmentInfo.segmentName);
             }
         }
-        yInfo() << LogPrefix << "....................................... debug-3";
 
         // Call IK worker pool to solve
         pImpl->ikPool->runAndWait();
-        yInfo() << LogPrefix << "....................................... debug-3-1";
         // Joint link pair ik solutions using joints map from link pairs initialization
         // to solution struct for exposing data through interface
         for (auto& linkPair : pImpl->linkPairs) {
             size_t jointIndex = 0;
             for (auto& pairJoint : linkPair.consideredJointLocations) {
-                yInfo() << LogPrefix << "....................................... debug-3-2";
 
                 // Check if it is a valid 1 DoF joint
 
@@ -966,34 +958,24 @@ void HumanStateProvider::run()
                         pairJoint.first, linkPair.jointConfigurations.getVal(jointIndex));
                     pImpl->jointVelocitiesSolution.setVal(
                         pairJoint.first, linkPair.jointVelocities.getVal(jointIndex));
-                    yInfo() << LogPrefix << "....................................... debug-3-3";
                     // If global ik is false, use link pair joint solutions
                     if (!pImpl->useGlobalIK) {
-                        yInfo() << LogPrefix
-                                << "....................................... debug-3-4-0";
-                        yInfo() << LogPrefix << pairJoint.first << " , "
-                                << pImpl->solution.jointPositions.size() << " ; " << jointIndex
-                                << " , " << linkPair.jointConfigurations.size();
+
                         pImpl->solution.jointPositions[pairJoint.first] =
                             linkPair.jointConfigurations.getVal(jointIndex);
-                        yInfo() << LogPrefix
-                                << "....................................... debug-3-4-1";
 
                         linkPair.sInitial.setVal(jointIndex,
                                                  linkPair.jointConfigurations.getVal(jointIndex));
-                        yInfo() << LogPrefix
-                                << "....................................... debug-3-4-2";
+
                         // TODO: Set the correct velocities values
                         pImpl->solution.jointVelocities[pairJoint.first] =
                             linkPair.jointVelocities.getVal(jointIndex);
                     }
                     else {
-                        yInfo() << LogPrefix << "....................................... debug-3-5";
 
                         pImpl->jointConfigurationSolution.setVal(
                             pairJoint.first, linkPair.jointConfigurations.getVal(jointIndex));
                     }
-                    yInfo() << LogPrefix << "....................................... debug-3-6";
                     jointIndex++;
                 }
                 else {
@@ -1004,7 +986,6 @@ void HumanStateProvider::run()
                 }
             }
         }
-        yInfo() << LogPrefix << "....................................... debug-4";
 
         auto tock_PW = std::chrono::high_resolution_clock::now();
         yDebug() << LogPrefix << "Pair-Wised IK took"
@@ -1085,8 +1066,6 @@ void HumanStateProvider::run()
 
     if (pImpl->useIntegrationBasedIK) {
 
-        yInfo() << LogPrefix << "Inside integration based iK";
-
         auto tick_IB = std::chrono::high_resolution_clock::now();
         pImpl->lastTime = yarp::os::Time::now();
 
@@ -1099,6 +1078,7 @@ void HumanStateProvider::run()
                                         pImpl->worldGravity);
         }
         else {
+
             computations->setRobotState(pImpl->baseTransformSolution,
                                         pImpl->jointConfigurationSolution,
                                         pImpl->baseVelocitySolution,

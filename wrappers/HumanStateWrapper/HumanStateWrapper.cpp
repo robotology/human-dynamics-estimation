@@ -71,7 +71,6 @@ bool HumanStateWrapper::open(yarp::os::Searchable& config)
     // ================
 
     setPeriod(period);
-    yInfo() << logPrefix << "....................................... debug-1";
 
     return true;
 }
@@ -85,7 +84,6 @@ bool HumanStateWrapper::close()
 
 void HumanStateWrapper::run()
 {
-    yInfo() << logPrefix << "....................................... debug-2";
 
     // Get data from the interface
     std::array<double, 3> basePositionInterface = pImpl->iHumanState->getBasePosition();
@@ -140,7 +138,6 @@ void HumanStateWrapper::run()
 
     // Send the data
     pImpl->outputPort.write(/*forceStrict=*/true);
-    yInfo() << logPrefix << "....................................... debug-3";
 }
 
 bool HumanStateWrapper::attach(yarp::dev::PolyDriver* poly)
