@@ -2,16 +2,17 @@
 <robot name="human-robot-pose-publisher" build=0 portprefix="">
 
     <device type="human_robot_pose_publisher" name="HumanRobotPosePublisher">
-        <param name="period">0.5</param>
+        <param name="period">0.01</param>
+        <param name="tfTimeout">1</param>
         <param name="robotURDFFileName">iCubGazeboV2_5.urdf</param>
         <param name="robotFloatingBaseFrame">root_link</param>
         <param name="robotLeftFootFrame">l_foot</param>
-        <param name="robotTFPrefix">/icub</param>
+        <param name="robotTFPrefix">/icubSim</param>
         <param name="humanFloatingBaseFrame">/Human/Pelvis</param>
-        <param name="humanLeftFootFrame">/Human/LeftFoot</param>
+        <param name="humanLeftFootFrame">/Human/RightFoot</param>
         <group name="HumanRobotLeftFootFixedTransform">
             <param name="rotation">(-1.0 0.0 0.0 0.0 -1.0 0.0 0.0 0.0 1.0)</param>
-            <param name="position">(0.59 -0.2549 0.0)</param>
+            <param name="position">(0.59 0.0 0.0)</param>
         </group>
     </device>
 
