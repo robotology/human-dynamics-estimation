@@ -16,6 +16,8 @@
 #include <yarp/math/Math.h>
 #include <yarp/os/LogStream.h>
 #include <yarp/os/Node.h>
+#include <yarp/os/RpcServer.h>
+#include <yarp/os/ResourceFinder.h>
 #include <yarp/os/PortReader.h>
 #include <yarp/os/ResourceFinder.h>
 #include <yarp/os/RpcServer.h>
