@@ -19,8 +19,6 @@
 #include <yarp/os/RpcServer.h>
 #include <yarp/os/ResourceFinder.h>
 #include <yarp/os/PortReader.h>
-#include <yarp/os/ResourceFinder.h>
-#include <yarp/os/RpcServer.h>
 
 #include <atomic>
 #include <mutex>
@@ -415,4 +413,3 @@ bool HumanRobotPosePublisher::impl::setRobotBasePose()
 
     return true;
 }
-
