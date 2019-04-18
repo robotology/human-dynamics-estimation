@@ -20,6 +20,7 @@
         <param name="period">0.100</param>
         <param name="urdf">teleoperation_iCub_model_V_2_5.urdf</param>
         <param name="floatingBaseFrame">(root_link_fake, XsensSuit::vLink::Pelvis)</param>
+        <!-- ikSolver options: pairwised, global, integrationbased -->
         <param name="ikSolver">pairwised</param>
         <param name="useXsensJointsAngles">false</param>
         <param name="allowIKFailures">true</param>
@@ -30,8 +31,8 @@
         <param name="ikPoolSizeOption">2</param>
         <param name="posTargetWeight">0.0</param>
         <param name="rotTargetWeight">1.0</param>
-        <param name="costRegularization">0.000001</param>
-        <param name="costTolerance">0.00001</param>
+        <param name="costRegularization">0.001</param>
+        <param name="costTolerance">0.001</param>
         <!-- inverse velocity kinematics parameters -->
         <param name="linVelTargetWeight">0.0</param>
         <param name="angVelTargetWeight">1.0</param>
@@ -86,5 +87,27 @@
         <action phase="shutdown" level="5" type="detach"/>
     </device>
 
+<!--device type="robot_position_controller" name="RobotPositionController">
+        <param name="period">0.100</param>
+        <param name="controlMode">positionDirect</param>
+        <param name="refSpeed">15.0</param>
+        <param name="samplingTime">0.05</param>
+        <param name="smoothingTime">1.0</param>
+        <param name="controlBoardsList">(head torso left_arm right_arm left_leg right_leg)</param>
+        <param name="remotePrefix">/icubSim</param>
+        <param name="localPrefix">/robotPositionController</param>
+        <param name="head">(neck_pitch neck_roll neck_yaw)</param>
+        <param name="torso">(torso_yaw torso_roll torso_pitch)</param>
+        <param name="left_arm">(l_shoulder_pitch l_shoulder_roll l_shoulder_yaw l_elbow l_wrist_prosup l_wrist_pitch l_wrist_yaw)</param>
+        <param name="right_arm">(r_shoulder_pitch r_shoulder_roll r_shoulder_yaw r_elbow r_wrist_prosup r_wrist_pitch r_wrist_yaw)</param>
+        <param name="left_leg">(l_hip_pitch l_hip_roll l_hip_yaw l_knee l_ankle_pitch l_ankle_roll)</param>
+        <param name="right_leg">(r_hip_pitch r_hip_roll r_hip_yaw r_knee r_ankle_pitch r_ankle_roll)</param>
+        <action phase="startup" level="5" type="attach">
+            <paramlist name="networks">
+                <elem name="RobotPositionController">RobotStateProvider</elem>
+            </paramlist>
+        </action>
+        <action phase="shutdown" level="5" type="detach"/>
+    </device-->
 
 </robot>

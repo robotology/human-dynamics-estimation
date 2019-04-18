@@ -1036,6 +1036,21 @@ bool HumanStateProvider::impl::initializePairwisedInverseKinematicsSolver()
         return false;
     }
 
+    {
+        std::lock_guard<std::mutex> lock(mutex);
+
+        // Set the initial solution in the middle between lower and upper limits
+        for (auto& linkPair : linkPairs) {
+            for (size_t i = 0; i < linkPair.pairModel.getNrOfJoints(); i++) {
+                double minJointLimit = linkPair.pairModel.getJoint(i)->getMinPosLimit(i);
+                double maxJointLimit = linkPair.pairModel.getJoint(i)->getMaxPosLimit(i);
+                double averageJointLimit = (minJointLimit + maxJointLimit) / 2.0;
+                linkPair.sInitial.setVal(i, averageJointLimit);
+            }
+        }
+
+    }
+
     return true;
 }
 
@@ -1132,22 +1147,6 @@ bool HumanStateProvider::impl::solvePairwisedInverseKinematicsSolver()
     {
         std::lock_guard<std::mutex> lock(mutex);
 
-        // Set the initial solution in the middle between lower and upper limits
-        for (auto& linkPair : linkPairs) {
-            // linkPair.sInitial.zero();
-            for (size_t i = 0; i < linkPair.pairModel.getNrOfJoints(); i++) {
-                double minJointLimit = linkPair.pairModel.getJoint(i)->getMinPosLimit(i);
-                double maxJointLimit = linkPair.pairModel.getJoint(i)->getMaxPosLimit(i);
-                double averageJointLimit = (minJointLimit + maxJointLimit) / 2.0;
-                linkPair.sInitial.setVal(i, averageJointLimit);
-            }
-        }
-
-    }
-
-    {
-        std::lock_guard<std::mutex> lock(mutex);
-
         // Set link segments transformation and velocity
         for (size_t segmentIndex = 0; segmentIndex < segments.size(); segmentIndex++) {
 
@@ -1171,6 +1170,8 @@ bool HumanStateProvider::impl::solvePairwisedInverseKinematicsSolver()
                 jointConfigurationSolution.setVal(pairJoint.first, linkPair.jointConfigurations.getVal(jointIndex));
                 jointVelocitiesSolution.setVal(pairJoint.first, linkPair.jointVelocities.getVal(jointIndex));
 
+                linkPair.sInitial.setVal(jointIndex,
+                                         linkPair.jointConfigurations.getVal(jointIndex));
                 jointIndex++;
             }
             else {

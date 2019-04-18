@@ -21,6 +21,7 @@
         <param name="period">0.100</param>
         <param name="urdf">humanSubject01_66dof.urdf</param>
         <param name="floatingBaseFrame">(Pelvis, XsensSuit::vLink::Pelvis)</param>
+        <!-- ikSolver options: pairwised, global, integrationbased -->
         <param name="ikSolver">pairwised</param>
         <param name="useXsensJointsAngles">false</param>
         <param name="allowIKFailures">true</param>
