@@ -10,18 +10,19 @@
 
 #include <iDynTree/Core/Transform.h>
 
-#include <yarp/os/ResourceFinder.h>
+#include <iDynTree/yarp/YARPConversions.h>
 #include <yarp/dev/IFrameTransform.h>
 #include <yarp/dev/PolyDriver.h>
 #include <yarp/math/Math.h>
 #include <yarp/os/LogStream.h>
 #include <yarp/os/Node.h>
-#include <yarp/os/RpcServer.h>
 #include <yarp/os/PortReader.h>
-#include <iDynTree/yarp/YARPConversions.h>
+#include <yarp/os/ResourceFinder.h>
+#include <yarp/os/RpcServer.h>
 
-#include <string>
+#include <atomic>
 #include <mutex>
+#include <string>
 
 const std::string DeviceName = "HumanRobotPosePublisher";
 const std::string LogPrefix = DeviceName + " :";
@@ -29,15 +30,14 @@ constexpr double DefaultPeriod = 0.01;
 
 using namespace hde::publishers;
 
-class cmdProcessor : public yarp::os::PortReader {
-
-protected:
-    std::mutex mtx;
+class CmdParser : public yarp::os::PortReader
+{
 
 public:
-    bool cmdStatus = false;
+    std::atomic<bool> cmdStatus{false};
 
-    virtual bool read(yarp::os::ConnectionReader& connection) {
+    bool read(yarp::os::ConnectionReader& connection) override
+    {
         yarp::os::Bottle command, response;
         if (command.read(connection)) {
 
@@ -46,48 +46,33 @@ public:
             }
             else if (command.get(0).asString() == "set") {
                 response.addString("Entered command is correct");
-                this->mtx.lock();
                 this->cmdStatus = true;
-                this->mtx.unlock();
             }
             else {
-                response.addString("Entered command is incorrect, Enter help to know available commands");
+                response.addString(
+                    "Entered command is incorrect, Enter help to know available commands");
             }
         }
-        else
-        {
-            this->mtx.lock();
+        else {
             this->cmdStatus = false;
-            this->mtx.unlock();
             return false;
         }
 
-        yarp::os::ConnectionWriter *reply = connection.getWriter();
+        yarp::os::ConnectionWriter* reply = connection.getWriter();
 
         if (reply != NULL) {
             response.write(*reply);
         }
-        else return false;
+        else
+            return false;
 
         return true;
-
-    }
-
-    bool getCommandStatus() {
-        std::lock_guard<std::mutex> lock(this->mtx);
-        return this->cmdStatus;
-    }
-
-    void setCommandStatus(bool status) {
-        std::lock_guard<std::mutex> lock(this->mtx);
-        this->cmdStatus = status;
     }
 };
 
 class HumanRobotPosePublisher::impl
 {
 public:
-
     mutable std::mutex mutex;
     bool first_data = false;
 
@@ -114,11 +99,11 @@ public:
     yarp::os::Node node = {"/" + DeviceName};
 
     // Rpc
-    cmdProcessor commandPro;
+    CmdParser commandPro;
     yarp::os::RpcServer rpcPort;
     bool cmdReceived;
     bool setRobotBasePose();
-    bool robotBaseTF;
+    bool robotBaseTFStatus;
 };
 
 HumanRobotPosePublisher::HumanRobotPosePublisher()
@@ -180,7 +165,8 @@ bool HumanRobotPosePublisher::open(yarp::os::Searchable& config)
         return false;
     }
 
-    if (!(config.check("robotFloatingBaseFrame") && config.find("robotFloatingBaseFrame").isString())) {
+    if (!(config.check("robotFloatingBaseFrame")
+          && config.find("robotFloatingBaseFrame").isString())) {
         yError() << LogPrefix << "robotFloatingBaseFrame option not found or not valid";
         return false;
     }
@@ -195,7 +181,8 @@ bool HumanRobotPosePublisher::open(yarp::os::Searchable& config)
         return false;
     }
 
-    if (!(config.check("humanFloatingBaseFrame") && config.find("humanFloatingBaseFrame").isString())) {
+    if (!(config.check("humanFloatingBaseFrame")
+          && config.find("humanFloatingBaseFrame").isString())) {
         yError() << LogPrefix << "humanFloatingBaseFrame option not found or not valid";
         return false;
     }
@@ -247,16 +234,19 @@ bool HumanRobotPosePublisher::open(yarp::os::Searchable& config)
 
     // Store the transform in the temporary object
     pImpl->robotHumanFixedTransform = {rotation, position};
-    iDynTree::toYarp(pImpl->robotHumanFixedTransform.inverse().asHomogeneousTransform(), pImpl->robotLeftFoot_H_humanLeftFoot);
+    iDynTree::toYarp(pImpl->robotHumanFixedTransform.inverse().asHomogeneousTransform(),
+                     pImpl->robotLeftFoot_H_humanLeftFoot);
 
     // Set default ground to robot base transform to be Identity
-    iDynTree::toYarp(iDynTree::Transform::Identity().asHomogeneousTransform(), pImpl->robotBase_H_ground);
+    // This will be the default transform at the start of the device
+    iDynTree::toYarp(iDynTree::Transform::Identity().asHomogeneousTransform(),
+                     pImpl->robotBase_H_ground);
 
     // ===================
     // INITIALIZE RPC PORT
     // ===================
 
-    std::string rpcPortName = "/" + DeviceName + "/rcp:i";
+    std::string rpcPortName = "/" + DeviceName + "/rpc:i";
     if (!pImpl->rpcPort.open(rpcPortName)) {
         yError() << LogPrefix << "Unable to open rpc port " << rpcPortName;
         return false;
@@ -266,16 +256,20 @@ bool HumanRobotPosePublisher::open(yarp::os::Searchable& config)
     pImpl->rpcPort.setReader(pImpl->commandPro);
 
     pImpl->cmdReceived = false;
-    pImpl->robotBaseTF = false;
+    pImpl->robotBaseTFStatus = true;
 
     yInfo() << LogPrefix << "*** ========================================";
     yInfo() << LogPrefix << "*** Period                                 :" << period;
     yInfo() << LogPrefix << "*** TF Timeout                             :" << pImpl->tfTimeout;
     yInfo() << LogPrefix << "*** Robot TF prefix                        :" << pImpl->robotTFPrefix;
-    yInfo() << LogPrefix << "*** Robot floating base frame              :" << pImpl->robotFloatingBaseFrame;
-    yInfo() << LogPrefix << "*** Robot left foot frame                  :" << pImpl->robotLeftFootFrame;
-    yInfo() << LogPrefix << "*** Human floating base frame              :" << pImpl->humanFloatingBaseFrame;
-    yInfo() << LogPrefix << "*** Human left foot frame                  :" << pImpl->humanLeftFootFrame;
+    yInfo() << LogPrefix
+            << "*** Robot floating base frame              :" << pImpl->robotFloatingBaseFrame;
+    yInfo() << LogPrefix
+            << "*** Robot left foot frame                  :" << pImpl->robotLeftFootFrame;
+    yInfo() << LogPrefix
+            << "*** Human floating base frame              :" << pImpl->humanFloatingBaseFrame;
+    yInfo() << LogPrefix
+            << "*** Human left foot frame                  :" << pImpl->humanLeftFootFrame;
     yInfo() << LogPrefix << "*** Rpc port                               :" << rpcPortName;
     yInfo() << LogPrefix << "*** Human robot left foot fixed transform  :";
     yInfo() << pImpl->robotHumanFixedTransform.toString();
@@ -300,12 +294,11 @@ bool HumanRobotPosePublisher::open(yarp::os::Searchable& config)
         return false;
     }
 
-
     // Check for first data
     pImpl->first_data = false;
     std::string frames;
     while (!pImpl->first_data) {
-        if(pImpl->iFrameTransform->allFramesAsString(frames)) {
+        if (pImpl->iFrameTransform->allFramesAsString(frames)) {
             pImpl->first_data = true;
             yInfo() << LogPrefix << "first data received";
         }
@@ -337,19 +330,21 @@ bool HumanRobotPosePublisher::close()
 void HumanRobotPosePublisher::run()
 {
     // Check command status
-    if (pImpl->commandPro.getCommandStatus()) {
-        pImpl->robotBaseTF = false;
+    if (pImpl->commandPro.cmdStatus) {
+        pImpl->robotBaseTFStatus = false;
         if (pImpl->setRobotBasePose()) {
-            pImpl->robotBaseTF = true;
-            pImpl->commandPro.setCommandStatus(false);
+            pImpl->robotBaseTFStatus = true;
+            pImpl->commandPro.cmdStatus = false;
             yInfo() << LogPrefix << "Robot ground to base transform set correctly";
         }
     }
 
     // Stream robot base tf
-    if (pImpl->robotBaseTF) {
-        if(!pImpl->iFrameTransform->setTransform(pImpl->robotTFPrefix + "/" + pImpl->robotFloatingBaseFrame,
-                                                "ground", pImpl->robotBase_H_ground)) {
+    if (pImpl->robotBaseTFStatus) {
+        if (!pImpl->iFrameTransform->setTransform(pImpl->robotTFPrefix + "/"
+                                                      + pImpl->robotFloatingBaseFrame,
+                                                  "ground",
+                                                  pImpl->robotBase_H_ground)) {
             yWarning() << LogPrefix << "Failed to set ground to robot base transform";
         }
     }
@@ -358,10 +353,10 @@ void HumanRobotPosePublisher::run()
 bool HumanRobotPosePublisher::impl::setRobotBasePose()
 {
 
-    //iDynTree::toYarp(iDynTree::Transform::Identity().asHomogeneousTransform(), this->robotBase_H_ground);
-    //return true;
+    // iDynTree::toYarp(iDynTree::Transform::Identity().asHomogeneousTransform(),
+    // this->robotBase_H_ground); return true;
 
-    //Read the homogeneous tf from ground to human base using IFrameTransform interface
+    // Read the homogeneous tf from ground to human base using IFrameTransform interface
     yarp::sig::Matrix humanBase_H_ground;
 
     // Read the homogeneous tf from human base to human left foot using IFrameTransform interface
@@ -373,39 +368,43 @@ bool HumanRobotPosePublisher::impl::setRobotBasePose()
     bool ok;
 
     /*ok = this->iFrameTransform->canTransform(this->humanFloatingBaseFrame, "ground") &&
-         this->iFrameTransform->canTransform(this->humanLeftFootFrame, this->humanFloatingBaseFrame);
-         this->iFrameTransform->canTransform(this->robotTFPrefix + "/" + this->robotFloatingBaseFrame,
-                                             this->robotTFPrefix + "/" + this->robotLeftFootFrame);*/
+         this->iFrameTransform->canTransform(this->humanLeftFootFrame,
+       this->humanFloatingBaseFrame); this->iFrameTransform->canTransform(this->robotTFPrefix + "/"
+       + this->robotFloatingBaseFrame, this->robotTFPrefix + "/" + this->robotLeftFootFrame);*/
 
-    ok = this->iFrameTransform->waitForTransform(this->humanFloatingBaseFrame, "ground", this->tfTimeout) &&
-         this->iFrameTransform->waitForTransform(this->humanLeftFootFrame, this->humanFloatingBaseFrame, this->tfTimeout);
-         this->iFrameTransform->waitForTransform(this->robotTFPrefix + "/" + this->robotFloatingBaseFrame,
-                                                 this->robotTFPrefix + "/" + this->robotLeftFootFrame, this->tfTimeout);
+    ok = this->iFrameTransform->waitForTransform(
+             this->humanFloatingBaseFrame, "ground", this->tfTimeout)
+         && this->iFrameTransform->waitForTransform(
+                this->humanLeftFootFrame, this->humanFloatingBaseFrame, this->tfTimeout);
+    this->iFrameTransform->waitForTransform(this->robotTFPrefix + "/"
+                                                + this->robotFloatingBaseFrame,
+                                            this->robotTFPrefix + "/" + this->robotLeftFootFrame,
+                                            this->tfTimeout);
 
-    if (ok) {
-
-        this->iFrameTransform->getTransform(this->humanFloatingBaseFrame, "ground", humanBase_H_ground);
-
-        this->iFrameTransform->getTransform(this->humanLeftFootFrame, this->humanFloatingBaseFrame, humanLeftFoot_H_humanBase);
-
-        this->iFrameTransform->getTransform(this->robotTFPrefix + "/" + this->robotFloatingBaseFrame,
-                                             this->robotTFPrefix + "/" + this->robotLeftFootFrame, robotBase_H_robotLeftFoot);
-
-        // Compute groud to robot base frame transform
-        robotBase_H_ground = robotBase_H_robotLeftFoot * this->robotLeftFoot_H_humanLeftFoot * humanLeftFoot_H_humanBase * humanBase_H_ground;
-
-        //yInfo() << LogPrefix << "Transformations :";
-        //yInfo() << "robotBase_H_robotLeftFoot : ";
-        //yInfo() << robotBase_H_robotLeftFoot.toString().c_str();
-        //yInfo() << "pImpl->robotLeftFoot_H_humanLeftFoot";
-        //yInfo() << pImpl->robotLeftFoot_H_humanLeftFoot.toString().c_str();
-        //yInfo() << "humanLeftFoot_H_humanBase";
-        //yInfo() << humanLeftFoot_H_humanBase.toString().c_str();
-        return true;
-    }
-    else {
+    if (!ok) {
         yWarning() << "Failed to get human or robot transforms from transform server";
         return false;
     }
-}
 
+    this->iFrameTransform->getTransform(this->humanFloatingBaseFrame, "ground", humanBase_H_ground);
+
+    this->iFrameTransform->getTransform(
+        this->humanLeftFootFrame, this->humanFloatingBaseFrame, humanLeftFoot_H_humanBase);
+
+    this->iFrameTransform->getTransform(this->robotTFPrefix + "/" + this->robotFloatingBaseFrame,
+                                        this->robotTFPrefix + "/" + this->robotLeftFootFrame,
+                                        robotBase_H_robotLeftFoot);
+
+    // Compute groud to robot base frame transform
+    robotBase_H_ground = robotBase_H_robotLeftFoot * this->robotLeftFoot_H_humanLeftFoot
+                         * humanLeftFoot_H_humanBase * humanBase_H_ground;
+
+    // yInfo() << LogPrefix << "Transformations :";
+    // yInfo() << "robotBase_H_robotLeftFoot : ";
+    // yInfo() << robotBase_H_robotLeftFoot.toString().c_str();
+    // yInfo() << "pImpl->robotLeftFoot_H_humanLeftFoot";
+    // yInfo() << pImpl->robotLeftFoot_H_humanLeftFoot.toString().c_str();
+    // yInfo() << "humanLeftFoot_H_humanBase";
+    // yInfo() << humanLeftFoot_H_humanBase.toString().c_str();
+    return true;
+}
