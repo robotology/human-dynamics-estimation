@@ -66,10 +66,6 @@ if(NOT MSVC)
                               USE_LINK_PATH)
 endif()
 
-# Advanced Eigen assertions
-# TODO: this is for the old IK and HDE. Is it necessary for HDE?
-option(HUMAN_DYNAMICS_ESTIMATION_DEBUG_MALLOC "Enable Eigen assertions on malloc" OFF)
-
 # Add the uninstall target
 include(AddUninstallTarget)
 
@@ -77,10 +73,8 @@ include(AddUninstallTarget)
 # PROJECT DIRECTORIES
 # ===================
 
-add_subdirectory(conf)
-
-# HDEv2
 yarp_configure_plugins_installation(hde)
+add_subdirectory(conf)
 add_subdirectory(msgs)
 add_subdirectory(interfaces)
 add_subdirectory(devices)

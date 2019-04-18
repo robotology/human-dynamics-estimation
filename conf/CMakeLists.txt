@@ -13,10 +13,10 @@ install(FILES ${HDE_XML_FILES}
 # Install yarpmanager application files
 set(HDE_APP_FILES xml/applications/HumanDynamicsEstimation.xml
                   xml/applications/HumanDynamicsEstimation-Human.xml
-	          xml/applications/HumanDynamicsEstimation-pHRI.xml
-		  xml/applications/HumanDynamicsEstimation-Rviz.xml
-	          xml/applications/HumanDynamicsEstimation-TransformServer.xml
-		  xml/applications/HumanDynamicsEstimation-YarpScope.xml)
+	                xml/applications/HumanDynamicsEstimation-pHRI.xml
+		              xml/applications/HumanDynamicsEstimation-Rviz.xml
+	                xml/applications/HumanDynamicsEstimation-TransformServer.xml
+		              xml/applications/HumanDynamicsEstimation-YarpScope.xml)
 
 yarp_install(FILES ${HDE_APP_FILES} DESTINATION ${YARP_APPLICATIONS_INSTALL_DIR})
 
@@ -32,8 +32,10 @@ yarp_install(FILES ${ROBOT_URDF_FILES}
 # ROS related installation
 set (ROS_PROJECT_NAME HDERviz)
 set (ROS_PACKAGE_FILE ros/package.xml)
-set (ROS_LAUNCH_FILE ros/launch/HDERviz.launch)
-set (ROS_RVIZ_FILE ros/rviz/HDERviz.rviz)
+set (ROS_LAUNCH_FILES ros/launch/HDERviz.launch
+                      ros/launch/iCubRviz.launch)
+set (ROS_RVIZ_FILES ros/rviz/HDERviz.rviz
+                    ros/rviz/iCubRviz.rviz)
 
 # Copy the package.xml, which is necessary to be treated as
 # a ROS package
@@ -42,10 +44,10 @@ install(FILES ${ROS_PACKAGE_FILE}
 
 
 # Install the .launch file and the config file
-install(FILES ${ROS_LAUNCH_FILE}
+install(FILES ${ROS_LAUNCH_FILES}
              DESTINATION ${CMAKE_INSTALL_PREFIX}/share/${ROS_PROJECT_NAME}/launch/)
 
-install(FILES ${ROS_RVIZ_FILE}
+install(FILES ${ROS_RVIZ_FILES}
              DESTINATION ${CMAKE_INSTALL_PREFIX}/share/${ROS_PROJECT_NAME}/rviz/)
 
 # Install robot urdf files

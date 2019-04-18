@@ -18,9 +18,9 @@
 
     <device type="human_state_provider" name="HumanStateProvider">
         <param name="period">0.100</param>
-        <param name="urdf">humanSubject03_66dof.urdf</param>
+        <param name="urdf">humanSubject01_66dof.urdf</param>
         <param name="floatingBaseFrame">(Pelvis, XsensSuit::vLink::Pelvis)</param>
-        <param name="ikSolver">integrationbased</param>
+        <param name="ikSolver">pairwised</param>
         <param name="useXsensJointsAngles">false</param>
         <param name="allowIKFailures">true</param>
         <param name="useDirectBaseMeasurement">false</param>

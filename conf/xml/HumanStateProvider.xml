@@ -18,9 +18,9 @@
 
     <device type="human_state_provider" name="HumanStateProvider">
         <param name="period">0.100</param>
-        <param name="urdf">humanSubject03_66dof.urdf</param>
+        <param name="urdf">humanSubject01_66dof.urdf</param>
         <param name="floatingBaseFrame">(Pelvis, XsensSuit::vLink::Pelvis)</param>
-        <param name="ikSolver">integrationbased</param>
+        <param name="ikSolver">pairwised</param>
         <param name="useXsensJointsAngles">false</param>
         <param name="allowIKFailures">true</param>
         <param name="useDirectBaseMeasurement">false</param>
@@ -167,25 +167,5 @@
         </action>
         <action phase="shutdown" level="5" type="detach"/>
     </device>
-
-    <!--Uncomment the following code if you need to dump wearable data-->
-    <!--device type="iwear_remapper" name="WearableData">
-        <param name="wearableDataPorts">(/FTShoeLeft/WearableData/data:o /FTShoeRight/WearableData/data:o /XSensSuit/WearableData/data:o)</param>
-        <param name="useRPC">false</param>
-        <param name="wearableRPCPorts">(/FTShoeLeft/WearableData/metadataRpc:o /FTShoeRight/WearableData/metadataRpc:o /XSensSuit/WearableData/metadataRpc:o)</param>
-        <param name="outputPortName">/IWearRemapper/data:o</param>
-    </device>
-
-    <device type="iwear_wrapper" name="WearableDataWrapper">
-        <param name="period">0.1</param>
-        <param name="dataPortName">/WearableData/data:o</param>
-        <param name="rpcPortName">/WearableData/metadataRpc:o</param>
-        <action phase="startup" level="5" type="attach">
-            <paramlist name="networks">
-                <elem name="WearableDataWrapper">WearableData</elem>
-            </paramlist>
-        </action>
-        <action phase="shutdown" level="5" type="detach"/>
-    </device-->
 
 </robot>

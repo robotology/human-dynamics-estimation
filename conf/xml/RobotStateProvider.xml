@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<robot name="Human-HDE" build=0 portprefix="">
+
+    <device type="transformServer" name="TransformServer">
+        <param name="transforms_lifetime">0.2</param>
+        <group name="ROS">
+            <param name="enable_ros_publisher">true</param>
+            <param name="enable_ros_subscriber">false</param>
+        </group>
+    </device>
+
+    <device type="iwear_remapper" name="XSenseIWearRemapper">
+        <param name="wearableDataPorts">(/XSensSuit/WearableData/data:o)</param>
+        <param name="useRPC">false</param>
+        <param name="wearableRPCPorts">(/XSensSuit/WearableData/metadataRpc:o)</param>
+        <param name="outputPortName">/HDE/XsensIWearRemapper/data:o</param>
+    </device>
+
+    <device type="human_state_provider" name="RobotStateProvider">
+        <param name="period">0.100</param>
+        <param name="urdf">teleoperation_iCub_model_V_2_5.urdf</param>
+        <param name="floatingBaseFrame">(root_link_fake, XsensSuit::vLink::Pelvis)</param>
+        <param name="ikSolver">pairwised</param>
+        <param name="useXsensJointsAngles">false</param>
+        <param name="allowIKFailures">true</param>
+        <param name="useDirectBaseMeasurement">false</param>
+        <!-- optimization parameters -->
+        <param name="maxIterationsIK">300</param>
+        <param name="ikLinearSolver">ma27</param>
+        <param name="ikPoolSizeOption">2</param>
+        <param name="posTargetWeight">0.0</param>
+        <param name="rotTargetWeight">1.0</param>
+        <param name="costRegularization">0.000001</param>
+        <param name="costTolerance">0.00001</param>
+        <!-- inverse velocity kinematics parameters -->
+        <param name="linVelTargetWeight">0.0</param>
+        <param name="angVelTargetWeight">1.0</param>
+        <!-- integration based IK parameters -->
+        <param name="integrationBasedIKCorrectionGainsLinRot">(1.0 1.0)</param>
+        <param name="integrationBasedIKIntegralCorrectionGainsLinRot">(0.0 0.0)</param>
+        <group name="MODEL_TO_DATA_LINK_NAMES">
+            <param name="map_Pelvis">(root_link_fake, XsensSuit::vLink::Pelvis)</param>
+            <param name="map_T8">(chest_fake, XsensSuit::vLink::T8)</param>
+            <param name="map_Head">(head_fake, XsensSuit::vLink::Head)</param>
+            <param name="map_RightUpperArm">(r_upper_arm_fake, XsensSuit::vLink::RightUpperArm)</param>
+            <param name="map_RightForeArm">(r_forearm_fake, XsensSuit::vLink::RightForeArm)</param>
+            <param name="map_RightHand">(r_hand_fake, XsensSuit::vLink::RightHand)</param>
+            <param name="map_LeftUpperArm">(l_upper_arm_fake, XsensSuit::vLink::LeftUpperArm)</param>
+            <param name="map_LeftForeArm">(l_forearm_fake, XsensSuit::vLink::LeftForeArm)</param>
+            <param name="map_LeftHand">(l_hand_fake, XsensSuit::vLink::LeftHand)</param>
+            <param name="map_RightUpperLeg">(r_upper_leg_fake, XsensSuit::vLink::RightUpperLeg)</param>
+            <param name="map_RightLowerLeg">(r_lower_leg_fake, XsensSuit::vLink::RightLowerLeg)</param>
+            <param name="map_RightFoot">(r_foot_fake, XsensSuit::vLink::RightFoot)</param>
+            <param name="map_LeftUpperLeg">(l_upper_leg_fake, XsensSuit::vLink::LeftUpperLeg)</param>
+            <param name="map_LeftLowerLeg">(l_lower_leg_fake, XsensSuit::vLink::LeftLowerLeg)</param>
+            <param name="map_LeftFoot">(l_foot_fake, XsensSuit::vLink::LeftFoot)</param>
+        </group>
+        <action phase="startup" level="5" type="attach">
+            <paramlist name="networks">
+                <elem name="HumanStateProviderLabel">XSenseIWearRemapper</elem>
+            </paramlist>
+        </action>
+        <action phase="shutdown" level="5" type="detach"/>
+    </device>
+
+    <device type="human_state_wrapper" name="RobotStateWrapper">
+        <param name="period">0.05</param>
+        <param name="outputPort">/HDE/RobotStateWrapper/state:o</param>
+        <action phase="startup" level="5" type="attach">
+            <paramlist name="networks">
+                <elem name="HumanStateWrapperLabel">RobotStateProvider</elem>
+            </paramlist>
+        </action>
+        <action phase="shutdown" level="5" type="detach"/>
+    </device>
+
+    <device type="human_state_publisher" name="RobotStatePublisher">
+        <param name="period">0.020</param>
+        <param name="baseTFName">/Robot/root_link_fake</param>
+        <param name="humanJointsTopic">/Robot/joint_states</param>
+        <action phase="startup" level="5" type="attach">
+            <paramlist name="networks">
+                <elem name="HumanStatePublisherLabel">RobotStateProvider</elem>
+            </paramlist>
+        </action>
+        <action phase="shutdown" level="5" type="detach"/>
+    </device>
+
+
+</robot>
