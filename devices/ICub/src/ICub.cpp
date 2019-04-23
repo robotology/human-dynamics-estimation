@@ -72,6 +72,8 @@ public:
     class ICubForceTorque6DSensor;
 
     std::vector<std::string> ftSensorNames;
+    std::vector<std::string> ftSensorPortNames;
+    std::vector<WrenchPort*> wrenchPortsVector;
     std::map<std::string, SensorPtr<ICubForceTorque6DSensor>> ftSensorsMap;
 
     WrenchPort leftHandFTPort;
@@ -113,9 +115,12 @@ public:
         , icubImpl(impl)
     {
         // Set the sensor status Ok after receiving the first data on the wrench ports
-        if (!icubImpl->leftHandFTPort.firstRun || !icubImpl->rightHandFTPort.firstRun) {
-            auto nonConstThis = const_cast<ICubForceTorque6DSensor*>(this);
-            nonConstThis->setStatus(wearable::sensor::SensorStatus::Ok);
+        for (size_t n = 0; n < icubImpl->ftSensorNames.size(); n++) {
+            if (this->m_name.find(icubImpl->ftSensorNames.at(n))) {
+                auto nonConstThis = const_cast<ICubForceTorque6DSensor*>(this);
+                nonConstThis->setStatus(wearable::sensor::SensorStatus::Ok);
+                break;
+            }
         }
     }
 
@@ -133,23 +138,13 @@ public:
         std::vector<double> wrench;
 
         // Reading wrench from WBD ports
-        if (this->m_name
-            == icubImpl->wearableName + wearable::Separator
-                   + sensor::IForceTorque6DSensor::getPrefix() + "leftWBDFTSensor") {
-
-            std::lock_guard<std::mutex> lck(icubImpl->leftHandFTPort.mtx);
-            wrench = icubImpl->leftHandFTPort.wrenchValues;
-
-            icubImpl->timeStamp.time = yarp::os::Time::now();
-        }
-        else if (this->m_name
-                 == icubImpl->wearableName + wearable::Separator
-                        + sensor::IForceTorque6DSensor::getPrefix() + "rightWBDFTSensor") {
-
-            std::lock_guard<std::mutex> lck(icubImpl->rightHandFTPort.mtx);
-            wrench = icubImpl->rightHandFTPort.wrenchValues;
-
-            icubImpl->timeStamp.time = yarp::os::Time::now();
+        for (size_t n = 0; n < icubImpl->ftSensorNames.size(); n++) {
+            if (this->m_name.find(icubImpl->ftSensorNames.at(n))) {
+                std::lock_guard<std::mutex> lck(icubImpl->wrenchPortsVector.at(n)->mtx);
+                wrench = icubImpl->wrenchPortsVector.at(n)->wrenchValues;
+                icubImpl->timeStamp.time = yarp::os::Time::now();
+                break;
+            }
         }
 
         // Check the size of wrench values
@@ -321,20 +316,15 @@ bool ICub::open(yarp::os::Searchable& config)
     // CHECK THE CONFIGURATION OPTIONS
     // ===============================
 
-    yarp::os::Bottle wbdHandsFTSensorsGroup = config.findGroup("wbd-hand-ft-sensors");
+    yarp::os::Bottle wbdHandsFTSensorsGroup = config.findGroup("ft-sensors");
     if (wbdHandsFTSensorsGroup.isNull()) {
-        yError() << LogPrefix << "REQUIRED parameter <wbd-hand-ft-sensors> NOT found";
+        yError() << LogPrefix << "REQUIRED parameter <ft-sensors> NOT found";
         return false;
     }
 
-    if (!wbdHandsFTSensorsGroup.check("leftHand") || !wbdHandsFTSensorsGroup.check("rightHand")) {
-        yError() << LogPrefix << "REQUIRED parameter <leftHand> or <rightHand> NOT found";
-        return false;
-    }
-
-    yarp::os::Bottle icubJointSensorGroup = config.findGroup("icub-joint-sensors");
+    yarp::os::Bottle icubJointSensorGroup = config.findGroup("joint-sensors");
     if (icubJointSensorGroup.isNull()) {
-        yError() << LogPrefix << "REQUIRED parameter <icub-joint-sensors> NOT found";
+        yError() << LogPrefix << "REQUIRED parameter <joint-sensors> NOT found";
         return false;
     }
 
@@ -353,57 +343,53 @@ bool ICub::open(yarp::os::Searchable& config)
     // ======================================
 
     pImpl->nSensors = wbdHandsFTSensorsGroup.size() - 1; //Set number of sensors equal to number of ft sensors
-    std::string leftHandFTPortName =
-        wbdHandsFTSensorsGroup.check("leftHand", yarp::os::Value(false)).asString();
-    std::string rightHandFTPortName =
-        wbdHandsFTSensorsGroup.check("rightHand", yarp::os::Value(false)).asString();
+
+    for (size_t n = 1; n <= pImpl->nSensors; n++) {
+        yarp::os::Bottle* param = wbdHandsFTSensorsGroup.get(n).asList();
+        pImpl->ftSensorNames.push_back(param->get(0).asString());
+        pImpl->sensorNames.push_back(param->get(0).asString());
+        pImpl->ftSensorPortNames.push_back(param->get(1).asString());
+    }
 
     // =========================
     // FT Sensors Initialization
     // =========================
 
-    if (!(pImpl->leftHandFTPort.open("/ICub/leftHandFTSensor:i")
-          && yarp::os::Network::connect(leftHandFTPortName,
-                                        pImpl->leftHandFTPort.getName().c_str()))) {
-        yError() << LogPrefix << "Failed to open or connect to "
-                 << pImpl->leftHandFTPort.getName().c_str();
-        return false;
-    }
-
-    pImpl->ftSensorNames.push_back("leftWBDFTSensor");
-    pImpl->sensorNames.push_back("leftWBDFTSensor");
-
-    if (!(pImpl->rightHandFTPort.open("/ICub/rightHandFTSensor:i")
-          && yarp::os::Network::connect(rightHandFTPortName,
-                                        pImpl->rightHandFTPort.getName().c_str()))) {
-        yError() << LogPrefix << "Failed to open or connect to "
-                 << pImpl->rightHandFTPort.getName().c_str();
-        return false;
-    }
-
-    pImpl->ftSensorNames.push_back("rightWBDFTSensor");
-    pImpl->sensorNames.push_back("rightWBDFTSensor");
-
-    // Enable the callback of the ports
-    pImpl->leftHandFTPort.useCallback();
-    pImpl->rightHandFTPort.useCallback();
-
-    // Wait to receive first data
-    while (pImpl->leftHandFTPort.firstRun && pImpl->rightHandFTPort.firstRun) {
-        yarp::os::Time::delay(10);
-    }
-
     std::string ft6dPrefix =
         getWearableName() + wearable::Separator + sensor::IForceTorque6DSensor::getPrefix();
 
-    for (size_t s = 0; s < pImpl->ftSensorNames.size(); ++s) {
+    for (size_t n = 0; n < pImpl->nSensors; n++) {
+
+        WrenchPort *wrenchPort = new WrenchPort;
+
+        if (!(wrenchPort->open("/ICub" + pImpl->ftSensorPortNames.at(n) + ":i")
+              && yarp::os::Network::connect(pImpl->ftSensorPortNames.at(n),
+                                            wrenchPort->getName().c_str()))) {
+            yError() << LogPrefix << "Failed to open " << wrenchPort->getName().c_str() << " port, "
+                                     "or connect to " << pImpl->ftSensorPortNames.at(n);
+            return false;
+        }
+
+        // Enable the callback of the ports
+        wrenchPort->useCallback();
+
+        // Wait to receive first data
+        while (wrenchPort->firstRun) {
+            yarp::os::Time::delay(1);
+        }
+
+        // Push to wrench ports vector
+        pImpl->wrenchPortsVector.push_back(wrenchPort);
+
         // Create the new sensors
         auto ft6d = std::make_shared<ICubImpl::ICubForceTorque6DSensor>(
-            pImpl.get(), ft6dPrefix + pImpl->ftSensorNames[s]);
+            pImpl.get(), ft6dPrefix + pImpl->ftSensorNames[n]);
 
-        pImpl->ftSensorsMap.emplace(ft6dPrefix + pImpl->ftSensorNames[s],
+        pImpl->ftSensorsMap.emplace(ft6dPrefix + pImpl->ftSensorNames[n],
                                     std::shared_ptr<ICubImpl::ICubForceTorque6DSensor>{ft6d});
     }
+
+    yInfo() << "check";
 
     // =========================================
     // PARSE JOINT SENSORS CONFIGURATION OPTIONS
