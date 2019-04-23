@@ -2,6 +2,8 @@
 # This software may be modified and distributed under the terms of the
 # GNU Lesser General Public License v2.1 or any later version.
 
+find_package(iDynTree REQUIRED)
+
 yarp_prepare_plugin(icub_wearable_device
     TYPE wearable::devices::ICub
     INCLUDE ICub.h
@@ -19,7 +21,9 @@ target_include_directories(ICub PRIVATE
 target_link_libraries(ICub PUBLIC
     Wearable::IWear
     YARP::YARP_dev
-    YARP::YARP_init)
+    YARP::YARP_init
+    iDynTree::idyntree-model
+    iDynTree::idyntree-high-level)
 
 yarp_install(
     TARGETS ICub

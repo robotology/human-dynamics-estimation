@@ -74,8 +74,11 @@ public:
     SensorPtr<const sensor::IForceTorque6DSensor>
     getForceTorque6DSensor(const sensor::SensorName name) const override;
 
-    inline SensorPtr<const sensor::IVirtualJointKinSensor>
-    getVirtualJointKinSensor(const sensor::SensorName /*name*/) const override;
+    SensorPtr<const sensor::IVirtualJointKinSensor>
+    getVirtualJointKinSensor(const sensor::SensorName name) const override;
+
+    SensorPtr<const sensor::IVirtualLinkKinSensor>
+    getVirtualLinkKinSensor(const sensor::SensorName name) const override;
 
     // UNIMPLEMENTED SENSORS
     // ---------------------
@@ -94,9 +97,6 @@ public:
 
     inline SensorPtr<const sensor::IPositionSensor>
     getPositionSensor(const sensor::SensorName /*name*/) const override;
-
-    inline SensorPtr<const sensor::IVirtualLinkKinSensor>
-    getVirtualLinkKinSensor(const sensor::SensorName /*name*/) const override;
 
     inline SensorPtr<const sensor::IVirtualSphericalJointKinSensor>
     getVirtualSphericalJointKinSensor(const sensor::SensorName /*name*/) const override;
@@ -150,12 +150,6 @@ wearable::devices::ICub::getPoseSensor(const sensor::SensorName /*name*/) const
 
 inline wearable::SensorPtr<const wearable::sensor::IPositionSensor>
 wearable::devices::ICub::getPositionSensor(const sensor::SensorName /*name*/) const
-{
-    return nullptr;
-}
-
-inline wearable::SensorPtr<const wearable::sensor::IVirtualLinkKinSensor>
-wearable::devices::ICub::getVirtualLinkKinSensor(const sensor::SensorName /*name*/) const
 {
     return nullptr;
 }

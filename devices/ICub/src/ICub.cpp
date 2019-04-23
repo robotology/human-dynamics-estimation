@@ -16,12 +16,18 @@
 #include <yarp/os/Property.h>
 #include <yarp/dev/IEncoders.h>
 #include <yarp/dev/IAxisInfo.h>
+#include <yarp/os/ResourceFinder.h>
+
+#include <iDynTree/Model/Model.h>
+#include <iDynTree/ModelIO/ModelLoader.h>
+#include <iDynTree/KinDynComputations.h>
 
 #include <assert.h>
 #include <map>
 #include <mutex>
 #include <string>
 #include <vector>
+#include <cmath>
 
 using namespace wearable::devices;
 
@@ -60,15 +66,31 @@ public:
 class ICub::ICubImpl
 {
 public:
-    //Generic
+
+    mutable std::mutex mtx;
+
+    // Generic
     const WearableName wearableName = "ICub";
+
+    //Gravity variable
+    iDynTree::Vector3 world_gravity;
+
+    // model
+    iDynTree::Model robotModel;
+    std::string floatingBaseName;
+
+    // kindyn object
+    iDynTree::KinDynComputations kinDynComputations;
+
+    bool updatedLinkQuantities;
+    void computeLinkQuantities();
 
     size_t nSensors;
     std::vector<std::string> sensorNames;
 
     wearable::TimeStamp timeStamp;
 
-    //FT Sensor
+    // FT Sensor
     class ICubForceTorque6DSensor;
 
     std::vector<std::string> ftSensorNames;
@@ -76,16 +98,13 @@ public:
     std::vector<WrenchPort*> wrenchPortsVector;
     std::map<std::string, SensorPtr<ICubForceTorque6DSensor>> ftSensorsMap;
 
-    WrenchPort leftHandFTPort;
-    WrenchPort rightHandFTPort;
-
-    //Joint Sensor
+    // Joint Sensor
     class ICubVirtualJointKinSensor;
 
     std::vector<std::string> jointSensorNames;
     std::map<std::string, SensorPtr<ICubVirtualJointKinSensor>> jointSensorsMap;
 
-    //Vector of motor control boards
+    // Vector of motor control boards
     yarp::os::Property options;
     std::vector<yarp::dev::PolyDriver*> remoteControlBoardsVec;
     std::vector<std::string> controlBoardNamesVec;
@@ -93,6 +112,25 @@ public:
 
     yarp::dev::IEncoders* iEncoders = nullptr;
     yarp::dev::IAxisInfo* iAxisInfo = nullptr;
+
+    // Virtual Link Sensor
+    class ICubVirtualLinkKinSensor;
+
+    std::vector<std::string> linkSensorNames;
+    std::map<std::string, SensorPtr<ICubVirtualLinkKinSensor>> linkSensorsMap;
+
+    // Joint variables
+    iDynTree::VectorDynSize jointPositionsVec;
+    iDynTree::VectorDynSize jointVelocitiesVec;
+    iDynTree::VectorDynSize jointAccelerationsVec;
+
+    // Link variables
+    std::map<std::string, wearable::Vector3>    linkPositionMap;
+    std::map<std::string, wearable::Quaternion> linkOrientationMap;
+    std::map<std::string, wearable::Vector3>    linkLinearVelocityMap;
+    std::map<std::string, wearable::Vector3>    linkAngularVelocityMap;
+    std::map<std::string, wearable::Vector3>    linkLinearAccelerationMap;
+    std::map<std::string, wearable::Vector3>    linkAngularAccelerationMap;
 };
 
 // ==========================================
@@ -180,12 +218,12 @@ public:
     ICub::ICubImpl* icubImpl = nullptr;
 
     yarp::dev::IEncoders* jointIEncoders = nullptr;
-    int                   jointIndex;
+    int jointIndex;
 
-    //Joint Variables
-    double                jointPos;
-    double                jointVel;
-    double                jointAcc;
+    // Joint Variables
+    double jointPos;
+    double jointVel;
+    double jointAcc;
 
     // ------------------------
     // Constructor / Destructor
@@ -198,52 +236,54 @@ public:
         : IVirtualJointKinSensor(name, status)
         , icubImpl(impl)
     {
-        //Get the joint index corresponding to the sensor and the encoders pointer
+        // Get the joint index corresponding to the sensor and the encoders pointer
         size_t boardCount = 0;
         yarp::dev::IEncoders* m_iEncoders = nullptr;
         yarp::dev::IAxisInfo* m_iAxisInfo = nullptr;
 
-        for (const auto& controlBoard :  icubImpl->controlBoardNamesVec) {
-            //Get encoder interface
-            if (!icubImpl->remoteControlBoardsVec.at(boardCount)->view(m_iEncoders) || !m_iEncoders) {
-                yError() << LogPrefix << "Failed to view the IEncoder interface from the " << controlBoard << " remote control board device";
+        for (const auto& controlBoard : icubImpl->controlBoardNamesVec) {
+            // Get encoder interface
+            if (!icubImpl->remoteControlBoardsVec.at(boardCount)->view(m_iEncoders)
+                || !m_iEncoders) {
+                yError() << LogPrefix << "Failed to view the IEncoder interface from the "
+                         << controlBoard << " remote control board device";
             }
 
-            //Get axis info interface
-            if (!icubImpl->remoteControlBoardsVec.at(boardCount)->view(m_iAxisInfo) || !m_iAxisInfo) {
-                yError() << LogPrefix << "Failed to view the IAxisInfo interface from the " << controlBoard << " remote control board device";
+            // Get axis info interface
+            if (!icubImpl->remoteControlBoardsVec.at(boardCount)->view(m_iAxisInfo)
+                || !m_iAxisInfo) {
+                yError() << LogPrefix << "Failed to view the IAxisInfo interface from the "
+                         << controlBoard << " remote control board device";
             }
 
-            //Get joint axes from encoder interface
+            // Get joint axes from encoder interface
             int nJoints;
             m_iEncoders->getAxes(&nJoints);
 
-            //Get axes names
+            // Get axes names
             for (int j = 0; j < nJoints; j++) {
                 std::string axisName;
                 m_iAxisInfo->getAxisName(j, axisName);
-                //Check if the joint name is equal to sensor name
+                // Check if the joint name is equal to sensor name
                 if (this->m_name
-                        == icubImpl->wearableName + wearable::Separator
-                        + sensor::IVirtualJointKinSensor::getPrefix() + axisName) {
-                        this->jointIndex = j;
-                        this->jointIEncoders = m_iEncoders;
-                        break;
+                    == icubImpl->wearableName + wearable::Separator
+                           + sensor::IVirtualJointKinSensor::getPrefix() + axisName) {
+                    this->jointIndex = j;
+                    this->jointIEncoders = m_iEncoders;
+                    break;
                 }
-
             }
 
             boardCount++;
         }
 
-        //Set the sensor status Ok after receiving the first data from joint encoder
-        if (this->jointIEncoders->getEncoder(this->jointIndex, &this->jointPos) &&
-            this->jointIEncoders->getEncoderSpeed(this->jointIndex, &this->jointVel) &&
-            this->jointIEncoders->getEncoderAcceleration(this->jointIndex, &this->jointAcc)) {
+        // Set the sensor status Ok after receiving the first data from joint encoder
+        if (this->jointIEncoders->getEncoder(this->jointIndex, &this->jointPos)
+            && this->jointIEncoders->getEncoderSpeed(this->jointIndex, &this->jointVel)
+            && this->jointIEncoders->getEncoderAcceleration(this->jointIndex, &this->jointAcc)) {
             auto nonConstThis = const_cast<ICubVirtualJointKinSensor*>(this);
             nonConstThis->setStatus(wearable::sensor::SensorStatus::Ok);
         }
-
     }
 
     ~ICubVirtualJointKinSensor() override = default;
@@ -253,7 +293,7 @@ public:
     // ====================================
     // ICubVirtualJointKinSensor interfaces
     // ====================================
-    //ICub joint quantities are in radians
+    // ICub joint quantities are in radians
     bool getJointPosition(double& position) const override
     {
         assert(icubImpl != nullptr);
@@ -291,6 +331,252 @@ public:
     }
 };
 
+void ICub::ICubImpl::computeLinkQuantities()
+{
+    size_t boardCount = 0;
+    int jointIndex = 0;
+    yarp::dev::IEncoders* iEncoders = nullptr;
+    yarp::dev::IAxisInfo* iAxisInfo = nullptr;
+
+    // Clear joint buffers
+    this->jointPositionsVec.zero();
+    this->jointVelocitiesVec.zero();
+    this->jointAccelerationsVec.zero();
+
+    for (const auto& controlBoard : this->controlBoardNamesVec) {
+        // Get encoder interface
+        if (!this->remoteControlBoardsVec.at(boardCount)->view(iEncoders)
+            || !iEncoders) {
+            yError() << LogPrefix << "Failed to view the IEncoder interface from the "
+                     << controlBoard << " remote control board device";
+        }
+
+        // Get axis info interface
+        if (!this->remoteControlBoardsVec.at(boardCount)->view(iAxisInfo)
+            || !iAxisInfo) {
+            yError() << LogPrefix << "Failed to view the IAxisInfo interface from the "
+                     << controlBoard << " remote control board device";
+        }
+
+        // Get joint axes from encoder interface
+        int nJoints;
+        iEncoders->getAxes(&nJoints);
+
+        // Get axes names
+        for (int j = 0; j < nJoints; j++) {
+            std::string axisName;
+            iAxisInfo->getAxisName(j, axisName);
+
+            // Store the joint quantities
+            double position;
+            double velocity;
+            double acceleration;
+
+            // Get joint quantities
+            iEncoders->getEncoder(j, &position);
+            iEncoders->getEncoderSpeed(j, &velocity);
+            iEncoders->getEncoderAcceleration(j, &acceleration);
+
+            if (this->robotModel.getJointIndex(axisName) != iDynTree::JOINT_INVALID_INDEX) {
+
+                // Update the joint buffers
+                this->jointPositionsVec.setVal(jointIndex, position*(M_PI/180));
+                this->jointVelocitiesVec.setVal(jointIndex, velocity*(M_PI/180));
+                this->jointAccelerationsVec.setVal(jointIndex, acceleration*(M_PI/180));
+
+                jointIndex++;
+
+            }
+
+        }
+
+        boardCount++;
+    }
+
+    // Set floating base
+    this->kinDynComputations.setFloatingBase(this->floatingBaseName);
+
+    // Set robot state
+    this->kinDynComputations.setRobotState(iDynTree::Transform::Identity(),
+                                           this->jointPositionsVec,
+                                           iDynTree::Twist::Zero(),
+                                           this->jointVelocitiesVec,
+                                           this->world_gravity);
+
+    // Clear link variables
+    this->linkPositionMap.clear();
+    this->linkOrientationMap.clear();
+    this->linkLinearVelocityMap.clear();
+    this->linkAngularVelocityMap.clear();
+
+    {
+        std::lock_guard<std::mutex> lock(this->mtx);
+        for (size_t l = 0; l < this->robotModel.getNrOfLinks(); l++)
+        {
+            // Get link name
+            std::string linkName = this->robotModel.getFrameName(l);
+            // Get link pose
+            iDynTree::Transform linkTransform;
+            linkTransform = this->kinDynComputations.getRelativeTransform(this->floatingBaseName,
+                                                                          linkName);
+
+            iDynTree::Position position = linkTransform.getPosition();
+            iDynTree::Vector4 orientation = linkTransform.getRotation().asQuaternion(); // format: w x y z
+
+            wearable::Vector3 linkPosition;
+            linkPosition.at(0) =  position.getVal(0);
+            linkPosition.at(1) =  position.getVal(1);
+            linkPosition.at(2) =  position.getVal(2);
+
+            this->linkPositionMap.emplace(linkName, linkPosition);
+
+            wearable::Quaternion linkOrientation;
+            //TODO: Double check quaternion handling
+            linkOrientation.at(0) = orientation.getVal(0);
+            linkOrientation.at(1) = orientation.getVal(1);
+            linkOrientation.at(2) = orientation.getVal(2);
+            linkOrientation.at(3) = orientation.getVal(3);
+
+            this->linkOrientationMap.emplace(linkName, linkOrientation);
+
+            // Get link velocity
+            //TODO
+            wearable::Vector3 linkLinearVelocity;
+            wearable::Vector3 linkAngularVelocity;
+
+            linkLinearVelocity.fill(0.0);
+            linkAngularVelocity.fill(0.0);
+
+            this->linkLinearVelocityMap.emplace(linkName, linkLinearVelocity);
+            this->linkAngularVelocityMap.emplace(linkName, linkAngularVelocity);
+
+            // Get link acceleration
+            //TODO
+            wearable::Vector3 linkLinearAcceleration;
+            wearable::Vector3 linkAngularAcceleration;
+
+            linkLinearAcceleration.fill(0.0);
+            linkAngularAcceleration.fill(0.0);
+
+            this->linkLinearAccelerationMap.emplace(linkName, linkLinearAcceleration);
+            this->linkAngularAccelerationMap.emplace(linkName, linkAngularAcceleration);
+        }
+    }
+
+}
+
+// ===========================================
+// ICub implementation of VirtualLinkKinsensor
+// ===========================================
+
+class ICub::ICubImpl::ICubVirtualLinkKinSensor : public wearable::sensor::IVirtualLinkKinSensor
+{
+public:
+    ICub::ICubImpl* icubImpl = nullptr;
+
+    // Constructor
+    ICubVirtualLinkKinSensor(
+        ICub::ICubImpl* impl,
+        const wearable::sensor::SensorName name = {},
+        const wearable::sensor::SensorStatus status =
+            wearable::sensor::SensorStatus::WaitingForFirstRead) // Default sensor status
+        : IVirtualLinkKinSensor(name, status)
+        , icubImpl(impl)
+    {
+        //TODO: Check if any other sensor checks can be used
+        auto nonConstThis = const_cast<ICubVirtualLinkKinSensor*>(this);
+        nonConstThis->setStatus(wearable::sensor::SensorStatus::Ok);
+    }
+
+    // Destructor
+    ~ICubVirtualLinkKinSensor() override = default;
+
+    // -------------------------------
+    // IVirtualLinkKinSensor interface
+    // -------------------------------
+
+    bool getLinkAcceleration(Vector3& linear, Vector3& angular) const override
+    {
+        if (icubImpl->linkSensorsMap.find(this->m_name)
+            == icubImpl->linkSensorsMap.end()) {
+            yError() << LogPrefix << "Sensor" << this->m_name << "NOT found";
+            linear.fill(0.0);
+            angular.fill(0.0);
+            return false;
+        }
+
+        //TODO: Do a dummy implementation later
+        linear.fill(0.0);
+        angular.fill(0.0);
+        return true;
+    }
+
+    bool getLinkPose(Vector3& position, Quaternion& orientation) const override
+    {
+        if (icubImpl->linkSensorsMap.find(this->m_name)
+            == icubImpl->linkSensorsMap.end()) {
+            yError() << LogPrefix << "Sensor" << this->m_name << "NOT found";
+            position.fill(0.0);
+            orientation.fill(0.0);
+            return false;
+        }
+
+        // Call link quantities computation
+        //TODO: This call has to be handled differently
+        icubImpl->computeLinkQuantities();
+
+        // Get link name
+        size_t found = this->m_name.find_last_of(":");
+        std::string linkName = this->m_name.substr(found+1);
+
+        {
+            // Get link position
+            std::lock_guard<std::mutex> lock(icubImpl->mtx);
+            if (icubImpl->linkPositionMap.find(linkName) == icubImpl->linkPositionMap.end()) {
+                yError() << LogPrefix << "Link " << linkName << "not found in link position map";
+                position.fill(0.0);
+                return false;
+            }
+
+            auto linkPos = icubImpl->linkPositionMap.find(linkName);
+            position = linkPos->second;
+
+            // Get link orientation
+            if (icubImpl->linkOrientationMap.find(linkName) == icubImpl->linkOrientationMap.end()) {
+                yError() << LogPrefix << "Link " << linkName << "not found in link orientation map";
+                orientation.fill(0.0);
+                return false;
+            }
+
+            auto linkOri = icubImpl->linkOrientationMap.find(linkName);
+            orientation = linkOri->second;
+        }
+
+        return true;
+    }
+
+    bool getLinkVelocity(Vector3& linear, Vector3& angular) const override
+    {
+        if (icubImpl->linkSensorsMap.find(this->m_name)
+            == icubImpl->linkSensorsMap.end()) {
+            yError() << LogPrefix << "Sensor" << this->m_name << "NOT found";
+            linear.fill(0.0);
+            angular.fill(0.0);
+            return false;
+        }
+
+        //TODO: Do the implementation using kindyn
+        linear.fill(0.0);
+        angular.fill(0.0);
+        return true;
+    }
+
+    // ------------------------
+    // Custom utility functions
+    // ------------------------
+    inline void setStatus(const wearable::sensor::SensorStatus aStatus) { m_status = aStatus; }
+};
+
 // ==========================================
 // ICub constructor/destructor implementation
 // ==========================================
@@ -307,6 +593,10 @@ bool ICub::open(yarp::os::Searchable& config)
 {
     yInfo() << LogPrefix << "Starting to configure";
 
+    // Set gravity vector
+    pImpl->world_gravity.zero();
+    pImpl->world_gravity.setVal(2, -9.81);
+
     // Configure clock
     if (!yarp::os::Time::isSystemClock()) {
         yarp::os::Time::useSystemClock();
@@ -315,6 +605,16 @@ bool ICub::open(yarp::os::Searchable& config)
     // ===============================
     // CHECK THE CONFIGURATION OPTIONS
     // ===============================
+
+    if (!(config.check("urdf") && config.find("urdf").isString())) {
+        yError() << LogPrefix << "urdf option not found or not valid";
+        return false;
+    }
+
+    if (!(config.check("floatingBase") && config.find("floatingBase").isString())) {
+        yError() << LogPrefix << "floatingBase option not found or not valid";
+        return false;
+    }
 
     yarp::os::Bottle wbdHandsFTSensorsGroup = config.findGroup("ft-sensors");
     if (wbdHandsFTSensorsGroup.isNull()) {
@@ -338,11 +638,44 @@ bool ICub::open(yarp::os::Searchable& config)
         return false;
     }
 
+    // ==========================
+    // INITIALIZE THE ROBOT MODEL
+    // ==========================
+
+    const std::string urdfFileName = config.find("urdf").asString();
+
+    auto& rf = yarp::os::ResourceFinder::getResourceFinderSingleton();
+    std::string urdfFilePath = rf.findFile(urdfFileName);
+    if (urdfFilePath.empty()) {
+        yError() << LogPrefix << "Failed to find file" << config.find("urdf").asString();
+        return false;
+    }
+
+    iDynTree::ModelLoader modelLoader;
+    if (!modelLoader.loadModelFromFile(urdfFilePath) || !modelLoader.isValid()) {
+        yError() << LogPrefix << "Failed to load model" << urdfFilePath;
+        return false;
+    }
+
+    pImpl->floatingBaseName = config.find("floatingBase").asString();
+
+    // Get the model from the loader
+    pImpl->robotModel = modelLoader.model();
+
+    // Set the model to kindyn object
+    pImpl->kinDynComputations.loadRobotModel(pImpl->robotModel);
+
+    // Initialize joint quantities size
+    pImpl->jointPositionsVec.resize(pImpl->robotModel.getNrOfDOFs());
+    pImpl->jointVelocitiesVec.resize(pImpl->robotModel.getNrOfDOFs());
+    pImpl->jointAccelerationsVec.resize(pImpl->robotModel.getNrOfDOFs());
+
     // ======================================
     // PARSE FT SENSORS CONFIGURATION OPTIONS
     // ======================================
 
-    pImpl->nSensors = wbdHandsFTSensorsGroup.size() - 1; //Set number of sensors equal to number of ft sensors
+    pImpl->nSensors =
+        wbdHandsFTSensorsGroup.size() - 1; // Set number of sensors equal to number of ft sensors
 
     for (size_t n = 1; n <= pImpl->nSensors; n++) {
         yarp::os::Bottle* param = wbdHandsFTSensorsGroup.get(n).asList();
@@ -360,13 +693,15 @@ bool ICub::open(yarp::os::Searchable& config)
 
     for (size_t n = 0; n < pImpl->nSensors; n++) {
 
-        WrenchPort *wrenchPort = new WrenchPort;
+        WrenchPort* wrenchPort = new WrenchPort;
 
         if (!(wrenchPort->open("/ICub" + pImpl->ftSensorPortNames.at(n) + ":i")
               && yarp::os::Network::connect(pImpl->ftSensorPortNames.at(n),
                                             wrenchPort->getName().c_str()))) {
-            yError() << LogPrefix << "Failed to open " << wrenchPort->getName().c_str() << " port, "
-                                     "or connect to " << pImpl->ftSensorPortNames.at(n);
+            yError() << LogPrefix << "Failed to open " << wrenchPort->getName().c_str()
+                     << " port, "
+                        "or connect to "
+                     << pImpl->ftSensorPortNames.at(n);
             return false;
         }
 
@@ -381,12 +716,12 @@ bool ICub::open(yarp::os::Searchable& config)
         // Push to wrench ports vector
         pImpl->wrenchPortsVector.push_back(wrenchPort);
 
-        // Create the new sensors
+        // Create the new ft6d sensors
         auto ft6d = std::make_shared<ICubImpl::ICubForceTorque6DSensor>(
             pImpl.get(), ft6dPrefix + pImpl->ftSensorNames[n]);
 
         pImpl->ftSensorsMap.emplace(ft6dPrefix + pImpl->ftSensorNames[n],
-                                    std::shared_ptr<ICubImpl::ICubForceTorque6DSensor>{ft6d});
+                                    SensorPtr<ICubImpl::ICubForceTorque6DSensor>{ft6d});
     }
 
     yInfo() << "check";
@@ -395,7 +730,7 @@ bool ICub::open(yarp::os::Searchable& config)
     // PARSE JOINT SENSORS CONFIGURATION OPTIONS
     // =========================================
 
-    //Get control board list
+    // Get control board list
     int controlBoardsListIndex;
     bool controlBoardsListExists = false;
     for (size_t i = 0; i < icubJointSensorGroup.size(); i++) {
@@ -413,13 +748,17 @@ bool ICub::open(yarp::os::Searchable& config)
         return false;
     }
 
-    yarp::os::Bottle* controlBoardsListParam = icubJointSensorGroup.get(controlBoardsListIndex).asList();
-    yarp::os::Bottle *controlBoardList = controlBoardsListParam->get(1).asList();
+    yarp::os::Bottle* controlBoardsListParam =
+        icubJointSensorGroup.get(controlBoardsListIndex).asList();
+    yarp::os::Bottle* controlBoardList = controlBoardsListParam->get(1).asList();
 
-    std::string remotePrefix = icubJointSensorGroup.check("remotePrefix", yarp::os::Value(false)).asString();
-    std::string localPrefix = icubJointSensorGroup.check("localPrefix", yarp::os::Value(false)).asString();
+    std::string remotePrefix =
+        icubJointSensorGroup.check("remotePrefix", yarp::os::Value(false)).asString();
+    std::string localPrefix =
+        icubJointSensorGroup.check("localPrefix", yarp::os::Value(false)).asString();
 
-    yInfo() << LogPrefix << "Control boards list         : " << controlBoardList->toString().c_str();
+    yInfo() << LogPrefix
+            << "Control boards list         : " << controlBoardList->toString().c_str();
     yInfo() << LogPrefix << "Remote control board prefix : " << remotePrefix;
     yInfo() << LogPrefix << "Local control board prefix  : " << localPrefix;
 
@@ -427,50 +766,55 @@ bool ICub::open(yarp::os::Searchable& config)
     // Joint Sensors Initialization
     // ============================
 
-    //Resize control board variables
+    // Resize control board variables
     pImpl->controlBoardNamesVec.resize(controlBoardList->size());
     pImpl->controlBoardJointsVec.resize(controlBoardList->size());
     pImpl->remoteControlBoardsVec.resize(controlBoardList->size());
 
-    //Set control board names
+    // Set control board names
     for (unsigned index = 0; index < controlBoardList->size(); index++) {
         std::string controlBoardName = controlBoardList->get(index).asString();
         pImpl->controlBoardNamesVec.at(index) = controlBoardName;
     }
 
-    //Initialize remote control boards
+    // Initialize remote control boards
     size_t boardCount = 0;
     for (const auto& controlBoard : pImpl->controlBoardNamesVec) {
         pImpl->options.put("device", "remote_controlboard");
         pImpl->options.put("remote", remotePrefix + "/" + controlBoard);
         pImpl->options.put("local", localPrefix + "/" + controlBoard);
 
-        //Open remote control board
+        // Open remote control board
         pImpl->remoteControlBoardsVec.at(boardCount) = new yarp::dev::PolyDriver;
         pImpl->remoteControlBoardsVec.at(boardCount)->open(pImpl->options);
 
         if (!pImpl->remoteControlBoardsVec.at(boardCount)->isValid()) {
-            yError() << LogPrefix << "Failed to open the remote control board device for " << controlBoard << " part";
+            yError() << LogPrefix << "Failed to open the remote control board device for "
+                     << controlBoard << " part";
             return false;
         }
 
-        //Get encoder interface
-        if (!pImpl->remoteControlBoardsVec.at(boardCount)->view(pImpl->iEncoders) || !pImpl->iEncoders) {
-            yError() << LogPrefix << "Failed to view the IEncoder interface from the " << controlBoard << " remote control board device";
+        // Get encoder interface
+        if (!pImpl->remoteControlBoardsVec.at(boardCount)->view(pImpl->iEncoders)
+            || !pImpl->iEncoders) {
+            yError() << LogPrefix << "Failed to view the IEncoder interface from the "
+                     << controlBoard << " remote control board device";
             return false;
         }
 
-        //Get axis info interface
-        if (!pImpl->remoteControlBoardsVec.at(boardCount)->view(pImpl->iAxisInfo) || !pImpl->iAxisInfo) {
-            yError() << LogPrefix << "Failed to view the IAxisInfo interface from the " << controlBoard << " remote control board device";
+        // Get axis info interface
+        if (!pImpl->remoteControlBoardsVec.at(boardCount)->view(pImpl->iAxisInfo)
+            || !pImpl->iAxisInfo) {
+            yError() << LogPrefix << "Failed to view the IAxisInfo interface from the "
+                     << controlBoard << " remote control board device";
             return false;
         }
 
-        //Get joint axes from encoder interface
+        // Get joint axes from encoder interface
         int remoteControlBoardJoints;
         pImpl->iEncoders->getAxes(&remoteControlBoardJoints);
 
-        //Get axes names and pad to sensor names
+        // Get axes names and pad to sensor names
         for (int j = 0; j < remoteControlBoardJoints; j++) {
             std::string axisName;
             pImpl->iAxisInfo->getAxisName(j, axisName);
@@ -478,28 +822,57 @@ bool ICub::open(yarp::os::Searchable& config)
             pImpl->sensorNames.push_back(axisName);
         }
 
-        //Update control board joints vector
+        // Update control board joints vector
         pImpl->controlBoardJointsVec.at(boardCount) = remoteControlBoardJoints;
 
-        //Update the number of sensors
+        // Update the number of sensors
         pImpl->nSensors = pImpl->nSensors + remoteControlBoardJoints;
 
         pImpl->options.clear();
         boardCount++;
     }
 
-    //Get joint sensor prefix
+    // Get joint sensor prefix
     std::string jointSensorPrefix =
         getWearableName() + wearable::Separator + sensor::IVirtualJointKinSensor::getPrefix();
 
     for (size_t s = 0; s < pImpl->jointSensorNames.size(); s++) {
-        // Create the new sensors
+        // Create the new joint sensors
         auto jointsensor = std::make_shared<ICubImpl::ICubVirtualJointKinSensor>(
             pImpl.get(), jointSensorPrefix + pImpl->jointSensorNames[s]);
 
-        pImpl->jointSensorsMap.emplace(jointSensorPrefix + pImpl->jointSensorNames[s],
-                                       std::shared_ptr<ICubImpl::ICubVirtualJointKinSensor>{jointsensor});
+        pImpl->jointSensorsMap.emplace(
+            jointSensorPrefix + pImpl->jointSensorNames[s],
+            SensorPtr<ICubImpl::ICubVirtualJointKinSensor>{jointsensor});
     }
+
+    // ============================
+    // Link Sensors Initialization
+    // ============================
+
+    // Set the size of joint variables
+    pImpl->jointPositionsVec.resize(pImpl->robotModel.getNrOfDOFs());
+    pImpl->jointVelocitiesVec.resize(pImpl->robotModel.getNrOfDOFs());
+
+    // Update the number of sensors
+    pImpl->nSensors = pImpl->nSensors + pImpl->robotModel.getNrOfLinks();
+
+    // Get joint sensor prefix
+    std::string linkSensorPrefix =
+        getWearableName() + wearable::Separator + sensor::IVirtualLinkKinSensor::getPrefix();
+
+    for (size_t l = 0; l < pImpl->robotModel.getNrOfLinks(); l++) {
+        //create the new link sensors
+        auto linksensor = std::make_shared<ICubImpl::ICubVirtualLinkKinSensor>(
+                    pImpl.get(), linkSensorPrefix + pImpl->robotModel.getLinkName(l));
+
+        pImpl->linkSensorsMap.emplace(
+                    linkSensorPrefix + pImpl->robotModel.getLinkName(l),
+                    SensorPtr<ICubImpl::ICubVirtualLinkKinSensor>{linksensor});
+    }
+
+    // Initialize link quantities flag
+    pImpl->updatedLinkQuantities = false;
 
     return true;
 }
@@ -521,7 +894,6 @@ wearable::WearStatus ICub::getStatus() const
         if (s->getSensorStatus() != sensor::SensorStatus::Ok) {
             status = wearable::WearStatus::Error;
         }
-
     }
 
     // Default return status is Ok
@@ -578,9 +950,16 @@ ICub::getSensors(const wearable::sensor::SensorType type) const
 
             break;
         }
-        case sensor::SensorType::VirtualJointKinSensor : {
+        case sensor::SensorType::VirtualJointKinSensor: {
             for (const auto& jointSensor : pImpl->jointSensorsMap) {
                 outVec.push_back(static_cast<SensorPtr<sensor::ISensor>>(jointSensor.second));
+            }
+
+            break;
+        }
+        case sensor::SensorType::VirtualLinkKinSensor: {
+            for (const auto& linkSensor : pImpl->linkSensorsMap) {
+                outVec.push_back(static_cast<SensorPtr<sensor::ISensor>>(linkSensor.second));
             }
 
             break;
@@ -607,7 +986,8 @@ ICub::getForceTorque6DSensor(const wearable::sensor::SensorName name) const
     }
 
     // Return a shared point to the required sensor
-    return dynamic_cast<wearable::SensorPtr<const wearable::sensor::IForceTorque6DSensor>&>(*pImpl->ftSensorsMap.at(name));
+    return dynamic_cast<wearable::SensorPtr<const wearable::sensor::IForceTorque6DSensor>&>(
+        *pImpl->ftSensorsMap.at(name));
 }
 
 // ------------
@@ -624,5 +1004,24 @@ ICub::getVirtualJointKinSensor(const wearable::sensor::SensorName name) const
     }
 
     // Return a shared point to the required sensor
-    return dynamic_cast<wearable::SensorPtr<const wearable::sensor::IVirtualJointKinSensor>&>(*pImpl->jointSensorsMap.at(name));
+    return dynamic_cast<wearable::SensorPtr<const wearable::sensor::IVirtualJointKinSensor>&>(
+        *pImpl->jointSensorsMap.at(name));
+}
+
+// ------------
+// LINK Sensor
+// ------------
+
+wearable::SensorPtr<const wearable::sensor::IVirtualLinkKinSensor>
+ICub::getVirtualLinkKinSensor(const wearable::sensor::SensorName name) const
+{
+    // Check if user-provided name corresponds to an available sensor
+    if (pImpl->linkSensorsMap.find(name) == pImpl->linkSensorsMap.end()) {
+        yError() << LogPrefix << "Invalid sensor name";
+        return nullptr;
+    }
+
+    // Return a shared point to the required sensor
+    return dynamic_cast<wearable::SensorPtr<const wearable::sensor::IVirtualLinkKinSensor>&>(
+        *pImpl->linkSensorsMap.at(name));
 }

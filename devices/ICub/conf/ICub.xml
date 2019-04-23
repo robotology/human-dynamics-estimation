@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <robot name="ICub">
     <device type="icub_wearable_device" name="ICubWearableDevice">
+        <param name="urdf">model.urdf</param>
+        <param name="floatingBase">root_link</param>
         <group name="ft-sensors">
             <param name="leftHandWBDFTSensor">/wholeBodyDynamics/left_arm/endEffectorWrench:o</param>
             <param name="rightHandWBDFTSensor">/wholeBodyDynamics/right_arm/endEffectorWrench:o</param>
