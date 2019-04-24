@@ -179,6 +179,8 @@ public:
     double angVelTargetWeight;
     double costRegularization;
 
+    double integrationBasedIKMeasuredLinearVelocityGain;
+    double integrationBasedIKMeasuredAngularVelocityGain;
     double integrationBasedIKLinearCorrectionGain;
     double integrationBasedIKAngularCorrectionGain;
     double integrationBasedIKIntegralLinearCorrectionGain;
@@ -471,6 +473,13 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
 
     if (pImpl->ikSolver == SolverIK::integrationbased)
     {
+        if (!(config.check("integrationBasedIKMeasuredVelocityGainLinRot") && config.find("integrationBasedIKMeasuredVelocityGainLinRot").isList()
+              && config.find("integrationBasedIKMeasuredVelocityGainLinRot").asList()->size() == 2)) {
+            yError() << LogPrefix
+                     << "integrationBasedIKMeasuredVelocityGainLinRot option not found or not valid";
+            return false;
+        }
+
         if (!(config.check("integrationBasedIKCorrectionGainsLinRot") && config.find("integrationBasedIKCorrectionGainsLinRot").isList()
               && config.find("integrationBasedIKCorrectionGainsLinRot").asList()->size() == 2)) {
             yError() << LogPrefix
@@ -488,10 +497,16 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
             return false;
         }
 
+        yarp::os::Bottle* integrationBasedIKMeasuredVelocityGainLinRot =
+            config.find("integrationBasedIKMeasuredVelocityGainLinRot").asList();
         yarp::os::Bottle* integrationBasedIKCorrectionGainsLinRot =
             config.find("integrationBasedIKCorrectionGainsLinRot").asList();
         yarp::os::Bottle* integrationBasedIKIntegralCorrectionGainsLinRot =
             config.find("integrationBasedIKIntegralCorrectionGainsLinRot").asList();
+        pImpl->integrationBasedIKMeasuredLinearVelocityGain =
+            integrationBasedIKMeasuredVelocityGainLinRot->get(0).asFloat64();
+        pImpl->integrationBasedIKMeasuredAngularVelocityGain =
+            integrationBasedIKMeasuredVelocityGainLinRot->get(0).asFloat64();
         pImpl->integrationBasedIKLinearCorrectionGain =
             integrationBasedIKCorrectionGainsLinRot->get(0).asFloat64();
         pImpl->integrationBasedIKAngularCorrectionGain =
@@ -526,6 +541,8 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     }
     if (pImpl->ikSolver == SolverIK::integrationbased)
     {
+        yInfo() << LogPrefix << "*** Measured Linear velocity gain    :" << pImpl->integrationBasedIKMeasuredLinearVelocityGain;
+        yInfo() << LogPrefix << "*** Measured Angular velocity gain   :" << pImpl->integrationBasedIKMeasuredAngularVelocityGain;
         yInfo() << LogPrefix << "*** Linear correction gain           :" << pImpl->integrationBasedIKLinearCorrectionGain;
         yInfo() << LogPrefix << "*** Angular correction gain          :" << pImpl->integrationBasedIKAngularCorrectionGain;
         yInfo() << LogPrefix << "*** Linear integral correction gain  :" << pImpl->integrationBasedIKIntegralLinearCorrectionGain;
@@ -565,6 +582,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     pImpl->kinDynComputations =
         std::unique_ptr<iDynTree::KinDynComputations>(new iDynTree::KinDynComputations());
     pImpl->kinDynComputations->loadRobotModel(modelLoader.model());
+    pImpl->kinDynComputations->setFloatingBase(pImpl->floatingBaseFrame.model);
 
     // =========================
     // INITIALIZE JOINTS BUFFERS
@@ -581,6 +599,8 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
 
     pImpl->jointVelocitiesSolution.resize(nrOfDOFs);
     pImpl->jointVelocitiesSolution.zero();
+
+    pImpl->baseTransformSolution.setRotation(iDynTree::Rotation::Identity());
 
     // ====================================
     // INITIALIZE INVERSE KINEMATICS SOLVER
@@ -1290,13 +1310,13 @@ bool HumanStateProvider::impl::solveIntegrationBasedInverseKinematics()
            linearVelocityError = computations->getWorldTransform(humanModel.getFrameIndex(linkName)).getPosition() - linkTransformMatrices[linkName].getPosition();
            iDynTree::toEigen(integralLinearVelocityError) = iDynTree::toEigen(integralLinearVelocityError) +  iDynTree::toEigen(linearVelocityError) * dt;
            for (int i=0; i<3; i++) {
-               linkVelocities[linkName].setVal(i, 0 * linkVelocities[linkName].getVal(i) - integrationBasedIKLinearCorrectionGain * linearVelocityError.getVal(i) - integrationBasedIKIntegralLinearCorrectionGain * integralLinearVelocityError.getVal(i));
+               linkVelocities[linkName].setVal(i, integrationBasedIKMeasuredLinearVelocityGain * linkVelocities[linkName].getVal(i) - integrationBasedIKLinearCorrectionGain * linearVelocityError.getVal(i) - integrationBasedIKIntegralLinearCorrectionGain * integralLinearVelocityError.getVal(i));
            }
         }
 
         // correct the links angular velocities
         for (int i=3; i<6; i++) {
-            linkVelocities[linkName].setVal(i, 0 * linkVelocities[linkName].getVal(i) -  integrationBasedIKAngularCorrectionGain * angularVelocityError.getVal(i-3) -  integrationBasedIKIntegralAngularCorrectionGain  * integralOrientationError.getVal(i-3));
+            linkVelocities[linkName].setVal(i, integrationBasedIKMeasuredAngularVelocityGain * linkVelocities[linkName].getVal(i) -  integrationBasedIKAngularCorrectionGain * angularVelocityError.getVal(i-3) -  integrationBasedIKIntegralAngularCorrectionGain  * integralOrientationError.getVal(i-3));
         }
     }
 

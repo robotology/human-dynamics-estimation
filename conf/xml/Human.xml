@@ -37,7 +37,8 @@
         <param name="linVelTargetWeight">0.0</param>
         <param name="angVelTargetWeight">1.0</param>
         <!-- integration based IK parameters -->
-        <param name="integrationBasedIKCorrectionGainsLinRot">(5.0 5.0)</param>
+        <param name="integrationBasedIKMeasuredVelocityGainLinRot">(0.1 0.1)</param>
+        <param name="integrationBasedIKCorrectionGainsLinRot">(8.0 8.0)</param>
         <param name="integrationBasedIKIntegralCorrectionGainsLinRot">(0.0 0.0)</param>
         <group name="MODEL_TO_DATA_LINK_NAMES">
             <param name="map_Pelvis">(Pelvis, XsensSuit::vLink::Pelvis)</param>
