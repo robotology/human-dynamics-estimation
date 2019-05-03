@@ -212,16 +212,6 @@ bool HumanControlBoard::attach(yarp::dev::PolyDriver* poly)
         yInfo() << LogPrefix << deviceName << "attach() successful";
     }
 
-    // ====
-    // MISC
-    // ====
-
-    // Start the PeriodicThread loop
-    if (!start()) {
-        yError() << LogPrefix << "Failed to start the loop";
-        return false;
-    }
-
     return true;
 }
 
@@ -235,7 +225,7 @@ bool HumanControlBoard::detach()
 
 bool HumanControlBoard::attachAll(const yarp::dev::PolyDriverList& driverList)
 {
-    bool attachStatus = false;
+    bool attachStatus = true;
     if (driverList.size() > 2) {
         yError() << LogPrefix << "This wrapper accepts only two attached PolyDriver";
         return false;
@@ -249,7 +239,17 @@ bool HumanControlBoard::attachAll(const yarp::dev::PolyDriverList& driverList)
             return false;
         }
 
-        attachStatus = attach(driver->poly);
+        attachStatus = attachStatus && attach(driver->poly);
+    }
+
+    // ====
+    // MISC
+    // ====
+
+    // Start the PeriodicThread loop
+    if (attachStatus && !start()) {
+        yError() << LogPrefix << "Failed to start the loop";
+        return false;
     }
 
     return attachStatus;

@@ -949,6 +949,8 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
     pImpl->berdyData.state.jointsAcceleration = iDynTree::JointDOFsDoubleArray(pImpl->berdyData.helper.model());
     pImpl->berdyData.state.jointsAcceleration.zero();
 
+    pImpl->berdyData.state.baseAngularVelocity.zero();
+
     // Set joint torque estimates size and initialize to zero
     pImpl->berdyData.estimates.jointTorqueEstimates = iDynTree::JointDOFsDoubleArray(pImpl->berdyData.helper.model());
     pImpl->berdyData.estimates.jointTorqueEstimates.zero();
@@ -1247,21 +1249,11 @@ bool HumanDynamicsEstimator::attach(yarp::dev::PolyDriver* poly)
         // Check the interface
         if (pImpl->iHumanWrench->getNumberOfWrenchSources() == 0
                 || pImpl->iHumanWrench->getNumberOfWrenchSources() != pImpl->iHumanWrench->getWrenchSourceNames().size()) {
-            yError() << "The IHumanState interface might not be ready";
+            yError() << "The IHumanWrench interface might not be ready";
             return false;
         }
 
         yInfo() << LogPrefix << deviceName << "attach() successful";
-    }
-
-    // ====
-    // MISC
-    // ====
-
-    // Start the PeriodicThread loop
-    if (!start()) {
-        yError() << LogPrefix << "Failed to start the loop.";
-        return false;
     }
 
     return true;
@@ -1270,6 +1262,7 @@ bool HumanDynamicsEstimator::attach(yarp::dev::PolyDriver* poly)
 bool HumanDynamicsEstimator::detach()
 {
     pImpl->iHumanState = nullptr;
+    pImpl->iHumanWrench = nullptr;
     pImpl->iAnalogSensor = nullptr;
     stop();
     return true;
@@ -1277,7 +1270,7 @@ bool HumanDynamicsEstimator::detach()
 
 bool HumanDynamicsEstimator::attachAll(const yarp::dev::PolyDriverList& driverList)
 {
-    bool attachStatus = false;
+    bool attachStatus = true;
     if (driverList.size() > 2) {
         yError() << LogPrefix << "This wrapper accepts only two attached PolyDriver";
         return false;
@@ -1291,7 +1284,17 @@ bool HumanDynamicsEstimator::attachAll(const yarp::dev::PolyDriverList& driverLi
             return false;
         }
 
-        attachStatus = attach(driver->poly);
+        attachStatus = attachStatus && attach(driver->poly);
+    }
+
+    // ====
+    // MISC
+    // ====
+
+    // Start the PeriodicThread loop
+    if (attachStatus && !start()) {
+        yError() << LogPrefix << "Failed to start the loop.";
+        return false;
     }
 
     return attachStatus;
