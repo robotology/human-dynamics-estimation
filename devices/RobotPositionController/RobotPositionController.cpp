@@ -77,9 +77,7 @@ RobotPositionController::RobotPositionController()
 {}
 
 RobotPositionController::~RobotPositionController()
-{
-    detachAll();
-}
+{}
 
 bool RobotPositionController::open(yarp::os::Searchable& config)
 {
@@ -276,8 +274,7 @@ bool RobotPositionController::close()
     for(auto& board : pImpl->remoteControlBoards) {
         board->close();
     }
-    yarp::os::PeriodicThread::stop();
-    detachAll();
+
     return true;
 }
 
@@ -432,6 +429,9 @@ bool RobotPositionController::attach(yarp::dev::PolyDriver* poly)
     return true;
 }
 
+void RobotPositionController::threadRelease()
+{}
+
 bool RobotPositionController::detach()
 {
     // Set the position control mode
@@ -458,6 +458,10 @@ bool RobotPositionController::detach()
             pImpl->iControlMode->setControlMode(joint,VOCAB_CM_POSITION);
         }
 
+    }
+
+    while (isRunning()) {
+        yarp::os::PeriodicThread::stop();
     }
 
     pImpl->iHumanState       = nullptr;

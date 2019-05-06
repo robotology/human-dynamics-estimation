@@ -1052,8 +1052,6 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
 
 bool HumanDynamicsEstimator::close()
 {
-    stop();
-    detachAll();
     return true;
 }
 
@@ -1259,8 +1257,15 @@ bool HumanDynamicsEstimator::attach(yarp::dev::PolyDriver* poly)
     return true;
 }
 
+void HumanDynamicsEstimator::threadRelease()
+{}
+
 bool HumanDynamicsEstimator::detach()
 {
+    while(isRunning()) {
+        stop();
+    }
+
     pImpl->iHumanState = nullptr;
     pImpl->iHumanWrench = nullptr;
     pImpl->iAnalogSensor = nullptr;

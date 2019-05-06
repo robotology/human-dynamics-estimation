@@ -151,7 +151,6 @@ bool HumanStatePublisher::open(yarp::os::Searchable& config)
 
 bool HumanStatePublisher::close()
 {
-    detach();
     pImpl->humanBasePoseROS.publisher.close();
     pImpl->humanJointStateROS.publisher.close();
     pImpl->node.interrupt();
@@ -298,9 +297,15 @@ bool HumanStatePublisher::attach(yarp::dev::PolyDriver* poly)
     return true;
 }
 
+void HumanStatePublisher::threadRelease()
+{}
+
 bool HumanStatePublisher::detach()
 {
-    stop();
+    while (isRunning()) {
+        stop();
+    }
+
     pImpl->humanBasePoseROS.publisher.interrupt();
     pImpl->humanJointStateROS.publisher.interrupt();
     pImpl->humanState = nullptr;

@@ -41,6 +41,7 @@ public:
 
     // PeriodicThread
     void run() override;
+    void threadRelease() override;
 
     // IWrapper interface
     bool attach(yarp::dev::PolyDriver* poly) override;
