@@ -64,9 +64,7 @@ HumanControlBoard::HumanControlBoard()
 {}
 
 HumanControlBoard::~HumanControlBoard()
-{
-    detachAll();
-}
+{}
 
 bool HumanControlBoard::open(yarp::os::Searchable& config)
 {
@@ -131,8 +129,6 @@ bool HumanControlBoard::open(yarp::os::Searchable& config)
 bool HumanControlBoard::close()
 {
     pImpl->dynamicsPort.close();
-    yarp::os::PeriodicThread::stop();
-    detachAll();
     return true;
 }
 
@@ -215,9 +211,15 @@ bool HumanControlBoard::attach(yarp::dev::PolyDriver* poly)
     return true;
 }
 
+void HumanControlBoard::threadRelease()
+{}
+
 bool HumanControlBoard::detach()
 {
-    askToStop();
+    while(isRunning()) {
+        yarp::os::PeriodicThread::stop();
+    }
+
     pImpl->iHumanState = nullptr;
     pImpl->iHumanDynamics = nullptr;
     return true;
