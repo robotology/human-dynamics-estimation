@@ -178,8 +178,6 @@ bool HumanDynamicsPublisher::open(yarp::os::Searchable& config)
 
 bool HumanDynamicsPublisher::close()
 {
-    detach();
-
     // Close ROS publishers
     for (auto& jointEffortData : pImpl->modelEffortData) {
         jointEffortData.publisher->close();
@@ -276,9 +274,14 @@ bool HumanDynamicsPublisher::attach(yarp::dev::PolyDriver* poly)
     return true;
 }
 
+void HumanDynamicsPublisher::threadRelease()
+{}
+
 bool HumanDynamicsPublisher::detach()
 {
-    stop();
+    while (isRunning()) {
+        stop();
+    }
 
     pImpl->humanDynamics = nullptr;
     return true;
