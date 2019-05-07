@@ -48,6 +48,7 @@ public:
 
     // PeriodicThread
     void run() override;
+    void threadRelease() override;
 
     // TypedReaderCallback
     void onRead(msg::WearableData& wearData) override;

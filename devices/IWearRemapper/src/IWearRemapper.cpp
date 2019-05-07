@@ -41,6 +41,7 @@ public:
     TimeStamp timestamp;
     bool firstRun = true;
     bool useRPC = false;
+    bool terminationCall = false;
 
     mutable std::recursive_mutex mutex;
 
@@ -339,8 +340,21 @@ bool IWearRemapper::open(yarp::os::Searchable& config)
     return true;
 }
 
+void IWearRemapper::threadRelease()
+{}
+
 bool IWearRemapper::close()
 {
+    while(isRunning()) {
+        stop();
+    }
+
+    while(!pImpl->outputPortWearData.isClosed()) {
+        pImpl->terminationCall = true;
+        pImpl->outputPortWearData.interrupt();
+        pImpl->outputPortWearData.close();
+    }
+
     return true;
 }
 
@@ -363,413 +377,419 @@ const std::map<msg::SensorStatus, sensor::SensorStatus> MapSensorStatus = {
 
 void IWearRemapper::onRead(msg::WearableData& receivedWearData)
 {
+    if (!pImpl->terminationCall) {
 
-    for (auto& accelerometersMap : receivedWearData.accelerometers) {
-        const auto& inputSensorName = accelerometersMap.first;
-        const auto& wearDataInputSensor = accelerometersMap.second;
+        auto& wearableData = pImpl->outputPortWearData.prepare();
+        wearableData.producerName = WrapperName;
 
-        // ====================
-        // EXPOSE THE INTERFACE
-        // ====================
-        auto isensor = getAccelerometer(inputSensorName);
-        if (!isensor) {
-            yError() << logPrefix << "Failed to get Accelerometer" << inputSensorName;
-            askToStop();
-            return;
+        for (auto& accelerometersMap : receivedWearData.accelerometers) {
+            const auto& inputSensorName = accelerometersMap.first;
+            const auto& wearDataInputSensor = accelerometersMap.second;
+
+            // ====================
+            // EXPOSE THE INTERFACE
+            // ====================
+            auto isensor = getAccelerometer(inputSensorName);
+            if (!isensor) {
+                yError() << logPrefix << "Failed to get Accelerometer" << inputSensorName;
+                askToStop();
+                return;
+            }
+            const auto* constSensor = static_cast<const sensor::impl::Accelerometer*>(isensor.get());
+            auto* sensor = const_cast<sensor::impl::Accelerometer*>(constSensor);
+            // Copy its data to the buffer used for exposing the IWear interface
+            sensor->setBuffer(
+                {wearDataInputSensor.data.x, wearDataInputSensor.data.y, wearDataInputSensor.data.z});
+            // Set the status
+            sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
         }
-        const auto* constSensor = static_cast<const sensor::impl::Accelerometer*>(isensor.get());
-        auto* sensor = const_cast<sensor::impl::Accelerometer*>(constSensor);
-        // Copy its data to the buffer used for exposing the IWear interface
-        sensor->setBuffer(
-            {wearDataInputSensor.data.x, wearDataInputSensor.data.y, wearDataInputSensor.data.z});
-        // Set the status
-        sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
-    }
 
-    for (auto& s : receivedWearData.emgSensors) {
-        const auto& inputSensorName = s.first;
-        const auto& wearDataInputSensor = s.second;
+        for (auto& s : receivedWearData.emgSensors) {
+            const auto& inputSensorName = s.first;
+            const auto& wearDataInputSensor = s.second;
 
-        // ====================
-        // EXPOSE THE INTERFACE
-        // ====================
-        auto isensor = getEmgSensor(inputSensorName);
-        if (!isensor) {
-            yError() << logPrefix << "Failed to get EmgSensor" << inputSensorName;
-            askToStop();
-            return;
+            // ====================
+            // EXPOSE THE INTERFACE
+            // ====================
+            auto isensor = getEmgSensor(inputSensorName);
+            if (!isensor) {
+                yError() << logPrefix << "Failed to get EmgSensor" << inputSensorName;
+                askToStop();
+                return;
+            }
+            const auto* constSensor = static_cast<const sensor::impl::EmgSensor*>(isensor.get());
+            auto* sensor = const_cast<sensor::impl::EmgSensor*>(constSensor);
+            // Copy its data to the buffer used for exposing the IWear interface
+            sensor->setBuffer(wearDataInputSensor.data.value, wearDataInputSensor.data.normalization);
+            // Set the status
+            sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
         }
-        const auto* constSensor = static_cast<const sensor::impl::EmgSensor*>(isensor.get());
-        auto* sensor = const_cast<sensor::impl::EmgSensor*>(constSensor);
-        // Copy its data to the buffer used for exposing the IWear interface
-        sensor->setBuffer(wearDataInputSensor.data.value, wearDataInputSensor.data.normalization);
-        // Set the status
-        sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
-    }
 
-    for (auto& s : receivedWearData.force3DSensors) {
-        const auto& inputSensorName = s.first;
-        const auto& wearDataInputSensor = s.second;
+        for (auto& s : receivedWearData.force3DSensors) {
+            const auto& inputSensorName = s.first;
+            const auto& wearDataInputSensor = s.second;
 
-        // ====================
-        // EXPOSE THE INTERFACE
-        // ====================
-        auto isensor = getForce3DSensor(inputSensorName);
-        if (!isensor) {
-            yError() << logPrefix << "Failed to get Force3DSensor" << inputSensorName;
-            askToStop();
-            return;
+            // ====================
+            // EXPOSE THE INTERFACE
+            // ====================
+            auto isensor = getForce3DSensor(inputSensorName);
+            if (!isensor) {
+                yError() << logPrefix << "Failed to get Force3DSensor" << inputSensorName;
+                askToStop();
+                return;
+            }
+            const auto* constSensor = static_cast<const sensor::impl::Force3DSensor*>(isensor.get());
+            auto* sensor = const_cast<sensor::impl::Force3DSensor*>(constSensor);
+            // Copy its data to the buffer used for exposing the IWear interface
+            sensor->setBuffer(
+                {wearDataInputSensor.data.x, wearDataInputSensor.data.y, wearDataInputSensor.data.z});
+            // Set the status
+            sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
         }
-        const auto* constSensor = static_cast<const sensor::impl::Force3DSensor*>(isensor.get());
-        auto* sensor = const_cast<sensor::impl::Force3DSensor*>(constSensor);
-        // Copy its data to the buffer used for exposing the IWear interface
-        sensor->setBuffer(
-            {wearDataInputSensor.data.x, wearDataInputSensor.data.y, wearDataInputSensor.data.z});
-        // Set the status
-        sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
-    }
 
-    for (auto& s : receivedWearData.forceTorque6DSensors) {
-        const auto& inputSensorName = s.first;
-        const auto& wearDataInputSensor = s.second;
+        for (auto& s : receivedWearData.forceTorque6DSensors) {
+            const auto& inputSensorName = s.first;
+            const auto& wearDataInputSensor = s.second;
 
-        // ====================
-        // EXPOSE THE INTERFACE
-        // ====================
-        auto isensor = getForceTorque6DSensor(inputSensorName);
-        if (!isensor) {
-            yError() << logPrefix << "Failed to get ForceTorque6DSensor" << inputSensorName;
-            askToStop();
-            return;
+            // ====================
+            // EXPOSE THE INTERFACE
+            // ====================
+            auto isensor = getForceTorque6DSensor(inputSensorName);
+            if (!isensor) {
+                yError() << logPrefix << "Failed to get ForceTorque6DSensor" << inputSensorName;
+                askToStop();
+                return;
+            }
+            const auto* constSensor =
+                static_cast<const sensor::impl::ForceTorque6DSensor*>(isensor.get());
+            auto* sensor = const_cast<sensor::impl::ForceTorque6DSensor*>(constSensor);
+            // Copy its data to the buffer used for exposing the IWear interface
+            sensor->setBuffer({wearDataInputSensor.data.force.x,
+                               wearDataInputSensor.data.force.y,
+                               wearDataInputSensor.data.force.z},
+                              {wearDataInputSensor.data.torque.x,
+                               wearDataInputSensor.data.torque.y,
+                               wearDataInputSensor.data.torque.z});
+            // Set the status
+            sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
         }
-        const auto* constSensor =
-            static_cast<const sensor::impl::ForceTorque6DSensor*>(isensor.get());
-        auto* sensor = const_cast<sensor::impl::ForceTorque6DSensor*>(constSensor);
-        // Copy its data to the buffer used for exposing the IWear interface
-        sensor->setBuffer({wearDataInputSensor.data.force.x,
-                           wearDataInputSensor.data.force.y,
-                           wearDataInputSensor.data.force.z},
-                          {wearDataInputSensor.data.torque.x,
-                           wearDataInputSensor.data.torque.y,
-                           wearDataInputSensor.data.torque.z});
-        // Set the status
-        sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
-    }
 
-    for (auto& s : receivedWearData.freeBodyAccelerationSensors) {
-        const auto& inputSensorName = s.first;
-        const auto& wearDataInputSensor = s.second;
+        for (auto& s : receivedWearData.freeBodyAccelerationSensors) {
+            const auto& inputSensorName = s.first;
+            const auto& wearDataInputSensor = s.second;
 
-        // ====================
-        // EXPOSE THE INTERFACE
-        // ====================
-        auto isensor = getFreeBodyAccelerationSensor(inputSensorName);
-        if (!isensor) {
-            yError() << logPrefix << "Failed to get FreeBodyAccelerationSensor" << inputSensorName;
-            askToStop();
-            return;
+            // ====================
+            // EXPOSE THE INTERFACE
+            // ====================
+            auto isensor = getFreeBodyAccelerationSensor(inputSensorName);
+            if (!isensor) {
+                yError() << logPrefix << "Failed to get FreeBodyAccelerationSensor" << inputSensorName;
+                askToStop();
+                return;
+            }
+            const auto* constSensor =
+                static_cast<const sensor::impl::FreeBodyAccelerationSensor*>(isensor.get());
+            auto* sensor = const_cast<sensor::impl::FreeBodyAccelerationSensor*>(constSensor);
+            // Copy its data to the buffer used for exposing the IWear interface
+            sensor->setBuffer(
+                {wearDataInputSensor.data.x, wearDataInputSensor.data.y, wearDataInputSensor.data.z});
+            // Set the status
+            sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
         }
-        const auto* constSensor =
-            static_cast<const sensor::impl::FreeBodyAccelerationSensor*>(isensor.get());
-        auto* sensor = const_cast<sensor::impl::FreeBodyAccelerationSensor*>(constSensor);
-        // Copy its data to the buffer used for exposing the IWear interface
-        sensor->setBuffer(
-            {wearDataInputSensor.data.x, wearDataInputSensor.data.y, wearDataInputSensor.data.z});
-        // Set the status
-        sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
-    }
 
-    for (auto& s : receivedWearData.gyroscopes) {
-        const auto& inputSensorName = s.first;
-        const auto& wearDataInputSensor = s.second;
+        for (auto& s : receivedWearData.gyroscopes) {
+            const auto& inputSensorName = s.first;
+            const auto& wearDataInputSensor = s.second;
 
-        // ====================
-        // EXPOSE THE INTERFACE
-        // ====================
-        auto isensor = getGyroscope(inputSensorName);
-        if (!isensor) {
-            yError() << logPrefix << "Failed to get Gyroscope" << inputSensorName;
-            askToStop();
-            return;
+            // ====================
+            // EXPOSE THE INTERFACE
+            // ====================
+            auto isensor = getGyroscope(inputSensorName);
+            if (!isensor) {
+                yError() << logPrefix << "Failed to get Gyroscope" << inputSensorName;
+                askToStop();
+                return;
+            }
+            const auto* constSensor = static_cast<const sensor::impl::Gyroscope*>(isensor.get());
+            auto* sensor = const_cast<sensor::impl::Gyroscope*>(constSensor);
+            // Copy its data to the buffer used for exposing the IWear interface
+            sensor->setBuffer(
+                {wearDataInputSensor.data.x, wearDataInputSensor.data.y, wearDataInputSensor.data.z});
+            // Set the status
+            sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
         }
-        const auto* constSensor = static_cast<const sensor::impl::Gyroscope*>(isensor.get());
-        auto* sensor = const_cast<sensor::impl::Gyroscope*>(constSensor);
-        // Copy its data to the buffer used for exposing the IWear interface
-        sensor->setBuffer(
-            {wearDataInputSensor.data.x, wearDataInputSensor.data.y, wearDataInputSensor.data.z});
-        // Set the status
-        sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
-    }
 
-    for (auto& s : receivedWearData.magnetometers) {
-        const auto& inputSensorName = s.first;
-        const auto& wearDataInputSensor = s.second;
+        for (auto& s : receivedWearData.magnetometers) {
+            const auto& inputSensorName = s.first;
+            const auto& wearDataInputSensor = s.second;
 
-        // ====================
-        // EXPOSE THE INTERFACE
-        // ====================
-        auto isensor = getMagnetometer(inputSensorName);
-        if (!isensor) {
-            yError() << logPrefix << "Failed to get Magnetometer" << inputSensorName;
-            askToStop();
-            return;
+            // ====================
+            // EXPOSE THE INTERFACE
+            // ====================
+            auto isensor = getMagnetometer(inputSensorName);
+            if (!isensor) {
+                yError() << logPrefix << "Failed to get Magnetometer" << inputSensorName;
+                askToStop();
+                return;
+            }
+            const auto* constSensor = static_cast<const sensor::impl::Magnetometer*>(isensor.get());
+            auto* sensor = const_cast<sensor::impl::Magnetometer*>(constSensor);
+            // Copy its data to the buffer used for exposing the IWear interface
+            sensor->setBuffer(
+                {wearDataInputSensor.data.x, wearDataInputSensor.data.y, wearDataInputSensor.data.z});
+            // Set the status
+            sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
         }
-        const auto* constSensor = static_cast<const sensor::impl::Magnetometer*>(isensor.get());
-        auto* sensor = const_cast<sensor::impl::Magnetometer*>(constSensor);
-        // Copy its data to the buffer used for exposing the IWear interface
-        sensor->setBuffer(
-            {wearDataInputSensor.data.x, wearDataInputSensor.data.y, wearDataInputSensor.data.z});
-        // Set the status
-        sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
-    }
 
-    for (auto& s : receivedWearData.orientationSensors) {
-        const auto& inputSensorName = s.first;
-        const auto& wearDataInputSensor = s.second;
+        for (auto& s : receivedWearData.orientationSensors) {
+            const auto& inputSensorName = s.first;
+            const auto& wearDataInputSensor = s.second;
 
-        // ====================
-        // EXPOSE THE INTERFACE
-        // ====================
-        auto isensor = getOrientationSensor(inputSensorName);
-        if (!isensor) {
-            yError() << logPrefix << "Failed to get OrientationSensor" << inputSensorName;
-            askToStop();
-            return;
+            // ====================
+            // EXPOSE THE INTERFACE
+            // ====================
+            auto isensor = getOrientationSensor(inputSensorName);
+            if (!isensor) {
+                yError() << logPrefix << "Failed to get OrientationSensor" << inputSensorName;
+                askToStop();
+                return;
+            }
+            const auto* constSensor =
+                static_cast<const sensor::impl::OrientationSensor*>(isensor.get());
+            auto* sensor = const_cast<sensor::impl::OrientationSensor*>(constSensor);
+            // Copy its data to the buffer used for exposing the IWear interface
+            sensor->setBuffer({wearDataInputSensor.data.w,
+                               wearDataInputSensor.data.x,
+                               wearDataInputSensor.data.y,
+                               wearDataInputSensor.data.z});
+            // Set the status
+            sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
         }
-        const auto* constSensor =
-            static_cast<const sensor::impl::OrientationSensor*>(isensor.get());
-        auto* sensor = const_cast<sensor::impl::OrientationSensor*>(constSensor);
-        // Copy its data to the buffer used for exposing the IWear interface
-        sensor->setBuffer({wearDataInputSensor.data.w,
-                           wearDataInputSensor.data.x,
-                           wearDataInputSensor.data.y,
-                           wearDataInputSensor.data.z});
-        // Set the status
-        sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
-    }
 
-    for (auto& s : receivedWearData.poseSensors) {
-        const auto& inputSensorName = s.first;
-        const auto& wearDataInputSensor = s.second;
+        for (auto& s : receivedWearData.poseSensors) {
+            const auto& inputSensorName = s.first;
+            const auto& wearDataInputSensor = s.second;
 
-        // ====================
-        // EXPOSE THE INTERFACE
-        // ====================
-        auto isensor = getPoseSensor(inputSensorName);
-        if (!isensor) {
-            yError() << logPrefix << "Failed to get PoseSensor" << inputSensorName;
-            askToStop();
-            return;
+            // ====================
+            // EXPOSE THE INTERFACE
+            // ====================
+            auto isensor = getPoseSensor(inputSensorName);
+            if (!isensor) {
+                yError() << logPrefix << "Failed to get PoseSensor" << inputSensorName;
+                askToStop();
+                return;
+            }
+            const auto* constSensor = static_cast<const sensor::impl::PoseSensor*>(isensor.get());
+            auto* sensor = const_cast<sensor::impl::PoseSensor*>(constSensor);
+            // Copy its data to the buffer used for exposing the IWear interface
+            sensor->setBuffer({wearDataInputSensor.data.orientation.w,
+                               wearDataInputSensor.data.orientation.x,
+                               wearDataInputSensor.data.orientation.y,
+                               wearDataInputSensor.data.orientation.z},
+                              {wearDataInputSensor.data.position.x,
+                               wearDataInputSensor.data.position.y,
+                               wearDataInputSensor.data.position.z});
+            // Set the status
+            sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
         }
-        const auto* constSensor = static_cast<const sensor::impl::PoseSensor*>(isensor.get());
-        auto* sensor = const_cast<sensor::impl::PoseSensor*>(constSensor);
-        // Copy its data to the buffer used for exposing the IWear interface
-        sensor->setBuffer({wearDataInputSensor.data.orientation.w,
-                           wearDataInputSensor.data.orientation.x,
-                           wearDataInputSensor.data.orientation.y,
-                           wearDataInputSensor.data.orientation.z},
-                          {wearDataInputSensor.data.position.x,
-                           wearDataInputSensor.data.position.y,
-                           wearDataInputSensor.data.position.z});
-        // Set the status
-        sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
-    }
 
-    for (auto& s : receivedWearData.positionSensors) {
-        const auto& inputSensorName = s.first;
-        const auto& wearDataInputSensor = s.second;
+        for (auto& s : receivedWearData.positionSensors) {
+            const auto& inputSensorName = s.first;
+            const auto& wearDataInputSensor = s.second;
 
-        // ====================
-        // EXPOSE THE INTERFACE
-        // ====================
-        auto isensor = getPositionSensor(inputSensorName);
-        if (!isensor) {
-            yError() << logPrefix << "Failed to get PositionSensor" << inputSensorName;
-            askToStop();
-            return;
+            // ====================
+            // EXPOSE THE INTERFACE
+            // ====================
+            auto isensor = getPositionSensor(inputSensorName);
+            if (!isensor) {
+                yError() << logPrefix << "Failed to get PositionSensor" << inputSensorName;
+                askToStop();
+                return;
+            }
+            const auto* constSensor = static_cast<const sensor::impl::PositionSensor*>(isensor.get());
+            auto* sensor = const_cast<sensor::impl::PositionSensor*>(constSensor);
+            // Copy its data to the buffer used for exposing the IWear interface
+            sensor->setBuffer(
+                {wearDataInputSensor.data.x, wearDataInputSensor.data.y, wearDataInputSensor.data.z});
+            // Set the status
+            sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
         }
-        const auto* constSensor = static_cast<const sensor::impl::PositionSensor*>(isensor.get());
-        auto* sensor = const_cast<sensor::impl::PositionSensor*>(constSensor);
-        // Copy its data to the buffer used for exposing the IWear interface
-        sensor->setBuffer(
-            {wearDataInputSensor.data.x, wearDataInputSensor.data.y, wearDataInputSensor.data.z});
-        // Set the status
-        sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
-    }
 
-    for (auto& s : receivedWearData.skinSensors) {
-        const auto& inputSensorName = s.first;
-        const auto& wearDataInputSensor = s.second;
+        for (auto& s : receivedWearData.skinSensors) {
+            const auto& inputSensorName = s.first;
+            const auto& wearDataInputSensor = s.second;
 
-        // ====================
-        // EXPOSE THE INTERFACE
-        // ====================
-        // Create the sensor if it does not exist
-        auto isensor = getSkinSensor(inputSensorName);
-        if (!isensor) {
-            yError() << logPrefix << "Failed to get SkinSensor" << inputSensorName;
-            askToStop();
-            return;
+            // ====================
+            // EXPOSE THE INTERFACE
+            // ====================
+            // Create the sensor if it does not exist
+            auto isensor = getSkinSensor(inputSensorName);
+            if (!isensor) {
+                yError() << logPrefix << "Failed to get SkinSensor" << inputSensorName;
+                askToStop();
+                return;
+            }
+            const auto* constSensor = static_cast<const sensor::impl::SkinSensor*>(isensor.get());
+            auto* sensor = const_cast<sensor::impl::SkinSensor*>(constSensor);
+            yWarning() << logPrefix << "SkinSensor is not yet implemented";
+            // Copy its data to the buffer used for exposing the IWear interface
+            //        pImpl->skinSensors[inputSensorName]->setBuffer(
+            //            {wearDataInputSensor.data.x, wearDataInputSensor.data.y,
+            //            wearDataInputSensor.data.z});
+            //        // Set the status
+            //        sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
         }
-        const auto* constSensor = static_cast<const sensor::impl::SkinSensor*>(isensor.get());
-        auto* sensor = const_cast<sensor::impl::SkinSensor*>(constSensor);
-        yWarning() << logPrefix << "SkinSensor is not yet implemented";
-        // Copy its data to the buffer used for exposing the IWear interface
-        //        pImpl->skinSensors[inputSensorName]->setBuffer(
-        //            {wearDataInputSensor.data.x, wearDataInputSensor.data.y,
-        //            wearDataInputSensor.data.z});
-        //        // Set the status
-        //        sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
-    }
 
-    for (auto& s : receivedWearData.temperatureSensors) {
-        const auto& inputSensorName = s.first;
-        const auto& wearDataInputSensor = s.second;
+        for (auto& s : receivedWearData.temperatureSensors) {
+            const auto& inputSensorName = s.first;
+            const auto& wearDataInputSensor = s.second;
 
-        // ====================
-        // EXPOSE THE INTERFACE
-        // ====================
-        auto isensor = getTemperatureSensor(inputSensorName);
-        if (!isensor) {
-            yError() << logPrefix << "Failed to get TemperatureSensor" << inputSensorName;
-            askToStop();
-            return;
+            // ====================
+            // EXPOSE THE INTERFACE
+            // ====================
+            auto isensor = getTemperatureSensor(inputSensorName);
+            if (!isensor) {
+                yError() << logPrefix << "Failed to get TemperatureSensor" << inputSensorName;
+                askToStop();
+                return;
+            }
+            const auto* constSensor =
+                static_cast<const sensor::impl::TemperatureSensor*>(isensor.get());
+            auto* sensor = const_cast<sensor::impl::TemperatureSensor*>(constSensor);
+            // Copy its data to the buffer used for exposing the IWear interface
+            sensor->setBuffer(wearDataInputSensor.data);
+            // Set the status
+            sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
         }
-        const auto* constSensor =
-            static_cast<const sensor::impl::TemperatureSensor*>(isensor.get());
-        auto* sensor = const_cast<sensor::impl::TemperatureSensor*>(constSensor);
-        // Copy its data to the buffer used for exposing the IWear interface
-        sensor->setBuffer(wearDataInputSensor.data);
-        // Set the status
-        sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
-    }
 
-    for (auto& s : receivedWearData.torque3DSensors) {
-        const auto& inputSensorName = s.first;
-        const auto& wearDataInputSensor = s.second;
+        for (auto& s : receivedWearData.torque3DSensors) {
+            const auto& inputSensorName = s.first;
+            const auto& wearDataInputSensor = s.second;
 
-        // ====================
-        // EXPOSE THE INTERFACE
-        // ====================
-        auto isensor = getTorque3DSensor(inputSensorName);
-        if (!isensor) {
-            askToStop();
-            yError() << logPrefix << "Failed to get Torque3DSensor" << inputSensorName;
-            return;
+            // ====================
+            // EXPOSE THE INTERFACE
+            // ====================
+            auto isensor = getTorque3DSensor(inputSensorName);
+            if (!isensor) {
+                askToStop();
+                yError() << logPrefix << "Failed to get Torque3DSensor" << inputSensorName;
+                return;
+            }
+            const auto* constSensor = static_cast<const sensor::impl::Torque3DSensor*>(isensor.get());
+            auto* sensor = const_cast<sensor::impl::Torque3DSensor*>(constSensor);
+            // Copy its data to the buffer used for exposing the IWear interface
+            sensor->setBuffer(
+                {wearDataInputSensor.data.x, wearDataInputSensor.data.y, wearDataInputSensor.data.z});
+            // Set the status
+            sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
         }
-        const auto* constSensor = static_cast<const sensor::impl::Torque3DSensor*>(isensor.get());
-        auto* sensor = const_cast<sensor::impl::Torque3DSensor*>(constSensor);
-        // Copy its data to the buffer used for exposing the IWear interface
-        sensor->setBuffer(
-            {wearDataInputSensor.data.x, wearDataInputSensor.data.y, wearDataInputSensor.data.z});
-        // Set the status
-        sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
-    }
 
-    for (auto& s : receivedWearData.virtualLinkKinSensors) {
-        const auto& inputSensorName = s.first;
-        const auto& wearDataInputSensor = s.second;
+        for (auto& s : receivedWearData.virtualLinkKinSensors) {
+            const auto& inputSensorName = s.first;
+            const auto& wearDataInputSensor = s.second;
 
-        // ====================
-        // EXPOSE THE INTERFACE
-        // ====================
-        auto isensor = getVirtualLinkKinSensor(inputSensorName);
-        if (!isensor) {
-            yError() << logPrefix << "Failed to get VirtualLinkKinSensor" << inputSensorName;
-            askToStop();
-            return;
+            // ====================
+            // EXPOSE THE INTERFACE
+            // ====================
+            auto isensor = getVirtualLinkKinSensor(inputSensorName);
+            if (!isensor) {
+                yError() << logPrefix << "Failed to get VirtualLinkKinSensor" << inputSensorName;
+                askToStop();
+                return;
+            }
+            const auto* constSensor =
+                static_cast<const sensor::impl::VirtualLinkKinSensor*>(isensor.get());
+            auto* sensor = const_cast<sensor::impl::VirtualLinkKinSensor*>(constSensor);
+            // Copy its data to the buffer used for exposing the IWear interface
+            sensor->setBuffer({wearDataInputSensor.data.linearAcceleration.x,
+                               wearDataInputSensor.data.linearAcceleration.y,
+                               wearDataInputSensor.data.linearAcceleration.z},
+                              {wearDataInputSensor.data.angularAcceleration.x,
+                               wearDataInputSensor.data.angularAcceleration.y,
+                               wearDataInputSensor.data.angularAcceleration.z},
+                              {wearDataInputSensor.data.linearVelocity.x,
+                               wearDataInputSensor.data.linearVelocity.y,
+                               wearDataInputSensor.data.linearVelocity.z},
+                              {wearDataInputSensor.data.angularVelocity.x,
+                               wearDataInputSensor.data.angularVelocity.y,
+                               wearDataInputSensor.data.angularVelocity.z},
+                              {wearDataInputSensor.data.position.x,
+                               wearDataInputSensor.data.position.y,
+                               wearDataInputSensor.data.position.z},
+                              {wearDataInputSensor.data.orientation.w,
+                               wearDataInputSensor.data.orientation.x,
+                               wearDataInputSensor.data.orientation.y,
+                               wearDataInputSensor.data.orientation.z});
+
+            // Set the status
+            sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
         }
-        const auto* constSensor =
-            static_cast<const sensor::impl::VirtualLinkKinSensor*>(isensor.get());
-        auto* sensor = const_cast<sensor::impl::VirtualLinkKinSensor*>(constSensor);
-        // Copy its data to the buffer used for exposing the IWear interface
-        sensor->setBuffer({wearDataInputSensor.data.linearAcceleration.x,
-                           wearDataInputSensor.data.linearAcceleration.y,
-                           wearDataInputSensor.data.linearAcceleration.z},
-                          {wearDataInputSensor.data.angularAcceleration.x,
-                           wearDataInputSensor.data.angularAcceleration.y,
-                           wearDataInputSensor.data.angularAcceleration.z},
-                          {wearDataInputSensor.data.linearVelocity.x,
-                           wearDataInputSensor.data.linearVelocity.y,
-                           wearDataInputSensor.data.linearVelocity.z},
-                          {wearDataInputSensor.data.angularVelocity.x,
-                           wearDataInputSensor.data.angularVelocity.y,
-                           wearDataInputSensor.data.angularVelocity.z},
-                          {wearDataInputSensor.data.position.x,
-                           wearDataInputSensor.data.position.y,
-                           wearDataInputSensor.data.position.z},
-                          {wearDataInputSensor.data.orientation.w,
-                           wearDataInputSensor.data.orientation.x,
-                           wearDataInputSensor.data.orientation.y,
-                           wearDataInputSensor.data.orientation.z});
 
-        // Set the status
-        sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
-    }
+        for (auto& s : receivedWearData.virtualJointKinSensors) {
+            const auto& inputSensorName = s.first;
+            const auto& wearDataInputSensor = s.second;
 
-    for (auto& s : receivedWearData.virtualJointKinSensors) {
-        const auto& inputSensorName = s.first;
-        const auto& wearDataInputSensor = s.second;
-
-        // ====================
-        // EXPOSE THE INTERFACE
-        // ====================
-        auto isensor = getVirtualJointKinSensor(inputSensorName);
-        if (!isensor) {
-            yError() << logPrefix << "Failed to get VirtualJointKinSensor"
-                     << inputSensorName;
-            askToStop();
-            return;
+            // ====================
+            // EXPOSE THE INTERFACE
+            // ====================
+            auto isensor = getVirtualJointKinSensor(inputSensorName);
+            if (!isensor) {
+                yError() << logPrefix << "Failed to get VirtualJointKinSensor"
+                         << inputSensorName;
+                askToStop();
+                return;
+            }
+            const auto* constSensor =
+                static_cast<const sensor::impl::VirtualJointKinSensor*>(isensor.get());
+            auto* sensor = const_cast<sensor::impl::VirtualJointKinSensor*>(constSensor);
+            // Copy its data to the buffer used for exposing the IWear interface
+            sensor->setBuffer({wearDataInputSensor.data.position},
+                              {wearDataInputSensor.data.velocity},
+                              {wearDataInputSensor.data.acceleration});
+            // Set the status
+            sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
         }
-        const auto* constSensor =
-            static_cast<const sensor::impl::VirtualJointKinSensor*>(isensor.get());
-        auto* sensor = const_cast<sensor::impl::VirtualJointKinSensor*>(constSensor);
-        // Copy its data to the buffer used for exposing the IWear interface
-        sensor->setBuffer({wearDataInputSensor.data.position},
-                          {wearDataInputSensor.data.velocity},
-                          {wearDataInputSensor.data.acceleration});
-        // Set the status
-        sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
-    }
 
-    for (auto& s : receivedWearData.virtualSphericalJointKinSensors) {
-        const auto& inputSensorName = s.first;
-        const auto& wearDataInputSensor = s.second;
+        for (auto& s : receivedWearData.virtualSphericalJointKinSensors) {
+            const auto& inputSensorName = s.first;
+            const auto& wearDataInputSensor = s.second;
 
-        // ====================
-        // EXPOSE THE INTERFACE
-        // ====================
-        auto isensor = getVirtualSphericalJointKinSensor(inputSensorName);
-        if (!isensor) {
-            yError() << logPrefix << "Failed to get VirtualSphericalJointKinSensor"
-                     << inputSensorName;
-            askToStop();
-            return;
+            // ====================
+            // EXPOSE THE INTERFACE
+            // ====================
+            auto isensor = getVirtualSphericalJointKinSensor(inputSensorName);
+            if (!isensor) {
+                yError() << logPrefix << "Failed to get VirtualSphericalJointKinSensor"
+                         << inputSensorName;
+                askToStop();
+                return;
+            }
+            const auto* constSensor =
+                static_cast<const sensor::impl::VirtualSphericalJointKinSensor*>(isensor.get());
+            auto* sensor = const_cast<sensor::impl::VirtualSphericalJointKinSensor*>(constSensor);
+            // Copy its data to the buffer used for exposing the IWear interface
+            sensor->setBuffer({wearDataInputSensor.data.angle.r,
+                               wearDataInputSensor.data.angle.p,
+                               wearDataInputSensor.data.angle.y},
+                              {wearDataInputSensor.data.velocity.x,
+                               wearDataInputSensor.data.velocity.y,
+                               wearDataInputSensor.data.velocity.z},
+                              {wearDataInputSensor.data.acceleration.x,
+                               wearDataInputSensor.data.acceleration.y,
+                               wearDataInputSensor.data.acceleration.z});
+            // Set the status
+            sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
         }
-        const auto* constSensor =
-            static_cast<const sensor::impl::VirtualSphericalJointKinSensor*>(isensor.get());
-        auto* sensor = const_cast<sensor::impl::VirtualSphericalJointKinSensor*>(constSensor);
-        // Copy its data to the buffer used for exposing the IWear interface
-        sensor->setBuffer({wearDataInputSensor.data.angle.r,
-                           wearDataInputSensor.data.angle.p,
-                           wearDataInputSensor.data.angle.y},
-                          {wearDataInputSensor.data.velocity.x,
-                           wearDataInputSensor.data.velocity.y,
-                           wearDataInputSensor.data.velocity.z},
-                          {wearDataInputSensor.data.acceleration.x,
-                           wearDataInputSensor.data.acceleration.y,
-                           wearDataInputSensor.data.acceleration.z});
-        // Set the status
-        sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
-    }
 
-    // Update the timestamp
-    pImpl->timestamp.sequenceNumber++;
-    pImpl->timestamp.time = yarp::os::Time::now();
+        // Update the timestamp
+        pImpl->timestamp.sequenceNumber++;
+        pImpl->timestamp.time = yarp::os::Time::now();
 
-    // This is used to handle the overall status of IWear
-    if (pImpl->firstRun) {
-        pImpl->firstRun = false;
+
+        // This is used to handle the overall status of IWear
+        if (pImpl->firstRun) {
+            pImpl->firstRun = false;
+        }
     }
 }
 

@@ -36,6 +36,7 @@ public:
 
     // PeriodicThread
     void run() override;
+    void threadRelease() override;
 
     // DeviceDriver interface
     bool open(yarp::os::Searchable& config) override;
