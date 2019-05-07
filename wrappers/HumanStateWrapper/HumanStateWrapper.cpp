@@ -156,16 +156,16 @@ bool HumanStateWrapper::attach(yarp::dev::PolyDriver* poly)
     // CHECK THE INTERFACE
     // ===================
 
-    yInfo() << pImpl->ihumanState->getNumberOfJoints() << " "
-            << pImpl->ihumanState->getJointNames().size();
+    yInfo() << pImpl->iHumanState->getNumberOfJoints() << " "
+            << pImpl->iHumanState->getJointNames().size();
 
     // std::vector<std::string> jointNames=pImpl->humanState->getJointNames();
-    for (int i = 0; i < pImpl->ihumanState->getJointNames().size(); i++) {
-        yInfo() << "Joint name (" << i << "): " << pImpl->ihumanState->getJointNames()[i];
+    for (int i = 0; i < pImpl->iHumanState->getJointNames().size(); i++) {
+        yInfo() << "Joint name (" << i << "): " << pImpl->iHumanState->getJointNames()[i];
     }
 
-    if (pImpl->ihumanState->getNumberOfJoints() == 0
-        || pImpl->ihumanState->getNumberOfJoints() != pImpl->ihumanState->getJointNames().size()) {
+    if (pImpl->iHumanState->getNumberOfJoints() == 0
+        || pImpl->iHumanState->getNumberOfJoints() != pImpl->iHumanState->getJointNames().size()) {
         yError() << "The IHumanState interface might not be ready";
         return false;
     }

@@ -59,7 +59,7 @@ int IKWorkerPool::closeIKWorkerPool()
     return m_shouldTerminate;
 }
 
-IKWorkerPool::~HumanIKWorkerPool()
+IKWorkerPool::~IKWorkerPool()
 {
 }
 
