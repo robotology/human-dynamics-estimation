@@ -17,11 +17,11 @@
     </device>
 
     <device type="human_state_provider" name="RobotStateProvider">
-        <param name="period">0.100</param>
+        <param name="period">0.0100</param>
         <param name="urdf">teleoperation_iCub_model_V_2_5.urdf</param>
         <param name="floatingBaseFrame">(root_link_fake, XsensSuit::vLink::Pelvis)</param>
         <!-- ikSolver options: pairwised, global, integrationbased -->
-        <param name="ikSolver">pairwised</param>
+        <param name="ikSolver">integrationbased</param>
         <param name="useXsensJointsAngles">false</param>
         <param name="allowIKFailures">true</param>
         <param name="useDirectBaseMeasurement">false</param>
@@ -37,7 +37,7 @@
         <param name="linVelTargetWeight">0.0</param>
         <param name="angVelTargetWeight">1.0</param>
         <!-- integration based IK parameters -->
-        <param name="integrationBasedIKMeasuredVelocityGainLinRot">(0.1 0.1)</param>
+        <param name="integrationBasedIKMeasuredVelocityGainLinRot">(1.0 1.0)</param>
         <param name="integrationBasedIKCorrectionGainsLinRot">(2.0 2.0)</param>
         <param name="integrationBasedIKIntegralCorrectionGainsLinRot">(0.0 0.0)</param>
         <group name="MODEL_TO_DATA_LINK_NAMES">
@@ -76,8 +76,8 @@
         <action phase="shutdown" level="5" type="detach"/>
     </device>
 
-    <device type="human_state_publisher" name="RobotStatePublisher">
-        <param name="period">0.020</param>
+    <!--device type="human_state_publisher" name="RobotStatePublisher">
+        <param name="period">0.010</param>
         <param name="baseTFName">/Robot/root_link_fake</param>
         <param name="humanJointsTopic">/Robot/joint_states</param>
         <action phase="startup" level="5" type="attach">
@@ -86,17 +86,17 @@
             </paramlist>
         </action>
         <action phase="shutdown" level="5" type="detach"/>
-    </device>
+    </device-->
 
     <!-- uncomment if you want to use the RobotStateProvider data to control the robot position -->
     <!--device type="robot_position_controller" name="RobotPositionController">
         <param name="period">0.100</param>
         <param name="controlMode">positionDirect</param>
         <param name="refSpeed">15.0</param>
-        <param name="samplingTime">0.05</param>
-        <param name="smoothingTime">1.0</param>
+        <param name="samplingTime">0.01</param>
+        <param name="smoothingTime">0.25</param>
         <param name="controlBoardsList">(head torso left_arm right_arm left_leg right_leg)</param>
-        <param name="remotePrefix">/icubSim</param>
+        <param name="remotePrefix">/icub</param>
         <param name="localPrefix">/robotPositionController</param>
         <param name="head">(neck_pitch neck_roll neck_yaw)</param>
         <param name="torso">(torso_yaw torso_roll torso_pitch)</param>
