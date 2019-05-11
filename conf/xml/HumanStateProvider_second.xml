@@ -1,27 +1,18 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<robot name="Human-HDE" build=0 portprefix="">
+<robot name="Human2-HDE" build=0 portprefix="">
 
-    <device type="transformServer" name="TransformServer">
-        <param name="transforms_lifetime">0.2</param>
-        <group name="ROS">
-            <param name="enable_ros_publisher">true</param>
-            <param name="enable_ros_subscriber">false</param>
-        </group>
-    </device>
-
-    <device type="iwear_remapper" name="XSenseIWearRemapper">
-        <param name="wearableDataPorts">(/XSensSuit/WearableData/data:o)</param>
+    <device type="iwear_remapper" name="XSenseIWearRemapper_2">
+        <param name="wearableDataPorts">(/XSensSuit_2/WearableData/data:o)</param>
         <param name="useRPC">false</param>
-        <param name="wearableRPCPorts">(/XSensSuit/WearableData/metadataRpc:o)</param>
-        <param name="outputPortName">/HDE/XsensIWearRemapper/data:o</param>
+        <param name="wearableRPCPorts">(/XSensSuit_2/WearableData/metadataRpc:o)</param>
+        <param name="outputPortName">/HDE_2/XsensIWearRemapper/data:o</param>
     </device>
 
-    <device type="human_state_provider" name="HumanStateProvider">
-        <param name="period">0.100</param>
-        <param name="urdf">Claudia48DoF_Dec2017.urdf</param>
+    <device type="human_state_provider" name="HumanStateProvider_2">
+        <param name="period">0.05</param>
+        <param name="urdf">humanSubject01_66dof.urdf</param>
         <param name="floatingBaseFrame">(Pelvis, XsensSuit::vLink::Pelvis)</param>
-        <!-- ikSolver options: pairwised, global, integrationbased -->
-        <param name="ikSolver">pairwised</param>
+        <param name="ikSolver">integrationbased</param>
         <param name="useXsensJointsAngles">false</param>
         <param name="allowIKFailures">true</param>
         <param name="useDirectBaseMeasurement">false</param>
@@ -36,10 +27,11 @@
         <!-- inverse velocity kinematics parameters -->
         <param name="linVelTargetWeight">0.0</param>
         <param name="angVelTargetWeight">1.0</param>
+        <param name="integrationBasedIKMeasuredVelocityGainLinRot">(1.0 1.0)</param>
         <!-- integration based IK parameters -->
-        <param name="integrationBasedIKMeasuredVelocityGainLinRot">(0.1 0.1)</param>
-        <param name="integrationBasedIKCorrectionGainsLinRot">(8.0 8.0)</param>
+        <param name="integrationBasedIKCorrectionGainsLinRot">(5.0 5.0)</param>
         <param name="integrationBasedIKIntegralCorrectionGainsLinRot">(0.0 0.0)</param>
+        <!-- TODO: How to use a reduced model in the entire HDE? (Starting from HumanStateProvider) -->
         <group name="MODEL_TO_DATA_LINK_NAMES">
             <param name="map_Pelvis">(Pelvis, XsensSuit::vLink::Pelvis)</param>
             <param name="map_L5">(L5, XsensSuit::vLink::L5)</param>
@@ -141,13 +133,13 @@
         </group>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
-                <elem name="HumanStateProviderLabel">XSenseIWearRemapper</elem>
+                <elem name="HumanStateProviderLabel">XSenseIWearRemapper_2</elem>
             </paramlist>
         </action>
         <action phase="shutdown" level="5" type="detach"/>
     </device>
 
-    <device type="human_state_wrapper" name="HumanStateWrapper">
+    <!--device type="human_state_wrapper" name="HumanStateWrapper">
         <param name="period">0.1</param>
         <param name="outputPort">/HDE/HumanStateWrapper/state:o</param>
         <action phase="startup" level="5" type="attach">
@@ -156,18 +148,19 @@
             </paramlist>
         </action>
         <action phase="shutdown" level="5" type="detach"/>
-    </device>
+    </device-->
 
-    <device type="human_state_publisher" name="HumanStatePublisher">
+    <device type="human_state_publisher" name="HumanStatePublisher_2">
         <param name="period">0.020</param>
-        <param name="baseTFName">/Human/Pelvis</param>
-        <param name="humanJointsTopic">/Human/joint_states</param>
+        <param name="baseTFName">/Human_2/Pelvis</param>
+        <param name="humanJointsTopic">/Human_2/joint_states</param>
+        <param name="portprefix">second</param>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
-                <elem name="HumanStatePublisherLabel">HumanStateProvider</elem>
+                <elem name="HumanStatePublisherLabel">HumanStateProvider_2</elem>
             </paramlist>
         </action>
-        <action phase="shutdown" level="5" type="detach"/>
+        <action phase="shutdown" level="4" type="detach"/>
     </device>
 
 </robot>

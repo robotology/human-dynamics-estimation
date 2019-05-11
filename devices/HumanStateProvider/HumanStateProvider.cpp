@@ -437,6 +437,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         pImpl->useDirectBaseMeasurement = config.find("useDirectBaseMeasurement").asBool();
         pImpl->linVelTargetWeight = config.find("linVelTargetWeight").asFloat64();
         pImpl->angVelTargetWeight = config.find("angVelTargetWeight").asFloat64();
+        pImpl->costRegularization = config.find("costRegularization").asDouble();
     }
 
     if (pImpl->ikSolver == SolverIK::pairwised) {
@@ -553,6 +554,8 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
                 << pImpl->integrationBasedIKIntegralLinearCorrectionGain;
         yInfo() << LogPrefix << "*** Angular integral correction gain :"
                 << pImpl->integrationBasedIKIntegralAngularCorrectionGain;
+        yInfo() << LogPrefix
+                << "*** Cost regularization              :" << pImpl->costRegularization;
     }
     yInfo() << LogPrefix << "*** ==================================";
 
@@ -1158,6 +1161,8 @@ bool HumanStateProvider::impl::initializeIntegrationBasedInverseKinematicsSolver
 
     // Set global Inverse Velocity Kinematics parameters
     inverseVelocityKinematics.setResolutionMode(InverseVelocityKinematics::pseudoinverse);
+    // Set Regularization Term:
+    inverseVelocityKinematics.setRegularization(costRegularization);
 
     if (!inverseVelocityKinematics.setModel(humanModel)) {
         yError() << LogPrefix << "IBIK: failed to load the model";
@@ -1174,6 +1179,7 @@ bool HumanStateProvider::impl::initializeIntegrationBasedInverseKinematicsSolver
         yError() << LogPrefix << "Failed to set the inverse velocity kinematics targets";
         return false;
     }
+
     return true;
 }
 
@@ -1391,12 +1397,12 @@ bool HumanStateProvider::impl::solveIntegrationBasedInverseKinematics()
         if (jointVelocitiesSolution.getVal(i) > max_velocity_val) {
             yWarning() << LogPrefix << "joint velocity out of limit: " << humanModel.getJointName(i)
                        << " : " << jointVelocitiesSolution.getVal(i);
-            jointVelocitiesSolution.setVal(i, max_velocity_val);
+            //            jointVelocitiesSolution.setVal(i, max_velocity_val);
         }
         else if (jointVelocitiesSolution.getVal(i) < (-1.0 * max_velocity_val)) {
             yWarning() << LogPrefix << "joint velocity out of limit: " << humanModel.getJointName(i)
                        << " : " << jointVelocitiesSolution.getVal(i);
-            jointVelocitiesSolution.setVal(i, -1.0 * max_velocity_val);
+            //            jointVelocitiesSolution.setVal(i, -1.0 * max_velocity_val);
         }
     }
     yInfo() << "**********************************";

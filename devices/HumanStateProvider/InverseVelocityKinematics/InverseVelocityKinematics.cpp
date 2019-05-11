@@ -9,6 +9,7 @@
 #include "InverseVelocityKinematics.hpp"
 
 #include <Eigen/QR>
+#include <Eigen/SparseCholesky>
 #include <iDynTree/Core/EigenHelpers.h>
 #include <iDynTree/Core/VectorDynSize.h>
 #include <iDynTree/KinDynComputations.h>
@@ -246,23 +247,23 @@ bool InverseVelocityKinematics::impl::solveProblem()
             iDynTree::iDynTreeEigenMatrixMap fullJacobian = iDynTree::toEigen(fullJacobianBuffer);
             yInfo() << "InverseVelocityKinematics::impl:: jacobian " << fullJacobian.rows()
                     << fullJacobian.cols();
-            yInfo() << "JACOBIAN:";
+            //            yInfo() << "JACOBIAN:";
 
-            for (unsigned i = 0; i < fullJacobianBuffer.rows(); i++) {
-                for (unsigned j = 0; j < fullJacobianBuffer.cols(); j++) {
-                    std::cout << fullJacobianBuffer.getVal(i, j);
-                    if (j < fullJacobianBuffer.cols() - 1) {
-                        std::cout << " , ";
-                    }
-                    else {
-                        std::cout << " ;" << std::endl;
-                    }
-                }
-            }
+            //            for (unsigned i = 0; i < fullJacobianBuffer.rows(); i++) {
+            //                for (unsigned j = 0; j < fullJacobianBuffer.cols(); j++) {
+            //                    std::cout << fullJacobianBuffer.getVal(i, j);
+            //                    if (j < fullJacobianBuffer.cols() - 1) {
+            //                        std::cout << " , ";
+            //                    }
+            //                    else {
+            //                        std::cout << " ;" << std::endl;
+            //                    }
+            //                }
+            //            }
 
-            yInfo() << "InverseVelocityKinematics::impl:: jacobian buffer"
-                    << fullJacobianBuffer.toString();
-            yInfo() << "velocities: " << fullVelocityBuffer.toString();
+            //            yInfo() << "InverseVelocityKinematics::impl:: jacobian buffer"
+            //                    << fullJacobianBuffer.toString();
+            //            yInfo() << "velocities: " << fullVelocityBuffer.toString();
         }
         else if (jointVelocityResult.getVal(i) < (-1.0 * max_velocity_val)) {
             yWarning() << "joint velocity out of limit: " << i << " : "
@@ -288,10 +289,34 @@ bool InverseVelocityKinematics::impl::solveWeightedPseudoInverse(
         return false;
 
     outputVector.resize(matrix.cols());
+    yInfo() << "reg: " << regularizationMatrix.getVal(1, 1) << regularizationMatrix.getVal(2, 2)
+            << regularizationMatrix.getVal(3, 3) << regularizationMatrix.getVal(4, 4);
 
     Eigen::DiagonalMatrix<double, Eigen::Dynamic> weightInverse(weightVector.size());
     weightInverse =
         Eigen::DiagonalMatrix<double, Eigen::Dynamic>(iDynTree::toEigen(weightVector)).inverse();
+
+    //**************************************************
+    // Pseudo inverse: CompleteOrthogonalDecomposition: // 7-9 msec
+    //**************************************************
+    //    Eigen::CompleteOrthogonalDecomposition<
+    //        Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+    //        WeightedJacobian = (iDynTree::toEigen(matrix).transpose() *
+    //        weightInverse.toDenseMatrix()
+    //                                * iDynTree::toEigen(matrix)
+    //                            + iDynTree::toEigen(regularizationMatrix))
+    //                               .completeOrthogonalDecomposition();
+    //    WeightedJacobian.setThreshold(1e-2);
+
+    //    iDynTree::toEigen(outputVector) =
+    //        WeightedJacobian.pseudoInverse() * iDynTree::toEigen(matrix).transpose()
+    //        * weightInverse.toDenseMatrix() * iDynTree::toEigen(inputVector);
+    //    std::cout << "rank: " << WeightedJacobian.rank()
+    //              << " threshhold: " << WeightedJacobian.threshold() << std::endl;
+
+    //**************************************************
+    // simple inversion: // 5-6 msec
+    //**************************************************
 
     //    iDynTree::toEigen(outputVector) =
     //        (iDynTree::toEigen(matrix).transpose() * weightInverse.toDenseMatrix()
@@ -301,14 +326,71 @@ bool InverseVelocityKinematics::impl::solveWeightedPseudoInverse(
     //        * iDynTree::toEigen(matrix).transpose() * weightInverse.toDenseMatrix()
     //        * iDynTree::toEigen(inputVector);
 
-    iDynTree::toEigen(outputVector) =
-        (iDynTree::toEigen(matrix).transpose() * weightInverse.toDenseMatrix()
-             * iDynTree::toEigen(matrix)
-         + iDynTree::toEigen(regularizationMatrix))
-            .completeOrthogonalDecomposition()
-            .pseudoInverse()
-        * iDynTree::toEigen(matrix).transpose() * weightInverse.toDenseMatrix()
-        * iDynTree::toEigen(inputVector);
+    //**************************************************
+    // Least Square Solving: // 50-60 msec
+    //**************************************************
+    //    iDynTree::toEigen(outputVector) =
+    //        (iDynTree::toEigen(matrix).transpose() * weightInverse.toDenseMatrix()
+    //             * iDynTree::toEigen(matrix)
+    //         + iDynTree::toEigen(regularizationMatrix))
+    //            .bdcSvd(Eigen::ComputeFullU | Eigen::ComputeFullV)
+    //            .solve(iDynTree::toEigen(matrix).transpose() * weightInverse.toDenseMatrix()
+    //                   * iDynTree::toEigen(inputVector));
+    //     Eigen::ComputeThinU | Eigen::ComputeThinV
+    //     Eigen::ComputeFullU | Eigen::ComputeFullV
+
+    //**************************************************
+    // Robust Cholesky decomposition (LDL^T): // 3-4 msec
+    //**************************************************
+    //    iDynTree::toEigen(outputVector) =
+    //        (iDynTree::toEigen(matrix).transpose() * weightInverse.toDenseMatrix()
+    //             * iDynTree::toEigen(matrix)
+    //         + iDynTree::toEigen(regularizationMatrix))
+    //            .ldlt()
+    //            .solve(iDynTree::toEigen(matrix).transpose() * weightInverse.toDenseMatrix()
+    //                   * iDynTree::toEigen(inputVector));
+
+    //**************************************************
+    // Standard Cholesky decomposition (LL^T): // 2-3 msec
+    //**************************************************
+    //    iDynTree::toEigen(outputVector) =
+    //        (iDynTree::toEigen(matrix).transpose() * weightInverse.toDenseMatrix()
+    //             * iDynTree::toEigen(matrix)
+    //         + iDynTree::toEigen(regularizationMatrix))
+    //            .llt()
+    //            .solve(iDynTree::toEigen(matrix).transpose() * weightInverse.toDenseMatrix()
+    //                   * iDynTree::toEigen(inputVector));
+
+    //**************************************************
+    // Sparse Robust Cholesky decomposition (SLDL^T): // 4-5 msec
+    //**************************************************
+
+    //    Eigen::SimplicialLDLT<Eigen::SparseMatrix<double>> solver;
+    //    solver.compute((iDynTree::toEigen(matrix).transpose() * weightInverse.toDenseMatrix()
+    //                        * iDynTree::toEigen(matrix)
+    //                    + iDynTree::toEigen(regularizationMatrix))
+    //                       .sparseView());
+
+    //    iDynTree::toEigen(outputVector) =
+    //        solver.solve(iDynTree::toEigen(matrix).transpose() * weightInverse.toDenseMatrix()
+    //                     * iDynTree::toEigen(inputVector));
+
+    //**************************************************
+    // Sparse Standard Cholesky decomposition (SLDL^T): // 3 msec
+    //**************************************************
+
+    //    Eigen::SimplicialLLT<Eigen::SparseMatrix<double>> solver;
+    //    solver.compute((iDynTree::toEigen(matrix).transpose() * weightInverse.toDenseMatrix()
+    //                        * iDynTree::toEigen(matrix)
+    //                    + iDynTree::toEigen(regularizationMatrix))
+    //                       .sparseView());
+
+    //    iDynTree::toEigen(outputVector) =
+    //        solver.solve(iDynTree::toEigen(matrix).transpose() * weightInverse.toDenseMatrix()
+    //                     * iDynTree::toEigen(inputVector));
+
+    // play with the gains of the regularization term, add the manipulability term maybe, or
+    // adding SVD term.
 
     return true;
 }
