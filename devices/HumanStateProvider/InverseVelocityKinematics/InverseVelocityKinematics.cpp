@@ -289,8 +289,9 @@ bool InverseVelocityKinematics::impl::solveWeightedPseudoInverse(
         return false;
 
     outputVector.resize(matrix.cols());
-    yInfo() << "reg: " << regularizationMatrix.getVal(1, 1) << regularizationMatrix.getVal(2, 2)
-            << regularizationMatrix.getVal(3, 3) << regularizationMatrix.getVal(4, 4);
+    //    yInfo() << "reg: " << regularizationMatrix.getVal(1, 1) << regularizationMatrix.getVal(2,
+    //    2)
+    //            << regularizationMatrix.getVal(3, 3) << regularizationMatrix.getVal(4, 4);
 
     Eigen::DiagonalMatrix<double, Eigen::Dynamic> weightInverse(weightVector.size());
     weightInverse =
@@ -318,13 +319,24 @@ bool InverseVelocityKinematics::impl::solveWeightedPseudoInverse(
     // simple inversion: // 5-6 msec
     //**************************************************
 
-    //    iDynTree::toEigen(outputVector) =
-    //        (iDynTree::toEigen(matrix).transpose() * weightInverse.toDenseMatrix()
-    //             * iDynTree::toEigen(matrix)
-    //         + iDynTree::toEigen(regularizationMatrix))
-    //            .inverse()
-    //        * iDynTree::toEigen(matrix).transpose() * weightInverse.toDenseMatrix()
-    //        * iDynTree::toEigen(inputVector);
+    iDynTree::toEigen(outputVector) =
+        (iDynTree::toEigen(matrix).transpose() * weightInverse.toDenseMatrix()
+             * iDynTree::toEigen(matrix)
+         + iDynTree::toEigen(regularizationMatrix))
+            .inverse()
+        * iDynTree::toEigen(matrix).transpose() * weightInverse.toDenseMatrix()
+        * iDynTree::toEigen(inputVector);
+    double manipulability = std::sqrt(
+        (iDynTree::toEigen(matrix).transpose() * iDynTree::toEigen(matrix)).determinant());
+    yInfo() << "manipulability: " << manipulability
+            << " , activation: " << (1 - std::tanh(manipulability / 2)) / 2;
+    //    std::cout << "jacobian: " << iDynTree::toEigen(matrix) << std::endl;
+
+    //    std::cout << "eigen values: "
+    //              << (iDynTree::toEigen(matrix).transpose() * iDynTree::toEigen(matrix))
+    //                     .eigenvalues()
+    //                     .transpose()
+    //              << std::endl;
 
     //**************************************************
     // Least Square Solving: // 50-60 msec

@@ -575,6 +575,13 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         yError() << LogPrefix << "Failed to load model" << urdfFilePath;
         return false;
     }
+    yInfo() << LogPrefix << "----------------------------------------" << modelLoader.isValid();
+    yInfo() << LogPrefix << modelLoader.model().toString();
+    yInfo() << LogPrefix << modelLoader.model().getNrOfLinks()
+            << " , joints: " << modelLoader.model().getNrOfJoints();
+
+    yInfo() << LogPrefix << "base link: "
+            << modelLoader.model().getLinkName(modelLoader.model().getDefaultBaseLink());
 
     // ====================
     // INITIALIZE VARIABLES
@@ -1397,12 +1404,12 @@ bool HumanStateProvider::impl::solveIntegrationBasedInverseKinematics()
         if (jointVelocitiesSolution.getVal(i) > max_velocity_val) {
             yWarning() << LogPrefix << "joint velocity out of limit: " << humanModel.getJointName(i)
                        << " : " << jointVelocitiesSolution.getVal(i);
-            //            jointVelocitiesSolution.setVal(i, max_velocity_val);
+            jointVelocitiesSolution.setVal(i, max_velocity_val);
         }
         else if (jointVelocitiesSolution.getVal(i) < (-1.0 * max_velocity_val)) {
             yWarning() << LogPrefix << "joint velocity out of limit: " << humanModel.getJointName(i)
                        << " : " << jointVelocitiesSolution.getVal(i);
-            //            jointVelocitiesSolution.setVal(i, -1.0 * max_velocity_val);
+            jointVelocitiesSolution.setVal(i, -1.0 * max_velocity_val);
         }
     }
     yInfo() << "**********************************";
