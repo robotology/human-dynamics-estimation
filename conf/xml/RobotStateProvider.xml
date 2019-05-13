@@ -31,7 +31,7 @@
         <param name="ikPoolSizeOption">2</param>
         <param name="posTargetWeight">0.0</param>
         <param name="rotTargetWeight">1.0</param>
-        <param name="costRegularization">0.001</param>
+        <param name="costRegularization">3.0</param>
         <param name="costTolerance">0.001</param>
         <!-- inverse velocity kinematics parameters -->
         <param name="linVelTargetWeight">0.0</param>
@@ -79,7 +79,7 @@
     <!--device type="human_state_publisher" name="RobotStatePublisher">
         <param name="period">0.010</param>
         <param name="baseTFName">/Robot/root_link_fake</param>
-        <param name="humanJointsTopic">/Robot/joint_states</param>
+        <param name="humanJointsTopic">/icubSim/joint_states</param>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
                 <elem name="HumanStatePublisherLabel">RobotStateProvider</elem>

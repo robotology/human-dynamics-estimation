@@ -18,7 +18,7 @@
 
     <device type="human_state_provider" name="HumanStateProvider">
         <param name="period">0.100</param>
-        <param name="urdf">Claudia48DoF_Dec2017.urdf</param>
+        <param name="urdf">humanSubject01_66dof.urdf</param>
         <param name="floatingBaseFrame">(Pelvis, XsensSuit::vLink::Pelvis)</param>
         <!-- ikSolver options: pairwised, global, integrationbased -->
         <param name="ikSolver">pairwised</param>
