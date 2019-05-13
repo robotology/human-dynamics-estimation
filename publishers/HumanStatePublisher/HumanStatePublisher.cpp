@@ -15,6 +15,9 @@
 #include <yarp/rosmsg/TickTime.h>
 #include <yarp/rosmsg/sensor_msgs/JointState.h>
 #include <yarp/rosmsg/tf2_msgs/TFMessage.h>
+#include <yarp/dev/IFrameTransform.h>
+#include <iDynTree/yarp/YARPConversions.h>
+#include <iDynTree/Core/Transform.h>
 
 #include <array>
 #include <string>
@@ -54,7 +57,12 @@ struct HumanStateBuffers
 class HumanStatePublisher::impl
 {
 public:
+    yarp::dev::PolyDriver transformClientDevice;
+    yarp::dev::IFrameTransform* iFrameTransform = nullptr;
+
     hde::interfaces::IHumanState* humanState = nullptr;
+
+    yarp::sig::Matrix humanBase_H_ground;
 
     bool firstRun = true;
     std::string baseTFName;
@@ -142,6 +150,26 @@ bool HumanStatePublisher::open(yarp::os::Searchable& config)
 
     if (!pImpl->humanJointStateROS.publisher.topic(humanJointsTopicName)) {
         yError() << LogPrefix << "Failed to create topic" << humanJointsTopicName;
+        return false;
+    }
+
+
+    // =========================
+    // OPEN THE TRANSFORM CLIENT
+    // =========================
+
+    yarp::os::Property options;
+    options.put("device", "transformClient");
+    options.put("local", "/" + DeviceName + "/transformClient");
+    options.put("remote", "/transformServer");
+
+    if (!pImpl->transformClientDevice.open(options)) {
+        yError() << LogPrefix << "Failed to open the transformClient device";
+        return false;
+    }
+
+    if (!pImpl->transformClientDevice.view(pImpl->iFrameTransform)) {
+        yError() << "The IFrameTransform is not implemented by the opened device";
         return false;
     }
 
@@ -252,6 +280,28 @@ void HumanStatePublisher::run()
     // Update the publisher message with the new one
     auto& baseStateMsg = pImpl->humanBasePoseROS.publisher.prepare();
     baseStateMsg = pImpl->humanBasePoseROS.message;
+
+    // Publise base tf to transform server
+    iDynTree::Position basePosition(pImpl->humanStateBuffers.basePosition[0],
+                                    pImpl->humanStateBuffers.basePosition[1],
+                                    pImpl->humanStateBuffers.basePosition[2]);
+
+    iDynTree::Vector4  quaternion;
+    quaternion.setVal(0, pImpl->humanStateBuffers.baseOrientation[0]);
+    quaternion.setVal(1, pImpl->humanStateBuffers.baseOrientation[1]);
+    quaternion.setVal(2, pImpl->humanStateBuffers.baseOrientation[2]);
+    quaternion.setVal(3, pImpl->humanStateBuffers.baseOrientation[3]);
+
+    iDynTree::Rotation baseRotation(iDynTree::Rotation::RotationFromQuaternion(quaternion));
+
+    iDynTree::Transform humanBase_H_ground_transform;
+    humanBase_H_ground_transform.setPosition(basePosition);
+    humanBase_H_ground_transform.setRotation(baseRotation);
+
+    iDynTree::toYarp(iDynTree::Transform::Identity().asHomogeneousTransform(),
+                     pImpl->humanBase_H_ground);
+
+    pImpl->iFrameTransform->setTransform(pImpl->baseTFName, "ground", pImpl->humanBase_H_ground);
 
     // ==================
     // WRITE THE MESSAGES
