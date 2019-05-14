@@ -179,6 +179,10 @@ void iDynTreeHelper::State::integrator::setNJoints(unsigned int _nJoints)
     nJoints = _nJoints;
     oldState.s.resize(nJoints);
     oldState.dot_s.resize(nJoints);
+    oldState.dot_dot_s.resize(nJoints);
+    oldState.s.zero();
+    oldState.dot_s.zero();
+    oldState.dot_dot_s.zero();
 
     resetState();
     resetJointLimits();
@@ -326,7 +330,7 @@ void iDynTreeHelper::State::integrator::integrate(iDynTree::VectorDynSize new_do
 
     if (interpolator == rectangular)
     {
-        for(int i; i<new_dot_s.size(); i++)
+        for(int i = 0; i<new_dot_s.size(); i++)
         {
             oldState.s.setVal(i, oldState.s.getVal(i) + new_dot_s.getVal(i) * dt);
             if (jointLimits.active)
@@ -339,7 +343,7 @@ void iDynTreeHelper::State::integrator::integrate(iDynTree::VectorDynSize new_do
     }
     else if (interpolator == trapezoidal)
     {
-        for(int i; i<new_dot_s.size(); i++)
+        for(int i = 0 ; i<new_dot_s.size(); i++)
         {
             oldState.s.setVal(i, oldState.s.getVal(i) + (oldState.dot_s.getVal(i) + new_dot_s.getVal(i)) * dt /2);
             if (jointLimits.active)
@@ -368,14 +372,14 @@ void iDynTreeHelper::State::integrator::integrate(iDynTree::VectorDynSize new_do
     //integrate base position
     if (interpolator == rectangular)
     {
-        for(int i; i<3; i++)
+        for(int i = 0; i<3; i++)
         {
             oldState.W_p_B.setVal(i, oldState.W_p_B.getVal(i) + new_dot_W_p_B.getVal(i) * dt);
         }
     }
     else if (interpolator == trapezoidal)
     {
-        for(int i; i<3; i++)
+        for(int i = 0; i<3; i++)
         {
             oldState.W_p_B.setVal(i, oldState.W_p_B.getVal(i) + (oldState.dot_W_p_B.getVal(i) + new_dot_W_p_B.getVal(i)) * dt /2);
         }
