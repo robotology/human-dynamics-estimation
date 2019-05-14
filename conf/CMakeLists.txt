@@ -23,7 +23,8 @@ yarp_install(FILES ${HDE_APP_FILES} DESTINATION ${YARP_APPLICATIONS_INSTALL_DIR}
 # Install robot urdf files
 set(ROBOT_URDF_FILES urdfs/iCubGenova02.urdf
                urdfs/iCubGenova04.urdf
-               urdfs/iCubGazeboV2_5.urdf)
+               urdfs/iCubGazeboV2_5.urdf
+	       urdfs/teleoperation_iCub_model_V_2_5.urdf)
 
 yarp_install(FILES ${ROBOT_URDF_FILES}
              DESTINATION ${YARP_CONTEXTS_INSTALL_DIR}/human-dynamic-estimation/urdfs)
