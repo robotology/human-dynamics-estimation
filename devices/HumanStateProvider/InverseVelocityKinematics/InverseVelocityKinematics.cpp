@@ -238,6 +238,7 @@ bool InverseVelocityKinematics::impl::solveProblem()
         jointVelocityResult.setVal(k, nu.getVal(k + 6));
     }
 
+
     double max_velocity_val = 10.0;
     // Add here the joint velocity limits
     for (unsigned i = 0; i < jointVelocityResult.size(); i++) {
@@ -247,6 +248,7 @@ bool InverseVelocityKinematics::impl::solveProblem()
             iDynTree::iDynTreeEigenMatrixMap fullJacobian = iDynTree::toEigen(fullJacobianBuffer);
             yInfo() << "InverseVelocityKinematics::impl:: jacobian " << fullJacobian.rows()
                     << fullJacobian.cols();
+
             //            yInfo() << "JACOBIAN:";
 
             //            for (unsigned i = 0; i < fullJacobianBuffer.rows(); i++) {
@@ -904,8 +906,7 @@ bool InverseVelocityKinematics::updateAngularVelocityTarget(std::string linkName
 bool InverseVelocityKinematics::getVelocitySolution(iDynTree::Twist& baseVelocity,
                                                     iDynTree::VectorDynSize& jointsVelocity)
 {
-    assert(getJointsVelocitySolution(jointsVelocity) && getBaseVelocitySolution(baseVelocity));
-    return true;
+  return getJointsVelocitySolution(jointsVelocity) && getBaseVelocitySolution(baseVelocity);
 }
 
 bool InverseVelocityKinematics::getJointsVelocitySolution(iDynTree::VectorDynSize& jointsVelocity)
