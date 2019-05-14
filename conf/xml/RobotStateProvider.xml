@@ -76,17 +76,17 @@
         <action phase="shutdown" level="5" type="detach"/>
     </device>
 
-    <!--device type="human_state_publisher" name="RobotStatePublisher">
-        <param name="period">0.010</param>
+    <device type="human_state_publisher" name="RobotStatePublisher">
+        <param name="period">0.020</param>
         <param name="baseTFName">/Robot/root_link_fake</param>
-        <param name="humanJointsTopic">/icubSim/joint_states</param>
+        <param name="humanJointsTopic">/Robot/joint_states</param>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
                 <elem name="HumanStatePublisherLabel">RobotStateProvider</elem>
             </paramlist>
         </action>
         <action phase="shutdown" level="5" type="detach"/>
-    </device-->
+    </device>
 
     <!-- uncomment if you want to use the RobotStateProvider data to control the robot position -->
     <!--device type="robot_position_controller" name="RobotPositionController">
