@@ -24,7 +24,13 @@ protected:
 public:
     typedef enum
     {
-        pseudoinverse
+        moorePenrose,
+        completeOrthogonalDecomposition,
+        leastSquare,
+        choleskyDecomposition,
+        sparseCholeskyDecomposition,
+        robustCholeskyDecomposition,
+        sparseRobustCholeskyDecomposition,
     } InverseVelocityKinematicsResolutionMode;
 
     InverseVelocityKinematics();
@@ -32,7 +38,8 @@ public:
 
     bool setModel(iDynTree::Model model);
     bool setFloatingBaseOnFrameNamed(std::string floatingBaseFrameName);
-    void setResolutionMode(InverseVelocityKinematicsResolutionMode resolutionMode);
+    bool setResolutionMode(InverseVelocityKinematicsResolutionMode resolutionMode);
+    bool setResolutionMode(std::string resolutionModeName);
     void setRegularization(double regularizationWeight);
 
     bool addTarget(std::string linkName,

@@ -68,6 +68,8 @@ using ModelLinkName = std::string;
 using WearableLinkName = std::string;
 using WearableJointName = std::string;
 
+using InverseVelocityKinematicsSolverName = std::string;
+
 struct FloatingBaseName
 {
     std::string model;
@@ -172,6 +174,7 @@ public:
     yarp::os::Value ikPoolOption;
     std::unique_ptr<IKWorkerPool> ikPool;
     SolutionIK solution;
+    InverseVelocityKinematicsSolverName inverseVelocityKinematicsSolver;
 
     double posTargetWeight;
     double rotTargetWeight;
@@ -185,6 +188,7 @@ public:
     double integrationBasedIKAngularCorrectionGain;
     double integrationBasedIKIntegralLinearCorrectionGain;
     double integrationBasedIKIntegralAngularCorrectionGain;
+    double integrationBasedJointVelocityLimit;
 
     SolverIK ikSolver;
 
@@ -434,6 +438,16 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
             return false;
         }
 
+        if (config.check("inverseVelocityKinematicsSolver")
+            && config.find("inverseVelocityKinematicsSolver").isString()) {
+            pImpl->inverseVelocityKinematicsSolver = config.find("inverseVelocityKinematicsSolver").asString();
+        }
+        else
+        {
+            pImpl->inverseVelocityKinematicsSolver = "moorePenrose";
+            yInfo() << LogPrefix << "Using default inverse velocity kinematics solver";
+        }
+
         pImpl->useDirectBaseMeasurement = config.find("useDirectBaseMeasurement").asBool();
         pImpl->linVelTargetWeight = config.find("linVelTargetWeight").asFloat64();
         pImpl->angVelTargetWeight = config.find("angVelTargetWeight").asFloat64();
@@ -471,6 +485,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     }
 
     if (pImpl->ikSolver == SolverIK::integrationbased) {
+
         if (!(config.check("integrationBasedIKMeasuredVelocityGainLinRot")
               && config.find("integrationBasedIKMeasuredVelocityGainLinRot").isList()
               && config.find("integrationBasedIKMeasuredVelocityGainLinRot").asList()->size()
@@ -499,6 +514,15 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
             return false;
         }
 
+        if (config.check("integrationBasedJointVelocityLimit")
+            && config.find("integrationBasedJointVelocityLimit").isDouble()) {
+            pImpl->integrationBasedJointVelocityLimit = config.find("integrationBasedJointVelocityLimit").asDouble();
+        }
+        else
+        {
+            pImpl->integrationBasedJointVelocityLimit = -1.0;
+        }
+
         yarp::os::Bottle* integrationBasedIKMeasuredVelocityGainLinRot =
             config.find("integrationBasedIKMeasuredVelocityGainLinRot").asList();
         yarp::os::Bottle* integrationBasedIKCorrectionGainsLinRot =
@@ -523,41 +547,48 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     // PRINT CURRENT CONFIGURATION OPTIONS
     // ===================================
 
-    yInfo() << LogPrefix << "*** ==================================";
-    yInfo() << LogPrefix << "*** Period                           :" << pImpl->period;
-    yInfo() << LogPrefix << "*** Urdf file name                   :" << urdfFileName;
-    yInfo() << LogPrefix << "*** Ik solver                        :" << solverName;
-    yInfo() << LogPrefix << "*** Use Xsens joint angles           :" << pImpl->useXsensJointsAngles;
+    yInfo() << LogPrefix << "*** ===================================";
+    yInfo() << LogPrefix << "*** Period                            :" << pImpl->period;
+    yInfo() << LogPrefix << "*** Urdf file name                    :" << urdfFileName;
+    yInfo() << LogPrefix << "*** Ik solver                         :" << solverName;
+    yInfo() << LogPrefix << "*** Use Xsens joint angles            :" << pImpl->useXsensJointsAngles;
     yInfo() << LogPrefix
             << "*** Use Directly base measurement    :" << pImpl->useDirectBaseMeasurement;
     if (pImpl->ikSolver == SolverIK::pairwised || pImpl->ikSolver == SolverIK::global) {
-        yInfo() << LogPrefix << "*** Allow IK failures                :" << pImpl->allowIKFailures;
-        yInfo() << LogPrefix << "*** Max IK iterations                :" << pImpl->maxIterationsIK;
-        yInfo() << LogPrefix << "*** Cost Tolerance                   :" << pImpl->costTolerance;
-        yInfo() << LogPrefix << "*** IK Solver Name                   :" << pImpl->linearSolverName;
-        yInfo() << LogPrefix << "*** Position target weight           :" << pImpl->posTargetWeight;
-        yInfo() << LogPrefix << "*** Rotation target weight           :" << pImpl->rotTargetWeight;
+        yInfo() << LogPrefix << "*** Allow IK failures                 :" << pImpl->allowIKFailures;
+        yInfo() << LogPrefix << "*** Max IK iterations                 :" << pImpl->maxIterationsIK;
+        yInfo() << LogPrefix << "*** Cost Tolerance                    :" << pImpl->costTolerance;
+        yInfo() << LogPrefix << "*** IK Solver Name                    :" << pImpl->linearSolverName;
+        yInfo() << LogPrefix << "*** Position target weight            :" << pImpl->posTargetWeight;
+        yInfo() << LogPrefix << "*** Rotation target weight            :" << pImpl->rotTargetWeight;
         yInfo() << LogPrefix
                 << "*** Cost regularization              :" << pImpl->costRegularization;
-        yInfo() << LogPrefix << "*** Size of thread pool              :" << pImpl->ikPoolSize;
+        yInfo() << LogPrefix << "*** Size of thread pool               :" << pImpl->ikPoolSize;
     }
     if (pImpl->ikSolver == SolverIK::integrationbased) {
-        yInfo() << LogPrefix << "*** Measured Linear velocity gain    :"
+        yInfo() << LogPrefix << "*** Measured Linear velocity gain     :"
                 << pImpl->integrationBasedIKMeasuredLinearVelocityGain;
-        yInfo() << LogPrefix << "*** Measured Angular velocity gain   :"
+        yInfo() << LogPrefix << "*** Measured Angular velocity gain    :"
                 << pImpl->integrationBasedIKMeasuredAngularVelocityGain;
-        yInfo() << LogPrefix << "*** Linear correction gain           :"
+        yInfo() << LogPrefix << "*** Linear correction gain            :"
                 << pImpl->integrationBasedIKLinearCorrectionGain;
-        yInfo() << LogPrefix << "*** Angular correction gain          :"
+        yInfo() << LogPrefix << "*** Angular correction gain           :"
                 << pImpl->integrationBasedIKAngularCorrectionGain;
-        yInfo() << LogPrefix << "*** Linear integral correction gain  :"
+        yInfo() << LogPrefix << "*** Linear integral correction gain   :"
                 << pImpl->integrationBasedIKIntegralLinearCorrectionGain;
-        yInfo() << LogPrefix << "*** Angular integral correction gain :"
+        yInfo() << LogPrefix << "*** Angular integral correction gain  :"
                 << pImpl->integrationBasedIKIntegralAngularCorrectionGain;
         yInfo() << LogPrefix
                 << "*** Cost regularization              :" << pImpl->costRegularization;
+        yInfo() << LogPrefix
+                << "*** Joint velocity limit             :" << pImpl->integrationBasedJointVelocityLimit;
     }
-    yInfo() << LogPrefix << "*** ==================================";
+    if (pImpl->ikSolver == SolverIK::integrationbased || pImpl->ikSolver == SolverIK::global)
+    {
+        yInfo() << LogPrefix << "*** Inverse Velocity Kinematics solver:"
+                << pImpl->inverseVelocityKinematicsSolver;
+    }
+    yInfo() << LogPrefix << "*** ===================================";
 
     // ==========================
     // INITIALIZE THE HUMAN MODEL
@@ -1127,7 +1158,7 @@ bool HumanStateProvider::impl::initializeGlobalInverseKinematicsSolver()
     }
 
     // Set global Inverse Velocity Kinematics parameters
-    inverseVelocityKinematics.setResolutionMode(InverseVelocityKinematics::pseudoinverse);
+    inverseVelocityKinematics.setResolutionMode(inverseVelocityKinematicsSolver);
     inverseVelocityKinematics.setRegularization(costRegularization);
 
     if (!inverseVelocityKinematics.setModel(humanModel)) {
@@ -1167,7 +1198,7 @@ bool HumanStateProvider::impl::initializeIntegrationBasedInverseKinematicsSolver
     integralOrientationError.zero();
 
     // Set global Inverse Velocity Kinematics parameters
-    inverseVelocityKinematics.setResolutionMode(InverseVelocityKinematics::pseudoinverse);
+    inverseVelocityKinematics.setResolutionMode(inverseVelocityKinematicsSolver);
     // Set Regularization Term:
     inverseVelocityKinematics.setRegularization(costRegularization);
 
@@ -1398,21 +1429,19 @@ bool HumanStateProvider::impl::solveIntegrationBasedInverseKinematics()
 
     inverseVelocityKinematics.getVelocitySolution(baseVelocitySolution, jointVelocitiesSolution);
 
-    double max_velocity_val = 10.0;
-    // Add here the joint velocity limits
+    // Threshold to limitate joint velocity
     for (unsigned i = 0; i < jointVelocitiesSolution.size(); i++) {
-        if (jointVelocitiesSolution.getVal(i) > max_velocity_val) {
+        if (integrationBasedJointVelocityLimit > 0 && jointVelocitiesSolution.getVal(i) > integrationBasedJointVelocityLimit) {
             yWarning() << LogPrefix << "joint velocity out of limit: " << humanModel.getJointName(i)
                        << " : " << jointVelocitiesSolution.getVal(i);
-            jointVelocitiesSolution.setVal(i, max_velocity_val);
+            jointVelocitiesSolution.setVal(i, integrationBasedJointVelocityLimit);
         }
-        else if (jointVelocitiesSolution.getVal(i) < (-1.0 * max_velocity_val)) {
+        else if (integrationBasedJointVelocityLimit > 0 && jointVelocitiesSolution.getVal(i) < (-1.0 * integrationBasedJointVelocityLimit)) {
             yWarning() << LogPrefix << "joint velocity out of limit: " << humanModel.getJointName(i)
                        << " : " << jointVelocitiesSolution.getVal(i);
-            jointVelocitiesSolution.setVal(i, -1.0 * max_velocity_val);
+            jointVelocitiesSolution.setVal(i, -1.0 * integrationBasedJointVelocityLimit);
         }
     }
-    yInfo() << "**********************************";
 
     // VELOCITY INTEGRATION
     // integrate velocities measurements
