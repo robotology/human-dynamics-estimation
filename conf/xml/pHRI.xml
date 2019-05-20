@@ -18,11 +18,11 @@
     </device>
 
     <device type="human_state_provider" name="HumanStateProvider">
-        <param name="period">0.100</param>
+        <param name="period">0.02</param>
         <param name="urdf">humanSubject01_66dof.urdf</param>
         <param name="floatingBaseFrame">(Pelvis, XsensSuit::vLink::Pelvis)</param>
         <!-- ikSolver options: pairwised, global, integrationbased -->
-        <param name="ikSolver">pairwised</param>
+        <param name="ikSolver">integrationbased</param>
         <param name="useXsensJointsAngles">false</param>
         <param name="allowIKFailures">true</param>
         <param name="useDirectBaseMeasurement">false</param>
@@ -35,11 +35,21 @@
         <param name="costRegularization">0.000001</param>
         <param name="costTolerance">0.001</param>
         <!-- inverse velocity kinematics parameters -->
+        <!-- inverseVelocityKinematicsSolver values:
+        moorePenrose,
+        completeOrthogonalDecomposition,
+        leastSquare,
+        choleskyDecomposition,
+        sparseCholeskyDecomposition,
+        robustCholeskyDecomposition,
+        sparseRobustCholeskyDecomposition -->
+        <param name='inverseVelocityKinematicsSolver'>sparseRobustCholeskyDecomposition</param>
         <param name="linVelTargetWeight">0.0</param>
         <param name="angVelTargetWeight">1.0</param>
         <!-- integration based IK parameters -->
-        <param name="integrationBasedIKMeasuredVelocityGainLinRot">(0.1 0.1)</param>
-        <param name="integrationBasedIKCorrectionGainsLinRot">(8.0 8.0)</param>
+        <param name='integrationBasedJointVelocityLimit'>10.0</param> <!-- comment or -1.0 for no limits -->
+        <param name="integrationBasedIKMeasuredVelocityGainLinRot">(1.0 1.0)</param>
+        <param name="integrationBasedIKCorrectionGainsLinRot">(8.0 20.0)</param>
         <param name="integrationBasedIKIntegralCorrectionGainsLinRot">(0.0 0.0)</param>
         <group name="MODEL_TO_DATA_LINK_NAMES">
             <param name="map_Pelvis">(Pelvis, XsensSuit::vLink::Pelvis)</param>
@@ -148,8 +158,9 @@
         <action phase="shutdown" level="5" type="detach"/>
     </device>
 
-    <!--device type="human_state_wrapper" name="HumanStateWrapper">
-        <param name="period">0.5</param>
+    <!-- Uncomment to stream the output of HumanStateProvider on a YARP port -->
+    <!-- <device type="human_state_wrapper" name="HumanStateWrapper">
+        <param name="period">0.02</param>
         <param name="outputPort">/HDE/HumanStateWrapper/state:o</param>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
@@ -157,10 +168,10 @@
             </paramlist>
         </action>
         <action phase="shutdown" level="5" type="detach"/>
-    </device-->
+    </device> -->
 
     <device type="human_state_publisher" name="HumanStatePublisher">
-        <param name="period">0.020</param>
+        <param name="period">0.02</param>
         <param name="baseTFName">/Human/Pelvis</param>
         <param name="humanJointsTopic">/Human/joint_states</param>
         <action phase="startup" level="5" type="attach">
@@ -168,7 +179,7 @@
                 <elem name="HumanStatePublisherLabel">HumanStateProvider</elem>
             </paramlist>
         </action>
-        <action phase="shutdown" level="4" type="detach"/>
+        <action phase="shutdown" level="5" type="detach"/>
     </device>
 
     <device type="iwear_remapper" name="FTSourcesIWearRemapper">
@@ -180,7 +191,7 @@
 
     <device type="human_wrench_provider" name="HumanWrenchProvider">
         <param name="period">0.100</param>
-        <param name="human_urdf">humanSubject03_66dof.urdf</param>
+        <param name="human_urdf">humanSubject01_66dof.urdf</param>
         <param name="pHRIScenario">true</param>
         <param name="robot_urdf">model.urdf</param>
         <param name="number_of_source_devices">3</param>
@@ -284,7 +295,7 @@
 
     <device type="human_dynamics_estimator" name="HumanDynamicsEstimator">
         <param name="period">0.100</param>
-        <param name="urdf">humanSubject03_66dof.urdf</param>
+        <param name="urdf">humanSubject01_66dof.urdf</param>
         <param name="baseLink">Pelvis</param>
         <param name="number_of_wrench_sensors">4</param>
         <param name="wrench_sensors_link_name">(LeftFoot RightFoot RightHand LeftHand)</param>
