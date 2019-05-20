@@ -190,7 +190,7 @@
 
     <device type="human_wrench_provider" name="HumanWrenchProvider">
         <param name="period">0.100</param>
-        <param name="human_urdf">humanSubject03_66dof.urdf</param>
+        <param name="human_urdf">humanSubject01_66dof.urdf</param>
         <param name="pHRIScenario">true</param>
         <param name="robot_urdf">model.urdf</param>
         <param name="number_of_source_devices">3</param>
@@ -276,7 +276,7 @@
 
     <!--device type="human_dynamics_estimator" name="HumanDynamicsEstimator">
         <param name="period">0.100</param>
-        <param name="urdf">humanSubject03_66dof.urdf</param>
+        <param name="urdf">humanSubject01_66dof.urdf</param>
         <param name="baseLink">Pelvis</param>
         <param name="number_of_wrench_sensors">2</param>
         <param name="wrench_sensors_link_name">(RightHand LeftHand)</param>
