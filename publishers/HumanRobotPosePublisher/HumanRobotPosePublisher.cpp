@@ -35,6 +35,7 @@ class CmdParser : public yarp::os::PortReader
 
 public:
     std::atomic<bool> cmdStatus{false};
+    std::atomic<bool> resetStatus{false};
 
     bool read(yarp::os::ConnectionReader& connection) override
     {
@@ -45,8 +46,12 @@ public:
                 response.addString("Enter <set> to set the robot pose correctly");
             }
             else if (command.get(0).asString() == "set") {
-                response.addString("Entered command is correct");
+                response.addString("Entered command <set> is correct");
                 this->cmdStatus = true;
+            }
+            else if (command.get(0).asString() == "reset") {
+                response.addString("Entered command <reset> is correct");
+                this->resetStatus = true;
             }
             else {
                 response.addString(
@@ -55,6 +60,7 @@ public:
         }
         else {
             this->cmdStatus = false;
+            this->resetStatus = false;
             return false;
         }
 
@@ -77,17 +83,17 @@ public:
     bool first_data = false;
 
     // Timeout
-    double tfTimeout;
+    double tfTimeoutCheckDuration;
 
     yarp::dev::PolyDriver transformClientDevice;
     yarp::dev::IFrameTransform* iFrameTransform = nullptr;
 
     // Final ground to robot base transform
-    yarp::sig::Matrix robotBase_H_ground;
+    yarp::sig::Matrix ground_H_robotBase;
 
     // Human Robot fixed transform
     iDynTree::Transform robotHumanFixedTransform;
-    yarp::sig::Matrix robotLeftFoot_H_humanLeftFoot;
+    yarp::sig::Matrix humanLeftFoot_H_robotLeftFoot;
 
     std::string robotTFPrefix;
     std::string robotFloatingBaseFrame;
@@ -97,6 +103,8 @@ public:
     std::string humanLeftFootFrame;
 
     yarp::os::Node node = {"/" + DeviceName};
+
+    std::string robotBasePoseStatusMessage;
 
     // Rpc
     CmdParser commandPro;
@@ -197,7 +205,7 @@ bool HumanRobotPosePublisher::open(yarp::os::Searchable& config)
     // ===============================
 
     const double period = config.check("period", yarp::os::Value(DefaultPeriod)).asFloat64();
-    pImpl->tfTimeout = config.check("tfTimeout", yarp::os::Value(DefaultPeriod)).asFloat64();
+    pImpl->tfTimeoutCheckDuration = config.check("tfTimeoutCheckDuration", yarp::os::Value(0.1)).asFloat64();
     const std::string robotURDFFileName = config.find("robotURDFFileName").asString();
 
     pImpl->robotFloatingBaseFrame = config.find("robotFloatingBaseFrame").asString();
@@ -232,15 +240,15 @@ bool HumanRobotPosePublisher::open(yarp::os::Searchable& config)
         return false;
     }
 
-    // Store the transform in the temporary object
+    // Set the fixed tranform between the robot and human
     pImpl->robotHumanFixedTransform = {rotation, position};
-    iDynTree::toYarp(pImpl->robotHumanFixedTransform.inverse().asHomogeneousTransform(),
-                     pImpl->robotLeftFoot_H_humanLeftFoot);
+        iDynTree::toYarp(pImpl->robotHumanFixedTransform.inverse().asHomogeneousTransform(),
+                         pImpl->humanLeftFoot_H_robotLeftFoot);
 
     // Set default ground to robot base transform to be Identity
     // This will be the default transform at the start of the device
     iDynTree::toYarp(iDynTree::Transform::Identity().asHomogeneousTransform(),
-                     pImpl->robotBase_H_ground);
+                     pImpl->ground_H_robotBase);
 
     // ===================
     // INITIALIZE RPC PORT
@@ -260,7 +268,7 @@ bool HumanRobotPosePublisher::open(yarp::os::Searchable& config)
 
     yInfo() << LogPrefix << "*** ========================================";
     yInfo() << LogPrefix << "*** Period                                 :" << period;
-    yInfo() << LogPrefix << "*** TF Timeout                             :" << pImpl->tfTimeout;
+    yInfo() << LogPrefix << "*** TF Timeout Check Duration              :" << pImpl->tfTimeoutCheckDuration;
     yInfo() << LogPrefix << "*** Robot TF prefix                        :" << pImpl->robotTFPrefix;
     yInfo() << LogPrefix
             << "*** Robot floating base frame              :" << pImpl->robotFloatingBaseFrame;
@@ -330,12 +338,14 @@ bool HumanRobotPosePublisher::close()
 void HumanRobotPosePublisher::run()
 {
     // Check command status
-    if (pImpl->commandPro.cmdStatus) {
+    if (pImpl->commandPro.cmdStatus || pImpl->commandPro.resetStatus) {
         pImpl->robotBaseTFStatus = false;
         if (pImpl->setRobotBasePose()) {
             pImpl->robotBaseTFStatus = true;
             pImpl->commandPro.cmdStatus = false;
-            yInfo() << LogPrefix << "Robot ground to base transform set correctly";
+
+            yInfo() << LogPrefix << pImpl->robotBasePoseStatusMessage;
+            pImpl->robotBasePoseStatusMessage.clear();
         }
     }
 
@@ -344,7 +354,7 @@ void HumanRobotPosePublisher::run()
         if (!pImpl->iFrameTransform->setTransform(pImpl->robotTFPrefix + "/"
                                                       + pImpl->robotFloatingBaseFrame,
                                                   "ground",
-                                                  pImpl->robotBase_H_ground)) {
+                                                  pImpl->ground_H_robotBase)) {
             yWarning() << LogPrefix << "Failed to set ground to robot base transform";
         }
     }
@@ -352,59 +362,54 @@ void HumanRobotPosePublisher::run()
 
 bool HumanRobotPosePublisher::impl::setRobotBasePose()
 {
+    if (this->commandPro.resetStatus) {
+        // Set default ground to robot base transform to be Identity
+        iDynTree::toYarp(iDynTree::Transform::Identity().asHomogeneousTransform(),
+                         this->ground_H_robotBase);
+        this->commandPro.resetStatus = false;
+        this->robotBasePoseStatusMessage = "Robot ground to base transform reset to Identity correctly";
 
-    // iDynTree::toYarp(iDynTree::Transform::Identity().asHomogeneousTransform(),
-    // this->robotBase_H_ground); return true;
+        return true;
+    }
 
     // Read the homogeneous tf from ground to human base using IFrameTransform interface
-    yarp::sig::Matrix humanBase_H_ground;
+    yarp::sig::Matrix ground_H_humanBase;
 
     // Read the homogeneous tf from human base to human left foot using IFrameTransform interface
-    yarp::sig::Matrix humanLeftFoot_H_humanBase;
+    yarp::sig::Matrix humanBase_H_humanLeftFoot;
 
     // Read the homogenous tf from robot left foot to robot base using IFrameTransform interface
-    yarp::sig::Matrix robotBase_H_robotLeftFoot;
+    yarp::sig::Matrix robotLeftFoot_H_robotBase;
 
     bool ok;
 
-    /*ok = this->iFrameTransform->canTransform(this->humanFloatingBaseFrame, "ground") &&
-         this->iFrameTransform->canTransform(this->humanLeftFootFrame,
-       this->humanFloatingBaseFrame); this->iFrameTransform->canTransform(this->robotTFPrefix + "/"
-       + this->robotFloatingBaseFrame, this->robotTFPrefix + "/" + this->robotLeftFootFrame);*/
-
     ok = this->iFrameTransform->waitForTransform(
-             this->humanFloatingBaseFrame, "ground", this->tfTimeout)
+             this->humanFloatingBaseFrame, "ground", this->tfTimeoutCheckDuration)
          && this->iFrameTransform->waitForTransform(
-                this->humanLeftFootFrame, this->humanFloatingBaseFrame, this->tfTimeout);
+                this->humanLeftFootFrame, this->humanFloatingBaseFrame, this->tfTimeoutCheckDuration);
     this->iFrameTransform->waitForTransform(this->robotTFPrefix + "/"
                                                 + this->robotFloatingBaseFrame,
                                             this->robotTFPrefix + "/" + this->robotLeftFootFrame,
-                                            this->tfTimeout);
+                                            this->tfTimeoutCheckDuration);
 
     if (!ok) {
         yWarning() << "Failed to get human or robot transforms from transform server";
         return false;
     }
 
-    this->iFrameTransform->getTransform(this->humanFloatingBaseFrame, "ground", humanBase_H_ground);
+    this->iFrameTransform->getTransform(this->humanFloatingBaseFrame, "ground", ground_H_humanBase);
 
     this->iFrameTransform->getTransform(
-        this->humanLeftFootFrame, this->humanFloatingBaseFrame, humanLeftFoot_H_humanBase);
+        this->humanLeftFootFrame, this->humanFloatingBaseFrame, humanBase_H_humanLeftFoot);
 
     this->iFrameTransform->getTransform(this->robotTFPrefix + "/" + this->robotFloatingBaseFrame,
                                         this->robotTFPrefix + "/" + this->robotLeftFootFrame,
-                                        robotBase_H_robotLeftFoot);
+                                        robotLeftFoot_H_robotBase);
 
     // Compute groud to robot base frame transform
-    robotBase_H_ground = robotBase_H_robotLeftFoot * this->robotLeftFoot_H_humanLeftFoot
-                         * humanLeftFoot_H_humanBase * humanBase_H_ground;
+    ground_H_robotBase = ground_H_humanBase * humanBase_H_humanLeftFoot * humanLeftFoot_H_robotLeftFoot * robotLeftFoot_H_robotBase;
 
-    // yInfo() << LogPrefix << "Transformations :";
-    // yInfo() << "robotBase_H_robotLeftFoot : ";
-    // yInfo() << robotBase_H_robotLeftFoot.toString().c_str();
-    // yInfo() << "pImpl->robotLeftFoot_H_humanLeftFoot";
-    // yInfo() << pImpl->robotLeftFoot_H_humanLeftFoot.toString().c_str();
-    // yInfo() << "humanLeftFoot_H_humanBase";
-    // yInfo() << humanLeftFoot_H_humanBase.toString().c_str();
+    this->robotBasePoseStatusMessage = "Robot ground to base transform set correctly";
+
     return true;
 }
