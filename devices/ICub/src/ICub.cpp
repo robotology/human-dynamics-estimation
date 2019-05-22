@@ -28,6 +28,8 @@
 #include <string>
 #include <vector>
 #include <cmath>
+#include <thread>
+#include <chrono>
 
 using namespace wearable::devices;
 
@@ -346,14 +348,14 @@ void ICub::ICubImpl::computeLinkQuantities()
     for (const auto& controlBoard : this->controlBoardNamesVec) {
         // Get encoder interface
         if (!this->remoteControlBoardsVec.at(boardCount)->view(iEncoders)
-            || !iEncoders) {
+                || !iEncoders) {
             yError() << LogPrefix << "Failed to view the IEncoder interface from the "
                      << controlBoard << " remote control board device";
         }
 
         // Get axis info interface
         if (!this->remoteControlBoardsVec.at(boardCount)->view(iAxisInfo)
-            || !iAxisInfo) {
+                || !iAxisInfo) {
             yError() << LogPrefix << "Failed to view the IAxisInfo interface from the "
                      << controlBoard << " remote control board device";
         }
@@ -403,6 +405,10 @@ void ICub::ICubImpl::computeLinkQuantities()
                                            this->jointVelocitiesVec,
                                            this->world_gravity);
 
+    // Set frame velocity representation
+    // TODO: Double check this representation
+    this->kinDynComputations.setFrameVelocityRepresentation(iDynTree::INERTIAL_FIXED_REPRESENTATION);
+
     // Clear link variables
     this->linkPositionMap.clear();
     this->linkOrientationMap.clear();
@@ -440,12 +446,21 @@ void ICub::ICubImpl::computeLinkQuantities()
             this->linkOrientationMap.emplace(linkName, linkOrientation);
 
             // Get link velocity
-            //TODO
-            wearable::Vector3 linkLinearVelocity;
-            wearable::Vector3 linkAngularVelocity;
+            iDynTree::Twist linkVelocity;
+            linkVelocity = this->kinDynComputations.getFrameVel(linkName);
 
-            linkLinearVelocity.fill(0.0);
-            linkAngularVelocity.fill(0.0);
+            iDynTree::Vector3 linearVelocity = linkVelocity.getLinearVec3();
+            iDynTree::Vector3 angularVelocity = linkVelocity.getAngularVec3();
+
+            wearable::Vector3 linkLinearVelocity;
+            linkLinearVelocity.at(0) = linearVelocity.getVal(0);
+            linkLinearVelocity.at(1) = linearVelocity.getVal(1);
+            linkLinearVelocity.at(2) = linearVelocity.getVal(2);
+
+            wearable::Vector3 linkAngularVelocity;
+            linkAngularVelocity.at(0) = angularVelocity.getVal(0);
+            linkAngularVelocity.at(1) = angularVelocity.getVal(1);
+            linkAngularVelocity.at(2) = angularVelocity.getVal(2);
 
             this->linkLinearVelocityMap.emplace(linkName, linkLinearVelocity);
             this->linkAngularVelocityMap.emplace(linkName, linkAngularVelocity);
@@ -494,22 +509,6 @@ public:
     // -------------------------------
     // IVirtualLinkKinSensor interface
     // -------------------------------
-
-    bool getLinkAcceleration(Vector3& linear, Vector3& angular) const override
-    {
-        if (icubImpl->linkSensorsMap.find(this->m_name)
-            == icubImpl->linkSensorsMap.end()) {
-            yError() << LogPrefix << "Sensor" << this->m_name << "NOT found";
-            linear.fill(0.0);
-            angular.fill(0.0);
-            return false;
-        }
-
-        //TODO: Do a dummy implementation later
-        linear.fill(0.0);
-        angular.fill(0.0);
-        return true;
-    }
 
     bool getLinkPose(Vector3& position, Quaternion& orientation) const override
     {
@@ -565,7 +564,48 @@ public:
             return false;
         }
 
-        //TODO: Do the implementation using kindyn
+        // Call link quantities computation
+        icubImpl->computeLinkQuantities();
+
+        // Get link name
+        size_t found = this->m_name.find_last_of(":");
+        std::string linkName = this->m_name.substr(found+1);
+
+        {
+            std::lock_guard<std::mutex> lock(icubImpl->mtx);
+            if (icubImpl->linkLinearVelocityMap.find(linkName) == icubImpl->linkLinearVelocityMap.end()) {
+                yError() << LogPrefix << "Link " << linkName << "not found in link linear velocity map";
+                linear.fill(0.0);
+                return false;
+            }
+
+            auto linearVel = icubImpl->linkLinearVelocityMap.find(linkName);
+            linear = linearVel->second;
+
+            if (icubImpl->linkAngularVelocityMap.find(linkName) == icubImpl->linkAngularVelocityMap.end()) {
+                yError() << LogPrefix << "Link " << linkName << "not found in link angular velocity map";
+                angular.fill(0.0);
+                return false;
+            }
+
+            auto angularVel = icubImpl->linkAngularVelocityMap.find(linkName);
+            angular = angularVel->second;
+        }
+
+        return true;
+    }
+
+    bool getLinkAcceleration(Vector3& linear, Vector3& angular) const override
+    {
+        if (icubImpl->linkSensorsMap.find(this->m_name)
+            == icubImpl->linkSensorsMap.end()) {
+            yError() << LogPrefix << "Sensor" << this->m_name << "NOT found";
+            linear.fill(0.0);
+            angular.fill(0.0);
+            return false;
+        }
+
+        //TODO: Do a dummy implementation later
         linear.fill(0.0);
         angular.fill(0.0);
         return true;
