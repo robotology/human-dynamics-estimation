@@ -32,8 +32,7 @@ HumanStateWrapper::HumanStateWrapper()
     , pImpl{new impl()}
 {}
 
-HumanStateWrapper::~HumanStateWrapper()
-{}
+HumanStateWrapper::~HumanStateWrapper() {}
 
 bool HumanStateWrapper::open(yarp::os::Searchable& config)
 {
@@ -86,6 +85,8 @@ void HumanStateWrapper::run()
 {
 
     // Get data from the interface
+    std::array<double, 3> CoMPositionInterface = pImpl->iHumanState->getCoMPosition();
+    std::array<double, 3> CoMVelocityInterface = pImpl->iHumanState->getCoMVelocity();
     std::array<double, 3> basePositionInterface = pImpl->iHumanState->getBasePosition();
     std::array<double, 4> baseOrientationInterface = pImpl->iHumanState->getBaseOrientation();
     std::array<double, 6> baseVelocity = pImpl->iHumanState->getBaseVelocity();
@@ -96,6 +97,14 @@ void HumanStateWrapper::run()
 
     // Prepare the message
     human::HumanState& humanStateData = pImpl->outputPort.prepare();
+
+    // Convert the COM position
+    humanStateData.CoMPositionWRTGlobal = {
+        CoMPositionInterface[0], CoMPositionInterface[1], CoMPositionInterface[2]};
+
+    // Convert the COM velocity
+    humanStateData.CoMVelocityWRTGlobal = {
+        CoMVelocityInterface[0], CoMVelocityInterface[1], CoMVelocityInterface[2]};
 
     // Convert the base position
     humanStateData.baseOriginWRTGlobal = {
@@ -185,8 +194,7 @@ bool HumanStateWrapper::attach(yarp::dev::PolyDriver* poly)
     return true;
 }
 
-void HumanStateWrapper::threadRelease()
-{}
+void HumanStateWrapper::threadRelease() {}
 
 bool HumanStateWrapper::detach()
 {

@@ -29,4 +29,6 @@ struct HumanState {
     5: Vector3 baseOriginWRTGlobal;
     6: Quaternion baseOrientationWRTGlobal;
     7: list<double> baseVelocityWRTGlobal;
+    8: Vector3 CoMPositionWRTGlobal;
+    9: Vector3 CoMVelocityWRTGlobal;
 }

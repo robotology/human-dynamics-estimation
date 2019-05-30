@@ -93,6 +93,9 @@ struct SolutionIK
 
     std::array<double, 6> baseVelocity;
 
+    std::array<double, 3> CoMPosition;
+    std::array<double, 3> CoMVelocity;
+
     void clear()
     {
         jointPositions.clear();
@@ -440,10 +443,10 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
 
         if (config.check("inverseVelocityKinematicsSolver")
             && config.find("inverseVelocityKinematicsSolver").isString()) {
-            pImpl->inverseVelocityKinematicsSolver = config.find("inverseVelocityKinematicsSolver").asString();
+            pImpl->inverseVelocityKinematicsSolver =
+                config.find("inverseVelocityKinematicsSolver").asString();
         }
-        else
-        {
+        else {
             pImpl->inverseVelocityKinematicsSolver = "moorePenrose";
             yInfo() << LogPrefix << "Using default inverse velocity kinematics solver";
         }
@@ -516,10 +519,10 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
 
         if (config.check("integrationBasedJointVelocityLimit")
             && config.find("integrationBasedJointVelocityLimit").isDouble()) {
-            pImpl->integrationBasedJointVelocityLimit = config.find("integrationBasedJointVelocityLimit").asDouble();
+            pImpl->integrationBasedJointVelocityLimit =
+                config.find("integrationBasedJointVelocityLimit").asDouble();
         }
-        else
-        {
+        else {
             pImpl->integrationBasedJointVelocityLimit = -1.0;
         }
 
@@ -551,14 +554,16 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     yInfo() << LogPrefix << "*** Period                            :" << pImpl->period;
     yInfo() << LogPrefix << "*** Urdf file name                    :" << urdfFileName;
     yInfo() << LogPrefix << "*** Ik solver                         :" << solverName;
-    yInfo() << LogPrefix << "*** Use Xsens joint angles            :" << pImpl->useXsensJointsAngles;
+    yInfo() << LogPrefix
+            << "*** Use Xsens joint angles            :" << pImpl->useXsensJointsAngles;
     yInfo() << LogPrefix
             << "*** Use Directly base measurement    :" << pImpl->useDirectBaseMeasurement;
     if (pImpl->ikSolver == SolverIK::pairwised || pImpl->ikSolver == SolverIK::global) {
         yInfo() << LogPrefix << "*** Allow IK failures                 :" << pImpl->allowIKFailures;
         yInfo() << LogPrefix << "*** Max IK iterations                 :" << pImpl->maxIterationsIK;
         yInfo() << LogPrefix << "*** Cost Tolerance                    :" << pImpl->costTolerance;
-        yInfo() << LogPrefix << "*** IK Solver Name                    :" << pImpl->linearSolverName;
+        yInfo() << LogPrefix
+                << "*** IK Solver Name                    :" << pImpl->linearSolverName;
         yInfo() << LogPrefix << "*** Position target weight            :" << pImpl->posTargetWeight;
         yInfo() << LogPrefix << "*** Rotation target weight            :" << pImpl->rotTargetWeight;
         yInfo() << LogPrefix
@@ -580,11 +585,10 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
                 << pImpl->integrationBasedIKIntegralAngularCorrectionGain;
         yInfo() << LogPrefix
                 << "*** Cost regularization              :" << pImpl->costRegularization;
-        yInfo() << LogPrefix
-                << "*** Joint velocity limit             :" << pImpl->integrationBasedJointVelocityLimit;
+        yInfo() << LogPrefix << "*** Joint velocity limit             :"
+                << pImpl->integrationBasedJointVelocityLimit;
     }
-    if (pImpl->ikSolver == SolverIK::integrationbased || pImpl->ikSolver == SolverIK::global)
-    {
+    if (pImpl->ikSolver == SolverIK::integrationbased || pImpl->ikSolver == SolverIK::global) {
         yInfo() << LogPrefix << "*** Inverse Velocity Kinematics solver:"
                 << pImpl->inverseVelocityKinematicsSolver;
     }
@@ -776,6 +780,16 @@ void HumanStateProvider::run()
                                         pImpl->baseVelocitySolution.getVal(3),
                                         pImpl->baseVelocitySolution.getVal(4),
                                         pImpl->baseVelocitySolution.getVal(5)};
+    }
+    {
+        iDynTree::KinDynComputations* computations = pImpl->kinDynComputations.get();
+        pImpl->solution.CoMPosition = {computations->getCenterOfMassPosition().getVal(0),
+                                       computations->getCenterOfMassPosition().getVal(1),
+                                       computations->getCenterOfMassPosition().getVal(2)};
+
+        pImpl->solution.CoMVelocity = {computations->getCenterOfMassVelocity().getVal(0),
+                                       computations->getCenterOfMassVelocity().getVal(1),
+                                       computations->getCenterOfMassVelocity().getVal(2)};
     }
 
     // compute the inverse kinematic errors (currently the result is unused, but it may be used for
@@ -1431,12 +1445,15 @@ bool HumanStateProvider::impl::solveIntegrationBasedInverseKinematics()
 
     // Threshold to limitate joint velocity
     for (unsigned i = 0; i < jointVelocitiesSolution.size(); i++) {
-        if (integrationBasedJointVelocityLimit > 0 && jointVelocitiesSolution.getVal(i) > integrationBasedJointVelocityLimit) {
+        if (integrationBasedJointVelocityLimit > 0
+            && jointVelocitiesSolution.getVal(i) > integrationBasedJointVelocityLimit) {
             yWarning() << LogPrefix << "joint velocity out of limit: " << humanModel.getJointName(i)
                        << " : " << jointVelocitiesSolution.getVal(i);
             jointVelocitiesSolution.setVal(i, integrationBasedJointVelocityLimit);
         }
-        else if (integrationBasedJointVelocityLimit > 0 && jointVelocitiesSolution.getVal(i) < (-1.0 * integrationBasedJointVelocityLimit)) {
+        else if (integrationBasedJointVelocityLimit > 0
+                 && jointVelocitiesSolution.getVal(i)
+                        < (-1.0 * integrationBasedJointVelocityLimit)) {
             yWarning() << LogPrefix << "joint velocity out of limit: " << humanModel.getJointName(i)
                        << " : " << jointVelocitiesSolution.getVal(i);
             jointVelocitiesSolution.setVal(i, -1.0 * integrationBasedJointVelocityLimit);
@@ -1890,6 +1907,17 @@ std::array<double, 3> HumanStateProvider::getBasePosition() const
 {
     std::lock_guard<std::mutex> lock(pImpl->mutex);
     return pImpl->solution.basePosition;
+}
+std::array<double, 3> HumanStateProvider::getCoMPosition() const
+{
+    std::lock_guard<std::mutex> lock(pImpl->mutex);
+    return pImpl->solution.CoMPosition;
+}
+
+std::array<double, 3> HumanStateProvider::getCoMVelocity() const
+{
+    std::lock_guard<std::mutex> lock(pImpl->mutex);
+    return pImpl->solution.CoMVelocity;
 }
 
 // This method returns the all link pair names from the full human model

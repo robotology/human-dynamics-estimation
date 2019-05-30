@@ -60,6 +60,9 @@ struct ModelState
 
     std::array<double, 6> baseVelocity;
 
+    std::array<double, 3> CoMPosition;
+    std::array<double, 3> CoMVelocity;
+
     void clear()
     {
         jointPositions = {};
@@ -243,48 +246,50 @@ bool XsensHumanStateProvider::close()
 
 void XsensHumanStateProvider::run()
 {
-        // Get joint angles
-        if (!pImpl->getJointAnglesFromInputData(pImpl->jointAngles)) {
-            yError() << LogPrefix << "Failed to get joint angles from input data";
-            askToStop();
-            return;
-        }
+    // Get joint angles
+    if (!pImpl->getJointAnglesFromInputData(pImpl->jointAngles)) {
+        yError() << LogPrefix << "Failed to get joint angles from input data";
+        askToStop();
+        return;
+    }
 
-        // Get the position and orientation of the base link, and convert it into iDynTree objects
-        Vector3 position;
-        Quaternion orientation;
+    // Get the position and orientation of the base link, and convert it into iDynTree objects
+    Vector3 position;
+    Quaternion orientation;
 
-        if (!pImpl->wearableStorage.baseLinkSensor->getLinkPose(position, orientation)) {
-            yError() << LogPrefix << "Failed to get position and orientation of the base"
-                     << "from the input data";
-            askToStop();
-            return;
-        }
+    if (!pImpl->wearableStorage.baseLinkSensor->getLinkPose(position, orientation)) {
+        yError() << LogPrefix << "Failed to get position and orientation of the base"
+                 << "from the input data";
+        askToStop();
+        return;
+    }
 
-        iDynTree::Position positioniDynTree(position[0], position[1], position[2]);
-        iDynTree::Rotation rotationiDynTree;
-        rotationiDynTree.fromQuaternion({orientation.data(), 4});
+    iDynTree::Position positioniDynTree(position[0], position[1], position[2]);
+    iDynTree::Rotation rotationiDynTree;
+    rotationiDynTree.fromQuaternion({orientation.data(), 4});
 
-        iDynTree::Transform baseTransform(std::move(rotationiDynTree), std::move(positioniDynTree));
-        
-        // Compute the model joint angles and save it in the state
-        for (unsigned i = 0; i < pImpl->jointAngles.size(); ++i) {
-            pImpl->state.jointPositions[i] = pImpl->jointAngles.getVal(i) * 3.14159 / 180;
-        }
+    iDynTree::Transform baseTransform(std::move(rotationiDynTree), std::move(positioniDynTree));
 
-        // Save poisition and orientation of the base link
-        pImpl->state.basePosition = {baseTransform.getPosition().getVal(0),
-                                        baseTransform.getPosition().getVal(1),
-                                        baseTransform.getPosition().getVal(2)};
+    // Compute the model joint angles and save it in the state
+    for (unsigned i = 0; i < pImpl->jointAngles.size(); ++i) {
+        pImpl->state.jointPositions[i] = pImpl->jointAngles.getVal(i) * 3.14159 / 180;
+    }
 
-        pImpl->state.baseOrientation = {
-            baseTransform.getRotation().asQuaternion().getVal(0),
-            baseTransform.getRotation().asQuaternion().getVal(1),
-            baseTransform.getRotation().asQuaternion().getVal(2),
-            baseTransform.getRotation().asQuaternion().getVal(3),};
+    // Save poisition and orientation of the base link
+    pImpl->state.basePosition = {baseTransform.getPosition().getVal(0),
+                                 baseTransform.getPosition().getVal(1),
+                                 baseTransform.getPosition().getVal(2)};
+
+    pImpl->state.baseOrientation = {
+        baseTransform.getRotation().asQuaternion().getVal(0),
+        baseTransform.getRotation().asQuaternion().getVal(1),
+        baseTransform.getRotation().asQuaternion().getVal(2),
+        baseTransform.getRotation().asQuaternion().getVal(3),
+    };
 }
 
-bool XsensHumanStateProvider::impl::getJointAnglesFromInputData(iDynTree::VectorDynSize& jointAngles)
+bool XsensHumanStateProvider::impl::getJointAnglesFromInputData(
+    iDynTree::VectorDynSize& jointAngles)
 {
     for (const auto& jointMapEntry : wearableStorage.modelToWearable_JointInfo) {
         const ModelJointName& modelJointName = jointMapEntry.first;
@@ -490,4 +495,15 @@ std::array<double, 3> XsensHumanStateProvider::getBasePosition() const
 {
     std::lock_guard<std::mutex> lock(pImpl->mutex);
     return pImpl->state.basePosition;
+}
+std::array<double, 3> XsensHumanStateProvider::getCoMVelocity() const
+{
+    std::lock_guard<std::mutex> lock(pImpl->mutex);
+    return pImpl->state.CoMVelocity;
+}
+
+std::array<double, 3> XsensHumanStateProvider::getCoMPosition() const
+{
+    std::lock_guard<std::mutex> lock(pImpl->mutex);
+    return pImpl->state.CoMPosition;
 }
