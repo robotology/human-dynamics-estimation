@@ -782,14 +782,14 @@ void HumanStateProvider::run()
                                         pImpl->baseVelocitySolution.getVal(5)};
     }
     {
-        iDynTree::KinDynComputations* computations = pImpl->kinDynComputations.get();
-        pImpl->solution.CoMPosition = {computations->getCenterOfMassPosition().getVal(0),
-                                       computations->getCenterOfMassPosition().getVal(1),
-                                       computations->getCenterOfMassPosition().getVal(2)};
+        iDynTree::KinDynComputations* kindyncomputations = pImpl->kinDynComputations.get();
+        pImpl->solution.CoMPosition = {kindyncomputations->getCenterOfMassPosition().getVal(0),
+                                       kindyncomputations->getCenterOfMassPosition().getVal(1),
+                                       kindyncomputations->getCenterOfMassPosition().getVal(2)};
 
-        pImpl->solution.CoMVelocity = {computations->getCenterOfMassVelocity().getVal(0),
-                                       computations->getCenterOfMassVelocity().getVal(1),
-                                       computations->getCenterOfMassVelocity().getVal(2)};
+        pImpl->solution.CoMVelocity = {kindyncomputations->getCenterOfMassVelocity().getVal(0),
+                                       kindyncomputations->getCenterOfMassVelocity().getVal(1),
+                                       kindyncomputations->getCenterOfMassVelocity().getVal(2)};
     }
 
     // compute the inverse kinematic errors (currently the result is unused, but it may be used for

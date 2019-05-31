@@ -496,14 +496,14 @@ std::array<double, 3> XsensHumanStateProvider::getBasePosition() const
     std::lock_guard<std::mutex> lock(pImpl->mutex);
     return pImpl->state.basePosition;
 }
-std::array<double, 3> XsensHumanStateProvider::getCoMVelocity() const
-{
-    std::lock_guard<std::mutex> lock(pImpl->mutex);
-    return pImpl->state.CoMVelocity;
-}
+// std::array<double, 3> XsensHumanStateProvider::getCoMVelocity() const
+//{
+//    std::lock_guard<std::mutex> lock(pImpl->mutex);
+//    return pImpl->state.CoMVelocity;
+//}
 
-std::array<double, 3> XsensHumanStateProvider::getCoMPosition() const
-{
-    std::lock_guard<std::mutex> lock(pImpl->mutex);
-    return pImpl->state.CoMPosition;
-}
+// std::array<double, 3> XsensHumanStateProvider::getCoMPosition() const
+//{
+//    std::lock_guard<std::mutex> lock(pImpl->mutex);
+//    return pImpl->state.CoMPosition;
+//}
