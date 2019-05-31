@@ -76,8 +76,8 @@
     </device>
 
     <!-- Uncomment to stream the output of HumanStateProvider on a YARP port -->
-    <!-- <device type="human_state_wrapper" name="RobotStateWrapper">
-        <param name="period">0.02</param>
+    <device type="human_state_wrapper" name="RobotStateWrapper">
+        <param name="period">0.01</param>
         <param name="outputPort">/HDE/RobotStateWrapper/state:o</param>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
@@ -85,7 +85,7 @@
             </paramlist>
         </action>
         <action phase="shutdown" level="5" type="detach"/>
-    </device> -->
+    </device>
 
     <device type="human_state_publisher" name="RobotStatePublisher">
         <param name="period">0.02</param>
