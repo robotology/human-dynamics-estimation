@@ -19,15 +19,6 @@ set(HDE_APP_FILES xml/applications/HumanDynamicsEstimation.xml
 
 yarp_install(FILES ${HDE_APP_FILES} DESTINATION ${YARP_APPLICATIONS_INSTALL_DIR})
 
-# Install robot urdf files
-set(ROBOT_URDF_FILES urdfs/iCubGenova02.urdf
-               urdfs/iCubGenova04.urdf
-               urdfs/iCubGazeboV2_5.urdf)
-
-yarp_install(FILES ${ROBOT_URDF_FILES}
-             DESTINATION ${YARP_CONTEXTS_INSTALL_DIR}/human-dynamic-estimation/urdfs)
-
-
 # ROS related installation
 set (ROS_PROJECT_NAME HDERviz)
 set (ROS_PACKAGE_FILE ros/package.xml)
@@ -46,8 +37,3 @@ install(FILES ${ROS_LAUNCH_FILE}
 
 install(FILES ${ROS_RVIZ_FILE}
              DESTINATION ${CMAKE_INSTALL_PREFIX}/share/${ROS_PROJECT_NAME}/rviz/)
-
-# Install robot urdf files
-install(FILES ${ROBOT_URDF_FILES}
-             DESTINATION ${CMAKE_INSTALL_PREFIX}/share/${ROS_PROJECT_NAME}/urdfs/)
-
