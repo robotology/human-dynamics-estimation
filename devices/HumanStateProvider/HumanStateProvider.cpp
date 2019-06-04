@@ -753,6 +753,17 @@ void HumanStateProvider::run()
         pImpl->baseVelocitySolution = measuredBaseVelocity;
     }
 
+    // CoM position and velocity
+    std::array<double, 3> CoM_position, CoM_velocity;
+    iDynTree::KinDynComputations* kindyncomputations = pImpl->kinDynComputations.get();
+    CoM_position = {kindyncomputations->getCenterOfMassPosition().getVal(0),
+                    kindyncomputations->getCenterOfMassPosition().getVal(1),
+                    kindyncomputations->getCenterOfMassPosition().getVal(2)};
+
+    CoM_velocity = {kindyncomputations->getCenterOfMassVelocity().getVal(0),
+                    kindyncomputations->getCenterOfMassVelocity().getVal(1),
+                    kindyncomputations->getCenterOfMassVelocity().getVal(2)};
+
     // Expose IK solution for IHumanState
     {
         std::lock_guard<std::mutex> lock(pImpl->mutex);
@@ -770,8 +781,7 @@ void HumanStateProvider::run()
             pImpl->baseTransformSolution.getRotation().asQuaternion().getVal(0),
             pImpl->baseTransformSolution.getRotation().asQuaternion().getVal(1),
             pImpl->baseTransformSolution.getRotation().asQuaternion().getVal(2),
-            pImpl->baseTransformSolution.getRotation().asQuaternion().getVal(3),
-        };
+            pImpl->baseTransformSolution.getRotation().asQuaternion().getVal(3)};
 
         // Use measured base frame velocity
         pImpl->solution.baseVelocity = {pImpl->baseVelocitySolution.getVal(0),
@@ -780,16 +790,9 @@ void HumanStateProvider::run()
                                         pImpl->baseVelocitySolution.getVal(3),
                                         pImpl->baseVelocitySolution.getVal(4),
                                         pImpl->baseVelocitySolution.getVal(5)};
-    }
-    {
-        iDynTree::KinDynComputations* kindyncomputations = pImpl->kinDynComputations.get();
-        pImpl->solution.CoMPosition = {kindyncomputations->getCenterOfMassPosition().getVal(0),
-                                       kindyncomputations->getCenterOfMassPosition().getVal(1),
-                                       kindyncomputations->getCenterOfMassPosition().getVal(2)};
-
-        pImpl->solution.CoMVelocity = {kindyncomputations->getCenterOfMassVelocity().getVal(0),
-                                       kindyncomputations->getCenterOfMassVelocity().getVal(1),
-                                       kindyncomputations->getCenterOfMassVelocity().getVal(2)};
+        // CoM position and velocity
+        pImpl->solution.CoMPosition = {CoM_position[0], CoM_position[1], CoM_position[2]};
+        pImpl->solution.CoMVelocity = {CoM_velocity[0], CoM_velocity[1], CoM_velocity[2]};
     }
 
     // compute the inverse kinematic errors (currently the result is unused, but it may be used for
