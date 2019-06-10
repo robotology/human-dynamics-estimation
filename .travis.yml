@@ -81,7 +81,7 @@ stage_osx:
     #- export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$DEPS_INSTALL_PREFIX/lib
     - export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$DEPS_INSTALL_PREFIX
     # Install dependencies
-    - brew install eigen ace tinyxml gsl dartsim/dart/ipopt qt
+    - brew install eigen ace tinyxml gsl ipopt qt
     - export PATH="/usr/local/opt/qt/bin/:$PATH"
     # Build other dependencies
     - cd $TRAVIS_BUILD_DIR
