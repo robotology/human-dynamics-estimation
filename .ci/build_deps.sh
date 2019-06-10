@@ -68,7 +68,7 @@ cd $GIT_FOLDER
 rm -rf wearables
 git clone https://github.com/robotology-playground/wearables.git
 cd wearables
-git checkout feature/cleanup
+git checkout feature/ICub-device-impl
 mkdir -p build && cd build
 cmake -G"${TRAVIS_CMAKE_GENERATOR}" \
       -DCMAKE_BUILD_TYPE=${TRAVIS_BUILD_TYPE} \
