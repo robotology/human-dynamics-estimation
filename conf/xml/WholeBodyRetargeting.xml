@@ -36,6 +36,7 @@
         <param name="costTolerance">0.001</param>
         <!-- inverse velocity kinematics parameters -->
         <!-- inverseVelocityKinematicsSolver values:
+        QP
         moorePenrose,
         completeOrthogonalDecomposition,
         leastSquare,
@@ -43,7 +44,7 @@
         sparseCholeskyDecomposition,
         robustCholeskyDecomposition,
         sparseRobustCholeskyDecomposition -->
-        <param name='inverseVelocityKinematicsSolver'>sparseRobustCholeskyDecomposition</param>
+        <param name='inverseVelocityKinematicsSolver'>QP</param>
         <param name="linVelTargetWeight">0.0</param>
         <param name="angVelTargetWeight">1.0</param>
         <!-- integration based IK parameters -->
