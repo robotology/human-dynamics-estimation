@@ -24,6 +24,7 @@ protected:
 public:
     typedef enum
     {
+        QP,
         moorePenrose,
         completeOrthogonalDecomposition,
         leastSquare,

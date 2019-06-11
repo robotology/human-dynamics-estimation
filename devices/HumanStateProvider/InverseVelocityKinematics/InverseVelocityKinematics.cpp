@@ -13,6 +13,8 @@
 #include <iDynTree/Core/EigenHelpers.h>
 #include <iDynTree/Core/VectorDynSize.h>
 #include <iDynTree/KinDynComputations.h>
+// osqp-eigen
+#include "OsqpEigen/OsqpEigen.h"
 
 // ====
 // IMPL
@@ -20,10 +22,20 @@
 
 class InverseVelocityKinematics::impl
 {
+    // qp variables
+    iDynTree::VectorDynSize m_u_prime, m_l_prime, m_q_prime;
+    iDynTree::MatrixDynSize m_A_prime, m_P_prime;
+
+    iDynTree::VectorDynSize m_u, m_l, m_q;
+    iDynTree::MatrixDynSize m_A, m_P;
+
+    std::unique_ptr<OsqpEigen::Solver> m_optimizerSolver; /**< Optimization solver. */
+
 public:
     iDynTree::Model model;
     iDynTree::KinDynComputations dynamics;
     size_t dofs;
+    size_t configSpaceSize;
 
     struct
     {
@@ -41,6 +53,7 @@ public:
     VelocityMap velocityTargets;
 
     size_t numberOfTargetVariables;
+    size_t numberOfConstraints;
     double regularizationWeight;
 
     iDynTree::Twist baseVelocityResult;
@@ -70,11 +83,11 @@ public:
 
     bool solveProblem();
 
-    bool solveWeightedPseudoInverse(iDynTree::MatrixDynSize matrix,
-                                    iDynTree::VectorDynSize inputVector,
-                                    iDynTree::VectorDynSize& outputVector,
-                                    iDynTree::VectorDynSize weightVector,
-                                    iDynTree::MatrixDynSize regularizationMatrix);
+    bool solveIntegrationBasedIK(iDynTree::MatrixDynSize matrix,
+                                 iDynTree::VectorDynSize inputVector,
+                                 iDynTree::VectorDynSize& outputVector,
+                                 iDynTree::VectorDynSize weightVector,
+                                 iDynTree::MatrixDynSize regularizationMatrix);
 
     void computeTargetSize();
     void computeProblemSizeAndResizeBuffers();
@@ -82,6 +95,7 @@ public:
     void prepareFullVelocityVector();
     void prepareFullJacobianMatrix();
     void prepareWeightVector();
+    void prepareOptimizer();
 };
 
 // ===================
@@ -222,7 +236,7 @@ bool InverseVelocityKinematics::impl::solveProblem()
     prepareWeightVector();
 
     iDynTree::VectorDynSize nu;
-    solveWeightedPseudoInverse(
+    solveIntegrationBasedIK(
         fullJacobianBuffer, fullVelocityBuffer, nu, weightVectorBuffer, regularizationMatrixBuffer);
 
     baseVelocityResult.setVal(0, nu.getVal(0));
@@ -236,10 +250,16 @@ bool InverseVelocityKinematics::impl::solveProblem()
         jointVelocityResult.setVal(k, nu.getVal(k + 6));
     }
 
+    //    yInfo() << "IB-IK, normal: ";
+    //    for (int k = 0; k < nu.size(); k++) {
+    //        std::cout << nu.getVal(k) << " ";
+    //    }
+    //    std::cout << std::endl;
+
     return true;
 }
 
-bool InverseVelocityKinematics::impl::solveWeightedPseudoInverse(
+bool InverseVelocityKinematics::impl::solveIntegrationBasedIK(
     iDynTree::MatrixDynSize matrix,
     iDynTree::VectorDynSize inputVector,
     iDynTree::VectorDynSize& outputVector,
@@ -255,9 +275,220 @@ bool InverseVelocityKinematics::impl::solveWeightedPseudoInverse(
     Eigen::DiagonalMatrix<double, Eigen::Dynamic> weightInverse(weightVector.size());
     weightInverse =
         Eigen::DiagonalMatrix<double, Eigen::Dynamic>(iDynTree::toEigen(weightVector)).inverse();
+    //********************* qp implementation
+    //    // check changing the matrixxd to sparse matrices if is faster or not!?
+    //    unsigned int taskSpaceSize = matrix.rows();
+    //    unsigned int configSpaceSize = matrix.cols();
+    //    unsigned int NoOfconstraints = configSpaceSize;
 
-    if (resolutionMode == moorePenrose)
-    {
+    //    // generate P_prime matrix
+    //    Eigen::MatrixXd P = Eigen::MatrixXd::Identity(taskSpaceSize, taskSpaceSize);
+
+    //    Eigen::MatrixXd P_prime(taskSpaceSize + configSpaceSize, taskSpaceSize + configSpaceSize);
+
+    //    //    P_prime.topLeftCorner(configSpaceSize, configSpaceSize) =
+    //    //        Eigen::MatrixXd::Zero(configSpaceSize, configSpaceSize);
+    //    P_prime.topLeftCorner(configSpaceSize, configSpaceSize) =
+    //        iDynTree::toEigen(regularizationMatrix).sparseView();
+    //    P_prime.topRightCorner(configSpaceSize, taskSpaceSize) =
+    //        Eigen::MatrixXd::Zero(configSpaceSize, taskSpaceSize);
+    //    P_prime.bottomLeftCorner(taskSpaceSize, configSpaceSize) =
+    //        Eigen::MatrixXd::Zero(taskSpaceSize, configSpaceSize);
+    //    P_prime.bottomRightCorner(taskSpaceSize, taskSpaceSize) = P;
+
+    //    // generate A_prime matrix for constraints
+    //    Eigen::MatrixXd A = Eigen::MatrixXd::Identity(NoOfconstraints, NoOfconstraints);
+
+    //    Eigen::MatrixXd A_prime(NoOfconstraints + taskSpaceSize, configSpaceSize + taskSpaceSize);
+
+    //    A_prime.topLeftCorner(taskSpaceSize, configSpaceSize) =
+    //    iDynTree::toEigen(matrix).sparseView(); A_prime.topRightCorner(taskSpaceSize,
+    //    taskSpaceSize) =
+    //        Eigen::MatrixXd::Identity(taskSpaceSize, taskSpaceSize);
+    //    A_prime.bottomLeftCorner(NoOfconstraints, configSpaceSize) = A;
+    //    A_prime.bottomRightCorner(NoOfconstraints, taskSpaceSize) =
+    //        Eigen::MatrixXd::Zero(NoOfconstraints, taskSpaceSize);
+    //    // generate upper limit vector (u_prime) and lower limit vector (l_prime)
+    //    Eigen::VectorXd V = iDynTree::toEigen(inputVector);
+    //    double jointVelocityLimit = 10.0;
+
+    //    Eigen::VectorXd U = Eigen::VectorXd::Ones(NoOfconstraints, 1) * jointVelocityLimit;
+    //    Eigen::VectorXd L = Eigen::VectorXd::Ones(NoOfconstraints, 1) * -1.0 * jointVelocityLimit;
+
+    //    Eigen::VectorXd u_prime(NoOfconstraints + taskSpaceSize);
+    //    u_prime.topRows(taskSpaceSize) = V;
+    //    u_prime.bottomRows(NoOfconstraints) = U;
+
+    //    Eigen::VectorXd l_prime(NoOfconstraints + taskSpaceSize);
+    //    l_prime.topRows(taskSpaceSize) = V;
+    //    l_prime.bottomRows(NoOfconstraints) = L;
+
+    //    OsqpEigen::Solver solver;
+    //    // solver.settings()->setVerbosity(false);
+    //    solver.settings()->setWarmStart(true);
+    //    solver.data()->setNumberOfVariables(taskSpaceSize + configSpaceSize);
+    //    solver.data()->setNumberOfConstraints(NoOfconstraints + taskSpaceSize);
+
+    //    Eigen::SparseMatrix<double> A_prime_sparse = A_prime.sparseView();
+    //    Eigen::SparseMatrix<double> P_prime_sparse = P_prime.sparseView();
+    //    Eigen::VectorXd q_prime(taskSpaceSize + configSpaceSize);
+    //    q_prime = Eigen::VectorXd::Zero(taskSpaceSize + configSpaceSize, 1);
+
+    //    // set A
+    //    if (!solver.data()->setLinearConstraintsMatrix(A_prime_sparse)) {
+    //        return 1;
+    //    }
+    //    // set U
+    //    if (!solver.data()->setUpperBound(u_prime)) {
+    //        return 1;
+    //    }
+    //    // set L
+    //    if (!solver.data()->setLowerBound(l_prime)) {
+    //        return 1;
+    //    }
+    //    // set P
+    //    if (!solver.data()->setHessianMatrix(P_prime_sparse)) {
+    //        return 1;
+    //    }
+
+    //    // set q
+    //    if (!solver.data()->setGradient(q_prime)) {
+    //        return 1;
+    //    }
+
+    //    if (!solver.initSolver()) {
+    //        return 1;
+    //    }
+
+    //    // controller QPSolution vector
+
+    yInfo() << "resolution mode: " << resolutionMode;
+    if (resolutionMode == QP) {
+
+        if (!m_optimizerSolver->isInitialized()) {
+            //            iDynTree::toEigen(m_A_prime).topLeftCorner(numberOfTargetVariables,
+            //            configSpaceSize) =
+            //                iDynTree::toEigen(matrix).sparseView();
+            //            iDynTree::toEigen(m_u_prime).topRows(numberOfTargetVariables) =
+            //                iDynTree::toEigen(inputVector);
+            //            iDynTree::toEigen(m_l_prime).topRows(numberOfTargetVariables) =
+            //                iDynTree::toEigen(inputVector);
+
+            //            // set A
+            //            Eigen::SparseMatrix<double> constraintMatrix =
+            //                iDynTree::toEigen(m_A_prime).sparseView();
+            //            if
+            //            (!m_optimizerSolver->data()->setLinearConstraintsMatrix(constraintMatrix))
+            //            {
+            //                yError() << "[InverseVelocityKinematics::impl::prepareOptimizer] "
+            //                         << "qp solver for [setLinearConstraintsMatrix] returns
+            //                         false.";
+            //                return 1;
+            //            }
+            //            yInfo() << "9";
+
+            //            // set U
+            //            auto upperBuond = iDynTree::toEigen(m_u_prime);
+            //            if (!m_optimizerSolver->data()->setUpperBound(upperBuond)) {
+            //                yError() << "[InverseVelocityKinematics::impl::prepareOptimizer] "
+            //                         << "qp solver for [setUpperBound] returns false.";
+
+            //                return 1;
+            //            }
+            //            yInfo() << "10";
+
+            //            // set L
+            //            auto lowerBuond = iDynTree::toEigen(m_l_prime);
+            //            if (!m_optimizerSolver->data()->setLowerBound(lowerBuond)) {
+            //                yError() << "[InverseVelocityKinematics::impl::prepareOptimizer] "
+            //                         << "qp solver for [setLowerBound] returns false.";
+
+            //                return 1;
+            //            }
+            //            yInfo() << "11";
+
+            //            // set P
+            //            Eigen::SparseMatrix<double> HessianMatrix =
+            //            iDynTree::toEigen(m_P_prime).sparseView(); if
+            //            (!m_optimizerSolver->data()->setHessianMatrix(HessianMatrix)) {
+            //                yError() << "[InverseVelocityKinematics::impl::prepareOptimizer] "
+            //                         << "qp solver for [setHessianMatrix] returns false.";
+
+            //                return 1;
+            //            }
+            //            yInfo() << "12";
+
+            //            // set q
+            //            auto GradientVector = iDynTree::toEigen(m_q_prime);
+            //            if (!m_optimizerSolver->data()->setGradient(GradientVector)) {
+            //                yError() << "[InverseVelocityKinematics::impl::prepareOptimizer] "
+            //                         << "qp solver for [setGradient] returns false.";
+            //                return 1;
+            //        }
+            yInfo() << "14-2";
+
+            if (!m_optimizerSolver->initSolver()) {
+                yError() << "[InverseVelocityKinematics::impl::prepareOptimizer] "
+                         << "qp solver for [initSolver] returns false.";
+
+                return 1;
+            }
+        }
+        else {
+            yInfo() << "15";
+            iDynTree::toEigen(m_A_prime).topLeftCorner(numberOfTargetVariables, configSpaceSize) =
+                iDynTree::toEigen(matrix).sparseView();
+            iDynTree::toEigen(m_u_prime).topRows(numberOfTargetVariables) =
+                iDynTree::toEigen(inputVector);
+            iDynTree::toEigen(m_l_prime).topRows(numberOfTargetVariables) =
+                iDynTree::toEigen(inputVector);
+
+            Eigen::SparseMatrix<double> constraintMatrix =
+                iDynTree::toEigen(m_A_prime).sparseView();
+            yInfo() << "16";
+            auto upperBuond = iDynTree::toEigen(m_u_prime);
+            auto lowerBuond = iDynTree::toEigen(m_l_prime);
+            yInfo() << "17";
+            if (!m_optimizerSolver->updateBounds(lowerBuond, upperBuond)) {
+                yError() << "[InverseVelocityKinematics::impl::solveIntegrationBasedIK] "
+                         << "qp solver for [updateBounds] returns false.";
+                return 1;
+            }
+            yInfo() << "17-1";
+            if (!m_optimizerSolver->updateLinearConstraintsMatrix(constraintMatrix)) {
+                yError() << "[InverseVelocityKinematics::impl::solveIntegrationBasedIK] "
+                         << "qp solver for [updateLinearConstraintsMatrix] returns false.";
+                return 1;
+            }
+            yInfo() << "18";
+        }
+        yInfo() << "19";
+
+        //        Eigen::VectorXd QPSolution;
+        // solve the QP problem   fullVelocityBuffer
+        if (!m_optimizerSolver->solve()) {
+            yError() << "[InverseVelocityKinematics::impl::solveIntegrationBasedIK] "
+                     << "qp solver for [solve] returns false.";
+
+            return 1;
+        }
+
+        // get the controller input
+        //        QPSolution = m_optimizerSolver->getSolution();
+
+        //    yInfo() << "IB-IK qp: ";
+        //    for (unsigned int i = 0; i < configSpaceSize; i++) {
+        //        std::cout << QPSolution.coeff(i, 0) << " ";
+        //    }
+        //    std::cout << std::endl;
+
+        //        iDynTree::toEigen(outputVector) = QPSolution.topRows(configSpaceSize);
+        iDynTree::toEigen(outputVector) = m_optimizerSolver->getSolution().topRows(configSpaceSize);
+        //        yInfo() << "running qp";
+
+        //**********************************
+    }
+    else if (resolutionMode == moorePenrose) {
         iDynTree::toEigen(outputVector) =
             (iDynTree::toEigen(matrix).transpose() * weightInverse.toDenseMatrix()
                  * iDynTree::toEigen(matrix)
@@ -266,13 +497,11 @@ bool InverseVelocityKinematics::impl::solveWeightedPseudoInverse(
             * iDynTree::toEigen(matrix).transpose() * weightInverse.toDenseMatrix()
             * iDynTree::toEigen(inputVector);
     }
-    else if (resolutionMode == completeOrthogonalDecomposition)
-    {
+    else if (resolutionMode == completeOrthogonalDecomposition) {
         Eigen::CompleteOrthogonalDecomposition<
             Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-            WeightedJacobian = (iDynTree::toEigen(matrix).transpose() *
-            weightInverse.toDenseMatrix()
-                                    * iDynTree::toEigen(matrix)
+            WeightedJacobian = (iDynTree::toEigen(matrix).transpose()
+                                    * weightInverse.toDenseMatrix() * iDynTree::toEigen(matrix)
                                 + iDynTree::toEigen(regularizationMatrix))
                                    .completeOrthogonalDecomposition();
         WeightedJacobian.setThreshold(1e-2);
@@ -283,8 +512,7 @@ bool InverseVelocityKinematics::impl::solveWeightedPseudoInverse(
         std::cout << "rank: " << WeightedJacobian.rank()
                   << " threshhold: " << WeightedJacobian.threshold() << std::endl;
     }
-    else if (resolutionMode == leastSquare)
-    {
+    else if (resolutionMode == leastSquare) {
         iDynTree::toEigen(outputVector) =
             (iDynTree::toEigen(matrix).transpose() * weightInverse.toDenseMatrix()
                  * iDynTree::toEigen(matrix)
@@ -293,8 +521,7 @@ bool InverseVelocityKinematics::impl::solveWeightedPseudoInverse(
                 .solve(iDynTree::toEigen(matrix).transpose() * weightInverse.toDenseMatrix()
                        * iDynTree::toEigen(inputVector));
     }
-    else if (resolutionMode == choleskyDecomposition)
-    {
+    else if (resolutionMode == choleskyDecomposition) {
         iDynTree::toEigen(outputVector) =
             (iDynTree::toEigen(matrix).transpose() * weightInverse.toDenseMatrix()
                  * iDynTree::toEigen(matrix)
@@ -303,8 +530,7 @@ bool InverseVelocityKinematics::impl::solveWeightedPseudoInverse(
                 .solve(iDynTree::toEigen(matrix).transpose() * weightInverse.toDenseMatrix()
                        * iDynTree::toEigen(inputVector));
     }
-    else if (resolutionMode == sparseCholeskyDecomposition)
-    {
+    else if (resolutionMode == sparseCholeskyDecomposition) {
         Eigen::SimplicialLLT<Eigen::SparseMatrix<double>> solver;
         solver.compute((iDynTree::toEigen(matrix).transpose() * weightInverse.toDenseMatrix()
                             * iDynTree::toEigen(matrix)
@@ -315,8 +541,7 @@ bool InverseVelocityKinematics::impl::solveWeightedPseudoInverse(
             solver.solve(iDynTree::toEigen(matrix).transpose() * weightInverse.toDenseMatrix()
                          * iDynTree::toEigen(inputVector));
     }
-    else if (resolutionMode == robustCholeskyDecomposition)
-    {
+    else if (resolutionMode == robustCholeskyDecomposition) {
         iDynTree::toEigen(outputVector) =
             (iDynTree::toEigen(matrix).transpose() * weightInverse.toDenseMatrix()
                  * iDynTree::toEigen(matrix)
@@ -325,8 +550,7 @@ bool InverseVelocityKinematics::impl::solveWeightedPseudoInverse(
                 .solve(iDynTree::toEigen(matrix).transpose() * weightInverse.toDenseMatrix()
                        * iDynTree::toEigen(inputVector));
     }
-    else if (resolutionMode == sparseRobustCholeskyDecomposition)
-    {
+    else if (resolutionMode == sparseRobustCholeskyDecomposition) {
         Eigen::SimplicialLDLT<Eigen::SparseMatrix<double>> solver;
         solver.compute((iDynTree::toEigen(matrix).transpose() * weightInverse.toDenseMatrix()
                             * iDynTree::toEigen(matrix)
@@ -372,6 +596,7 @@ void InverseVelocityKinematics::impl::computeProblemSizeAndResizeBuffers()
     regularizationMatrixBuffer.resize(6 + dofs, 6 + dofs);
     iDynTree::toEigen(regularizationMatrixBuffer) =
         identityMatrix.toDenseMatrix() * regularizationWeight;
+    prepareOptimizer();
 
     problemInitialized = true;
 }
@@ -477,6 +702,150 @@ void InverseVelocityKinematics::impl::prepareWeightVector()
             vectorIndex += 3;
         }
     }
+}
+void InverseVelocityKinematics::impl::prepareOptimizer()
+{
+    //    if (resolutionMode == QP) {
+    configSpaceSize = dofs + 6;
+    numberOfConstraints = dofs;
+    yInfo() << "1";
+
+    // generate P_prime matrix
+    m_P = iDynTree::MatrixDynSize(numberOfTargetVariables, numberOfTargetVariables);
+    iDynTree::toEigen(m_P).setIdentity();
+
+    m_P_prime = iDynTree::MatrixDynSize(numberOfTargetVariables + configSpaceSize,
+                                        numberOfTargetVariables + configSpaceSize);
+    iDynTree::toEigen(m_P_prime).topLeftCorner(configSpaceSize, configSpaceSize) =
+        iDynTree::toEigen(regularizationMatrixBuffer);
+    iDynTree::toEigen(m_P_prime).topRightCorner(configSpaceSize, numberOfTargetVariables) =
+        Eigen::MatrixXd::Zero(configSpaceSize, numberOfTargetVariables);
+    iDynTree::toEigen(m_P_prime).bottomLeftCorner(numberOfTargetVariables, configSpaceSize) =
+        Eigen::MatrixXd::Zero(numberOfTargetVariables, configSpaceSize);
+    iDynTree::toEigen(m_P_prime).bottomRightCorner(
+        numberOfTargetVariables, numberOfTargetVariables) = iDynTree::toEigen(m_P);
+    yInfo() << "3";
+    // generate A_prime matrix for constraints
+    m_A = iDynTree::MatrixDynSize(numberOfConstraints, configSpaceSize);
+    // to implement, get constraint matrix from the user!
+    if (numberOfConstraints == dofs) {
+        iDynTree::toEigen(m_A).bottomRows(dofs).setIdentity();
+    }
+    else {
+        yError() << "[InverseVelocityKinematics::impl::prepareOptimizer] "
+                 << " to implement: user defined constraint matrix";
+    }
+    m_A_prime = iDynTree::MatrixDynSize(numberOfConstraints + numberOfTargetVariables,
+                                        configSpaceSize + numberOfTargetVariables);
+    yInfo() << "4";
+    iDynTree::toEigen(m_A_prime).topLeftCorner(numberOfTargetVariables, configSpaceSize) =
+        Eigen::MatrixXd::Zero(numberOfTargetVariables, configSpaceSize);
+    iDynTree::toEigen(m_A_prime)
+        .topRightCorner(numberOfTargetVariables, numberOfTargetVariables)
+        .setIdentity();
+    iDynTree::toEigen(m_A_prime).bottomLeftCorner(numberOfConstraints, configSpaceSize) =
+        iDynTree::toEigen(m_A);
+    iDynTree::toEigen(m_A_prime).bottomRightCorner(numberOfConstraints, numberOfTargetVariables) =
+        Eigen::MatrixXd::Zero(numberOfConstraints, numberOfTargetVariables);
+    // generate upper limit vector (u_prime) and lower limit vector (l_prime)
+    m_l = iDynTree::VectorDynSize(numberOfConstraints);
+    m_u = iDynTree::VectorDynSize(numberOfConstraints);
+    yInfo() << "5";
+    // to implement, get velocity vector limit from the configuration files
+    double jointVelocityLimit = 10.0;
+
+    iDynTree::toEigen(m_u) = Eigen::VectorXd::Ones(numberOfConstraints, 1) * jointVelocityLimit;
+    yInfo() << "5 - 1";
+    iDynTree::toEigen(m_l) =
+        Eigen::VectorXd::Ones(numberOfConstraints, 1) * -1.0 * jointVelocityLimit;
+    yInfo() << "5 - 2";
+    m_l_prime = iDynTree::VectorDynSize(numberOfConstraints + numberOfTargetVariables);
+    m_u_prime = iDynTree::VectorDynSize(numberOfConstraints + numberOfTargetVariables);
+    yInfo() << "6";
+    iDynTree::toEigen(m_u_prime).topRows(numberOfTargetVariables) =
+        Eigen::VectorXd::Zero(numberOfTargetVariables, 1);
+    iDynTree::toEigen(m_u_prime).bottomRows(numberOfConstraints) = iDynTree::toEigen(m_u);
+
+    iDynTree::toEigen(m_l_prime).topRows(numberOfTargetVariables) =
+        Eigen::VectorXd::Zero(numberOfTargetVariables, 1);
+    yInfo() << "7";
+    iDynTree::toEigen(m_l_prime).bottomRows(numberOfConstraints) = iDynTree::toEigen(m_l);
+    m_optimizerSolver = std::make_unique<OsqpEigen::Solver>();
+
+    // solver.settings()->setVerbosity(false);
+    m_optimizerSolver->settings()->setWarmStart(true);
+    m_optimizerSolver->settings()->setVerbosity(false);
+
+    m_optimizerSolver->data()->setNumberOfVariables(numberOfTargetVariables + configSpaceSize);
+    m_optimizerSolver->data()->setNumberOfConstraints(numberOfConstraints
+                                                      + numberOfTargetVariables);
+
+    //        Eigen::SparseMatrix<double> A_prime_sparse = A_prime.sparseView();
+    //        Eigen::SparseMatrix<double> P_prime_sparse = P_prime.sparseView();
+    //    Eigen::VectorXd q_prime(numberOfTargetVariables + configSpaceSize);
+    m_q_prime = iDynTree::VectorDynSize(numberOfTargetVariables + configSpaceSize);
+    iDynTree::toEigen(m_q_prime).setZero();
+
+    yInfo() << "8";
+    // set A
+    Eigen::SparseMatrix<double> constraintMatrix = iDynTree::toEigen(m_A_prime).sparseView();
+    if (!m_optimizerSolver->data()->setLinearConstraintsMatrix(constraintMatrix)) {
+        yError() << "[InverseVelocityKinematics::impl::prepareOptimizer] "
+                 << "qp solver for [setLinearConstraintsMatrix] returns false.";
+        return;
+    }
+    yInfo() << "9";
+
+    // set U
+    auto upperBuond = iDynTree::toEigen(m_u_prime);
+    if (!m_optimizerSolver->data()->setUpperBound(upperBuond)) {
+        yError() << "[InverseVelocityKinematics::impl::prepareOptimizer] "
+                 << "qp solver for [setUpperBound] returns false.";
+
+        return;
+    }
+    yInfo() << "10";
+
+    // set L
+    auto lowerBuond = iDynTree::toEigen(m_l_prime);
+    if (!m_optimizerSolver->data()->setLowerBound(lowerBuond)) {
+        yError() << "[InverseVelocityKinematics::impl::prepareOptimizer] "
+                 << "qp solver for [setLowerBound] returns false.";
+
+        return;
+    }
+    yInfo() << "11";
+
+    // set P
+    Eigen::SparseMatrix<double> HessianMatrix = iDynTree::toEigen(m_P_prime).sparseView();
+    if (!m_optimizerSolver->data()->setHessianMatrix(HessianMatrix)) {
+        yError() << "[InverseVelocityKinematics::impl::prepareOptimizer] "
+                 << "qp solver for [setHessianMatrix] returns false.";
+
+        return;
+    }
+    yInfo() << "12";
+
+    // set q
+    auto GradientVector = iDynTree::toEigen(m_q_prime);
+    if (!m_optimizerSolver->data()->setGradient(GradientVector)) {
+        yError() << "[InverseVelocityKinematics::impl::prepareOptimizer] "
+                 << "qp solver for [setGradient] returns false.";
+        return;
+    }
+    yInfo() << "13";
+
+    if (!m_optimizerSolver->initSolver()) {
+        yError() << "[InverseVelocityKinematics::impl::prepareOptimizer] "
+                 << "qp solver for [initSolver] returns false.";
+
+        return;
+    }
+    yInfo() << "14";
+
+    // controller QPSolution vector
+    //   Eigen::VectorXd QPSolution;
+    //    }
 }
 
 // ===================
@@ -655,14 +1024,17 @@ bool InverseVelocityKinematics::setResolutionMode(
     return true;
 }
 
-bool InverseVelocityKinematics::setResolutionMode(
-    std::string resolutionModeName)
+bool InverseVelocityKinematics::setResolutionMode(std::string resolutionModeName)
 {
-    if (resolutionModeName == "moorePenrose") {
+    if (resolutionModeName == "QP") {
+        pImpl->resolutionMode = InverseVelocityKinematicsResolutionMode::QP;
+    }
+    else if (resolutionModeName == "moorePenrose") {
         pImpl->resolutionMode = InverseVelocityKinematicsResolutionMode::moorePenrose;
     }
     else if (resolutionModeName == "completeOrthogonalDecomposition") {
-        pImpl->resolutionMode = InverseVelocityKinematicsResolutionMode::completeOrthogonalDecomposition;
+        pImpl->resolutionMode =
+            InverseVelocityKinematicsResolutionMode::completeOrthogonalDecomposition;
     }
     else if (resolutionModeName == "leastSquare") {
         pImpl->resolutionMode = InverseVelocityKinematicsResolutionMode::leastSquare;
@@ -671,13 +1043,16 @@ bool InverseVelocityKinematics::setResolutionMode(
         pImpl->resolutionMode = InverseVelocityKinematicsResolutionMode::choleskyDecomposition;
     }
     else if (resolutionModeName == "sparseCholeskyDecomposition") {
-        pImpl->resolutionMode = InverseVelocityKinematicsResolutionMode::sparseCholeskyDecomposition;
+        pImpl->resolutionMode =
+            InverseVelocityKinematicsResolutionMode::sparseCholeskyDecomposition;
     }
     else if (resolutionModeName == "robustCholeskyDecomposition") {
-        pImpl->resolutionMode = InverseVelocityKinematicsResolutionMode::robustCholeskyDecomposition;
+        pImpl->resolutionMode =
+            InverseVelocityKinematicsResolutionMode::robustCholeskyDecomposition;
     }
     else if (resolutionModeName == "sparseRobustCholeskyDecomposition") {
-        pImpl->resolutionMode = InverseVelocityKinematicsResolutionMode::sparseRobustCholeskyDecomposition;
+        pImpl->resolutionMode =
+            InverseVelocityKinematicsResolutionMode::sparseRobustCholeskyDecomposition;
     }
     else {
         std::cerr << "[ERROR] Invalid resolution mode: " << resolutionModeName << std::endl;
@@ -760,14 +1135,12 @@ bool InverseVelocityKinematics::setJointConfiguration(std::string jointName,
 
 bool InverseVelocityKinematics::setJointsConfiguration(iDynTree::VectorDynSize jointsConfiguration)
 {
-    if (pImpl->state.jointsConfiguration.size() == jointsConfiguration.size())
-    {
+    if (pImpl->state.jointsConfiguration.size() == jointsConfiguration.size()) {
         pImpl->state.jointsConfiguration = jointsConfiguration;
         pImpl->updateConfiguration();
         return true;
     }
-    else
-    {
+    else {
         return false;
     }
 }
@@ -793,13 +1166,11 @@ bool InverseVelocityKinematics::setBasePose(iDynTree::Vector3 basePosition,
 bool InverseVelocityKinematics::setConfiguration(iDynTree::Transform baseTransform,
                                                  iDynTree::VectorDynSize jointsConfiguration)
 {
-    if (setJointsConfiguration(jointsConfiguration) && setBasePose(baseTransform))
-    {
+    if (setJointsConfiguration(jointsConfiguration) && setBasePose(baseTransform)) {
         pImpl->updateConfiguration();
         return true;
     }
-    else
-    {
+    else {
         return false;
     }
 }
@@ -808,16 +1179,13 @@ bool InverseVelocityKinematics::setConfiguration(iDynTree::Vector3 basePosition,
                                                  iDynTree::Rotation baseRotation,
                                                  iDynTree::VectorDynSize jointsConfiguration)
 {
-    if (setJointsConfiguration(jointsConfiguration) && setBasePose(basePosition, baseRotation))
-    {
+    if (setJointsConfiguration(jointsConfiguration) && setBasePose(basePosition, baseRotation)) {
         pImpl->updateConfiguration();
         return true;
     }
-    else
-    {
+    else {
         return false;
     }
-
 }
 
 bool InverseVelocityKinematics::updateTarget(std::string linkName,
@@ -888,18 +1256,16 @@ bool InverseVelocityKinematics::updateAngularVelocityTarget(std::string linkName
 bool InverseVelocityKinematics::getVelocitySolution(iDynTree::Twist& baseVelocity,
                                                     iDynTree::VectorDynSize& jointsVelocity)
 {
-  return getJointsVelocitySolution(jointsVelocity) && getBaseVelocitySolution(baseVelocity);
+    return getJointsVelocitySolution(jointsVelocity) && getBaseVelocitySolution(baseVelocity);
 }
 
 bool InverseVelocityKinematics::getJointsVelocitySolution(iDynTree::VectorDynSize& jointsVelocity)
 {
-    if (jointsVelocity.size() == pImpl->jointVelocityResult.size())
-    {
+    if (jointsVelocity.size() == pImpl->jointVelocityResult.size()) {
         jointsVelocity = pImpl->jointVelocityResult;
         return true;
     }
-    else
-    {
+    else {
         return false;
     }
 }
