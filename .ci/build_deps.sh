@@ -35,6 +35,21 @@ if [ "${TRAVIS_OS_NAME}" = "osx" ] ; then
         -DCREATE_LIB_MATH=ON
     cmake --build . --config $TRAVIS_BUILD_TYPE --target install
 
+    # Build and install icub-main
+    cd $GIT_FOLDER
+
+    rm -rf icub-main
+    git clone --depth 1 -b $DEPS_BRANCH https://github.com/robotology/icub-main.git
+    cd icub-main
+    mkdir -p build && cd build
+
+    cmake .. \
+        -G"$TRAVIS_CMAKE_GENERATOR" \
+        -DCMAKE_BUILD_TYPE=$TRAVIS_BUILD_TYPE \
+        -DCMAKE_INSTALL_PREFIX=$DEPS_INSTALL_PREFIX \
+        -DCREATE_LIB_MATH=ON
+    cmake --build . --config $TRAVIS_BUILD_TYPE --target install
+
     # Build and install idyntree
     cd $GIT_FOLDER
     rm -rf idyntree
