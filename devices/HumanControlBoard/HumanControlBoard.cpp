@@ -15,6 +15,7 @@
 
 #include <yarp/os/LogStream.h>
 #include <yarp/os/ResourceFinder.h>
+#include <yarp/os/Stamp.h>
 #include <yarp/sig/Vector.h>
 
 #include <iDynTree/Model/Model.h>
@@ -32,6 +33,9 @@ public:
     // Attached interface
     hde::interfaces::IHumanState* iHumanState = nullptr;
     hde::interfaces::IHumanDynamics* iHumanDynamics = nullptr;
+
+    // TimeStamp for IEncodersTimed interface
+    yarp::os::Stamp m_lastTimestamp;
 
     mutable std::mutex mtx;
 
@@ -335,6 +339,30 @@ bool HumanControlBoard::getEncoderAccelerations(double* accs)
         accs[i] = pImpl->jointAccelerations[i];
     }
     return true;
+}
+
+// IEncoderTimes interface
+bool HumanControlBoard::getEncodersTimed(double *encs, double *time)
+{
+    double my_time = pImpl->m_lastTimestamp.getTime();
+    if (!encs)
+        return false;
+    for (std::size_t i = 0; i < pImpl->nJoints; i++) {
+        encs[i] = pImpl->jointPositions[i];
+        time[i] = my_time;
+    }
+    return true;
+}
+
+bool HumanControlBoard::getEncoderTimed(int j, double* v, double *time)
+{
+    if (time && v && j >= 0 && static_cast<std::size_t>(j) < pImpl->nJoints) {
+        *v = pImpl->jointPositions[j];
+        *time = pImpl->m_lastTimestamp.getTime();
+        return true;
+    }
+
+    return false;
 }
 
 // ITorqueControl interface
