@@ -153,10 +153,6 @@ jobs:
       after_failure: skip
       after_success: skip
       after_script: skip
-      env:
-        TRAVIS_CMAKE_GENERATOR="Xcode"
-        TRAVIS_BUILD_TYPE="Debug"
-    - <<: *osx_template
       compiler: clang
       env:
         TRAVIS_CMAKE_GENERATOR="Unix Makefiles"
