@@ -80,11 +80,12 @@ public:
                           iDynTree::VectorDynSize jointsConfiguration);
 
     // TODO
-    // setBaseVelocityLimit
-    // setBaseLinearVelocityLimit
-    // setBaseAngularVelocityLimit
-    // setJointVelocityLimit
-    // setJointsVelocityLimit
+    bool setBaseVelocityLimit(iDynTree::Vector6 lowerBound, iDynTree::Vector6 upperBound);
+    // bool setBaseLinearVelocityLimit();
+    // bool setBaseAngularVelocityLimit();
+    // bool setJointVelocityLimit(std::string jointName, double jointLimit);
+    bool setJointsVelocityLimit(std::vector<std::string> jointsNameList,
+                                iDynTree::VectorDynSize jointsLimitList);
 
     bool updateTarget(std::string linkName,
                       iDynTree::Vector3 linearVelocity,
