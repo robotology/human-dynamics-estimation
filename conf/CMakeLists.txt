@@ -35,6 +35,10 @@ set(ROBOT_URDF_FILES urdfs/iCubGenova02.urdf
 yarp_install(FILES ${ROBOT_URDF_FILES}
              DESTINATION ${YARP_CONTEXTS_INSTALL_DIR}/human-dynamic-estimation/urdfs)
 
+# Install custom constraint matrix
+file(GLOB scripts config/*.ini)
+yarp_install(FILES ${scripts} DESTINATION ${YARP_CONTEXTS_INSTALL_DIR})
+
 
 # ROS related installation
 set (ROS_PROJECT_NAME HDERviz)
