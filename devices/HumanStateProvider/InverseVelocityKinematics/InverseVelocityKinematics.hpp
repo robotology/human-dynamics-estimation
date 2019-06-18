@@ -9,6 +9,12 @@
 #ifndef INVERSEVELOCITYKINEMATICS_HPP
 #define INVERSEVELOCITYKINEMATICS_HPP
 
+#include <Eigen/Dense>
+#include <Eigen/QR>
+#include <Eigen/SparseCholesky>
+#include <iDynTree/Core/EigenHelpers.h>
+#include <iDynTree/Core/VectorDynSize.h>
+#include <iDynTree/KinDynComputations.h>
 #include <iDynTree/Model/Model.h>
 
 #include <map>
@@ -80,12 +86,19 @@ public:
                           iDynTree::VectorDynSize jointsConfiguration);
 
     // TODO
-    bool setBaseVelocityLimit(iDynTree::Vector6 lowerBound, iDynTree::Vector6 upperBound);
+    bool setCustomBaseVelocityLimit(iDynTree::VectorDynSize lowerBound,
+                                    iDynTree::VectorDynSize upperBound);
     // bool setBaseLinearVelocityLimit();
     // bool setBaseAngularVelocityLimit();
     // bool setJointVelocityLimit(std::string jointName, double jointLimit);
-    bool setJointsVelocityLimit(std::vector<std::string> jointsNameList,
-                                iDynTree::VectorDynSize jointsLimitList);
+    bool setCustomJointsVelocityLimit(std::vector<iDynTree::JointIndex> jointsIndexList,
+                                      iDynTree::VectorDynSize jointsLimitList);
+    bool setCustomConstraintsJointsValues(std::vector<iDynTree::JointIndex> jointsIndexList,
+                                          iDynTree::VectorDynSize upperBoundary,
+                                          iDynTree::VectorDynSize lowerBoundary,
+                                          iDynTree::MatrixDynSize customConstraintMatrix);
+
+    bool setGeneralJointVelocityConstraints(double jointVelocityLimit);
 
     bool updateTarget(std::string linkName,
                       iDynTree::Vector3 linearVelocity,
