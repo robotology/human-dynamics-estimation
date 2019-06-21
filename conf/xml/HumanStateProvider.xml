@@ -151,6 +151,22 @@
            <param name="map_jLeftBallFoot_roty">(jLeftBallFoot_roty, XsensSuit::vSJoint::jLeftBallFoot, 1)</param>
            <param name="map_jLeftBallFoot_rotz">(jLeftBallFoot_rotz, XsensSuit::vSJoint::jLeftBallFoot, 2)</param>
         </group>
+        <group name="CUSTOM_CONSTRAINTS">
+        <!-- check issue #132 for more info-->
+        <!-- note that a group can not be empty, otherwise it returns error-->
+        <!-- custom joint limits velocities-->
+            <param name="custom_joints_velocity_limits_names">()</param>
+            <param name="custom_joints_velocity_limits_values">()</param>
+            <!--param name="base_velocity_limit_upper_buond">(1.0, 1.0, 1.0, 1.0, 1.0, 1.0 )</param>
+            <param name="base_velocity_limit_lower_buond">(-1.0, -1.0, -1.0, -1.0, -1.0, -1.0 )</param-->
+        <!-- Custom joint Configuration constraints-->
+            <!--param name="custom_constraint_variables">()</param>
+            <param name="custom_constraint_matrix"> ()</param>
+            <param name="custom_constraint_lower_bound"> ()</param>
+            <param name="custom_constraint_upper_bound"> ()</param>
+            <param name="k_u">1.0</param>
+            <param name="k_l">1.0</param-->
+        </group>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
                 <elem name="HumanStateProviderLabel">XSenseIWearRemapper</elem>

@@ -96,7 +96,9 @@ public:
     bool setCustomConstraintsJointsValues(std::vector<iDynTree::JointIndex> jointsIndexList,
                                           iDynTree::VectorDynSize upperBoundary,
                                           iDynTree::VectorDynSize lowerBoundary,
-                                          iDynTree::MatrixDynSize customConstraintMatrix);
+                                          iDynTree::MatrixDynSize customConstraintMatrix,
+                                          double k_u,
+                                          double k_l);
 
     bool setGeneralJointVelocityConstraints(double jointVelocityLimit);
 
