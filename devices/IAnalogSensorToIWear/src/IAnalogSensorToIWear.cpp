@@ -148,9 +148,7 @@ public:
 
     bool getForceTorque6D(Vector3& force3D, Vector3& torque3D) const override
     {
-        if (!handler.readData()) {
-            return false;
-        }
+        bool dataOk = handler.readData();
 
         // Dirty workaround to set the status from a const method
         auto nonConstThis = const_cast<ForceTorque6DSensor*>(this);
@@ -158,7 +156,7 @@ public:
 
         // TODO: The positions of force and torques are hardcoded. Forces should be the first
         //       triplet of elements of the read vector and torques the second one.
-        bool ok = handler.getData(force3D, offset) && handler.getData(torque3D, offset + 3);
+        bool ok = dataOk && handler.getData(force3D, offset) && handler.getData(torque3D, offset + 3);
         if (groundReactionFT) {
             force3D[0] = -1 * force3D[0];
             force3D[1] = -1 * force3D[1];
@@ -185,15 +183,13 @@ public:
 
     bool getForce3D(Vector3& force3D) const override
     {
-        if (!handler.readData()) {
-            return false;
-        }
+        bool dataOk = handler.readData();
 
         // Dirty workaround to set the status from a const method
         auto nonConstThis = const_cast<Force3DSensor*>(this);
         nonConstThis->setStatus(handler.getStatus());
 
-        return handler.getData(force3D, offset);
+        return dataOk && handler.getData(force3D, offset);
     }
 };
 
@@ -210,15 +206,13 @@ public:
 
     bool getTorque3D(Vector3& torque3D) const override
     {
-        if (!handler.readData()) {
-            return false;
-        }
+        bool dataOk = handler.readData();
 
         // Dirty workaround to set the status from a const method
         auto nonConstThis = const_cast<Torque3DSensor*>(this);
         nonConstThis->setStatus(handler.getStatus());
 
-        return handler.getData(torque3D, offset);
+        return dataOk && handler.getData(torque3D, offset);
     }
 };
 
@@ -235,15 +229,13 @@ public:
 
     bool getTemperature(double& temperature) const override
     {
-        if (!handler.readData()) {
-            return false;
-        }
+        bool dataOk = handler.readData();
 
         // Dirty workaround to set the status from a const method
         auto nonConstThis = const_cast<TemperatureSensor*>(this);
         nonConstThis->setStatus(handler.getStatus());
 
-        return handler.getData(temperature, offset);
+        return dataOk && handler.getData(temperature, offset);
     }
 };
 
@@ -260,15 +252,13 @@ public:
 
     bool getPressure(std::vector<double>& pressure) const override
     {
-        if (!handler.readData()) {
-            return false;
-        }
+        bool dataOk = handler.readData();
 
         // Dirty workaround to set the status from a const method
         auto nonConstThis = const_cast<SkinSensor*>(this);
         nonConstThis->setStatus(handler.getStatus());
 
-        return handler.getData(pressure, offset);
+        return dataOk && handler.getData(pressure, offset);
     }
 };
 
