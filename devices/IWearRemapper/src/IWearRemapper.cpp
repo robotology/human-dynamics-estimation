@@ -762,16 +762,33 @@ WearStatus IWearRemapper::getStatus() const
         return WearStatus::WaitingForFirstRead;
     }
 
+    // Logic for combining the status of all the sensors.
+    // The tricky part is deciding how to handle the mixed case of timeout and overflow.
+    // The WaigingForFirstRead is not considered since the data is supposed not to be streamed.
+    // TODO: For now, overflow is stronger.
+    WearStatus status = WearStatus::Ok;
     for (const auto& s : getAllSensors()) {
-        if (s->getSensorStatus() != sensor::SensorStatus::Ok) {
-            yError() << logPrefix << "The status of" << s->getSensorName() << "is not Ok ("
-                     << static_cast<int>(s->getSensorStatus()) << ")";
-            return WearStatus::Error;
+        switch (s->getSensorStatus()) {
+            case sensor::SensorStatus::Overflow:
+                status = WearStatus::Overflow;
+                break;
+            case sensor::SensorStatus::Timeout:
+                if (status == WearStatus::Overflow) {
+                    break;
+                }
+                status = WearStatus::Timeout;
+                break;
+            case sensor::SensorStatus::Ok:
+                // Keep checking other sensors
+                break;
+            default:
+                // If even just one sensor is Error, Unknown, or
+                // any other state return error
+                return WearStatus::Error;
         }
-        // TODO: improve handling of the overall status
     }
 
-    return WearStatus::Ok;
+    return status;
 }
 
 TimeStamp IWearRemapper::getTimeStamp() const
