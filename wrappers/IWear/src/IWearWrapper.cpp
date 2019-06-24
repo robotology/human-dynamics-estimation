@@ -138,11 +138,18 @@ void IWearWrapper::run()
         return;
     }
 
-    if (pImpl->iWear->getStatus() != WearStatus::Ok) {
+    if (pImpl->iWear->getStatus() == WearStatus::Error
+            || pImpl->iWear->getStatus() == WearStatus::Unknown) {
         yError() << logPrefix << "The status of the IWear interface is not Ok"
                  << static_cast<int>(pImpl->iWear->getStatus()) << ")";
         askToStop();
         return;
+    }
+
+    // case status is TIMEOUT or DATA_OVERFLOW
+    if (pImpl->iWear->getStatus() != WearStatus::Ok) {
+        yWarning() << logPrefix << "The status of the IWear interface is not Ok"
+                 << static_cast<int>(pImpl->iWear->getStatus()) << ")";
     }
 
     if (pImpl->firstRun) {
@@ -175,10 +182,10 @@ void IWearWrapper::run()
         for (const auto& sensor : pImpl->accelerometers) {
             wearable::Vector3 vector3;
             if (!sensor->getLinearAcceleration(vector3)) {
-                yError() << logPrefix << "[Accelerometers] "
-                         << "Failed to read data";
-                askToStop();
-                return;
+                yWarning() << logPrefix << "[Accelerometers] "
+                         << "Failed to read data, "
+                         << "sensor status is "
+                         << static_cast<int>(sensor->getSensorStatus());
             }
 
             data.accelerometers[sensor->getSensorName()] = {generateSensorStatus(sensor.get()),
@@ -190,10 +197,10 @@ void IWearWrapper::run()
             double value, normalization;
             // double normalizationValue;
             if (!sensor->getEmgSignal(value) || !sensor->getEmgSignal(normalization)) {
-                yError() << logPrefix << "[EmgSensors] "
-                         << "Failed to read data";
-                askToStop();
-                return;
+                yWarning() << logPrefix << "[EmgSensors] "
+                         << "Failed to read data, "
+                         << "sensor status is "
+                         << static_cast<int>(sensor->getSensorStatus());
             }
             data.emgSensors[sensor->getSensorName()] = {generateSensorStatus(sensor.get()),
                                                         {value, normalization}};
@@ -201,12 +208,12 @@ void IWearWrapper::run()
     }
     {
         for (const auto& sensor : pImpl->force3DSensors) {
-            yError() << logPrefix << "[Force3DSensors] "
-                     << "Failed to read data";
             wearable::Vector3 vector3;
             if (!sensor->getForce3D(vector3)) {
-                askToStop();
-                return;
+                yWarning() << logPrefix << "[Force3DSensors] "
+                         << "Failed to read data, "
+                         << "sensor status is "
+                         << static_cast<int>(sensor->getSensorStatus());
             }
 
             data.force3DSensors[sensor->getSensorName()] = {generateSensorStatus(sensor.get()),
@@ -217,10 +224,10 @@ void IWearWrapper::run()
         for (const auto& sensor : pImpl->forceTorque6DSensors) {
             wearable::Vector6 vector6;
             if (!sensor->getForceTorque6D(vector6)) {
-                yError() << logPrefix << "[ForceTorque6DSensors] "
-                         << "Failed to read data";
-                askToStop();
-                return;
+                yWarning() << logPrefix << "[ForceTorque6DSensors] "
+                         << "Failed to read data, "
+                         << "sensor status is "
+                         << static_cast<int>(sensor->getSensorStatus());
             }
 
             data.forceTorque6DSensors[sensor->getSensorName()] = {
@@ -232,10 +239,10 @@ void IWearWrapper::run()
         for (const auto& sensor : pImpl->freeBodyAccelerationSensors) {
             wearable::Vector3 vector3;
             if (!sensor->getFreeBodyAcceleration(vector3)) {
-                yError() << logPrefix << "[FreeBodyAccelerationSensors] "
-                         << "Failed to read data";
-                askToStop();
-                return;
+                yWarning() << logPrefix << "[FreeBodyAccelerationSensors] "
+                         << "Failed to read data, "
+                         << "sensor status is "
+                         << static_cast<int>(sensor->getSensorStatus());
             }
 
             data.freeBodyAccelerationSensors[sensor->getSensorName()] = {
@@ -246,10 +253,10 @@ void IWearWrapper::run()
         for (const auto& sensor : pImpl->gyroscopes) {
             wearable::Vector3 vector3;
             if (!sensor->getAngularRate(vector3)) {
-                yError() << logPrefix << "[Gyroscopes] "
-                         << "Failed to read data";
-                askToStop();
-                return;
+                yWarning() << logPrefix << "[Gyroscopes] "
+                         << "Failed to read data, "
+                         << "sensor status is "
+                         << static_cast<int>(sensor->getSensorStatus());
             }
 
             data.gyroscopes[sensor->getSensorName()] = {generateSensorStatus(sensor.get()),
@@ -260,10 +267,10 @@ void IWearWrapper::run()
         for (const auto& sensor : pImpl->magnetometers) {
             wearable::Vector3 vector3;
             if (!sensor->getMagneticField(vector3)) {
-                yError() << logPrefix << "[Magnetometers] "
-                         << "Failed to read data";
-                askToStop();
-                return;
+                yWarning() << logPrefix << "[Magnetometers] "
+                         << "Failed to read data, "
+                         << "sensor status is "
+                         << static_cast<int>(sensor->getSensorStatus());
             }
 
             data.magnetometers[sensor->getSensorName()] = {generateSensorStatus(sensor.get()),
@@ -274,10 +281,10 @@ void IWearWrapper::run()
         for (const auto& sensor : pImpl->orientationSensors) {
             wearable::Quaternion quaternion;
             if (!sensor->getOrientationAsQuaternion(quaternion)) {
-                yError() << logPrefix << "[OrientationSensors] "
-                         << "Failed to read data";
-                askToStop();
-                return;
+                yWarning() << logPrefix << "[OrientationSensors] "
+                         << "Failed to read data, "
+                         << "sensor status is "
+                         << static_cast<int>(sensor->getSensorStatus());
             }
 
             data.orientationSensors[sensor->getSensorName()] = {generateSensorStatus(sensor.get()),
@@ -289,10 +296,10 @@ void IWearWrapper::run()
             wearable::Vector3 vector3;
             wearable::Quaternion quaternion;
             if (!sensor->getPose(quaternion, vector3)) {
-                yError() << logPrefix << "[PoseSensors] "
-                         << "Failed to read data";
-                askToStop();
-                return;
+                yWarning() << logPrefix << "[PoseSensors] "
+                         << "Failed to read data, "
+                         << "sensor status is "
+                         << static_cast<int>(sensor->getSensorStatus());
             }
 
             data.poseSensors[sensor->getSensorName()] = {
@@ -304,10 +311,10 @@ void IWearWrapper::run()
         for (const auto& sensor : pImpl->positionSensors) {
             wearable::Vector3 vector3;
             if (!sensor->getPosition(vector3)) {
-                yError() << logPrefix << "[PositionSensors] "
-                         << "Failed to read data";
-                askToStop();
-                return;
+                yWarning() << logPrefix << "[PositionSensors] "
+                         << "Failed to read data, "
+                         << "sensor status is "
+                         << static_cast<int>(sensor->getSensorStatus());
             }
 
             data.positionSensors[sensor->getSensorName()] = {generateSensorStatus(sensor.get()),
@@ -323,10 +330,10 @@ void IWearWrapper::run()
         for (const auto& sensor : pImpl->temperatureSensors) {
             double value;
             if (!sensor->getTemperature(value)) {
-                yError() << logPrefix << "[TemperatureSensors] "
-                         << "Failed to read data";
-                askToStop();
-                return;
+                yWarning() << logPrefix << "[TemperatureSensors] "
+                         << "Failed to read data, "
+                         << "sensor status is "
+                         << static_cast<int>(sensor->getSensorStatus());
             }
 
             data.temperatureSensors[sensor->getSensorName()] = {generateSensorStatus(sensor.get()),
@@ -337,10 +344,10 @@ void IWearWrapper::run()
         for (const auto& sensor : pImpl->torque3DSensors) {
             wearable::Vector3 vector3;
             if (!sensor->getTorque3D(vector3)) {
-                yError() << logPrefix << "[Torque3DSensors] "
-                         << "Failed to read data";
-                askToStop();
-                return;
+                yWarning() << logPrefix << "[Torque3DSensors] "
+                         << "Failed to read data, "
+                         << "sensor status is "
+                         << static_cast<int>(sensor->getSensorStatus());
             }
 
             data.torque3DSensors[sensor->getSensorName()] = {generateSensorStatus(sensor.get()),
@@ -358,10 +365,10 @@ void IWearWrapper::run()
             if (!sensor->getLinkAcceleration(linearAcc, angularAcc)
                 || !sensor->getLinkPose(position, orientation)
                 || !sensor->getLinkVelocity(linearVel, angularVel)) {
-                yError() << logPrefix << "[VirtualLinkKinSensors] "
-                         << "Failed to read data";
-                askToStop();
-                return;
+                yWarning() << logPrefix << "[VirtualLinkKinSensors] "
+                         << "Failed to read data, "
+                         << "sensor status is "
+                         << static_cast<int>(sensor->getSensorStatus());
             }
 
             data.virtualLinkKinSensors[sensor->getSensorName()] = {
@@ -381,10 +388,10 @@ void IWearWrapper::run()
             wearable::Vector3 jointAcc;
             if (!sensor->getJointAnglesAsRPY(jointAngles) || !sensor->getJointVelocities(jointVel)
                 || !sensor->getJointAccelerations(jointAcc)) {
-                yError() << logPrefix << "[VirtualSphericalJointKinSensors] "
-                         << "Failed to read data";
-                askToStop();
-                return;
+                yWarning() << logPrefix << "[VirtualSphericalJointKinSensors] "
+                         << "Failed to read data, "
+                         << "sensor status is "
+                         << static_cast<int>(sensor->getSensorStatus());
             }
             data.virtualSphericalJointKinSensors[sensor->getSensorName()] = {
                 generateSensorStatus(sensor.get()),
