@@ -221,7 +221,7 @@ bool RobotPositionController::open(yarp::os::Searchable& config)
             }
 
             // Get initial joint positions from encoders
-            double initEncoderJointPositions[remoteControlBoardJoints];
+            double* initEncoderJointPositions = new double[remoteControlBoardJoints];
             pImpl->iEncoders->getEncoders(initEncoderJointPositions);
 
             yarp::sig::Vector initEncoderJointPositionsVector;
@@ -299,7 +299,7 @@ void RobotPositionController::run()
     if (pImpl->firstDataCheck) {
 
         // Initialize joint position array with a dummy value
-        double jointPositionsArray[pImpl->jointNameListFromConfigControlBoards.size()];
+        double* jointPositionsArray = new double[pImpl->jointNameListFromConfigControlBoards.size()];
 
         // Set the joint position values array for iPositionControl interface
         for (unsigned controlBoardJointIndex = 0; controlBoardJointIndex < pImpl->jointNameListFromConfigControlBoards.size(); controlBoardJointIndex++) {
@@ -327,7 +327,7 @@ void RobotPositionController::run()
             pImpl->iEncoders->getAxes(&joints);
 
             // Read joint position through IEncoder interface
-            double encoderJointPositions[joints];
+            double* encoderJointPositions = new double[joints];
             pImpl->iEncoders->getEncoders(encoderJointPositions);
 
             if (pImpl->controlMode == "position") {
