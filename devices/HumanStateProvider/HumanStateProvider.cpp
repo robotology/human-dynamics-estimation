@@ -322,6 +322,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         yError() << LogPrefix << "ikSolver " << solverName << " not found";
         return false;
     }
+	
     yarp::os::Bottle* floatingBaseFrameList = config.find("floatingBaseFrame").asList();
     pImpl->useXsensJointsAngles = config.find("useXsensJointsAngles").asBool();
     const std::string urdfFileName = config.find("urdf").asString();
