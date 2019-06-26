@@ -20,6 +20,8 @@ yarp_add_plugin(RobotPositionController
 target_include_directories(RobotPositionController PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
 
+add_definitions(-D_USE_MATH_DEFINES)
+
 target_link_libraries(RobotPositionController PUBLIC
     IHumanState
     YARP::YARP_OS
