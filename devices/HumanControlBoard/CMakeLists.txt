@@ -19,6 +19,8 @@ yarp_add_plugin(HumanControlBoard
 target_include_directories(HumanControlBoard PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
 
+add_definitions(-D_USE_MATH_DEFINES)
+
 target_link_libraries(HumanControlBoard PUBLIC
     IHumanState
     IHumanDynamics
