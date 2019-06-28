@@ -1,57 +1,44 @@
 **NOTE:** The code base in master branch is under final development steps. A big refactoring is being done towards a 2.0 version of Human Dynamics Estimation (HDEv2). The current available documentation may no longer be relavant to HDEv2 and we advice users to be cautious of it. The new documentation will follow soon.
 
-# YARP module for the Human Dynamics Estimation (HDE)
+# YARP devices for the Human Dynamics Estimation (HDE)
 
-| Linux/macOS | Windows |
-|:----------:|:--------:|
-[![Build Status](https://travis-ci.org/robotology/human-dynamics-estimation.svg?branch=master)](https://travis-ci.org/robotology/human-dynamics-estimation) | [![Build status](https://ci.appveyor.com/api/projects/status/w5rhsreg2fcmqud2/branch/master?svg=true)](https://ci.appveyor.com/project/claudia-lat/human-dynamics-estimation/branch/master)|
+| Linux/macOS |
+|:----------:|
+[![Build Status](https://travis-ci.org/robotology/human-dynamics-estimation.svg?branch=master)](https://travis-ci.org/robotology/human-dynamics-estimation) |
 
-Human Dynamics Estimation (HDE) is a collection of YARP modules for the estimation of the dynamics in humans while physically interacting with a robot.
+Human Dynamics Estimation (HDE) is a collection of YARP devices for the online estimation of the kinematics and dynamics of a human subject monitored with a set of wearable sensors and/or interacting with a robot. A ROS-based visualizer allows to visualize in real-time the output of the estimation. The devices can be installed and run in Linux, MacOS and Windows.
 
 
 ##  Contents
-* **[Rationale](#rationale)**
+* **[Applications](#applications)**
 * **[Overview](#overview)**
-* **[How to use it](#how-to-use-it)**
 * **[Dependencies](#dependencies)**
 * **[How to install](#how-to-install)**
 * **[Documentation](#documentation)**
 * **[Citing this work](#citing-this-work)**
 * **[Acknowledgments](#acknowledgments)**
 
+## Applications
+The code contained in this repository can serve different application. Depending on the type of application, a different set of hardware and sensors informationa are required and running the code can have different requirements.
+The main applications are the following
 
-## Rationale
-HDE is the *on-line* evolution of the Matlab code present in [MAPest](https://github.com/claudia-lat/MAPest) repository.  The general idea is to be able in real-time to estimate the forces acting on the human body during a physical interaction with a robot. 
-A ROS-based visualizer allows to visualize in real-time this interaction.
-
-
-## How to use it
-The best way to use this repository is to exploit all the available suggested tools that allow you to have the real-time forces and motion estimation. 
-
-<img src="misc/real_time_estimation.png" width=450 height=300>
-
-For reproducing the same experimental set-up as in figure, you would need the following dependencies:
-- the iCub robot
-- the Rviz visualizer
-
-If you are using them, you don't have to modify this code.
-Clearly, they are not dependencies in terms of software but in terms of tools for which the code is tailored.  If you want to use another visualizer or another robot, keep in mind that the code requires minor modifications.
+| Application | hardware |
+|:----------:|:----------:|
+| Inverse Kinematics | kinematic sensors |
+| Dynamics Estimation | kinematic sensors <br> FTsensors |
+| Human-Robot interaction | kinematic sensors <br> FTsensors <br> robot |
+| Whole-body Retargeting | kinematic sensors <br> robot |
 
 ## Overview
-A general overview of HDE is described as follows: 
-- a [human-state-provider](human-state-provider) module;
-- a [human-forces-provider](human-forces-provider) module;
-- a [human-dynamics-estimator](human-dynamics-estimator) module;
-- the [human-viz-bridge](human-viz-bridge) module for the visualization.
+The main devices contained in this project are the following:
+- **HumanStateProvider**: solve inverse kinematics given a set of kinematic sensor.
+- **HumanDynamicsEstimator**: solve the inverse dynamics given the kinematic state and a set of wrenches measurment.
+- **RobotPositionControl**: controls the position of a robot with a given kinematic state.
 
-<img src="misc/hde_yarp_architecture.png">
+The information coming from the sensors come in the form of the `IWear` [YARP interface](https://www.yarp.it/group__dev__iface.html), for more reference on how those are generated please refer to [`Wearables`](https://github.com/robotology/wearables). All the information exchanged among the HDE devices trough implmented in this project (`IHumanDynamics`, `IHumanState`, `IHumanWrench`) and can be published among a network using the coreresponding wrapper devices
 
-*What about the raw data?*
-
-The data about the human kinematics are provided to the *human-state-provider* module by the YARP interface `yarp::dev::IFrameProvider`.  [Here](https://github.com/robotology-playground/xsens-mvn) there is the implementation of the YARP driver for acquiring data if the motion capture is obtained through a Xsens MVN system. 
-The data related to the external forces are provided to the  *human-forces-provider* module whether the forces are coming from a YARP port (e.g.,in the case of the robot wrenches) or in the form of a AnalogSensor -by using the `yarp::dev::IAnalogSensor` interface- when they are coming from a force-torque device (see [here](https://github.com/robotology-playground/forcetorque-yarp-devices) the implementation of YARP Device Drivers for various commercial Six Axis Force Torque sensors).
-The human model is a URDF model with its non standard extension (see [here](https://github.com/robotology/idyntree/blob/master/doc/model_loading.md) for more details). 
-
+A possible architecture itegrating wearable sensors and HDE is described in the following scheme: 
+<img src="misc/hde_scheme.png">
 
 ## Dependencies
 Here following there is a list of dependencies you need for using this repository.  It is worth to notice that the *build* ones and the *libraries* are mandatory to install your project. Instead, the *optional dependencies* are defined optional in the sense that the project is built even if they are not included.  The installation of the all dependencies  is strongly suggested if you want to have a visual feedback of how much your estimation is good.
@@ -64,16 +51,17 @@ For installing the dependencies you can decide to install them individually or t
 
 #### Libraries
 - [**YARP**](https://github.com/robotology/yarp): a library and toolkit for communication and device interfaces.
+- [**icub-main**](https://github.com/robotology/icub-main): a library for the interaction with the iCub robot.
 - [**iDynTree**](https://github.com/robotology/idyntree): a library of robots dynamics algorithms for control, estimation and simulation.
+- [**Wearables**](https://github.com/robotology/wearables): a library for communication and interfaces with wearable sensors.
 - [**Eigen**](http://eigen.tuxfamily.org/index.php?title=Main_Page): a C++ template library for linear algebra.
-- [**IPOPT**](http://wiki.icub.org/wiki/Installing_IPOPT): a software package for large-scale nonlinear optimization for the inverse kinematics code in the [human-state-provider](human-state-provider) module.
+- [**IPOPT**](http://wiki.icub.org/wiki/Installing_IPOPT): a software package for large-scale nonlinear optimization.
 
 #### Optional dependencies
-- [**ROS**](http://wiki.ros.org): an open-source provider of libraries and tools for creating robot applications.  More details for the installation [here](human-viz-bridge).
-
+- [**ROS**](http://wiki.ros.org) with [**rviz**](http://wiki.ros.org/rviz) package: an open-source provider of libraries and tools for creating robot applications.
 
 ## How to install
-Finally, after having installed the dependencies, you can install the HDE project:
+After installing all the dependencies, you can install the HDE project:
 ```bash
 git clone https://github.com/robotology-playground/human-dynamics-estimation.git
 mkdir build
@@ -93,11 +81,6 @@ and installing
 ```
 cmake --build . --config Release --target install
 ```
-
-
-## Documentation
-The documentation for HDE is automatically extracted from the C++ code using Doxygen, and it is available [here](https://robotology.github.io/human-dynamics-estimation/html/annotated.html) .
-
 
 ## Citing this work
 
