@@ -10,24 +10,12 @@ Human Dynamics Estimation (HDE) is a collection of YARP devices for the online e
 
 
 ##  Contents
-* **[Applications](#applications)**
 * **[Overview](#overview)**
 * **[Dependencies](#dependencies)**
 * **[How to install](#how-to-install)**
-* **[Documentation](#documentation)**
+* **[Applications](#applications)**
 * **[Citing this work](#citing-this-work)**
 * **[Acknowledgments](#acknowledgments)**
-
-## Applications
-The code contained in this repository can serve different application. Depending on the type of application, a different set of hardware and sensors informationa are required and running the code can have different requirements.
-The main applications are the following
-
-| Application | hardware |
-|:----------:|:----------:|
-| Inverse Kinematics | kinematic sensors |
-| Dynamics Estimation | kinematic sensors <br> FTsensors |
-| Human-Robot interaction | kinematic sensors <br> FTsensors <br> robot |
-| Whole-body Retargeting | kinematic sensors <br> robot |
 
 ## Overview
 The main devices contained in this project are the following:
@@ -54,7 +42,7 @@ For installing the dependencies you can decide to install them individually or t
 - [**icub-main**](https://github.com/robotology/icub-main): a library for the interaction with the iCub robot.
 - [**iDynTree**](https://github.com/robotology/idyntree): a library of robots dynamics algorithms for control, estimation and simulation.
 - [**Wearables**](https://github.com/robotology/wearables): a library for communication and interfaces with wearable sensors.
-- [**Eigen**](http://eigen.tuxfamily.org/index.php?title=Main_Page): a C++ template library for linear algebra.
+- [**Eigen**](http://eigen.tuxfamily.org/index.php?title=Main_Page) (3.3 or later): a C++ template library for linear algebra.
 - [**IPOPT**](http://wiki.icub.org/wiki/Installing_IPOPT): a software package for large-scale nonlinear optimization.
 
 #### Optional dependencies
@@ -81,6 +69,17 @@ and installing
 ```
 cmake --build . --config Release --target install
 ```
+
+## Applications
+The code contained in this repository can serve different application. Depending on the type of application, a different set of hardware and sensors informationa are required and running the code can have different requirements.
+The main applications are the following
+
+| Application | hardware |
+|:----------:|:----------:|
+| Inverse Kinematics | kinematic sensors |
+| Dynamics Estimation | kinematic sensors <br> FTsensors |
+| Human-Robot interaction | kinematic sensors <br> FTsensors <br> robot |
+| Whole-body Retargeting | kinematic sensors <br> robot |
 
 ## Citing this work
 
