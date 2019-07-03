@@ -710,11 +710,7 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
     for (auto& s : receivedWearData.virtualJointKinSensors) {
         const auto& inputSensorName = s.first;
         const auto& wearDataInputSensor = s.second;
-        // ==========================
-        // FORWARD TO THE OUTPUT PORT
-        // ==========================
-        auto& wearData = pImpl->outputPortWearData.prepare();
-        wearData.virtualJointKinSensors[inputSensorName] = wearDataInputSensor;
+
         // ====================
         // EXPOSE THE INTERFACE
         // ====================
