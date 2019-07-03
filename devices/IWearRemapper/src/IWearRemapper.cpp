@@ -342,6 +342,8 @@ bool IWearRemapper::close()
 
 void IWearRemapper::run()
 {
+    if (getStatus() == WearStatus::Error)
+        askToStop();
     return;
 }
 
@@ -764,15 +766,21 @@ WearStatus IWearRemapper::getStatus() const
 
     // Logic for combining the status of all the sensors.
     // The tricky part is deciding how to handle the mixed case of timeout and overflow.
-    // The WaigingForFirstRead is not considered since the data is supposed not to be streamed.
+    // The WaitingingForFirstRead is not considered since the data is supposed not to be streamed.
     // TODO: For now, overflow is stronger.
     WearStatus status = WearStatus::Ok;
     for (const auto& s : getAllSensors()) {
         switch (s->getSensorStatus()) {
             case sensor::SensorStatus::Overflow:
+                yWarning() << logPrefix << "type (" << static_cast<int>(s->getSensorType()) <<
+                              ") sensor [" << s->getSensorName() << "] status is (" <<
+                              static_cast<int>(s->getSensorStatus()) << ")";
                 status = WearStatus::Overflow;
                 break;
             case sensor::SensorStatus::Timeout:
+                yWarning() << logPrefix << "type (" << static_cast<int>(s->getSensorType()) <<
+                              ") sensor [" << s->getSensorName() << "] status is (" <<
+                              static_cast<int>(s->getSensorStatus()) << ")";
                 if (status == WearStatus::Overflow) {
                     break;
                 }
@@ -784,6 +792,9 @@ WearStatus IWearRemapper::getStatus() const
             default:
                 // If even just one sensor is Error, Unknown, or
                 // any other state return error
+                yError() << logPrefix << "type (" << static_cast<int>(s->getSensorType()) <<
+                              ") sensor [" << s->getSensorName() << "] status is (" <<
+                              static_cast<int>(s->getSensorStatus()) << ")";
                 return WearStatus::Error;
         }
     }

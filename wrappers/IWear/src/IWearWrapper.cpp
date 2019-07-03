@@ -140,7 +140,7 @@ void IWearWrapper::run()
 
     if (pImpl->iWear->getStatus() == WearStatus::Error
             || pImpl->iWear->getStatus() == WearStatus::Unknown) {
-        yError() << logPrefix << "The status of the IWear interface is not Ok"
+        yError() << logPrefix << "The status of the IWear interface is not Ok ("
                  << static_cast<int>(pImpl->iWear->getStatus()) << ")";
         askToStop();
         return;
@@ -148,7 +148,7 @@ void IWearWrapper::run()
 
     // case status is TIMEOUT or DATA_OVERFLOW
     if (pImpl->iWear->getStatus() != WearStatus::Ok) {
-        yWarning() << logPrefix << "The status of the IWear interface is not Ok"
+        yWarning() << logPrefix << "The status of the IWear interface is not Ok ("
                  << static_cast<int>(pImpl->iWear->getStatus()) << ")";
     }
 
