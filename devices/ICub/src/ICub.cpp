@@ -22,7 +22,7 @@
 #include <iDynTree/ModelIO/ModelLoader.h>
 #include <iDynTree/KinDynComputations.h>
 
-#include <assert.h>
+#include <cassert>
 #include <map>
 #include <mutex>
 #include <string>
@@ -636,11 +636,6 @@ bool ICub::open(yarp::os::Searchable& config)
     // Set gravity vector
     pImpl->world_gravity.zero();
     pImpl->world_gravity.setVal(2, -9.81);
-
-    // Configure clock
-    if (!yarp::os::Time::isSystemClock()) {
-        yarp::os::Time::useSystemClock();
-    }
 
     // ===============================
     // CHECK THE CONFIGURATION OPTIONS
