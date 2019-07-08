@@ -17,6 +17,13 @@
         <node>${generic_node}</node>
 	      <tag>yarpdatadumper</tag>
   </module>
+
+  <module>
+        <name>yarpdatadumper</name>
+        <parameters>--name /human_dump/robotState --type bottle --txTime --rxTime</parameters>
+        <node>${generic_node}</node>
+	      <tag>yarpdatadumper</tag>
+  </module>
 	
 		
   <module>
@@ -78,6 +85,12 @@
 	<connection>
         <from>/HDE/HumanStateWrapper/state:o</from>
         <to>/human_dump/humanState</to>
+        <protocol>udp</protocol>
+  </connection>
+
+  <connection>
+        <from>/HDE/RobotStateWrapper/state:o</from>
+        <to>/human_dump/robotState</to>
         <protocol>udp</protocol>
   </connection>
 
