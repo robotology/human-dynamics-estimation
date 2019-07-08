@@ -1,0 +1,34 @@
+<launch>
+    <group ns="HumanGroup">
+        <arg name="Human"/>
+        <arg name="gui" default="False"/>
+        <arg name="vel" default="True"/>
+        <arg name="eff" default="True"/>
+        <arg name="humanModel" default="$(find HDERviz)/urdfs/humanSubject01_66dof.urdf"/>
+        <arg name="rvizconfig" default="$(find HDERviz)/rviz/twoHumansRviz.rviz" />
+
+        <param name="robot_description" command="$(find xacro)/xacro.py $(arg humanModel)" />
+        <param name="use_gui" value="$(arg gui)"/>
+
+        <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" />
+
+        <!-- Configure the robot_state_publisher node -->
+        <!-- This is the old method. Now we use the idyntree module -->
+        <!--
+              yarprobotstatepublisher - -tfPrefix /Human/ - -model humanSubject01_66dof.urdf
+                  - -base-frame Pelvis - -jointstates-topic "/Human/joint_states"
+        -->
+    </group>
+    <group ns="HumanGroup_2">
+        <arg name="Human_2" />
+        <arg name="gui" default="False" />
+        <arg name="vel" default="True" />
+        <arg name="eff" default="True"/>
+        <arg name="humanModel_2" default="$(find HDERviz)/urdfs/humanSubject01_66dof.urdf"/>
+
+        <param name="use_gui" value="$(arg gui)"/>
+        <param name="robot_description" command="$(find xacro)/xacro.py $(arg humanModel_2)" />
+
+        <param name="tf_prefix" value="human_2" type="str"/>
+    </group>
+</launch>

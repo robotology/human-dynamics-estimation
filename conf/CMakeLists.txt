@@ -34,9 +34,11 @@ yarp_install(FILES ${ROBOT_URDF_FILES}
 set (ROS_PROJECT_NAME HDERviz)
 set (ROS_PACKAGE_FILE ros/package.xml)
 set (ROS_LAUNCH_FILES ros/launch/HDERviz.launch
-                      ros/launch/iCubRviz.launch)
+                      ros/launch/iCubRviz.launch
+                      ros/launch/twoHumansRviz.launch)
 set (ROS_RVIZ_FILES ros/rviz/HDERviz.rviz
-                    ros/rviz/iCubRviz.rviz)
+                    ros/rviz/iCubRviz.rviz
+                    ros/rviz/twoHumansRviz.rviz)
 
 # Copy the package.xml, which is necessary to be treated as
 # a ROS package
