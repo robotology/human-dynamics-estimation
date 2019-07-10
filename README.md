@@ -1,5 +1,3 @@
-**NOTE:** The code base in master branch is under final development steps. A big refactoring is being done towards a 2.0 version of Human Dynamics Estimation (HDEv2). The current available documentation may no longer be relavant to HDEv2 and we advice users to be cautious of it. The new documentation will follow soon.
-
 # YARP devices for the Human Dynamics Estimation (HDE)
 
 | Linux/macOS |
