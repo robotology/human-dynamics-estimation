@@ -23,7 +23,7 @@ The main devices contained in this project are the following:
 
 The information coming from the sensors come in the form of the `IWear` [YARP interface](https://www.yarp.it/group__dev__iface.html), for more reference on how those are generated please refer to [`Wearables`](https://github.com/robotology/wearables). All the information exchanged among the HDE devices trough implmented in this project (`IHumanDynamics`, `IHumanState`, `IHumanWrench`) and can be published among a network using the coreresponding wrapper devices
 
-A possible architecture itegrating wearable sensors and HDE is described in the following scheme: 
+A possible architecture integrating wearable sensors and HDE is described in the following scheme: 
 <img src="misc/hde_scheme.png">
 
 ## Dependencies
