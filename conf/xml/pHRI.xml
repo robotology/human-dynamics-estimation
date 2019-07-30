@@ -190,7 +190,7 @@
     </device>
 
     <device type="human_wrench_provider" name="HumanWrenchProvider">
-        <param name="period">0.100</param>
+        <param name="period">0.02</param>
         <param name="human_urdf">humanSubject01_66dof.urdf</param>
         <param name="pHRIScenario">true</param>
         <param name="robot_urdf">model.urdf</param>
@@ -294,7 +294,7 @@
     </device>
 
     <device type="human_dynamics_estimator" name="HumanDynamicsEstimator">
-        <param name="period">0.100</param>
+        <param name="period">0.02</param>
         <param name="urdf">humanSubject01_66dof.urdf</param>
         <param name="baseLink">Pelvis</param>
         <param name="number_of_wrench_sensors">4</param>
@@ -338,7 +338,7 @@
     </device-->
 
     <device type="human_dynamics_publisher" name="HumanDynamicsPublisher">
-        <param name="period">0.020</param>
+        <param name="period">0.010</param>
         <param name="parentLinkNames">(LeftFoot LeftLowerLeg LeftUpperLeg LeftHand LeftForeArm LeftUpperArm RightFoot RightLowerLeg RightUpperLeg RightHand RightForeArm RightUpperArm)</param>
         <param name="sphericalJointNames">(jLeftAnkle jLeftKnee jLeftHip jLeftWrist jLeftElbow jLeftShoulder jRightAnkle jRightKnee jRightHip jRightWrist jRightElbow jRightShoulder)</param>
         <param name="topicPrefix">/HumanEffortBridge</param>
@@ -373,6 +373,26 @@
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
                 <elem name="HumanJoints">HumanControlBoard</elem>
+            </paramlist>
+        </action>
+        <action phase="shutdown" level="5" type="detach"/>
+    </device>
+
+    <!--Uncomment the following code if you need to dump wearable data-->
+    <device type="iwear_remapper" name="pHRIWearableData">
+        <param name="wearableDataPorts">(/XSensSuit/WearableData/data:o /FTShoeLeft/WearableData/data:o /FTShoeRight/WearableData/data:o /ICub/WearableData/data:o)</param>
+        <param name="useRPC">false</param>
+        <param name="wearableRPCPorts">(/XSensSuit/WearableData/metadataRpc:o /FTShoeLeft/WearableData/metadataRpc:o /FTShoeRight/WearableData/metadataRpc:o /ICub/WearableData/metadataRpc:o)</param>
+        <param name="outputPortName">/pHRI/IWearRemapper/data:o</param>
+    </device>
+
+    <device type="iwear_wrapper" name="pHRIWearableDataWrapper">
+        <param name="period">0.1</param>
+        <param name="dataPortName">/pHRI/WearableData/data:o</param>
+        <param name="rpcPortName">/pHRI/WearableData/metadataRpc:o</param>
+        <action phase="startup" level="5" type="attach">
+            <paramlist name="networks">
+                <elem name="WearableDataWrapper">pHRIWearableData</elem>
             </paramlist>
         </action>
         <action phase="shutdown" level="5" type="detach"/>
