@@ -41,3 +41,4 @@ public:
 };
 
 #endif // HDE_DEVICES_HUMANROBOTPOSEPUBLISHER
+

@@ -36,3 +36,4 @@ yarp_install(
 yarp_install(
     FILES "${CMAKE_CURRENT_SOURCE_DIR}/conf/human_robot_pose_publisher.ini"
     DESTINATION ${YARP_PLUGIN_MANIFESTS_INSTALL_DIR})
+

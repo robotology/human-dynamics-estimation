@@ -6,7 +6,7 @@
         <param name="robotURDFFileName">iCubGazeboV2_5.urdf</param>
         <param name="robotFloatingBaseFrame">root_link</param>
         <param name="robotLeftFootFrame">l_foot</param>
-        <param name="robotTFPrefix">/icub</param>
+        <param name="robotTFPrefix">/Robot</param>
         <param name="humanFloatingBaseFrame">/Human/Pelvis</param>
         <param name="humanLeftFootFrame">/Human/LeftFoot</param>
         <group name="HumanRobotLeftFootFixedTransform">
