@@ -66,7 +66,7 @@ public:
 
         yarp::os::ConnectionWriter* reply = connection.getWriter();
 
-        if (reply != NULL) {
+        if (reply) {
             response.write(*reply);
         }
         else

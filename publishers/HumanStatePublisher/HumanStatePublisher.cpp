@@ -285,7 +285,6 @@ void HumanStatePublisher::run()
     // WRITE THE MESSAGES
     // ==================
 
-    //pImpl->humanBasePoseROS.publisher.write(/*forceStrict=*/true);
     pImpl->humanJointStateROS.publisher.write(/*forceStrict=*/true);
 
     // Publish base tf to transform server
