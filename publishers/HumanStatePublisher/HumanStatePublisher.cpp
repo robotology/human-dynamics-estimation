@@ -11,6 +11,7 @@
 
 #include <yarp/os/LogStream.h>
 #include <yarp/os/Node.h>
+#include <yarp/os/Bottle.h>
 #include <yarp/os/Publisher.h>
 #include <yarp/rosmsg/TickTime.h>
 #include <yarp/rosmsg/sensor_msgs/JointState.h>
@@ -59,7 +60,7 @@ class HumanStatePublisher::impl
 public:
     yarp::dev::PolyDriver transformClientDevice;
     yarp::dev::IFrameTransform* iFrameTransform = nullptr;
-    
+
     yarp::sig::Matrix humanBase_H_ground;
 
     hde::interfaces::IHumanState* humanState = nullptr;
@@ -67,6 +68,11 @@ public:
     bool firstRun = true;
     bool fixBasePosition = false;
     bool fixBaseOrientation = false;
+
+    // Base offset variables
+    yarp::os::Bottle *basePositionOffset = nullptr;
+    yarp::os::Bottle *baseOrientationOffset = nullptr;
+
     std::string baseTFName;
 
     // Buffers
@@ -128,6 +134,40 @@ bool HumanStatePublisher::open(yarp::os::Searchable& config)
             yError() << LogPrefix << "Parameter 'fixBaseOrientation' invalid (required quaternion)";
             return false;
         }
+    }
+
+    // Check and parse base position offset
+    if (config.check("basePositionOffset")) {
+        if (config.find("basePositionOffset").isList() &&
+                config.find("basePositionOffset").asList()->size() == 3) {
+            pImpl->basePositionOffset = new yarp::os::Bottle(*config.find("basePositionOffset").asList());
+            yInfo() << LogPrefix << "Using base position offset: " << pImpl->basePositionOffset->toString().c_str();
+        }
+        else {
+            yError() << LogPrefix << "Parameter 'basePositionOffset' invalid";
+            return false;
+        }
+    }
+    else {
+        // Set default base position offset
+        pImpl->basePositionOffset = new yarp::os::Bottle("0.0 0.0 0.0");
+    }
+
+    // Check and parse base orientation offset
+    if (config.check("baseOrientationOffset")) {
+        if (config.find("baseOrientationOffset").isList() &&
+                config.find("baseOrientationOffset").asList()->size() == 4) {
+            pImpl->baseOrientationOffset = new yarp::os::Bottle(*config.find("baseOrientationOffset").asList());
+            yInfo() << LogPrefix << "Using base orientation offset: " << pImpl->baseOrientationOffset->toString().c_str();
+        }
+        else {
+            yError() << LogPrefix << "Parameter 'baseOrientationOffset' invalid (required quaternion)";
+            return false;
+        }
+    }
+    else {
+        // Set default base orientation
+        pImpl->baseOrientationOffset = new yarp::os::Bottle("0.0 0.0 0.0 0.0");
     }
 
     // ROS TOPICS
@@ -220,7 +260,7 @@ bool HumanStatePublisher::open(yarp::os::Searchable& config)
         yError() << LogPrefix << "Failed to create topic" << humanJointsTopicName;
         return false;
     }
- 
+
     // =========================
     // OPEN THE TRANSFORM CLIENT
     // =========================
@@ -330,6 +370,17 @@ void HumanStatePublisher::run()
         pImpl->humanStateBuffers.baseOrientation = pImpl->humanState->getBaseOrientation();
     }
 
+    // Add base position offset
+    pImpl->humanStateBuffers.basePosition[0] = pImpl->humanStateBuffers.basePosition[0] + pImpl->basePositionOffset->get(0).asFloat64();
+    pImpl->humanStateBuffers.basePosition[1] = pImpl->humanStateBuffers.basePosition[1] + pImpl->basePositionOffset->get(1).asFloat64();
+    pImpl->humanStateBuffers.basePosition[2] = pImpl->humanStateBuffers.basePosition[2] + pImpl->basePositionOffset->get(2).asFloat64();
+
+    // Add base orientation offset
+    pImpl->humanStateBuffers.baseOrientation[0] = pImpl->humanStateBuffers.baseOrientation[0] + pImpl->baseOrientationOffset->get(0).asFloat64();
+    pImpl->humanStateBuffers.baseOrientation[1] = pImpl->humanStateBuffers.baseOrientation[1] + pImpl->baseOrientationOffset->get(1).asFloat64();
+    pImpl->humanStateBuffers.baseOrientation[2] = pImpl->humanStateBuffers.baseOrientation[2] + pImpl->baseOrientationOffset->get(2).asFloat64();
+    pImpl->humanStateBuffers.baseOrientation[3] = pImpl->humanStateBuffers.baseOrientation[3] + pImpl->baseOrientationOffset->get(3).asFloat64();
+
     // This is the buffer of the message with base data which will be sent.
     // Here we get the handlt to the first (and only) tf which is sent.
     auto& baseMessageBufferTransform = pImpl->humanBasePoseROS.message.transforms[0];
@@ -431,6 +482,8 @@ bool HumanStatePublisher::detach()
     pImpl->humanBasePoseROS.publisher.interrupt();
     pImpl->humanJointStateROS.publisher.interrupt();
     pImpl->humanState = nullptr;
+    pImpl->basePositionOffset = nullptr;
+    pImpl->baseOrientationOffset = nullptr;
     return true;
 }
 
