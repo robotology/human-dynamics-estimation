@@ -1171,16 +1171,6 @@ void HumanDynamicsEstimator::run()
     iDynTree::VectorDynSize estimatedDynamicVariables(pImpl->berdyData.helper.getNrOfDynamicVariables());
     pImpl->berdyData.solver->getLastEstimate(estimatedDynamicVariables);
 
-    // Extract joint torques from estimated dynamic variables
-    pImpl->berdyData.helper.extractJointTorquesFromDynamicVariables(estimatedDynamicVariables,
-                                                                    pImpl->berdyData.state.jointsPosition,
-                                                                    pImpl->berdyData.estimates.jointTorqueEstimates);
-
-    // Debug code
-    //yInfo() << "Input measurements : " << pImpl->berdyData.buffers.measurements.toString();
-    //yInfo() << "Estimated dynamic variables : " << estimatedDynamicVariables.toString();
-    //yInfo() << "Extracted Torque estimates : " << pImpl->berdyData.estimates.jointTorqueEstimates.toString();
-
     // ===========================
     // EXPOSE DATA FOR IHUMANSTATE
     // ===========================
@@ -1188,7 +1178,7 @@ void HumanDynamicsEstimator::run()
     {
         std::lock_guard<std::mutex> lock(pImpl->mutex);
 
-        // Extract the joint torque estimates and store to the variable
+        // Extract joint torques from estimated dynamic variables
         pImpl->berdyData.helper.extractJointTorquesFromDynamicVariables(estimatedDynamicVariables,
                                                                         pImpl->berdyData.state.jointsPosition,
                                                                         pImpl->berdyData.estimates.jointTorqueEstimates);
