@@ -210,6 +210,7 @@ struct BerdyData
     struct DynamicEstimates
     {
         iDynTree::JointDOFsDoubleArray jointTorqueEstimates;
+        iDynTree::LinkNetExternalWrenches linkNetExternalWrenchEstimates;
     } estimates;    
 };
 
@@ -955,6 +956,10 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
     pImpl->berdyData.estimates.jointTorqueEstimates = iDynTree::JointDOFsDoubleArray(pImpl->berdyData.helper.model());
     pImpl->berdyData.estimates.jointTorqueEstimates.zero();
 
+    // Set the links net external wrench estimates size and initialize to zero
+    pImpl->berdyData.estimates.linkNetExternalWrenchEstimates = iDynTree::LinkWrenches(pImpl->berdyData.helper.model().getNrOfLinks());
+    pImpl->berdyData.estimates.linkNetExternalWrenchEstimates.zero();
+
     // Get the berdy sensors following its internal order
     std::vector<iDynTree::BerdySensor> berdySensors = pImpl->berdyData.helper.getSensorsOrdering();
 
@@ -1046,6 +1051,10 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
     pImpl->berdyData.helper.extractJointTorquesFromDynamicVariables(estimatedDynamicVariables,
                                                                     pImpl->berdyData.state.jointsPosition,
                                                                     pImpl->berdyData.estimates.jointTorqueEstimates);
+
+    // Extract links net external wrench from estimated dynamic variables
+    pImpl->berdyData.helper.extractLinkNetExternalWrenchesFromDynamicVariables(estimatedDynamicVariables,
+                                                                               pImpl->berdyData.estimates.linkNetExternalWrenchEstimates);
 
     return true;
 }
@@ -1182,6 +1191,11 @@ void HumanDynamicsEstimator::run()
         pImpl->berdyData.helper.extractJointTorquesFromDynamicVariables(estimatedDynamicVariables,
                                                                         pImpl->berdyData.state.jointsPosition,
                                                                         pImpl->berdyData.estimates.jointTorqueEstimates);
+
+        // Extract links net external wrench from estimated dynamic variables
+        pImpl->berdyData.helper.extractLinkNetExternalWrenchesFromDynamicVariables(estimatedDynamicVariables,
+                                                                                   pImpl->berdyData.estimates.linkNetExternalWrenchEstimates);
+
     }
 
 }
