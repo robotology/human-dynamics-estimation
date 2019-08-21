@@ -65,6 +65,8 @@ public:
     hde::interfaces::IHumanState* humanState = nullptr;
 
     bool firstRun = true;
+    bool fixBasePosition = false;
+    bool fixBaseOrientation = false;
     std::string baseTFName;
 
     // Buffers
@@ -96,6 +98,36 @@ bool HumanStatePublisher::open(yarp::os::Searchable& config)
     if (!(config.check("period") && config.find("period").isFloat64())) {
         yInfo() << LogPrefix << "Using default period: " << DefaultPeriod << "s";
         useDefaultPeriod = true;
+    }
+
+    yarp::os::Bottle* fixedBasePosition;
+    if (config.check("fixBasePosition")) {
+        if (config.find("fixBasePosition").isList() &&
+                config.find("fixBasePosition").asList()->size() == 3) {
+            pImpl->fixBasePosition = true;
+            fixedBasePosition = config.find("fixBasePosition").asList();
+            yInfo() << LogPrefix << "Using a fixed position for the base frame: "
+                    << fixedBasePosition;
+        }
+        else {
+            yError() << LogPrefix << "Parameter 'fixBasePosition' invalid";
+            return false;
+        }
+    }
+
+    yarp::os::Bottle* fixedBaseOrientation;
+    if (config.check("fixBaseOrientation")) {
+        if (config.find("fixBaseOrientation").isList() &&
+                config.find("fixBaseOrientation").asList()->size() == 4) {
+            pImpl->fixBaseOrientation = true;
+            fixedBaseOrientation = config.find("fixBaseOrientation").asList();
+            yInfo() << LogPrefix << "Using a fixed orientation for the base frame: "
+                    << fixedBaseOrientation;
+        }
+        else {
+            yError() << LogPrefix << "Parameter 'fixBaseOrientation' invalid (required quaternion)";
+            return false;
+        }
     }
 
     // ROS TOPICS
@@ -141,6 +173,19 @@ bool HumanStatePublisher::open(yarp::os::Searchable& config)
     }
     else {
         pImpl->node = new yarp::os::Node({"/" + DeviceName});
+    }
+
+    if (pImpl->fixBasePosition) {
+        pImpl->humanStateBuffers.basePosition[0] = fixedBasePosition->get(0).asFloat64();
+        pImpl->humanStateBuffers.basePosition[1] = fixedBasePosition->get(1).asFloat64();
+        pImpl->humanStateBuffers.basePosition[2] = fixedBasePosition->get(2).asFloat64();
+    }
+
+    if (pImpl->fixBaseOrientation) {
+        pImpl->humanStateBuffers.baseOrientation[0] = fixedBaseOrientation->get(0).asFloat64();
+        pImpl->humanStateBuffers.baseOrientation[1] = fixedBaseOrientation->get(1).asFloat64();
+        pImpl->humanStateBuffers.baseOrientation[2] = fixedBaseOrientation->get(2).asFloat64();
+        pImpl->humanStateBuffers.baseOrientation[3] = fixedBaseOrientation->get(3).asFloat64();
     }
 
     yInfo() << LogPrefix << "*** =====================";
@@ -277,9 +322,14 @@ void HumanStatePublisher::run()
     // PREPARE THE BASE POSITION MESSAGE
     // =================================
 
-    // Get the data from the interface
-    pImpl->humanStateBuffers.basePosition = pImpl->humanState->getBasePosition();
-    pImpl->humanStateBuffers.baseOrientation = pImpl->humanState->getBaseOrientation();
+    // Get the data from the interface if not using fixed values
+    if (!pImpl->fixBasePosition) {
+        pImpl->humanStateBuffers.basePosition = pImpl->humanState->getBasePosition();
+    }
+    if (!pImpl->fixBaseOrientation) {
+        pImpl->humanStateBuffers.baseOrientation = pImpl->humanState->getBaseOrientation();
+    }
+
     // This is the buffer of the message with base data which will be sent.
     // Here we get the handlt to the first (and only) tf which is sent.
     auto& baseMessageBufferTransform = pImpl->humanBasePoseROS.message.transforms[0];
