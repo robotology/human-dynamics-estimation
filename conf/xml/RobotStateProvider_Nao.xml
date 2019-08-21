@@ -137,7 +137,7 @@
         <param name="baseTFName">/Nao/base_link</param>
         <param name="humanJointsTopic">/Nao/joint_states</param>
 				<param name="portprefix">nao</param>
-	      <param name="basePositionOffset">(0.0 -17.0 0.0)</param>
+	      <param name="basePositionOffset">(0.0 -17.0 -0.75)</param>
 	      <param name="baseOrientationOffset">(0.0 0.0 0.0 0.0)</param>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">

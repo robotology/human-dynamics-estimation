@@ -267,7 +267,12 @@ bool HumanStatePublisher::open(yarp::os::Searchable& config)
 
     yarp::os::Property options;
     options.put("device", "transformClient");
-    options.put("local", "/" + DeviceName + "/transformClient");
+    if (hasPortPrefix) {
+        options.put("local", "/" + portPrefix + "/" + DeviceName + "/transformClient");
+    }
+    else {
+        options.put("local", "/" + DeviceName + "/transformClient");
+    }
     options.put("remote", "/transformServer");
 
     if (!pImpl->transformClientDevice.open(options)) {
