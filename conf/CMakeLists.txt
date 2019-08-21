@@ -4,6 +4,7 @@ set (HDE_XML_FILES xml/TransformServer.xml
                    xml/Human.xml
                    xml/pHRI.xml
                    xml/RobotPosePublisher.xml
+                   xml/RobotStateProvider_Human.xml
                    xml/RobotStateProvider_iCub.xml
 									 xml/RobotStateProvider_Nao.xml
 									 xml/RobotStateProvider_Walkman.xml
