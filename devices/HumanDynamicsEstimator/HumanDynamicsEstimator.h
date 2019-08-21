@@ -10,6 +10,7 @@
 #define HDE_DEVICES_HUMANDYNAMICSESTIMATOR
 
 #include <yarp/dev/DeviceDriver.h>
+#include <yarp/dev/IAnalogSensor.h>
 #include <yarp/dev/Wrapper.h>
 #include <yarp/os/PeriodicThread.h>
 
@@ -28,6 +29,7 @@ class hde::devices::HumanDynamicsEstimator final
     , public yarp::dev::IWrapper
     , public yarp::dev::IMultipleWrapper
     , public yarp::os::PeriodicThread
+    , public yarp::dev::IAnalogSensor
     , public hde::interfaces::IHumanDynamics
 {
 private:
@@ -53,6 +55,15 @@ public:
     // IMultipleWrapper interface
     bool attachAll(const yarp::dev::PolyDriverList& driverList) override;
     bool detachAll() override;
+
+    // IAnalogSensor interface
+    int read(yarp::sig::Vector& out) override;
+    int getState(int ch) override;
+    int getChannels() override;
+    int calibrateSensor() override;
+    int calibrateSensor(const yarp::sig::Vector& value) override;
+    int calibrateChannel(int ch) override;
+    int calibrateChannel(int ch, double value) override;
 
     // IHumanDynamics
     std::vector<std::string> getJointNames() const override;
