@@ -45,6 +45,12 @@ constexpr double DefaultPeriod = 0.01;
 
 using namespace hde::devices;
 
+struct LinkNetExternalWrenchAnalogSensorData
+{
+    size_t numberOfChannels = 0;
+    std::vector<double> measurements;
+};
+
 static bool parseYarpValueToStdVector(const yarp::os::Value& option, std::vector<double>& output)
 {
     bool isList = option.isList();
@@ -792,6 +798,9 @@ public:
 
     // Wrench sensor link names variable
     std::vector<std::string> wrenchSensorsLinkNames;
+
+    // Link net external wrench analog sensor variable
+    LinkNetExternalWrenchAnalogSensorData linkNetExternalWrenchAnalogSensorData;
 };
 
 HumanDynamicsEstimator::HumanDynamicsEstimator()
@@ -851,6 +860,13 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
     pImpl->wrenchSensorsLinkNames.resize(linkNames->size());
     for (int i = 0; i < linkNames->size(); i++) {
         pImpl->wrenchSensorsLinkNames.at(i) = linkNames->get(i).asString();
+    }
+
+    // Initialize the number of channels of the equivalent IAnalogSensor
+    {
+        std::lock_guard<std::mutex> lock(pImpl->mutex);
+        pImpl->linkNetExternalWrenchAnalogSensorData.measurements.resize(6 * pImpl->wrenchSensorsLinkNames.size(), 0);
+        pImpl->linkNetExternalWrenchAnalogSensorData.numberOfChannels = 6 * pImpl->wrenchSensorsLinkNames.size();
     }
 
     yInfo() << LogPrefix << "*** ===========================";
@@ -1196,6 +1212,31 @@ void HumanDynamicsEstimator::run()
         pImpl->berdyData.helper.extractLinkNetExternalWrenchesFromDynamicVariables(estimatedDynamicVariables,
                                                                                    pImpl->berdyData.estimates.linkNetExternalWrenchEstimates);
 
+        // Check to ensure all the links net external wrenches are extracted correctly
+        if (!pImpl->berdyData.estimates.linkNetExternalWrenchEstimates.isConsistent(pImpl->humanModel))
+        {
+            yError() << LogPrefix << "Links net external wrench estimates extracted from dynamic variables are not consistent with the model provided";
+        }
+
+        // Expose the data as IAnalogSensor
+        // ================================
+        // Exposing only wrench on only selected links
+        // TODO: Instead of using wrenchSensorsLinkNames may be we can give a separate parameter
+        // containing links we are interested to see the extracted wrench estimates
+        for (int i = 0; i < pImpl->wrenchSensorsLinkNames.size(); i++) {
+
+            std::string linkName = pImpl->wrenchSensorsLinkNames.at(i);
+            iDynTree::Wrench linkNetExternalWrench = pImpl->berdyData.estimates.linkNetExternalWrenchEstimates(pImpl->humanModel.getLinkIndex(linkName));
+
+            pImpl->linkNetExternalWrenchAnalogSensorData.measurements[6 * i + 0] = linkNetExternalWrench.getLinearVec3()(0);
+            pImpl->linkNetExternalWrenchAnalogSensorData.measurements[6 * i + 1] = linkNetExternalWrench.getLinearVec3()(1);
+            pImpl->linkNetExternalWrenchAnalogSensorData.measurements[6 * i + 2] = linkNetExternalWrench.getLinearVec3()(2);
+            pImpl->linkNetExternalWrenchAnalogSensorData.measurements[6 * i + 3] = linkNetExternalWrench.getAngularVec3()(0);
+            pImpl->linkNetExternalWrenchAnalogSensorData.measurements[6 * i + 4] = linkNetExternalWrench.getAngularVec3()(1);
+            pImpl->linkNetExternalWrenchAnalogSensorData.measurements[6 * i + 5] = linkNetExternalWrench.getAngularVec3()(2);
+
+        }
+
     }
 
 }
@@ -1342,4 +1383,54 @@ std::vector<double> HumanDynamicsEstimator::getJointTorques() const
         jointTorques.at(index) = pImpl->berdyData.estimates.jointTorqueEstimates.getVal(index);
     }
     return jointTorques;
+}
+
+// =============
+// IAnalogSensor
+// =============
+
+int HumanDynamicsEstimator::read(yarp::sig::Vector& out)
+{
+    out.resize(pImpl->linkNetExternalWrenchAnalogSensorData.measurements.size());
+
+    {
+        std::lock_guard<std::mutex> lock(pImpl->mutex);
+        std::copy(pImpl->linkNetExternalWrenchAnalogSensorData.measurements.begin(),
+                  pImpl->linkNetExternalWrenchAnalogSensorData.measurements.end(),
+                  out.data());
+    }
+
+    return IAnalogSensor::AS_OK;
+}
+
+int HumanDynamicsEstimator::getState(int ch)
+{
+    // The return status is always ok as the data is not from any sensor but estimation values
+    return IAnalogSensor::AS_OK;
+}
+
+int HumanDynamicsEstimator::getChannels()
+{
+    std::lock_guard<std::mutex> lock(pImpl->mutex);
+    return pImpl->linkNetExternalWrenchAnalogSensorData.numberOfChannels;
+}
+
+int HumanDynamicsEstimator::calibrateSensor()
+{
+    return IAnalogSensor::AS_ERROR;
+}
+
+int HumanDynamicsEstimator::calibrateSensor(const yarp::sig::Vector& /*value*/)
+{
+    return IAnalogSensor::AS_ERROR;
+}
+
+int HumanDynamicsEstimator::calibrateChannel(int /*ch*/)
+{
+    return IAnalogSensor::AS_ERROR;
+}
+
+int HumanDynamicsEstimator::calibrateChannel(int /*ch*/, double /*value*/)
+{
+    return IAnalogSensor::AS_ERROR;
 }
