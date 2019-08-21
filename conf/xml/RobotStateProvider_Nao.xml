@@ -1,25 +1,25 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE robot PUBLIC "-//YARP//DTD yarprobotinterface 3.0//EN" "http://www.yarp.it/DTD/yarprobotinterfaceV3.0.dtd">
-<robot name="Human-HDE" build=0 portprefix="">
+<robot name="Nao-Retargeting" build=0 portprefix="">
 
-    <device type="transformServer" name="TransformServer">
+    <!-- <device type="transformServer" name="TransformServer">
         <param name="transforms_lifetime">0.2</param>
         <group name="ROS">
             <param name="enable_ros_publisher">true</param>
             <param name="enable_ros_subscriber">false</param>
         </group>
-    </device>
+    </device> -->
 
     <device type="iwear_remapper" name="XSenseIWearRemapper">
         <param name="wearableDataPorts">(/XSensSuit/WearableData/data:o)</param>
         <param name="useRPC">false</param>
         <param name="wearableRPCPorts">(/XSensSuit/WearableData/metadataRpc:o)</param>
-        <param name="outputPortName">/HDE/XsensIWearRemapper/data:o</param> 
+        <param name="outputPortName">/Nao/XsensIWearRemapper/data:o</param>
     </device>
 
     <device type="human_state_provider" name="RobotStateProvider">
         <param name="period">0.02</param>
-        <param name="urdf">model.urdf</param>
+        <param name="urdf">nao.urdf</param>
         <param name="floatingBaseFrame">(base_link, XsensSuit::vLink::Pelvis)</param>
         <!-- ikSolver options: pairwised, global, integrationbased -->
         <param name="ikSolver">integrationbased</param>
@@ -123,26 +123,29 @@
     <!-- Uncomment to stream the output of HumanStateProvider on a YARP port -->
     <!--device type="human_state_wrapper" name="RobotStateWrapper">
         <param name="period">0.01</param>
-        <param name="outputPort">/HDE/RobotStateWrapper/state:o</param>
+        <param name="outputPort">/Nao/RobotStateWrapper/state:o</param>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
                 <elem name="HumanStateWrapperLabel">RobotStateProvider</elem>
             </paramlist>
         </action>
         <action phase="shutdown" level="5" type="detach"/>
-    </device>
+    </device-->
 
     <device type="human_state_publisher" name="RobotStatePublisher">
         <param name="period">0.02</param>
-        <param name="baseTFName">/Robot/base_link</param>
-        <param name="humanJointsTopic">/Robot/joint_states</param>
+        <param name="baseTFName">/Nao/base_link</param>
+        <param name="humanJointsTopic">/Nao/joint_states</param>
+				<param name="portprefix">nao</param>
+	      <param name="basePositionOffset">(0.0 -17.0 0.0)</param>
+	      <param name="baseOrientationOffset">(0.0 0.0 0.0 0.0)</param>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
                 <elem name="HumanStatePublisherLabel">RobotStateProvider</elem>
             </paramlist>
         </action>
         <action phase="shutdown" level="5" type="detach"/>
-    </device-->
+    </device>
 
     <!-- uncomment if you want to use the RobotStateProvider data to control the robot position -->
     <!--device type="robot_position_controller" name="RobotPositionController">

@@ -4,6 +4,11 @@ set (HDE_XML_FILES xml/TransformServer.xml
                    xml/Human.xml
                    xml/pHRI.xml
                    xml/RobotPosePublisher.xml
+                   xml/RobotStateProvider_iCub.xml
+									 xml/RobotStateProvider_Nao.xml
+									 xml/RobotStateProvider_Walkman.xml
+									 xml/RobotStateProvider_Atlas.xml
+									 xml/RobotStateProvider_Baxter.xml
                    xml/HumanJointTorquesYarpScope.xml
                    xml/applications/HumanDynamicsEstimation-HumanDumper.xml)
 
@@ -56,4 +61,3 @@ install(FILES ${ROS_RVIZ_FILES}
 # Install robot urdf files
 install(FILES ${ROBOT_URDF_FILES}
              DESTINATION ${CMAKE_INSTALL_PREFIX}/share/${ROS_PROJECT_NAME}/urdfs/)
-
