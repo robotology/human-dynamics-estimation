@@ -44,7 +44,8 @@ struct AnalogSensorData
 enum class WrenchSourceType
 {
     Fixed,
-    Robot, // TODO
+    Robot,
+    Dummy, // TODO
 };
 
 struct WrenchSourceData
@@ -317,16 +318,19 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
         else if (sourceType == "robot") {
             WrenchSourceData.type = WrenchSourceType::Robot;
         }
+        else if (sourceType == "dummy") {
+            WrenchSourceData.type = WrenchSourceType::Dummy;
+        }
         else {
             yError() << LogPrefix << "Option" << sourceName
-                     << ":: type must be either 'fixed' or 'robot'";
+                     << ":: type must be either 'fixed' or 'robot' or 'dummy'";
             return false;
         }
 
         switch (WrenchSourceData.type) {
-                // Process Fixed source type
-                // =========================
 
+            // Process Fixed source type
+            // =========================
             case WrenchSourceType::Fixed: {
                 auto transformer = std::make_unique<FixedFrameWrenchTransformer>();
 
@@ -468,6 +472,20 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
                 break;
             }
 
+            // Process Dummy source type
+            // =========================
+            case WrenchSourceType::Dummy: {
+
+                yDebug() << LogPrefix << "=============:";
+                yDebug() << LogPrefix << "New source   :" << WrenchSourceData.name;
+                yDebug() << LogPrefix << "Sensor name  :" << WrenchSourceData.sensorName;
+                yDebug() << LogPrefix << "Type         :" << sourceType;
+                yDebug() << LogPrefix << "Output frame :" << WrenchSourceData.outputFrame;
+                yDebug() << LogPrefix << "=============:";
+
+                break;
+            }
+
         }
 
         // Store the wrench source data
@@ -556,95 +574,103 @@ void HumanWrenchProvider::run()
     for (unsigned i = 0; i < pImpl->wrenchSources.size(); ++i) {
         auto& forceSource = pImpl->wrenchSources[i];
 
-        // Get the measurement
-        // ===================
+        // Set default values
+        iDynTree::Force defaultForce(0,0,0);
+        iDynTree::Torque defaultTorque(0,0,0);
 
-        wearable::Vector3 forces;
-        wearable::Vector3 torques;
+        iDynTree::Wrench transformedWrench(defaultForce, defaultTorque);
 
-        if (!forceSource.ftWearableSensor) {
-            yError() << LogPrefix << "Failed to get wearable sensor for source" << forceSource.name;
-            askToStop();
-            return;
-        }
+        if (pImpl->wrenchSources[i].type != WrenchSourceType::Dummy) {
 
-        if (!forceSource.ftWearableSensor->getForceTorque6D(forces, torques)) {
-            yError() << LogPrefix << "Failed to get measurement from sensor"
-                     << forceSource.ftWearableSensor->getSensorName();
-            askToStop();
-            return;
-        }
+            // Get the measurement
+            // ===================
 
-        // Tranform it to the correct frame
-        // ================================
+            wearable::Vector3 forces;
+            wearable::Vector3 torques;
 
-        iDynTree::Wrench inputWrench({forces[0], forces[1], forces[2]},
-                                     {torques[0], torques[1], torques[2]});
+            if (!forceSource.ftWearableSensor) {
+                yError() << LogPrefix << "Failed to get wearable sensor for source" << forceSource.name;
+                askToStop();
+                return;
+            }
 
-        iDynTree::Wrench transformedWrench;
+            if (!forceSource.ftWearableSensor->getForceTorque6D(forces, torques)) {
+                yError() << LogPrefix << "Failed to get measurement from sensor"
+                         << forceSource.ftWearableSensor->getSensorName();
+                askToStop();
+                return;
+            }
 
-        if (forceSource.type == WrenchSourceType::Robot) {
+            // Tranform it to the correct frame
+            // ================================
 
-            iDynTree::Transform humanFeetToHandsTransform = iDynTree::Transform::Identity();
-            iDynTree::KinDynComputations humanKinDynComp;
+            iDynTree::Wrench inputWrench({forces[0], forces[1], forces[2]},
+                                         {torques[0], torques[1], torques[2]});
 
-            humanKinDynComp.loadRobotModel(pImpl->humanModel);
-            humanKinDynComp.setRobotState(iDynTree::Transform::Identity(),
-                                          pImpl->humanJointPositionsVec,
-                                          iDynTree::Twist::Zero(),
-                                          pImpl->humanJointVelocitiesVec,
-                                          pImpl->world_gravity);
-            humanFeetToHandsTransform = humanKinDynComp.getRelativeTransform(forceSource.outputFrame,forceSource.humanLinkingFrame);
+            if (forceSource.type == WrenchSourceType::Robot) {
 
-            iDynTree::Transform robotFeetToHandsTransform = iDynTree::Transform::Identity();
-            iDynTree::KinDynComputations robotKinDynComp;
+                iDynTree::Transform humanFeetToHandsTransform = iDynTree::Transform::Identity();
+                iDynTree::KinDynComputations humanKinDynComp;
 
-            robotKinDynComp.loadRobotModel(pImpl->robotModel);
-            robotKinDynComp.setRobotState(iDynTree::Transform::Identity(),
-                                          pImpl->robotJointPositionsVec,
-                                          iDynTree::Twist::Zero(),
-                                          pImpl->robotJointVelocitiesVec,
-                                          pImpl->world_gravity);
-            robotFeetToHandsTransform = robotKinDynComp.getRelativeTransformExplicit(pImpl->robotModel.getFrameIndex(forceSource.robotLinkingFrame),
-                                                                                     pImpl->robotModel.getFrameIndex(forceSource.robotLinkingFrame),
-                                                                                     pImpl->robotModel.getFrameIndex(forceSource.robotSourceOriginFrame),
-                                                                                     pImpl->robotModel.getFrameIndex(forceSource.robotSourceOrientationFrame));
+                humanKinDynComp.loadRobotModel(pImpl->humanModel);
+                humanKinDynComp.setRobotState(iDynTree::Transform::Identity(),
+                                              pImpl->humanJointPositionsVec,
+                                              iDynTree::Twist::Zero(),
+                                              pImpl->humanJointVelocitiesVec,
+                                              pImpl->world_gravity);
+                humanFeetToHandsTransform = humanKinDynComp.getRelativeTransform(forceSource.outputFrame,forceSource.humanLinkingFrame);
 
-            // TODO: Move this logic to WrenchFrameTransformers.cpp file
+                iDynTree::Transform robotFeetToHandsTransform = iDynTree::Transform::Identity();
+                iDynTree::KinDynComputations robotKinDynComp;
 
-            // Access the tranforms through pointers
-            std::lock_guard<std::mutex> lock(pImpl->mutex);
+                robotKinDynComp.loadRobotModel(pImpl->robotModel);
+                robotKinDynComp.setRobotState(iDynTree::Transform::Identity(),
+                                              pImpl->robotJointPositionsVec,
+                                              iDynTree::Twist::Zero(),
+                                              pImpl->robotJointVelocitiesVec,
+                                              pImpl->world_gravity);
+                robotFeetToHandsTransform = robotKinDynComp.getRelativeTransformExplicit(pImpl->robotModel.getFrameIndex(forceSource.robotLinkingFrame),
+                                                                                         pImpl->robotModel.getFrameIndex(forceSource.robotLinkingFrame),
+                                                                                         pImpl->robotModel.getFrameIndex(forceSource.robotSourceOriginFrame),
+                                                                                         pImpl->robotModel.getFrameIndex(forceSource.robotSourceOrientationFrame));
 
-            // Downcast it and move the pointer ownership into the object of derived class
-            auto transformerPtr = dynamic_cast<RobotFrameWrenchTransformer*>(forceSource.frameTransformer.release());
-            std::unique_ptr<RobotFrameWrenchTransformer> newTransformer;
-            newTransformer.reset(transformerPtr);
+                // TODO: Move this logic to WrenchFrameTransformers.cpp file
 
-            // Access the fixed transformation stored from configuration
-            auto robotHumanFeetFixedTransform = newTransformer->fixedTransform;
+                // Access the tranforms through pointers
+                std::lock_guard<std::mutex> lock(pImpl->mutex);
 
-            // Compute the final robot to human transform
-            iDynTree::Transform robotToHumanTransform;
+                // Downcast it and move the pointer ownership into the object of derived class
+                auto transformerPtr = dynamic_cast<RobotFrameWrenchTransformer*>(forceSource.frameTransformer.release());
+                std::unique_ptr<RobotFrameWrenchTransformer> newTransformer;
+                newTransformer.reset(transformerPtr);
 
-            robotToHumanTransform = iDynTree::Transform::Identity() *
-                                    humanFeetToHandsTransform * //HumanHand_H_HumanFoot
-                                    robotHumanFeetFixedTransform * //HumanFoot_H_RobotFoot
-                                    robotFeetToHandsTransform; //RobotFoot_H_RobotHand
+                // Access the fixed transformation stored from configuration
+                auto robotHumanFeetFixedTransform = newTransformer->fixedTransform;
 
-            // Update the stored transform
-            newTransformer->transform = robotToHumanTransform;
+                // Compute the final robot to human transform
+                iDynTree::Transform robotToHumanTransform;
 
-            // Get reaction wrenches for the robot
-            inputWrench = inputWrench * -1;
+                robotToHumanTransform = iDynTree::Transform::Identity() *
+                                        humanFeetToHandsTransform * //HumanHand_H_HumanFoot
+                                        robotHumanFeetFixedTransform * //HumanFoot_H_RobotFoot
+                                        robotFeetToHandsTransform; //RobotFoot_H_RobotHand
 
-            // Downcast it and move the pointer ownership into the object containing the source data
-            auto ptr = static_cast<IWrenchFrameTransformer*>(newTransformer.release());
-            forceSource.frameTransformer.reset(ptr);
-        }
+                // Update the stored transform
+                newTransformer->transform = robotToHumanTransform;
 
-        if (!forceSource.frameTransformer->transformWrenchFrame(inputWrench, transformedWrench)) {
-            askToStop();
-            return;
+                // Get reaction wrenches for the robot
+                inputWrench = inputWrench * -1;
+
+                // Downcast it and move the pointer ownership into the object containing the source data
+                auto ptr = static_cast<IWrenchFrameTransformer*>(newTransformer.release());
+                forceSource.frameTransformer.reset(ptr);
+            }
+
+            if (!forceSource.frameTransformer->transformWrenchFrame(inputWrench, transformedWrench)) {
+                askToStop();
+                return;
+            }
+
         }
 
         // Expose the data as IAnalogSensor
