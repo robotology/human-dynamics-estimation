@@ -194,8 +194,8 @@
         <param name="period">0.100</param>
         <param name="human_urdf">humanSubject01_66dof.urdf</param>
         <param name="pHRIScenario">false</param>
-        <param name="number_of_sources">2</param>
-        <param name="sources">(FTShoeLeft FTShoeRight)</param>
+        <param name="number_of_sources">4</param>
+        <param name="sources">(FTShoeLeft FTShoeRight DummyLeftHand DummyRightHand)</param>
         <group name="FTShoeLeft">
             <param name="sensorName">FTShoeLeftFTSensors</param>
             <param name="outputFrame">LeftFoot</param>
@@ -213,6 +213,16 @@
                                     0.0 1.0 0.0
                                     0.0 0.0 1.0)</param>
             <param name="position">(-0.0026 0.0 -0.1208)</param>
+        </group>
+        <group name="DummyLeftHand">
+            <param name="sensorName">DummyLeftHandFTSensors</param>
+            <param name="outputFrame">LeftHand</param>
+            <param name="type">dummy</param>
+        </group>
+        <group name="DummyRightHand">
+            <param name="sensorName">DummyRightHandFTSensors</param>
+            <param name="outputFrame">RightHand</param>
+            <param name="type">dummy</param>
         </group>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
@@ -244,10 +254,10 @@
         </paramlist>
         <group name="ROS">
             <param name="useROS">true</param>
-            <param name="ROS_topicName">(/HDE/WrenchStamped/LeftFoot /HDE/WrenchStamped/RightFoot)</param>
+            <param name="ROS_topicName">(/HDE/WrenchStamped/LeftFoot /HDE/WrenchStamped/RightFoot /HDE/WrenchStamped/LeftHand /HDE/WrenchStamped/RightHand)</param>
             <param name="ROS_nodeName">/HDE/HumanWrenchPublisherNode</param>
             <param name="ROS_msgType">geometry_msgs/WrenchStamped</param>
-            <param name="frame_id">(Human/LeftFoot Human/RightFoot)</param>
+            <param name="frame_id">(Human/LeftFoot Human/RightFoot Human/LeftHand Human/RightHand)</param>
         </group>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
@@ -261,8 +271,8 @@
         <param name="period">0.100</param>
         <param name="urdf">humanSubject01_66dof.urdf</param>
         <param name="baseLink">Pelvis</param>
-        <param name="number_of_wrench_sensors">2</param>
-        <param name="wrench_sensors_link_name">(LeftFoot RightFoot)</param>
+        <param name="number_of_wrench_sensors">4</param>
+        <param name="wrench_sensors_link_name">(LeftFoot RightFoot LeftHand RightHand)</param>
         <group name="PRIORS">
             <param name="mu_dyn_variables">0.0001</param>
             <param name="cov_dyn_variables">10000.0</param>
@@ -271,9 +281,11 @@
             <param name="cov_measurements_DOF_ACCELERATION_SENSOR">0.666e-5</param>
             <group name="cov_measurements_NET_EXT_WRENCH_SENSOR">
                 <param name="value">1e-6</param>
-                <param name="specific_elements">(LeftFoot RightFoot)</param>
+                <param name="specific_elements">(LeftFoot RightFoot LeftHand RightHand)</param>
                 <param name="LeftFoot">(0.0589998348 0.0589998348 0.0359999712 0.002250000225 0.002250000225 0.56e-3)</param>
                 <param name="RightFoot">(0.0589998348 0.0589998348 0.0359999712 0.002250000225 0.002250000225 0.56e-3)</param>
+                <param name="LeftHand">(10000.0 10000.0 10000.0 10000.0 10000.0 10000.0)</param>
+                <param name="RightHand">(10000.0 10000.0 10000.0 10000.0 10000.0 10000.0)</param>
             </group>
         </group>
         <group name="SENSORS_REMOVAL">
@@ -310,10 +322,10 @@
         </paramlist>
         <group name="ROS">
             <param name="useROS">true</param>
-            <param name="ROS_topicName">(/HDE/EstimatedWrenchStamped/LeftFoot /HDE/EstimatedWrenchStamped/RightFoot)</param>
+            <param name="ROS_topicName">(/HDE/EstimatedWrenchStamped/LeftFoot /HDE/EstimatedWrenchStamped/RightFoot /HDE/EstimatedWrenchStamped/LeftHand /HDE/EstimatedWrenchStamped/RightHand)</param>
             <param name="ROS_nodeName">/HDE/HumanEstimatedWrenchPublisherNode</param>
             <param name="ROS_msgType">geometry_msgs/WrenchStamped</param>
-            <param name="frame_id">(Human/LeftFoot Human/RightFoot)</param>
+            <param name="frame_id">(Human/LeftFoot Human/RightFoot Human/LeftHand Human/RightHand)</param>
         </group>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
