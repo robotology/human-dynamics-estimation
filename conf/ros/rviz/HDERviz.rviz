@@ -25,7 +25,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: ""
+    SyncSource: jRightShoulderEffort
 Preferences:
   PromptSaveOnExit: true
 Toolbars:
@@ -772,6 +772,62 @@ Visualization Manager:
       Topic: /HDE/WrenchStamped/RightHand
       Torque Arrow Scale: 0
       Torque Color: 37; 95; 255
+      Unreliable: false
+      Value: true
+    - Alpha: 1
+      Arrow Width: 0.30000001192092896
+      Class: rviz/WrenchStamped
+      Enabled: true
+      Force Arrow Scale: 0.0020000000949949026
+      Force Color: 252; 175; 62
+      Hide Small Values: true
+      History Length: 1
+      Name: LeftFoot_EstimatedExtWrenches
+      Topic: /HDE/EstimatedWrenchStamped/LeftFoot
+      Torque Arrow Scale: 0
+      Torque Color: 204; 204; 51
+      Unreliable: false
+      Value: true
+    - Alpha: 1
+      Arrow Width: 0.30000001192092896
+      Class: rviz/WrenchStamped
+      Enabled: true
+      Force Arrow Scale: 0.0020000000949949026
+      Force Color: 252; 175; 62
+      Hide Small Values: true
+      History Length: 1
+      Name: RightFoot_EstimatedExtWrenches
+      Topic: /HDE/EstimatedWrenchStamped/RightFoot
+      Torque Arrow Scale: 0
+      Torque Color: 204; 204; 51
+      Unreliable: false
+      Value: true
+    - Alpha: 1
+      Arrow Width: 0.30000001192092896
+      Class: rviz/WrenchStamped
+      Enabled: true
+      Force Arrow Scale: 0.0020000000949949026
+      Force Color: 252; 175; 62
+      Hide Small Values: true
+      History Length: 1
+      Name: LeftHand_EstimatedExtWrenches
+      Topic: /HDE/EstimatedWrenchStamped/LeftHand
+      Torque Arrow Scale: 0
+      Torque Color: 204; 204; 51
+      Unreliable: false
+      Value: true
+    - Alpha: 1
+      Arrow Width: 0.30000001192092896
+      Class: rviz/WrenchStamped
+      Enabled: true
+      Force Arrow Scale: 0.0020000000949949026
+      Force Color: 252; 175; 62
+      Hide Small Values: true
+      History Length: 1
+      Name: RightHand_EstimatedExtWrenches
+      Topic: /HDE/EstimatedWrenchStamped/RightHand
+      Torque Arrow Scale: 0
+      Torque Color: 204; 204; 51
       Unreliable: false
       Value: true
     - Alpha: 1

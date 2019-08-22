@@ -288,6 +288,41 @@
         <action phase="shutdown" level="5" type="detach"/>
     </device>
 
+    <!--device type="analogServer" name="HumanEstimatedWrenchWrapper">
+        <param name="name">/HDE/HumanEstimatedWrenchWrapper/wrench:o</param>
+        <param name="period">10</param>
+        <action phase="startup" level="5" type="attach">
+            <paramlist name="networks">
+                <elem name="HumanEstimatedWrenchWrapperLabel">HumanDynamicsEstimator</elem>
+            </paramlist>
+        </action>
+        <action phase="shutdown" level="5" type="detach" />
+    </device-->
+
+    <!--Wrapper to publish EstimatedWrenchStamped message to Rviz-->
+    <device type="analogServer" name="HumanEstimatedWrenchPublisher">
+        <param name="name">/HDE/HumanEstimatedWrenchPublisher/wrench:o</param>
+        <param name="period">20</param>
+        <param name="channels">12</param>
+        <paramlist name="ports">
+            <elem name="FirstSetOfChannels">0 5 0 5</elem>
+            <elem name="SecondSetOfChannels">6 11 0 5</elem>
+        </paramlist>
+        <group name="ROS">
+            <param name="useROS">true</param>
+            <param name="ROS_topicName">(/HDE/EstimatedWrenchStamped/LeftFoot /HDE/EstimatedWrenchStamped/RightFoot)</param>
+            <param name="ROS_nodeName">/HDE/HumanEstimatedWrenchPublisherNode</param>
+            <param name="ROS_msgType">geometry_msgs/WrenchStamped</param>
+            <param name="frame_id">(Human/LeftFoot Human/RightFoot)</param>
+        </group>
+        <action phase="startup" level="5" type="attach">
+            <paramlist name="networks">
+                <elem name="HumanEstimatesWrenchPublisherLabel">HumanDynamicsEstimator</elem>
+            </paramlist>
+        </action>
+        <action phase="shutdown" level="4" type="detach" />
+    </device>
+
     <!--device type="human_dynamics_wrapper" name="HumanDynamicsWrapper">
         <param name="period">0.1</param>
         <param name="outputPort">/HDE/HumanDynamicsWrapper/torques:o</param>
