@@ -2,14 +2,6 @@
 <!DOCTYPE robot PUBLIC "-//YARP//DTD yarprobotinterface 3.0//EN" "http://www.yarp.it/DTD/yarprobotinterfaceV3.0.dtd">
 <robot name="Atlas-Retargeting" build=0 portprefix="">
 
-    <!--device type="transformServer" name="TransformServer">
-        <param name="transforms_lifetime">0.2</param>
-        <group name="ROS">
-            <param name="enable_ros_publisher">true</param>
-            <param name="enable_ros_subscriber">false</param>
-        </group>
-    </device-->
-
     <device type="iwear_remapper" name="XSenseIWearRemapper">
         <param name="wearableDataPorts">(/XSensSuit/WearableData/data:o)</param>
         <param name="useRPC">false</param>
