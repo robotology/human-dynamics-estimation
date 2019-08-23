@@ -131,7 +131,7 @@
         <param name="baseTFName">/Atlas/pelvis</param>
         <param name="humanJointsTopic">/Atlas/joint_states</param>
 		<param name="portprefix">atlas</param>
-	    <param name="basePositionOffset">(0.0 -8.0 0.0)</param>
+	    <param name="basePositionOffset">(0.0 -11.0 0.0)</param>
 		<param name="baseOrientationOffset">(0.0 0.0 0.0 0.0)</param>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">

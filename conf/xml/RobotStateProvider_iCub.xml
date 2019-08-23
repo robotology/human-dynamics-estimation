@@ -84,7 +84,7 @@
         <param name="baseTFName">/iCub/root_link_fake</param>
         <param name="humanJointsTopic">/iCub/joint_states</param>
 				<param name="portprefix">icub</param>
-	      <param name="basePositionOffset">(0.0 -14.0 0.0)</param>
+	      <param name="basePositionOffset">(0.0 -17.0 0.0)</param>
 				<param name="baseOrientationOffset">(0.0 0.0 0.0 0.0)</param>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
