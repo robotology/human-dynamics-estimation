@@ -21,6 +21,8 @@
         <param name="period">0.02</param>
         <param name="urdf">humanSubject03_66dof.urdf</param>
         <param name="floatingBaseFrame">(Pelvis, XsensSuit::vLink::Pelvis)</param>
+        <!--Use none for Zero values, gravity for -9.8, proper for proper sensor acceleration-->
+        <param name="accelerometerSensorMeasurementsOption">gravity</param>
         <!-- ikSolver options: pairwised, global, integrationbased -->
         <param name="ikSolver">integrationbased</param>
         <param name="useXsensJointsAngles">false</param>

@@ -14,11 +14,16 @@
 #include <iDynTree/InverseKinematics.h>
 #include <iDynTree/Model/Model.h>
 #include <iDynTree/ModelIO/ModelLoader.h>
+#include <iDynTree/Sensors/Sensors.h>
+#include <iDynTree/Sensors/AccelerometerSensor.h>
+#include <iDynTree/Core/EigenHelpers.h>
+#include <iDynTree/Model/Traversal.h>
+
+
 #include <yarp/os/LogStream.h>
 #include <yarp/os/ResourceFinder.h>
 
-#include <iDynTree/Core/EigenHelpers.h>
-#include <iDynTree/Model/Traversal.h>
+
 
 #include <array>
 #include <atomic>
@@ -130,6 +135,15 @@ struct WearableStorage
         jointSensorsMap;
 };
 
+struct HumanSensorData
+{
+    // Accelerometers
+    std::string accelerometerSensorMeasurementsOption;
+    std::vector<std::string> accelerometerSensorNames;
+    std::vector<iDynTree::Transform> parentLink_H_accelerometerSensor;
+    std::vector<std::array<double, 3>> accelerometerSensorMeasurements;
+};
+
 class HumanStateProvider::impl
 {
 public:
@@ -168,6 +182,9 @@ public:
     std::unordered_map<std::string, iDynTreeHelper::Rotation::rotationDistance>
         linkErrorOrientations;
     std::unordered_map<std::string, iDynTree::Vector3> linkErrorAngularVelocities;
+
+    // Sensor variables
+    HumanSensorData humanSensorData;
 
     // IK parameters
     int ikPoolSize{1};
@@ -326,6 +343,10 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     // =======================================
     // PARSE THE GENERAL CONFIGURATION OPTIONS
     // =======================================
+
+    // Get accelerometer sensor measurements option parameters
+    // Default option set to "none" for zero measurement values
+    pImpl->humanSensorData.accelerometerSensorMeasurementsOption = config.check("accelerometerSensorMeasurementsOption",yarp::os::Value("none")).asString();
 
     std::string solverName = config.find("ikSolver").asString();
     if (solverName == "global")
@@ -568,14 +589,13 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     // PRINT CURRENT CONFIGURATION OPTIONS
     // ===================================
 
-    yInfo() << LogPrefix << "*** ===================================";
-    yInfo() << LogPrefix << "*** Period                            :" << pImpl->period;
-    yInfo() << LogPrefix << "*** Urdf file name                    :" << urdfFileName;
-    yInfo() << LogPrefix << "*** Ik solver                         :" << solverName;
-    yInfo() << LogPrefix
-            << "*** Use Xsens joint angles            :" << pImpl->useXsensJointsAngles;
-    yInfo() << LogPrefix
-            << "*** Use Directly base measurement    :" << pImpl->useDirectBaseMeasurement;
+    yInfo() << LogPrefix << "*** ===========================================";
+    yInfo() << LogPrefix << "*** Period                                    :" << pImpl->period;
+    yInfo() << LogPrefix << "*** Urdf file name                            :" << urdfFileName;
+    yInfo() << LogPrefix << "*** Accelerometer sensor measurements option  :" << pImpl->humanSensorData.accelerometerSensorMeasurementsOption;
+    yInfo() << LogPrefix << "*** Ik solver                                 :" << solverName;
+    yInfo() << LogPrefix << "*** Use Xsens joint angles                    :" << pImpl->useXsensJointsAngles;
+    yInfo() << LogPrefix << "*** Use Directly base measurement             :" << pImpl->useDirectBaseMeasurement;
     if (pImpl->ikSolver == SolverIK::pairwised || pImpl->ikSolver == SolverIK::global) {
         yInfo() << LogPrefix << "*** Allow IK failures                 :" << pImpl->allowIKFailures;
         yInfo() << LogPrefix << "*** Max IK iterations                 :" << pImpl->maxIterationsIK;
@@ -610,7 +630,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         yInfo() << LogPrefix << "*** Inverse Velocity Kinematics solver:"
                 << pImpl->inverseVelocityKinematicsSolver;
     }
-    yInfo() << LogPrefix << "*** ===================================";
+    yInfo() << LogPrefix << "*** ===========================================";
 
     // ==========================
     // INITIALIZE THE HUMAN MODEL
@@ -629,11 +649,11 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         return false;
     }
     yInfo() << LogPrefix << "----------------------------------------" << modelLoader.isValid();
-    yInfo() << LogPrefix << modelLoader.model().toString();
-    yInfo() << LogPrefix << modelLoader.model().getNrOfLinks()
-            << " , joints: " << modelLoader.model().getNrOfJoints();
+    //yInfo() << LogPrefix << modelLoader.model().toString();
+    yInfo() << LogPrefix << "Links : " << modelLoader.model().getNrOfLinks()
+            << " , Joints: " << modelLoader.model().getNrOfJoints();
 
-    yInfo() << LogPrefix << "base link: "
+    yInfo() << LogPrefix << "Base Link: "
             << modelLoader.model().getLinkName(modelLoader.model().getDefaultBaseLink());
 
     // ====================
@@ -652,6 +672,58 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         std::unique_ptr<iDynTree::KinDynComputations>(new iDynTree::KinDynComputations());
     pImpl->kinDynComputations->loadRobotModel(modelLoader.model());
     pImpl->kinDynComputations->setFloatingBase(pImpl->floatingBaseFrame.model);
+
+    // ================================
+    // INITIALIZE ACCELEROMETER SENSORS
+    // ================================
+
+    iDynTree::SensorsList humanSensors = modelLoader.sensors();
+
+    size_t nrOfAccelerometerSensors = humanSensors.getNrOfSensors(iDynTree::ACCELEROMETER);
+
+    pImpl->humanSensorData.accelerometerSensorNames.resize(nrOfAccelerometerSensors);
+    pImpl->humanSensorData.parentLink_H_accelerometerSensor.resize(nrOfAccelerometerSensors);
+    pImpl->humanSensorData.accelerometerSensorMeasurements.resize(nrOfAccelerometerSensors);
+
+    for (size_t i = 0; i < nrOfAccelerometerSensors; i++) {
+
+        // Get the sensor pointer
+        iDynTree::AccelerometerSensor *sensor = static_cast<iDynTree::AccelerometerSensor*>(humanSensors.getSensor(iDynTree::ACCELEROMETER, i));
+
+        if (!sensor->isValid() || !sensor->isConsistent(pImpl->humanModel)) {
+            yError() << LogPrefix << "Error in reading human sensor";
+            return false;
+        }
+
+        // Store the sensor name
+        pImpl->humanSensorData.accelerometerSensorNames.at(i) = sensor->getName();
+
+        // Store parentLink_H_accelerometerSensor transform
+        // NOTE: Considering the current status of HDEv2 where accelerometer location is constant with respect to its parent link in the urdf model,
+        // we can store this transform in the initialization. In case if there is a dynamic location of the sensor in the future, the transform has
+        // to be handled in the run method
+        pImpl->humanSensorData.parentLink_H_accelerometerSensor.at(i) = sensor->getLinkSensorTransform();
+
+        // Initialize zero default sensor measurements
+        pImpl->humanSensorData.accelerometerSensorMeasurements.at(i) = std::array<double, 3>{0.0, 0.0, 0.0};
+
+        if (pImpl->humanSensorData.accelerometerSensorMeasurementsOption == "gravity") {
+            // Update to gravity values if passed as a parameter
+            pImpl->humanSensorData.accelerometerSensorMeasurements.at(i) = std::array<double, 3>{pImpl->worldGravity(0), pImpl->worldGravity(1), pImpl->worldGravity(2)};
+        }
+
+        yInfo() << LogPrefix << "Accelerometer sensor name : " << pImpl->humanSensorData.accelerometerSensorNames.at(i);
+
+        yInfo() << LogPrefix << "parentLink_H_accelerometerSensor transform : " << pImpl->humanSensorData.parentLink_H_accelerometerSensor.at(i).toString().c_str();
+
+        yInfo() << LogPrefix << "Accelerometer measurements (" << i << ") : " << pImpl->humanSensorData.accelerometerSensorMeasurements.at(i)[0]
+                                                                              << " " << pImpl->humanSensorData.accelerometerSensorMeasurements.at(i)[1]
+                                                                              << " " << pImpl->humanSensorData.accelerometerSensorMeasurements.at(i)[2];
+
+    }
+
+    // Debug Info
+    yInfo() << LogPrefix << "Accelerometers size : " << pImpl->humanSensorData.accelerometerSensorNames.size();
 
     // =========================
     // INITIALIZE JOINTS BUFFERS
@@ -991,6 +1063,8 @@ void HumanStateProvider::run()
     CoM_velocity = {kindyncomputations->getCenterOfMassVelocity().getVal(0),
                     kindyncomputations->getCenterOfMassVelocity().getVal(1),
                     kindyncomputations->getCenterOfMassVelocity().getVal(2)};
+
+    // TODO: Compute proper acceleration
 
     // Expose IK solution for IHumanState
     {
