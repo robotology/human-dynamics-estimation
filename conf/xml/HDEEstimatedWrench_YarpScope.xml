@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<portscope rows="2" columns="2" carrier="mcast">
+
+    <!-- The color scheme for the graphs is similar to>
+    <matlab plots color order-->
+
+		<!--Left Foot Plots-->
+    <plot gridx="0"
+          gridy="0"
+          title="Left Foot Estimated Wrench"
+          size="60"
+          minval="-1500"
+          maxval="1500"
+          bgcolor="white">
+        <graph remote="/HDE/HumanEstimatedWrenchWrapper/wrench:o"
+               index="0"
+               color="#0173BC"
+               title="Fx"
+               type="lines" />
+	      <graph remote="/HDE/HumanEstimatedWrenchWrapper/wrench:o"
+               index="1"
+               color="#D95218"
+               title="Fy"
+               type="lines" />
+	      <graph remote="/HDE/HumanEstimatedWrenchWrapper/wrench:o"
+               index="2"
+               color="#EDB022"
+               title="Fz"
+               type="lines" />
+	      <graph remote="/HDE/HumanEstimatedWrenchWrapper/wrench:o"
+               index="3"
+               color="#7E2E8D"
+               title="Tx"
+               type="lines" />
+	      <graph remote="/HDE/HumanEstimatedWrenchWrapper/wrench:o"
+               index="4"
+               color="#78AC30"
+               title="Ty"
+               type="lines" />
+	      <graph remote="/HDE/HumanEstimatedWrenchWrapper/wrench:o"
+               index="5"
+               color="#4EBEEE"
+               title="Tz"
+               type="lines" />
+    </plot>
+
+		<!--Right Foot Plots-->
+    <plot gridx="1"
+          gridy="0"
+          title="Right Foot Estimated Wrench"
+          size="60"
+          minval="-1500"
+          maxval="1500"
+          bgcolor="white">
+        <graph remote="/HDE/HumanEstimatedWrenchWrapper/wrench:o"
+               index="6"
+               color="#0173BC"
+               title="Fx"
+               type="lines" />
+	      <graph remote="/HDE/HumanEstimatedWrenchWrapper/wrench:o"
+               index="7"
+               color="#D95218"
+               title="Fy"
+               type="lines" />
+	      <graph remote="/HDE/HumanEstimatedWrenchWrapper/wrench:o"
+               index="8"
+               color="#EDB022"
+               title="Fz"
+               type="lines" />
+	      <graph remote="/HDE/HumanEstimatedWrenchWrapper/wrench:o"
+               index="9"
+               color="#7E2E8D"
+               title="Tx"
+               type="lines" />
+	      <graph remote="/HDE/HumanEstimatedWrenchWrapper/wrench:o"
+               index="10"
+               color="#78AC30"
+               title="Ty"
+               type="lines" />
+	      <graph remote="/HDE/HumanEstimatedWrenchWrapper/wrench:o"
+               index="11"
+               color="#4EBEEE"
+               title="Tz"
+               type="lines" />
+    </plot>
+
+    <!--Left Hand Plots-->
+    <plot gridx="0"
+          gridy="1"
+          title="Left Hand Estimated Wrench"
+          size="60"
+          minval="-1500"
+          maxval="1500"
+          bgcolor="white">
+        <graph remote="/HDE/HumanEstimatedWrenchWrapper/wrench:o"
+               index="12"
+               color="#0173BC"
+               title="Fx"
+               type="lines" />
+	      <graph remote="/HDE/HumanEstimatedWrenchWrapper/wrench:o"
+               index="13"
+               color="#D95218"
+               title="Fy"
+               type="lines" />
+	      <graph remote="/HDE/HumanEstimatedWrenchWrapper/wrench:o"
+               index="14"
+               color="#EDB022"
+               title="Fz"
+               type="lines" />
+	      <graph remote="/HDE/HumanEstimatedWrenchWrapper/wrench:o"
+               index="15"
+               color="#7E2E8D"
+               title="Tx"
+               type="lines" />
+	      <graph remote="/HDE/HumanEstimatedWrenchWrapper/wrench:o"
+               index="16"
+               color="#78AC30"
+               title="Ty"
+               type="lines" />
+	      <graph remote="/HDE/HumanEstimatedWrenchWrapper/wrench:o"
+               index="17"
+               color="#4EBEEE"
+               title="Tz"
+               type="lines" />
+    </plot>
+
+    <!--Right Hand Plots-->
+    <plot gridx="1"
+          gridy="1"
+          title="Right Hand Estimated Wrench"
+          size="60"
+          minval="-1500"
+          maxval="1500"
+          bgcolor="white">
+        <graph remote="/HDE/HumanEstimatedWrenchWrapper/wrench:o"
+               index="18"
+               color="#0173BC"
+               title="Fx"
+               type="lines" />
+	      <graph remote="/HDE/HumanEstimatedWrenchWrapper/wrench:o"
+               index="19"
+               color="#D95218"
+               title="Fy"
+               type="lines" />
+	      <graph remote="/HDE/HumanEstimatedWrenchWrapper/wrench:o"
+               index="20"
+               color="#EDB022"
+               title="Fz"
+               type="lines" />
+	      <graph remote="/HDE/HumanEstimatedWrenchWrapper/wrench:o"
+               index="21"
+               color="#7E2E8D"
+               title="Tx"
+               type="lines" />
+	      <graph remote="/HDE/HumanEstimatedWrenchWrapper/wrench:o"
+               index="22"
+               color="#78AC30"
+               title="Ty"
+               type="lines" />
+	      <graph remote="/HDE/HumanEstimatedWrenchWrapper/wrench:o"
+               index="23"
+               color="#4EBEEE"
+               title="Tz"
+               type="lines" />
+    </plot>
+
+</portscope>

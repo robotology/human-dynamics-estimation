@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<portscope rows="1" columns="1" carrier="mcast">
+
+    <!-- The color scheme for the graphs is similar to>
+    <matlab plots color order-->
+
+    <plot gridx="0"
+          gridy="0"
+          title="Hand Estimated Wrench"
+          size="60"
+          minval="-1500"
+          maxval="1500"
+          bgcolor="white">
+        <graph remote="/HDE/HumanEstimatedWrenchWrapper/wrench:o"
+               index="12"
+               color="#0173BC"
+               title="Fx"
+               type="lines" />
+	      <graph remote="/HDE/HumanEstimatedWrenchWrapper/wrench:o"
+               index="13"
+               color="#D95218"
+               title="Fy"
+               type="lines" />
+	      <graph remote="/HDE/HumanEstimatedWrenchWrapper/wrench:o"
+               index="14"
+               color="#EDB022"
+               title="Fz"
+               type="lines" />
+	      <graph remote="/HDE/HumanEstimatedWrenchWrapper/wrench:o"
+               index="15"
+               color="#7E2E8D"
+               title="Tx"
+               type="lines" />
+	      <graph remote="/HDE/HumanEstimatedWrenchWrapper/wrench:o"
+               index="16"
+               color="#78AC30"
+               title="Ty"
+               type="lines" />
+	      <graph remote="/HDE/HumanEstimatedWrenchWrapper/wrench:o"
+               index="17"
+               color="#4EBEEE"
+               title="Tz"
+               type="lines" />
+    </plot>
+
+</portscope>
