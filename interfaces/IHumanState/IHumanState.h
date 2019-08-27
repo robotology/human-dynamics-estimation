@@ -38,6 +38,9 @@ public:
 
     virtual std::array<double, 3> getCoMPosition() const = 0;
     virtual std::array<double, 3> getCoMVelocity() const = 0;
+
+    virtual std::vector<std::string> getAccelerometerNames() const = 0;
+    virtual std::vector<std::array<double, 3>> getProperAccelerations() const = 0;
 };
 
 #endif // HDE_INTERFACES_IHUMANSTATE

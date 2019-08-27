@@ -2251,6 +2251,18 @@ std::array<double, 3> HumanStateProvider::getCoMVelocity() const
     return pImpl->solution.CoMVelocity;
 }
 
+std::vector<std::string> HumanStateProvider::getAccelerometerNames() const
+{
+    std::lock_guard<std::mutex> lock(pImpl->mutex);
+    return pImpl->humanSensorData.accelerometerSensorNames;
+}
+
+std::vector<std::array<double, 3>> HumanStateProvider::getProperAccelerations() const
+{
+    std::lock_guard<std::mutex> lock(pImpl->mutex);
+    return pImpl->humanSensorData.accelerometerSensorMeasurements;
+}
+
 // This method returns the all link pair names from the full human model
 static void createEndEffectorsPairs(
     const iDynTree::Model& model,
