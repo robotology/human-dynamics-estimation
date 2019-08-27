@@ -79,6 +79,25 @@
             <param name="map_LeftFoot">(LeftFoot, XsensSuit::vLink::LeftFoot)</param>
             <param name="map_LeftToe">(LeftToe, XsensSuit::vLink::LeftToe)</param>
         </group>
+        <group name="MODEL_TO_DATA_ACCELEROMETER_PARENT_LINK_NAMES">
+            <param name="map_Pelvis">(Pelvis, XsensSuit::fbAcc::Pelvis)</param>
+            <param name="map_T8">(T8, XsensSuit::fbAcc::T8)</param>
+            <param name="map_Head">(Head, XsensSuit::fbAcc::Head)</param>
+            <param name="map_RightShoulder">(RightShoulder, XsensSuit::fbAcc::RightShoulder)</param>
+            <param name="map_RightUpperArm">(RightUpperArm, XsensSuit::fbAcc::RightUpperArm)</param>
+            <param name="map_RightForeArm">(RightForeArm, XsensSuit::fbAcc::RightForeArm)</param>
+            <param name="map_RightHand">(RightHand, XsensSuit::fbAcc::RightHand)</param>
+            <param name="map_LeftShoulder">(LeftShoulder, XsensSuit::fbAcc::LeftShoulder)</param>
+            <param name="map_LeftUpperArm">(LeftUpperArm, XsensSuit::fbAcc::LeftUpperArm)</param>
+            <param name="map_LeftForeArm">(LeftForeArm, XsensSuit::fbAcc::LeftForeArm)</param>
+            <param name="map_LeftHand">(LeftHand, XsensSuit::fbAcc::LeftHand)</param>
+            <param name="map_RightUpperLeg">(RightUpperLeg, XsensSuit::fbAcc::RightUpperLeg)</param>
+            <param name="map_RightLowerLeg">(RightLowerLeg, XsensSuit::fbAcc::RightLowerLeg)</param>
+            <param name="map_RightFoot">(RightFoot, XsensSuit::fbAcc::RightFoot)</param>
+            <param name="map_LeftUpperLeg">(LeftUpperLeg, XsensSuit::fbAcc::LeftUpperLeg)</param>
+            <param name="map_LeftLowerLeg">(LeftLowerLeg, XsensSuit::fbAcc::LeftLowerLeg)</param>
+            <param name="map_LeftFoot">(LeftFoot, XsensSuit::fbAcc::LeftFoot)</param>
+        </group>
         <group name="MODEL_TO_DATA_JOINT_NAMES">
            <!-- TODO: this groups is here for configuring the data that might initialize the IK. -->
            <!--       However, the zeros and frames from Xsens might be different and we have to -->
