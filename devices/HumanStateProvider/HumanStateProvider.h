@@ -65,6 +65,9 @@ public:
     std::array<double, 6> getBaseVelocity() const override;
     std::array<double, 3> getCoMPosition() const override;
     std::array<double, 3> getCoMVelocity() const override;
+
+    std::vector<std::string> getAccelerometerNames() const override;
+    std::vector<std::array<double, 3>> getProperAccelerations() const override;
 };
 
 #endif // HDE_DEVICES_HUMANSTATEPROVIDER
