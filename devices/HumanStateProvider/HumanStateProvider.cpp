@@ -188,6 +188,7 @@ public:
     std::unordered_map<std::string, iDynTree::Vector3> linkErrorAngularVelocities;
 
     // Sensor variables
+    bool useFBAccelerationFromWearableData;
     HumanSensorData humanSensorData;
 
     // IK parameters
@@ -346,40 +347,75 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         }
     }
 
-    // Parse MODEL_TO_DATA_ACCELEROMETER_PARENT_LINK_NAMES
-    // TODO: This parsing can be improved by a single function for both links and accelerometers
-    yarp::os::Bottle& accelerometersGroup = config.findGroup("MODEL_TO_DATA_ACCELEROMETER_PARENT_LINK_NAMES");
-    if (accelerometersGroup.isNull()) {
-        yError() << LogPrefix << "Failed to find group MODEL_TO_DATA_ACCELEROMETER_PARENT_LINK_NAMES";
-        return false;
+    // Set gravity
+    pImpl->worldGravity.zero();
+    pImpl->worldGravity(2) = -9.81;
+
+    // Get accelerometer sensor measurements option parameters
+    // Default option set to "none" for zero measurement values
+    pImpl->humanSensorData.accelerometerSensorMeasurementsOption = config.check("accelerometerSensorMeasurementsOption",yarp::os::Value("none")).asString();
+
+
+    if (pImpl->humanSensorData.accelerometerSensorMeasurementsOption == "proper") {
+        yInfo() << LogPrefix << "Configuring accelerometers to user freebody accelerometer values from wearable input data";
+        pImpl->useFBAccelerationFromWearableData = true;
+    }
+    else {
+
+        yInfo() << LogPrefix << "Configuring accelerometers based on the given urdf model";
+        if (pImpl->humanSensorData.accelerometerSensorMeasurementsOption == "none") {
+            yInfo() << LogPrefix << "Using default values of Zeros for the angular acceleration";
+        }
+        else if (pImpl->humanSensorData.accelerometerSensorMeasurementsOption == "gravity") {
+            yInfo() << LogPrefix << "Using default values of ["<< pImpl->worldGravity.toString().c_str() << "] for the angular acceleration";
+        }
+
+
+        pImpl->useFBAccelerationFromWearableData = false;
     }
 
-    yInfo() << LogPrefix << "Accelerometers group size : " << accelerometersGroup.size();
-
-    for (size_t a = 1; a < accelerometersGroup.size(); ++a) {
-        if (!(accelerometersGroup.get(a).isList() && accelerometersGroup.get(a).asList()->size() == 2)) {
-            yError() << LogPrefix
-                     << "Childs of MODEL_TO_DATA_ACCELEROMETER_PARENT_LINK_NAMES must be lists of two elements";
+    // If proper acceleration from wearable data is needed, user has to pass MODEL_TO_DATA_ACCELEROMETER_PARENT_LINK_NAMES
+    // Parse MODEL_TO_DATA_ACCELEROMETER_PARENT_LINK_NAMES
+    // TODO: This parsing can be improved by a single function for both links and accelerometers
+    if (pImpl->useFBAccelerationFromWearableData) {
+        yarp::os::Bottle& accelerometersGroup = config.findGroup("MODEL_TO_DATA_ACCELEROMETER_PARENT_LINK_NAMES");
+        if (accelerometersGroup.isNull()) {
+            yError() << LogPrefix << "Failed to find group MODEL_TO_DATA_ACCELEROMETER_PARENT_LINK_NAMES";
             return false;
         }
-        yarp::os::Bottle* list = accelerometersGroup.get(a).asList();
-        std::string key = list->get(0).asString();
-        yarp::os::Bottle* listContent = list->get(1).asList();
 
-        if (!((listContent->size() == 2) && (listContent->get(0).isString())
-              && (listContent->get(1).isString()))) {
-            yError() << LogPrefix << "Accelerometer parent link list must have two strings";
-            return false;
+        for (size_t a = 1; a < accelerometersGroup.size(); ++a) {
+            if (!(accelerometersGroup.get(a).isList() && accelerometersGroup.get(a).asList()->size() == 2)) {
+                yError() << LogPrefix
+                         << "Childs of MODEL_TO_DATA_ACCELEROMETER_PARENT_LINK_NAMES must be lists of two elements";
+                return false;
+            }
+            yarp::os::Bottle* list = accelerometersGroup.get(a).asList();
+            std::string key = list->get(0).asString();
+            yarp::os::Bottle* listContent = list->get(1).asList();
+
+            if (!((listContent->size() == 2) && (listContent->get(0).isString())
+                  && (listContent->get(1).isString()))) {
+                yError() << LogPrefix << "Accelerometer parent link list must have two strings";
+                return false;
+            }
+        }
+
+        // Parse accelerometersGroup parameters
+        for (size_t a = 1; a < accelerometersGroup.size(); ++a) {
+            yarp::os::Bottle* listContent = accelerometersGroup.get(a).asList()->get(1).asList();
+
+            std::string modelParentLinkName = listContent->get(0).asString();
+            std::string wearableParentLinkName =listContent->get(1).asString();
+
+            yInfo() << LogPrefix << "Read accelerometer parent link map: " << modelParentLinkName << "==>" << wearableParentLinkName;
+            pImpl->wearableStorage.modelToWearable_AccelerometerParentLinkName[modelParentLinkName] = wearableParentLinkName;
         }
     }
 
     // =======================================
     // PARSE THE GENERAL CONFIGURATION OPTIONS
     // =======================================
-
-    // Get accelerometer sensor measurements option parameters
-    // Default option set to "none" for zero measurement values
-    pImpl->humanSensorData.accelerometerSensorMeasurementsOption = config.check("accelerometerSensorMeasurementsOption",yarp::os::Value("none")).asString();
 
     std::string solverName = config.find("ikSolver").asString();
     if (solverName == "global")
@@ -413,16 +449,6 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         pImpl->wearableStorage.modelToWearable_LinkName[modelLinkName] = wearableLinkName;
     }
 
-    // Parse accelerometersGroup parameters
-    for (size_t a = 1; a < accelerometersGroup.size(); ++a) {
-        yarp::os::Bottle* listContent = accelerometersGroup.get(a).asList()->get(1).asList();
-
-        std::string modelParentLinkName = listContent->get(0).asString();
-        std::string wearableParentLinkName =listContent->get(1).asString();
-
-        yInfo() << LogPrefix << "Read accelerometer parent link map: " << modelParentLinkName << "==>" << wearableParentLinkName;
-        pImpl->wearableStorage.modelToWearable_AccelerometerParentLinkName[modelParentLinkName] = wearableParentLinkName;
-    }
 
     // ==========================================
     // PARSE THE DEPENDENDT CONFIGURATION OPTIONS
@@ -708,10 +734,6 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     // Get the model from the loader
     pImpl->humanModel = modelLoader.model();
 
-    // Set gravity
-    pImpl->worldGravity.zero();
-    pImpl->worldGravity(2) = -9.81;
-
     // Initialize kinDyn computation
     pImpl->kinDynComputations =
         std::unique_ptr<iDynTree::KinDynComputations>(new iDynTree::KinDynComputations());
@@ -724,6 +746,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
 
     pImpl->humanSensors = modelLoader.sensors();
 
+    // Initialize human accelerometer sensor buffers from model data
     size_t nrOfAccelerometerSensors = pImpl->humanSensors.getNrOfSensors(iDynTree::ACCELEROMETER);
 
     pImpl->humanSensorData.accelerometerSensorNames.resize(nrOfAccelerometerSensors);
@@ -1062,11 +1085,13 @@ void HumanStateProvider::run()
         }
     }
 
-    // Get freebody acceleration from input wearable data
-    if (!pImpl->getfbAccelerationFromInputData(pImpl->fbAccelerationMatrices)) {
-        yError() << LogPrefix << "Failed to get freebody accelerometer values from input wearable data";
-        askToStop();
-        return;
+    if (pImpl->useFBAccelerationFromWearableData) {
+        // Get freebody acceleration from input wearable data
+        if (!pImpl->getfbAccelerationFromInputData(pImpl->fbAccelerationMatrices)) {
+            yError() << LogPrefix << "Failed to get freebody accelerometer values from input wearable data";
+            askToStop();
+            return;
+        }
     }
 
     // Solve Inverse Kinematics and Inverse Velocity Problems
@@ -1117,6 +1142,9 @@ void HumanStateProvider::run()
                     kindyncomputations->getCenterOfMassVelocity().getVal(2)};
 
     // TODO: Compute proper acceleration
+    if (pImpl->useFBAccelerationFromWearableData) {
+
+    }
 
     // Expose IK solution for IHumanState
     {
@@ -2187,39 +2215,44 @@ bool HumanStateProvider::attach(yarp::dev::PolyDriver* poly)
     // CHECK ACCELEROMETERS
     // ====================
 
-    // Check that the attached IWear interface contains all the accelerometer sensors
-    for (size_t accelerometerIndex = 0; accelerometerIndex < pImpl->humanSensors.getNrOfSensors(iDynTree::ACCELEROMETER); accelerometerIndex++) {
+    if (pImpl->useFBAccelerationFromWearableData) {
 
-        // Get sensor
-        iDynTree::AccelerometerSensor *accelerometerSenor = static_cast<iDynTree::AccelerometerSensor*>(pImpl->humanSensors.getSensor(iDynTree::ACCELEROMETER, accelerometerIndex));
+        yDebug() << "Checking fbAccelerometer sensors from the attached iwear interface";
 
-        // Get model accelerometer sensor parent link name
-        std::string accelerometerModelParentLinkName = accelerometerSenor->getParentLink();
+        // Check that the attached IWear interface contains all the accelerometer sensors
+        for (size_t accelerometerIndex = 0; accelerometerIndex < pImpl->humanSensors.getNrOfSensors(iDynTree::ACCELEROMETER); accelerometerIndex++) {
 
-        if (pImpl->wearableStorage.modelToWearable_AccelerometerParentLinkName.find(accelerometerModelParentLinkName)
-            == pImpl->wearableStorage.modelToWearable_AccelerometerParentLinkName.end()) {
-            yWarning() << LogPrefix << "Failed to find" << accelerometerModelParentLinkName
-                       << "entry in the AccelerometerParentLinkName map. Skipping this link.";
-            continue;
+            // Get sensor
+            iDynTree::AccelerometerSensor *accelerometerSenor = static_cast<iDynTree::AccelerometerSensor*>(pImpl->humanSensors.getSensor(iDynTree::ACCELEROMETER, accelerometerIndex));
+
+            // Get model accelerometer sensor parent link name
+            std::string accelerometerModelParentLinkName = accelerometerSenor->getParentLink();
+
+            if (pImpl->wearableStorage.modelToWearable_AccelerometerParentLinkName.find(accelerometerModelParentLinkName)
+                == pImpl->wearableStorage.modelToWearable_AccelerometerParentLinkName.end()) {
+                yWarning() << LogPrefix << "Failed to find" << accelerometerModelParentLinkName
+                           << "entry in the AccelerometerParentLinkName map. Skipping this link.";
+                continue;
+            }
+
+            // Get the name of the sensor associated to the link
+            std::string accelerometerWearableParentLinkName =
+                pImpl->wearableStorage.modelToWearable_AccelerometerParentLinkName.at(accelerometerModelParentLinkName);
+
+            // Try to get the sensor
+            auto sensor = pImpl->iWear->getFreeBodyAccelerationSensor(accelerometerWearableParentLinkName);
+            if (!sensor) {
+                // yError() << LogPrefix << "Failed to find sensor associated to link" <<
+                // accelerometerWearableParentLinkName
+                //<< "from the IWear interface";
+                return false;
+            }
+
+            // Create a sensor map entry using the wearable sensor name as key
+            pImpl->wearableStorage.accelerometerSensorsMap[accelerometerWearableParentLinkName] =
+                    pImpl->iWear->getFreeBodyAccelerationSensor(accelerometerWearableParentLinkName);
+
         }
-
-        // Get the name of the sensor associated to the link
-        std::string accelerometerWearableParentLinkName =
-            pImpl->wearableStorage.modelToWearable_AccelerometerParentLinkName.at(accelerometerModelParentLinkName);
-
-        // Try to get the sensor
-        auto sensor = pImpl->iWear->getFreeBodyAccelerationSensor(accelerometerWearableParentLinkName);
-        if (!sensor) {
-            // yError() << LogPrefix << "Failed to find sensor associated to link" <<
-            // accelerometerWearableParentLinkName
-            //<< "from the IWear interface";
-            return false;
-        }
-
-        // Create a sensor map entry using the wearable sensor name as key
-        pImpl->wearableStorage.accelerometerSensorsMap[accelerometerWearableParentLinkName] =
-                pImpl->iWear->getFreeBodyAccelerationSensor(accelerometerWearableParentLinkName);
-
     }
 
 
