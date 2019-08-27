@@ -28,7 +28,7 @@
         <group name="output-stream-configuration">
             <param name="enable-joint-data">true</param>
             <param name="enable-link-data">true</param>
-            <param name="enable-sensor-data">false</param>
+            <param name="enable-sensor-data">true</param>
         </group>
         <!-- Subject=specific body dimensions -->
         <group name="body-dimensions">
