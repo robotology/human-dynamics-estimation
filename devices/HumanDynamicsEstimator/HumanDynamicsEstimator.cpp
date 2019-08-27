@@ -38,6 +38,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <algorithm>
 
 const std::string DeviceName = "HumanDynamicsEstimator";
 const std::string LogPrefix = DeviceName + " :";
@@ -1090,6 +1091,18 @@ void HumanDynamicsEstimator::run()
     std::array<double, 4> baseOrientation = pImpl->iHumanState->getBaseOrientation();
     std::array<double, 6> baseVelocity    = pImpl->iHumanState->getBaseVelocity();
 
+    std::vector<std::string> accelerometerSensorNames = pImpl->iHumanState->getAccelerometerNames();
+    std::vector<std::array<double, 3>> properAccelerations = pImpl->iHumanState->getProperAccelerations();
+
+    yInfo() << LogPrefix << "accelerometerSensorNames size : " << accelerometerSensorNames.size();
+    for (size_t i=0; i < accelerometerSensorNames.size(); i++) {
+        yInfo() << accelerometerSensorNames.at(i);
+    }
+    yInfo() << LogPrefix << "properAccelerations size : " << properAccelerations.size();
+    for (size_t i=0; i < properAccelerations.size(); i++) {
+        yInfo() << properAccelerations.at(i)[0] << " " << properAccelerations.at(i)[1] << " " << properAccelerations.at(i)[2];
+    }
+
     // Set base angular velocity
     pImpl->berdyData.state.baseAngularVelocity.setVal(0, baseVelocity.at(3));
     pImpl->berdyData.state.baseAngularVelocity.setVal(1, baseVelocity.at(4));
@@ -1133,11 +1146,44 @@ void HumanDynamicsEstimator::run()
             {
                 case iDynTree::ACCELEROMETER_SENSOR:
                 {
-                    // Filling y vector with zero values for ACCELEROMETER sensors
-                    // TODO: Fill the correct data
-                    for (int i = 0; i < 3; i++)
-                    {
-                        pImpl->berdyData.buffers.measurements(found->second.offset + i) = 0;
+                    // Double check the sensor names from the model and the IHumanState interface
+                    yInfo() << LogPrefix << "sensorParentLinkName : " << sensor.id;
+
+                    std::vector<std::string>::iterator itr = std::find(accelerometerSensorNames.begin(),
+                                                                       accelerometerSensorNames.end(),
+                                                                       sensor.id);
+
+                    yInfo() << LogPrefix << "*itr : "  << accelerometerSensorNames.at(std::distance(accelerometerSensorNames.begin(), itr));
+
+                    // Find if the parent link name is present in the names from IHumanState interface
+                    if (itr != accelerometerSensorNames.end()) {
+
+                        // Get the proper acceleration from IHumanState interface
+                        std::array<double, 3> properAcceleration = properAccelerations.at(std::distance(accelerometerSensorNames.begin(), itr));
+
+                        // Set proper acceleration measurements
+                        pImpl->berdyData.buffers.measurements(found->second.offset + 0) = properAcceleration[0];
+                        pImpl->berdyData.buffers.measurements(found->second.offset + 1) = properAcceleration[1];
+                        pImpl->berdyData.buffers.measurements(found->second.offset + 2) = properAcceleration[2];
+
+                        yInfo() << LogPrefix << "Accelerometer sensor parent link : " << *itr;
+                        yInfo() << LogPrefix << " Proper acceleration :" << pImpl->berdyData.buffers.measurements.getVal(found->second.offset + 0)
+                                                                         << " " << pImpl->berdyData.buffers.measurements.getVal(found->second.offset + 1)
+                                                                         << " " << pImpl->berdyData.buffers.measurements.getVal(found->second.offset + 2);
+
+                    }
+                    else {
+
+                        yWarning() << LogPrefix << "Could not find accelerometer" << sensor.id
+                                   << "in the accelerometerSensorNames obtained from IHumanState interface. Ignoring it "
+                                      "Double check if the same models are used in HumanStateProvider and HumanDynamicsEstimator";
+
+                        // Set zero default values for ignored sensors
+                        for (int i = 0; i < 3; i++)
+                        {
+                            pImpl->berdyData.buffers.measurements(found->second.offset + i) = 0;
+                        }
+
                     }
                 }
                 break;
