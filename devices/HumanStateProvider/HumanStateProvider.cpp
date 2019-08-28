@@ -938,15 +938,17 @@ void HumanStateProvider::run()
                 continue;
             }
 
-            iDynTree::Transform base_H_parentLink = kindyncomputations->getRelativeTransform(pImpl->humanModel.getFrameIndex(accelerometerParentLinkName),
-                                                                                             pImpl->humanModel.getFrameIndex(pImpl->floatingBaseFrame.model));
+            iDynTree::Transform base_H_sensor = kindyncomputations->getRelativeTransform(pImpl->humanModel.getFrameIndex(pImpl->humanSensorData.accelerometerSensorNames.at(accelerometerCount)),
+                                                                                         pImpl->humanModel.getFrameIndex(pImpl->floatingBaseFrame.model));
 
             iDynTree::Transform world_H_accelerometer = pImpl->baseTransformSolution *
-                                                        base_H_parentLink *
-                                                        pImpl->humanSensorData.parentLink_H_accelerometerSensor.at(accelerometerCount);
+                                                        base_H_sensor;
 
             // Get accelerometer fbAcceleration value stored in the buffer
             iDynTree::LinAcceleration fbAcceleration = pImpl->fbAccelerationMatrices.at(accelerometerParentLinkName);
+
+            yInfo() << "====================Accelerometer name : " << pImpl->humanSensorData.accelerometerSensorNames.at(accelerometerCount) << "=================";
+            yInfo() << "Free body acceleration : " << fbAcceleration.toString().c_str();
 
             // Compute corrected acceleration
             iDynTree::SpatialAcc correctedAcceleration;
@@ -961,7 +963,7 @@ void HumanStateProvider::run()
                 // Set the linear part to corrected acceleartion
                 correctedAcceleration.setVal(0, fbAcceleration.getVal(0) - pImpl->worldGravity(0));
                 correctedAcceleration.setVal(1, fbAcceleration.getVal(1) - pImpl->worldGravity(1));
-                correctedAcceleration.setVal(1, fbAcceleration.getVal(2) - pImpl->worldGravity(2));
+                correctedAcceleration.setVal(2, fbAcceleration.getVal(2) - pImpl->worldGravity(2));
             }
             else if (pImpl->humanSensorData.accelerometerSensorMeasurementsOption == "gravity") {
 
@@ -970,6 +972,21 @@ void HumanStateProvider::run()
                 correctedAcceleration.setVal(1,  - pImpl->worldGravity(1));
                 correctedAcceleration.setVal(2,  - pImpl->worldGravity(2));
             }
+
+            yInfo() << LogPrefix << "World_H_Base transform : ";
+            yInfo() << "Position : " << pImpl->baseTransformSolution.getPosition().toString().c_str();
+            yInfo() << "Rotation : " << pImpl->baseTransformSolution.getRotation().toString().c_str();
+
+            yInfo() << LogPrefix << "Base_H_Sensor transform : ";
+            yInfo() << "Position : " << base_H_sensor.getPosition().toString().c_str();
+            yInfo() << "Rotation : " << base_H_sensor.getRotation().toString().c_str();
+
+            yInfo() << LogPrefix << "World_H_Sensor transform : ";
+            yInfo() << "Position : " << world_H_accelerometer.getPosition().toString().c_str();
+            yInfo() << "Rotation : " << world_H_accelerometer.getRotation().toString().c_str();
+
+
+            yInfo() << "Corrected accceleration : " << correctedAcceleration.toString().c_str();
 
             // TODO: Double check this computation
             iDynTree::Rotation w_R_accelerometer = world_H_accelerometer.getRotation();
@@ -985,6 +1002,9 @@ void HumanStateProvider::run()
                                                                properAcceleration.getVal(2)};
 
                 pImpl->humanSensorData.accelerometerSensorMeasurements.at(accelerometerCount) = properLinAcceleration;
+
+                yInfo() << "Proper acceleraton : " << properAcceleration.toString().c_str();
+                yInfo() << "================================================================================================================";
 
                 // Increase accelerometer count
                 accelerometerCount++;

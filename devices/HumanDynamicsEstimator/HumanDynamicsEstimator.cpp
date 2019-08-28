@@ -218,6 +218,7 @@ struct BerdyData
     {
         iDynTree::JointDOFsDoubleArray jointTorqueEstimates;
         iDynTree::LinkNetExternalWrenches linkNetExternalWrenchEstimates;
+        iDynTree::LinkAccArray linkClassicalProperAccelerationEstimates; // This is also called sensor proper acceleration in Traversaro's PhD Thesis
     } estimates;    
 };
 
@@ -977,6 +978,9 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
     pImpl->berdyData.estimates.linkNetExternalWrenchEstimates = iDynTree::LinkWrenches(pImpl->berdyData.helper.model().getNrOfLinks());
     pImpl->berdyData.estimates.linkNetExternalWrenchEstimates.zero();
 
+    // Set the links classical proper acceleration estimates size
+    pImpl->berdyData.estimates.linkClassicalProperAccelerationEstimates = iDynTree::LinkAccArray(pImpl->berdyData.helper.model().getNrOfLinks());
+
     // Get the berdy sensors following its internal order
     std::vector<iDynTree::BerdySensor> berdySensors = pImpl->berdyData.helper.getSensorsOrdering();
 
@@ -1093,6 +1097,13 @@ void HumanDynamicsEstimator::run()
 
     std::vector<std::string> accelerometerSensorNames = pImpl->iHumanState->getAccelerometerNames();
     std::vector<std::array<double, 3>> properAccelerations = pImpl->iHumanState->getProperAccelerations();
+
+    for(size_t i = 0; i < accelerometerSensorNames.size(); i++) {
+        yInfo() << LogPrefix << "Accelerometer sensor : " << accelerometerSensorNames.at(i) <<
+                                " ; Proper accelearation : " << properAccelerations.at(i)[0]
+                                                             << " " << properAccelerations.at(i)[1]
+                                                             << " " << properAccelerations.at(i)[2];
+    }
 
     // Set base angular velocity
     pImpl->berdyData.state.baseAngularVelocity.setVal(0, baseVelocity.at(3));
@@ -1223,6 +1234,28 @@ void HumanDynamicsEstimator::run()
     // Extract the estimated dynamic variables
     iDynTree::VectorDynSize estimatedDynamicVariables(pImpl->berdyData.helper.getNrOfDynamicVariables());
     pImpl->berdyData.solver->getLastEstimate(estimatedDynamicVariables);
+
+    iDynTree::LinkProperAccArray properAccs;
+    iDynTree::LinkNetTotalWrenchesWithoutGravity netTotalWrenchesWithoutGrav;
+    iDynTree::LinkNetExternalWrenches netExtWrenches;
+    iDynTree::LinkInternalWrenches linkJointWrenches;
+    iDynTree::JointDOFsDoubleArray jointTorques;
+    iDynTree::JointDOFsDoubleArray jointAccs;
+
+    //Extract LINK_BODY_PROPER_CLASSICAL_ACCELERATION from dynamic variables
+    for (iDynTree::LinkIndex lnkIdx=0; lnkIdx < static_cast<iDynTree::LinkIndex>(pImpl->humanModel.getNrOfLinks()); lnkIdx++) {
+
+        iDynTree::IndexRange range = pImpl->berdyData.helper.getRangeLinkVariable(iDynTree::LINK_BODY_PROPER_CLASSICAL_ACCELERATION, lnkIdx);
+        iDynTree::LinAcceleration linAcc(estimatedDynamicVariables.data() + range.offset, 3);
+        iDynTree::AngAcceleration angAcc(estimatedDynamicVariables.data() + range.offset + 3, 3);
+        pImpl->berdyData.estimates.linkClassicalProperAccelerationEstimates(lnkIdx) = iDynTree::SpatialAcc(linAcc, angAcc);
+
+
+    }
+
+    yInfo() << LogPrefix << "================ Berdy classical acceleration estimates size is " << pImpl->berdyData.estimates.linkClassicalProperAccelerationEstimates.getNrOfLinks() << " ==============";
+    yInfo() << pImpl->berdyData.estimates.linkClassicalProperAccelerationEstimates.toString(pImpl->humanModel).c_str();
+
 
     // ===========================
     // EXPOSE DATA FOR IHUMANSTATE
