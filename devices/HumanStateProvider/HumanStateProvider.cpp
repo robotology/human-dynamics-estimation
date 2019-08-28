@@ -1183,17 +1183,15 @@ void HumanStateProvider::run()
             correctedAcceleration.setVal(4, 0.0);
             correctedAcceleration.setVal(5, 0.0);
 
-            yInfo() << LogPrefix << "FB Acceleration : " << fbAcceleration.toString().c_str();
-
             if (pImpl->humanSensorData.accelerometerSensorMeasurementsOption == "proper") {
-                yInfo() << LogPrefix << "Computing proper acceleartion";
+
                 // Set the linear part to corrected acceleartion
                 correctedAcceleration.setVal(0, fbAcceleration.getVal(0) - pImpl->worldGravity(0));
                 correctedAcceleration.setVal(1, fbAcceleration.getVal(1) - pImpl->worldGravity(1));
                 correctedAcceleration.setVal(1, fbAcceleration.getVal(2) - pImpl->worldGravity(2));
             }
             else if (pImpl->humanSensorData.accelerometerSensorMeasurementsOption == "gravity") {
-                yInfo() << LogPrefix << "Computing gravity acceleration";
+
                 // Set the linear part to corrected acceleartion*/
                 correctedAcceleration.setVal(0,  - pImpl->worldGravity(0));
                 correctedAcceleration.setVal(1,  - pImpl->worldGravity(1));
@@ -1203,8 +1201,6 @@ void HumanStateProvider::run()
             // TODO: Double check this computation
             iDynTree::Rotation w_R_accelerometer = world_H_accelerometer.getRotation();
             iDynTree::SpatialAcc properAcceleration = w_R_accelerometer.inverse() * correctedAcceleration;
-
-            yInfo() << LogPrefix << "Proper accelearation : " << properAcceleration.toString().c_str();
 
             // Expose proper angular acceleration for IHumanState interface
             {
@@ -2508,12 +2504,6 @@ std::vector<std::string> HumanStateProvider::getAccelerometerNames() const
 std::vector<std::array<double, 3>> HumanStateProvider::getProperAccelerations() const
 {
     std::lock_guard<std::mutex> lock(pImpl->mutex);
-
-    for (size_t i; i < pImpl->humanSensorData.accelerometerSensorMeasurements.size(); i++) {
-        std::array<double, 3> acc = pImpl->humanSensorData.accelerometerSensorMeasurements.at(i);
-        yInfo() << "Requested proper acceleration : " << acc[0] << " " << acc[1] << acc[2];
-    }
-
     return pImpl->humanSensorData.accelerometerSensorMeasurements;
 }
 

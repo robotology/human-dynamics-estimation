@@ -1148,17 +1148,10 @@ void HumanDynamicsEstimator::run()
                         // Get the proper acceleration from IHumanState interface
                         std::array<double, 3> properAcceleration = properAccelerations.at(std::distance(accelerometerSensorNames.begin(), itr));
 
-                        yInfo() << LogPrefix << "Received proper acceleration : " << std::distance(accelerometerSensorNames.begin(), itr);
-
                         // Set proper acceleration measurements
                         pImpl->berdyData.buffers.measurements(found->second.offset + 0) = properAcceleration[0];
                         pImpl->berdyData.buffers.measurements(found->second.offset + 1) = properAcceleration[1];
                         pImpl->berdyData.buffers.measurements(found->second.offset + 2) = properAcceleration[2];
-
-                        yInfo() << LogPrefix << "Accelerometer sensor parent link : " << *itr;
-                        yInfo() << LogPrefix << " Proper acceleration :" << pImpl->berdyData.buffers.measurements.getVal(found->second.offset + 0)
-                                                                         << " " << pImpl->berdyData.buffers.measurements.getVal(found->second.offset + 1)
-                                                                         << " " << pImpl->berdyData.buffers.measurements.getVal(found->second.offset + 2);
 
                     }
                     else {
