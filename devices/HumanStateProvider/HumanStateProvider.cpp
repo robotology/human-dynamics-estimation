@@ -764,6 +764,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         }
 
         // Store the sensor name
+        // The naming convention is assumed to be ParentLinkName_accelerometer e.g. LeftFoot_accelerometer
         pImpl->humanSensorData.accelerometerSensorNames.at(i) = sensor->getName();
 
         // Store parentLink_H_accelerometerSensor transform
@@ -1143,6 +1144,97 @@ void HumanStateProvider::run()
 
     // TODO: Compute proper acceleration
     if (pImpl->useFBAccelerationFromWearableData) {
+
+        // Update kinDyn computations based on IK solution
+        iDynTree::VectorDynSize solvedJointPositions(pImpl->solution.jointPositions.size());
+
+        for (size_t j = 0; j < pImpl->solution.jointPositions.size(); j++) {
+            solvedJointPositions.setVal(j, pImpl->solution.jointPositions.at(j));
+        }
+
+        iDynTree::VectorDynSize solvedJointVelocities(pImpl->solution.jointVelocities.size());
+
+        for (size_t j = 0; j < pImpl->solution.jointVelocities.size(); j++) {
+            solvedJointVelocities.setVal(j, pImpl->solution.jointVelocities.at(j));
+        }
+
+        pImpl->kinDynComputations->setRobotState(pImpl->baseTransformSolution,
+                                                 solvedJointPositions,
+                                                 pImpl->baseVelocitySolution,
+                                                 solvedJointVelocities,
+                                                 pImpl->worldGravity);
+
+        // Iterate over the stored model sensors
+        int accelerometerCount = 0;
+        for (auto& accSensorName : pImpl->humanSensorData.accelerometerSensorNames) {
+
+            // Extract the parent link name from the sensor name
+            std::size_t separatorLocation = accSensorName.find_last_of("_");
+
+            std::string accelerometerParentLinkName = accSensorName.substr(0, separatorLocation);
+
+            if (pImpl->fbAccelerationMatrices.find(accelerometerParentLinkName)
+                == pImpl->fbAccelerationMatrices.end()) {
+                yWarning() << LogPrefix << "Failed to find" << accelerometerParentLinkName
+                           << "entry in the fbAccelerationMatrices map. Skipping this link.";
+                continue;
+            }
+
+            iDynTree::Transform base_H_parentLink = kindyncomputations->getRelativeTransform(pImpl->humanModel.getFrameIndex(accelerometerParentLinkName),
+                                                                                             pImpl->humanModel.getFrameIndex(pImpl->floatingBaseFrame.model));
+
+            iDynTree::Transform world_H_accelerometer = pImpl->baseTransformSolution *
+                                                        base_H_parentLink *
+                                                        pImpl->humanSensorData.parentLink_H_accelerometerSensor.at(accelerometerCount);
+
+            // Increase accelerometer count
+            accelerometerCount++;
+
+            // Get accelerometer fbAcceleration value stored in the buffer
+            iDynTree::LinAcceleration fbAcceleration = pImpl->fbAccelerationMatrices.at(accelerometerParentLinkName);
+
+            // Compute corrected acceleration
+            iDynTree::SpatialAcc correctedAcceleration;
+
+            // Set the angular part to zero
+            correctedAcceleration.setVal(3, 0.0);
+            correctedAcceleration.setVal(4, 0.0);
+            correctedAcceleration.setVal(5, 0.0);
+
+            if (pImpl->humanSensorData.accelerometerSensorMeasurementsOption == "proper") {
+                // Set the linear part to corrected acceleartion
+                correctedAcceleration.setVal(0, fbAcceleration.getVal(0) - pImpl->worldGravity(0));
+                correctedAcceleration.setVal(1, fbAcceleration.getVal(1) - pImpl->worldGravity(1));
+                correctedAcceleration.setVal(2, fbAcceleration.getVal(2) - pImpl->worldGravity(2));
+            }
+            else if (pImpl->humanSensorData.accelerometerSensorMeasurementsOption == "gravity") {
+                // Set the linear part to just gravity term
+                correctedAcceleration.setVal(0,  - pImpl->worldGravity(0));
+                correctedAcceleration.setVal(1,  - pImpl->worldGravity(1));
+                correctedAcceleration.setVal(2,  - pImpl->worldGravity(2));
+            }
+
+            // TODO: Double check this computation
+            iDynTree::Rotation w_R_accelerometer = world_H_accelerometer.getRotation();
+            iDynTree::SpatialAcc properAcceleration = w_R_accelerometer.inverse() * correctedAcceleration;
+
+            // Expose proper angular acceleration for IHumanState interface
+            {
+
+                std::lock_guard<std::mutex> lock(pImpl->mutex);
+
+                for (size_t a = 0; a < pImpl->humanSensorData.accelerometerSensorNames.size(); a++) {
+
+                    std::array<double, 3> properLinAcceleration = {properAcceleration.getVal(0),
+                                                                   properAcceleration.getVal(1),
+                                                                   properAcceleration.getVal(2)};
+
+                    pImpl->humanSensorData.accelerometerSensorMeasurements.at(a) = properLinAcceleration;
+                }
+
+            }
+
+        }
 
     }
 
