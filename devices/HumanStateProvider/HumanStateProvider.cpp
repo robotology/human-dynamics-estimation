@@ -410,7 +410,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         yError() << LogPrefix << "ikSolver " << solverName << " not found";
         return false;
     }
-	
+
     yarp::os::Bottle* floatingBaseFrameList = config.find("floatingBaseFrame").asList();
     pImpl->useXsensJointsAngles = config.find("useXsensJointsAngles").asBool();
     const std::string urdfFileName = config.find("urdf").asString();
@@ -968,16 +968,16 @@ void HumanStateProvider::run()
             correctedAcceleration.setVal(5, 0.0);
 
             if (pImpl->humanSensorData.accelerometerSensorMeasurementsOption == "proper") {
-                // Set the angular part to corrected acceleartion
-                correctedAcceleration.setVal(3, fbAcceleration.getVal(0) - pImpl->worldGravity(0));
-                correctedAcceleration.setVal(4, fbAcceleration.getVal(1) - pImpl->worldGravity(1));
-                correctedAcceleration.setVal(5, fbAcceleration.getVal(2) - pImpl->worldGravity(2));
+                // Set the linear part to corrected acceleartion
+                correctedAcceleration.setVal(0, fbAcceleration.getVal(0) - pImpl->worldGravity(0));
+                correctedAcceleration.setVal(1, fbAcceleration.getVal(1) - pImpl->worldGravity(1));
+                correctedAcceleration.setVal(1, fbAcceleration.getVal(2) - pImpl->worldGravity(2));
             }
             else if (pImpl->humanSensorData.accelerometerSensorMeasurementsOption == "gravity") {
-                // Set the angular part to corrected acceleartion*/
-                correctedAcceleration.setVal(3,  - pImpl->worldGravity(0));
-                correctedAcceleration.setVal(4,  - pImpl->worldGravity(1));
-                correctedAcceleration.setVal(5,  - pImpl->worldGravity(2));
+                // Set the linear part to corrected acceleartion*/
+                correctedAcceleration.setVal(0,  - pImpl->worldGravity(0));
+                correctedAcceleration.setVal(1,  - pImpl->worldGravity(1));
+                correctedAcceleration.setVal(2,  - pImpl->worldGravity(2));
             }
 
             // TODO: Double check this computation
