@@ -1094,15 +1094,6 @@ void HumanDynamicsEstimator::run()
     std::vector<std::string> accelerometerSensorNames = pImpl->iHumanState->getAccelerometerNames();
     std::vector<std::array<double, 3>> properAccelerations = pImpl->iHumanState->getProperAccelerations();
 
-    yInfo() << LogPrefix << "accelerometerSensorNames size : " << accelerometerSensorNames.size();
-    for (size_t i=0; i < accelerometerSensorNames.size(); i++) {
-        yInfo() << accelerometerSensorNames.at(i);
-    }
-    yInfo() << LogPrefix << "properAccelerations size : " << properAccelerations.size();
-    for (size_t i=0; i < properAccelerations.size(); i++) {
-        yInfo() << properAccelerations.at(i)[0] << " " << properAccelerations.at(i)[1] << " " << properAccelerations.at(i)[2];
-    }
-
     // Set base angular velocity
     pImpl->berdyData.state.baseAngularVelocity.setVal(0, baseVelocity.at(3));
     pImpl->berdyData.state.baseAngularVelocity.setVal(1, baseVelocity.at(4));
@@ -1147,19 +1138,17 @@ void HumanDynamicsEstimator::run()
                 case iDynTree::ACCELEROMETER_SENSOR:
                 {
                     // Double check the sensor names from the model and the IHumanState interface
-                    yInfo() << LogPrefix << "sensorParentLinkName : " << sensor.id;
-
                     std::vector<std::string>::iterator itr = std::find(accelerometerSensorNames.begin(),
                                                                        accelerometerSensorNames.end(),
                                                                        sensor.id);
-
-                    yInfo() << LogPrefix << "*itr : "  << accelerometerSensorNames.at(std::distance(accelerometerSensorNames.begin(), itr));
 
                     // Find if the parent link name is present in the names from IHumanState interface
                     if (itr != accelerometerSensorNames.end()) {
 
                         // Get the proper acceleration from IHumanState interface
                         std::array<double, 3> properAcceleration = properAccelerations.at(std::distance(accelerometerSensorNames.begin(), itr));
+
+                        yInfo() << LogPrefix << "Received proper acceleration : " << std::distance(accelerometerSensorNames.begin(), itr);
 
                         // Set proper acceleration measurements
                         pImpl->berdyData.buffers.measurements(found->second.offset + 0) = properAcceleration[0];
