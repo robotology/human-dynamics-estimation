@@ -96,6 +96,26 @@
             <param name="map_LeftLowerLeg">(LeftLowerLeg, XsensSuit::fbAcc::LeftLowerLeg)</param>
             <param name="map_LeftFoot">(LeftFoot, XsensSuit::fbAcc::LeftFoot)</param>
         </group>
+        <!--TODO: fbAcc, orient data from wearable are related, so a single parameter set of the associated parent links can be used-->
+        <group name="MODEL_TO_DATA_ORIENTATION_PARENT_LINK_NAMES">
+            <param name="map_Pelvis">(Pelvis, XsensSuit::orient::Pelvis)</param>
+            <param name="map_T8">(T8, XsensSuit::orient::T8)</param>
+            <param name="map_Head">(Head, XsensSuit::orient::Head)</param>
+            <param name="map_RightShoulder">(RightShoulder, XsensSuit::orient::RightShoulder)</param>
+            <param name="map_RightUpperArm">(RightUpperArm, XsensSuit::orient::RightUpperArm)</param>
+            <param name="map_RightForeArm">(RightForeArm, XsensSuit::orient::RightForeArm)</param>
+            <param name="map_RightHand">(RightHand, XsensSuit::orient::RightHand)</param>
+            <param name="map_LeftShoulder">(LeftShoulder, XsensSuit::orient::LeftShoulder)</param>
+            <param name="map_LeftUpperArm">(LeftUpperArm, XsensSuit::orient::LeftUpperArm)</param>
+            <param name="map_LeftForeArm">(LeftForeArm, XsensSuit::orient::LeftForeArm)</param>
+            <param name="map_LeftHand">(LeftHand, XsensSuit::orient::LeftHand)</param>
+            <param name="map_RightUpperLeg">(RightUpperLeg, XsensSuit::orient::RightUpperLeg)</param>
+            <param name="map_RightLowerLeg">(RightLowerLeg, XsensSuit::orient::RightLowerLeg)</param>
+            <param name="map_RightFoot">(RightFoot, XsensSuit::orient::RightFoot)</param>
+            <param name="map_LeftUpperLeg">(LeftUpperLeg, XsensSuit::orient::LeftUpperLeg)</param>
+            <param name="map_LeftLowerLeg">(LeftLowerLeg, XsensSuit::orient::LeftLowerLeg)</param>
+            <param name="map_LeftFoot">(LeftFoot, XsensSuit::orient::LeftFoot)</param>
+        </group>
         <group name="MODEL_TO_DATA_JOINT_NAMES">
            <!-- TODO: this groups is here for configuring the data that might initialize the IK. -->
            <!--       However, the zeros and frames from Xsens might be different and we have to -->
@@ -215,8 +235,8 @@
         <param name="period">0.100</param>
         <param name="human_urdf">humanSubject01_66dof.urdf</param>
         <param name="pHRIScenario">false</param>
-        <param name="number_of_sources">4</param>
-        <param name="sources">(FTShoeLeft FTShoeRight DummyLeftHand DummyRightHand)</param>
+        <param name="number_of_sources">3</param>
+        <param name="sources">(FTShoeLeft FTShoeRight DummyLeftHand)</param>
         <group name="FTShoeLeft">
             <param name="sensorName">FTShoeLeftFTSensors</param>
             <param name="outputFrame">LeftFoot</param>
