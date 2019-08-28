@@ -20,8 +20,8 @@
         <param name="period">0.02</param>
         <param name="urdf">humanSubject01_66dof.urdf</param>
         <param name="floatingBaseFrame">(Pelvis, XsensSuit::vLink::Pelvis)</param>
-        <!--Use none for Zero values, gravity for -9.8, proper for proper sensor acceleration-->
-        <param name="accelerometerSensorMeasurementsOption">gravity</param>
+        <!--Use none for Zero values, gravity for compensating gravity acceleration, proper for proper sensor acceleration-->
+        <param name="accelerometerSensorMeasurementsOption">proper</param>
         <!-- ikSolver options: pairwised, global, integrationbased -->
         <param name="ikSolver">integrationbased</param>
         <param name="useXsensJointsAngles">false</param>
@@ -253,7 +253,7 @@
         <action phase="shutdown" level="5" type="detach" />
     </device>
 
-    <!--device type="analogServer" name="HumanWrenchWrapper">
+    <device type="analogServer" name="HumanWrenchWrapper">
         <param name="name">/HDE/HumanWrenchWrapper/wrench:o</param>
         <param name="period">10</param>
         <action phase="startup" level="5" type="attach">
@@ -262,23 +262,24 @@
             </paramlist>
         </action>
         <action phase="shutdown" level="5" type="detach" />
-    </device-->
+    </device>
 
     <!--Wrapper to publish WrenchStamped message to Rviz-->
     <device type="analogServer" name="HumanWrenchPublisher">
         <param name="name">/HDE/HumanWrenchPublisher/wrench:o</param>
         <param name="period">20</param>
-        <param name="channels">12</param>
+        <param name="channels">18</param>
         <paramlist name="ports">
             <elem name="FirstSetOfChannels">0 5 0 5</elem>
             <elem name="SecondSetOfChannels">6 11 0 5</elem>
+            <elem name="ThirdSetOfChannels">12 17 0 5</elem>
         </paramlist>
         <group name="ROS">
             <param name="useROS">true</param>
-            <param name="ROS_topicName">(/HDE/WrenchStamped/LeftFoot /HDE/WrenchStamped/RightFoot /HDE/WrenchStamped/LeftHand /HDE/WrenchStamped/RightHand)</param>
+            <param name="ROS_topicName">(/HDE/WrenchStamped/LeftFoot /HDE/WrenchStamped/RightFoot /HDE/WrenchStamped/LeftHand)</param>
             <param name="ROS_nodeName">/HDE/HumanWrenchPublisherNode</param>
             <param name="ROS_msgType">geometry_msgs/WrenchStamped</param>
-            <param name="frame_id">(Human/LeftFoot Human/RightFoot Human/LeftHand Human/RightHand)</param>
+            <param name="frame_id">(Human/LeftFoot Human/RightFoot Human/LeftHand)</param>
         </group>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
@@ -292,21 +293,22 @@
         <param name="period">0.100</param>
         <param name="urdf">humanSubject01_66dof.urdf</param>
         <param name="baseLink">Pelvis</param>
-        <param name="number_of_wrench_sensors">4</param>
-        <param name="wrench_sensors_link_name">(LeftFoot RightFoot LeftHand RightHand)</param>
+        <param name="number_of_wrench_sensors">3</param>
+        <param name="wrench_sensors_link_name">(LeftFoot RightFoot LeftHand)</param>
         <group name="PRIORS">
             <param name="mu_dyn_variables">0.0001</param>
             <param name="cov_dyn_variables">10000.0</param>
-            <param name="cov_dyn_constraints">0.0001</param>
+            <param name="cov_dyn_constraints">1e-12</param>
             <param name="cov_measurements_ACCELEROMETER_SENSOR">(0.0011 0.0011 0.0011)</param>
             <param name="cov_measurements_DOF_ACCELERATION_SENSOR">0.666e-5</param>
             <group name="cov_measurements_NET_EXT_WRENCH_SENSOR">
-                <param name="value">1e-6</param>
-                <param name="specific_elements">(LeftFoot RightFoot LeftHand RightHand)</param>
-                <param name="LeftFoot">(0.0589998348 0.0589998348 0.0359999712 0.002250000225 0.002250000225 0.56e-3)</param>
-                <param name="RightFoot">(0.0589998348 0.0589998348 0.0359999712 0.002250000225 0.002250000225 0.56e-3)</param>
-                <param name="LeftHand">(10000.0 10000.0 10000.0 10000.0 10000.0 10000.0)</param>
-                <param name="RightHand">(10000.0 10000.0 10000.0 10000.0 10000.0 10000.0)</param>
+                <param name="value">1e-12</param>
+                <param name="specific_elements">(LeftFoot RightFoot LeftHand)</param>
+                <!-- <param name="LeftFoot">(0.0589998348 0.0589998348 0.0359999712 0.002250000225 0.002250000225 0.56e-3)</param>
+                <param name="RightFoot">(0.0589998348 0.0589998348 0.0359999712 0.002250000225 0.002250000225 0.56e-3)</param> -->
+                <param name="LeftFoot">(1e-12 1e-12 1e-12 1e-12 1e-12 1e-12)</param>
+                <param name="RightFoot">(1e-12 1e-12 1e-12 1e-12 1e-12 1e-12)</param>
+                <param name="LeftHand">(1e-6 1e-6 1e-6 1e-6 1e-6 1e-6)</param>
             </group>
         </group>
         <group name="SENSORS_REMOVAL">
@@ -336,17 +338,18 @@
     <device type="analogServer" name="HumanEstimatedWrenchPublisher">
         <param name="name">/HDE/HumanEstimatedWrenchPublisher/wrench:o</param>
         <param name="period">20</param>
-        <param name="channels">12</param>
+        <param name="channels">18</param>
         <paramlist name="ports">
             <elem name="FirstSetOfChannels">0 5 0 5</elem>
             <elem name="SecondSetOfChannels">6 11 0 5</elem>
+            <elem name="ThirdSetOfChannels">12 17 0 5</elem>
         </paramlist>
         <group name="ROS">
             <param name="useROS">true</param>
-            <param name="ROS_topicName">(/HDE/EstimatedWrenchStamped/LeftFoot /HDE/EstimatedWrenchStamped/RightFoot /HDE/EstimatedWrenchStamped/LeftHand /HDE/EstimatedWrenchStamped/RightHand)</param>
+            <param name="ROS_topicName">(/HDE/EstimatedWrenchStamped/LeftFoot /HDE/EstimatedWrenchStamped/RightFoot /HDE/EstimatedWrenchStamped/LeftHand)</param>
             <param name="ROS_nodeName">/HDE/HumanEstimatedWrenchPublisherNode</param>
             <param name="ROS_msgType">geometry_msgs/WrenchStamped</param>
-            <param name="frame_id">(Human/LeftFoot Human/RightFoot Human/LeftHand Human/RightHand)</param>
+            <param name="frame_id">(Human/LeftFoot Human/RightFoot Human/LeftHand)</param>
         </group>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
