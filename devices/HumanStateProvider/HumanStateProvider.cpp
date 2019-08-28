@@ -360,16 +360,14 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         yInfo() << LogPrefix << "Configuring accelerometers to user freebody accelerometer values from wearable input data";
         pImpl->useFBAccelerationFromWearableData = true;
     }
+    else if ( pImpl->humanSensorData.accelerometerSensorMeasurementsOption == "gravity") {
+        yInfo() << LogPrefix << "Configuring accelerometers to use compensate only for gravity acceleration";
+        pImpl->useFBAccelerationFromWearableData = true;
+    }
     else {
 
         yInfo() << LogPrefix << "Configuring accelerometers based on the given urdf model";
-        if (pImpl->humanSensorData.accelerometerSensorMeasurementsOption == "none") {
-            yInfo() << LogPrefix << "Using default values of Zeros for the angular acceleration";
-        }
-        else if (pImpl->humanSensorData.accelerometerSensorMeasurementsOption == "gravity") {
-            yInfo() << LogPrefix << "Using default values of ["<< pImpl->worldGravity.toString().c_str() << "] for the angular acceleration";
-        }
-
+        yInfo() << LogPrefix << "Using default values of Zeros for the accelerometers";
 
         pImpl->useFBAccelerationFromWearableData = false;
     }
@@ -775,11 +773,6 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
 
         // Initialize zero default sensor measurements
         pImpl->humanSensorData.accelerometerSensorMeasurements.at(i) = std::array<double, 3>{0.0, 0.0, 0.0};
-
-        if (pImpl->humanSensorData.accelerometerSensorMeasurementsOption == "gravity") {
-            // Update to gravity values if passed as a parameter
-            pImpl->humanSensorData.accelerometerSensorMeasurements.at(i) = std::array<double, 3>{pImpl->worldGravity(0), pImpl->worldGravity(1), pImpl->worldGravity(2)};
-        }
 
         yInfo() << LogPrefix << "Accelerometer sensor name : " << pImpl->humanSensorData.accelerometerSensorNames.at(i);
 
@@ -1202,16 +1195,16 @@ void HumanStateProvider::run()
             correctedAcceleration.setVal(5, 0.0);
 
             if (pImpl->humanSensorData.accelerometerSensorMeasurementsOption == "proper") {
-                // Set the linear part to corrected acceleartion
-                correctedAcceleration.setVal(0, fbAcceleration.getVal(0) - pImpl->worldGravity(0));
-                correctedAcceleration.setVal(1, fbAcceleration.getVal(1) - pImpl->worldGravity(1));
-                correctedAcceleration.setVal(2, fbAcceleration.getVal(2) - pImpl->worldGravity(2));
+                // Set the angular part to corrected acceleartion
+                correctedAcceleration.setVal(3, fbAcceleration.getVal(0) - pImpl->worldGravity(0));
+                correctedAcceleration.setVal(4, fbAcceleration.getVal(1) - pImpl->worldGravity(1));
+                correctedAcceleration.setVal(5, fbAcceleration.getVal(2) - pImpl->worldGravity(2));
             }
             else if (pImpl->humanSensorData.accelerometerSensorMeasurementsOption == "gravity") {
-                // Set the linear part to just gravity term
-                correctedAcceleration.setVal(0,  - pImpl->worldGravity(0));
-                correctedAcceleration.setVal(1,  - pImpl->worldGravity(1));
-                correctedAcceleration.setVal(2,  - pImpl->worldGravity(2));
+                // Set the angular part to corrected acceleartion*/
+                correctedAcceleration.setVal(3,  - pImpl->worldGravity(0));
+                correctedAcceleration.setVal(4,  - pImpl->worldGravity(1));
+                correctedAcceleration.setVal(5,  - pImpl->worldGravity(2));
             }
 
             // TODO: Double check this computation
