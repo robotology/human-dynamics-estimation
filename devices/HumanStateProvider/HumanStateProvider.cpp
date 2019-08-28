@@ -774,14 +774,6 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         // Initialize zero default sensor measurements
         pImpl->humanSensorData.accelerometerSensorMeasurements.at(i) = std::array<double, 3>{0.0, 0.0, 0.0};
 
-        yInfo() << LogPrefix << "Accelerometer sensor name : " << pImpl->humanSensorData.accelerometerSensorNames.at(i);
-
-        yInfo() << LogPrefix << "parentLink_H_accelerometerSensor transform : " << pImpl->humanSensorData.parentLink_H_accelerometerSensor.at(i).toString().c_str();
-
-        yInfo() << LogPrefix << "Accelerometer measurements (" << i << ") : " << pImpl->humanSensorData.accelerometerSensorMeasurements.at(i)[0]
-                                                                              << " " << pImpl->humanSensorData.accelerometerSensorMeasurements.at(i)[1]
-                                                                              << " " << pImpl->humanSensorData.accelerometerSensorMeasurements.at(i)[2];
-
     }
 
     // Debug Info
@@ -1180,9 +1172,6 @@ void HumanStateProvider::run()
                                                         base_H_parentLink *
                                                         pImpl->humanSensorData.parentLink_H_accelerometerSensor.at(accelerometerCount);
 
-            // Increase accelerometer count
-            accelerometerCount++;
-
             // Get accelerometer fbAcceleration value stored in the buffer
             iDynTree::LinAcceleration fbAcceleration = pImpl->fbAccelerationMatrices.at(accelerometerParentLinkName);
 
@@ -1194,13 +1183,17 @@ void HumanStateProvider::run()
             correctedAcceleration.setVal(4, 0.0);
             correctedAcceleration.setVal(5, 0.0);
 
+            yInfo() << LogPrefix << "FB Acceleration : " << fbAcceleration.toString().c_str();
+
             if (pImpl->humanSensorData.accelerometerSensorMeasurementsOption == "proper") {
+                yInfo() << LogPrefix << "Computing proper acceleartion";
                 // Set the linear part to corrected acceleartion
                 correctedAcceleration.setVal(0, fbAcceleration.getVal(0) - pImpl->worldGravity(0));
                 correctedAcceleration.setVal(1, fbAcceleration.getVal(1) - pImpl->worldGravity(1));
                 correctedAcceleration.setVal(1, fbAcceleration.getVal(2) - pImpl->worldGravity(2));
             }
             else if (pImpl->humanSensorData.accelerometerSensorMeasurementsOption == "gravity") {
+                yInfo() << LogPrefix << "Computing gravity acceleration";
                 // Set the linear part to corrected acceleartion*/
                 correctedAcceleration.setVal(0,  - pImpl->worldGravity(0));
                 correctedAcceleration.setVal(1,  - pImpl->worldGravity(1));
@@ -1211,19 +1204,22 @@ void HumanStateProvider::run()
             iDynTree::Rotation w_R_accelerometer = world_H_accelerometer.getRotation();
             iDynTree::SpatialAcc properAcceleration = w_R_accelerometer.inverse() * correctedAcceleration;
 
+            yInfo() << LogPrefix << "Proper accelearation : " << properAcceleration.toString().c_str();
+
             // Expose proper angular acceleration for IHumanState interface
             {
 
                 std::lock_guard<std::mutex> lock(pImpl->mutex);
 
-                for (size_t a = 0; a < pImpl->humanSensorData.accelerometerSensorNames.size(); a++) {
+                std::array<double, 3> properLinAcceleration = {properAcceleration.getVal(0),
+                                                               properAcceleration.getVal(1),
+                                                               properAcceleration.getVal(2)};
 
-                    std::array<double, 3> properLinAcceleration = {properAcceleration.getVal(0),
-                                                                   properAcceleration.getVal(1),
-                                                                   properAcceleration.getVal(2)};
+                pImpl->humanSensorData.accelerometerSensorMeasurements.at(accelerometerCount) = properLinAcceleration;
 
-                    pImpl->humanSensorData.accelerometerSensorMeasurements.at(a) = properLinAcceleration;
-                }
+                // Increase accelerometer count
+                accelerometerCount++;
+
 
             }
 
@@ -2512,6 +2508,12 @@ std::vector<std::string> HumanStateProvider::getAccelerometerNames() const
 std::vector<std::array<double, 3>> HumanStateProvider::getProperAccelerations() const
 {
     std::lock_guard<std::mutex> lock(pImpl->mutex);
+
+    for (size_t i; i < pImpl->humanSensorData.accelerometerSensorMeasurements.size(); i++) {
+        std::array<double, 3> acc = pImpl->humanSensorData.accelerometerSensorMeasurements.at(i);
+        yInfo() << "Requested proper acceleration : " << acc[0] << " " << acc[1] << acc[2];
+    }
+
     return pImpl->humanSensorData.accelerometerSensorMeasurements;
 }
 
