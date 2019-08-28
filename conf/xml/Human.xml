@@ -297,18 +297,18 @@
         <param name="wrench_sensors_link_name">(LeftFoot RightFoot LeftHand)</param>
         <group name="PRIORS">
             <param name="mu_dyn_variables">0.0001</param>
-            <param name="cov_dyn_variables">10000.0</param>
-            <param name="cov_dyn_constraints">1e-12</param>
-            <param name="cov_measurements_ACCELEROMETER_SENSOR">(0.0011 0.0011 0.0011)</param>
+            <param name="cov_dyn_variables">1e4.0</param>
+            <param name="cov_dyn_constraints">1e-6</param>
+            <param name="cov_measurements_ACCELEROMETER_SENSOR">(1e-6 1e-6 1e-6)</param>
             <param name="cov_measurements_DOF_ACCELERATION_SENSOR">0.666e-5</param>
             <group name="cov_measurements_NET_EXT_WRENCH_SENSOR">
                 <param name="value">1e-12</param>
                 <param name="specific_elements">(LeftFoot RightFoot LeftHand)</param>
                 <!-- <param name="LeftFoot">(0.0589998348 0.0589998348 0.0359999712 0.002250000225 0.002250000225 0.56e-3)</param>
                 <param name="RightFoot">(0.0589998348 0.0589998348 0.0359999712 0.002250000225 0.002250000225 0.56e-3)</param> -->
-                <param name="LeftFoot">(1e-12 1e-12 1e-12 1e-12 1e-12 1e-12)</param>
-                <param name="RightFoot">(1e-12 1e-12 1e-12 1e-12 1e-12 1e-12)</param>
-                <param name="LeftHand">(1e-6 1e-6 1e-6 1e-6 1e-6 1e-6)</param>
+                <param name="LeftFoot">(1e-6 1e-6 1e-6 1e-6 1e-6 1e-6)</param>
+                <param name="RightFoot">(1e-6 1e-6 1e-6 1e-6 1e-6 1e-6)</param>
+                <param name="LeftHand">(1e-6 1e-6 1e-4 1e-6 1e-6 1e-6)</param>
             </group>
         </group>
         <group name="SENSORS_REMOVAL">
@@ -323,7 +323,7 @@
         <action phase="shutdown" level="5" type="detach"/>
     </device>
 
-    <!--device type="analogServer" name="HumanEstimatedWrenchWrapper">
+    <device type="analogServer" name="HumanEstimatedWrenchWrapper">
         <param name="name">/HDE/HumanEstimatedWrenchWrapper/wrench:o</param>
         <param name="period">10</param>
         <action phase="startup" level="5" type="attach">
@@ -332,7 +332,7 @@
             </paramlist>
         </action>
         <action phase="shutdown" level="5" type="detach" />
-    </device-->
+    </device>
 
     <!--Wrapper to publish EstimatedWrenchStamped message to Rviz-->
     <device type="analogServer" name="HumanEstimatedWrenchPublisher">
