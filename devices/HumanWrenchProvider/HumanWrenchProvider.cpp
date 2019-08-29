@@ -736,15 +736,21 @@ bool HumanWrenchProvider::attach(yarp::dev::PolyDriver* poly)
 
         // Get the ft wearable sensors containing the input measurements
         for (auto& ftSensorSourceData : pImpl->wrenchSources) {
-            auto sensor = pImpl->iWear->getForceTorque6DSensor(ftSensorSourceData.sensorName);
 
-            if (!sensor) {
-                yError() << LogPrefix << "Failed to get sensor" << ftSensorSourceData.sensorName
-                         << "from the attached IWear interface";
-                return false;
+            if (ftSensorSourceData.type != WrenchSourceType::Dummy) {
+
+                auto sensor = pImpl->iWear->getForceTorque6DSensor(ftSensorSourceData.sensorName);
+
+                if (!sensor) {
+                    yError() << LogPrefix << "Failed to get sensor" << ftSensorSourceData.sensorName
+                             << "from the attached IWear interface";
+                    return false;
+                }
+
+                ftSensorSourceData.ftWearableSensor = sensor;
+
             }
 
-            ftSensorSourceData.ftWearableSensor = sensor;
         }
 
         // Initialize the number of channels of the equivalent IAnalogSensor
