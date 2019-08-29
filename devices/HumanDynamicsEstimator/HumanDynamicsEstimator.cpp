@@ -1096,13 +1096,16 @@ void HumanDynamicsEstimator::run()
     std::array<double, 6> baseVelocity    = pImpl->iHumanState->getBaseVelocity();
 
     std::vector<std::string> accelerometerSensorNames = pImpl->iHumanState->getAccelerometerNames();
-    std::vector<std::array<double, 3>> properAccelerations = pImpl->iHumanState->getProperAccelerations();
+    std::vector<std::array<double, 6>> properAccelerations = pImpl->iHumanState->getProperAccelerations();
 
     for(size_t i = 0; i < accelerometerSensorNames.size(); i++) {
         yInfo() << LogPrefix << "Accelerometer sensor : " << accelerometerSensorNames.at(i) <<
                                 " ; Proper accelearation : " << properAccelerations.at(i)[0]
                                                              << " " << properAccelerations.at(i)[1]
-                                                             << " " << properAccelerations.at(i)[2];
+                                                             << " " << properAccelerations.at(i)[2]
+                                                             << " " << properAccelerations.at(i)[3]
+                                                             << " " << properAccelerations.at(i)[4]
+                                                             << " " << properAccelerations.at(i)[5];
     }
 
     // Set base angular velocity
@@ -1157,9 +1160,9 @@ void HumanDynamicsEstimator::run()
                     if (itr != accelerometerSensorNames.end()) {
 
                         // Get the proper acceleration from IHumanState interface
-                        std::array<double, 3> properAcceleration = properAccelerations.at(std::distance(accelerometerSensorNames.begin(), itr));
+                        std::array<double, 6> properAcceleration = properAccelerations.at(std::distance(accelerometerSensorNames.begin(), itr));
 
-                        // Set proper acceleration measurements
+                        // Set linear proper acceleration measurements
                         pImpl->berdyData.buffers.measurements(found->second.offset + 0) = properAcceleration[0];
                         pImpl->berdyData.buffers.measurements(found->second.offset + 1) = properAcceleration[1];
                         pImpl->berdyData.buffers.measurements(found->second.offset + 2) = properAcceleration[2];

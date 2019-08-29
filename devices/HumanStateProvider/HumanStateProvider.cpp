@@ -146,7 +146,7 @@ struct HumanSensorData
     // Accelerometers
     std::string accelerometerSensorMeasurementsOption;
     std::vector<std::string> accelerometerSensorNames;
-    std::vector<std::array<double, 3>> accelerometerSensorMeasurements;
+    std::vector<std::array<double, 6>> accelerometerSensorMeasurements;
 };
 
 class HumanStateProvider::impl
@@ -821,7 +821,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         pImpl->humanSensorData.accelerometerSensorNames.at(i) = sensor->getName();
 
         // Initialize zero default sensor measurements
-        pImpl->humanSensorData.accelerometerSensorMeasurements.at(i) = std::array<double, 3>{0.0, 0.0, 0.0};
+        pImpl->humanSensorData.accelerometerSensorMeasurements.at(i) = std::array<double, 6>{0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
     }
 
@@ -1027,11 +1027,6 @@ void HumanStateProvider::run()
             // Compute corrected acceleration
             iDynTree::SpatialAcc correctedAcceleration;
 
-            // Set the angular part to zero
-            correctedAcceleration.setVal(3, 0.0);
-            correctedAcceleration.setVal(4, 0.0);
-            correctedAcceleration.setVal(5, 0.0);
-
             if (pImpl->humanSensorData.accelerometerSensorMeasurementsOption == "proper") {
 
                 // Set the linear part to corrected acceleartion
@@ -1046,6 +1041,17 @@ void HumanStateProvider::run()
                 correctedAcceleration.setVal(1,  - pImpl->worldGravity(1));
                 correctedAcceleration.setVal(2,  - pImpl->worldGravity(2));
             }
+
+            yInfo() << LogPrefix << "Link accelerations : " << pImpl->linkAccelerations.at(accelerometerParentLinkName).toString().c_str();
+
+            // Set the angular part to link angular acceleration
+            iDynTree::AngAcceleration linkAngAcc = pImpl->linkAccelerations.at(accelerometerParentLinkName).getAngularVec3();
+
+            yInfo() << LogPrefix << "Link angular acceleration : " << linkAngAcc.toString().c_str();
+
+            correctedAcceleration.setVal(3, linkAngAcc.getVal(0));
+            correctedAcceleration.setVal(4, linkAngAcc.getVal(1));
+            correctedAcceleration.setVal(5, linkAngAcc.getVal(2));
 
             yInfo() << LogPrefix << "World_H_Base transform : ";
             yInfo() << "Position : " << pImpl->baseTransformSolution.getPosition().toString().c_str();
@@ -1076,11 +1082,14 @@ void HumanStateProvider::run()
 
                 std::lock_guard<std::mutex> lock(pImpl->mutex);
 
-                std::array<double, 3> properLinAcceleration = {properAcceleration.getVal(0),
-                                                               properAcceleration.getVal(1),
-                                                               properAcceleration.getVal(2)};
+                std::array<double, 6> properAcce = {properAcceleration.getVal(0),
+                                                    properAcceleration.getVal(1),
+                                                    properAcceleration.getVal(2),
+                                                    properAcceleration.getVal(3),
+                                                    properAcceleration.getVal(4),
+                                                    properAcceleration.getVal(5)};
 
-                pImpl->humanSensorData.accelerometerSensorMeasurements.at(accelerometerCount) = properLinAcceleration;
+                pImpl->humanSensorData.accelerometerSensorMeasurements.at(accelerometerCount) = properAcce;
 
                 yInfo() << "Proper acceleraton : " << properAcceleration.toString().c_str();
                 yInfo() << "================================================================================================================";
@@ -2455,10 +2464,44 @@ std::vector<std::string> HumanStateProvider::getAccelerometerNames() const
     return pImpl->humanSensorData.accelerometerSensorNames;
 }
 
-std::vector<std::array<double, 3>> HumanStateProvider::getProperAccelerations() const
+std::vector<std::array<double, 6>> HumanStateProvider::getProperAccelerations() const
 {
     std::lock_guard<std::mutex> lock(pImpl->mutex);
     return pImpl->humanSensorData.accelerometerSensorMeasurements;
+}
+
+std::vector<std::array<double, 3>> HumanStateProvider::getProperLinAccelerations() const
+{
+    std::lock_guard<std::mutex> lock(pImpl->mutex);
+
+    std::vector<std::array<double, 3>> properLinAccelerations;
+    properLinAccelerations.resize(pImpl->humanSensorData.accelerometerSensorMeasurements.size());
+
+    for (size_t a = 0; a < pImpl->humanSensorData.accelerometerSensorMeasurements.size(); a++) {
+
+        properLinAccelerations.at(a) = {pImpl->humanSensorData.accelerometerSensorMeasurements.at(a)[0],
+                                        pImpl->humanSensorData.accelerometerSensorMeasurements.at(a)[1],
+                                        pImpl->humanSensorData.accelerometerSensorMeasurements.at(a)[2]};
+    }
+
+    return properLinAccelerations;
+}
+
+std::vector<std::array<double, 3>> HumanStateProvider::getProperAngAccelerations() const
+{
+    std::lock_guard<std::mutex> lock(pImpl->mutex);
+
+    std::vector<std::array<double, 3>> properAngAccelerations;
+    properAngAccelerations.resize(pImpl->humanSensorData.accelerometerSensorMeasurements.size());
+
+    for (size_t a = 0; a < pImpl->humanSensorData.accelerometerSensorMeasurements.size(); a++) {
+
+        properAngAccelerations.at(a) = {pImpl->humanSensorData.accelerometerSensorMeasurements.at(a)[3],
+                                        pImpl->humanSensorData.accelerometerSensorMeasurements.at(a)[4],
+                                        pImpl->humanSensorData.accelerometerSensorMeasurements.at(a)[5]};
+    }
+
+    return properAngAccelerations;
 }
 
 // This method returns the all link pair names from the full human model
