@@ -321,6 +321,7 @@
             <param name="cov_dyn_variables">1e.0</param>
             <param name="cov_dyn_constraints">1e-2</param>
             <param name="cov_measurements_ACCELEROMETER_SENSOR">(1e-3 1e-3 1e-3)</param>
+            <param name="cov_measurements_THREE_AXIS_ANGULAR_ACCELEROMETER_SENSOR">(1e-3 1e-3 1e-3)</param>
             <param name="cov_measurements_DOF_ACCELERATION_SENSOR">0.666e-3</param>
             <group name="cov_measurements_NET_EXT_WRENCH_SENSOR">
                 <param name="value">1e-6</param>

@@ -28,6 +28,8 @@
 #include <iDynTree/ModelIO/ModelLoader.h>
 #include <iDynTree/Sensors/Sensors.h>
 #include <iDynTree/Sensors/ThreeAxisForceTorqueContactSensor.h>
+#include <iDynTree/Sensors/AccelerometerSensor.h>
+#include <iDynTree/Sensors/ThreeAxisAngularAccelerometerSensor.h>
 
 #include <yarp/os/LogStream.h>
 #include <yarp/os/ResourceFinder.h>
@@ -912,6 +914,42 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
     // Initialize the sensors
     iDynTree::SensorsList humanSensors = modelLoader.sensors();
 
+    // Add THREE_AXIS_ANGULAR_ACCELEROMETER_SENSOR sensors to the sensor list
+    for (size_t a = 0; a < humanSensors.getNrOfSensors(iDynTree::ACCELEROMETER); a++) {
+
+        // Initialize THREE_AXIS_ANGULAR_ACCELEROMETER_SENSOR
+        iDynTree::ThreeAxisAngularAccelerometerSensor angAccSensor;
+
+        // Get the accelerometer sensor pointer
+        iDynTree::AccelerometerSensor *linAccSensor = static_cast<iDynTree::AccelerometerSensor*>(humanSensors.getSensor(iDynTree::ACCELEROMETER, a));
+
+        if (!linAccSensor->isValid() || !linAccSensor->isConsistent(pImpl->humanModel)) {
+            yError() << LogPrefix << "Error in reading human sensor";
+            return false;
+        }
+
+        // Set the angular acceleration sensor name e.g. LeftFoot_accelerometer with accelerometer parent link name and add _angAccelerometer suffix
+        std::string angAccSensorName = linAccSensor->getParentLink() + "_angAccelerometer";
+
+        // Set angular accelerometer sensor name
+        angAccSensor.setName(angAccSensorName);
+
+        // Set angular accelerometer sensor properties same as the linear accelerometer
+        angAccSensor.setParentLink(linAccSensor->getParentLink());
+        angAccSensor.setParentLinkIndex(linAccSensor->getParentLinkIndex());
+        angAccSensor.setLinkSensorTransform(linAccSensor->getLinkSensorTransform());
+
+        // Add angular accelerometer to sensors list
+        int sensorIndex = humanSensors.addSensor(angAccSensor);
+        if ( sensorIndex == -1){
+            yError() << LogPrefix << "Error in adding angular accelerometer sensor " << angAccSensor.getName()
+                                  << " to the sensors list";
+            return false;
+
+        }
+
+    }
+
     // If any, remove the sensors from the SENSORS_REMOVAL option
     if (!parseSensorRemovalGroup(config.findGroup("SENSORS_REMOVAL"), humanSensors, pImpl->mapBerdySensorType)) {
         yError() << LogPrefix << "Failed to parse SENSORS_REMOVAL group";
@@ -1098,14 +1136,14 @@ void HumanDynamicsEstimator::run()
     std::vector<std::string> accelerometerSensorNames = pImpl->iHumanState->getAccelerometerNames();
     std::vector<std::array<double, 6>> properAccelerations = pImpl->iHumanState->getProperAccelerations();
 
+    yInfo() << LogPrefix << "================ Proper acceleration input to berdy measurement vector===============";
     for(size_t i = 0; i < accelerometerSensorNames.size(); i++) {
-        yInfo() << LogPrefix << "Accelerometer sensor : " << accelerometerSensorNames.at(i) <<
-                                " ; Proper accelearation : " << properAccelerations.at(i)[0]
-                                                             << " " << properAccelerations.at(i)[1]
-                                                             << " " << properAccelerations.at(i)[2]
-                                                             << " " << properAccelerations.at(i)[3]
-                                                             << " " << properAccelerations.at(i)[4]
-                                                             << " " << properAccelerations.at(i)[5];
+        yInfo() << LogPrefix << accelerometerSensorNames.at(i) << " " << properAccelerations.at(i)[0]
+                                                               << " " << properAccelerations.at(i)[1]
+                                                               << " " << properAccelerations.at(i)[2]
+                                                               << " " << properAccelerations.at(i)[3]
+                                                               << " " << properAccelerations.at(i)[4]
+                                                               << " " << properAccelerations.at(i)[5];
     }
 
     // Set base angular velocity
@@ -1140,6 +1178,7 @@ void HumanDynamicsEstimator::run()
 
     // Iterate over the sensors and add corresponding measurements
     for (const iDynTree::BerdySensor& sensor : berdySensors) {
+
         // Create the key
         SensorKey key = {sensor.type, sensor.id};
 
@@ -1149,6 +1188,48 @@ void HumanDynamicsEstimator::run()
             // Update sensor measurements vector y
             switch (sensor.type)
             {
+                case iDynTree::THREE_AXIS_ANGULAR_ACCELEROMETER_SENSOR:
+                {
+                    // Check for the ParentLinkName_accelerometer sensor name, as this is the name of the sensors in IHumanState interface
+                    std::size_t separatorLocation = sensor.id.find_last_of("_");
+
+                    // Double check the sensor names from the model and the IHumanState interface
+                    std::vector<std::string>::iterator itr = std::find(accelerometerSensorNames.begin(),
+                                                                       accelerometerSensorNames.end(),
+                                                                       sensor.id.substr(0, separatorLocation) + "_accelerometer");
+
+                    // Find if the parent link name is present in the names from IHumanState interface
+                    if (itr != accelerometerSensorNames.end()) {
+
+                        // Get the proper acceleration from IHumanState interface
+                        std::array<double, 6> properAcceleration = properAccelerations.at(std::distance(accelerometerSensorNames.begin(), itr));
+
+                        // Set linear proper acceleration measurements
+                        pImpl->berdyData.buffers.measurements(found->second.offset + 0) = properAcceleration[3];
+                        pImpl->berdyData.buffers.measurements(found->second.offset + 1) = properAcceleration[4];
+                        pImpl->berdyData.buffers.measurements(found->second.offset + 2) = properAcceleration[5];
+
+//                        yInfo() << LogPrefix << "Angular acceleration values : " << properAcceleration[3]
+//                                                                                 << " " << properAcceleration[4]
+//                                                                                 << " " << properAcceleration[5];
+
+                    }
+                    else {
+
+                        yWarning() << LogPrefix << "Could not find accelerometer" << sensor.id
+                                   << "in the accelerometerSensorNames obtained from IHumanState interface. Ignoring it "
+                                      "Double check if the same models are used in HumanStateProvider and HumanDynamicsEstimator";
+
+                        // Set zero default values for ignored sensors
+                        for (int i = 0; i < 3; i++)
+                        {
+                            pImpl->berdyData.buffers.measurements(found->second.offset + i) = 0;
+                        }
+
+                    }
+
+                }
+                break;
                 case iDynTree::ACCELEROMETER_SENSOR:
                 {
                     // Double check the sensor names from the model and the IHumanState interface

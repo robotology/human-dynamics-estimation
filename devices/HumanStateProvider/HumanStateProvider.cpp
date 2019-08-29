@@ -1021,8 +1021,8 @@ void HumanStateProvider::run()
             // Get accelerometer fbAcceleration value stored in the buffer
             iDynTree::LinAcceleration fbAcceleration = pImpl->fbAccelerationMatrices.at(accelerometerParentLinkName);
 
-            yInfo() << "====================Accelerometer name : " << pImpl->humanSensorData.accelerometerSensorNames.at(accelerometerCount) << "=================";
-            yInfo() << "Free body acceleration : " << fbAcceleration.toString().c_str();
+            //yInfo() << "====================Accelerometer name : " << pImpl->humanSensorData.accelerometerSensorNames.at(accelerometerCount) << "=================";
+            //yInfo() << "Free body acceleration : " << fbAcceleration.toString().c_str();
 
             // Compute corrected acceleration
             iDynTree::SpatialAcc correctedAcceleration;
@@ -1042,37 +1042,37 @@ void HumanStateProvider::run()
                 correctedAcceleration.setVal(2,  - pImpl->worldGravity(2));
             }
 
-            yInfo() << LogPrefix << "Link accelerations : " << pImpl->linkAccelerations.at(accelerometerParentLinkName).toString().c_str();
+            //yInfo() << LogPrefix << "Link accelerations : " << pImpl->linkAccelerations.at(accelerometerParentLinkName).toString().c_str();
 
             // Set the angular part to link angular acceleration
             iDynTree::AngAcceleration linkAngAcc = pImpl->linkAccelerations.at(accelerometerParentLinkName).getAngularVec3();
 
-            yInfo() << LogPrefix << "Link angular acceleration : " << linkAngAcc.toString().c_str();
+            //yInfo() << LogPrefix << "Link angular acceleration : " << linkAngAcc.toString().c_str();
 
             correctedAcceleration.setVal(3, linkAngAcc.getVal(0));
             correctedAcceleration.setVal(4, linkAngAcc.getVal(1));
             correctedAcceleration.setVal(5, linkAngAcc.getVal(2));
 
-            yInfo() << LogPrefix << "World_H_Base transform : ";
-            yInfo() << "Position : " << pImpl->baseTransformSolution.getPosition().toString().c_str();
-            yInfo() << "Rotation : " << pImpl->baseTransformSolution.getRotation().toString().c_str();
+//            yInfo() << LogPrefix << "World_H_Base transform : ";
+//            yInfo() << "Position : " << pImpl->baseTransformSolution.getPosition().toString().c_str();
+//            yInfo() << "Rotation : " << pImpl->baseTransformSolution.getRotation().toString().c_str();
 
-            yInfo() << LogPrefix << "Base_H_Sensor transform : ";
-            yInfo() << "Position : " << base_H_sensor.getPosition().toString().c_str();
-            yInfo() << "Rotation : " << base_H_sensor.getRotation().toString().c_str();
+//            yInfo() << LogPrefix << "Base_H_Sensor transform : ";
+//            yInfo() << "Position : " << base_H_sensor.getPosition().toString().c_str();
+//            yInfo() << "Rotation : " << base_H_sensor.getRotation().toString().c_str();
 
-            yInfo() << LogPrefix << "World_H_Sensor transform : ";
-            yInfo() << "Position : " << world_H_accelerometer.getPosition().toString().c_str();
-            yInfo() << "Rotation : " << world_H_accelerometer.getRotation().toString().c_str();
+//            yInfo() << LogPrefix << "World_H_Sensor transform : ";
+//            yInfo() << "Position : " << world_H_accelerometer.getPosition().toString().c_str();
+//            yInfo() << "Rotation : " << world_H_accelerometer.getRotation().toString().c_str();
 
 
-            yInfo() << "Corrected accceleration : " << correctedAcceleration.toString().c_str();
+//            yInfo() << "Corrected accceleration : " << correctedAcceleration.toString().c_str();
 
 //            // TODO: Double check this computation
 //            iDynTree::Rotation w_R_accelerometer = world_H_accelerometer.getRotation();
 //            iDynTree::SpatialAcc properAcceleration = w_R_accelerometer.inverse() * correctedAcceleration;
 
-            yInfo() << "Sensor orientaion : " << pImpl->sensorOrientationMatrices.at(accelerometerParentLinkName).toString().c_str();
+//            yInfo() << "Sensor orientaion : " << pImpl->sensorOrientationMatrices.at(accelerometerParentLinkName).toString().c_str();
 
             // Compute proper acceleration
             iDynTree::SpatialAcc properAcceleration = pImpl->sensorOrientationMatrices.at(accelerometerParentLinkName).inverse() * correctedAcceleration;
@@ -1091,8 +1091,8 @@ void HumanStateProvider::run()
 
                 pImpl->humanSensorData.accelerometerSensorMeasurements.at(accelerometerCount) = properAcce;
 
-                yInfo() << "Proper acceleraton : " << properAcceleration.toString().c_str();
-                yInfo() << "================================================================================================================";
+//                yInfo() << "Proper acceleraton : " << properAcceleration.toString().c_str();
+//                yInfo() << "================================================================================================================";
 
                 // Increase accelerometer count
                 accelerometerCount++;
@@ -2238,8 +2238,6 @@ bool HumanStateProvider::attach(yarp::dev::PolyDriver* poly)
         // Check that the attached IWear interface contains all the accelerometer sensors
         for (size_t accelerometerIndex = 0; accelerometerIndex < pImpl->humanSensors.getNrOfSensors(iDynTree::ACCELEROMETER); accelerometerIndex++) {
 
-            yDebug() << "Checking fbAccelerometer sensors from the attached iwear interface";
-
             // Get acceleration sensor
             iDynTree::AccelerometerSensor *accelerometerSenor = static_cast<iDynTree::AccelerometerSensor*>(pImpl->humanSensors.getSensor(iDynTree::ACCELEROMETER, accelerometerIndex));
 
@@ -2269,8 +2267,6 @@ bool HumanStateProvider::attach(yarp::dev::PolyDriver* poly)
             // Create acceleration sensor map entry using the wearable sensor name as key
             pImpl->wearableStorage.accelerometerSensorsMap[accelerometerWearableParentLinkName] =
                     pImpl->iWear->getFreeBodyAccelerationSensor(accelerometerWearableParentLinkName);
-
-            yInfo() << "Checking IOrientation sensors from the attached iwear interface";
 
             // Get the name of the orientation sensor associated to the link
             // NOTE: In the configuration a check has been put to ensure that the acceleration and orientation sensor parent link name from the configuration
