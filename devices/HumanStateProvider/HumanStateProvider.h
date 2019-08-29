@@ -67,7 +67,9 @@ public:
     std::array<double, 3> getCoMVelocity() const override;
 
     std::vector<std::string> getAccelerometerNames() const override;
-    std::vector<std::array<double, 3>> getProperAccelerations() const override;
+    std::vector<std::array<double, 3>> getProperLinAccelerations() const override;
+    std::vector<std::array<double, 3>> getProperAngAccelerations() const override;
+    std::vector<std::array<double, 6>> getProperAccelerations() const override;
 };
 
 #endif // HDE_DEVICES_HUMANSTATEPROVIDER
