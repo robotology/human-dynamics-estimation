@@ -65,6 +65,8 @@ public:
     std::array<double, 6> getBaseVelocity() const override;
     std::array<double, 3> getCoMPosition() const override;
     std::array<double, 3> getCoMVelocity() const override;
+    std::array<double, 3> getCoMBiasAcceleration() const override;
+    std::array<double, 3> getCoMProperAcceleration() const override;
 
     std::vector<std::string> getAccelerometerNames() const override;
     std::vector<std::array<double, 3>> getProperLinAccelerations() const override;

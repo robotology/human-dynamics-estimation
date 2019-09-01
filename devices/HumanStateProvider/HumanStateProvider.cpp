@@ -98,6 +98,7 @@ struct SolutionIK
 
     std::array<double, 3> CoMPosition;
     std::array<double, 3> CoMVelocity;
+    std::array<double, 3> CoMBiasAcceleration;
 
     void clear()
     {
@@ -196,6 +197,8 @@ public:
     // Sensor variables
     bool useFBAccelerationFromWearableData;
     HumanSensorData humanSensorData;
+
+    std::array<double, 3> CoMProperAcceleration;
 
     // IK parameters
     int ikPoolSize{1};
@@ -842,6 +845,9 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
 
     }
 
+    // Initialize CoM proper acceleration to zero
+    pImpl->CoMProperAcceleration = std::array<double, 3>{0.0, 0.0, 0.0};
+
     // Debug Info
     yInfo() << LogPrefix << "Accelerometers size : " << pImpl->humanSensorData.accelerometerSensorNames.size();
 
@@ -1201,7 +1207,13 @@ void HumanStateProvider::run()
                     kindyncomputations->getCenterOfMassVelocity().getVal(1),
                     kindyncomputations->getCenterOfMassVelocity().getVal(2)};
 
-    // TODO: Compute proper acceleration
+    // CoM acceleration
+    std::array<double, 3> CoM_biasacceleration;
+    CoM_biasacceleration = {kindyncomputations->getCenterOfMassBiasAcc().getVal(0),
+                            kindyncomputations->getCenterOfMassBiasAcc().getVal(1),
+                            kindyncomputations->getCenterOfMassBiasAcc().getVal(2)};
+
+    // Compute proper acceleration
     if (pImpl->useFBAccelerationFromWearableData) {
 
         // Update kinDyn computations based on IK solution
@@ -1263,7 +1275,7 @@ void HumanStateProvider::run()
             }
             else if (pImpl->humanSensorData.accelerometerSensorMeasurementsOption == "gravity") {
 
-                // Set the linear part to corrected acceleartion*/
+                // Set the linear part to corrected acceleartion
                 correctedAcceleration.setVal(0,  - pImpl->worldGravity(0));
                 correctedAcceleration.setVal(1,  - pImpl->worldGravity(1));
                 correctedAcceleration.setVal(2,  - pImpl->worldGravity(2));
@@ -1329,6 +1341,43 @@ void HumanStateProvider::run()
 
         }
 
+        // Compute CoM proper acceleration
+        iDynTree::SpatialAcc comSpatialAcc; // abuse of notation
+
+        if (pImpl->humanSensorData.accelerometerSensorMeasurementsOption == "proper") {
+
+            // Set the linear part of com spatial acceleartion
+            comSpatialAcc.setVal(0, CoM_biasacceleration[0] - pImpl->worldGravity(0));
+            comSpatialAcc.setVal(1, CoM_biasacceleration[1] - pImpl->worldGravity(1));
+            comSpatialAcc.setVal(2, CoM_biasacceleration[2] - pImpl->worldGravity(2));
+        }
+        else if (pImpl->humanSensorData.accelerometerSensorMeasurementsOption == "gravity") {
+
+            // Set the linear part of com spatial acceleartion
+            comSpatialAcc.setVal(0,  - pImpl->worldGravity(0));
+            comSpatialAcc.setVal(1,  - pImpl->worldGravity(1));
+            comSpatialAcc.setVal(2,  - pImpl->worldGravity(2));
+        }
+
+        // Set the angular part of com spatial acceleration to zero
+        comSpatialAcc.setVal(3, 0.0);
+        comSpatialAcc.setVal(4, 0.0);
+        comSpatialAcc.setVal(5, 0.0);
+
+        // Compute com proper acceleration
+        iDynTree::SpatialAcc comProperAcceleration = pImpl->baseTransformSolution.getRotation().inverse() * comSpatialAcc;
+
+        // Expose proper com acceleration for IHumanState interface
+        {
+
+            std::lock_guard<std::mutex> lock(pImpl->mutex);
+
+            pImpl->CoMProperAcceleration = {comProperAcceleration.getVal(0),
+                                            comProperAcceleration.getVal(1),
+                                            comProperAcceleration.getVal(2)};
+
+        }
+
     }
 
     // Expose IK solution for IHumanState
@@ -1360,6 +1409,9 @@ void HumanStateProvider::run()
         // CoM position and velocity
         pImpl->solution.CoMPosition = {CoM_position[0], CoM_position[1], CoM_position[2]};
         pImpl->solution.CoMVelocity = {CoM_velocity[0], CoM_velocity[1], CoM_velocity[2]};
+
+        // CoM bias acceleration
+        pImpl->solution.CoMBiasAcceleration = {CoM_biasacceleration[0], CoM_biasacceleration[1], CoM_biasacceleration[2]};
     }
 
     // compute the inverse kinematic errors (currently the result is unused, but it may be used for
@@ -2704,6 +2756,18 @@ std::array<double, 3> HumanStateProvider::getCoMVelocity() const
 {
     std::lock_guard<std::mutex> lock(pImpl->mutex);
     return pImpl->solution.CoMVelocity;
+}
+
+std::array<double, 3> HumanStateProvider::getCoMBiasAcceleration() const
+{
+    std::lock_guard<std::mutex> lock(pImpl->mutex);
+    return pImpl->solution.CoMBiasAcceleration;
+}
+
+std::array<double, 3> HumanStateProvider::getCoMProperAcceleration() const
+{
+    std::lock_guard<std::mutex> lock(pImpl->mutex);
+    return pImpl->CoMProperAcceleration;
 }
 
 std::vector<std::string> HumanStateProvider::getAccelerometerNames() const
