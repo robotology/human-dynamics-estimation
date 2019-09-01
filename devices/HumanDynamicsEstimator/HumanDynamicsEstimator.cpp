@@ -143,6 +143,7 @@ static bool getVectorWithFullCovarianceValues(const std::string& optionName,
         {"DOF_ACCELERATION_SENSOR", {iDynTree::BerdySensorTypes::DOF_ACCELERATION_SENSOR, 1}},
         {"DOF_TORQUE_SENSOR", {iDynTree::BerdySensorTypes::DOF_TORQUE_SENSOR, 1}},
         {"NET_EXT_WRENCH_SENSOR", {iDynTree::BerdySensorTypes::NET_EXT_WRENCH_SENSOR, 6}},
+        {"COM_ACCELEROMETER_SENSOR", {iDynTree::BerdySensorTypes::COM_ACCELEROMETER_SENSOR, 3}},
     };
 
     if (mapBerdySensorInfo.find(optionName) == mapBerdySensorInfo.end()) {
@@ -789,7 +790,8 @@ public:
         {iDynTree::BerdySensorTypes::DOF_ACCELERATION_SENSOR, "DOF_ACCELERATION_SENSOR"},
         {iDynTree::BerdySensorTypes::DOF_TORQUE_SENSOR, "DOF_TORQUE_SENSOR"},
         {iDynTree::BerdySensorTypes::NET_EXT_WRENCH_SENSOR, "NET_EXT_WRENCH_SENSOR"},
-        {iDynTree::BerdySensorTypes::JOINT_WRENCH_SENSOR, "JOINT_WRENCH_SENSOR"}};
+        {iDynTree::BerdySensorTypes::JOINT_WRENCH_SENSOR, "JOINT_WRENCH_SENSOR"},
+        {iDynTree::BerdySensorTypes::COM_ACCELEROMETER_SENSOR, "COM_ACCELEROMETER_SENSOR"}};
 
     // Berdy sensors map
     SensorMapIndex sensorMapIndex;
@@ -950,6 +952,30 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
 
     }
 
+//    // Get accelerometer attached to the base link
+//    unsigned int baseLinkAccSensorIndex;
+//    std::string baseLinkAccSensorName = pImpl->humanModel.getLinkName(pImpl->berdyData.state.floatingBaseFrameIndex) + "_accelerometer";
+//    humanSensors.getSensorIndex(iDynTree::ACCELEROMETER, baseLinkAccSensorName, baseLinkAccSensorIndex);
+
+//    iDynTree::AccelerometerSensor *baseAccSensor = static_cast<iDynTree::AccelerometerSensor*>(humanSensors.getSensor(iDynTree::ACCELEROMETER, baseLinkAccSensorIndex));
+
+//    // Add CoM accelerometer sensor
+//    iDynTree::BerdySensorTypes::COM_ACCELEROMETER_SENSOR;
+//    iDynTree::AccelerometerSensor CoMAccSensor;
+//    std::string CoMAccSensorName = pImpl->humanModel.getLinkName(pImpl->berdyData.state.floatingBaseFrameIndex) + "_comAccelerometer";
+//    CoMAccSensor.setName(CoMAccSensorName);
+
+//    CoMAccSensor.setParentLink(pImpl->humanModel.getLinkName(pImpl->berdyData.state.floatingBaseFrameIndex));
+//    CoMAccSensor.setParentLinkIndex(pImpl->berdyData.state.floatingBaseFrameIndex);
+//    CoMAccSensor.setLinkSensorTransform(baseAccSensor->getLinkSensorTransform());
+
+//    // Add CoM accelerometer to the sensors
+//    if (humanSensors.addSensor(CoMAccSensor) == -1) {
+//        yError() << LogPrefix << "Error in adding CoM angular accelerometer sensor " << CoMAccSensor.getName()
+//                              << " to the sensor list";
+//        return false;
+//    }
+
     // If any, remove the sensors from the SENSORS_REMOVAL option
     if (!parseSensorRemovalGroup(config.findGroup("SENSORS_REMOVAL"), humanSensors, pImpl->mapBerdySensorType)) {
         yError() << LogPrefix << "Failed to parse SENSORS_REMOVAL group";
@@ -965,6 +991,7 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
     berdyOptions.includeAllJointAccelerationsAsSensors = true;
     berdyOptions.includeAllJointTorquesAsSensors = false;
     berdyOptions.includeFixedBaseExternalWrench = false;
+    berdyOptions.includeCoMAccelerometerAsSensor = true;
 
     // Check berdy options
     if (!berdyOptions.checkConsistency()) {
@@ -977,6 +1004,8 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
         yError() << LogPrefix << "Failed to initialize BERDY";
         return false;
     }
+
+    yInfo() << LogPrefix << "Number of COM_ACCELEROMETER_SENSOR sensors : " << humanSensors.getNrOfSensors(static_cast<iDynTree::SensorType>(iDynTree::BerdySensorTypes::COM_ACCELEROMETER_SENSOR));
 
     // Initialize the BerdySolver
     pImpl->berdyData.solver = std::make_unique<iDynTree::BerdySparseMAPSolver>(pImpl->berdyData.helper);
@@ -1023,8 +1052,8 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
     std::vector<iDynTree::BerdySensor> berdySensors = pImpl->berdyData.helper.getSensorsOrdering();
 
     /* The total number of sensors are :
-     * 17 Accelerometers, 66 DOF Acceleration sensors and 67 NET EXT WRENCH sensors
-     * The total number of sensor measurements = (17x3) + (66x1) + (67x6) = 519
+     * 17 Linear Accelerometers, 17 Angular Acceleromters 66 DOF Acceleration sensors and 67 NET EXT WRENCH sensors
+     * The total number of sensor measurements = (17x3) + (17x3) + (66x1) + (67x6) = 519
      */
 
     // Create a map that describes where are the sensors measurements in the y vector
@@ -1136,15 +1165,17 @@ void HumanDynamicsEstimator::run()
     std::vector<std::string> accelerometerSensorNames = pImpl->iHumanState->getAccelerometerNames();
     std::vector<std::array<double, 6>> properAccelerations = pImpl->iHumanState->getProperAccelerations();
 
-    yInfo() << LogPrefix << "================ Proper acceleration input to berdy measurement vector===============";
-    for(size_t i = 0; i < accelerometerSensorNames.size(); i++) {
-        yInfo() << LogPrefix << accelerometerSensorNames.at(i) << " " << properAccelerations.at(i)[0]
-                                                               << " " << properAccelerations.at(i)[1]
-                                                               << " " << properAccelerations.at(i)[2]
-                                                               << " " << properAccelerations.at(i)[3]
-                                                               << " " << properAccelerations.at(i)[4]
-                                                               << " " << properAccelerations.at(i)[5];
-    }
+    std::array<double, 3> comProperAcceleration = pImpl->iHumanState->getCoMProperAcceleration();
+
+//    yInfo() << LogPrefix << "================ Proper acceleration input to berdy measurement vector===============";
+//    for(size_t i = 0; i < accelerometerSensorNames.size(); i++) {
+//        yInfo() << LogPrefix << accelerometerSensorNames.at(i) << " " << properAccelerations.at(i)[0]
+//                                                               << " " << properAccelerations.at(i)[1]
+//                                                               << " " << properAccelerations.at(i)[2]
+//                                                               << " " << properAccelerations.at(i)[3]
+//                                                               << " " << properAccelerations.at(i)[4]
+//                                                               << " " << properAccelerations.at(i)[5];
+//    }
 
     // Set base angular velocity
     pImpl->berdyData.state.baseAngularVelocity.setVal(0, baseVelocity.at(3));
@@ -1188,6 +1219,18 @@ void HumanDynamicsEstimator::run()
             // Update sensor measurements vector y
             switch (sensor.type)
             {
+                case iDynTree::COM_ACCELEROMETER_SENSOR:
+                {
+                    yInfo() << LogPrefix << "Inside COM_ACCELEROMETER_SENSOR at index " << found->second.offset;
+                    // Set com proper acceleration measurements
+                    pImpl->berdyData.buffers.measurements(found->second.offset + 0) = comProperAcceleration[0];
+                    pImpl->berdyData.buffers.measurements(found->second.offset + 1) = comProperAcceleration[1];
+                    pImpl->berdyData.buffers.measurements(found->second.offset + 2) = comProperAcceleration[2];
+
+                    yInfo() << LogPrefix << "=============COM Proper Acceleration==========";
+                    yInfo() << comProperAcceleration[0] << " " << comProperAcceleration[1] << " " << comProperAcceleration[2];
+                }
+                break;
                 case iDynTree::THREE_AXIS_ANGULAR_ACCELEROMETER_SENSOR:
                 {
                     // Check for the ParentLinkName_accelerometer sensor name, as this is the name of the sensors in IHumanState interface
@@ -1337,8 +1380,8 @@ void HumanDynamicsEstimator::run()
 
     }
 
-    yInfo() << LogPrefix << "================ Berdy classical acceleration estimates size is " << pImpl->berdyData.estimates.linkClassicalProperAccelerationEstimates.getNrOfLinks() << " ==============";
-    yInfo() << pImpl->berdyData.estimates.linkClassicalProperAccelerationEstimates.toString(pImpl->humanModel).c_str();
+    //yInfo() << LogPrefix << "================ Berdy classical acceleration estimates size is " << pImpl->berdyData.estimates.linkClassicalProperAccelerationEstimates.getNrOfLinks() << " ==============";
+    //yInfo() << pImpl->berdyData.estimates.linkClassicalProperAccelerationEstimates.toString(pImpl->humanModel).c_str();
 
 
     // ===========================
