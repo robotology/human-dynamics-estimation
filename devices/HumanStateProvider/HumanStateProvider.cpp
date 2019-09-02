@@ -1347,16 +1347,16 @@ void HumanStateProvider::run()
         if (pImpl->humanSensorData.accelerometerSensorMeasurementsOption == "proper") {
 
             // Set the linear part of com spatial acceleartion
-            comSpatialAcc.setVal(0, CoM_biasacceleration[0] - pImpl->worldGravity(0));
-            comSpatialAcc.setVal(1, CoM_biasacceleration[1] - pImpl->worldGravity(1));
-            comSpatialAcc.setVal(2, CoM_biasacceleration[2] - pImpl->worldGravity(2));
+            comSpatialAcc.setVal(0, pImpl->humanModel.getTotalMass() * (CoM_biasacceleration[0] - pImpl->worldGravity(0)));
+            comSpatialAcc.setVal(1, pImpl->humanModel.getTotalMass() * (CoM_biasacceleration[1] - pImpl->worldGravity(1)));
+            comSpatialAcc.setVal(2, pImpl->humanModel.getTotalMass() * (CoM_biasacceleration[2] - pImpl->worldGravity(2)));
         }
         else if (pImpl->humanSensorData.accelerometerSensorMeasurementsOption == "gravity") {
 
             // Set the linear part of com spatial acceleartion
-            comSpatialAcc.setVal(0,  - pImpl->worldGravity(0));
-            comSpatialAcc.setVal(1,  - pImpl->worldGravity(1));
-            comSpatialAcc.setVal(2,  - pImpl->worldGravity(2));
+            comSpatialAcc.setVal(0,  - pImpl->worldGravity(0) * pImpl->humanModel.getTotalMass());
+            comSpatialAcc.setVal(1,  - pImpl->worldGravity(1) * pImpl->humanModel.getTotalMass());
+            comSpatialAcc.setVal(2,  - pImpl->worldGravity(2) * pImpl->humanModel.getTotalMass());
         }
 
         // Set the angular part of com spatial acceleration to zero
@@ -1364,7 +1364,7 @@ void HumanStateProvider::run()
         comSpatialAcc.setVal(4, 0.0);
         comSpatialAcc.setVal(5, 0.0);
 
-        // Compute com proper acceleration
+        // Compute com proper acceleration and multiply with the total model mass
         iDynTree::SpatialAcc comProperAcceleration = pImpl->baseTransformSolution.getRotation().inverse() * comSpatialAcc;
 
         // Expose proper com acceleration for IHumanState interface
