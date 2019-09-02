@@ -2,9 +2,9 @@
 <robot name="Human2-HDE" build=0 portprefix="">
 
     <device type="iwear_remapper" name="XSenseIWearRemapper_2">
-        <param name="wearableDataPorts">(/XSensSuit_2/WearableData/data:o)</param>
+        <param name="wearableDataPorts">(/XSensSuit/WearableData_2/data:o)</param>
         <param name="useRPC">false</param>
-        <param name="wearableRPCPorts">(/XSensSuit_2/WearableData/metadataRpc:o)</param>
+        <param name="wearableRPCPorts">(/XSensSuit/WearableData_2/metadataRpc:o)</param>
         <param name="outputPortName">/HDE_2/XsensIWearRemapper/data:o</param>
     </device>
 
