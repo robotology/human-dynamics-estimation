@@ -331,7 +331,7 @@
                 <param name="RightFoot">(59e-4 59e-4 36e-4 2.25e-4 2.25e-4 0.56e-4)</param-->
 		<param name="LeftFoot">(1e-16 1e-16 1e-16 1e-16 1e-16 1e-16)</param>
                 <param name="RightFoot">(1e-16 1e-16 1e-16 1e-16 1e-16 1e-16)</param>
-                <param name="LeftHand">(1e6 1e6 1e6 1e-6 1e-6 1e-6)</param>
+                <param name="LeftHand">(1e-1 1e-1 1e-1 1e-6 1e-6 1e-6)</param>
                 <!--param name="RightHand">(1e2 1e2 1e2 1e-6 1e-6 1e-6)</param-->
             </group>
         </group>
