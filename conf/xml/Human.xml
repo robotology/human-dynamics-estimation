@@ -318,7 +318,7 @@
         <param name="wrench_sensors_link_name">(LeftFoot RightFoot LeftHand)</param>
         <group name="PRIORS">
             <param name="mu_dyn_variables">0.0001</param>
-            <param name="cov_dyn_variables">1e1</param>
+            <param name="cov_dyn_variables">1e6</param>
             <param name="cov_dyn_constraints">1e-6</param>
             <param name="cov_measurements_ACCELEROMETER_SENSOR">(1e-3 1e-3 1e-3)</param>
             <param name="cov_measurements_THREE_AXIS_ANGULAR_ACCELEROMETER_SENSOR">(1e-3 1e-3 1e-3)</param>
@@ -327,11 +327,11 @@
             <group name="cov_measurements_NET_EXT_WRENCH_SENSOR">
                 <param name="value">1e-6</param>
                 <param name="specific_elements">(LeftFoot RightFoot LeftHand)</param>
-                <param name="LeftFoot">(59e-4 59e-4 36e-4 2.25e-4 2.25e-4 0.56e-4)</param>
-                <param name="RightFoot">(59e-4 59e-4 36e-4 2.25e-4 2.25e-4 0.56e-4)</param>
-		<!--param name="LeftFoot">(1e-16 1e-16 1e-16 1e-16 1e-16 1e-16)</param>
-                <param name="RightFoot">(1e-16 1e-16 1e-16 1e-16 1e-16 1e-16)</param-->
-                <param name="LeftHand">(1e-6 1e-6 1e-6 1e-6 1e-6 1e-6)</param>
+                <!--param name="LeftFoot">(59e-4 59e-4 36e-4 2.25e-4 2.25e-4 0.56e-4)</param>
+                <param name="RightFoot">(59e-4 59e-4 36e-4 2.25e-4 2.25e-4 0.56e-4)</param-->
+		<param name="LeftFoot">(1e-16 1e-16 1e-16 1e-16 1e-16 1e-16)</param>
+                <param name="RightFoot">(1e-16 1e-16 1e-16 1e-16 1e-16 1e-16)</param>
+                <param name="LeftHand">(1e6 1e6 1e6 1e-6 1e-6 1e-6)</param>
                 <!--param name="RightHand">(1e2 1e2 1e2 1e-6 1e-6 1e-6)</param-->
             </group>
         </group>
