@@ -19,7 +19,7 @@
 
     <device type="human_state_provider" name="HumanStateProvider">
         <param name="period">0.02</param>
-        <param name="urdf">humanSubject03_66dof.urdf</param>
+        <param name="urdf">humanSubject02_48dof.urdf</param>
         <param name="floatingBaseFrame">(Pelvis, XsensSuit::vLink::Pelvis)</param>
         <!--Use none for Zero values, gravity for compensating gravity acceleration, proper for proper sensor acceleration-->
         <param name="accelerometerSensorMeasurementsOption">proper</param>
@@ -235,7 +235,7 @@
 
     <device type="human_wrench_provider" name="HumanWrenchProvider">
         <param name="period">0.100</param>
-        <param name="human_urdf">humanSubject03_66dof.urdf</param>
+        <param name="human_urdf">humanSubject02_48dof.urdf</param>
         <param name="pHRIScenario">false</param>
         <param name="number_of_sources">4</param>
         <param name="sources">(FTShoeLeft FTShoeRight DummyLeftHand DummyRightHand)</param>
@@ -314,7 +314,7 @@
 
     <device type="human_dynamics_estimator" name="HumanDynamicsEstimator">
         <param name="period">0.100</param>
-        <param name="urdf">humanSubject03_66dof.urdf</param>
+        <param name="urdf">humanSubject02_48dof.urdf</param>	
         <param name="baseLink">Pelvis</param>
         <param name="number_of_wrench_sensors">4</param>
         <param name="wrench_sensors_link_name">(LeftFoot RightFoot LeftHand RightHand)</param>
@@ -331,8 +331,8 @@
                 <param name="specific_elements">(LeftFoot RightFoot LeftHand RightHand)</param>
                 <param name="LeftFoot">(59e-4 59e-4 36e-4 2.25e-4 2.25e-4 0.56e-4)</param>
                 <param name="RightFoot">(59e-4 59e-4 36e-4 2.25e-4 2.25e-4 0.56e-4)</param>
-                <param name="LeftHand">(1e-6 1e-6 1e-4 1e-6 1e-6 1e-6)</param>
-                <param name="RightHand">(1e-6 1e-6 1e-4 1e-6 1e-6 1e-6)</param>
+                <param name="LeftHand">(1e2 1e2 1e2 1e-6 1e-6 1e-6)</param>
+                <param name="RightHand">(1e2 1e2 1e2 1e-6 1e-6 1e-6)</param>
             </group>
         </group>
         <group name="SENSORS_REMOVAL">
@@ -409,9 +409,9 @@
         <action phase="shutdown" level="4" type="detach"/>
     </device>
 
-    <device type="human_control_board" name="HumanControlBoard">
+    <!-- <device type="human_control_board" name="HumanControlBoard">
         <param name="period">0.100</param>
-        <param name="urdf">humanSubject03_66dof.urdf</param>
+        <param name="urdf">humanSubject02_48dof.urdf</param>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
                 <elem name="HumanControlBoardLabel1">HumanStateProvider</elem>
@@ -434,7 +434,7 @@
             </paramlist>
         </action>
         <action phase="shutdown" level="5" type="detach"/>
-    </device>
+    </device> -->
 
     <!--Uncomment the following code if you need to dump wearable data-->
     <!--device type="iwear_remapper" name="WearableData">
