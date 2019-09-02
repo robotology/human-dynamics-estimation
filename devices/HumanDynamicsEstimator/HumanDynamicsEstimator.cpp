@@ -30,6 +30,7 @@
 #include <iDynTree/Sensors/ThreeAxisForceTorqueContactSensor.h>
 #include <iDynTree/Sensors/AccelerometerSensor.h>
 #include <iDynTree/Sensors/ThreeAxisAngularAccelerometerSensor.h>
+#include <iDynTree/KinDynComputations.h>
 
 #include <yarp/os/LogStream.h>
 #include <yarp/os/ResourceFinder.h>
@@ -1400,6 +1401,50 @@ void HumanDynamicsEstimator::run()
         pImpl->berdyData.helper.extractLinkNetExternalWrenchesFromDynamicVariables(estimatedDynamicVariables,
                                                                                    pImpl->berdyData.estimates.linkNetExternalWrenchEstimates);
 
+        // Using kindyn to compute link
+        iDynTree::KinDynComputations kinDynComputations;
+        kinDynComputations.loadRobotModel(pImpl->humanModel);
+        kinDynComputations.setFloatingBase(pImpl->humanModel.getLinkName(pImpl->berdyData.state.floatingBaseFrameIndex));
+        iDynTree::Vector4 quat;
+        quat.setVal(0, baseOrientation[0]);
+        quat.setVal(1, baseOrientation[1]);
+        quat.setVal(2, baseOrientation[2]);
+        quat.setVal(3, baseOrientation[3]);
+
+        iDynTree::Rotation rot;
+        rot.fromQuaternion(quat);
+
+        iDynTree::Position pos;
+        pos.setVal(0, basePosition[0]);
+        pos.setVal(1, basePosition[1]);
+        pos.setVal(2, basePosition[2]);
+
+        iDynTree::Transform baseTransform;
+        baseTransform.setPosition(pos);
+        baseTransform.setRotation(rot);
+
+        iDynTree::VectorDynSize s, sdot;
+        s.resize(jointsPosition.size());
+        sdot.resize(jointsPosition.size());
+        for (size_t idx = 0; idx < jointsPosition.size(); idx++)
+        {
+            s.setVal(idx, jointsPosition[idx]);
+            sdot.setVal(idx, jointsVelocity[idx]);
+        }
+
+        // TODO clean this workaround
+        iDynTree::Vector3 gravity;
+        gravity.zero();
+        gravity(0) = pImpl->gravity(0);
+        gravity(1) = pImpl->gravity(1);
+        gravity(2) = pImpl->gravity(2);
+        kinDynComputations.setRobotState(baseTransform,
+                                         s,
+                                         iDynTree::Twist::Zero(),
+                                         sdot,
+                                         gravity);
+
+
         // Check to ensure all the links net external wrenches are extracted correctly
         if (!pImpl->berdyData.estimates.linkNetExternalWrenchEstimates.isConsistent(pImpl->humanModel))
         {
@@ -1414,8 +1459,15 @@ void HumanDynamicsEstimator::run()
         for (int i = 0; i < pImpl->wrenchSensorsLinkNames.size(); i++) {
 
             std::string linkName = pImpl->wrenchSensorsLinkNames.at(i);
-            iDynTree::Wrench linkNetExternalWrench = pImpl->berdyData.estimates.linkNetExternalWrenchEstimates(pImpl->humanModel.getLinkIndex(linkName));
 
+            // Get world_H_link transform
+            iDynTree::Transform world_H_link = kinDynComputations.getWorldTransform(linkName);   
+            world_H_link.setPosition(iDynTree::Position::Zero());
+            yInfo() << "----> link name " << linkName << " " << pImpl->berdyData.estimates.linkNetExternalWrenchEstimates(pImpl->humanModel.getLinkIndex(linkName)).toString();
+
+            iDynTree::Wrench linkNetExternalWrench = (world_H_link.inverse()) * pImpl->berdyData.estimates.linkNetExternalWrenchEstimates(pImpl->humanModel.getLinkIndex(linkName));
+
+            yInfo() << "----> link name " << linkName << " " << linkNetExternalWrench.toString();
             pImpl->linkNetExternalWrenchAnalogSensorData.measurements[6 * i + 0] = linkNetExternalWrench.getLinearVec3()(0);
             pImpl->linkNetExternalWrenchAnalogSensorData.measurements[6 * i + 1] = linkNetExternalWrench.getLinearVec3()(1);
             pImpl->linkNetExternalWrenchAnalogSensorData.measurements[6 * i + 2] = linkNetExternalWrench.getLinearVec3()(2);
