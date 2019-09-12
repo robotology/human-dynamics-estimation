@@ -349,12 +349,6 @@ bool IWearRemapper::close()
         stop();
     }
 
-    while(!pImpl->outputPortWearData.isClosed()) {
-        pImpl->terminationCall = true;
-        pImpl->outputPortWearData.interrupt();
-        pImpl->outputPortWearData.close();
-    }
-
     return true;
 }
 
@@ -378,9 +372,6 @@ const std::map<msg::SensorStatus, sensor::SensorStatus> MapSensorStatus = {
 void IWearRemapper::onRead(msg::WearableData& receivedWearData)
 {
     if (!pImpl->terminationCall) {
-
-        auto& wearableData = pImpl->outputPortWearData.prepare();
-        wearableData.producerName = WrapperName;
 
         for (auto& accelerometersMap : receivedWearData.accelerometers) {
             const auto& inputSensorName = accelerometersMap.first;
