@@ -75,8 +75,8 @@ IWearWrapper::IWearWrapper()
 
 IWearWrapper::~IWearWrapper()
 {
-    close();
     detachAll();
+    close();
 }
 
 // =======
@@ -582,8 +582,17 @@ bool IWearWrapper::attach(yarp::dev::PolyDriver* poly)
     return true;
 }
 
+void IWearWrapper::threadRelease()
+{
+
+}
+
 bool IWearWrapper::detach()
 {
+    while (isRunning()) {
+        stop();
+    }
+
     pImpl->iWear = nullptr;
     pImpl->iPreciselyTimed = nullptr;
     pImpl->wearableMetadata = {};
