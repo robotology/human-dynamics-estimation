@@ -156,7 +156,7 @@
         <param name="baseTFName">/Human_2/Pelvis</param>
         <param name="humanJointsTopic">/Human_2/joint_states</param>
         <param name="portprefix">second</param>
-        <param name="fixBasePosition">(0.0 0.0 1.1)</param>
+        <!--param name="fixBasePosition">(0.0 0.0 1.1)</param-->
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
                 <elem name="HumanStatePublisherLabel">HumanStateProvider_2</elem>

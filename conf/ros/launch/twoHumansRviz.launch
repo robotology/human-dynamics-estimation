@@ -24,7 +24,7 @@
         <arg name="gui" default="False" />
         <arg name="vel" default="True" />
         <arg name="eff" default="True"/>
-        <arg name="humanModel_2" default="$(find HDERviz)/urdfs/humanSubject01_66dof.urdf"/>
+        <arg name="humanModel_2" default="$(find HDERviz)/urdfs/humanSubject02_66dof.urdf"/>
 
         <param name="use_gui" value="$(arg gui)"/>
         <param name="robot_description" command="$(find xacro)/xacro.py $(arg humanModel_2)" />

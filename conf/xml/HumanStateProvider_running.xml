@@ -1,12 +1,19 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!DOCTYPE robot PUBLIC "-//YARP//DTD yarprobotinterface 3.0//EN" "http://www.yarp.it/DTD/yarprobotinterfaceV3.0.dtd">
-<robot name="Human-Retargeting" build=0 portprefix="">
+<robot name="Human-HDE" build=0 portprefix="">
+
+    <device type="transformServer" name="TransformServer">
+        <param name="transforms_lifetime">0.2</param>
+        <group name="ROS">
+            <param name="enable_ros_publisher">true</param>
+            <param name="enable_ros_subscriber">false</param>
+        </group>
+    </device>
 
     <device type="iwear_remapper" name="XSenseIWearRemapper">
         <param name="wearableDataPorts">(/XSensSuit/WearableData/data:o)</param>
         <param name="useRPC">false</param>
         <param name="wearableRPCPorts">(/XSensSuit/WearableData/metadataRpc:o)</param>
-        <param name="outputPortName">/Human/XsensIWearRemapper/data:o</param>
+        <param name="outputPortName">/HDE/XsensIWearRemapper/data:o</param>
     </device>
 
     <device type="human_state_provider" name="HumanStateProvider">
@@ -153,7 +160,7 @@
     <!-- Uncomment to stream the output of HumanStateProvider on a YARP port -->
     <!-- <device type="human_state_wrapper" name="HumanStateWrapper">
         <param name="period">0.02</param>
-        <param name="outputPort">/Human/HumanStateWrapper/state:o</param>
+        <param name="outputPort">/HDE/HumanStateWrapper/state:o</param>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
                 <elem name="HumanStateWrapperLabel">HumanStateProvider</elem>
@@ -166,8 +173,7 @@
         <param name="period">0.02</param>
         <param name="baseTFName">/Human/Pelvis</param>
         <param name="humanJointsTopic">/Human/joint_states</param>
-        <param name="basePositionOffset">(0.0 0.0 0.0)</param>
-	<!--param name="baseOrientationOffset">(0.7071068 0.0 0.0 0.7071068)</param-->
+	<param name="fixBasePosition">(0.0 0.0 1.1)</param>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
                 <elem name="HumanStatePublisherLabel">HumanStateProvider</elem>

@@ -132,7 +132,7 @@
         <param name="humanJointsTopic">/Atlas/joint_states</param>
 	<param name="portprefix">atlas</param>
 	<param name="basePositionOffset">(0.0 5.0 0.0)</param>
-	<param name="baseOrientationOffset">(0.7071068 0.0 0.0 0.7071068)</param>
+	<!--param name="baseOrientationOffset">(0.7071068 0.0 0.0 0.7071068)</param-->
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
                 <elem name="HumanStatePublisherLabel">RobotStateProvider</elem>
