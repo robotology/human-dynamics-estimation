@@ -1251,8 +1251,8 @@ void HumanStateProvider::run()
                 continue;
             }
 
-            iDynTree::Transform base_H_sensor = kindyncomputations->getRelativeTransform(pImpl->humanModel.getFrameIndex(pImpl->humanSensorData.accelerometerSensorNames.at(accelerometerCount)),
-                                                                                         pImpl->humanModel.getFrameIndex(pImpl->floatingBaseFrame.model));
+            iDynTree::Transform base_H_sensor = kindyncomputations->getRelativeTransform(pImpl->humanModel.getFrameIndex(pImpl->floatingBaseFrame.model),
+                                                                                         pImpl->humanModel.getFrameIndex(pImpl->humanSensorData.accelerometerSensorNames.at(accelerometerCount)));
 
             iDynTree::Transform world_H_accelerometer = pImpl->baseTransformSolution *
                                                         base_H_sensor;
