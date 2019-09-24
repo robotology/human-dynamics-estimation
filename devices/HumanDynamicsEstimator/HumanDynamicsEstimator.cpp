@@ -953,30 +953,6 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
 
     }
 
-//    // Get accelerometer attached to the base link
-//    unsigned int baseLinkAccSensorIndex;
-//    std::string baseLinkAccSensorName = pImpl->humanModel.getLinkName(pImpl->berdyData.state.floatingBaseFrameIndex) + "_accelerometer";
-//    humanSensors.getSensorIndex(iDynTree::ACCELEROMETER, baseLinkAccSensorName, baseLinkAccSensorIndex);
-
-//    iDynTree::AccelerometerSensor *baseAccSensor = static_cast<iDynTree::AccelerometerSensor*>(humanSensors.getSensor(iDynTree::ACCELEROMETER, baseLinkAccSensorIndex));
-
-//    // Add CoM accelerometer sensor
-//    iDynTree::BerdySensorTypes::COM_ACCELEROMETER_SENSOR;
-//    iDynTree::AccelerometerSensor CoMAccSensor;
-//    std::string CoMAccSensorName = pImpl->humanModel.getLinkName(pImpl->berdyData.state.floatingBaseFrameIndex) + "_comAccelerometer";
-//    CoMAccSensor.setName(CoMAccSensorName);
-
-//    CoMAccSensor.setParentLink(pImpl->humanModel.getLinkName(pImpl->berdyData.state.floatingBaseFrameIndex));
-//    CoMAccSensor.setParentLinkIndex(pImpl->berdyData.state.floatingBaseFrameIndex);
-//    CoMAccSensor.setLinkSensorTransform(baseAccSensor->getLinkSensorTransform());
-
-//    // Add CoM accelerometer to the sensors
-//    if (humanSensors.addSensor(CoMAccSensor) == -1) {
-//        yError() << LogPrefix << "Error in adding CoM angular accelerometer sensor " << CoMAccSensor.getName()
-//                              << " to the sensor list";
-//        return false;
-//    }
-
     // If any, remove the sensors from the SENSORS_REMOVAL option
     if (!parseSensorRemovalGroup(config.findGroup("SENSORS_REMOVAL"), humanSensors, pImpl->mapBerdySensorType)) {
         yError() << LogPrefix << "Failed to parse SENSORS_REMOVAL group";
@@ -993,6 +969,30 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
     berdyOptions.includeAllJointTorquesAsSensors = false;
     berdyOptions.includeFixedBaseExternalWrench = false;
     berdyOptions.includeCoMAccelerometerAsSensor = true;
+
+    // Get the comConstraintIncludeAllLinks option. The default value is true
+    bool comConstraintIncludeAllLinks = config.check("comConstraintIncludeAllLinks",yarp::os::Value(true)).asBool();
+
+    // Set the links to be considered for com acceleration constraint
+    // TODO: Check if initializing the default case in berdy init is a better approach. At the moment there is no back compatibility problem
+    // This is an berdy option that has to be initialized before calling berdy initialization
+    // If only the links that are having know measurements are to be considered, use the wrench sensor link names
+    if (berdyOptions.includeCoMAccelerometerAsSensor && !comConstraintIncludeAllLinks) {
+        berdyOptions.comConstraintLinkIndexVector.resize(pImpl->wrenchSensorsLinkNames.size());
+
+        for (size_t idx = 0; idx < pImpl->wrenchSensorsLinkNames.size(); idx++)
+        {
+            berdyOptions.comConstraintLinkIndexVector.at(idx) = modelLoader.model().getLinkIndex(pImpl->wrenchSensorsLinkNames.at(idx));
+        }
+    }
+    else if (berdyOptions.includeCoMAccelerometerAsSensor && comConstraintIncludeAllLinks) { // Include all the model links
+        berdyOptions.comConstraintLinkIndexVector.resize(modelLoader.model().getNrOfLinks());
+
+        for (size_t idx = 0; idx < modelLoader.model().getNrOfLinks(); idx++) {
+            berdyOptions.comConstraintLinkIndexVector.at(idx) = idx;
+        }
+    }
+
 
     // Check berdy options
     if (!berdyOptions.checkConsistency()) {

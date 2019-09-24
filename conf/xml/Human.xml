@@ -318,6 +318,7 @@
         <param name="baseLink">Pelvis</param>
         <param name="number_of_wrench_sensors">3</param>
         <param name="wrench_sensors_link_name">(LeftFoot RightFoot LeftHand)</param>
+        <param name="comConstraintIncludeAllLinks">false</param>
         <group name="PRIORS">
             <param name="mu_dyn_variables">0.0001</param>
             <param name="cov_dyn_variables">1e6</param>
