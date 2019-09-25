@@ -21,7 +21,7 @@
         <param name="urdf">humanSubject02_48dof.urdf</param>
         <param name="floatingBaseFrame">(Pelvis, XsensSuit::vLink::Pelvis)</param>
         <!--Use none for Zero values, gravity for compensating gravity acceleration, proper for proper sensor acceleration-->
-        <param name="accelerometerSensorMeasurementsOption">gravity</param>
+        <param name="accelerometerSensorMeasurementsOption">proper</param>
         <!-- ikSolver options: pairwised, global, integrationbased -->
         <param name="ikSolver">integrationbased</param>
         <param name="useXsensJointsAngles">false</param>
@@ -316,7 +316,7 @@
         <param name="baseLink">Pelvis</param>
         <param name="number_of_wrench_sensors">3</param>
         <param name="wrench_sensors_link_name">(LeftFoot RightFoot LeftHand)</param>
-        <param name="comConstraintIncludeAllLinks">false</param>
+        <!--param name="comConstraintIncludeAllLinks">true</param-->
         <group name="PRIORS">
             <param name="mu_dyn_variables">0.0001</param>
             <param name="cov_dyn_variables">1e6</param>
