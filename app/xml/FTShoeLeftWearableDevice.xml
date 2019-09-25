@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<robot name="ftshoesleft_ianalogsensor_to_iwear" build=0 portprefix="">
+<robot name="ftshoeleft_ianalogsensor_to_iwear" build=0 portprefix="">
 
 <!-- First level devices section - force-torque-sensors -->
 <device type="canBusAnalogSensor" name="ftShoe_Left_Front">

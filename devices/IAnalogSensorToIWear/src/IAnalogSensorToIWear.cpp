@@ -25,7 +25,7 @@ using namespace wearable::devices;
 
 // Class that stores the IAnalogSensor interface and provides utilites to
 // map its data to containers compatible with IWear
-static class IAnalogSensorHandler
+class IAnalogSensorHandler
 {
 public:
     yarp::sig::Vector buffer;
@@ -128,7 +128,36 @@ public:
         return true;
     }
 
-} handler;
+};
+
+struct ParsedOptions
+{
+    wearable::WearableName wearableName;
+
+    wearable::sensor::SensorName sensorName;
+    wearable::sensor::SensorType wearableSensorType;
+
+    size_t numberOfChannels;
+    size_t channelOffset;
+
+    bool getGroundReactionFT;
+};
+
+class IAnalogSensorToIWear::Impl
+{
+public:
+    bool firstRun = true;
+    mutable std::recursive_mutex mutex;
+
+    TimeStamp timestamp;
+    ParsedOptions options;
+
+    wearable::SensorPtr<wearable::sensor::ISensor> iSensor;
+
+    bool allocateSensor(const wearable::sensor::SensorType type,
+                        const wearable::sensor::SensorName name,
+                        IAnalogSensorHandler handler);
+};
 
 // ================================
 // WEARABLE SENSORS IMPLEMENTATIONS
@@ -139,24 +168,24 @@ class ForceTorque6DSensor : public IForceTorque6DSensor
 public:
     unsigned offset = 0;
     bool groundReactionFT;
+    IAnalogSensorHandler handler;
 
-    ForceTorque6DSensor(SensorName name, SensorStatus status = SensorStatus::Unknown)
-        : IForceTorque6DSensor(name, status)
+    ForceTorque6DSensor(SensorName name, IAnalogSensorHandler analogSensorHandler, SensorStatus status = SensorStatus::Unknown)
+        : IForceTorque6DSensor(name, status), handler(analogSensorHandler)
     {}
 
     void setStatus(const SensorStatus status) { m_status = status; }
 
     bool getForceTorque6D(Vector3& force3D, Vector3& torque3D) const override
     {
-        bool dataOk = handler.readData();
-
-        // Dirty workaround to set the status from a const method
+        // Dirty workaround to set the status from a const method and call non-const methods of the handler
         auto nonConstThis = const_cast<ForceTorque6DSensor*>(this);
-        nonConstThis->setStatus(handler.getStatus());
+        bool dataOk = nonConstThis->handler.readData();
+        nonConstThis->setStatus(nonConstThis->handler.getStatus());
 
         // TODO: The positions of force and torques are hardcoded. Forces should be the first
         //       triplet of elements of the read vector and torques the second one.
-        bool ok = dataOk && handler.getData(force3D, offset) && handler.getData(torque3D, offset + 3);
+        bool ok = dataOk && nonConstThis->handler.getData(force3D, offset) && nonConstThis->handler.getData(torque3D, offset + 3);
         if (groundReactionFT) {
             force3D[0] = -1 * force3D[0];
             force3D[1] = -1 * force3D[1];
@@ -174,22 +203,22 @@ class Force3DSensor : public IForce3DSensor
 {
 public:
     unsigned offset = 0;
+    IAnalogSensorHandler handler;
 
-    Force3DSensor(SensorName name, SensorStatus status = SensorStatus::Unknown)
-        : IForce3DSensor(name, status)
+    Force3DSensor(SensorName name, IAnalogSensorHandler analogSensorHandler, SensorStatus status = SensorStatus::Unknown)
+        : IForce3DSensor(name, status), handler(analogSensorHandler)
     {}
 
     void setStatus(const SensorStatus status) { m_status = status; }
 
     bool getForce3D(Vector3& force3D) const override
     {
-        bool dataOk = handler.readData();
-
-        // Dirty workaround to set the status from a const method
+        // Dirty workaround to set the status from a const method and call non-const methods of the handler
         auto nonConstThis = const_cast<Force3DSensor*>(this);
-        nonConstThis->setStatus(handler.getStatus());
+        bool dataOk = nonConstThis->handler.readData();
+        nonConstThis->setStatus(nonConstThis->handler.getStatus());
 
-        return dataOk && handler.getData(force3D, offset);
+        return dataOk && nonConstThis->handler.getData(force3D, offset);
     }
 };
 
@@ -197,22 +226,22 @@ class Torque3DSensor : public ITorque3DSensor
 {
 public:
     unsigned offset = 0;
+    IAnalogSensorHandler handler;
 
-    Torque3DSensor(SensorName name, SensorStatus status = SensorStatus::Unknown)
-        : ITorque3DSensor(name, status)
+    Torque3DSensor(SensorName name, IAnalogSensorHandler analogSensorHandler, SensorStatus status = SensorStatus::Unknown)
+        : ITorque3DSensor(name, status), handler(analogSensorHandler)
     {}
 
     void setStatus(const SensorStatus status) { m_status = status; }
 
     bool getTorque3D(Vector3& torque3D) const override
     {
-        bool dataOk = handler.readData();
-
-        // Dirty workaround to set the status from a const method
+        // Dirty workaround to set the status from a const method and call non-const methods of the handler
         auto nonConstThis = const_cast<Torque3DSensor*>(this);
-        nonConstThis->setStatus(handler.getStatus());
+        bool dataOk = nonConstThis->handler.readData();
+        nonConstThis->setStatus(nonConstThis->handler.getStatus());
 
-        return dataOk && handler.getData(torque3D, offset);
+        return dataOk && nonConstThis->handler.getData(torque3D, offset);
     }
 };
 
@@ -220,45 +249,45 @@ class TemperatureSensor : public ITemperatureSensor
 {
 public:
     unsigned offset = 0;
+    IAnalogSensorHandler handler;
 
-    TemperatureSensor(SensorName name, SensorStatus status = SensorStatus::Unknown)
-        : ITemperatureSensor(name, status)
+    TemperatureSensor(SensorName name, IAnalogSensorHandler analogSensorHandler, SensorStatus status = SensorStatus::Unknown)
+        : ITemperatureSensor(name, status), handler(analogSensorHandler)
     {}
 
     void setStatus(const SensorStatus status) { m_status = status; }
 
     bool getTemperature(double& temperature) const override
     {
-        bool dataOk = handler.readData();
-
-        // Dirty workaround to set the status from a const method
+        // Dirty workaround to set the status from a const method and call non-const methods of the handler and call non-const methods of the handler
         auto nonConstThis = const_cast<TemperatureSensor*>(this);
-        nonConstThis->setStatus(handler.getStatus());
+        bool dataOk = nonConstThis->handler.readData();
+        nonConstThis->setStatus(nonConstThis->handler.getStatus());
 
-        return dataOk && handler.getData(temperature, offset);
+        return dataOk && nonConstThis->handler.getData(temperature, offset);
     }
 };
 
-class SkinSensor : public ISkinSensor
+class SkinSensor: public ISkinSensor
 {
 public:
     unsigned offset = 0;
+    IAnalogSensorHandler handler;
 
-    SkinSensor(SensorName name, SensorStatus status = SensorStatus::Unknown)
-        : ISkinSensor(name, status)
+    SkinSensor(SensorName name, IAnalogSensorHandler analogSensorHandler, SensorStatus status = SensorStatus::Unknown)
+        : ISkinSensor(name, status), handler(analogSensorHandler)
     {}
 
     void setStatus(const SensorStatus status) { m_status = status; }
 
     bool getPressure(std::vector<double>& pressure) const override
     {
-        bool dataOk = handler.readData();
-
-        // Dirty workaround to set the status from a const method
+        // Dirty workaround to set the status from a const method and call non-const methods of the handler
         auto nonConstThis = const_cast<SkinSensor*>(this);
-        nonConstThis->setStatus(handler.getStatus());
+        bool dataOk = nonConstThis->handler.readData();
+        nonConstThis->setStatus(nonConstThis->handler.getStatus());
 
-        return dataOk && handler.getData(pressure, offset);
+        return dataOk && nonConstThis->handler.getData(pressure, offset);
     }
 };
 
@@ -307,34 +336,6 @@ wearable::sensor::SensorType sensorTypeFromString(std::string sensorTypeString)
         return {};
     }
 }
-
-struct ParsedOptions
-{
-    wearable::WearableName wearableName;
-
-    wearable::sensor::SensorName sensorName;
-    wearable::sensor::SensorType wearableSensorType;
-
-    size_t numberOfChannels;
-    size_t channelOffset;
-
-    bool getGroundReactionFT;
-};
-
-class IAnalogSensorToIWear::Impl
-{
-public:
-    bool firstRun = true;
-    mutable std::recursive_mutex mutex;
-
-    TimeStamp timestamp;
-    ParsedOptions options;
-
-    wearable::SensorPtr<wearable::sensor::ISensor> iSensor;
-
-    bool allocateSensor(const wearable::sensor::SensorType type,
-                        const wearable::sensor::SensorName name);
-};
 
 IAnalogSensorToIWear::IAnalogSensorToIWear()
     : pImpl{new Impl()}
@@ -405,14 +406,13 @@ bool IAnalogSensorToIWear::open(yarp::os::Searchable& config)
     // INITIALIZE THE DEVICE
     // =====================
 
-    handler.buffer.resize(pImpl->options.numberOfChannels);
-
     return true;
 }
 
 bool IAnalogSensorToIWear::close()
 {
     detach();
+    pImpl->iSensor.reset();
     return true;
 }
 
@@ -423,39 +423,40 @@ yarp::os::Stamp IAnalogSensorToIWear::getLastInputStamp()
 }
 
 bool IAnalogSensorToIWear::Impl::allocateSensor(const wearable::sensor::SensorType type,
-                                                const wearable::sensor::SensorName name)
+                                                const wearable::sensor::SensorName name,
+                                                IAnalogSensorHandler handler)
 {
     // The sensors are initialized as Ok in order to trigger the first data read.
     // If there is any error during the first read, the sensor updates its own status
     // that is then propagated to the global IWear status.
     switch (type) {
         case wearable::sensor::SensorType::Force3DSensor: {
-            auto sensor = std::make_shared<Force3DSensor>(name, SensorStatus::Ok);
+            auto sensor = std::make_shared<Force3DSensor>(name, handler, SensorStatus::Ok);
             sensor->offset = options.channelOffset;
             iSensor = std::dynamic_pointer_cast<ISensor>(sensor);
             break;
         }
         case wearable::sensor::SensorType::ForceTorque6DSensor: {
-            auto sensor = std::make_shared<ForceTorque6DSensor>(name, SensorStatus::Ok);
+            auto sensor = std::make_shared<ForceTorque6DSensor>(name, handler, SensorStatus::Ok);
             sensor->offset = options.channelOffset;
             sensor->groundReactionFT = options.getGroundReactionFT;
             iSensor = std::dynamic_pointer_cast<ISensor>(sensor);
             break;
         }
         case wearable::sensor::SensorType::TemperatureSensor: {
-            auto sensor = std::make_shared<TemperatureSensor>(name, SensorStatus::Ok);
+            auto sensor = std::make_shared<TemperatureSensor>(name, handler, SensorStatus::Ok);
             sensor->offset = options.channelOffset;
             iSensor = std::dynamic_pointer_cast<ISensor>(sensor);
             break;
         }
         case wearable::sensor::SensorType::Torque3DSensor: {
-            auto sensor = std::make_shared<Torque3DSensor>(name, SensorStatus::Ok);
+            auto sensor = std::make_shared<Torque3DSensor>(name, handler, SensorStatus::Ok);
             sensor->offset = options.channelOffset;
             iSensor = std::dynamic_pointer_cast<ISensor>(sensor);
             break;
         }
         case wearable::sensor::SensorType::SkinSensor: {
-            auto sensor = std::make_shared<SkinSensor>(name, SensorStatus::Ok);
+            auto sensor = std::make_shared<SkinSensor>(name, handler, SensorStatus::Ok);
             sensor->offset = options.channelOffset;
             iSensor = std::dynamic_pointer_cast<ISensor>(sensor);
             break;
@@ -470,12 +471,15 @@ bool IAnalogSensorToIWear::Impl::allocateSensor(const wearable::sensor::SensorTy
 
 bool IAnalogSensorToIWear::attach(yarp::dev::PolyDriver* poly)
 {
+    IAnalogSensorHandler handler;
+    handler.buffer.resize(pImpl->options.numberOfChannels);
+
     if (!poly) {
         yError() << LogPrefix << "Passed PolyDriver is nullptr";
         return false;
     }
 
-    if (handler.interface || !poly->view(handler.interface) || !handler.interface) {
+    if (!(poly->view(handler.interface) && handler.interface)) {
         yError() << LogPrefix << "Failed to view the IAnalogSensor interface from the PolyDriver";
         return false;
     }
@@ -506,7 +510,7 @@ bool IAnalogSensorToIWear::attach(yarp::dev::PolyDriver* poly)
         }
     }
 
-    if (!pImpl->allocateSensor(pImpl->options.wearableSensorType, pImpl->options.sensorName)) {
+    if (!pImpl->allocateSensor(pImpl->options.wearableSensorType, pImpl->options.sensorName, handler)) {
         yError() << LogPrefix << "Failed to allocate a new sensor of the specified type";
         return false;
     }
@@ -519,7 +523,6 @@ bool IAnalogSensorToIWear::attach(yarp::dev::PolyDriver* poly)
 
 bool IAnalogSensorToIWear::detach()
 {
-    handler.interface = nullptr;
     return true;
 }
 
