@@ -43,6 +43,9 @@
 #include <vector>
 #include <algorithm>
 
+#include <iostream>
+#include <fstream>
+
 const std::string DeviceName = "HumanDynamicsEstimator";
 const std::string LogPrefix = DeviceName + " :";
 constexpr double DefaultPeriod = 0.01;
@@ -772,6 +775,10 @@ public:
         gravity(2) = -9.81;
     }
 
+    // Debug files
+    std::ofstream measurementsFile;
+    std::ofstream dynamicVariablesFile;
+
     // Attached interfaces
     hde::interfaces::IHumanState* iHumanState = nullptr;
     hde::interfaces::IHumanWrench* iHumanWrench = nullptr;
@@ -968,7 +975,7 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
     berdyOptions.includeAllJointAccelerationsAsSensors = true;
     berdyOptions.includeAllJointTorquesAsSensors = false;
     berdyOptions.includeFixedBaseExternalWrench = false;
-    berdyOptions.includeCoMAccelerometerAsSensor = true;
+    berdyOptions.includeCoMAccelerometerAsSensor = false;
 
     // Get the comConstraintIncludeAllLinks option. The default value is true
     bool comConstraintIncludeAllLinks = config.check("comConstraintIncludeAllLinks",yarp::os::Value(true)).asBool();
@@ -1145,11 +1152,18 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
     pImpl->berdyData.helper.extractLinkNetExternalWrenchesFromDynamicVariables(estimatedDynamicVariables,
                                                                                pImpl->berdyData.estimates.linkNetExternalWrenchEstimates);
 
+    // Open debug files
+    pImpl->measurementsFile.open("measurementsVector.txt", std::ios::trunc);
+    pImpl->dynamicVariablesFile.open("dynamicVariablesVector.txt", std::ios::trunc);
+
     return true;
 }
 
 bool HumanDynamicsEstimator::close()
 {
+    pImpl->measurementsFile.close();
+    pImpl->dynamicVariablesFile.close();
+
     return true;
 }
 
@@ -1342,6 +1356,10 @@ void HumanDynamicsEstimator::run()
         }
     }
 
+    // Dump measurement vector to a text file
+    pImpl->measurementsFile << pImpl->berdyData.buffers.measurements.toString().c_str() << std::endl;
+
+
     // Set the kinematic information necessary for the dynamics estimation
     pImpl->berdyData.helper.updateKinematicsFromFloatingBase(pImpl->berdyData.state.jointsPosition,
                                                              pImpl->berdyData.state.jointsVelocity,
@@ -1362,6 +1380,9 @@ void HumanDynamicsEstimator::run()
     // Extract the estimated dynamic variables
     iDynTree::VectorDynSize estimatedDynamicVariables(pImpl->berdyData.helper.getNrOfDynamicVariables());
     pImpl->berdyData.solver->getLastEstimate(estimatedDynamicVariables);
+
+    // Dump dynamic variables vector to a text file
+    pImpl->dynamicVariablesFile << estimatedDynamicVariables.toString().c_str() << std::endl;
 
     iDynTree::LinkProperAccArray properAccs;
     iDynTree::LinkNetTotalWrenchesWithoutGravity netTotalWrenchesWithoutGrav;
@@ -1463,11 +1484,11 @@ void HumanDynamicsEstimator::run()
             // Get world_H_link transform
             iDynTree::Transform world_H_link = kinDynComputations.getWorldTransform(linkName);   
             world_H_link.setPosition(iDynTree::Position::Zero());
-            yInfo() << "----> link name " << linkName << " " << pImpl->berdyData.estimates.linkNetExternalWrenchEstimates(pImpl->humanModel.getLinkIndex(linkName)).toString();
+            //yInfo() << "----> link name " << linkName << " " << pImpl->berdyData.estimates.linkNetExternalWrenchEstimates(pImpl->humanModel.getLinkIndex(linkName)).toString();
 
             iDynTree::Wrench linkNetExternalWrench = (world_H_link.inverse()) * pImpl->berdyData.estimates.linkNetExternalWrenchEstimates(pImpl->humanModel.getLinkIndex(linkName));
 
-            yInfo() << "----> link name " << linkName << " " << linkNetExternalWrench.toString();
+            //yInfo() << "----> link name " << linkName << " " << linkNetExternalWrench.toString();
             pImpl->linkNetExternalWrenchAnalogSensorData.measurements[6 * i + 0] = linkNetExternalWrench.getLinearVec3()(0);
             pImpl->linkNetExternalWrenchAnalogSensorData.measurements[6 * i + 1] = linkNetExternalWrench.getLinearVec3()(1);
             pImpl->linkNetExternalWrenchAnalogSensorData.measurements[6 * i + 2] = linkNetExternalWrench.getLinearVec3()(2);
