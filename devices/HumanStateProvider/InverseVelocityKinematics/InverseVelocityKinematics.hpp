@@ -102,6 +102,9 @@ public:
 
     bool setGeneralJointVelocityConstraints(double jointVelocityLimit);
 
+    bool setGeneralJointsUpperLowerConstraints(iDynTree::VectorDynSize jointUpperLimits,
+                                               iDynTree::VectorDynSize jointLowerLimits);
+
     bool updateTarget(std::string linkName,
                       iDynTree::Vector3 linearVelocity,
                       iDynTree::Vector3 angularVelocity,
