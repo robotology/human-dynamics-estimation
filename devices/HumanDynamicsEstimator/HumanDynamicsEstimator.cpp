@@ -975,7 +975,7 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
     berdyOptions.includeAllJointAccelerationsAsSensors = true;
     berdyOptions.includeAllJointTorquesAsSensors = false;
     berdyOptions.includeFixedBaseExternalWrench = false;
-    berdyOptions.includeCoMAccelerometerAsSensor = false;
+    berdyOptions.includeCoMAccelerometerAsSensor = true;
 
     // Get the comConstraintIncludeAllLinks option. The default value is true
     bool comConstraintIncludeAllLinks = config.check("comConstraintIncludeAllLinks",yarp::os::Value(true)).asBool();
@@ -1013,7 +1013,9 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
         return false;
     }
 
-    yInfo() << LogPrefix << "Number of COM_ACCELEROMETER_SENSOR sensors : " << humanSensors.getNrOfSensors(static_cast<iDynTree::SensorType>(iDynTree::BerdySensorTypes::COM_ACCELEROMETER_SENSOR));
+    if (berdyOptions.includeCoMAccelerometerAsSensor) {
+        yInfo() << LogPrefix << "Number of COM_ACCELEROMETER_SENSOR sensors : " << humanSensors.getNrOfSensors(static_cast<iDynTree::SensorType>(iDynTree::BerdySensorTypes::COM_ACCELEROMETER_SENSOR));
+    }
 
     // Initialize the BerdySolver
     pImpl->berdyData.solver = std::make_unique<iDynTree::BerdySparseMAPSolver>(pImpl->berdyData.helper);
