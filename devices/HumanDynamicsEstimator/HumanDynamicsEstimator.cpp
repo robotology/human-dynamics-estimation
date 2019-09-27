@@ -190,6 +190,17 @@ struct BerdyData
         // Measurements prior
         iDynTree::SparseMatrix<iDynTree::ColumnMajor> measurementsCovarianceMatrix; // sigma_y
 
+        // Task 1 Priors
+        // Regularization priors
+        iDynTree::VectorDynSize task1_dynamicsRegularizationExpectedValueVector; // mu_d
+        iDynTree::SparseMatrix<iDynTree::ColumnMajor> task1_dynamicsRegularizationCovarianceMatrix; // sigma_d
+
+        // Dynamic constraint prior
+        iDynTree::SparseMatrix<iDynTree::ColumnMajor> task1_dynamicsConstraintsCovarianceMatrix; // sigma_D
+
+        // Measurements prior
+        iDynTree::SparseMatrix<iDynTree::ColumnMajor> task1_measurementsCovarianceMatrix; // sigma_y
+
         static void
         initializeSparseMatrixSize(size_t size,
                                    iDynTree::SparseMatrix<iDynTree::ColumnMajor>& matrix)
@@ -208,6 +219,7 @@ struct BerdyData
     struct Buffers
     {
         iDynTree::VectorDynSize measurements;
+        iDynTree::VectorDynSize task1_measurements;
 
     } buffers;
 
@@ -453,6 +465,10 @@ static bool parsePriorsGroup(const yarp::os::Bottle& priorsGroup,
     std::vector<double> covDynVariables; //sigma_d
     std::vector<double> covDynConstraints; // sigma_D
 
+    std::vector<double> task1_muDynVariables; // mu_d
+    std::vector<double> task1_covDynVariables; //sigma_d
+    std::vector<double> task1_covDynConstraints; // sigma_D
+
     if (setMuDynVariables
         && !parseYarpValueToStdVector(priorsGroup.find("mu_dyn_variables"), muDynVariables)) {
         yError() << LogPrefix << "Failed to parse 'mu_dyn_variables' option";
@@ -481,12 +497,16 @@ static bool parsePriorsGroup(const yarp::os::Bottle& priorsGroup,
 
     // Resize and zero the buffer
     size_t nrOfDynamicVariables = berdyData.helper.getNrOfDynamicVariables();
+    size_t task1_nrOfDynamicVariables = berdyData.helper.getNrOfDynamicVariables(true);
 
     // Set the values stored in the configuration if any
     if (setMuDynVariables) {
         // If only one value is provided, resize it to the expected size
         if (muDynVariables.size() == 1) {
             muDynVariables = std::vector<double>(static_cast<size_t>(nrOfDynamicVariables),
+                                                 muDynVariables.front());
+
+            task1_muDynVariables = std::vector<double>(static_cast<size_t>(task1_nrOfDynamicVariables),
                                                  muDynVariables.front());
         }
 
@@ -495,8 +515,13 @@ static bool parsePriorsGroup(const yarp::os::Bottle& priorsGroup,
             berdyData.priors.dynamicsRegularizationExpectedValueVector(i) = muDynVariables[i];
         }
 
+        for (size_t i = 0; i < task1_muDynVariables.size(); ++i) {
+            berdyData.priors.task1_dynamicsRegularizationExpectedValueVector(i) = task1_muDynVariables[i];
+        }
+
         yInfo() << LogPrefix << "Dynamic variables regularization expected value vector set successfully";
     }
+
 
     // ---------------------------------------------------------------
     // Priors on dynamics variables regularization covariance: Sigma_d
@@ -505,10 +530,13 @@ static bool parsePriorsGroup(const yarp::os::Bottle& priorsGroup,
     // Set the values stored in the configuration if any
     if (setCovDynVariables) {
         size_t nrOfDynamicVariables = berdyData.helper.getNrOfDynamicVariables();
+        size_t task1_nrOfDynamicVariables = berdyData.helper.getNrOfDynamicVariables(true);
 
         // If only one value is provided, resize it to the expected size
         if (covDynVariables.size() == 1) {
             covDynVariables = std::vector<double>(static_cast<size_t>(nrOfDynamicVariables),
+                                                  covDynVariables.front());
+            task1_covDynVariables = std::vector<double>(static_cast<size_t>(task1_nrOfDynamicVariables),
                                                   covDynVariables.front());
         }
         // Otherwise, check that the size is what is expected
@@ -538,6 +566,25 @@ static bool parsePriorsGroup(const yarp::os::Bottle& priorsGroup,
             return false;
         }
 
+        // Fill task1 regularization covariance matrix
+        iDynTree::Triplets task1_covDynVariablesTriplets;
+        if (!getSparseCovarianceMatrix(task1_covDynVariables, task1_covDynVariablesTriplets)) {
+            yError() << LogPrefix << "Failed to process values of 'covDynVariables' option for task1";
+            return false;
+        }
+
+        if (task1_covDynVariablesTriplets.size() != 0) {
+            // Resize the sparse matrix before storing values from triplets
+            berdyData.priors.task1_dynamicsRegularizationCovarianceMatrix.resize(task1_covDynVariablesTriplets.size(),
+                                                                            task1_covDynVariablesTriplets.size());
+            // Store the value into the berdyData
+            berdyData.priors.task1_dynamicsRegularizationCovarianceMatrix.setFromTriplets(task1_covDynVariablesTriplets);
+        }
+        else {
+            yError() << LogPrefix << "task1 covDynVariablesTriplets size invalid";
+            return false;
+        }
+
         yInfo() << LogPrefix << "Dynamic variables regularization covariance matrix set successfully";
     }
 
@@ -549,10 +596,14 @@ static bool parsePriorsGroup(const yarp::os::Bottle& priorsGroup,
     // Set the values stored in the configuration if any
     if (setCovDynConstraints) {
         size_t nrOfDynamicEquations = berdyData.helper.getNrOfDynamicEquations();
+        size_t task1_nrOfDynamicEquations = berdyData.helper.getNrOfDynamicEquations(true);
 
         // If only one value is provided, resize it to the expected size
         if (covDynConstraints.size() == 1) {
             covDynConstraints = std::vector<double>(static_cast<size_t>(nrOfDynamicEquations),
+                                                    covDynConstraints.front());
+
+            task1_covDynConstraints = std::vector<double>(static_cast<size_t>(task1_nrOfDynamicEquations),
                                                     covDynConstraints.front());
         }
         // Otherwise, check that the size is what is expected
@@ -582,6 +633,26 @@ static bool parsePriorsGroup(const yarp::os::Bottle& priorsGroup,
             return false;
         }
 
+        // Set task1 dynamic constraints covariance matrix
+        iDynTree::Triplets task1_covDynConstraintsTriplets;
+        if (!getSparseCovarianceMatrix(task1_covDynConstraints, task1_covDynConstraintsTriplets)) {
+            yError() << LogPrefix << "Failed to process values of 'covDynConstraints' option";
+            return false;
+        }
+
+        // Check the size of the triplets
+        if (task1_covDynConstraintsTriplets.size() != 0) {
+            // Resize the sparse matrix before storing values from triplets
+            berdyData.priors.task1_dynamicsConstraintsCovarianceMatrix.resize(task1_covDynConstraintsTriplets.size(),
+                                                                         task1_covDynConstraintsTriplets.size());
+            // Store the value into the berdyData
+            berdyData.priors.task1_dynamicsConstraintsCovarianceMatrix.setFromTriplets(task1_covDynConstraintsTriplets);
+        }
+        else {
+            yError() << LogPrefix << "task1 covDynConstraintsTriplets size invalid";
+            return false;
+        }
+
         yInfo() << LogPrefix << "Dynamic constraints covariance covariance matrix set successfully";
     }
 
@@ -591,6 +662,7 @@ static bool parsePriorsGroup(const yarp::os::Bottle& priorsGroup,
     // -------------------------------------------
 
     iDynTree::Triplets allSensorsTriplets;
+    iDynTree::Triplets task1SensorsTriplets;
     std::string covMeasurementOptionPrefix = "cov_measurements_";
 
     for (const iDynTree::BerdySensor& berdySensor : berdyData.helper.getSensorsOrdering()) {
@@ -626,6 +698,32 @@ static bool parsePriorsGroup(const yarp::os::Bottle& priorsGroup,
                 allSensorsTriplets.setTriplet(modifiedTriplet);
             }
 
+            // Check for sensor type and fill task1 measurement covariance matrix
+            if (berdySensor.type == (iDynTree::BerdySensorTypes)iDynTree::COM_ACCELEROMETER_SENSOR ||
+                berdySensor.type == (iDynTree::BerdySensorTypes)iDynTree::NET_EXT_WRENCH_SENSOR) {
+
+                iDynTree::Triplets task1_triplets{};
+
+                if (!getTripletsFromPriorGroup(
+                        priorsGroup, covMeasurementOptionPrefix, berdySensorTypeString, task1_triplets, berdySensor)) {
+                    yError() << LogPrefix << "Failed to get task1 triplets for sensor"
+                             << berdySensorTypeString;
+                    return false;
+                }
+
+                // Modify the triplets before adding them to the global sparse matrix.
+                // This is necessary because we stack all the sensors in a single matrix.
+                for (const iDynTree::Triplet& task1_triplet : task1_triplets) {
+                    iDynTree::Triplet task1_modifiedTriplet = task1_triplet;
+                    task1_modifiedTriplet.row += berdySensor.range.offset;
+                    task1_modifiedTriplet.column += berdySensor.range.offset;
+
+                    // Combine the triplet of the sensor with the global one
+                    task1SensorsTriplets.setTriplet(task1_modifiedTriplet);
+                }
+
+            }
+
         }
         else {
             yError() << LogPrefix << "Failed to find the parameter " << covMeasurementOptionPrefix + berdySensorTypeString;
@@ -643,6 +741,19 @@ static bool parsePriorsGroup(const yarp::os::Bottle& priorsGroup,
     }
     else {
         yError() << LogPrefix << "allSensorsTriplets size invalid";
+        return false;
+    }
+
+    // Check the size of task1 triplets
+    if (task1SensorsTriplets.size() != 0) {
+        // Resize the sparse matrix before storing values from task1 triplets
+        berdyData.priors.task1_measurementsCovarianceMatrix.resize(task1SensorsTriplets.size(),
+                                                              task1SensorsTriplets.size());
+        // Store the priors of the sensors
+        berdyData.priors.task1_measurementsCovarianceMatrix.setFromTriplets(task1SensorsTriplets);
+    }
+    else {
+        yError() << LogPrefix << "task1SensorsTriplets size invalid";
         return false;
     }
 
@@ -774,6 +885,9 @@ public:
         gravity.zero();
         gravity(2) = -9.81;
     }
+
+    // Stack of tasks berdy flags
+    bool task1;
 
     // Debug files
     std::ofstream measurementsFile;
@@ -1031,9 +1145,21 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
     size_t numberOfDynEquations = pImpl->berdyData.helper.getNrOfDynamicEquations();
     size_t numberOfMeasurements = pImpl->berdyData.helper.getNrOfSensorsMeasurements();
 
+    size_t task1_numberOfDynVariables = pImpl->berdyData.helper.getNrOfDynamicVariables(true);
+    size_t task1_numberOfDynEquations = pImpl->berdyData.helper.getNrOfDynamicEquations(true);
+    size_t task1_numberOfMeasurements = pImpl->berdyData.helper.getNrOfSensorsMeasurements(true);
+
+    // Debug info
+    yInfo() << LogPrefix << "Task1 number of dynamic variables : " << task1_numberOfDynVariables;
+    yInfo() << LogPrefix << "Task1 number of dynamic equations : " << task1_numberOfDynEquations;
+    yInfo() << LogPrefix << "Task1 number of measurements : " << task1_numberOfMeasurements;
+
     // Set measurements size and initialize to zero
     pImpl->berdyData.buffers.measurements.resize(numberOfMeasurements);
     pImpl->berdyData.buffers.measurements.zero();
+
+    pImpl->berdyData.buffers.task1_measurements.resize(task1_numberOfMeasurements);
+    pImpl->berdyData.buffers.task1_measurements.zero();
 
     // Set state variables size and initialize to zero
     pImpl->berdyData.state.jointsPosition = iDynTree::JointPosDoubleArray(pImpl->berdyData.helper.model());
@@ -1091,10 +1217,17 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
     pImpl->berdyData.priors.dynamicsRegularizationExpectedValueVector.resize(numberOfDynVariables);
     pImpl->berdyData.priors.dynamicsRegularizationExpectedValueVector.zero();
 
+    pImpl->berdyData.priors.task1_dynamicsRegularizationExpectedValueVector.resize(task1_numberOfDynVariables);
+    pImpl->berdyData.priors.task1_dynamicsRegularizationExpectedValueVector.zero();
+
     // Set sigma_d, sigma_D and sigma_y priors size and initialize identity triplets
     pImpl->berdyData.priors.initializeSparseMatrixSize(numberOfDynVariables, pImpl->berdyData.priors.dynamicsRegularizationCovarianceMatrix);
     pImpl->berdyData.priors.initializeSparseMatrixSize(numberOfDynEquations, pImpl->berdyData.priors.dynamicsConstraintsCovarianceMatrix);
     pImpl->berdyData.priors.initializeSparseMatrixSize(numberOfMeasurements, pImpl->berdyData.priors.measurementsCovarianceMatrix);
+
+    pImpl->berdyData.priors.initializeSparseMatrixSize(task1_numberOfDynVariables, pImpl->berdyData.priors.task1_dynamicsRegularizationCovarianceMatrix);
+    pImpl->berdyData.priors.initializeSparseMatrixSize(task1_numberOfDynEquations, pImpl->berdyData.priors.task1_dynamicsConstraintsCovarianceMatrix);
+    pImpl->berdyData.priors.initializeSparseMatrixSize(task1_numberOfMeasurements, pImpl->berdyData.priors.task1_measurementsCovarianceMatrix);
 
     // Parse the priors
     if (!parsePriorsGroup(config.findGroup("PRIORS"), pImpl->berdyData, pImpl->mapBerdySensorType)) {
@@ -1104,6 +1237,42 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
     else {
         yInfo() << LogPrefix << "PRIORS group parsed correctly";
     }
+
+    // ----------------------------
+    // Run a first dummy estimation
+    // ----------------------------
+//    pImpl->task1 = true;
+
+//    // Set the priors to berdy solver for task1
+//    pImpl->berdyData.solver->setDynamicsRegularizationPriorExpectedValue(pImpl->berdyData.priors.task1_dynamicsRegularizationExpectedValueVector, pImpl->task1);
+//    yInfo() << LogPrefix << "Task1 Berdy solver DynamicsRegularizationPriorExpectedValue set successfully";
+
+//    pImpl->berdyData.solver->setDynamicsRegularizationPriorCovariance(pImpl->berdyData.priors.task1_dynamicsRegularizationCovarianceMatrix, pImpl->task1);
+//    yInfo() << LogPrefix << "Task1 Berdy solver DynamicsRegularizationPriorCovariance set successfully";
+
+//    pImpl->berdyData.solver->setDynamicsConstraintsPriorCovariance(pImpl->berdyData.priors.task1_dynamicsConstraintsCovarianceMatrix, pImpl->task1);
+//    yInfo() << LogPrefix << "Task1 Berdy solver DynamicsConstraintsPriorCovariance set successfully";
+
+//    pImpl->berdyData.solver->setMeasurementsPriorCovariance(pImpl->berdyData.priors.task1_measurementsCovarianceMatrix, pImpl->task1);
+//    yInfo() << LogPrefix << "Task1 Berdy solver MeasurementsPriorCovariance set successfully";
+
+//    // Update estimator with task1 information
+//    pImpl->berdyData.solver->updateEstimateInformationFloatingBase(pImpl->berdyData.state.jointsPosition,
+//                                                                   pImpl->berdyData.state.jointsVelocity,
+//                                                                   pImpl->berdyData.state.floatingBaseFrameIndex,
+//                                                                   pImpl->berdyData.state.baseAngularVelocity,
+//                                                                   pImpl->berdyData.buffers.task1_measurements,
+//                                                                   pImpl->task1);
+
+//    yInfo() << LogPrefix << "Berdy estimation information updated";
+//    // Do task1 berdy estimation
+//    if (!pImpl->berdyData.solver->doEstimate(pImpl->task1)) {
+//        yError() << LogPrefix << "Failed to launch a first dummy estimation for task1";
+//        return false;
+//    }
+//    else {
+//        yInfo() << LogPrefix << "First dummy estimation for task1 is done successfully";
+//    }
 
     // Set the priors to berdy solver
     pImpl->berdyData.solver->setDynamicsRegularizationPriorExpectedValue(pImpl->berdyData.priors.dynamicsRegularizationExpectedValueVector);
@@ -1118,9 +1287,7 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
     pImpl->berdyData.solver->setMeasurementsPriorCovariance(pImpl->berdyData.priors.measurementsCovarianceMatrix);
     yInfo() << LogPrefix << "Berdy solver MeasurementsPriorCovariance set successfully";
 
-    // ----------------------------
-    // Run a first dummy estimation
-    // ----------------------------
+
 
     // Set the kinematic information necessary for the dynamics estimation
     pImpl->berdyData.helper.updateKinematicsFromFloatingBase(pImpl->berdyData.state.jointsPosition,
@@ -1171,6 +1338,7 @@ bool HumanDynamicsEstimator::close()
 
 void HumanDynamicsEstimator::run()
 {
+    yInfo() << LogPrefix << "Inside run...";
     // Get state data from the attached IHumanState interface
     std::vector<double> jointsPosition    = pImpl->iHumanState->getJointPositions();
     std::vector<double> jointsVelocity    = pImpl->iHumanState->getJointVelocities();
@@ -1218,6 +1386,7 @@ void HumanDynamicsEstimator::run()
 
     // Clear measurements
     pImpl->berdyData.buffers.measurements.zero();
+    pImpl->berdyData.buffers.task1_measurements.zero();
 
     /* The total number of sensors are :
      * 17 Accelerometers, 66 DOF Acceleration sensors and 67 NET EXT WRENCH sensors
@@ -1243,6 +1412,11 @@ void HumanDynamicsEstimator::run()
                     pImpl->berdyData.buffers.measurements(found->second.offset + 0) = comProperAcceleration[0];
                     pImpl->berdyData.buffers.measurements(found->second.offset + 1) = comProperAcceleration[1];
                     pImpl->berdyData.buffers.measurements(found->second.offset + 2) = comProperAcceleration[2];
+
+//                    // Fill task1 measurement vector
+//                    pImpl->berdyData.buffers.task1_measurements(found->second.offset + 0) = comProperAcceleration[0];
+//                    pImpl->berdyData.buffers.task1_measurements(found->second.offset + 1) = comProperAcceleration[1];
+//                    pImpl->berdyData.buffers.task1_measurements(found->second.offset + 2) = comProperAcceleration[2];
 
                     yInfo() << LogPrefix << "=============COM Proper Acceleration==========";
                     yInfo() << comProperAcceleration[0] << " " << comProperAcceleration[1] << " " << comProperAcceleration[2];
@@ -1339,6 +1513,8 @@ void HumanDynamicsEstimator::run()
                             for (int i = 0; i < 6; i++)
                             {
                                 pImpl->berdyData.buffers.measurements(found->second.offset + i) = wrenchValues.at(idx*6 + i);
+
+//                                pImpl->berdyData.buffers.task1_measurements(found->second.offset + i) = wrenchValues.at(idx*6 + i);
                             }
                             break;
                         }
@@ -1346,6 +1522,8 @@ void HumanDynamicsEstimator::run()
                             for (int i = 0; i < 6; i++)
                             {
                                 pImpl->berdyData.buffers.measurements(found->second.offset + i) = 0;
+
+//                                pImpl->berdyData.buffers.task1_measurements(found->second.offset + i) = 0;
                             }
                         }
                     }
@@ -1362,6 +1540,8 @@ void HumanDynamicsEstimator::run()
     pImpl->measurementsFile << pImpl->berdyData.buffers.measurements.toString().c_str() << std::endl;
 
 
+    // TODO: Check if this call to updateKinematicsFromFloatingBase is needed
+    // updateEstimateInformationFloatingBase calls updateKinematicsFromFloatingBase in the backend of berdy helper
     // Set the kinematic information necessary for the dynamics estimation
     pImpl->berdyData.helper.updateKinematicsFromFloatingBase(pImpl->berdyData.state.jointsPosition,
                                                              pImpl->berdyData.state.jointsVelocity,
