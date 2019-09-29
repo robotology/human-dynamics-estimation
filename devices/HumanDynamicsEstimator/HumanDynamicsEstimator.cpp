@@ -917,6 +917,7 @@ public:
 
     // Berdy sensors map
     SensorMapIndex sensorMapIndex;
+    SensorMapIndex task1SensorMapIndex;
 
     // Berdy variable
     BerdyData berdyData;
@@ -1091,6 +1092,10 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
     berdyOptions.includeFixedBaseExternalWrench = false;
     berdyOptions.includeCoMAccelerometerAsSensor = true;
 
+    // Berdy task1 flag
+    // TODO: Probably better to have it as an option
+    pImpl->task1 = true;
+
     // Get the comConstraintIncludeAllLinks option. The default value is true
     bool comConstraintIncludeAllLinks = config.check("comConstraintIncludeAllLinks",yarp::os::Value(true)).asBool();
 
@@ -1184,6 +1189,29 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
     // Set the links classical proper acceleration estimates size
     pImpl->berdyData.estimates.linkClassicalProperAccelerationEstimates = iDynTree::LinkAccArray(pImpl->berdyData.helper.model().getNrOfLinks());
 
+    // Get the task1 berdy sensors following its internal order
+    std::vector<iDynTree::BerdySensor> task1BerdySensors = pImpl->berdyData.helper.getSensorsOrdering(pImpl->task1);
+
+    // Create a map that describes where are the sensors measurements in the task1 y vector
+    // in terms of index offset and range
+    for (const iDynTree::BerdySensor& task1Sensor : task1BerdySensors) {
+        // Create the key
+        SensorKey key = {task1Sensor.type, task1Sensor.id};
+
+        // Check that it is unique
+        if (pImpl->task1SensorMapIndex.find(key) != pImpl->task1SensorMapIndex.end()) {
+            yWarning() << "The sensor" << task1Sensor.id
+                       << "has been already inserted in task1SensorMapIndex. Check the urdf model for duplicates. "
+                          "Skipping it.";
+            continue;
+        }
+
+        // Insert the sensor index range
+        // TODO: This line seems to cause corrupted size vs. prev_size Aborted (core dumped) error sometimes
+        // Check if this is related to the changes in berdy for including y1 measurements
+        pImpl->task1SensorMapIndex.insert({key, task1Sensor.range});
+    }
+
     // Get the berdy sensors following its internal order
     std::vector<iDynTree::BerdySensor> berdySensors = pImpl->berdyData.helper.getSensorsOrdering();
 
@@ -1241,7 +1269,6 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
     // ----------------------------
     // Run a first dummy estimation
     // ----------------------------
-//    pImpl->task1 = true;
 
 //    // Set the priors to berdy solver for task1
 //    pImpl->berdyData.solver->setDynamicsRegularizationPriorExpectedValue(pImpl->berdyData.priors.task1_dynamicsRegularizationExpectedValueVector, pImpl->task1);
@@ -1338,7 +1365,6 @@ bool HumanDynamicsEstimator::close()
 
 void HumanDynamicsEstimator::run()
 {
-    yInfo() << LogPrefix << "Inside run...";
     // Get state data from the attached IHumanState interface
     std::vector<double> jointsPosition    = pImpl->iHumanState->getJointPositions();
     std::vector<double> jointsVelocity    = pImpl->iHumanState->getJointVelocities();
@@ -1351,16 +1377,6 @@ void HumanDynamicsEstimator::run()
     std::vector<std::array<double, 6>> properAccelerations = pImpl->iHumanState->getProperAccelerations();
 
     std::array<double, 3> comProperAcceleration = pImpl->iHumanState->getCoMProperAcceleration();
-
-//    yInfo() << LogPrefix << "================ Proper acceleration input to berdy measurement vector===============";
-//    for(size_t i = 0; i < accelerometerSensorNames.size(); i++) {
-//        yInfo() << LogPrefix << accelerometerSensorNames.at(i) << " " << properAccelerations.at(i)[0]
-//                                                               << " " << properAccelerations.at(i)[1]
-//                                                               << " " << properAccelerations.at(i)[2]
-//                                                               << " " << properAccelerations.at(i)[3]
-//                                                               << " " << properAccelerations.at(i)[4]
-//                                                               << " " << properAccelerations.at(i)[5];
-//    }
 
     // Set base angular velocity
     pImpl->berdyData.state.baseAngularVelocity.setVal(0, baseVelocity.at(3));
@@ -1381,12 +1397,66 @@ void HumanDynamicsEstimator::run()
     // Fill in the y vector with sensor measurements for the FT sensors
     std::vector<double> wrenchValues = pImpl->iHumanWrench->getWrenches();
 
+    // Get the task1 berdy sensors following its internal order
+    std::vector<iDynTree::BerdySensor> task1BerdySensors = pImpl->berdyData.helper.getSensorsOrdering(pImpl->task1);
+
+    // Clear task1 measurements vector y1
+    pImpl->berdyData.buffers.task1_measurements.zero();
+
+    // Iterate over the task1 sensors and add corresponding measurements
+    for (const iDynTree::BerdySensor& task1Sensor : task1BerdySensors) {
+
+        // Create the key
+        SensorKey key = {task1Sensor.type, task1Sensor.id};
+
+        // Check that it exists in the sensorMapIndex
+        if (pImpl->task1SensorMapIndex.find(key) != pImpl->task1SensorMapIndex.end()) {
+            SensorMapIndex::const_iterator found = pImpl->task1SensorMapIndex.find(key);
+
+            // Update task1 sensor measurements vector y1
+            switch (task1Sensor.type)
+            {
+                case iDynTree::COM_ACCELEROMETER_SENSOR:
+                {
+                    // Set com proper acceleration measurements
+                    pImpl->berdyData.buffers.task1_measurements(found->second.offset + 0) = comProperAcceleration[0];
+                    pImpl->berdyData.buffers.task1_measurements(found->second.offset + 1) = comProperAcceleration[1];
+                    pImpl->berdyData.buffers.task1_measurements(found->second.offset + 2) = comProperAcceleration[2];
+                }
+                break;
+                case iDynTree::NET_EXT_WRENCH_SENSOR:
+                {
+                    // Filling y vector with zero values for NET_EXT_WRENCH sensors
+                    for (int idx = 0; idx < pImpl->wrenchSensorsLinkNames.size(); idx++) {
+                        std::string wrenchSensorLinkName = pImpl->wrenchSensorsLinkNames.at(idx);
+                        if (wrenchSensorLinkName.compare(task1Sensor.id) == 0) {
+                            for (int i = 0; i < 6; i++)
+                            {
+                                pImpl->berdyData.buffers.task1_measurements(found->second.offset + i) = wrenchValues.at(idx*6 + i);
+                            }
+                            break;
+                        }
+                        else {
+                            for (int i = 0; i < 6; i++)
+                            {
+                                pImpl->berdyData.buffers.task1_measurements(found->second.offset + i) = 0;
+                            }
+                        }
+                    }
+                }
+                break;
+            default:
+                yWarning() << LogPrefix << task1Sensor.type << " sensor unimplemented";
+                break;
+            }
+        }
+    }
+
     // Get the berdy sensors following its internal order
     std::vector<iDynTree::BerdySensor> berdySensors = pImpl->berdyData.helper.getSensorsOrdering();
 
     // Clear measurements
     pImpl->berdyData.buffers.measurements.zero();
-    pImpl->berdyData.buffers.task1_measurements.zero();
 
     /* The total number of sensors are :
      * 17 Accelerometers, 66 DOF Acceleration sensors and 67 NET EXT WRENCH sensors
@@ -1407,19 +1477,10 @@ void HumanDynamicsEstimator::run()
             {
                 case iDynTree::COM_ACCELEROMETER_SENSOR:
                 {
-                    yInfo() << LogPrefix << "Inside COM_ACCELEROMETER_SENSOR at index " << found->second.offset;
                     // Set com proper acceleration measurements
                     pImpl->berdyData.buffers.measurements(found->second.offset + 0) = comProperAcceleration[0];
                     pImpl->berdyData.buffers.measurements(found->second.offset + 1) = comProperAcceleration[1];
                     pImpl->berdyData.buffers.measurements(found->second.offset + 2) = comProperAcceleration[2];
-
-//                    // Fill task1 measurement vector
-//                    pImpl->berdyData.buffers.task1_measurements(found->second.offset + 0) = comProperAcceleration[0];
-//                    pImpl->berdyData.buffers.task1_measurements(found->second.offset + 1) = comProperAcceleration[1];
-//                    pImpl->berdyData.buffers.task1_measurements(found->second.offset + 2) = comProperAcceleration[2];
-
-                    yInfo() << LogPrefix << "=============COM Proper Acceleration==========";
-                    yInfo() << comProperAcceleration[0] << " " << comProperAcceleration[1] << " " << comProperAcceleration[2];
                 }
                 break;
                 case iDynTree::THREE_AXIS_ANGULAR_ACCELEROMETER_SENSOR:
@@ -1513,8 +1574,6 @@ void HumanDynamicsEstimator::run()
                             for (int i = 0; i < 6; i++)
                             {
                                 pImpl->berdyData.buffers.measurements(found->second.offset + i) = wrenchValues.at(idx*6 + i);
-
-//                                pImpl->berdyData.buffers.task1_measurements(found->second.offset + i) = wrenchValues.at(idx*6 + i);
                             }
                             break;
                         }
@@ -1522,8 +1581,6 @@ void HumanDynamicsEstimator::run()
                             for (int i = 0; i < 6; i++)
                             {
                                 pImpl->berdyData.buffers.measurements(found->second.offset + i) = 0;
-
-//                                pImpl->berdyData.buffers.task1_measurements(found->second.offset + i) = 0;
                             }
                         }
                     }
