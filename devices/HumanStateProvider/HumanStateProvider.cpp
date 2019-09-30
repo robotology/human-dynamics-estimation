@@ -693,6 +693,17 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
             yError() << LogPrefix << "Failed to find group CUSTOM_CONSTRAINTS";
             return false;
         }
+        if (pImpl->inverseVelocityKinematicsSolver != "QP"
+            || pImpl->ikSolver != SolverIK::integrationbased) {
+            yError()
+                << LogPrefix
+                << "'CUSTOM_CONSTRAINTS' group option is available only if "
+                   "'ikSolver==integrationbased' & 'inverseVelocityKinematicsSolver==QP'. \n To "
+                   "continute please either put the options as described here or comment out "
+                   "the 'CUSTOM_CONSTRAINTS' group.";
+
+            return false;
+        }
 
         yInfo() << "==================>>>>>>> constraint group: " << constraintGroup.size();
 
