@@ -1270,37 +1270,41 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
     // Run a first dummy estimation
     // ----------------------------
 
-//    // Set the priors to berdy solver for task1
-//    pImpl->berdyData.solver->setDynamicsRegularizationPriorExpectedValue(pImpl->berdyData.priors.task1_dynamicsRegularizationExpectedValueVector, pImpl->task1);
-//    yInfo() << LogPrefix << "Task1 Berdy solver DynamicsRegularizationPriorExpectedValue set successfully";
+    // Set the priors to berdy solver for task1
+    pImpl->berdyData.solver->setDynamicsRegularizationPriorExpectedValue(pImpl->berdyData.priors.task1_dynamicsRegularizationExpectedValueVector, pImpl->task1);
+    yInfo() << LogPrefix << "Task1 Berdy solver DynamicsRegularizationPriorExpectedValue set successfully";
 
-//    pImpl->berdyData.solver->setDynamicsRegularizationPriorCovariance(pImpl->berdyData.priors.task1_dynamicsRegularizationCovarianceMatrix, pImpl->task1);
-//    yInfo() << LogPrefix << "Task1 Berdy solver DynamicsRegularizationPriorCovariance set successfully";
+    pImpl->berdyData.solver->setDynamicsRegularizationPriorCovariance(pImpl->berdyData.priors.task1_dynamicsRegularizationCovarianceMatrix, pImpl->task1);
+    yInfo() << LogPrefix << "Task1 Berdy solver DynamicsRegularizationPriorCovariance set successfully";
 
-//    pImpl->berdyData.solver->setDynamicsConstraintsPriorCovariance(pImpl->berdyData.priors.task1_dynamicsConstraintsCovarianceMatrix, pImpl->task1);
-//    yInfo() << LogPrefix << "Task1 Berdy solver DynamicsConstraintsPriorCovariance set successfully";
+    pImpl->berdyData.solver->setDynamicsConstraintsPriorCovariance(pImpl->berdyData.priors.task1_dynamicsConstraintsCovarianceMatrix, pImpl->task1);
+    yInfo() << LogPrefix << "Task1 Berdy solver DynamicsConstraintsPriorCovariance set successfully";
 
-//    pImpl->berdyData.solver->setMeasurementsPriorCovariance(pImpl->berdyData.priors.task1_measurementsCovarianceMatrix, pImpl->task1);
-//    yInfo() << LogPrefix << "Task1 Berdy solver MeasurementsPriorCovariance set successfully";
+    pImpl->berdyData.solver->setMeasurementsPriorCovariance(pImpl->berdyData.priors.task1_measurementsCovarianceMatrix, pImpl->task1);
+    yInfo() << LogPrefix << "Task1 Berdy solver MeasurementsPriorCovariance set successfully";
 
-//    // Update estimator with task1 information
-//    pImpl->berdyData.solver->updateEstimateInformationFloatingBase(pImpl->berdyData.state.jointsPosition,
-//                                                                   pImpl->berdyData.state.jointsVelocity,
-//                                                                   pImpl->berdyData.state.floatingBaseFrameIndex,
-//                                                                   pImpl->berdyData.state.baseAngularVelocity,
-//                                                                   pImpl->berdyData.buffers.task1_measurements,
-//                                                                   pImpl->task1);
+    // Update estimator with task1 information
+    pImpl->berdyData.solver->updateEstimateInformationFloatingBase(pImpl->berdyData.state.jointsPosition,
+                                                                   pImpl->berdyData.state.jointsVelocity,
+                                                                   pImpl->berdyData.state.floatingBaseFrameIndex,
+                                                                   pImpl->berdyData.state.baseAngularVelocity,
+                                                                   pImpl->berdyData.buffers.task1_measurements,
+                                                                   pImpl->task1);
 
-//    yInfo() << LogPrefix << "Berdy estimation information updated";
-//    // Do task1 berdy estimation
-//    if (!pImpl->berdyData.solver->doEstimate(pImpl->task1)) {
-//        yError() << LogPrefix << "Failed to launch a first dummy estimation for task1";
-//        return false;
-//    }
-//    else {
-//        yInfo() << LogPrefix << "First dummy estimation for task1 is done successfully";
-//    }
+    // Do task1 berdy estimation
+    if (!pImpl->berdyData.solver->doEstimate(pImpl->task1)) {
+        yError() << LogPrefix << "Failed to launch a first dummy estimation for task1";
+        return false;
+    }
 
+    // Extract the estimated dynamic variables of task1
+    iDynTree::VectorDynSize task1_estimatedDynamicVariables(pImpl->berdyData.helper.getNrOfDynamicVariables(pImpl->task1));
+    pImpl->berdyData.solver->getLastEstimate(task1_estimatedDynamicVariables, pImpl->task1);
+
+    // Extract links net external wrench from estimated dynamic variables of task1
+    pImpl->berdyData.helper.extractLinkNetExternalWrenchesFromDynamicVariables(estimatedDynamicVariables,
+                                                                               pImpl->berdyData.estimates.linkNetExternalWrenchEstimates,
+                                                                               pImpl->task1);
     // Set the priors to berdy solver
     pImpl->berdyData.solver->setDynamicsRegularizationPriorExpectedValue(pImpl->berdyData.priors.dynamicsRegularizationExpectedValueVector);
     yInfo() << LogPrefix << "Berdy solver DynamicsRegularizationPriorExpectedValue set successfully";
@@ -1313,14 +1317,6 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
 
     pImpl->berdyData.solver->setMeasurementsPriorCovariance(pImpl->berdyData.priors.measurementsCovarianceMatrix);
     yInfo() << LogPrefix << "Berdy solver MeasurementsPriorCovariance set successfully";
-
-
-
-    // Set the kinematic information necessary for the dynamics estimation
-    pImpl->berdyData.helper.updateKinematicsFromFloatingBase(pImpl->berdyData.state.jointsPosition,
-                                                             pImpl->berdyData.state.jointsVelocity,
-                                                             pImpl->berdyData.state.floatingBaseFrameIndex,
-                                                             pImpl->berdyData.state.baseAngularVelocity);
 
     // Update estimator information
     pImpl->berdyData.solver->updateEstimateInformationFloatingBase(pImpl->berdyData.state.jointsPosition,
@@ -1422,6 +1418,7 @@ void HumanDynamicsEstimator::run()
                     pImpl->berdyData.buffers.task1_measurements(found->second.offset + 0) = comProperAcceleration[0];
                     pImpl->berdyData.buffers.task1_measurements(found->second.offset + 1) = comProperAcceleration[1];
                     pImpl->berdyData.buffers.task1_measurements(found->second.offset + 2) = comProperAcceleration[2];
+
                 }
                 break;
                 case iDynTree::NET_EXT_WRENCH_SENSOR:
@@ -1451,6 +1448,38 @@ void HumanDynamicsEstimator::run()
             }
         }
     }
+
+    yInfo() << LogPrefix << "=================Task1 Berdy Measurements : " << pImpl->berdyData.buffers.task1_measurements.size() << "=================";
+    yInfo() << pImpl->berdyData.buffers.task1_measurements.toString().c_str();
+
+    // Update estimator information
+    pImpl->berdyData.solver->updateEstimateInformationFloatingBase(pImpl->berdyData.state.jointsPosition,
+                                                                   pImpl->berdyData.state.jointsVelocity,
+                                                                   pImpl->berdyData.state.floatingBaseFrameIndex,
+                                                                   pImpl->berdyData.state.baseAngularVelocity,
+                                                                   pImpl->berdyData.buffers.task1_measurements,
+                                                                   pImpl->task1);
+    // Do task1 berdy estimation
+    if (!pImpl->berdyData.solver->doEstimate(pImpl->task1)) {
+        yError() << LogPrefix << "Failed to do task1 berdy estimation";
+    }
+
+    // Extract the estimated dynamic variables
+    iDynTree::VectorDynSize task1_estimatedDynamicVariables(pImpl->berdyData.helper.getNrOfDynamicVariables(pImpl->task1));
+    pImpl->berdyData.solver->getLastEstimate(task1_estimatedDynamicVariables, pImpl->task1);
+
+    yInfo() << LogPrefix << "=================Task1 Berdy Estimates : " << task1_estimatedDynamicVariables.size() << "=================";
+    yInfo() << task1_estimatedDynamicVariables.toString().c_str();
+
+    // Extract links net external wrench from  task1 estimated dynamic variables
+    pImpl->berdyData.helper.extractLinkNetExternalWrenchesFromDynamicVariables(task1_estimatedDynamicVariables,
+                                                                               pImpl->berdyData.estimates.linkNetExternalWrenchEstimates,
+                                                                               pImpl->task1);
+
+    yInfo() << pImpl->berdyData.estimates.linkNetExternalWrenchEstimates.toString(pImpl->berdyData.helper.model());
+
+
+    // TODO: Update the measurements for full berdy esimation from the berdy estimates of task1
 
     // Get the berdy sensors following its internal order
     std::vector<iDynTree::BerdySensor> berdySensors = pImpl->berdyData.helper.getSensorsOrdering();
@@ -1503,10 +1532,6 @@ void HumanDynamicsEstimator::run()
                         pImpl->berdyData.buffers.measurements(found->second.offset + 0) = properAcceleration[3];
                         pImpl->berdyData.buffers.measurements(found->second.offset + 1) = properAcceleration[4];
                         pImpl->berdyData.buffers.measurements(found->second.offset + 2) = properAcceleration[5];
-
-//                        yInfo() << LogPrefix << "Angular acceleration values : " << properAcceleration[3]
-//                                                                                 << " " << properAcceleration[4]
-//                                                                                 << " " << properAcceleration[5];
 
                     }
                     else {
