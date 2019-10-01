@@ -890,6 +890,8 @@ public:
     bool task1;
 
     // Debug files
+    std::ofstream task1MeasurementFile;
+    std::ofstream task1DynamicVariablesFile;
     std::ofstream measurementsFile;
     std::ofstream dynamicVariablesFile;
 
@@ -1345,6 +1347,8 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
                                                                                pImpl->berdyData.estimates.linkNetExternalWrenchEstimates);
 
     // Open debug files
+    pImpl->task1MeasurementFile.open("task1MeasurementVector.txt", std::ios::trunc);
+    pImpl->task1DynamicVariablesFile.open("task1DynamicVariablesVector.txt", std::ios::trunc);
     pImpl->measurementsFile.open("measurementsVector.txt", std::ios::trunc);
     pImpl->dynamicVariablesFile.open("dynamicVariablesVector.txt", std::ios::trunc);
 
@@ -1353,6 +1357,8 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
 
 bool HumanDynamicsEstimator::close()
 {
+    pImpl->task1MeasurementFile.close();
+    pImpl->task1DynamicVariablesFile.close();
     pImpl->measurementsFile.close();
     pImpl->dynamicVariablesFile.close();
 
@@ -1449,6 +1455,9 @@ void HumanDynamicsEstimator::run()
         }
     }
 
+    // Dump task1 measurement vector
+    pImpl->task1MeasurementFile << pImpl->berdyData.buffers.task1_measurements.toString().c_str() << std::endl;
+
     // Update estimator information
     pImpl->berdyData.solver->updateEstimateInformationFloatingBase(pImpl->berdyData.state.jointsPosition,
                                                                    pImpl->berdyData.state.jointsVelocity,
@@ -1464,6 +1473,9 @@ void HumanDynamicsEstimator::run()
     // Extract the estimated dynamic variables
     iDynTree::VectorDynSize task1_estimatedDynamicVariables(pImpl->berdyData.helper.getNrOfDynamicVariables(pImpl->task1));
     pImpl->berdyData.solver->getLastEstimate(task1_estimatedDynamicVariables, pImpl->task1);
+
+    // Dump task1 dynamic variables vector
+    pImpl->task1DynamicVariablesFile << task1_estimatedDynamicVariables.toString().c_str() << std::endl;
 
     // Extract links net external wrench from  task1 estimated dynamic variables
     pImpl->berdyData.helper.extractLinkNetExternalWrenchesFromDynamicVariables(task1_estimatedDynamicVariables,
