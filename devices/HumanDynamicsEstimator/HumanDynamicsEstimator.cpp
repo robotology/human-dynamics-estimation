@@ -1350,6 +1350,12 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
     pImpl->berdyData.solver->setDynamicsConstraintsPriorCovariance(pImpl->berdyData.priors.dynamicsConstraintsCovarianceMatrix);
     yInfo() << LogPrefix << "Berdy solver DynamicsConstraintsPriorCovariance set successfully";
 
+    // Manually invert the hands covariance from high to low
+    for (int i = 0; i < 6; i++) {
+        double updatedCovariance = 1/pImpl->berdyData.priors.measurementsCovarianceMatrix.getValue(324+i,324+i);
+        pImpl->berdyData.priors.measurementsCovarianceMatrix.setValue(324+i, 324+i, updatedCovariance);
+    }
+
     pImpl->berdyData.solver->setMeasurementsPriorCovariance(pImpl->berdyData.priors.measurementsCovarianceMatrix);
     yInfo() << LogPrefix << "Berdy solver MeasurementsPriorCovariance set successfully";
 
@@ -1804,8 +1810,8 @@ void HumanDynamicsEstimator::run()
             world_H_link.setPosition(iDynTree::Position::Zero());
             //yInfo() << "----> link name " << linkName << " " << pImpl->berdyData.estimates.linkNetExternalWrenchEstimates(pImpl->humanModel.getLinkIndex(linkName)).toString();
 
-            iDynTree::Wrench linkNetExternalWrench = (world_H_link.inverse()) * pImpl->berdyData.estimates.linkNetExternalWrenchEstimates(pImpl->humanModel.getLinkIndex(linkName));
-//            iDynTree::Wrench linkNetExternalWrench = (iDynTree::Transform::Identity()) * pImpl->berdyData.estimates.linkNetExternalWrenchEstimates(pImpl->humanModel.getLinkIndex(linkName));
+//            iDynTree::Wrench linkNetExternalWrench = (world_H_link.inverse()) * pImpl->berdyData.estimates.linkNetExternalWrenchEstimates(pImpl->humanModel.getLinkIndex(linkName));
+            iDynTree::Wrench linkNetExternalWrench = (iDynTree::Transform::Identity()) * pImpl->berdyData.estimates.linkNetExternalWrenchEstimates(pImpl->humanModel.getLinkIndex(linkName));
 
             //yInfo() << "----> link name " << linkName << " " << linkNetExternalWrench.toString();
             pImpl->linkNetExternalWrenchAnalogSensorData.measurements[6 * i + 0] = linkNetExternalWrench.getLinearVec3()(0);
