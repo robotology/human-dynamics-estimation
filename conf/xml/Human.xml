@@ -22,7 +22,7 @@
         <param name="urdf">humanSubject02_48dof.urdf</param>
         <param name="floatingBaseFrame">(Pelvis, XsensSuit::vLink::Pelvis)</param>
         <!--Use none for Zero values, gravity for compensating gravity acceleration, proper for proper sensor acceleration-->
-        <param name="accelerometerSensorMeasurementsOption">proper</param>
+        <param name="accelerometerSensorMeasurementsOption">gravity</param>
         <!-- ikSolver options: pairwised, global, integrationbased -->
         <param name="ikSolver">integrationbased</param>
         <param name="useXsensJointsAngles">false</param>
@@ -326,9 +326,9 @@
            <param name="cov_measurements_ACCELEROMETER_SENSOR">(0.0011 0.0011 0.0011)</param>
            <param name="cov_measurements_THREE_AXIS_ANGULAR_ACCELEROMETER_SENSOR">(1e-3 1e-3 1e-3)</param>
            <param name="cov_measurements_DOF_ACCELERATION_SENSOR">0.666e-5</param>
-           <param name="cov_measurements_COM_ACCELEROMETER_SENSOR">(1e-6 1e-6 1e-6)</param>
+           <param name="cov_measurements_COM_ACCELEROMETER_SENSOR">(1e-2 1e-2 1e-2)</param>
            <group name="cov_measurements_NET_EXT_WRENCH_SENSOR">
-               <param name="value">1e-16</param>
+               <param name="value">1e-6</param>
                <param name="specific_elements">(LeftFoot RightFoot LeftHand)</param>
                <!-- <param name="LeftFoot">(0.0589998348 0.0589998348 0.0359999712 0.002250000225 0.002250000225 0.56e-3)</param>
                <param name="RightFoot">(0.0589998348 0.0589998348 0.0359999712 0.002250000225 0.002250000225 0.56e-3)</param> -->

@@ -58,6 +58,16 @@ struct LinkNetExternalWrenchAnalogSensorData
     std::vector<double> measurements;
 };
 
+void printMatrix(auto& matrix) {
+    yInfo() << LogPrefix << "============= Matrix Size : " << matrix.rows() << " , " << matrix.columns() <<  " =============";
+    for (size_t i = 0; i < matrix.rows(); i++) {
+        for (size_t j = 0; j < matrix.columns(); j++) {
+            std::cout << matrix.getValue(i,j);
+        }
+        std::cout << std::endl;
+    }
+}
+
 static bool parseYarpValueToStdVector(const yarp::os::Value& option, std::vector<double>& output)
 {
     bool isList = option.isList();
@@ -665,6 +675,62 @@ static bool parsePriorsGroup(const yarp::os::Bottle& priorsGroup,
     iDynTree::Triplets task1SensorsTriplets;
     std::string covMeasurementOptionPrefix = "cov_measurements_";
 
+    // Construct the task1 measurement covariance matrix
+    for (const iDynTree::BerdySensor& task1BerdySensor : berdyData.helper.getSensorsOrdering(true)) {
+
+        // Chec that the sensor is a valid berdy sensor of task1
+        // Check that the sensor is a valid berdy sensor
+        if (mapBerdySensorType.find(task1BerdySensor.type) == mapBerdySensorType.end()) {
+            yError() << LogPrefix << "Failed to find berdy sensor type. Maybe is a new sensor?";
+            return false;
+        }
+
+        // Get the string from the enum
+        std::string berdySensorTypeString = mapBerdySensorType.at(task1BerdySensor.type);
+
+        if (!priorsGroup.find(covMeasurementOptionPrefix + berdySensorTypeString).isNull()) {
+
+            iDynTree::Triplets task1_triplets{};
+
+            if (!getTripletsFromPriorGroup(
+                    priorsGroup, covMeasurementOptionPrefix, berdySensorTypeString, task1_triplets, task1BerdySensor)) {
+                yError() << LogPrefix << "Failed to get task1 triplets for sensor"
+                         << berdySensorTypeString;
+                return false;
+            }
+
+            // Modify the triplets before adding them to the global sparse matrix.
+            // This is necessary because we stack all the sensors in a single matrix.
+            for (const iDynTree::Triplet& task1_triplet : task1_triplets) {
+                iDynTree::Triplet task1_modifiedTriplet = task1_triplet;
+                task1_modifiedTriplet.row += task1BerdySensor.range.offset;
+                task1_modifiedTriplet.column += task1BerdySensor.range.offset;
+
+                // Combine the triplet of the sensor with the global one
+                task1SensorsTriplets.setTriplet(task1_modifiedTriplet);
+            }
+
+        }
+        else {
+            yError() << LogPrefix << "Failed to find the parameter " << covMeasurementOptionPrefix + berdySensorTypeString;
+            return false;
+        }
+
+    }
+
+    // Check the size of task1 triplets
+    if (task1SensorsTriplets.size() != 0) {
+        // Resize the sparse matrix before storing values from task1 triplets
+        berdyData.priors.task1_measurementsCovarianceMatrix.resize(task1SensorsTriplets.size(),
+                                                              task1SensorsTriplets.size());
+        // Store the priors of the sensors
+        berdyData.priors.task1_measurementsCovarianceMatrix.setFromTriplets(task1SensorsTriplets);
+    }
+    else {
+        yError() << LogPrefix << "task1SensorsTriplets size invalid";
+        return false;
+    }
+
     for (const iDynTree::BerdySensor& berdySensor : berdyData.helper.getSensorsOrdering()) {
 
         // Check that the sensor is a valid berdy sensor
@@ -698,32 +764,6 @@ static bool parsePriorsGroup(const yarp::os::Bottle& priorsGroup,
                 allSensorsTriplets.setTriplet(modifiedTriplet);
             }
 
-            // Check for sensor type and fill task1 measurement covariance matrix
-            if (berdySensor.type == (iDynTree::BerdySensorTypes)iDynTree::COM_ACCELEROMETER_SENSOR ||
-                berdySensor.type == (iDynTree::BerdySensorTypes)iDynTree::NET_EXT_WRENCH_SENSOR) {
-
-                iDynTree::Triplets task1_triplets{};
-
-                if (!getTripletsFromPriorGroup(
-                        priorsGroup, covMeasurementOptionPrefix, berdySensorTypeString, task1_triplets, berdySensor)) {
-                    yError() << LogPrefix << "Failed to get task1 triplets for sensor"
-                             << berdySensorTypeString;
-                    return false;
-                }
-
-                // Modify the triplets before adding them to the global sparse matrix.
-                // This is necessary because we stack all the sensors in a single matrix.
-                for (const iDynTree::Triplet& task1_triplet : task1_triplets) {
-                    iDynTree::Triplet task1_modifiedTriplet = task1_triplet;
-                    task1_modifiedTriplet.row += berdySensor.range.offset;
-                    task1_modifiedTriplet.column += berdySensor.range.offset;
-
-                    // Combine the triplet of the sensor with the global one
-                    task1SensorsTriplets.setTriplet(task1_modifiedTriplet);
-                }
-
-            }
-
         }
         else {
             yError() << LogPrefix << "Failed to find the parameter " << covMeasurementOptionPrefix + berdySensorTypeString;
@@ -741,19 +781,6 @@ static bool parsePriorsGroup(const yarp::os::Bottle& priorsGroup,
     }
     else {
         yError() << LogPrefix << "allSensorsTriplets size invalid";
-        return false;
-    }
-
-    // Check the size of task1 triplets
-    if (task1SensorsTriplets.size() != 0) {
-        // Resize the sparse matrix before storing values from task1 triplets
-        berdyData.priors.task1_measurementsCovarianceMatrix.resize(task1SensorsTriplets.size(),
-                                                              task1SensorsTriplets.size());
-        // Store the priors of the sensors
-        berdyData.priors.task1_measurementsCovarianceMatrix.setFromTriplets(task1SensorsTriplets);
-    }
-    else {
-        yError() << LogPrefix << "task1SensorsTriplets size invalid";
         return false;
     }
 
@@ -1093,7 +1120,7 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
     berdyOptions.includeAllJointTorquesAsSensors = false;
     berdyOptions.includeFixedBaseExternalWrench = false;
     berdyOptions.includeCoMAccelerometerAsSensor = true;
-    berdyOptions.task1SolutionOption = iDynTree::Task1SolutionOption::DIRECT;
+    berdyOptions.task1SolutionOption = iDynTree::Task1SolutionOption::PARTIAL_MAP;
 
     // Berdy task1 flag
     // TODO: Probably better to have it as an option
@@ -1279,12 +1306,17 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
 
     pImpl->berdyData.solver->setDynamicsRegularizationPriorCovariance(pImpl->berdyData.priors.task1_dynamicsRegularizationCovarianceMatrix, pImpl->task1);
     yInfo() << LogPrefix << "Task1 Berdy solver DynamicsRegularizationPriorCovariance set successfully";
+    printMatrix(pImpl->berdyData.priors.task1_dynamicsRegularizationCovarianceMatrix);
 
     pImpl->berdyData.solver->setDynamicsConstraintsPriorCovariance(pImpl->berdyData.priors.task1_dynamicsConstraintsCovarianceMatrix, pImpl->task1);
     yInfo() << LogPrefix << "Task1 Berdy solver DynamicsConstraintsPriorCovariance set successfully";
+    printMatrix(pImpl->berdyData.priors.task1_dynamicsConstraintsCovarianceMatrix);
 
     pImpl->berdyData.solver->setMeasurementsPriorCovariance(pImpl->berdyData.priors.task1_measurementsCovarianceMatrix, pImpl->task1);
     yInfo() << LogPrefix << "Task1 Berdy solver MeasurementsPriorCovariance set successfully";
+    printMatrix(pImpl->berdyData.priors.task1_measurementsCovarianceMatrix);
+
+
 
     // Update estimator with task1 information
     pImpl->berdyData.solver->updateEstimateInformationFloatingBase(pImpl->berdyData.state.jointsPosition,
