@@ -672,6 +672,45 @@ static bool parsePriorsGroup(const yarp::os::Bottle& priorsGroup,
     // Priors on measurements constraints: Sigma_y
     // -------------------------------------------
 
+    std::vector<std::string> dynamicWrenchLinks;
+    if (!priorsGroup.check("cov_measurements_NET_EXT_WRENCH_SENSOR")) {
+        yError() << LogPrefix << "No 'cov_measurements_NET_EXT_WRENCH_SENSOR' option is found";
+        return false;
+    }
+    else {
+
+        yarp::os::Bottle covNetExtWrenchMeasurementGroup = priorsGroup.findGroup("cov_measurements_NET_EXT_WRENCH_SENSOR");
+
+        // Check if specific_element list exists and is valid
+        if (!(covNetExtWrenchMeasurementGroup.check("DynamicWrenchLinks")
+              && covNetExtWrenchMeasurementGroup.find("DynamicWrenchLinks").isList())) {
+            yWarning() << LogPrefix
+                     << "No 'DynamicWrenchLinks' list inside cov_measurements_NET_EXT_WRENCH_SENSOR group";
+        }
+        else {
+            // Get dynamic wrench links list from priorsGroup
+            yarp::os::Bottle* dynamicWrenchLinksList = covNetExtWrenchMeasurementGroup.find("DynamicWrenchLinks").asList();
+
+            // Dynamic wrench links vector on which covariances invert from high for task1 to low for task2
+            dynamicWrenchLinks.resize(dynamicWrenchLinksList->size());
+            for (unsigned l = 0; l < dynamicWrenchLinksList->size(); l++) {
+
+                if (!dynamicWrenchLinksList->get(l).isString()) {
+                    yError() << LogPrefix << "The 'DynamicWrenchLinks' should be a list of strings of link names";
+                    return false;
+                }
+
+                if (!dynamicWrenchLinksList->get(l).isString()) {
+                    yError() << LogPrefix << "The 'DynamicWrenchLinks' should be a list of strings";
+                    return false;
+                }
+
+                std::string frameName = dynamicWrenchLinksList->get(l).asString();
+                dynamicWrenchLinks.at(l) = frameName;
+            }
+        }
+    }
+
     iDynTree::Triplets allSensorsTriplets;
     iDynTree::Triplets task1SensorsTriplets;
     std::string covMeasurementOptionPrefix = "cov_measurements_";
@@ -760,6 +799,14 @@ static bool parsePriorsGroup(const yarp::os::Bottle& priorsGroup,
                 iDynTree::Triplet modifiedTriplet = triplet;
                 modifiedTriplet.row += berdySensor.range.offset;
                 modifiedTriplet.column += berdySensor.range.offset;
+
+                std::vector<std::string>::iterator found = std::find(dynamicWrenchLinks.begin(), dynamicWrenchLinks.end(), berdySensor.id);
+                if ((found != dynamicWrenchLinks.end()) && berdySensor.type == iDynTree::NET_EXT_WRENCH_SENSOR ) {
+
+                    // Invert specific links wrench covariance
+                    modifiedTriplet.value = 1/triplet.value;
+
+                }
 
                 // Combine the triplet of the sensor with the global one
                 allSensorsTriplets.setTriplet(modifiedTriplet);
@@ -1349,12 +1396,6 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
 
     pImpl->berdyData.solver->setDynamicsConstraintsPriorCovariance(pImpl->berdyData.priors.dynamicsConstraintsCovarianceMatrix);
     yInfo() << LogPrefix << "Berdy solver DynamicsConstraintsPriorCovariance set successfully";
-
-    // Manually invert the hands covariance from high to low
-    for (int i = 0; i < 6; i++) {
-        double updatedCovariance = 1/pImpl->berdyData.priors.measurementsCovarianceMatrix.getValue(324+i,324+i);
-        pImpl->berdyData.priors.measurementsCovarianceMatrix.setValue(324+i, 324+i, updatedCovariance);
-    }
 
     pImpl->berdyData.solver->setMeasurementsPriorCovariance(pImpl->berdyData.priors.measurementsCovarianceMatrix);
     yInfo() << LogPrefix << "Berdy solver MeasurementsPriorCovariance set successfully";
