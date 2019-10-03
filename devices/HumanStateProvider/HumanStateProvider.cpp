@@ -695,14 +695,11 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         }
         if (pImpl->inverseVelocityKinematicsSolver != "QP"
             || pImpl->ikSolver != SolverIK::integrationbased) {
-            yError()
+            yWarning()
                 << LogPrefix
                 << "'CUSTOM_CONSTRAINTS' group option is available only if "
-                   "'ikSolver==integrationbased' & 'inverseVelocityKinematicsSolver==QP'. \n To "
-                   "continute please either put the options as described here or comment out "
-                   "the 'CUSTOM_CONSTRAINTS' group.";
-
-            return false;
+                   "'ikSolver==integrationbased' & 'inverseVelocityKinematicsSolver==QP'. \n "
+                   "Currently, you are NOT using the customized constraint group.";
         }
 
         yInfo() << "==================>>>>>>> constraint group: " << constraintGroup.size();
@@ -1466,9 +1463,9 @@ bool HumanStateProvider::impl::initializeIntegrationBasedInverseKinematicsSolver
         return false;
     }
 
-    //******************************************
-    //****** SET CONSTRAINTS FOR IB-IK *********
-    //******************************************
+    // =========================
+    // SET CONSTRAINTS FOR IB-IK
+    // =========================
     if (custom_jointsVelocityLimitsNames.size() != 0) {
         inverseVelocityKinematics.setCustomJointsVelocityLimit(custom_jointsVelocityLimitsIndexes,
                                                                custom_jointsVelocityLimitsValues);

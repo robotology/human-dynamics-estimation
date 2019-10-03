@@ -36,6 +36,7 @@
         <param name="costTolerance">0.001</param>
         <!-- inverse velocity kinematics parameters -->
         <!-- inverseVelocityKinematicsSolver values:
+        QP
         moorePenrose,
         completeOrthogonalDecomposition,
         leastSquare,
