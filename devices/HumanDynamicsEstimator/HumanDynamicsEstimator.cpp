@@ -1169,7 +1169,7 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
     berdyOptions.includeFixedBaseExternalWrench = false;
     berdyOptions.includeCoMAccelerometerAsSensorInTask1 = true;
     berdyOptions.includeCoMAccelerometerAsSensorInTask2 = false;
-    berdyOptions.task1SolutionOption = iDynTree::Task1SolutionOption::PARTIAL_MAP;
+    berdyOptions.stackOfTasksMAP = true;
 
     // Berdy task1 flag
     // TODO: Probably better to have it as an option
