@@ -31,9 +31,8 @@ set(ROBOT_URDF_FILES urdfs/iCubGenova02.urdf
                urdfs/iCubGenova04.urdf
                urdfs/iCubGazeboV2_5.urdf
 	       urdfs/teleoperation_iCub_model_V_2_5.urdf)
-
 yarp_install(FILES ${ROBOT_URDF_FILES}
-             DESTINATION ${YARP_CONTEXTS_INSTALL_DIR}/human-dynamic-estimation/urdfs)
+             DESTINATION ${CMAKE_INSTALL_PREFIX}/share/${HDE_PROJECT_NAME}/)
 
 # Install custom constraint matrix
 file(GLOB scripts config/*.ini)

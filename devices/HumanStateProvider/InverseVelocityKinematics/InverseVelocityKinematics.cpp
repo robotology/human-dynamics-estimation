@@ -33,7 +33,7 @@ public:
     size_t configSpaceSize; // configuration space DoFs (dofs+ baseDofs)
     size_t baseDofs; // base DoFs
 
-    //*********** custom cosntraints *************//
+    //*********** cosntraints *************//
     //****** general cosntraints *******//
     double m_generalJointVelocityLimit;
     iDynTree::VectorDynSize m_jointsLowerLimits, m_jointsUpperLimits;
@@ -1097,7 +1097,7 @@ bool InverseVelocityKinematics::setResolutionMode(
     return true;
 }
 
-bool InverseVelocityKinematics::setResolutionMode(std::string resolutionModeName)
+bool InverseVelocityKinematics::setResolutionMode(const std::string resolutionModeName)
 {
     if (resolutionModeName == "QP") {
         pImpl->resolutionMode = InverseVelocityKinematicsResolutionMode::QP;
@@ -1365,7 +1365,7 @@ bool InverseVelocityKinematics::setCustomBaseVelocityLimit(iDynTree::VectorDynSi
     return true;
 }
 bool InverseVelocityKinematics::setCustomJointsVelocityLimit(
-    std::vector<iDynTree::JointIndex> jointsIndexList,
+    const std::vector<iDynTree::JointIndex> jointsIndexList,
     iDynTree::VectorDynSize jointsLimitList)
 {
     pImpl->m_customJointsVelocityLimitsIndexes = jointsIndexList;
@@ -1378,7 +1378,7 @@ bool InverseVelocityKinematics::setCustomJointsVelocityLimit(
 }
 
 bool InverseVelocityKinematics::setCustomConstraintsJointsValues(
-    std::vector<iDynTree::JointIndex> jointsIndexList,
+    const std::vector<iDynTree::JointIndex> jointsIndexList,
     iDynTree::VectorDynSize upperBoundary,
     iDynTree::VectorDynSize lowerBoundary,
     iDynTree::MatrixDynSize customConstraintMatrix,
