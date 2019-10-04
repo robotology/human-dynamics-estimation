@@ -334,7 +334,7 @@
                <param name="RightFoot">(1e-6 1e-6 1e-6 1e-6 1e-6 1e-6)</param>
                <param name="LeftHand">(1e6 1e6 1e6 1e6 1e6 1e6)</param>
                <param name="RightHand">(1e6 1e6 1e6 1e6 1e6 1e6)</param>
-               <param name="DynamicWrenchLinks">(LeftHand RightHand)</param>
+               <param name="FicticiousWrenchLinks">(LeftHand RightHand)</param>
            </group>
         </group>
         <group name="SENSORS_REMOVAL">

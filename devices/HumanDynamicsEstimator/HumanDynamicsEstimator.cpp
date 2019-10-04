@@ -35,6 +35,7 @@
 #include <yarp/os/LogStream.h>
 #include <yarp/os/ResourceFinder.h>
 #include <yarp/dev/IAnalogSensor.h>
+#include <yarp/os/RpcServer.h>
 #include <iDynTree/yarp/YARPConversions.h>
 
 #include <mutex>
@@ -42,6 +43,7 @@
 #include <unordered_map>
 #include <vector>
 #include <algorithm>
+#include <atomic>
 
 #include <iostream>
 #include <fstream>
@@ -439,7 +441,8 @@ static bool getTripletsFromPriorGroup(const yarp::os::Bottle priorGroup,
 
 static bool parsePriorsGroup(const yarp::os::Bottle& priorsGroup,
                              BerdyData& berdyData,
-                             const std::unordered_map<iDynTree::BerdySensorTypes, std::string>& mapBerdySensorType)
+                             const std::unordered_map<iDynTree::BerdySensorTypes, std::string>& mapBerdySensorType,
+                             std::vector<std::string>& ficticiousWrenchLinks)
 {
     // =================
     // CHECK THE OPTIONS
@@ -672,7 +675,6 @@ static bool parsePriorsGroup(const yarp::os::Bottle& priorsGroup,
     // Priors on measurements constraints: Sigma_y
     // -------------------------------------------
 
-    std::vector<std::string> dynamicWrenchLinks;
     if (!priorsGroup.check("cov_measurements_NET_EXT_WRENCH_SENSOR")) {
         yError() << LogPrefix << "No 'cov_measurements_NET_EXT_WRENCH_SENSOR' option is found";
         return false;
@@ -682,31 +684,31 @@ static bool parsePriorsGroup(const yarp::os::Bottle& priorsGroup,
         yarp::os::Bottle covNetExtWrenchMeasurementGroup = priorsGroup.findGroup("cov_measurements_NET_EXT_WRENCH_SENSOR");
 
         // Check if specific_element list exists and is valid
-        if (!(covNetExtWrenchMeasurementGroup.check("DynamicWrenchLinks")
-              && covNetExtWrenchMeasurementGroup.find("DynamicWrenchLinks").isList())) {
+        if (!(covNetExtWrenchMeasurementGroup.check("FicticiousWrenchLinks")
+              && covNetExtWrenchMeasurementGroup.find("FicticiousWrenchLinks").isList())) {
             yWarning() << LogPrefix
-                     << "No 'DynamicWrenchLinks' list inside cov_measurements_NET_EXT_WRENCH_SENSOR group";
+                     << "No 'FicticiousWrenchLinks' list inside cov_measurements_NET_EXT_WRENCH_SENSOR group";
         }
         else {
             // Get dynamic wrench links list from priorsGroup
-            yarp::os::Bottle* dynamicWrenchLinksList = covNetExtWrenchMeasurementGroup.find("DynamicWrenchLinks").asList();
+            yarp::os::Bottle* ficticiousWrenchLinksList = covNetExtWrenchMeasurementGroup.find("FicticiousWrenchLinks").asList();
 
             // Dynamic wrench links vector on which covariances invert from high for task1 to low for task2
-            dynamicWrenchLinks.resize(dynamicWrenchLinksList->size());
-            for (unsigned l = 0; l < dynamicWrenchLinksList->size(); l++) {
+            ficticiousWrenchLinks.resize(ficticiousWrenchLinksList->size());
+            for (unsigned l = 0; l < ficticiousWrenchLinksList->size(); l++) {
 
-                if (!dynamicWrenchLinksList->get(l).isString()) {
-                    yError() << LogPrefix << "The 'DynamicWrenchLinks' should be a list of strings of link names";
+                if (!ficticiousWrenchLinksList->get(l).isString()) {
+                    yError() << LogPrefix << "The 'FicticiousWrenchLinks' should be a list of strings of link names";
                     return false;
                 }
 
-                if (!dynamicWrenchLinksList->get(l).isString()) {
-                    yError() << LogPrefix << "The 'DynamicWrenchLinks' should be a list of strings";
+                if (!ficticiousWrenchLinksList->get(l).isString()) {
+                    yError() << LogPrefix << "The 'FicticiousWrenchLinks' should be a list of strings";
                     return false;
                 }
 
-                std::string frameName = dynamicWrenchLinksList->get(l).asString();
-                dynamicWrenchLinks.at(l) = frameName;
+                std::string frameName = ficticiousWrenchLinksList->get(l).asString();
+                ficticiousWrenchLinks.at(l) = frameName;
             }
         }
     }
@@ -800,8 +802,8 @@ static bool parsePriorsGroup(const yarp::os::Bottle& priorsGroup,
                 modifiedTriplet.row += berdySensor.range.offset;
                 modifiedTriplet.column += berdySensor.range.offset;
 
-                std::vector<std::string>::iterator found = std::find(dynamicWrenchLinks.begin(), dynamicWrenchLinks.end(), berdySensor.id);
-                if ((found != dynamicWrenchLinks.end()) && berdySensor.type == iDynTree::NET_EXT_WRENCH_SENSOR ) {
+                std::vector<std::string>::iterator found = std::find(ficticiousWrenchLinks.begin(), ficticiousWrenchLinks.end(), berdySensor.id);
+                if ((found != ficticiousWrenchLinks.end()) && berdySensor.type == iDynTree::NET_EXT_WRENCH_SENSOR ) {
 
                     // Invert specific links wrench covariance
                     modifiedTriplet.value = 1/triplet.value;
@@ -952,6 +954,51 @@ static bool parseSensorRemovalGroup(const yarp::os::Bottle& sensorRemovalGroup,
     return true;
 }
 
+class CmdParser : public yarp::os::PortReader
+{
+
+public:
+    std::atomic<bool> cmdStatus{false};
+    std::atomic<bool> task1{false};
+    std::atomic<bool> ficticiousLinks{false};
+
+    bool read(yarp::os::ConnectionReader& connection) override
+    {
+        yarp::os::Bottle command, response;
+        if (command.read(connection)) {
+
+            if (command.get(0).asString() == "help") {
+                response.addString("Enter <removeWrenchOffset> to remove the wrench estimates offset on ficticious wrench sources");
+            }
+            else if (command.get(0).asString() == "removeWrenchOffset" && this->ficticiousLinks) {
+                response.addString("Entered command <removeWrenchOffset> is correct");
+                this->cmdStatus = true;
+            }
+            else if (command.get(0).asString() == "removeWrenchOffset" && !this->ficticiousLinks) {
+                response.addString("Entered command <removeWrenchOffset> is correct but no ficticious links present");
+            }
+            else {
+                response.addString(
+                    "Entered command is incorrect, Enter help to know available commands");
+            }
+        }
+        else {
+            this->cmdStatus = false;
+            return false;
+        }
+
+        yarp::os::ConnectionWriter* reply = connection.getWriter();
+
+        if (reply != NULL) {
+            response.write(*reply);
+        }
+        else
+            return false;
+
+        return true;
+    }
+};
+
 class HumanDynamicsEstimator::Impl
 {
 public:
@@ -960,6 +1007,10 @@ public:
         gravity.zero();
         gravity(2) = -9.81;
     }
+
+    // Rpc
+    CmdParser commandPro;
+    yarp::os::RpcServer rpcPort;
 
     // Stack of tasks berdy flags
     bool task1;
@@ -1005,6 +1056,12 @@ public:
     // Wrench sensor link names variable
     std::vector<std::string> wrenchSensorsLinkNames;
 
+    // Vector of links with ficticious wrench sources
+    std::vector<std::string> ficticiousWrenchLinks;
+
+    // Ficticious wrench offsets vector
+    std::unordered_map<std::string, iDynTree::Wrench> ficticiousWrenchOffsetMap;
+
     // Link net external wrench analog sensor variable
     LinkNetExternalWrenchAnalogSensorData linkNetExternalWrenchAnalogSensorData;
 };
@@ -1047,6 +1104,19 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
         yError() << LogPrefix << "Parameter 'number_of_wrench_sensors' missing or invalid";
         return false;
     }
+
+    // ===================
+    // INITIALIZE RPC PORT
+    // ===================
+
+    std::string rpcPortName = "/" + DeviceName + "/rpc:i";
+    if (!pImpl->rpcPort.open(rpcPortName)) {
+        yError() << LogPrefix << "Unable to open rpc port " << rpcPortName;
+        return false;
+    }
+
+    // Set rpc port reader
+    pImpl->rpcPort.setReader(pImpl->commandPro);
 
     // ===============================
     // PARSE THE CONFIGURATION OPTIONS
@@ -1170,6 +1240,11 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
     berdyOptions.includeCoMAccelerometerAsSensorInTask1 = true;
     berdyOptions.includeCoMAccelerometerAsSensorInTask2 = false;
     berdyOptions.stackOfTasksMAP = true;
+
+    // Set rpc task1 variable
+    if (berdyOptions.stackOfTasksMAP) {
+        pImpl->commandPro.task1 = true;
+    }
 
     // Berdy task1 flag
     // TODO: Probably better to have it as an option
@@ -1340,12 +1415,27 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
     pImpl->berdyData.priors.initializeSparseMatrixSize(task1_numberOfMeasurements, pImpl->berdyData.priors.task1_measurementsCovarianceMatrix);
 
     // Parse the priors
-    if (!parsePriorsGroup(config.findGroup("PRIORS"), pImpl->berdyData, pImpl->mapBerdySensorType)) {
+    if (!parsePriorsGroup(config.findGroup("PRIORS"), pImpl->berdyData, pImpl->mapBerdySensorType, pImpl->ficticiousWrenchLinks)) {
         yError() << LogPrefix << "Failed to parse PRIORS group";
         return false;
     }
     else {
         yInfo() << LogPrefix << "PRIORS group parsed correctly";
+    }
+
+    // Set the size of ficticious wrench offset map
+    if (pImpl->ficticiousWrenchLinks.size() != 0) {
+
+        // Set ficticios links flag of the rpc command processor
+        pImpl->commandPro.ficticiousLinks = true;
+
+        // Initialize to identity wrench
+        for (size_t w = 0; w < pImpl->ficticiousWrenchLinks.size(); w++) {
+
+            iDynTree::Wrench dummyWrench = iDynTree::Wrench::Zero();
+            pImpl->ficticiousWrenchOffsetMap.insert(make_pair(pImpl->ficticiousWrenchLinks.at(w), dummyWrench));
+
+        }
     }
 
     // ----------------------------
@@ -1561,6 +1651,7 @@ void HumanDynamicsEstimator::run()
                                                                                pImpl->berdyData.estimates.task1_linkNetExternalWrenchEstimates,
                                                                                pImpl->task1);
 
+
     // Update wrench values with the estimates from task1
     for (int idx = 0; idx < pImpl->wrenchSensorsLinkNames.size(); idx++) {
 
@@ -1570,15 +1661,32 @@ void HumanDynamicsEstimator::run()
 
         iDynTree::Wrench linkWrench = pImpl->berdyData.estimates.task1_linkNetExternalWrenchEstimates(linkIndex);
 
+        iDynTree::Wrench ficticiousWrench = iDynTree::Wrench::Zero();
+        if (pImpl->ficticiousWrenchOffsetMap.find(wrenchSensorLinkName) != pImpl->ficticiousWrenchOffsetMap.end()) {
+            ficticiousWrench = pImpl->ficticiousWrenchOffsetMap.at(wrenchSensorLinkName);
+        }
+
         // TODO: Double check if updating only the hands wrench measurements is better
-        wrenchValues.at(idx*6 + 0) = linkWrench.getVal(0);
-        wrenchValues.at(idx*6 + 1) = linkWrench.getVal(1);
-        wrenchValues.at(idx*6 + 2) = linkWrench.getVal(2);
-        wrenchValues.at(idx*6 + 3) = linkWrench.getVal(3);
-        wrenchValues.at(idx*6 + 4) = linkWrench.getVal(4);
-        wrenchValues.at(idx*6 + 5) = linkWrench.getVal(5);
+        wrenchValues.at(idx*6 + 0) = linkWrench.getVal(0) - ficticiousWrench.getVal(0);
+        wrenchValues.at(idx*6 + 1) = linkWrench.getVal(1) - ficticiousWrench.getVal(1);
+        wrenchValues.at(idx*6 + 2) = linkWrench.getVal(2) - ficticiousWrench.getVal(2);
+        wrenchValues.at(idx*6 + 3) = linkWrench.getVal(3) - ficticiousWrench.getVal(3);
+        wrenchValues.at(idx*6 + 4) = linkWrench.getVal(4) - ficticiousWrench.getVal(4);
+        wrenchValues.at(idx*6 + 5) = linkWrench.getVal(5) - ficticiousWrench.getVal(5);
+
+        // Check for rpc command status
+        if (pImpl->commandPro.cmdStatus && pImpl->commandPro.task1) {
+            if (pImpl->ficticiousWrenchOffsetMap.find(wrenchSensorLinkName) != pImpl->ficticiousWrenchOffsetMap.end()) {
+
+                // Set ficticious wrench offset
+                pImpl->ficticiousWrenchOffsetMap.at(wrenchSensorLinkName) = linkWrench;
+            }
+        }
 
     }
+
+    // Set rpc command status to false
+    pImpl->commandPro.cmdStatus = false;
 
     // Get the berdy sensors following its internal order
     std::vector<iDynTree::BerdySensor> berdySensors = pImpl->berdyData.helper.getSensorsOrdering();
