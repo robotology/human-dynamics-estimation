@@ -1885,9 +1885,9 @@ void HumanDynamicsEstimator::run()
         std::lock_guard<std::mutex> lock(pImpl->mutex);
 
         // Extract joint torques from estimated dynamic variables
-//        pImpl->berdyData.helper.extractJointTorquesFromDynamicVariables(estimatedDynamicVariables,
-//                                                                        pImpl->berdyData.state.jointsPosition,
-//                                                                        pImpl->berdyData.estimates.jointTorqueEstimates);
+        pImpl->berdyData.helper.extractJointTorquesFromDynamicVariables(estimatedDynamicVariables,
+                                                                        pImpl->berdyData.state.jointsPosition,
+                                                                        pImpl->berdyData.estimates.jointTorqueEstimates);
 
         // Extract links net external wrench from estimated dynamic variables
         pImpl->berdyData.helper.extractLinkNetExternalWrenchesFromDynamicVariables(estimatedDynamicVariables,
