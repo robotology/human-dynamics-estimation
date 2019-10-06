@@ -961,6 +961,8 @@ public:
     std::atomic<bool> cmdStatus{false};
     std::atomic<bool> task1{false};
     std::atomic<bool> ficticiousLinks{false};
+    std::atomic<bool> realLinks{false};
+    std::atomic<bool> reset{false};
 
     bool read(yarp::os::ConnectionReader& connection) override
     {
@@ -968,14 +970,20 @@ public:
         if (command.read(connection)) {
 
             if (command.get(0).asString() == "help") {
-                response.addString("Enter <removeWrenchOffset> to remove the wrench estimates offset on ficticious wrench sources");
+                response.addString("Enter <removeWrenchOffset> to remove the wrench estimates offset on real wrench sources");
+                response.addString("Enter <reset> to clear the wrench estimates offset on real wrench sources");
             }
-            else if (command.get(0).asString() == "removeWrenchOffset" && this->ficticiousLinks) {
+            else if (command.get(0).asString() == "removeWrenchOffset" && (this->ficticiousLinks || this-realLinks)) {
                 response.addString("Entered command <removeWrenchOffset> is correct");
                 this->cmdStatus = true;
             }
             else if (command.get(0).asString() == "removeWrenchOffset" && !this->ficticiousLinks) {
                 response.addString("Entered command <removeWrenchOffset> is correct but no ficticious links present");
+            }
+            else if (command.get(0).asString() == "reset") {
+                response.addString("Entered command <reset> is correct, clearing all wrench estimates and offsets");
+                this->cmdStatus = true;
+                this->reset = true;
             }
             else {
                 response.addString(
@@ -1061,6 +1069,9 @@ public:
 
     // Ficticious wrench offsets vector
     std::unordered_map<std::string, iDynTree::Wrench> ficticiousWrenchOffsetMap;
+
+    // Real wrench offsets vector
+    std::unordered_map<std::string, iDynTree::Wrench> realWrenchOffsetMap;
 
     // Link net external wrench analog sensor variable
     LinkNetExternalWrenchAnalogSensorData linkNetExternalWrenchAnalogSensorData;
@@ -1438,6 +1449,23 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
         }
     }
 
+    // Set the size of real wrench offset map
+    for (size_t w = 0; w < pImpl->wrenchSensorsLinkNames.size(); w++) {
+
+        std::string wrenchSensorLinkName = pImpl->wrenchSensorsLinkNames.at(w);
+
+        if (pImpl->ficticiousWrenchOffsetMap.find(wrenchSensorLinkName) == pImpl->ficticiousWrenchOffsetMap.end()) {
+
+            iDynTree::Wrench dummyWrench = iDynTree::Wrench::Zero();
+            pImpl->realWrenchOffsetMap.insert(make_pair(pImpl->wrenchSensorsLinkNames.at(w), dummyWrench));
+        }
+
+        if (pImpl->realWrenchOffsetMap.size() != 0) {
+            // Set real links flag of the rpc command processor
+            pImpl->commandPro.realLinks = true;
+        }
+    }
+
     // ----------------------------
     // Run a first dummy estimation
     // ----------------------------
@@ -1549,6 +1577,7 @@ void HumanDynamicsEstimator::run()
     std::vector<std::array<double, 6>> properAccelerations = pImpl->iHumanState->getProperAccelerations();
 
     std::array<double, 3> comProperAccelerationInBaseFrame = pImpl->iHumanState->getCoMProperAccelerationExpressedInBaseFrame();
+    std::array<double, 6> comProperAccelerationInWorldFrame = pImpl->iHumanState->getCoMProperAccelerationExpressedInWorldFrame();
 
     // Set base angular velocity
     pImpl->berdyData.state.baseAngularVelocity.setVal(0, baseVelocity.at(3));
@@ -1565,6 +1594,51 @@ void HumanDynamicsEstimator::run()
     for (size_t i = 0; i < jointsVelocity.size(); ++i) {
         pImpl->berdyData.state.jointsVelocity.setVal(i, jointsVelocity.at(i));
     }
+
+    // Using kindyn to compute link
+    // TODO: Cleanup code
+    iDynTree::KinDynComputations kinDynComputations;
+    kinDynComputations.loadRobotModel(pImpl->humanModel);
+    kinDynComputations.setFloatingBase(pImpl->humanModel.getLinkName(pImpl->berdyData.state.floatingBaseFrameIndex));
+    iDynTree::Vector4 quat;
+    quat.setVal(0, baseOrientation[0]);
+    quat.setVal(1, baseOrientation[1]);
+    quat.setVal(2, baseOrientation[2]);
+    quat.setVal(3, baseOrientation[3]);
+
+    iDynTree::Rotation rot;
+    rot.fromQuaternion(quat);
+
+    iDynTree::Position pos;
+    pos.setVal(0, basePosition[0]);
+    pos.setVal(1, basePosition[1]);
+    pos.setVal(2, basePosition[2]);
+
+    iDynTree::Transform baseTransform;
+    baseTransform.setPosition(pos);
+    baseTransform.setRotation(rot);
+
+    iDynTree::VectorDynSize s, sdot;
+    s.resize(jointsPosition.size());
+    sdot.resize(jointsPosition.size());
+    for (size_t idx = 0; idx < jointsPosition.size(); idx++)
+    {
+        s.setVal(idx, jointsPosition[idx]);
+        sdot.setVal(idx, jointsVelocity[idx]);
+    }
+
+    // TODO clean this workaround
+    iDynTree::Vector3 gravity;
+    gravity.zero();
+    gravity(0) = pImpl->gravity(0);
+    gravity(1) = pImpl->gravity(1);
+    gravity(2) = pImpl->gravity(2);
+    kinDynComputations.setRobotState(baseTransform,
+                                     s,
+                                     iDynTree::Twist::Zero(),
+                                     sdot,
+                                     gravity);
+
 
     // Fill in the y vector with sensor measurements for the FT sensors
     std::vector<double> wrenchValues = pImpl->iHumanWrench->getWrenches();
@@ -1601,10 +1675,19 @@ void HumanDynamicsEstimator::run()
                     // Filling y vector with zero values for NET_EXT_WRENCH sensors
                     for (int idx = 0; idx < pImpl->wrenchSensorsLinkNames.size(); idx++) {
                         std::string wrenchSensorLinkName = pImpl->wrenchSensorsLinkNames.at(idx);
+
+                        iDynTree::Transform world_H_link = kinDynComputations.getWorldTransform(wrenchSensorLinkName);
+                        iDynTree::Wrench offsetWrenchInWorldFrame = iDynTree::Wrench::Zero();
+                        iDynTree::Wrench offsetWrenchInLinkFrame = iDynTree::Wrench::Zero();
+                        if (pImpl->realWrenchOffsetMap.find(wrenchSensorLinkName) != pImpl->realWrenchOffsetMap.end()) {
+                            offsetWrenchInWorldFrame = pImpl->realWrenchOffsetMap.at(wrenchSensorLinkName);
+                            offsetWrenchInLinkFrame = world_H_link.getRotation().inverse() * offsetWrenchInWorldFrame;
+                        }
+
                         if (wrenchSensorLinkName.compare(task1Sensor.id) == 0) {
                             for (int i = 0; i < 6; i++)
                             {
-                                pImpl->berdyData.buffers.task1_measurements(found->second.offset + i) = wrenchValues.at(idx*6 + i);
+                                pImpl->berdyData.buffers.task1_measurements(found->second.offset + i) = wrenchValues.at(idx*6 + i) - offsetWrenchInLinkFrame.getVal(i);
                             }
                             break;
                         }
@@ -1652,36 +1735,72 @@ void HumanDynamicsEstimator::run()
                                                                                pImpl->task1);
 
 
+
     // Update wrench values with the estimates from task1
     for (int idx = 0; idx < pImpl->wrenchSensorsLinkNames.size(); idx++) {
 
         std::string wrenchSensorLinkName = pImpl->wrenchSensorsLinkNames.at(idx);
+        iDynTree::Transform world_H_link = kinDynComputations.getWorldTransform(wrenchSensorLinkName);
 
         iDynTree::LinkIndex linkIndex = pImpl->berdyData.helper.model().getLinkIndex(wrenchSensorLinkName);
 
         iDynTree::Wrench linkWrench = pImpl->berdyData.estimates.task1_linkNetExternalWrenchEstimates(linkIndex);
 
-        iDynTree::Wrench ficticiousWrench = iDynTree::Wrench::Zero();
-        if (pImpl->ficticiousWrenchOffsetMap.find(wrenchSensorLinkName) != pImpl->ficticiousWrenchOffsetMap.end()) {
-            ficticiousWrench = pImpl->ficticiousWrenchOffsetMap.at(wrenchSensorLinkName);
-        }
-
         // TODO: Double check if updating only the hands wrench measurements is better
-        wrenchValues.at(idx*6 + 0) = linkWrench.getVal(0) - ficticiousWrench.getVal(0);
-        wrenchValues.at(idx*6 + 1) = linkWrench.getVal(1) - ficticiousWrench.getVal(1);
-        wrenchValues.at(idx*6 + 2) = linkWrench.getVal(2) - ficticiousWrench.getVal(2);
-        wrenchValues.at(idx*6 + 3) = linkWrench.getVal(3) - ficticiousWrench.getVal(3);
-        wrenchValues.at(idx*6 + 4) = linkWrench.getVal(4) - ficticiousWrench.getVal(4);
-        wrenchValues.at(idx*6 + 5) = linkWrench.getVal(5) - ficticiousWrench.getVal(5);
+        wrenchValues.at(idx*6 + 0) = linkWrench.getVal(0);
+        wrenchValues.at(idx*6 + 1) = linkWrench.getVal(1);
+        wrenchValues.at(idx*6 + 2) = linkWrench.getVal(2);
+        wrenchValues.at(idx*6 + 3) = linkWrench.getVal(3);
+        wrenchValues.at(idx*6 + 4) = linkWrench.getVal(4);
+        wrenchValues.at(idx*6 + 5) = linkWrench.getVal(5);
 
         // Check for rpc command status
-        if (pImpl->commandPro.cmdStatus && pImpl->commandPro.task1) {
-            if (pImpl->ficticiousWrenchOffsetMap.find(wrenchSensorLinkName) != pImpl->ficticiousWrenchOffsetMap.end()) {
+        if (pImpl->commandPro.cmdStatus && pImpl->commandPro.realLinks) {
 
-                // Set ficticious wrench offset
-                pImpl->ficticiousWrenchOffsetMap.at(wrenchSensorLinkName) = linkWrench;
+            if (pImpl->realWrenchOffsetMap.find(wrenchSensorLinkName) != pImpl->realWrenchOffsetMap.end()) {
+
+                // Set real wrench offset
+                iDynTree::Wrench rateOfChangeOfMomentum = iDynTree::Wrench::Zero();
+                rateOfChangeOfMomentum.setVal(0, comProperAccelerationInWorldFrame[0]/2);
+                rateOfChangeOfMomentum.setVal(1, comProperAccelerationInWorldFrame[1]/2);
+                rateOfChangeOfMomentum.setVal(2, comProperAccelerationInWorldFrame[2]/2);
+                rateOfChangeOfMomentum.setVal(3, comProperAccelerationInWorldFrame[3]/2);
+                rateOfChangeOfMomentum.setVal(4, comProperAccelerationInWorldFrame[4]/2);
+                rateOfChangeOfMomentum.setVal(5, comProperAccelerationInWorldFrame[5]/2);
+
+                iDynTree::Wrench realWrenchOffset = iDynTree::Wrench::Zero();
+
+                pImpl->realWrenchOffsetMap.at(wrenchSensorLinkName) = world_H_link.getRotation() * linkWrench -  rateOfChangeOfMomentum;
+
             }
         }
+
+    }
+
+    // Clear wrench offset values and estimates
+    if (pImpl->commandPro.cmdStatus && pImpl->commandPro.reset) {
+
+        yInfo() << LogPrefix << "Clearing wrenches";
+        for (int idx = 0; idx < pImpl->wrenchSensorsLinkNames.size(); idx++) {
+
+            std::string wrenchSensorLinkName = pImpl->wrenchSensorsLinkNames.at(idx);
+
+            // Clear input wrench values once
+            wrenchValues.at(idx*6 + 0) = 0;
+            wrenchValues.at(idx*6 + 1) = 0;
+            wrenchValues.at(idx*6 + 2) = 0;
+            wrenchValues.at(idx*6 + 3) = 0;
+            wrenchValues.at(idx*6 + 4) = 0;
+            wrenchValues.at(idx*6 + 5) = 0;
+
+            if (pImpl->realWrenchOffsetMap.find(wrenchSensorLinkName) != pImpl->realWrenchOffsetMap.end()) {
+
+                pImpl->realWrenchOffsetMap.at(wrenchSensorLinkName) = iDynTree::Wrench::Zero();
+
+            }
+        }
+
+        pImpl->commandPro.reset = false;
 
     }
 
@@ -1872,10 +1991,6 @@ void HumanDynamicsEstimator::run()
 
 
     }
-
-    //yInfo() << LogPrefix << "================ Berdy classical acceleration estimates size is " << pImpl->berdyData.estimates.linkClassicalProperAccelerationEstimates.getNrOfLinks() << " ==============";
-    //yInfo() << pImpl->berdyData.estimates.linkClassicalProperAccelerationEstimates.toString(pImpl->humanModel).c_str();
-
 
     // ===========================
     // EXPOSE DATA FOR IHUMANSTATE

@@ -199,7 +199,7 @@ public:
     HumanSensorData humanSensorData;
 
     std::array<double, 3> CoMProperAccelerationExpressedInBaseFrame;
-    std::array<double, 3> CoMProperAccelerationExpressedInWorldFrame;
+    std::array<double, 6> CoMProperAccelerationExpressedInWorldFrame;
 
     // IK parameters
     int ikPoolSize{1};
@@ -848,7 +848,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
 
     // Initialize CoM proper acceleration to zero
     pImpl->CoMProperAccelerationExpressedInBaseFrame = std::array<double, 3>{0.0, 0.0, 0.0};
-    pImpl->CoMProperAccelerationExpressedInWorldFrame = std::array<double, 3>{0.0, 0.0, 0.0};
+    pImpl->CoMProperAccelerationExpressedInWorldFrame = std::array<double, 6>{0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
     // Debug Info
     yInfo() << LogPrefix << "Accelerometers size : " << pImpl->humanSensorData.accelerometerSensorNames.size();
@@ -1362,7 +1362,10 @@ void HumanStateProvider::run()
 
             pImpl->CoMProperAccelerationExpressedInWorldFrame = {comSpatialAccExpressedInWorld.getVal(0),
                                                                  comSpatialAccExpressedInWorld.getVal(1),
-                                                                 comSpatialAccExpressedInWorld.getVal(2)};
+                                                                 comSpatialAccExpressedInWorld.getVal(2),
+                                                                 comSpatialAccExpressedInWorld.getVal(3),
+                                                                 comSpatialAccExpressedInWorld.getVal(4),
+                                                                 comSpatialAccExpressedInWorld.getVal(5)};
 
         }
 
@@ -2758,7 +2761,7 @@ std::array<double, 3> HumanStateProvider::getCoMProperAccelerationExpressedInBas
     return pImpl->CoMProperAccelerationExpressedInBaseFrame;
 }
 
-std::array<double, 3> HumanStateProvider::getCoMProperAccelerationExpressedInWorldFrame() const
+std::array<double, 6> HumanStateProvider::getCoMProperAccelerationExpressedInWorldFrame() const
 {
     std::lock_guard<std::mutex> lock(pImpl->mutex);
     return pImpl->CoMProperAccelerationExpressedInWorldFrame;
