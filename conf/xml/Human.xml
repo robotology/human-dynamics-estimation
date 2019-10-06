@@ -19,7 +19,7 @@
 
     <device type="human_state_provider" name="HumanStateProvider">
         <param name="period">0.02</param>
-        <param name="urdf">humanSubject02_48dof.urdf</param>
+        <param name="urdf">humanSubject03_66dof.urdf</param>
         <param name="floatingBaseFrame">(Pelvis, XsensSuit::vLink::Pelvis)</param>
         <!--Use none for Zero values, gravity for compensating gravity acceleration, proper for proper sensor acceleration-->
         <param name="accelerometerSensorMeasurementsOption">gravity</param>
@@ -235,7 +235,7 @@
 
     <device type="human_wrench_provider" name="HumanWrenchProvider">
         <param name="period">0.100</param>
-        <param name="human_urdf">humanSubject02_48dof.urdf</param>
+        <param name="human_urdf">humanSubject03_66dof.urdf</param>
         <param name="pHRIScenario">false</param>
         <param name="number_of_sources">4</param>
         <param name="sources">(FTShoeLeft FTShoeRight DummyLeftHand DummyRightHand)</param>
@@ -413,7 +413,7 @@
 
     <!-- <device type="human_control_board" name="HumanControlBoard">
         <param name="period">0.100</param>
-        <param name="urdf">humanSubject02_48dof.urdf</param>
+        <param name="urdf">humanSubject03_66dof.urdf</param>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
                 <elem name="HumanControlBoardLabel1">HumanStateProvider</elem>
