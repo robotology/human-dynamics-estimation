@@ -1548,7 +1548,7 @@ void HumanDynamicsEstimator::run()
     std::vector<std::string> accelerometerSensorNames = pImpl->iHumanState->getAccelerometerNames();
     std::vector<std::array<double, 6>> properAccelerations = pImpl->iHumanState->getProperAccelerations();
 
-    std::array<double, 3> comProperAcceleration = pImpl->iHumanState->getCoMProperAcceleration();
+    std::array<double, 3> comProperAccelerationInBaseFrame = pImpl->iHumanState->getCoMProperAccelerationExpressedInBaseFrame();
 
     // Set base angular velocity
     pImpl->berdyData.state.baseAngularVelocity.setVal(0, baseVelocity.at(3));
@@ -1591,9 +1591,9 @@ void HumanDynamicsEstimator::run()
                 case iDynTree::COM_ACCELEROMETER_SENSOR:
                 {
                     // Set com proper acceleration measurements
-                    pImpl->berdyData.buffers.task1_measurements(found->second.offset + 0) = comProperAcceleration[0];
-                    pImpl->berdyData.buffers.task1_measurements(found->second.offset + 1) = comProperAcceleration[1];
-                    pImpl->berdyData.buffers.task1_measurements(found->second.offset + 2) = comProperAcceleration[2];
+                    pImpl->berdyData.buffers.task1_measurements(found->second.offset + 0) = comProperAccelerationInBaseFrame[0];
+                    pImpl->berdyData.buffers.task1_measurements(found->second.offset + 1) = comProperAccelerationInBaseFrame[1];
+                    pImpl->berdyData.buffers.task1_measurements(found->second.offset + 2) = comProperAccelerationInBaseFrame[2];
                 }
                 break;
                 case iDynTree::NET_EXT_WRENCH_SENSOR:
@@ -1714,9 +1714,9 @@ void HumanDynamicsEstimator::run()
                 case iDynTree::COM_ACCELEROMETER_SENSOR:
                 {
                     // Set com proper acceleration measurements
-                    pImpl->berdyData.buffers.measurements(found->second.offset + 0) = comProperAcceleration[0];
-                    pImpl->berdyData.buffers.measurements(found->second.offset + 1) = comProperAcceleration[1];
-                    pImpl->berdyData.buffers.measurements(found->second.offset + 2) = comProperAcceleration[2];
+                    pImpl->berdyData.buffers.measurements(found->second.offset + 0) = comProperAccelerationInBaseFrame[0];
+                    pImpl->berdyData.buffers.measurements(found->second.offset + 1) = comProperAccelerationInBaseFrame[1];
+                    pImpl->berdyData.buffers.measurements(found->second.offset + 2) = comProperAccelerationInBaseFrame[2];
                 }
                 break;
                 case iDynTree::THREE_AXIS_ANGULAR_ACCELEROMETER_SENSOR:

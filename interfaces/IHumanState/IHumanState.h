@@ -39,7 +39,8 @@ public:
     virtual std::array<double, 3> getCoMPosition() const = 0;
     virtual std::array<double, 3> getCoMVelocity() const = 0;
     virtual std::array<double, 3> getCoMBiasAcceleration() const = 0;
-    virtual std::array<double, 3> getCoMProperAcceleration() const = 0;
+    virtual std::array<double, 3> getCoMProperAccelerationExpressedInBaseFrame() const = 0;
+    virtual std::array<double, 3> getCoMProperAccelerationExpressedInWorldFrame() const = 0;
 
     virtual std::vector<std::string> getAccelerometerNames() const = 0;
     virtual std::vector<std::array<double, 3>> getProperLinAccelerations() const = 0;

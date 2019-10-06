@@ -198,7 +198,8 @@ public:
     bool useFBAccelerationFromWearableData;
     HumanSensorData humanSensorData;
 
-    std::array<double, 3> CoMProperAcceleration;
+    std::array<double, 3> CoMProperAccelerationExpressedInBaseFrame;
+    std::array<double, 3> CoMProperAccelerationExpressedInWorldFrame;
 
     // IK parameters
     int ikPoolSize{1};
@@ -846,7 +847,8 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     }
 
     // Initialize CoM proper acceleration to zero
-    pImpl->CoMProperAcceleration = std::array<double, 3>{0.0, 0.0, 0.0};
+    pImpl->CoMProperAccelerationExpressedInBaseFrame = std::array<double, 3>{0.0, 0.0, 0.0};
+    pImpl->CoMProperAccelerationExpressedInWorldFrame = std::array<double, 3>{0.0, 0.0, 0.0};
 
     // Debug Info
     yInfo() << LogPrefix << "Accelerometers size : " << pImpl->humanSensorData.accelerometerSensorNames.size();
@@ -1260,9 +1262,6 @@ void HumanStateProvider::run()
             // Get accelerometer fbAcceleration value stored in the buffer
             iDynTree::LinAcceleration fbAcceleration = pImpl->fbAccelerationMatrices.at(accelerometerParentLinkName);
 
-            //yInfo() << "====================Accelerometer name : " << pImpl->humanSensorData.accelerometerSensorNames.at(accelerometerCount) << "=================";
-            //yInfo() << "Free body acceleration : " << fbAcceleration.toString().c_str();
-
             // Compute corrected acceleration
             iDynTree::SpatialAcc correctedAcceleration;
 
@@ -1281,37 +1280,12 @@ void HumanStateProvider::run()
                 correctedAcceleration.setVal(2,  - pImpl->worldGravity(2));
             }
 
-            //yInfo() << LogPrefix << "Link accelerations : " << pImpl->linkAccelerations.at(accelerometerParentLinkName).toString().c_str();
-
             // Set the angular part to link angular acceleration
             iDynTree::AngAcceleration linkAngAcc = pImpl->linkAccelerations.at(accelerometerParentLinkName).getAngularVec3();
-
-            //yInfo() << LogPrefix << "Link angular acceleration : " << linkAngAcc.toString().c_str();
 
             correctedAcceleration.setVal(3, linkAngAcc.getVal(0));
             correctedAcceleration.setVal(4, linkAngAcc.getVal(1));
             correctedAcceleration.setVal(5, linkAngAcc.getVal(2));
-
-//            yInfo() << LogPrefix << "World_H_Base transform : ";
-//            yInfo() << "Position : " << pImpl->baseTransformSolution.getPosition().toString().c_str();
-//            yInfo() << "Rotation : " << pImpl->baseTransformSolution.getRotation().toString().c_str();
-
-//            yInfo() << LogPrefix << "Base_H_Sensor transform : ";
-//            yInfo() << "Position : " << base_H_sensor.getPosition().toString().c_str();
-//            yInfo() << "Rotation : " << base_H_sensor.getRotation().toString().c_str();
-
-//            yInfo() << LogPrefix << "World_H_Sensor transform : ";
-//            yInfo() << "Position : " << world_H_accelerometer.getPosition().toString().c_str();
-//            yInfo() << "Rotation : " << world_H_accelerometer.getRotation().toString().c_str();
-
-
-//            yInfo() << "Corrected accceleration : " << correctedAcceleration.toString().c_str();
-
-//            // TODO: Double check this computation
-//            iDynTree::Rotation w_R_accelerometer = world_H_accelerometer.getRotation();
-//            iDynTree::SpatialAcc properAcceleration = w_R_accelerometer.inverse() * correctedAcceleration;
-
-//            yInfo() << "Sensor orientaion : " << pImpl->sensorOrientationMatrices.at(accelerometerParentLinkName).toString().c_str();
 
             // Compute proper acceleration
             iDynTree::SpatialAcc properAcceleration = pImpl->sensorOrientationMatrices.at(accelerometerParentLinkName).inverse() * correctedAcceleration;
@@ -1330,9 +1304,6 @@ void HumanStateProvider::run()
 
                 pImpl->humanSensorData.accelerometerSensorMeasurements.at(accelerometerCount) = properAcce;
 
-//                yInfo() << "Proper acceleraton : " << properAcceleration.toString().c_str();
-//                yInfo() << "================================================================================================================";
-
                 // Increase accelerometer count
                 accelerometerCount++;
 
@@ -1342,39 +1313,56 @@ void HumanStateProvider::run()
         }
 
         // Compute CoM proper acceleration
-        iDynTree::SpatialAcc comSpatialAcc; // abuse of notation
+        iDynTree::SpatialAcc comSpatialAccExpressedInBase; // abuse of notation
+        iDynTree::SpatialAcc comSpatialAccExpressedInWorld;
 
         if (pImpl->humanSensorData.accelerometerSensorMeasurementsOption == "proper") {
 
             // Set the linear part of com spatial acceleartion
-            comSpatialAcc.setVal(0, pImpl->humanModel.getTotalMass() * (CoM_biasacceleration[0] - pImpl->worldGravity(0)));
-            comSpatialAcc.setVal(1, pImpl->humanModel.getTotalMass() * (CoM_biasacceleration[1] - pImpl->worldGravity(1)));
-            comSpatialAcc.setVal(2, pImpl->humanModel.getTotalMass() * (CoM_biasacceleration[2] - pImpl->worldGravity(2)));
+            comSpatialAccExpressedInBase.setVal(0, pImpl->humanModel.getTotalMass() * (CoM_biasacceleration[0] - pImpl->worldGravity(0)));
+            comSpatialAccExpressedInBase.setVal(1, pImpl->humanModel.getTotalMass() * (CoM_biasacceleration[1] - pImpl->worldGravity(1)));
+            comSpatialAccExpressedInBase.setVal(2, pImpl->humanModel.getTotalMass() * (CoM_biasacceleration[2] - pImpl->worldGravity(2)));
+
+            comSpatialAccExpressedInWorld.setVal(0, pImpl->humanModel.getTotalMass() * (CoM_biasacceleration[0] - pImpl->worldGravity(0)));
+            comSpatialAccExpressedInWorld.setVal(1, pImpl->humanModel.getTotalMass() * (CoM_biasacceleration[1] - pImpl->worldGravity(1)));
+            comSpatialAccExpressedInWorld.setVal(2, pImpl->humanModel.getTotalMass() * (CoM_biasacceleration[2] - pImpl->worldGravity(2)));
         }
         else if (pImpl->humanSensorData.accelerometerSensorMeasurementsOption == "gravity") {
 
             // Set the linear part of com spatial acceleartion
-            comSpatialAcc.setVal(0,  - pImpl->worldGravity(0) * pImpl->humanModel.getTotalMass());
-            comSpatialAcc.setVal(1,  - pImpl->worldGravity(1) * pImpl->humanModel.getTotalMass());
-            comSpatialAcc.setVal(2,  - pImpl->worldGravity(2) * pImpl->humanModel.getTotalMass());
+            comSpatialAccExpressedInBase.setVal(0,  - pImpl->worldGravity(0) * pImpl->humanModel.getTotalMass());
+            comSpatialAccExpressedInBase.setVal(1,  - pImpl->worldGravity(1) * pImpl->humanModel.getTotalMass());
+            comSpatialAccExpressedInBase.setVal(2,  - pImpl->worldGravity(2) * pImpl->humanModel.getTotalMass());
+
+            comSpatialAccExpressedInWorld.setVal(0,  - pImpl->worldGravity(0) * pImpl->humanModel.getTotalMass());
+            comSpatialAccExpressedInWorld.setVal(1,  - pImpl->worldGravity(1) * pImpl->humanModel.getTotalMass());
+            comSpatialAccExpressedInWorld.setVal(2,  - pImpl->worldGravity(2) * pImpl->humanModel.getTotalMass());
         }
 
         // Set the angular part of com spatial acceleration to zero
-        comSpatialAcc.setVal(3, 0.0);
-        comSpatialAcc.setVal(4, 0.0);
-        comSpatialAcc.setVal(5, 0.0);
+        comSpatialAccExpressedInBase.setVal(3, 0.0);
+        comSpatialAccExpressedInBase.setVal(4, 0.0);
+        comSpatialAccExpressedInBase.setVal(5, 0.0);
+
+        comSpatialAccExpressedInWorld.setVal(3, 0.0);
+        comSpatialAccExpressedInWorld.setVal(4, 0.0);
+        comSpatialAccExpressedInWorld.setVal(5, 0.0);
 
         // Compute com proper acceleration and multiply with the total model mass
-        iDynTree::SpatialAcc comProperAcceleration = pImpl->baseTransformSolution.getRotation().inverse() * comSpatialAcc;
+        iDynTree::SpatialAcc CoMProperAccelerationExpressedInBaseFrame = pImpl->baseTransformSolution.getRotation().inverse() * comSpatialAccExpressedInBase;
 
         // Expose proper com acceleration for IHumanState interface
         {
 
             std::lock_guard<std::mutex> lock(pImpl->mutex);
 
-            pImpl->CoMProperAcceleration = {comProperAcceleration.getVal(0),
-                                            comProperAcceleration.getVal(1),
-                                            comProperAcceleration.getVal(2)};
+            pImpl->CoMProperAccelerationExpressedInBaseFrame = {CoMProperAccelerationExpressedInBaseFrame.getVal(0),
+                                                                CoMProperAccelerationExpressedInBaseFrame.getVal(1),
+                                                                CoMProperAccelerationExpressedInBaseFrame.getVal(2)};
+
+            pImpl->CoMProperAccelerationExpressedInWorldFrame = {comSpatialAccExpressedInWorld.getVal(0),
+                                                                 comSpatialAccExpressedInWorld.getVal(1),
+                                                                 comSpatialAccExpressedInWorld.getVal(2)};
 
         }
 
@@ -2764,10 +2752,16 @@ std::array<double, 3> HumanStateProvider::getCoMBiasAcceleration() const
     return pImpl->solution.CoMBiasAcceleration;
 }
 
-std::array<double, 3> HumanStateProvider::getCoMProperAcceleration() const
+std::array<double, 3> HumanStateProvider::getCoMProperAccelerationExpressedInBaseFrame() const
 {
     std::lock_guard<std::mutex> lock(pImpl->mutex);
-    return pImpl->CoMProperAcceleration;
+    return pImpl->CoMProperAccelerationExpressedInBaseFrame;
+}
+
+std::array<double, 3> HumanStateProvider::getCoMProperAccelerationExpressedInWorldFrame() const
+{
+    std::lock_guard<std::mutex> lock(pImpl->mutex);
+    return pImpl->CoMProperAccelerationExpressedInWorldFrame;
 }
 
 std::vector<std::string> HumanStateProvider::getAccelerometerNames() const
