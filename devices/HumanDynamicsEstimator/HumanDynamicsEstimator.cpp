@@ -54,7 +54,19 @@ constexpr double DefaultPeriod = 0.01;
 
 using namespace hde::devices;
 
-struct LinkNetExternalWrenchAnalogSensorData
+struct LinkNetExternalWrenchEstimatesAnalogSensorData
+{
+    size_t numberOfChannels = 0;
+    std::vector<double> measurements;
+};
+
+struct LinkExternalWrenchMeasurementsAnalogSensorData
+{
+    size_t numberOfChannels = 0;
+    std::vector<double> measurements;
+};
+
+struct AllWrenchAnalogSensorData
 {
     size_t numberOfChannels = 0;
     std::vector<double> measurements;
@@ -1074,7 +1086,14 @@ public:
     std::unordered_map<std::string, iDynTree::Wrench> realWrenchOffsetMap;
 
     // Link net external wrench analog sensor variable
-    LinkNetExternalWrenchAnalogSensorData linkNetExternalWrenchAnalogSensorData;
+    LinkNetExternalWrenchEstimatesAnalogSensorData linkNetExternalWrenchEstimatesAnalogSensorData;
+
+    // Link external wrench measurements analog sensor variable
+    LinkExternalWrenchMeasurementsAnalogSensorData linkExternalWrenchMeasurementAnalogSensorData;
+
+    // TODO: In case of using multiple analog sensor usage in the future, we can remove this variable
+    // Analog sensor variable containing the offset removed wrench measurements and the extimates link net external wrench estimates
+    AllWrenchAnalogSensorData allWrenchAnalogSensorData;
 };
 
 HumanDynamicsEstimator::HumanDynamicsEstimator()
@@ -1152,8 +1171,16 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
     // Initialize the number of channels of the equivalent IAnalogSensor
     {
         std::lock_guard<std::mutex> lock(pImpl->mutex);
-        pImpl->linkNetExternalWrenchAnalogSensorData.measurements.resize(6 * pImpl->wrenchSensorsLinkNames.size(), 0);
-        pImpl->linkNetExternalWrenchAnalogSensorData.numberOfChannels = 6 * pImpl->wrenchSensorsLinkNames.size();
+        pImpl->linkNetExternalWrenchEstimatesAnalogSensorData.measurements.resize(6 * pImpl->wrenchSensorsLinkNames.size(), 0);
+        pImpl->linkNetExternalWrenchEstimatesAnalogSensorData.numberOfChannels = 6 * pImpl->wrenchSensorsLinkNames.size();
+
+        pImpl->linkExternalWrenchMeasurementAnalogSensorData.measurements.resize(6 * pImpl->wrenchSensorsLinkNames.size(), 0);
+        pImpl->linkExternalWrenchMeasurementAnalogSensorData.numberOfChannels = 6 * pImpl->wrenchSensorsLinkNames.size();
+
+        pImpl->allWrenchAnalogSensorData.measurements.resize(pImpl->linkNetExternalWrenchEstimatesAnalogSensorData.measurements.size() +
+                                                             pImpl->linkExternalWrenchMeasurementAnalogSensorData.measurements.size(), 0);
+        pImpl->allWrenchAnalogSensorData.numberOfChannels = pImpl->linkNetExternalWrenchEstimatesAnalogSensorData.numberOfChannels +
+                                                            pImpl->linkExternalWrenchMeasurementAnalogSensorData.numberOfChannels;
     }
 
     yInfo() << LogPrefix << "*** ===========================";
@@ -1643,6 +1670,9 @@ void HumanDynamicsEstimator::run()
     // Fill in the y vector with sensor measurements for the FT sensors
     std::vector<double> wrenchValues = pImpl->iHumanWrench->getWrenches();
 
+    std::vector<double> offsetRemovedWrenchValues;
+    offsetRemovedWrenchValues.resize(wrenchValues.size(), 0.0);
+
     // Get the task1 berdy sensors following its internal order
     std::vector<iDynTree::BerdySensor> task1BerdySensors = pImpl->berdyData.helper.getSensorsOrdering(pImpl->task1);
 
@@ -1685,9 +1715,15 @@ void HumanDynamicsEstimator::run()
                         }
 
                         if (wrenchSensorLinkName.compare(task1Sensor.id) == 0) {
-                            for (int i = 0; i < 6; i++)
-                            {
-                                pImpl->berdyData.buffers.task1_measurements(found->second.offset + i) = wrenchValues.at(idx*6 + i) - offsetWrenchInLinkFrame.getVal(i);
+                            std::vector<std::string>::iterator it = std::find(pImpl->wrenchSensorsLinkNames.begin(),  pImpl->wrenchSensorsLinkNames.end(), wrenchSensorLinkName);
+                            if (it != pImpl->wrenchSensorsLinkNames.end()) {
+                                int index = std::distance(pImpl->wrenchSensorsLinkNames.begin(), it);
+
+                                for (int i = 0; i < 6; i++)
+                                {
+                                    offsetRemovedWrenchValues.at(index*6 + i) = wrenchValues.at(idx*6 + i) - offsetWrenchInLinkFrame.getVal(i);
+                                    pImpl->berdyData.buffers.task1_measurements(found->second.offset + i) = offsetRemovedWrenchValues.at(index*6 + i);
+                                }
                             }
                             break;
                         }
@@ -2067,23 +2103,40 @@ void HumanDynamicsEstimator::run()
         // containing links we are interested to see the extracted wrench estimates
         for (int i = 0; i < pImpl->wrenchSensorsLinkNames.size(); i++) {
 
+            // Expose offset removed wrench to link external wrench measurement analog sensor variable
+            pImpl->linkExternalWrenchMeasurementAnalogSensorData.measurements[6 * i + 0] = offsetRemovedWrenchValues.at(i*6 + 0);
+            pImpl->linkExternalWrenchMeasurementAnalogSensorData.measurements[6 * i + 1] = offsetRemovedWrenchValues.at(i*6 + 1);
+            pImpl->linkExternalWrenchMeasurementAnalogSensorData.measurements[6 * i + 2] = offsetRemovedWrenchValues.at(i*6 + 2);
+            pImpl->linkExternalWrenchMeasurementAnalogSensorData.measurements[6 * i + 3] = offsetRemovedWrenchValues.at(i*6 + 3);
+            pImpl->linkExternalWrenchMeasurementAnalogSensorData.measurements[6 * i + 4] = offsetRemovedWrenchValues.at(i*6 + 4);
+            pImpl->linkExternalWrenchMeasurementAnalogSensorData.measurements[6 * i + 5] = offsetRemovedWrenchValues.at(i*6 + 5);
+
+            // Expose offset removed wrench to all wrench analog sensor variable
+            pImpl->allWrenchAnalogSensorData.measurements[2 * 6 * i + 0] = offsetRemovedWrenchValues.at(i*6 + 0);
+            pImpl->allWrenchAnalogSensorData.measurements[2 * 6 * i + 1] = offsetRemovedWrenchValues.at(i*6 + 1);
+            pImpl->allWrenchAnalogSensorData.measurements[2 * 6 * i + 2] = offsetRemovedWrenchValues.at(i*6 + 2);
+            pImpl->allWrenchAnalogSensorData.measurements[2 * 6 * i + 3] = offsetRemovedWrenchValues.at(i*6 + 3);
+            pImpl->allWrenchAnalogSensorData.measurements[2 * 6 * i + 4] = offsetRemovedWrenchValues.at(i*6 + 4);
+            pImpl->allWrenchAnalogSensorData.measurements[2 * 6 * i + 5] = offsetRemovedWrenchValues.at(i*6 + 5);
+
+            // Expose net link external wrench estimates to analog sensor data variable
             std::string linkName = pImpl->wrenchSensorsLinkNames.at(i);
+            iDynTree::Wrench linkNetExternalWrench = pImpl->berdyData.estimates.linkNetExternalWrenchEstimates(pImpl->humanModel.getLinkIndex(linkName));
 
-            // Get world_H_link transform
-            iDynTree::Transform world_H_link = kinDynComputations.getWorldTransform(linkName);   
-            world_H_link.setPosition(iDynTree::Position::Zero());
-            //yInfo() << "----> link name " << linkName << " " << pImpl->berdyData.estimates.linkNetExternalWrenchEstimates(pImpl->humanModel.getLinkIndex(linkName)).toString();
+            pImpl->linkNetExternalWrenchEstimatesAnalogSensorData.measurements[6 * i + 0] = linkNetExternalWrench.getLinearVec3()(0);
+            pImpl->linkNetExternalWrenchEstimatesAnalogSensorData.measurements[6 * i + 1] = linkNetExternalWrench.getLinearVec3()(1);
+            pImpl->linkNetExternalWrenchEstimatesAnalogSensorData.measurements[6 * i + 2] = linkNetExternalWrench.getLinearVec3()(2);
+            pImpl->linkNetExternalWrenchEstimatesAnalogSensorData.measurements[6 * i + 3] = linkNetExternalWrench.getAngularVec3()(0);
+            pImpl->linkNetExternalWrenchEstimatesAnalogSensorData.measurements[6 * i + 4] = linkNetExternalWrench.getAngularVec3()(1);
+            pImpl->linkNetExternalWrenchEstimatesAnalogSensorData.measurements[6 * i + 5] = linkNetExternalWrench.getAngularVec3()(2);
 
-//            iDynTree::Wrench linkNetExternalWrench = (world_H_link.inverse()) * pImpl->berdyData.estimates.linkNetExternalWrenchEstimates(pImpl->humanModel.getLinkIndex(linkName));
-            iDynTree::Wrench linkNetExternalWrench = (iDynTree::Transform::Identity()) * pImpl->berdyData.estimates.linkNetExternalWrenchEstimates(pImpl->humanModel.getLinkIndex(linkName));
-
-            //yInfo() << "----> link name " << linkName << " " << linkNetExternalWrench.toString();
-            pImpl->linkNetExternalWrenchAnalogSensorData.measurements[6 * i + 0] = linkNetExternalWrench.getLinearVec3()(0);
-            pImpl->linkNetExternalWrenchAnalogSensorData.measurements[6 * i + 1] = linkNetExternalWrench.getLinearVec3()(1);
-            pImpl->linkNetExternalWrenchAnalogSensorData.measurements[6 * i + 2] = linkNetExternalWrench.getLinearVec3()(2);
-            pImpl->linkNetExternalWrenchAnalogSensorData.measurements[6 * i + 3] = linkNetExternalWrench.getAngularVec3()(0);
-            pImpl->linkNetExternalWrenchAnalogSensorData.measurements[6 * i + 4] = linkNetExternalWrench.getAngularVec3()(1);
-            pImpl->linkNetExternalWrenchAnalogSensorData.measurements[6 * i + 5] = linkNetExternalWrench.getAngularVec3()(2);
+            // Expose estimated wrench to all wrench analog sensor variable
+            pImpl->allWrenchAnalogSensorData.measurements[2 * 6 * i + 6] = linkNetExternalWrench.getLinearVec3()(0);
+            pImpl->allWrenchAnalogSensorData.measurements[2 * 6 * i + 7] = linkNetExternalWrench.getLinearVec3()(1);
+            pImpl->allWrenchAnalogSensorData.measurements[2 * 6 * i + 8] = linkNetExternalWrench.getLinearVec3()(2);
+            pImpl->allWrenchAnalogSensorData.measurements[2 * 6 * i + 9] = linkNetExternalWrench.getLinearVec3()(3);
+            pImpl->allWrenchAnalogSensorData.measurements[2 * 6 * i + 10] = linkNetExternalWrench.getLinearVec3()(4);
+            pImpl->allWrenchAnalogSensorData.measurements[2 * 6 * i + 11] = linkNetExternalWrench.getLinearVec3()(5);
 
         }
 
@@ -2241,12 +2294,12 @@ std::vector<double> HumanDynamicsEstimator::getJointTorques() const
 
 int HumanDynamicsEstimator::read(yarp::sig::Vector& out)
 {
-    out.resize(pImpl->linkNetExternalWrenchAnalogSensorData.measurements.size());
+    out.resize(pImpl->allWrenchAnalogSensorData.measurements.size());
 
     {
         std::lock_guard<std::mutex> lock(pImpl->mutex);
-        std::copy(pImpl->linkNetExternalWrenchAnalogSensorData.measurements.begin(),
-                  pImpl->linkNetExternalWrenchAnalogSensorData.measurements.end(),
+        std::copy(pImpl->allWrenchAnalogSensorData.measurements.begin(),
+                  pImpl->allWrenchAnalogSensorData.measurements.end(),
                   out.data());
     }
 
@@ -2262,7 +2315,7 @@ int HumanDynamicsEstimator::getState(int ch)
 int HumanDynamicsEstimator::getChannels()
 {
     std::lock_guard<std::mutex> lock(pImpl->mutex);
-    return pImpl->linkNetExternalWrenchAnalogSensorData.numberOfChannels;
+    return pImpl->linkNetExternalWrenchEstimatesAnalogSensorData.numberOfChannels;
 }
 
 int HumanDynamicsEstimator::calibrateSensor()

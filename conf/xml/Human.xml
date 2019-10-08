@@ -364,19 +364,23 @@
     <device type="analogServer" name="HumanEstimatedWrenchPublisher">
         <param name="name">/HDE/HumanEstimatedWrenchPublisher/wrench:o</param>
         <param name="period">20</param>
-        <param name="channels">24</param>
+        <param name="channels">48</param>
         <paramlist name="ports">
             <elem name="FirstSetOfChannels">0 5 0 5</elem>
             <elem name="SecondSetOfChannels">6 11 0 5</elem>
             <elem name="ThirdSetOfChannels">12 17 0 5</elem>
             <elem name="FourthSetOfChannels">18 23 0 5</elem>
+            <elem name="FifthSetOfChannels">24 29 0 5</elem>
+            <elem name="SixthSetOfChannels">30 35 0 5</elem>
+            <elem name="SeventhSetOfChannels">36 41 0 5</elem>
+            <elem name="EightSetOfChannels">42 47 0 5</elem>
         </paramlist>
         <group name="ROS">
             <param name="useROS">true</param>
-            <param name="ROS_topicName">(/HDE/EstimatedWrenchStamped/LeftFoot /HDE/EstimatedWrenchStamped/RightFoot /HDE/EstimatedWrenchStamped/LeftHand /HDE/EstimatedWrenchStamped/RightHand)</param>
+            <param name="ROS_topicName">(/HDE/OffsetRemovedMeasurementWrenchStamped/LeftFoot /HDE/EstimatedWrenchStamped/LeftFoot /HDE/OffsetRemovedMeasurementWrenchStamped/RightFoot /HDE/EstimatedWrenchStamped/RightFoot /HDE/OffsetRemovedMeasurementWrenchStamped/LeftHand /HDE/EstimatedWrenchStamped/LeftHand /HDE/OffsetRemovedMeasurementWrenchStamped/RightHand /HDE/EstimatedWrenchStamped/RightHand)</param>
             <param name="ROS_nodeName">/HDE/HumanEstimatedWrenchPublisherNode</param>
             <param name="ROS_msgType">geometry_msgs/WrenchStamped</param>
-            <param name="frame_id">(Human/LeftFoot Human/RightFoot Human/LeftHand Human/RightHand)</param>
+            <param name="frame_id">(Human/LeftFoot Human/LeftFoot Human/RightFoot Human/RightFoot Human/LeftHand Human/LeftHand Human/RightHand Human/RightHand)</param>
         </group>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
