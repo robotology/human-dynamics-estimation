@@ -4,7 +4,7 @@
         <arg name="gui" default="False"/>
         <arg name="vel" default="True"/>
         <arg name="eff" default="True"/>
-        <arg name="humanModel" default="$(find HDERviz)/urdfs/humanSubject03_66dof.urdf"/>
+        <arg name="humanModel" default="$(find HDERviz)/urdfs/humanSubject01_66dof.urdf"/>
         <arg name="rvizconfig" default="$(find HDERviz)/rviz/HDERviz.rviz" />
 
         <param name="robot_description" command="$(find xacro)/xacro.py $(arg humanModel)" />
