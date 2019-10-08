@@ -22,6 +22,8 @@
 
 #include <yarp/os/LogStream.h>
 #include <yarp/os/ResourceFinder.h>
+#include <yarp/os/RpcServer.h>
+#include <yarp/os/Vocab.h>
 
 #include <array>
 #include <atomic>
@@ -150,6 +152,124 @@ struct HumanSensorData
     std::vector<std::array<double, 6>> accelerometerSensorMeasurements;
 };
 
+class CmdParser : public yarp::os::PortReader
+{
+
+public:
+    std::array<std::atomic_bool,3> positionOffsetFlag{{ATOMIC_VAR_INIT(false), ATOMIC_VAR_INIT(false), ATOMIC_VAR_INIT(false)}};
+    std::array<std::atomic_bool,3> orientationOffsetFlag{{ATOMIC_VAR_INIT(false), ATOMIC_VAR_INIT(false), ATOMIC_VAR_INIT(false)}};
+    std::atomic<bool> cmdStatus{false};
+
+    bool read(yarp::os::ConnectionReader& connection) override
+    {
+        yarp::os::Bottle command, response;
+        if (command.read(connection)) {
+
+            if (command.get(0).asString() == "help") {
+                response.addVocab(yarp::os::Vocab::encode("many"));
+                response.addString("Enter <removePositionOffset> to remove the base position offset from all the axis \n"
+                                   "   or <removePositionOffset> <axis> <axis_list> for removing position offset of specific axis (e.g. 'removePositionOffset axis xy') \n"
+                                   "Enter <removeOrientationOffset> to remove the base orientation offset \n"
+                                   "   or <removeOrientationOffset> <axis> <axis_list> for removing orientatino offset on specific axis \n"
+                                   "Enter <resetPositionOffset> to reset the base position \n"
+                                   "Enter <resetOrientationOffset> to reset the base orientation \n"
+                                   "Enter <resetOffset> to reset the base position and orientation"
+                                    );
+            }
+            else if (command.get(0).asString() == "removePositionOffset") {
+                if (command.size() == 1) {
+                    response.addString("Entered command <removePositionOffset> is correct, removing position offset for all the axis");
+                    this->positionOffsetFlag.at(0) = true;
+                    this->positionOffsetFlag.at(1) = true;
+                    this->positionOffsetFlag.at(2) = true;
+                    this->cmdStatus = true;
+                }
+                else if (command.get(1).isString() && command.get(1).asString() == "axis" && command.get(2).isString()) {
+                    response.addString("Entered command <removePositionOffset> is correct, removing position offset for the selected axis");
+                    std::string axis = command.get(2).asString();
+                    if (axis.find('x')!=std::string::npos)
+                         this->positionOffsetFlag[0] = true;
+                    if (axis.find('y')!=std::string::npos)
+                         this->positionOffsetFlag[1] = true;
+                    if (axis.find('z')!=std::string::npos)
+                         this->positionOffsetFlag[2] = true;
+                    this->cmdStatus = true;
+                }
+                else {
+                    response.addString(
+                        "Entered command is incorrect, Enter help to know available commands");
+                }
+            }
+            else if (command.get(0).asString() == "removeOrientationOffset") {
+                if (command.size() == 1) {
+                    response.addString("Entered command <removeOrientationOffset> is correct, removing orientation offset for all the axis");
+                    this->orientationOffsetFlag.at(0) = true;
+                    this->orientationOffsetFlag.at(1) = true;
+                    this->orientationOffsetFlag.at(2) = true;
+                    this->cmdStatus = true;
+                }
+                else if (command.get(1).isString() && command.get(1).asString() == "axis" && command.get(2).isString()) {
+                    response.addString("Entered command <removeOrientationOffset> is correct, removing orientation offset for the selected axis");
+                    std::string axis = command.get(2).asString();
+                    if (axis.find('x')!=std::string::npos)
+                         this->orientationOffsetFlag[0] = true;
+                    if (axis.find('y')!=std::string::npos)
+                         this->orientationOffsetFlag[1] = true;
+                    if (axis.find('z')!=std::string::npos)
+                         this->orientationOffsetFlag[2] = true;
+                    this->cmdStatus = true;
+                }
+                else {
+                    response.addString(
+                        "Entered command is incorrect, Enter help to know available commands");
+                }
+            }
+            else if (command.get(0).asString() == "resetPositionOffset") {
+                response.addString("Entered command <resetPositionOffset> is correct, resetting the position offset");
+                this->positionOffsetFlag.at(0) = false;
+                this->positionOffsetFlag.at(1) = false;
+                this->positionOffsetFlag.at(2) = false;
+                this->cmdStatus = true;
+            }
+            else if (command.get(0).asString() == "resetOrientationOffset") {
+                response.addString("Entered command <resetOrientationOffset> is correct, resetting the orientation offset");
+                this->orientationOffsetFlag.at(0) = false;
+                this->orientationOffsetFlag.at(1) = false;
+                this->orientationOffsetFlag.at(2) = false;
+                this->cmdStatus = true;
+            }
+            else if (command.get(0).asString() == "resetOffset") {
+                response.addString("Entered command <resetOffset> is correct, resetting position and orientation offsets");
+                this->positionOffsetFlag.at(0) = false;
+                this->positionOffsetFlag.at(1) = false;
+                this->positionOffsetFlag.at(2) = false;
+                this->orientationOffsetFlag.at(0) = false;
+                this->orientationOffsetFlag.at(1) = false;
+                this->orientationOffsetFlag.at(2) = false;
+                this->cmdStatus = true;
+            }
+            else {
+                response.addString(
+                    "Entered command is incorrect, Enter help to know available commands");
+            }
+        }
+        else {
+            this->cmdStatus = false;
+            return false;
+        }
+
+        yarp::os::ConnectionWriter* reply = connection.getWriter();
+
+        if (reply != NULL) {
+            response.write(*reply);
+        }
+        else
+            return false;
+
+        return true;
+    }
+};
+
 class HumanStateProvider::impl
 {
 public:
@@ -173,6 +293,10 @@ public:
     std::vector<SegmentInfo> segments;
     std::vector<LinkPairInfo> linkPairs;
 
+    // Rpc
+    CmdParser commandPro;
+    yarp::os::RpcServer rpcPort;
+
     // Link wearable data buffers
     std::unordered_map<std::string, iDynTree::Transform> linkTransformMatrices;
     std::unordered_map<std::string, iDynTree::Twist> linkVelocities;
@@ -189,6 +313,12 @@ public:
 
     iDynTree::Vector3 integralOrientationError;
     iDynTree::Vector3 integralLinearVelocityError;
+
+    // Offsets
+    iDynTree::Position basePositionOffset;
+    std::array<bool,3> basePositionOffsetFlag;
+    iDynTree::Vector3 baseOrientationOffsetRPY;
+    std::array<bool,3> baseOrientationOffsetFlag;
 
     std::unordered_map<std::string, iDynTreeHelper::Rotation::rotationDistance>
         linkErrorOrientations;
@@ -487,6 +617,19 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         }
 
     }
+
+    // ===================
+    // INITIALIZE RPC PORT
+    // ===================
+
+    std::string rpcPortName = "/" + DeviceName + "/rpc:i";
+    if (!pImpl->rpcPort.open(rpcPortName)) {
+        yError() << LogPrefix << "Unable to open rpc port " << rpcPortName;
+        return false;
+    }
+
+    // Set rpc port reader
+    pImpl->rpcPort.setReader(pImpl->commandPro);
 
     // =======================================
     // PARSE THE GENERAL CONFIGURATION OPTIONS
@@ -870,6 +1013,11 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     pImpl->jointVelocitiesSolution.zero();
 
     pImpl->baseTransformSolution.setRotation(iDynTree::Rotation::Identity());
+
+    pImpl->basePositionOffset.zero();
+    pImpl->baseOrientationOffsetFlag.fill(false);
+    pImpl->baseOrientationOffsetRPY.zero();
+    pImpl->basePositionOffsetFlag.fill(false);
 
     // ================================================
     // INITIALIZE CUSTOM CONSTRAINTS FOR INTEGRATION-IK
@@ -1371,6 +1519,14 @@ void HumanStateProvider::run()
 
     }
 
+    // Set the offsets for the base
+    iDynTree::Transform baseTrasfromSolutionAfterOffset;
+    baseTrasfromSolutionAfterOffset.setPosition(pImpl->baseTransformSolution.getPosition() - pImpl->basePositionOffset);
+    iDynTree::Vector3 baseTransformSolutionRPY= pImpl->baseTransformSolution.getRotation().asRPY();
+    baseTrasfromSolutionAfterOffset.setRotation(iDynTree::Rotation::RotZ(pImpl->baseOrientationOffsetRPY.getVal(2)).inverse() * iDynTree::Rotation::RotZ(baseTransformSolutionRPY.getVal(2)) *
+                                                iDynTree::Rotation::RotZ(pImpl->baseOrientationOffsetRPY.getVal(1)).inverse() * iDynTree::Rotation::RotZ(baseTransformSolutionRPY.getVal(1)) *
+                                                iDynTree::Rotation::RotZ(pImpl->baseOrientationOffsetRPY.getVal(0)).inverse() * iDynTree::Rotation::RotZ(baseTransformSolutionRPY.getVal(0)));
+
     // Expose IK solution for IHumanState
     {
         std::lock_guard<std::mutex> lock(pImpl->mutex);
@@ -1380,15 +1536,15 @@ void HumanStateProvider::run()
             pImpl->solution.jointVelocities[i] = pImpl->jointVelocitiesSolution.getVal(i);
         }
 
-        pImpl->solution.basePosition = {pImpl->baseTransformSolution.getPosition().getVal(0),
-                                        pImpl->baseTransformSolution.getPosition().getVal(1),
-                                        pImpl->baseTransformSolution.getPosition().getVal(2)};
+        pImpl->solution.basePosition = {baseTrasfromSolutionAfterOffset.getPosition().getVal(0),
+                                        baseTrasfromSolutionAfterOffset.getPosition().getVal(1),
+                                        baseTrasfromSolutionAfterOffset.getPosition().getVal(2)};
 
         pImpl->solution.baseOrientation = {
-            pImpl->baseTransformSolution.getRotation().asQuaternion().getVal(0),
-            pImpl->baseTransformSolution.getRotation().asQuaternion().getVal(1),
-            pImpl->baseTransformSolution.getRotation().asQuaternion().getVal(2),
-            pImpl->baseTransformSolution.getRotation().asQuaternion().getVal(3)};
+            baseTrasfromSolutionAfterOffset.getRotation().asQuaternion().getVal(0),
+            baseTrasfromSolutionAfterOffset.getRotation().asQuaternion().getVal(1),
+            baseTrasfromSolutionAfterOffset.getRotation().asQuaternion().getVal(2),
+            baseTrasfromSolutionAfterOffset.getRotation().asQuaternion().getVal(3)};
 
         // Use measured base frame velocity
         pImpl->solution.baseVelocity = {pImpl->baseVelocitySolution.getVal(0),
@@ -1417,6 +1573,37 @@ void HumanStateProvider::run()
     //                                          pImpl->jointVelocitiesSolution,
     //                                          pImpl->baseVelocitySolution,
     //                                          pImpl->linkErrorAngularVelocities);
+
+    // Check for rpc command status and update offsets
+    if (pImpl->commandPro.cmdStatus) {
+        if (pImpl->commandPro.positionOffsetFlag.at(0) || pImpl->commandPro.positionOffsetFlag.at(1) || pImpl->commandPro.positionOffsetFlag.at(2)) {
+            for (size_t idx=0; idx<3; idx++) {
+                if (pImpl->commandPro.positionOffsetFlag.at(idx) & !pImpl->basePositionOffsetFlag.at(idx)) {
+                    pImpl->basePositionOffset.setVal(idx, pImpl->baseTransformSolution.getPosition().getVal(idx));
+                    pImpl->basePositionOffsetFlag.at(idx) = true;
+                }
+            }
+        }
+        else {
+            pImpl->basePositionOffset.zero();
+            pImpl->basePositionOffsetFlag.fill(false);
+        }
+
+        if (pImpl->commandPro.orientationOffsetFlag.at(0) || pImpl->commandPro.orientationOffsetFlag.at(1) || pImpl->commandPro.orientationOffsetFlag.at(2)) {
+            for (size_t idx=0; idx<3; idx++) {
+                if (pImpl->commandPro.orientationOffsetFlag.at(idx) & !pImpl->baseOrientationOffsetFlag.at(idx)) {
+                    pImpl->baseOrientationOffsetRPY.setVal(idx, pImpl->baseTransformSolution.getRotation().asRPY().getVal(idx));
+                    pImpl->baseOrientationOffsetFlag.at(idx) = true;
+                }
+            }
+        }
+        else {
+            pImpl->baseOrientationOffsetRPY.zero();
+            pImpl->baseOrientationOffsetFlag.fill(false);
+        }
+
+    }
+    pImpl->commandPro.cmdStatus = false;
 }
 
 bool HumanStateProvider::impl::getLinkQuantitiesFromInputData(
