@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE robot PUBLIC "-//YARP//DTD yarprobotinterface 3.0//EN" "http://www.yarp.it/DTD/yarprobotinterfaceV3.0.dtd">
+<robot name="Human-HDE" build=0 portprefix="">
+
+    <!--Uncomment the following code if you need to dump wearable data-->
+    <device type="iwear_remapper" name="WearableData">
+        <param name="wearableDataPorts">(/FTShoeLeft/WearableData/data:o /FTShoeRight/WearableData/data:o)</param>
+        <param name="useRPC">false</param>
+        <param name="wearableRPCPorts">(/FTShoeLeft/WearableData/metadataRpc:o /FTShoeRight/WearableData/metadataRpc:o)</param>
+        <param name="outputPortName">/IWearRemapper/data:o</param>
+    </device>
+    <device type="iwear_remapper" name="WearableData2">
+        <param name="wearableDataPorts">(/XSensSuit/WearableData/data:o)</param>
+        <param name="useRPC">false</param>
+        <param name="wearableRPCPorts">(/XSensSuit/WearableData/metadataRpc:o)</param>
+        <param name="outputPortName">/IWearRemapper2/data:o</param>
+    </device>
+
+    <device type="iwear_wrapper" name="WearableDataWrapper">
+        <param name="period">0.1</param>
+        <param name="dataPortName">/WearableData/data:o</param>
+        <param name="rpcPortName">/WearableData/metadataRpc:o</param>
+        <action phase="startup" level="5" type="attach">
+            <paramlist name="networks">
+                <elem name="WearableDataWrapper">WearableData</elem>
+            </paramlist>
+        </action>
+        <action phase="shutdown" level="5" type="detach"/>
+    </device>
+    <device type="iwear_wrapper" name="WearableDataWrapper2">
+        <param name="period">0.1</param>
+        <param name="dataPortName">/WearableData2/data:o</param>
+        <param name="rpcPortName">/WearableData2/metadataRpc:o</param>
+        <action phase="startup" level="5" type="attach">
+            <paramlist name="networks">
+                <elem name="WearableDataWrapper">WearableData2</elem>
+            </paramlist>
+        </action>
+        <action phase="shutdown" level="5" type="detach"/>
+    </device>
+
+</robot>
