@@ -1,0 +1,106 @@
+<application>
+  <name>twoHumansIK</name>
+  <description>An application for running Inverse Kinematics of two Human Subjects</description>
+
+  <module>
+    <name>yarplogger</name>
+    <parameters>--start --no_stop</parameters>
+    <description>Run yarplogger</description>
+    <node>localhost</node>
+  </module>
+
+  <!--yarprobotinterface for transform server-->
+  <module>
+    <name>yarprobotinterface</name>
+    <parameters>--config TransformServer.xml</parameters>
+    <dependencies>
+          <port timeout="5.0">/ros</port>
+    </dependencies>
+    <environment>YARP_FORWARD_LOG_ENABLE=1</environment>
+    <description>Run transform server</description>
+    <node>localhost</node>
+  </module>
+
+  <!--yarprobotinterface configuration for the first Human-->
+  <module>
+    <name>yarprobotinterface</name>
+    <parameters>--config HumanStateProvider_1.xml</parameters>
+    <dependencies>
+          <port timeout="5.0">/transformServer/rpc</port>
+          <port timeout="5.0">/transformServer/transforms:o</port>
+          <port timeout="5.0">/XSensSuit/WearableData/data:o</port>
+    </dependencies>
+    <environment>YARP_FORWARD_LOG_ENABLE=1</environment>
+    <description>Run IK for first human</description>
+    <node>localhost</node>
+  </module>
+
+  <!--yarprobotinterface configuration for the first Human-->
+  <module>
+    <name>yarprobotinterface</name>
+    <parameters>--config HumanStateProvider_2.xml</parameters>
+    <dependencies>
+          <port timeout="5.0">/transformServer/rpc</port>
+          <port timeout="5.0">/transformServer/transforms:o</port>
+          <port timeout="5.0">/XSensSuit/WearableData_2/data:o</port>
+    </dependencies>
+    <environment>YARP_FORWARD_LOG_ENABLE=1</environment>
+    <description>Run IK for first human</description>
+    <node>localhost</node>
+  </module>
+
+  <!--yarpdatadumper configuration for the first Human-->
+  <module>
+        <name>yarpdatadumper</name>
+        <parameters>--name /human_dump/humanState_1 --type bottle --txTime --rxTime</parameters>
+        <node>localhost</node>
+	      <tag>yarpdatadumper</tag>
+  </module>
+
+  <module>
+        <name>yarpdatadumper</name>
+        <parameters>--name /human_dump/wearable_1/xsens --type bottle --txTime --rxTime</parameters>
+        <node>${generic_node}</node>
+        <tag>yarpdatadumper</tag>
+  </module>
+
+  <!--yarpdatadumper configuration for the second Human-->
+  <module>
+        <name>yarpdatadumper</name>
+        <parameters>--name /human_dump/humanState_2 --type bottle --txTime --rxTime</parameters>
+        <node>localhost</node>
+	      <tag>yarpdatadumper</tag>
+  </module>
+
+  <module>
+        <name>yarpdatadumper</name>
+        <parameters>--name /human_dump/wearable_2/xsens --type bottle --txTime --rxTime</parameters>
+        <node>${generic_node}</node>
+        <tag>yarpdatadumper</tag>
+  </module>
+
+  <connection>
+        <from>/HDE_1/HumanStateWrapper/state:o</from>
+        <to>/human_dump/humanState_1</to>
+        <protocol>udp</protocol>
+  </connection>
+
+  <connection>
+        <from>/HDE_2/HumanStateWrapper/state:o</from>
+        <to>/human_dump/humanState_2</to>
+        <protocol>udp</protocol>
+  </connection>
+
+  <connection>
+        <from>/XSensSuit/WearableData/data:o</from>
+        <to>/human_dump/wearable_1/xsens</to>
+        <protocol>udp</protocol>
+  </connection>
+
+  <connection>
+        <from>/XSensSuit/WearableData_2/data:o</from>
+        <to>/human_dump/wearable_2/xsens</to>
+        <protocol>udp</protocol>
+  </connection>
+
+</application>

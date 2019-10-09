@@ -2,24 +2,16 @@
 <!DOCTYPE robot PUBLIC "-//YARP//DTD yarprobotinterface 3.0//EN" "http://www.yarp.it/DTD/yarprobotinterfaceV3.0.dtd">
 <robot name="Human-HDE" build=0 portprefix="">
 
-    <device type="transformServer" name="TransformServer">
-        <param name="transforms_lifetime">0.2</param>
-        <group name="ROS">
-            <param name="enable_ros_publisher">true</param>
-            <param name="enable_ros_subscriber">false</param>
-        </group>
-    </device>
-
-    <device type="iwear_remapper" name="XSenseIWearRemapper">
+    <device type="iwear_remapper" name="XSenseIWearRemapper_1">
         <param name="wearableDataPorts">(/XSensSuit/WearableData/data:o)</param>
         <param name="useRPC">false</param>
         <param name="wearableRPCPorts">(/XSensSuit/WearableData/metadataRpc:o)</param>
         <param name="outputPortName">/HDE/XsensIWearRemapper/data:o</param>
     </device>
 
-    <device type="human_state_provider" name="HumanStateProvider">
+    <device type="human_state_provider" name="HumanStateProvider_1">
         <param name="period">0.02</param>
-        <param name="urdf">humanSubject01_66dof.urdf</param>
+        <param name="urdf">humanSubject03_66dof.urdf</param>
         <param name="floatingBaseFrame">(Pelvis, XsensSuit::vLink::Pelvis)</param>
         <!-- ikSolver options: pairwised, global, integrationbased -->
         <param name="ikSolver">integrationbased</param>
@@ -34,6 +26,7 @@
         <param name="rotTargetWeight">1.0</param>
         <param name="costRegularization">0.000001</param>
         <param name="costTolerance">0.001</param>
+        <param name="rpcPortPrefix">first</param>
         <!-- inverse velocity kinematics parameters -->
         <!-- inverseVelocityKinematicsSolver values:
         moorePenrose,
@@ -152,31 +145,33 @@
         </group>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
-                <elem name="HumanStateProviderLabel">XSenseIWearRemapper</elem>
+                <elem name="HumanStateProviderLabel">XSenseIWearRemapper_1</elem>
             </paramlist>
         </action>
         <action phase="shutdown" level="5" type="detach"/>
     </device>
 
     <!-- Uncomment to stream the output of HumanStateProvider on a YARP port -->
-    <!-- <device type="human_state_wrapper" name="HumanStateWrapper">
+    <device type="human_state_wrapper" name="HumanStateWrapper_1">
         <param name="period">0.02</param>
-        <param name="outputPort">/HDE/HumanStateWrapper/state:o</param>
+        <param name="outputPort">/HDE_1/HumanStateWrapper/state:o</param>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
-                <elem name="HumanStateWrapperLabel">HumanStateProvider</elem>
+                <elem name="HumanStateWrapperLabel">HumanStateProvider_1</elem>
             </paramlist>
         </action>
         <action phase="shutdown" level="5" type="detach"/>
-    </device> -->
+    </device>
 
-    <device type="human_state_publisher" name="HumanStatePublisher">
+    <device type="human_state_publisher" name="HumanStatePublisher_1">
         <param name="period">0.02</param>
-        <param name="baseTFName">/Human/Pelvis</param>
-        <param name="humanJointsTopic">/Human/joint_states</param>
+        <param name="baseTFName">/Human_1/Pelvis</param>
+        <param name="humanJointsTopic">/Human_1/joint_states</param>
+        <param name="portprefix">first</param>
+        <param name="basePositionOffset">(0.0 0.0 0.0)</param>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
-                <elem name="HumanStatePublisherLabel">HumanStateProvider</elem>
+                <elem name="HumanStatePublisherLabel">HumanStateProvider_1</elem>
             </paramlist>
         </action>
         <action phase="shutdown" level="5" type="detach"/>
