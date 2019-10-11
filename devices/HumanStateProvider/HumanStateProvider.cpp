@@ -1308,13 +1308,16 @@ void HumanStateProvider::run()
 
     }
 
-    // Set the offsets for the base
-    iDynTree::Transform baseTrasfromSolutionAfterOffset;
-    baseTrasfromSolutionAfterOffset.setPosition(pImpl->baseTransformSolution.getPosition() - pImpl->basePositionOffset);
-    iDynTree::Vector3 baseTransformSolutionRPY= pImpl->baseTransformSolution.getRotation().asRPY();
-    baseTrasfromSolutionAfterOffset.setRotation(iDynTree::Rotation::RotZ(pImpl->baseOrientationOffsetRPY.getVal(2)).inverse() * iDynTree::Rotation::RotZ(baseTransformSolutionRPY.getVal(2)) *
-                                                iDynTree::Rotation::RotZ(pImpl->baseOrientationOffsetRPY.getVal(1)).inverse() * iDynTree::Rotation::RotZ(baseTransformSolutionRPY.getVal(1)) *
-                                                iDynTree::Rotation::RotZ(pImpl->baseOrientationOffsetRPY.getVal(0)).inverse() * iDynTree::Rotation::RotZ(baseTransformSolutionRPY.getVal(0)));
+    // If flags are on, set the offsets for the base pose
+    iDynTree::Transform baseTrasfromSolutionAfterOffset = pImpl->baseTransformSolution;
+    iDynTree::Rotation baseOrientationOffsetRotationMatrixInverse = iDynTree::Rotation::Identity();
+    if (pImpl->baseOrientationOffsetFlag.at(0) || pImpl->baseOrientationOffsetFlag.at(1) || pImpl->baseOrientationOffsetFlag.at(2)) {
+        baseOrientationOffsetRotationMatrixInverse = iDynTree::Rotation::RPY(pImpl->baseOrientationOffsetRPY.getVal(0), pImpl->baseOrientationOffsetRPY.getVal(1), pImpl->baseOrientationOffsetRPY.getVal(2)).inverse();
+        baseTrasfromSolutionAfterOffset.setRotation(baseOrientationOffsetRotationMatrixInverse * pImpl->baseTransformSolution.getRotation());
+    }
+    if (pImpl->basePositionOffsetFlag.at(0) || pImpl->basePositionOffsetFlag.at(1) || pImpl->basePositionOffsetFlag.at(2)) {
+        baseTrasfromSolutionAfterOffset.setPosition(baseOrientationOffsetRotationMatrixInverse * (pImpl->baseTransformSolution.getPosition() - pImpl->basePositionOffset));
+    }
 
     // Expose IK solution for IHumanState
     {
