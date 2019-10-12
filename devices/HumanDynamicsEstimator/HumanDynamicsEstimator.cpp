@@ -72,16 +72,6 @@ struct AllWrenchAnalogSensorData
     std::vector<double> measurements;
 };
 
-void printMatrix(auto& matrix) {
-    yInfo() << LogPrefix << "============= Matrix Size : " << matrix.rows() << " , " << matrix.columns() <<  " =============";
-    for (size_t i = 0; i < matrix.rows(); i++) {
-        for (size_t j = 0; j < matrix.columns(); j++) {
-            std::cout << matrix.getValue(i,j);
-        }
-        std::cout << std::endl;
-    }
-}
-
 static bool parseYarpValueToStdVector(const yarp::os::Value& option, std::vector<double>& output)
 {
     bool isList = option.isList();
