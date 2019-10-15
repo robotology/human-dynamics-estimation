@@ -46,7 +46,7 @@
         sparseCholeskyDecomposition,
         robustCholeskyDecomposition,
         sparseRobustCholeskyDecomposition -->
-        <param name='inverseVelocityKinematicsSolver'>sparseRobustCholeskyDecomposition</param>
+        <param name='inverseVelocityKinematicsSolver'>QP</param>
         <param name="linVelTargetWeight">0.0</param>
         <param name="angVelTargetWeight">1.0</param>
         <!-- integration based IK parameters -->
@@ -332,10 +332,11 @@
                <param name="specific_elements">(LeftFoot RightFoot LeftHand RightHand)</param>
                <param name="LeftFoot">(1e-6 1e-6 1e-6 1e-6 1e-6 1e-6)</param>
                <param name="RightFoot">(1e-6 1e-6 1e-6 1e-6 1e-6 1e-6)</param>
-               <param name="LeftHand">(1e6 1e6 1e6 1e6 1e6 1e6)</param>
-               <param name="RightHand">(1e6 1e6 1e6 1e6 1e6 1e6)</param>
+               <param name="LeftHand">(1e1 1e1 1e1 1e-6 1e-6 1e-6)</param>
+               <param name="RightHand">(1e1 1e1 1e1 1e-6 1e-6 1e-6)</param>
                <param name="FicticiousWrenchLinks">(LeftHand RightHand)</param>
            </group>
+           <param name="cov_task1_measurements_NET_EXT_WRENCH_SENSOR">1e-6</param>
         </group>
         <group name="SENSORS_REMOVAL">
             <param name="GYROSCOPE_SENSOR">*</param>

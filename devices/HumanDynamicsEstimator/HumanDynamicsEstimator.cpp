@@ -362,7 +362,7 @@ static bool getTripletsFromPriorGroup(const yarp::os::Bottle priorGroup,
 
     if (!isCase3) {
         // Get the option
-        yarp::os::Value& covMeasurementOption = priorGroup.find("cov_measurements_" + sensorType);
+        yarp::os::Value& covMeasurementOption = priorGroup.find(optionPrefix + sensorType);
 
         // Case 1 and Case 2
         if (!getTripletsFromPriorGroupCase1Case2(covMeasurementOption, sensorType, triplets)) {
@@ -718,6 +718,7 @@ static bool parsePriorsGroup(const yarp::os::Bottle& priorsGroup,
     iDynTree::Triplets allSensorsTriplets;
     iDynTree::Triplets task1SensorsTriplets;
     std::string covMeasurementOptionPrefix = "cov_measurements_";
+    std::string covTask1MeasurementOptionPrefix = "cov_task1_measurements_";
 
     // Construct the task1 measurement covariance matrix
     for (const iDynTree::BerdySensor& task1BerdySensor : berdyData.helper.getSensorsOrdering(true)) {
@@ -775,6 +776,7 @@ static bool parsePriorsGroup(const yarp::os::Bottle& priorsGroup,
         return false;
     }
 
+    // Construct the task2 measurement covariance matrix
     for (const iDynTree::BerdySensor& berdySensor : berdyData.helper.getSensorsOrdering()) {
 
         // Check that the sensor is a valid berdy sensor
@@ -786,16 +788,31 @@ static bool parsePriorsGroup(const yarp::os::Bottle& priorsGroup,
         // Get the string from the enum
         std::string berdySensorTypeString = mapBerdySensorType.at(berdySensor.type);
 
-        if (!priorsGroup.find(covMeasurementOptionPrefix + berdySensorTypeString).isNull()) {
+        if (!priorsGroup.find(covMeasurementOptionPrefix + berdySensorTypeString).isNull() || !priorsGroup.find(covTask1MeasurementOptionPrefix + berdySensorTypeString).isNull()) {
 
             iDynTree::Triplets triplets{};
 
-            if (!getTripletsFromPriorGroup(
-                    priorsGroup, covMeasurementOptionPrefix, berdySensorTypeString, triplets, berdySensor)) {
-                yError() << LogPrefix << "Failed to get triplets for sensor"
-                         << berdySensorTypeString;
-                return false;
+            if (priorsGroup.find(covTask1MeasurementOptionPrefix + berdySensorTypeString).isNull())
+            {
+                if (!getTripletsFromPriorGroup(
+                        priorsGroup, covMeasurementOptionPrefix, berdySensorTypeString, triplets, berdySensor)) {
+                    yError() << LogPrefix << "Failed to get triplets for sensor"
+                             << berdySensorTypeString;
+                    return false;
+                }
             }
+            else
+            {
+                yInfo() << LogPrefix << "Found cov_task1_measurements for sensor"
+                        << berdySensorTypeString << ", it will be used in second task";
+                if (!getTripletsFromPriorGroup(
+                        priorsGroup, covTask1MeasurementOptionPrefix, berdySensorTypeString, triplets, berdySensor)) {
+                    yError() << LogPrefix << "Failed to get triplets for sensor"
+                             << berdySensorTypeString;
+                    return false;
+                }
+            }
+
 
             // Modify the triplets before adding them to the global sparse matrix.
             // This is necessary because we stack all the sensors in a single matrix.
@@ -803,14 +820,6 @@ static bool parsePriorsGroup(const yarp::os::Bottle& priorsGroup,
                 iDynTree::Triplet modifiedTriplet = triplet;
                 modifiedTriplet.row += berdySensor.range.offset;
                 modifiedTriplet.column += berdySensor.range.offset;
-
-                std::vector<std::string>::iterator found = std::find(ficticiousWrenchLinks.begin(), ficticiousWrenchLinks.end(), berdySensor.id);
-                if ((found != ficticiousWrenchLinks.end()) && berdySensor.type == iDynTree::NET_EXT_WRENCH_SENSOR ) {
-
-                    // Invert specific links wrench covariance
-                    modifiedTriplet.value = 1/triplet.value;
-
-                }
 
                 // Combine the triplet of the sensor with the global one
                 allSensorsTriplets.setTriplet(modifiedTriplet);
