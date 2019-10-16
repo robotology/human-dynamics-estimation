@@ -1138,7 +1138,14 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
     // INITIALIZE RPC PORT
     // ===================
 
-    std::string rpcPortName = "/" + DeviceName + "/rpc:i";
+    std::string rpcPortName;
+    if (!(config.check("rpcPortPrefix") && config.find("rpcPortPrefix").isString())) {
+        rpcPortName = "/" + DeviceName + "/rpc:i";
+    }
+    else {
+        rpcPortName = "/" + config.find("rpcPortPrefix").asString() + "/" + DeviceName + "/rpc:i";
+    }
+
     if (!pImpl->rpcPort.open(rpcPortName)) {
         yError() << LogPrefix << "Unable to open rpc port " << rpcPortName;
         return false;
