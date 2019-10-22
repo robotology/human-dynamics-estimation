@@ -1799,16 +1799,17 @@ void HumanDynamicsEstimator::run()
         // Check for rpc command status
         if (pImpl->commandPro.cmdStatus && pImpl->commandPro.realLinks) {
 
+            size_t numberOfRealWrench = pImpl->realWrenchOffsetMap.size();
             if (pImpl->realWrenchOffsetMap.find(wrenchSensorLinkName) != pImpl->realWrenchOffsetMap.end()) {
 
                 // Set real wrench offset
                 iDynTree::Wrench rateOfChangeOfMomentum = iDynTree::Wrench::Zero();
-                rateOfChangeOfMomentum.setVal(0, comProperAccelerationInWorldFrame[0]/2);
-                rateOfChangeOfMomentum.setVal(1, comProperAccelerationInWorldFrame[1]/2);
-                rateOfChangeOfMomentum.setVal(2, comProperAccelerationInWorldFrame[2]/2);
-                rateOfChangeOfMomentum.setVal(3, comProperAccelerationInWorldFrame[3]/2);
-                rateOfChangeOfMomentum.setVal(4, comProperAccelerationInWorldFrame[4]/2);
-                rateOfChangeOfMomentum.setVal(5, comProperAccelerationInWorldFrame[5]/2);
+                rateOfChangeOfMomentum.setVal(0, comProperAccelerationInWorldFrame[0]/numberOfRealWrench);
+                rateOfChangeOfMomentum.setVal(1, comProperAccelerationInWorldFrame[1]/numberOfRealWrench);
+                rateOfChangeOfMomentum.setVal(2, comProperAccelerationInWorldFrame[2]/numberOfRealWrench);
+                rateOfChangeOfMomentum.setVal(3, comProperAccelerationInWorldFrame[3]/numberOfRealWrench);
+                rateOfChangeOfMomentum.setVal(4, comProperAccelerationInWorldFrame[4]/numberOfRealWrench);
+                rateOfChangeOfMomentum.setVal(5, comProperAccelerationInWorldFrame[5]/numberOfRealWrench);
 
                 iDynTree::Wrench realWrenchOffset = iDynTree::Wrench::Zero();
 

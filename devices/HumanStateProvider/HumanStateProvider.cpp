@@ -1353,44 +1353,43 @@ void HumanStateProvider::run()
         pImpl->baseVelocitySolution = measuredBaseVelocity;
     }
 
+    // Update kinDyn computations based on IK solution
+    iDynTree::VectorDynSize solvedJointPositions(pImpl->solution.jointPositions.size());
+
+    for (size_t j = 0; j < pImpl->solution.jointPositions.size(); j++) {
+        solvedJointPositions.setVal(j, pImpl->solution.jointPositions.at(j));
+    }
+
+    iDynTree::VectorDynSize solvedJointVelocities(pImpl->solution.jointVelocities.size());
+
+    for (size_t j = 0; j < pImpl->solution.jointVelocities.size(); j++) {
+        solvedJointVelocities.setVal(j, pImpl->solution.jointVelocities.at(j));
+    }
+
+    pImpl->kinDynComputations->setRobotState(pImpl->baseTransformSolution,
+                                             solvedJointPositions,
+                                             pImpl->baseVelocitySolution,
+                                             solvedJointVelocities,
+                                             pImpl->worldGravity);
+
     // CoM position and velocity
     std::array<double, 3> CoM_position, CoM_velocity;
-    iDynTree::KinDynComputations* kindyncomputations = pImpl->kinDynComputations.get();
-    CoM_position = {kindyncomputations->getCenterOfMassPosition().getVal(0),
-                    kindyncomputations->getCenterOfMassPosition().getVal(1),
-                    kindyncomputations->getCenterOfMassPosition().getVal(2)};
+    CoM_position = {pImpl->kinDynComputations->getCenterOfMassPosition().getVal(0),
+                    pImpl->kinDynComputations->getCenterOfMassPosition().getVal(1),
+                    pImpl->kinDynComputations->getCenterOfMassPosition().getVal(2)};
 
-    CoM_velocity = {kindyncomputations->getCenterOfMassVelocity().getVal(0),
-                    kindyncomputations->getCenterOfMassVelocity().getVal(1),
-                    kindyncomputations->getCenterOfMassVelocity().getVal(2)};
+    CoM_velocity = {pImpl->kinDynComputations->getCenterOfMassVelocity().getVal(0),
+                    pImpl->kinDynComputations->getCenterOfMassVelocity().getVal(1),
+                    pImpl->kinDynComputations->getCenterOfMassVelocity().getVal(2)};
 
     // CoM acceleration
     std::array<double, 3> CoM_biasacceleration;
-    CoM_biasacceleration = {kindyncomputations->getCenterOfMassBiasAcc().getVal(0),
-                            kindyncomputations->getCenterOfMassBiasAcc().getVal(1),
-                            kindyncomputations->getCenterOfMassBiasAcc().getVal(2)};
+    CoM_biasacceleration = {pImpl->kinDynComputations->getCenterOfMassBiasAcc().getVal(0),
+                            pImpl->kinDynComputations->getCenterOfMassBiasAcc().getVal(1),
+                            pImpl->kinDynComputations->getCenterOfMassBiasAcc().getVal(2)};
 
     // Compute proper acceleration
     if (pImpl->useFBAccelerationFromWearableData) {
-
-        // Update kinDyn computations based on IK solution
-        iDynTree::VectorDynSize solvedJointPositions(pImpl->solution.jointPositions.size());
-
-        for (size_t j = 0; j < pImpl->solution.jointPositions.size(); j++) {
-            solvedJointPositions.setVal(j, pImpl->solution.jointPositions.at(j));
-        }
-
-        iDynTree::VectorDynSize solvedJointVelocities(pImpl->solution.jointVelocities.size());
-
-        for (size_t j = 0; j < pImpl->solution.jointVelocities.size(); j++) {
-            solvedJointVelocities.setVal(j, pImpl->solution.jointVelocities.at(j));
-        }
-
-        pImpl->kinDynComputations->setRobotState(pImpl->baseTransformSolution,
-                                                 solvedJointPositions,
-                                                 pImpl->baseVelocitySolution,
-                                                 solvedJointVelocities,
-                                                 pImpl->worldGravity);
 
         // Iterate over the stored model sensors
         int accelerometerCount = 0;
@@ -1408,7 +1407,7 @@ void HumanStateProvider::run()
                 continue;
             }
 
-            iDynTree::Transform base_H_sensor = kindyncomputations->getRelativeTransform(pImpl->humanModel.getFrameIndex(pImpl->floatingBaseFrame.model),
+            iDynTree::Transform base_H_sensor = pImpl->kinDynComputations->getRelativeTransform(pImpl->humanModel.getFrameIndex(pImpl->floatingBaseFrame.model),
                                                                                          pImpl->humanModel.getFrameIndex(pImpl->humanSensorData.accelerometerSensorNames.at(accelerometerCount)));
 
             iDynTree::Transform world_H_accelerometer = pImpl->baseTransformSolution *
@@ -1468,16 +1467,11 @@ void HumanStateProvider::run()
         }
 
         // Compute CoM proper acceleration
-        iDynTree::SpatialAcc comSpatialAccExpressedInBase; // abuse of notation
         iDynTree::SpatialAcc comSpatialAccExpressedInWorld;
 
         if (pImpl->humanSensorData.accelerometerSensorMeasurementsOption == "proper") {
 
             // Set the linear part of com spatial acceleartion
-            comSpatialAccExpressedInBase.setVal(0, pImpl->humanModel.getTotalMass() * (CoM_biasacceleration[0] - pImpl->worldGravity(0)));
-            comSpatialAccExpressedInBase.setVal(1, pImpl->humanModel.getTotalMass() * (CoM_biasacceleration[1] - pImpl->worldGravity(1)));
-            comSpatialAccExpressedInBase.setVal(2, pImpl->humanModel.getTotalMass() * (CoM_biasacceleration[2] - pImpl->worldGravity(2)));
-
             comSpatialAccExpressedInWorld.setVal(0, pImpl->humanModel.getTotalMass() * (CoM_biasacceleration[0] - pImpl->worldGravity(0)));
             comSpatialAccExpressedInWorld.setVal(1, pImpl->humanModel.getTotalMass() * (CoM_biasacceleration[1] - pImpl->worldGravity(1)));
             comSpatialAccExpressedInWorld.setVal(2, pImpl->humanModel.getTotalMass() * (CoM_biasacceleration[2] - pImpl->worldGravity(2)));
@@ -1485,26 +1479,18 @@ void HumanStateProvider::run()
         else if (pImpl->humanSensorData.accelerometerSensorMeasurementsOption == "gravity") {
 
             // Set the linear part of com spatial acceleartion
-            comSpatialAccExpressedInBase.setVal(0,  - pImpl->worldGravity(0) * pImpl->humanModel.getTotalMass());
-            comSpatialAccExpressedInBase.setVal(1,  - pImpl->worldGravity(1) * pImpl->humanModel.getTotalMass());
-            comSpatialAccExpressedInBase.setVal(2,  - pImpl->worldGravity(2) * pImpl->humanModel.getTotalMass());
-
             comSpatialAccExpressedInWorld.setVal(0,  - pImpl->worldGravity(0) * pImpl->humanModel.getTotalMass());
             comSpatialAccExpressedInWorld.setVal(1,  - pImpl->worldGravity(1) * pImpl->humanModel.getTotalMass());
             comSpatialAccExpressedInWorld.setVal(2,  - pImpl->worldGravity(2) * pImpl->humanModel.getTotalMass());
         }
 
         // Set the angular part of com spatial acceleration to zero
-        comSpatialAccExpressedInBase.setVal(3, 0.0);
-        comSpatialAccExpressedInBase.setVal(4, 0.0);
-        comSpatialAccExpressedInBase.setVal(5, 0.0);
-
         comSpatialAccExpressedInWorld.setVal(3, 0.0);
         comSpatialAccExpressedInWorld.setVal(4, 0.0);
         comSpatialAccExpressedInWorld.setVal(5, 0.0);
 
         // Compute com proper acceleration and multiply with the total model mass
-        iDynTree::SpatialAcc CoMProperAccelerationExpressedInBaseFrame = pImpl->baseTransformSolution.getRotation().inverse() * comSpatialAccExpressedInBase;
+        iDynTree::SpatialAcc CoMProperAccelerationExpressedInBaseFrame = pImpl->baseTransformSolution.getRotation().inverse() * comSpatialAccExpressedInWorld;
 
         // Expose proper com acceleration for IHumanState interface
         {
