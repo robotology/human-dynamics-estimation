@@ -69,8 +69,6 @@ stage_osx:
     - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$DEPS_INSTALL_PREFIX/lib
     - export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$DEPS_INSTALL_PREFIX
     - export CMAKE_BUILD_OPTIONS=""
-    # Temporary use devel branches for dependencies waiting the post Yarp3 alignment
-    - export DEPS_BRANCH="devel"
     # Setup ccache
     - brew install ccache
     - export PATH="/usr/local/opt/ccache/libexec:$PATH"
