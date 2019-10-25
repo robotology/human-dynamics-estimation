@@ -317,6 +317,8 @@
         <param name="number_of_wrench_sensors">4</param>
         <param name="wrench_sensors_link_name">(LeftFoot RightFoot LeftHand RightHand)</param>
         <param name="comConstraintIncludeAllLinks">false</param>
+        <param name="removeOffsetOption">source</param>
+        <param name="dynamicWrenchOffsetSD">10.0</param>
         <group name="PRIORS">
            <param name="mu_dyn_variables">1e-6</param>
            <param name="cov_dyn_variables">1e6</param>
@@ -330,8 +332,8 @@
                <param name="specific_elements">(LeftFoot RightFoot LeftHand RightHand)</param>
                <param name="LeftFoot">(1e-6 1e-6 1e-6 1e-6 1e-6 1e-6)</param>
                <param name="RightFoot">(1e-6 1e-6 1e-6 1e-6 1e-6 1e-6)</param>
-               <param name="LeftHand">(1e1 1e1 1e1 1e-6 1e-6 1e-6)</param>
-               <param name="RightHand">(1e1 1e1 1e1 1e-6 1e-6 1e-6)</param>
+               <param name="LeftHand">(1e6 1e6 1e6 1e-6 1e-6 1e-6)</param>
+               <param name="RightHand">(1e6 1e6 1e6 1e-6 1e-6 1e-6)</param>
                <param name="FicticiousWrenchLinks">(LeftHand RightHand)</param>
            </group>
            <param name="cov_task1_measurements_NET_EXT_WRENCH_SENSOR">1e-6</param>
@@ -362,7 +364,7 @@
     <!--Wrapper to publish EstimatedWrenchStamped message to Rviz-->
     <device type="analogServer" name="HumanEstimatedWrenchPublisher">
         <param name="name">/HDE/HumanEstimatedWrenchPublisher/wrench:o</param>
-        <param name="period">20</param>
+        <param name="period">10</param>
         <param name="channels">48</param>
         <paramlist name="ports">
             <elem name="FirstSetOfChannels">0 5 0 5</elem>
