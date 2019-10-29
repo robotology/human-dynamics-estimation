@@ -1055,6 +1055,8 @@ public:
     std::string removeOffsetOption;
     double dynamicWrenchOffsetSD;
 
+    bool saveStateToFile;
+
     const std::unordered_map<iDynTree::BerdySensorTypes, std::string> mapBerdySensorType = {
         {iDynTree::BerdySensorTypes::SIX_AXIS_FORCE_TORQUE_SENSOR, "SIX_AXIS_FORCE_TORQUE_SENSOR"},
         {iDynTree::BerdySensorTypes::ACCELEROMETER_SENSOR, "ACCELEROMETER_SENSOR"},
@@ -1311,6 +1313,9 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
 
     // Get the comConstraintIncludeAllLinks option. The default value is true
     bool comConstraintIncludeAllLinks = config.check("comConstraintIncludeAllLinks",yarp::os::Value(true)).asBool();
+
+    // Get the saveStateToFile option. The default value is false
+    pImpl->saveStateToFile = config.check("saveStateToFile",yarp::os::Value(false)).asBool();
 
     // Set the links to be considered for com acceleration constraint
     // TODO: Check if initializing the default case in berdy init is a better approach. At the moment there is no back compatibility problem
@@ -1590,20 +1595,24 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
                                                                                pImpl->berdyData.estimates.linkNetExternalWrenchEstimates);
 
     // Open debug files
-    pImpl->task1MeasurementFile.open("task1MeasurementsVector.txt", std::ios::trunc);
-    pImpl->task1DynamicVariablesFile.open("task1DynamicVariablesVector.txt", std::ios::trunc);
-    pImpl->measurementsFile.open("measurementsVector.txt", std::ios::trunc);
-    pImpl->dynamicVariablesFile.open("dynamicVariablesVector.txt", std::ios::trunc);
+    if (pImpl->saveStateToFile) {
+        pImpl->task1MeasurementFile.open("task1MeasurementsVector.txt", std::ios::trunc);
+        pImpl->task1DynamicVariablesFile.open("task1DynamicVariablesVector.txt", std::ios::trunc);
+        pImpl->measurementsFile.open("measurementsVector.txt", std::ios::trunc);
+        pImpl->dynamicVariablesFile.open("dynamicVariablesVector.txt", std::ios::trunc);
+    }
 
     return true;
 }
 
 bool HumanDynamicsEstimator::close()
 {
-    pImpl->task1MeasurementFile.close();
-    pImpl->task1DynamicVariablesFile.close();
-    pImpl->measurementsFile.close();
-    pImpl->dynamicVariablesFile.close();
+    if (pImpl->saveStateToFile) {
+        pImpl->task1MeasurementFile.close();
+        pImpl->task1DynamicVariablesFile.close();
+        pImpl->measurementsFile.close();
+        pImpl->dynamicVariablesFile.close();
+    }
 
     return true;
 }
@@ -1793,7 +1802,9 @@ void HumanDynamicsEstimator::run()
     }
 
     // Dump task1 measurement vector
-    pImpl->task1MeasurementFile << pImpl->berdyData.buffers.task1_measurements.toString().c_str() << std::endl;
+    if (pImpl->saveStateToFile) {
+        pImpl->task1MeasurementFile << pImpl->berdyData.buffers.task1_measurements.toString().c_str() << std::endl;
+    }
 
     // Update estimator information
     pImpl->berdyData.solver->updateEstimateInformationFloatingBase(pImpl->berdyData.state.jointsPosition,
@@ -1812,7 +1823,9 @@ void HumanDynamicsEstimator::run()
     pImpl->berdyData.solver->getLastEstimate(task1_estimatedDynamicVariables, pImpl->task1);
 
     // Dump task1 dynamic variables vector
-    pImpl->task1DynamicVariablesFile << task1_estimatedDynamicVariables.toString().c_str() << std::endl;
+    if (pImpl->saveStateToFile) {
+        pImpl->task1DynamicVariablesFile << task1_estimatedDynamicVariables.toString().c_str() << std::endl;
+    }
 
     // Extract links net external wrench from  task1 estimated dynamic variables
     pImpl->berdyData.helper.extractLinkNetExternalWrenchesFromDynamicVariables(task1_estimatedDynamicVariables,
@@ -2085,8 +2098,9 @@ void HumanDynamicsEstimator::run()
     }
 
     // Dump measurement vector to a text file
-    pImpl->measurementsFile << pImpl->berdyData.buffers.measurements.toString().c_str() << std::endl;
-
+    if (pImpl->saveStateToFile) {
+        pImpl->measurementsFile << pImpl->berdyData.buffers.measurements.toString().c_str() << std::endl;
+    }
 
     // TODO: Check if this call to updateKinematicsFromFloatingBase is needed
     // updateEstimateInformationFloatingBase calls updateKinematicsFromFloatingBase in the backend of berdy helper
@@ -2112,7 +2126,9 @@ void HumanDynamicsEstimator::run()
     pImpl->berdyData.solver->getLastEstimate(estimatedDynamicVariables);
 
     // Dump dynamic variables vector to a text file
-    pImpl->dynamicVariablesFile << estimatedDynamicVariables.toString().c_str() << std::endl;
+    if (pImpl->saveStateToFile) {
+        pImpl->dynamicVariablesFile << estimatedDynamicVariables.toString().c_str() << std::endl;
+    }
 
     iDynTree::LinkProperAccArray properAccs;
     iDynTree::LinkNetTotalWrenchesWithoutGravity netTotalWrenchesWithoutGrav;

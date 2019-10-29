@@ -317,6 +317,7 @@
         <param name="number_of_wrench_sensors">4</param>
         <param name="wrench_sensors_link_name">(LeftFoot RightFoot LeftHand RightHand)</param>
         <param name="comConstraintIncludeAllLinks">false</param>
+        <param name="saveStateToFile">false</param>
         <param name="removeOffsetOption">source</param>
         <param name="dynamicWrenchOffsetSD">10.0</param>
         <group name="PRIORS">
