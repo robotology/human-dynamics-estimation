@@ -7,7 +7,7 @@
     <param name="canbusDevice"> "ecan" </param>
     <param name="physDevice"> "ecan" </param>
     <param name="canDeviceNum"> 0 </param>
-    <param name="canAddress"> 0x05 </param>
+    <param name="canAddress"> 0x01 </param>
     <param name="format"> 16 </param>
     <param name="channels"> 6 </param>
     <param name="period"> 5 </param>
@@ -18,7 +18,7 @@
     <param name="canbusDevice"> "ecan" </param>
     <param name="physDevice"> "ecan" </param>
     <param name="canDeviceNum"> 0 </param>
-    <param name="canAddress"> 0x06 </param>
+    <param name="canAddress"> 0x02 </param>
     <param name="format"> 16 </param>
     <param name="channels"> 6 </param>
     <param name="period"> 5 </param>
@@ -29,7 +29,7 @@
     <param name="canbusDevice"> "ecan" </param>
     <param name="physDevice"> "ecan" </param>
     <param name="canDeviceNum"> 0 </param>
-    <param name="canAddress"> 0x07 </param>
+    <param name="canAddress"> 0x03 </param>
     <param name="format"> 16 </param>
     <param name="channels"> 6 </param>
     <param name="period"> 5 </param>
@@ -40,7 +40,7 @@
     <param name="canbusDevice"> "ecan" </param>
     <param name="physDevice"> "ecan" </param>
     <param name="canDeviceNum"> 0 </param>
-    <param name="canAddress"> 0x08 </param>
+    <param name="canAddress"> 0x04 </param>
     <param name="format"> 16 </param>
     <param name="channels"> 6 </param>
     <param name="period"> 5 </param>
