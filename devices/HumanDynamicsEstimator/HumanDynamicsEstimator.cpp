@@ -969,10 +969,12 @@ class CmdParser : public yarp::os::PortReader
 {
 
 public:
-    std::atomic<bool> cmdStatus{false};
+    std::atomic<bool> cmdOffsetStatus{false};
     std::atomic<bool> cmdDynamicStatus{false};
-    std::atomic<bool> reset{false};
+    std::atomic<bool> resetOffset{false};
     std::atomic<bool> dynamicOffset{false};
+    std::atomic<bool> cmdTask1Status{false};
+    std::atomic<bool> resetTask1{false};
     std::string wrenchSourceName;
 
     bool read(yarp::os::ConnectionReader& connection) override
@@ -983,22 +985,33 @@ public:
             if (command.get(0).asString() == "help") {
                 response.addString("Enter <removeWrenchOffset> to remove the wrench estimates offset");
                 response.addString("Enter <removeWrenchOffset> <wrenchSourceName> to set the offset for the given wrench source (works only if removeOffsetOption is source-dynamic)");
-                response.addString("Enter <reset> to clear the wrench estimates offset on real wrench sources");
+                response.addString("Enter <resetOffset> to clear the wrench estimates offset on real wrench sources");
+                response.addString("Enter <fixEstimatedWrenches> to skip the task1 and fix the estimated external wrenches");
+                response.addString("Enter <resetEstimatedWrenches> to restart the task1 for estimating external wrenches");
             }
             else if (command.get(0).asString() == "removeWrenchOffset" && command.get(1).isNull()) {
                 response.addString("Entered command <removeWrenchOffset> is correct");
-                this->cmdStatus = true;
+                this->cmdOffsetStatus = true;
             }
             else if (dynamicOffset && command.get(0).asString() == "removeWrenchOffset" && !command.get(1).isNull()) {
                 wrenchSourceName = command.get(1).asString();
                 response.addString("Entered command <removeWrenchOffset> is correct, setting the offset for the source " + wrenchSourceName);
                 this->cmdDynamicStatus = true;
-                this->cmdStatus = true;
+                this->cmdOffsetStatus = true;
             }
-            else if (command.get(0).asString() == "reset") {
-                response.addString("Entered command <reset> is correct, clearing all wrench estimates and offsets");
-                this->cmdStatus = true;
-                this->reset = true;
+            else if (command.get(0).asString() == "resetOffset") {
+                response.addString("Entered command <resetOffset> is correct, clearing all wrench estimates and offsets");
+                this->cmdOffsetStatus = true;
+                this->resetOffset = true;
+            }
+            else if (command.get(0).asString() == "fixEstimatedWrenches") {
+                response.addString("Entered command <fixEstimatedWrenches> is correct, fixing estimated external wrenches");
+                this->cmdTask1Status = true;
+            }
+            else if (command.get(0).asString() == "resetEstimatedWrenches") {
+                response.addString("Entered command <resetEstimatedWrenches> is correct, estimating external hands wrenches");
+                this->cmdTask1Status = true;
+                this->resetTask1 = true;
             }
             else {
                 response.addString(
@@ -1006,7 +1019,8 @@ public:
             }
         }
         else {
-            this->cmdStatus = false;
+            this->cmdOffsetStatus = false;
+            this->cmdTask1Status = false;
             return false;
         }
 
@@ -1094,6 +1108,10 @@ public:
     std::unordered_map<std::string, iDynTree::Wrench> realWrenchOffsetMap;
     std::unordered_map<std::string, iDynTree::Wrench> realWrenchDynamicOffsetMap;
     std::unordered_map<std::string, double> dynamicOffsetGains;
+
+    // Enabling fix external wrench Estimation
+    bool enableTask1ExternalWrenchEstimation;
+    std::unordered_map<std::string, iDynTree::Wrench> fixedExternalWrenchEstimationInWorldFrameMap;
 
     // Model wrench offset
     iDynTree::Wrench modelWrenchOffset;
@@ -1307,9 +1325,12 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
     berdyOptions.includeCoMAccelerometerAsSensorInTask2 = false;
     berdyOptions.stackOfTasksMAP = true;
 
+    pImpl->enableTask1ExternalWrenchEstimation = true;
+
     // Berdy task1 flag
     // TODO: Probably better to have it as an option
     pImpl->task1 = true;
+
 
     // Get the comConstraintIncludeAllLinks option. The default value is true
     bool comConstraintIncludeAllLinks = config.check("comConstraintIncludeAllLinks",yarp::os::Value(true)).asBool();
@@ -1495,7 +1516,7 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
 
             iDynTree::Wrench dummyWrench = iDynTree::Wrench::Zero();
             pImpl->ficticiousWrenchOffsetMap.insert(make_pair(pImpl->ficticiousWrenchLinks.at(w), dummyWrench));
-
+            pImpl->fixedExternalWrenchEstimationInWorldFrameMap.insert(make_pair(pImpl->ficticiousWrenchLinks.at(w), dummyWrench));
         }
     }
 
@@ -1696,7 +1717,6 @@ void HumanDynamicsEstimator::run()
 
     // Fill in the y vector with sensor measurements for the FT sensors
     std::vector<double> wrenchValues = pImpl->iHumanWrench->getWrenches();
-    std::vector<double> task1EstiamtedWrenchValues = wrenchValues;
 
     std::vector<double> offsetRemovedWrenchValues;
     offsetRemovedWrenchValues.resize(wrenchValues.size(), 0.0);
@@ -1733,7 +1753,7 @@ void HumanDynamicsEstimator::run()
                 break;
                 case iDynTree::NET_EXT_WRENCH_SENSOR:
                 {
-                    double totalGain = 0.0;
+                    double allLinksInContact = 1.0;
                     // compute the gains for the dynamic offset removal
                     if (pImpl->removeOffsetOption == "source-dynamic") {
                         for (int idx = 0; idx < pImpl->wrenchSensorsLinkNames.size(); idx++) {
@@ -1746,7 +1766,7 @@ void HumanDynamicsEstimator::run()
                                 }
                                 double wrenchGain = std::exp(-wrenchModule / (2 * pImpl->dynamicWrenchOffsetSD ));
                                 pImpl->dynamicOffsetGains.at(wrenchSensorLinkName) = wrenchGain;
-                                totalGain = totalGain + wrenchGain;
+                                allLinksInContact = allLinksInContact * (1 - wrenchGain);
                             }
                         }
                     }
@@ -1767,21 +1787,24 @@ void HumanDynamicsEstimator::run()
                             dynamicOffsetWrenchInLinkFrame = world_H_link.getRotation().inverse() * dynamicOffsetWrenchInWorldFrame;
 
                             //compute the weight for the offset (if dynamic offset is not enabled, dynamicOffsetWeight=0, offsetWeight=1)
-                            dynamicOffsetWeight =  (1- pImpl->dynamicOffsetGains.at(wrenchSensorLinkName)) * (totalGain - pImpl->dynamicOffsetGains.at(wrenchSensorLinkName)) / (pImpl->dynamicOffsetGains.size() - 1);
-                            offsetWeight = 1 - dynamicOffsetWeight;
+                            offsetWeight = allLinksInContact;
+                            dynamicOffsetWeight = (1 - allLinksInContact) * (1- pImpl->dynamicOffsetGains.at(wrenchSensorLinkName));
+                            // offsetWeight = 1 - (totalGain - pImpl->dynamicOffsetGains.at(wrenchSensorLinkName)) / (pImpl->dynamicOffsetGains.size() - 1);
+                            // dynamicOffsetWeight =  (1- pImpl->dynamicOffsetGains.at(wrenchSensorLinkName)) * (totalGain - pImpl->dynamicOffsetGains.at(wrenchSensorLinkName)) / (pImpl->dynamicOffsetGains.size() - 1);
+
                         }
 
                         if (wrenchSensorLinkName.compare(task1Sensor.id) == 0) {
                             std::vector<std::string>::iterator it = std::find(pImpl->wrenchSensorsLinkNames.begin(),  pImpl->wrenchSensorsLinkNames.end(), wrenchSensorLinkName);
                             if (it != pImpl->wrenchSensorsLinkNames.end()) {
                                 int index = std::distance(pImpl->wrenchSensorsLinkNames.begin(), it);
-
                                 for (int i = 0; i < 6; i++)
                                 {
                                     offsetRemovedWrenchValues.at(index*6 + i) = wrenchValues.at(idx*6 + i) - offsetWeight * offsetWrenchInLinkFrame.getVal(i)
                                                                                                            - dynamicOffsetWeight * dynamicOffsetWrenchInLinkFrame.getVal(i);
                                     pImpl->berdyData.buffers.task1_measurements(found->second.offset + i) = offsetRemovedWrenchValues.at(index*6 + i);
                                 }
+
                             }
                             break;
                         }
@@ -1801,59 +1824,81 @@ void HumanDynamicsEstimator::run()
         }
     }
 
-    // Dump task1 measurement vector
-    if (pImpl->saveStateToFile) {
-        pImpl->task1MeasurementFile << pImpl->berdyData.buffers.task1_measurements.toString().c_str() << std::endl;
+    // Wrench vakues to be used for the second task.
+    // This vector will be filled with the estimation coming from task1 if enabled,
+    // or with the fixed values for the estimated wrenches.
+    std::vector<double> task1EstiamtedWrenchValues = offsetRemovedWrenchValues;
+
+    // Prepare Berdy data for task1, do estimate, and extract estimated wrench values
+    if (pImpl->enableTask1ExternalWrenchEstimation) {
+        // Dump task1 measurement vector
+        if (pImpl->saveStateToFile) {
+            pImpl->task1MeasurementFile << pImpl->berdyData.buffers.task1_measurements.toString().c_str() << std::endl;
+        }
+
+        // Update estimator information
+        pImpl->berdyData.solver->updateEstimateInformationFloatingBase(pImpl->berdyData.state.jointsPosition,
+                                                                       pImpl->berdyData.state.jointsVelocity,
+                                                                       pImpl->berdyData.state.floatingBaseFrameIndex,
+                                                                       pImpl->berdyData.state.baseAngularVelocity,
+                                                                       pImpl->berdyData.buffers.task1_measurements,
+                                                                       pImpl->task1);
+        // Do task1 berdy estimation
+        if (!pImpl->berdyData.solver->doEstimate(pImpl->task1)) {
+            yError() << LogPrefix << "Failed to do task1 berdy estimation";
+        }
+
+        // Extract the estimated dynamic variables
+        iDynTree::VectorDynSize task1_estimatedDynamicVariables(pImpl->berdyData.helper.getNrOfDynamicVariables(pImpl->task1));
+        pImpl->berdyData.solver->getLastEstimate(task1_estimatedDynamicVariables, pImpl->task1);
+
+        // Dump task1 dynamic variables vector
+        if (pImpl->saveStateToFile) {
+            pImpl->task1DynamicVariablesFile << task1_estimatedDynamicVariables.toString().c_str() << std::endl;
+        }
+
+        // Extract links net external wrench from  task1 estimated dynamic variables
+        pImpl->berdyData.helper.extractLinkNetExternalWrenchesFromDynamicVariables(task1_estimatedDynamicVariables,
+                                                                                   pImpl->berdyData.estimates.task1_linkNetExternalWrenchEstimates,
+                                                                                   pImpl->task1);
+
+
+
+        // Update wrench values with the estimates from task1
+        for (int idx = 0; idx < pImpl->wrenchSensorsLinkNames.size(); idx++) {
+
+            std::string wrenchSensorLinkName = pImpl->wrenchSensorsLinkNames.at(idx);
+            iDynTree::LinkIndex linkIndex = pImpl->berdyData.helper.model().getLinkIndex(wrenchSensorLinkName);
+
+            iDynTree::Wrench linkWrench = pImpl->berdyData.estimates.task1_linkNetExternalWrenchEstimates(linkIndex);
+
+            // TODO: Double check if updating only the hands wrench measurements is better
+            task1EstiamtedWrenchValues.at(idx*6 + 0) = linkWrench.getVal(0);
+            task1EstiamtedWrenchValues.at(idx*6 + 1) = linkWrench.getVal(1);
+            task1EstiamtedWrenchValues.at(idx*6 + 2) = linkWrench.getVal(2);
+            task1EstiamtedWrenchValues.at(idx*6 + 3) = linkWrench.getVal(3);
+            task1EstiamtedWrenchValues.at(idx*6 + 4) = linkWrench.getVal(4);
+            task1EstiamtedWrenchValues.at(idx*6 + 5) = linkWrench.getVal(5);
+        }
+    }
+    else {
+        for (int idx = 0; idx < pImpl->wrenchSensorsLinkNames.size(); idx++) {
+            std::string wrenchSensorLinkName = pImpl->wrenchSensorsLinkNames.at(idx);
+            if (pImpl->fixedExternalWrenchEstimationInWorldFrameMap.find(wrenchSensorLinkName) != pImpl->fixedExternalWrenchEstimationInWorldFrameMap.end()) {
+                iDynTree::Transform world_H_link = kinDynComputations.getWorldTransform(wrenchSensorLinkName);
+                iDynTree::Wrench linkWrenchInLinkFrame = world_H_link.inverse().getRotation() * pImpl->fixedExternalWrenchEstimationInWorldFrameMap.at(wrenchSensorLinkName);
+                task1EstiamtedWrenchValues.at(idx*6 + 0) = linkWrenchInLinkFrame.getVal(0);
+                task1EstiamtedWrenchValues.at(idx*6 + 1) = linkWrenchInLinkFrame.getVal(1);
+                task1EstiamtedWrenchValues.at(idx*6 + 2) = linkWrenchInLinkFrame.getVal(2);
+                task1EstiamtedWrenchValues.at(idx*6 + 3) = linkWrenchInLinkFrame.getVal(3);
+                task1EstiamtedWrenchValues.at(idx*6 + 4) = linkWrenchInLinkFrame.getVal(4);
+                task1EstiamtedWrenchValues.at(idx*6 + 5) = linkWrenchInLinkFrame.getVal(5);
+            }
+        }
     }
 
-    // Update estimator information
-    pImpl->berdyData.solver->updateEstimateInformationFloatingBase(pImpl->berdyData.state.jointsPosition,
-                                                                   pImpl->berdyData.state.jointsVelocity,
-                                                                   pImpl->berdyData.state.floatingBaseFrameIndex,
-                                                                   pImpl->berdyData.state.baseAngularVelocity,
-                                                                   pImpl->berdyData.buffers.task1_measurements,
-                                                                   pImpl->task1);
-    // Do task1 berdy estimation
-    if (!pImpl->berdyData.solver->doEstimate(pImpl->task1)) {
-        yError() << LogPrefix << "Failed to do task1 berdy estimation";
-    }
-
-    // Extract the estimated dynamic variables
-    iDynTree::VectorDynSize task1_estimatedDynamicVariables(pImpl->berdyData.helper.getNrOfDynamicVariables(pImpl->task1));
-    pImpl->berdyData.solver->getLastEstimate(task1_estimatedDynamicVariables, pImpl->task1);
-
-    // Dump task1 dynamic variables vector
-    if (pImpl->saveStateToFile) {
-        pImpl->task1DynamicVariablesFile << task1_estimatedDynamicVariables.toString().c_str() << std::endl;
-    }
-
-    // Extract links net external wrench from  task1 estimated dynamic variables
-    pImpl->berdyData.helper.extractLinkNetExternalWrenchesFromDynamicVariables(task1_estimatedDynamicVariables,
-                                                                               pImpl->berdyData.estimates.task1_linkNetExternalWrenchEstimates,
-                                                                               pImpl->task1);
-
-
-
-    // Update wrench values with the estimates from task1
-    for (int idx = 0; idx < pImpl->wrenchSensorsLinkNames.size(); idx++) {
-
-        std::string wrenchSensorLinkName = pImpl->wrenchSensorsLinkNames.at(idx);
-        iDynTree::Transform world_H_link = kinDynComputations.getWorldTransform(wrenchSensorLinkName);
-        iDynTree::LinkIndex linkIndex = pImpl->berdyData.helper.model().getLinkIndex(wrenchSensorLinkName);
-
-        iDynTree::Wrench linkWrench = pImpl->berdyData.estimates.task1_linkNetExternalWrenchEstimates(linkIndex);
-
-        // TODO: Double check if updating only the hands wrench measurements is better
-        task1EstiamtedWrenchValues.at(idx*6 + 0) = linkWrench.getVal(0);
-        task1EstiamtedWrenchValues.at(idx*6 + 1) = linkWrench.getVal(1);
-        task1EstiamtedWrenchValues.at(idx*6 + 2) = linkWrench.getVal(2);
-        task1EstiamtedWrenchValues.at(idx*6 + 3) = linkWrench.getVal(3);
-        task1EstiamtedWrenchValues.at(idx*6 + 4) = linkWrench.getVal(4);
-        task1EstiamtedWrenchValues.at(idx*6 + 5) = linkWrench.getVal(5);
-    }
-
-    // Check for rpc command status, and in case update the offsets
-    if (pImpl->commandPro.cmdStatus && !pImpl->commandPro.reset) {
+    // Check for rpc command status for the offset, and in case update or reset the offsets
+    if (pImpl->commandPro.cmdOffsetStatus && !pImpl->commandPro.resetOffset) {
         if (pImpl->removeOffsetOption == "source" || (!pImpl->commandPro.cmdDynamicStatus && pImpl->removeOffsetOption == "source-dynamic")) {
             for (int idx = 0; idx < pImpl->wrenchSensorsLinkNames.size(); idx++) {
                 std::string wrenchSensorLinkName = pImpl->wrenchSensorsLinkNames.at(idx);
@@ -1934,9 +1979,7 @@ void HumanDynamicsEstimator::run()
             yWarning() << LogPrefix << "The choosen removeOffsetOption " << pImpl->removeOffsetOption << " is not valid";
         }
     }
-
-    // Clear wrench offset values and estimates
-    if (pImpl->commandPro.cmdStatus && pImpl->commandPro.reset) {
+    else if (pImpl->commandPro.cmdOffsetStatus && pImpl->commandPro.resetOffset) {
 
         yInfo() << LogPrefix << "Clearing offsets";
         for (int idx = 0; idx < pImpl->wrenchSensorsLinkNames.size(); idx++) {
@@ -1944,21 +1987,43 @@ void HumanDynamicsEstimator::run()
             std::string wrenchSensorLinkName = pImpl->wrenchSensorsLinkNames.at(idx);
 
             if (pImpl->realWrenchOffsetMap.find(wrenchSensorLinkName) != pImpl->realWrenchOffsetMap.end()) {
-
                 pImpl->realWrenchOffsetMap.at(wrenchSensorLinkName) = iDynTree::Wrench::Zero();
-
             }
         }
 
         pImpl->modelWrenchOffset = iDynTree::Wrench::Zero();
+    }
 
-        pImpl->commandPro.reset = false;
-
+    // Check for rpc command status for the offset, and in case update or reset the offsets
+    if (pImpl->commandPro.cmdTask1Status && !pImpl->commandPro.resetTask1) {
+        if (!pImpl->enableTask1ExternalWrenchEstimation) {
+            yWarning() << LogPrefix << "External wrench estimation is already fixed, reset it before fixing a new estimation";
+        }
+        else {
+            for (int idx = 0; idx < pImpl->ficticiousWrenchLinks.size(); idx++) {
+                std::string wrenchSensorLinkName = pImpl->ficticiousWrenchLinks.at(idx);
+                iDynTree::LinkIndex linkIndex = pImpl->berdyData.helper.model().getLinkIndex(wrenchSensorLinkName);
+                if (pImpl->fixedExternalWrenchEstimationInWorldFrameMap.find(wrenchSensorLinkName) != pImpl->fixedExternalWrenchEstimationInWorldFrameMap.end()) {
+                    iDynTree::Transform world_H_link = kinDynComputations.getWorldTransform(wrenchSensorLinkName);
+                    pImpl->fixedExternalWrenchEstimationInWorldFrameMap.at(wrenchSensorLinkName) = world_H_link.getRotation() * pImpl->berdyData.estimates.task1_linkNetExternalWrenchEstimates(linkIndex);
+                    yInfo() << LogPrefix << "Setting fixed wrench value for wrench source: "<< wrenchSensorLinkName;
+                }
+            }
+            yInfo() << LogPrefix << "Disabling task1 estimation";
+            pImpl->enableTask1ExternalWrenchEstimation = false;
+        }
+    }
+    else if (pImpl->commandPro.cmdTask1Status && pImpl->commandPro.resetTask1) {
+        yInfo() << LogPrefix << "Clearing fixed estimated wrenches and enabling task1 estimation";
+        pImpl->enableTask1ExternalWrenchEstimation = true;
     }
 
     // Set rpc command status to false
-    pImpl->commandPro.cmdStatus = false;
+    pImpl->commandPro.cmdOffsetStatus = false;
     pImpl->commandPro.cmdDynamicStatus = false;
+    pImpl->commandPro.resetOffset = false;
+    pImpl->commandPro.cmdTask1Status = false;
+    pImpl->commandPro.resetTask1 = false;
 
     // Get the berdy sensors following its internal order
     std::vector<iDynTree::BerdySensor> berdySensors = pImpl->berdyData.helper.getSensorsOrdering();
