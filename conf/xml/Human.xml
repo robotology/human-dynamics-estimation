@@ -318,8 +318,9 @@
         <param name="wrench_sensors_link_name">(LeftFoot RightFoot LeftHand RightHand)</param>
         <param name="comConstraintIncludeAllLinks">false</param>
         <param name="saveStateToFile">false</param>
-        <param name="removeOffsetOption">source</param>
-        <param name="dynamicWrenchOffsetSD">10.0</param>
+        <param name="removeOffsetOption">source-dynamic</param>
+        <param name="dynamicWrenchOffsetSD">30.0</param>
+        <param name="wrenchEstimationForceLowerThreshold">100</param>
         <group name="PRIORS">
            <param name="mu_dyn_variables">1e-6</param>
            <param name="cov_dyn_variables">1e6</param>

@@ -1069,6 +1069,10 @@ public:
     std::string removeOffsetOption;
     double dynamicWrenchOffsetSD;
 
+    // TODO: threshold option should be more customable, and upper limit should be add.
+    // treshold to set low estimated wrenches to zero. if it has value -1, no treshold is used.
+    double wrenchEstimationForceLowerThreshold;
+
     bool saveStateToFile;
 
     const std::unordered_map<iDynTree::BerdySensorTypes, std::string> mapBerdySensorType = {
@@ -1197,12 +1201,14 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
     yarp::os::Bottle* linkNames = config.find("wrench_sensors_link_name").asList();
 
     // Configuration option for removing the offset
-
     pImpl->removeOffsetOption = config.check("removeOffsetOption",yarp::os::Value("model")).asString();
     pImpl->dynamicWrenchOffsetSD = config.check("dynamicWrenchOffsetSD",yarp::os::Value(1.0)).asDouble();
     if (pImpl->removeOffsetOption == "source-dynamic") {
         pImpl->commandPro.dynamicOffset = true;
     }
+
+    // Configuration option to set a threshold to the estimated wrenches
+    pImpl->wrenchEstimationForceLowerThreshold = config.check("wrenchEstimationForceLowerThreshold",yarp::os::Value(-1.0)).asDouble();
 
     if (number_of_wrench_sensors != linkNames->size()) {
         yError() << LogPrefix << "mismatch between the number of wrench sensors and corresponding sensor link names list";
@@ -1897,6 +1903,23 @@ void HumanDynamicsEstimator::run()
         }
     }
 
+    // Apply treshold to the estimated wrenches
+    if (pImpl->wrenchEstimationForceLowerThreshold > 0.0) {
+        for (int idx = 0; idx < pImpl->wrenchSensorsLinkNames.size(); idx++) {
+            double wrenchModule = 0.0;
+            for (int i = 0; i < 3; i++)
+            {
+                wrenchModule = wrenchModule + std::pow( task1EstiamtedWrenchValues.at(idx*6 + i), 2 );
+            }
+            if (wrenchModule < std::pow(pImpl->wrenchEstimationForceLowerThreshold, 2)) {
+                for (int i = 0; i < 3; i++)
+                {
+                    task1EstiamtedWrenchValues.at(idx*6 + i) = 0;
+                }
+            }
+        }
+    }
+
     // Check for rpc command status for the offset, and in case update or reset the offsets
     if (pImpl->commandPro.cmdOffsetStatus && !pImpl->commandPro.resetOffset) {
         if (pImpl->removeOffsetOption == "source" || (!pImpl->commandPro.cmdDynamicStatus && pImpl->removeOffsetOption == "source-dynamic")) {
@@ -2307,6 +2330,21 @@ void HumanDynamicsEstimator::run()
             // Expose net link external wrench estimates to analog sensor data variable
             std::string linkName = pImpl->wrenchSensorsLinkNames.at(i);
             iDynTree::Wrench linkNetExternalWrench = pImpl->berdyData.estimates.linkNetExternalWrenchEstimates(pImpl->humanModel.getLinkIndex(linkName));
+
+            // Apply treshold to the estimated wrenches
+            if (pImpl->wrenchEstimationForceLowerThreshold > 0.0) {
+                double wrenchModule = 0.0;
+                for (int i = 0; i < 3; i++)
+                {
+                    wrenchModule = wrenchModule + std::pow( linkNetExternalWrench.getLinearVec3()(i), 2 );
+                }
+                if (wrenchModule < std::pow(pImpl->wrenchEstimationForceLowerThreshold, 2)) {
+                    for (int i = 0; i < 3; i++)
+                    {
+                        linkNetExternalWrench.setVal(i, 0);
+                    }
+                }
+            }
 
             pImpl->linkNetExternalWrenchEstimatesAnalogSensorData.measurements[6 * i + 0] = linkNetExternalWrench.getLinearVec3()(0);
             pImpl->linkNetExternalWrenchEstimatesAnalogSensorData.measurements[6 * i + 1] = linkNetExternalWrench.getLinearVec3()(1);
