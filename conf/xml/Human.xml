@@ -46,7 +46,7 @@
         sparseCholeskyDecomposition,
         robustCholeskyDecomposition,
         sparseRobustCholeskyDecomposition -->
-        <param name='inverseVelocityKinematicsSolver'>QP</param>
+        <param name='inverseVelocityKinematicsSolver'>sparseRobustCholeskyDecomposition</param>
         <param name="linVelTargetWeight">0.0</param>
         <param name="angVelTargetWeight">1.0</param>
         <!-- integration based IK parameters -->
@@ -201,7 +201,7 @@
     </device>
 
     <!-- Uncomment to stream the output of HumanStateProvider on a YARP port -->
-    <!-- <device type="human_state_wrapper" name="HumanStateWrapper">
+    <device type="human_state_wrapper" name="HumanStateWrapper">
         <param name="period">0.02</param>
         <param name="outputPort">/HDE/HumanStateWrapper/state:o</param>
         <action phase="startup" level="5" type="attach">
@@ -210,10 +210,10 @@
             </paramlist>
         </action>
         <action phase="shutdown" level="5" type="detach"/>
-    </device> -->
+    </device>
 
     <device type="human_state_publisher" name="HumanStatePublisher">
-        <param name="period">0.02</param>
+        <param name="period">0.08</param>
         <param name="baseTFName">/Human/Pelvis</param>
         <param name="humanJointsTopic">/Human/joint_states</param>
         <action phase="startup" level="5" type="attach">
@@ -232,7 +232,7 @@
     </device>
 
     <device type="human_wrench_provider" name="HumanWrenchProvider">
-        <param name="period">0.100</param>
+        <param name="period">0.020</param>
         <param name="human_urdf">humanSubject01_66dof.urdf</param>
         <param name="pHRIScenario">false</param>
         <param name="number_of_sources">4</param>
@@ -259,11 +259,13 @@
             <param name="sensorName">DummyLeftHandFTSensors</param>
             <param name="outputFrame">LeftHand</param>
             <param name="type">dummy</param>
+            <param name="position">(0.0 0.05 0.0)</param>
         </group>
         <group name="DummyRightHand">
             <param name="sensorName">DummyRightHandFTSensors</param>
             <param name="outputFrame">RightHand</param>
             <param name="type">dummy</param>
+            <param name="position">(0.0 0.05 0.0)</param>
         </group>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
@@ -275,7 +277,7 @@
 
     <device type="analogServer" name="HumanWrenchWrapper">
         <param name="name">/HDE/HumanWrenchWrapper/wrench:o</param>
-        <param name="period">10</param>
+        <param name="period">20</param>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
                 <elem name="HumanWrenchWrapperLabel">HumanWrenchProvider</elem>
@@ -311,16 +313,16 @@
     </device>
 
     <device type="human_dynamics_estimator" name="HumanDynamicsEstimator">
-        <param name="period">0.100</param>
+        <param name="period">0.02</param>
         <param name="urdf">humanSubject01_66dof.urdf</param>
         <param name="baseLink">Pelvis</param>
         <param name="number_of_wrench_sensors">4</param>
         <param name="wrench_sensors_link_name">(LeftFoot RightFoot LeftHand RightHand)</param>
         <param name="comConstraintIncludeAllLinks">false</param>
         <param name="saveStateToFile">false</param>
-        <param name="removeOffsetOption">source-dynamic</param>
+        <param name="removeOffsetOption">source</param>
         <param name="dynamicWrenchOffsetSD">30.0</param>
-        <param name="wrenchEstimationForceLowerThreshold">100</param>
+        <param name="wrenchEstimationForceLowerThreshold">10</param>
         <group name="PRIORS">
            <param name="mu_dyn_variables">1e-6</param>
            <param name="cov_dyn_variables">1e6</param>
@@ -334,8 +336,8 @@
                <param name="specific_elements">(LeftFoot RightFoot LeftHand RightHand)</param>
                <param name="LeftFoot">(1e-6 1e-6 1e-6 1e-6 1e-6 1e-6)</param>
                <param name="RightFoot">(1e-6 1e-6 1e-6 1e-6 1e-6 1e-6)</param>
-               <param name="LeftHand">(1e6 1e6 1e6 1e-6 1e-6 1e-6)</param>
-               <param name="RightHand">(1e6 1e6 1e6 1e-6 1e-6 1e-6)</param>
+               <param name="LeftHand">(1e1 1e1 1e1 1e-6 1e-6 1e-6)</param>
+               <param name="RightHand">(1e1 1e1 1e1 1e-6 1e-6 1e-6)</param>
                <param name="FicticiousWrenchLinks">(LeftHand RightHand)</param>
            </group>
            <param name="cov_task1_measurements_NET_EXT_WRENCH_SENSOR">1e-6</param>
@@ -354,7 +356,7 @@
 
     <device type="analogServer" name="HumanEstimatedWrenchWrapper">
         <param name="name">/HDE/HumanEstimatedWrenchWrapper/wrench:o</param>
-        <param name="period">10</param>
+        <param name="period">20</param>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
                 <elem name="HumanEstimatedWrenchWrapperLabel">HumanDynamicsEstimator</elem>
@@ -366,7 +368,7 @@
     <!--Wrapper to publish EstimatedWrenchStamped message to Rviz-->
     <device type="analogServer" name="HumanEstimatedWrenchPublisher">
         <param name="name">/HDE/HumanEstimatedWrenchPublisher/wrench:o</param>
-        <param name="period">10</param>
+        <param name="period">20</param>
         <param name="channels">48</param>
         <paramlist name="ports">
             <elem name="FirstSetOfChannels">0 5 0 5</elem>
@@ -405,7 +407,7 @@
     </device-->
 
     <device type="human_dynamics_publisher" name="HumanDynamicsPublisher">
-        <param name="period">0.020</param>
+        <param name="period">0.02</param>
         <param name="parentLinkNames">(LeftFoot LeftLowerLeg LeftUpperLeg LeftHand LeftForeArm LeftUpperArm RightFoot RightLowerLeg RightUpperLeg RightHand RightForeArm RightUpperArm)</param>
         <param name="sphericalJointNames">(jLeftAnkle jLeftKnee jLeftHip jLeftWrist jLeftElbow jLeftShoulder jRightAnkle jRightKnee jRightHip jRightWrist jRightElbow jRightShoulder)</param>
         <param name="topicPrefix">/HumanEffortBridge</param>
@@ -446,7 +448,7 @@
     </device> -->
 
     <!--Uncomment the following code if you need to dump wearable data-->
-    <!--device type="iwear_remapper" name="WearableData">
+    <!-- <device type="iwear_remapper" name="WearableData">
         <param name="wearableDataPorts">(/FTShoeLeft/WearableData/data:o /FTShoeRight/WearableData/data:o /XSensSuit/WearableData/data:o)</param>
         <param name="useRPC">false</param>
         <param name="wearableRPCPorts">(/FTShoeLeft/WearableData/metadataRpc:o /FTShoeRight/WearableData/metadataRpc:o /XSensSuit/WearableData/metadataRpc:o)</param>
@@ -454,7 +456,7 @@
     </device>
 
     <device type="iwear_wrapper" name="WearableDataWrapper">
-        <param name="period">0.1</param>
+        <param name="period">0.02</param>
         <param name="dataPortName">/WearableData/data:o</param>
         <param name="rpcPortName">/WearableData/metadataRpc:o</param>
         <action phase="startup" level="5" type="attach">
@@ -463,6 +465,6 @@
             </paramlist>
         </action>
         <action phase="shutdown" level="5" type="detach"/>
-    </device-->
+    </device> -->
 
 </robot>
