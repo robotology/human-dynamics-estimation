@@ -69,15 +69,28 @@ cmake --build . --config Release --target install
 ```
 
 ## Applications
-The code contained in this repository can serve different application. Depending on the type of application, a different set of hardware and sensors informationa are required and running the code can have different requirements.
+The code contained in this repository can serve different application. Depending on the type of application, a different set of hardware and sensors are required. In addiction, since the applications are based on [wearables devices](https://github.com/robotology/wearables), a certain number of wearable devices should be running providing the source sensor data.
 The main applications are the following
 
-| Application | hardware |
-|:----------:|:----------:|
-| Inverse Kinematics | kinematic sensors |
-| Dynamics Estimation | kinematic sensors <br> FTsensors |
-| Human-Robot interaction | kinematic sensors <br> FTsensors <br> robot |
-| Whole-body Retargeting | kinematic sensors <br> robot |
+| Application | hardware | werable device | 
+|:----------:|:----------:|:----------:| 
+| Inverse Kinematics | kinematic sensors | XsensSuit |
+| Dynamics Estimation | kinematic sensors <br> FTshoes | XsensSuit <br> FTshoes |
+| Human-Robot Interaction | kinematic sensors <br> FTsensors <br> FTshoes | XsensSuit <br> FTshoes <br> robot |
+| Whole-Body Retargeting | kinematic sensors <br> robot | XsensSuit |
+
+## How to run
+### Applications
+Documentation for running each specific application can be found at the following links:
+- Inverse Kinematics
+- Dynamics Estimation
+- Human-Robot Interaction
+- Whole-Body Retargeting
+
+### Wearable device sources
+Documentaton for running the wearable data source can be found in [`wearables`](https://github.com/robotology/wearables) at the following links:
+- [FTShoes](https://github.com/robotology/wearables/blob/master/doc/How-to-run-FTshoes.md)
+- [XsensSuit](https://github.com/robotology/wearables/blob/master/doc/How-to-run-XsensSuit.md)
 
 ## Citing this work
 
