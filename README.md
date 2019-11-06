@@ -86,6 +86,7 @@ Documentation for running each specific application can be found at the followin
 - Dynamics Estimation
 - Human-Robot Interaction
 - Whole-Body Retargeting
+
 Accordingly to what presented in [previous section](https://github.com/robotology/human-dynamics-estimation#applications), each application will require a proper set of wearable device sources running.
 
 ### Wearable device sources
