@@ -6,7 +6,7 @@ The configuration file to run the XsensSuit as wearable device is [`XsensSuitWea
 ```
 yarprobotinterface --config XsensSuitWearableDevice.xml
 ```
-Once the device is started
+Once the device is started, it will start searching for the suit until it finds all the sensor. You can check the output of the device to follow the status of the search. It may be required to move the sensor in order to let them be discovered.
 
 **Before running**
 Before running the device make sure that:
@@ -17,11 +17,11 @@ Before running the device make sure that:
   - `xsens-rundeps-dir`: Folder where XsensMVN runtime dependencies are stored.
   - `default-calibration-type`: Calibration type to be used (available values: `NposeWalk`, `TposeWalk`, `Npose`, `Tpose`).
   - `minimum-calibration-quality-required`: Minimum calibration quality to be considered good enought to be applied and allow the acquisition to start (available values: `Poor`, `Acceptable`, `Good`).
-  - `body-dimensions`: Subject=specific body dimensions.
+  - `body-dimensions`: Subject specific body dimensions.
 - The subject is wearing the suit correctly 
 
 **Calibration**
-In order to acquire data from the Xsens suit it is required to perform a calibration procedure, the type of procedure is set trought the configuration file (`default-calibration-type`).
+In order to acquire data from the Xsens suit it is required to perform a calibration procedure, the type of procedure is set through the configuration file (`default-calibration-type`).
 The calibration is started sending the following command:
 ```
 yarp rpc /XsensSuit/Control/rpc:i
@@ -44,5 +44,5 @@ startAcquisition
 ```
 If the device is running correctly, the stream of wearable data can be read with:
 ```
-/XsensSuit/WearableData/data:o
+yarp read ... /XsensSuit/WearableData/data:o
 ```
