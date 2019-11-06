@@ -1,0 +1,57 @@
+<application>
+  <name>WearableDevices-Dumper</name>
+  <description>An application for dumping wearable data</description>
+
+  <module>
+        <name>yarpdatadumper</name>
+        <parameters>--name /wearableData/FTshoes/left --type bottle --txTime --rxTime</parameters>
+        <node>${generic_node}</node>
+        <tag>yarpdatadumper</tag>
+  </module>
+
+  <module>
+        <name>yarpdatadumper</name>
+        <parameters>--name /wearableData/FTshoes/right --type bottle --txTime --rxTime</parameters>
+        <node>${generic_node}</node>
+        <tag>yarpdatadumper</tag>
+  </module>
+
+  <module>
+        <name>yarpdatadumper</name>
+        <parameters>--name /wearableData/xsens --type bottle --txTime --rxTime</parameters>
+        <node>${generic_node}</node>
+        <tag>yarpdatadumper</tag>
+  </module>
+
+  <module>
+      <name>yarpdatadumper</name>
+      <parameters>--name /wearableData/SkinInsoles --type bottle --txTime --rxTime</parameters>
+      <node>${generic_node}</node>
+      <tag>yarpdatadumper</tag>
+  </module>
+
+  <connection>
+        <from>/FTShoeLeft/WearableData/data:o</from>
+        <to>/wearableData/FTshoes/left</to>
+        <protocol>udp</protocol>
+  </connection>
+
+  <connection>
+        <from>/FTShoeRight/WearableData/data:o</from>
+        <to>/wearableData/FTshoes/right</to>
+        <protocol>udp</protocol>
+  </connection>
+
+  <connection>
+        <from>/XSensSuit/WearableData/data:o</from>
+        <to>/wearableData/xsens</to>
+        <protocol>udp</protocol>
+  </connection>
+
+  <connection>
+        <from>/SkinInsoles/WearableData/data:o</from>
+        <to>/wearableData/SkinInsoles</to>
+        <protocol>udp</protocol>
+  </connection>
+
+</application>
