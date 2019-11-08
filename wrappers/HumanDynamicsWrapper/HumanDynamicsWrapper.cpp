@@ -8,7 +8,7 @@
 
 #include "HumanDynamicsWrapper.h"
 #include "IHumanDynamics.h"
-#include "thrift/HumanDynamics.h"
+#include <HumanDynamicsEstimation/HumanDynamics.h>
 
 #include <yarp/os/BufferedPort.h>
 #include <yarp/os/LogStream.h>
@@ -35,8 +35,7 @@ HumanDynamicsWrapper::HumanDynamicsWrapper()
     , pImpl{new impl()}
 {}
 
-HumanDynamicsWrapper::~HumanDynamicsWrapper()
-{}
+HumanDynamicsWrapper::~HumanDynamicsWrapper() {}
 
 bool HumanDynamicsWrapper::open(yarp::os::Searchable& config)
 {
@@ -126,7 +125,8 @@ bool HumanDynamicsWrapper::attach(yarp::dev::PolyDriver* poly)
     // ===================
 
     if (pImpl->humanDynamics->getNumberOfJoints() == 0
-        || pImpl->humanDynamics->getNumberOfJoints() != pImpl->humanDynamics->getJointNames().size()) {
+        || pImpl->humanDynamics->getNumberOfJoints()
+               != pImpl->humanDynamics->getJointNames().size()) {
         yError() << "The IHumanDynamics interface might not be ready";
         return false;
     }
@@ -146,12 +146,11 @@ bool HumanDynamicsWrapper::attach(yarp::dev::PolyDriver* poly)
     return true;
 }
 
-void HumanDynamicsWrapper::threadRelease()
-{}
+void HumanDynamicsWrapper::threadRelease() {}
 
 bool HumanDynamicsWrapper::detach()
 {
-    while(isRunning()) {
+    while (isRunning()) {
         stop();
     }
 
@@ -180,21 +179,3 @@ bool HumanDynamicsWrapper::detachAll()
 {
     return detach();
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
