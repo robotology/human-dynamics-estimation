@@ -3,7 +3,9 @@
 # GNU Lesser General Public License v2.1 or any later version.
 
 cmake_minimum_required(VERSION 3.5)
-project(HumanDynamicsEstimation CXX)
+project(HumanDynamicsEstimation
+        LANGUAGES CXX
+        VERSION 2.0.0)
 
 # =====================
 # PROJECT CONFIGURATION
@@ -80,3 +82,13 @@ add_subdirectory(interfaces)
 add_subdirectory(devices)
 add_subdirectory(wrappers)
 add_subdirectory(publishers)
+
+include(InstallBasicPackageFiles)
+install_basic_package_files(${PROJECT_NAME}
+  VERSION ${${PROJECT_NAME}_VERSION}
+  COMPATIBILITY AnyNewerVersion
+  VARS_PREFIX ${PROJECT_NAME}
+  NO_CHECK_REQUIRED_COMPONENTS_MACRO)
+
+# Add the uninstall target
+include(AddUninstallTarget)
