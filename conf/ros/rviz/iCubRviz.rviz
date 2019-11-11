@@ -857,7 +857,7 @@ Visualization Manager:
           Value: true
       Name: iCubModel
       Robot Description: robot_description
-      TF Prefix: Robot
+      TF Prefix: iCub
       Update Interval: 0
       Value: true
       Visual Enabled: true
