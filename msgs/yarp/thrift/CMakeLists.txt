@@ -14,7 +14,7 @@ yarp_idl_to_dir(HumanDynamicsEstimation/HumanState.thrift
 
 include_directories(${LIBRARY_TARGET_NAME}_INCLUDE_DIRS)
 add_library(${LIBRARY_TARGET_NAME} SHARED ${${LIBRARY_TARGET_NAME}_GEN_SRC} ${${LIBRARY_TARGET_NAME}_GEN_HDR})
-target_link_libraries(${LIBRARY_TARGET_NAME} ${YARP_LIBRARIES})
+target_link_libraries(${LIBRARY_TARGET_NAME} YARP::YARP_OS)
 
 set_target_properties(${LIBRARY_TARGET_NAME} PROPERTIES
                       PUBLIC_HEADER "${${LIBRARY_TARGET_NAME}_GEN_HDR}")
@@ -51,7 +51,7 @@ yarp_idl_to_dir(HumanDynamicsEstimation/HumanDynamics.thrift
 
 include_directories(${LIBRARY_TARGET_NAME}_INCLUDE_DIRS)
 add_library(${LIBRARY_TARGET_NAME} SHARED ${${LIBRARY_TARGET_NAME}_GEN_SRC} ${${LIBRARY_TARGET_NAME}_GEN_HDR})
-target_link_libraries(${LIBRARY_TARGET_NAME} ${YARP_LIBRARIES})
+target_link_libraries(${LIBRARY_TARGET_NAME} YARP::YARP_OS)
 
 set_target_properties(${LIBRARY_TARGET_NAME} PROPERTIES
                       PUBLIC_HEADER "${${LIBRARY_TARGET_NAME}_GEN_HDR}")
