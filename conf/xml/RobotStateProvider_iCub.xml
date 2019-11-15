@@ -26,6 +26,7 @@
         <param name="rotTargetWeight">1.0</param>
         <param name="costRegularization">1.0</param>
         <param name="costTolerance">0.001</param>
+        <param name="rpcPortPrefix">iCub</param>
         <!-- inverse velocity kinematics parameters -->
         <!-- inverseVelocityKinematicsSolver values:
         QP
