@@ -16,6 +16,8 @@
 #include <iDynTree/ModelIO/ModelLoader.h>
 #include <yarp/os/LogStream.h>
 #include <yarp/os/ResourceFinder.h>
+#include <yarp/os/RpcServer.h>
+#include <yarp/os/Vocab.h>
 
 #include <iDynTree/Core/EigenHelpers.h>
 #include <iDynTree/Model/Traversal.h>
@@ -28,6 +30,7 @@
 #include <string>
 #include <thread>
 #include <unordered_map>
+#include <numeric>
 
 #include "Utils.hpp"
 
@@ -142,6 +145,12 @@ public:
     float period;
     mutable std::mutex mutex;
 
+    // Rpc
+    class CmdParser;
+    std::unique_ptr<CmdParser> commandPro;
+    yarp::os::RpcServer rpcPort;
+    bool applyRpcCommand();
+
     // Wearable variables
     WearableStorage wearableStorage;
 
@@ -155,6 +164,7 @@ public:
     // Buffers
     std::unordered_map<std::string, iDynTree::Rotation> linkRotationMatrices;
     std::unordered_map<std::string, iDynTree::Transform> linkTransformMatrices;
+    std::unordered_map<std::string, iDynTree::Transform> linkTransformMatricesRaw;
     std::unordered_map<std::string, iDynTree::Rotation> linkOrientationMatrices;
     std::unordered_map<std::string, iDynTree::Twist> linkVelocities;
     iDynTree::VectorDynSize jointConfigurationSolution;
@@ -209,6 +219,13 @@ public:
     iDynTree::VectorDynSize baseVelocityLowerLimit;
     double k_u, k_l;
 
+    // Secondary calibration
+    std::unordered_map<std::string, iDynTree::Rotation> secondaryCalibrationRotations;
+    void ereaseSecondaryCalibration(const std::string& linkName);
+    void selectJointsAndLinksForSecondaryCalibration(const std::string& linkName, const std::string& childLinkName,
+                                                  std::vector<iDynTree::JointIndex> jointZeroIndices, std::vector<iDynTree::LinkIndex> linkToCalibrateIndices);
+    void computeSecondaryCalibrationRotations(const std::vector<iDynTree::JointIndex>& jointZeroIndices, const std::vector<iDynTree::LinkIndex>& linkToCalibrateIndices);
+
     SolverIK ikSolver;
 
     bool useDirectBaseMeasurement;
@@ -229,7 +246,11 @@ public:
     bool getLinkTransformFromInputData(std::unordered_map<std::string, iDynTree::Transform>& t);
     bool getLinkVelocityFromInputData(std::unordered_map<std::string, iDynTree::Twist>& t);
 
+    // calibrate data
+    bool applySecondaryCalibration(const std::unordered_map<std::string, iDynTree::Transform>& t_in, std::unordered_map<std::string, iDynTree::Transform>& t_out);
+
     // solver initialization and update
+    bool createLinkPairs();
     bool initializePairwisedInverseKinematicsSolver();
     bool initializeGlobalInverseKinematicsSolver();
     bool initializeIntegrationBasedInverseKinematicsSolver();
@@ -257,7 +278,102 @@ public:
         iDynTree::VectorDynSize jointVelocities,
         iDynTree::Twist baseVelocity,
         std::unordered_map<std::string, iDynTree::Vector3>& linkAngularVelocityError);
+
+    // constructor
+    impl();
 };
+
+// ===============
+// RPC PORT PARSER
+// ===============
+
+class HumanStateProvider::impl::CmdParser : public yarp::os::PortReader
+{
+
+public:
+    std::atomic<bool> cmdStatus{false};
+    std::atomic<bool> cmdErease{false};
+    std::string parentLinkName;
+    std::string childLinkName;
+
+    void resetInternalVariables()
+    {
+        parentLinkName = "";
+        childLinkName = "";
+        cmdStatus = false;
+        cmdErease = false;
+    }
+
+    bool read(yarp::os::ConnectionReader& connection) override
+    {
+        yarp::os::Bottle command, response;
+        if (command.read(connection)) {
+
+            if (command.get(0).asString() == "help") {
+                response.addVocab(yarp::os::Vocab::encode("many"));
+                response.addString("The following commands can be used to apply a secondary calibration assuming the subject is in the zero configuration of the model for the calibrated links. \n");
+                response.addString("Enter <calibrate> to apply a secondary calibration for all the links \n");
+                response.addString("Enter <calibrate <linkName>> to apply a secondary calibration for the given link \n");
+                response.addString("Enter <calibrate <parentLinkName> <childLinkName>> to apply a secondary calibration for the given chain \n");
+                response.addString("Enter <reset <linkName>> to remove secondary calibration for the given link \n");
+                response.addString("Enter <reset> to remove all the secondary calibrations");
+            }
+            else if (command.get(0).asString() == "calibrate" && !command.get(1).isNull() && !command.get(2).isNull()) {
+                this->parentLinkName = command.get(1).asString();
+                this->childLinkName = command.get(2).asString();
+                response.addString("Entered command <calibrate> is correct, setting the offset for the chain from " + this->parentLinkName + " to " + this->childLinkName);
+                this->cmdStatus = true;
+            }
+            else if (command.get(0).asString() == "calibrate" && !command.get(1).isNull()) {
+                this->parentLinkName = command.get(1).asString();
+                response.addString("Entered command <calibrate> is correct, setting the offset calibration for the link " + this->parentLinkName);
+                this->cmdStatus = true;
+            }
+            else if (command.get(0).asString() == "calibrate") {
+                response.addString("Setting the offset calibartion for all the links");
+                this->cmdStatus = true;
+            }
+            else if (command.get(0).asString() == "reset" && command.get(1).isNull()) {
+                response.addString("Entered command <reset> is correct, removing all the secondary calibrations ");
+                this->cmdStatus = true;
+                this->cmdErease = true;
+            }
+            else if (command.get(0).asString() == "reset" && !command.get(1).isNull()) {
+                this->parentLinkName = command.get(1).asString();
+                response.addString("Entered command <reset> is correct, removing the secondaty calibration for the link " + this->parentLinkName);
+                this->cmdStatus = true;
+                this->cmdErease = true;
+            }
+            else {
+                response.addString(
+                    "Entered command is incorrect. Enter help to know available commands");
+            }
+        }
+        else {
+            resetInternalVariables();
+            return false;
+        }
+
+        yarp::os::ConnectionWriter* reply = connection.getWriter();
+
+        if (reply != NULL) {
+            response.write(*reply);
+        }
+        else
+            return false;
+
+        return true;
+    }
+};
+
+// ===========
+// CONSTRUCTOR
+// ===========
+
+HumanStateProvider::impl::impl()
+    : commandPro(new CmdParser())
+{}
+
 
 // =========================
 // HUMANSTATEPROVIDER DEVICE
@@ -882,6 +998,15 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
                 << pImpl->customConstraintVariablesIndex[i];
     }
 
+    // ==================================================================
+    // CREATE LINK PAIR VECTOR FOR SECONDARY CALIBRATION AND PAIRWISED IK
+    // ==================================================================
+
+    if (!pImpl->createLinkPairs()) {
+        askToStop();
+        return false;
+    }
+
     // ====================================
     // INITIALIZE INVERSE KINEMATICS SOLVER
     // ====================================
@@ -904,6 +1029,27 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
             return false;
         }
     }
+
+    // ===================
+    // INITIALIZE RPC PORT
+    // ===================
+
+    std::string rpcPortName;
+    if (!(config.check("rpcPortPrefix") && config.find("rpcPortPrefix").isString())) {
+        rpcPortName = "/" + DeviceName + "/rpc:i";
+    }
+    else {
+        rpcPortName = "/" + config.find("rpcPortPrefix").asString() + "/" + DeviceName + "/rpc:i";
+    }
+
+    if (!pImpl->rpcPort.open(rpcPortName)) {
+        yError() << LogPrefix << "Unable to open rpc port " << rpcPortName;
+        return false;
+    }
+
+    // Set rpc port reader
+    pImpl->rpcPort.setReader(*pImpl->commandPro);
+
     return true;
 }
 
@@ -915,8 +1061,15 @@ bool HumanStateProvider::close()
 void HumanStateProvider::run()
 {
     // Get the link transformations from input data
-    if (!pImpl->getLinkTransformFromInputData(pImpl->linkTransformMatrices)) {
+    if (!pImpl->getLinkTransformFromInputData(pImpl->linkTransformMatricesRaw)) {
         yError() << LogPrefix << "Failed to get link transforms from input data";
+        askToStop();
+        return;
+    }
+
+    // Apply the secondart calibration to input data
+    if (!pImpl->applySecondaryCalibration(pImpl->linkTransformMatricesRaw, pImpl->linkTransformMatrices)) {
+        yError() << LogPrefix << "Failed to apply secondary calibration to input data";
         askToStop();
         return;
     }
@@ -1023,6 +1176,21 @@ void HumanStateProvider::run()
         pImpl->solution.CoMVelocity = {CoM_velocity[0], CoM_velocity[1], CoM_velocity[2]};
     }
 
+    // Check for rpc command status and apply command
+    if (pImpl->commandPro->cmdStatus) {
+
+        // Apply rpc command
+        if (!pImpl->applyRpcCommand()) {
+            yWarning() << LogPrefix << "Failed to execute the rpc command";
+        }
+
+        // reset the rpc internal status
+        {
+            std::lock_guard<std::mutex> lock(pImpl->mutex);
+            pImpl->commandPro->resetInternalVariables();
+        }
+    }
+
     // compute the inverse kinematic errors (currently the result is unused, but it may be used for
     // evaluating the IK performance)
     // pImpl->computeLinksOrientationErrors(pImpl->linkTransformMatrices,
@@ -1035,6 +1203,132 @@ void HumanStateProvider::run()
     //                                          pImpl->jointVelocitiesSolution,
     //                                          pImpl->baseVelocitySolution,
     //                                          pImpl->linkErrorAngularVelocities);
+}
+
+void HumanStateProvider::impl::ereaseSecondaryCalibration(const std::string& linkName)
+{
+    if (linkName != "") {
+        secondaryCalibrationRotations.erase(linkName);
+        yInfo() << LogPrefix << "Discarding the secondary calibration matrix for link " << linkName;
+    }
+    else {
+        secondaryCalibrationRotations.clear();
+        yInfo() << LogPrefix << "Discarding all the secondary calibration matrices";
+    }
+}
+
+void HumanStateProvider::impl::selectJointsAndLinksForSecondaryCalibration(const std::string& linkName, const std::string& childLinkName,
+                                              std::vector<iDynTree::JointIndex> jointZeroIndices, std::vector<iDynTree::LinkIndex> linkToCalibrateIndices)
+{
+    if (linkName == "") {
+        // Select all the links and the joints
+
+        // add all the links of the model to [linkToCalibrateIndices]
+        linkToCalibrateIndices.resize(kinDynComputations->getNrOfLinks());
+        std::iota(linkToCalibrateIndices.begin(), linkToCalibrateIndices.end(), 0);
+
+        // add all the joints of the model to [jointZeroIndices]
+        jointZeroIndices.resize(kinDynComputations->getNrOfDegreesOfFreedom());
+        std::iota(jointZeroIndices.begin(), jointZeroIndices.end(), 0);
+    }
+    else if (childLinkName == "") {
+        // Select the chosen link [linkName] and the joints between the link and its parend link
+
+        // add link to [linkToCalibrateIndices]
+        linkToCalibrateIndices.push_back(kinDynComputations->model().getLinkIndex(linkName));
+
+        // add joints to [jointZeroIndices]
+        for (auto pairInfo = linkPairs.begin(); pairInfo != linkPairs.end(); pairInfo++)
+        {
+            if (pairInfo->parentFrameName == linkName) {
+                for (size_t pairModelJointIndex = 0; pairModelJointIndex < pairInfo->pairModel.getNrOfJoints(); pairModelJointIndex++) {
+                    std::string jointName = pairInfo->pairModel.getJointName(pairModelJointIndex);
+                    jointZeroIndices.push_back(kinDynComputations->model().getJointIndex(jointName));
+                }
+                break;
+            }
+        }
+
+    }
+    else {
+        // Create chain between the given parent link [linkName] and the child link [childLinkName] and select the joints and the links involved in the chain
+
+        // create reduced model between parent and child frame
+        iDynTree::Model chainModel;
+        getReducedModel(kinDynComputations->model(), linkName, childLinkName, chainModel);
+
+        // add links found in the submodel to [linkToCalibrateIndices]
+        // TODO missing fake links that are frames
+        for (size_t chainModelLinkIndex = 0; chainModelLinkIndex < chainModel.getNrOfLinks(); chainModelLinkIndex ++) {
+            std::string chainLinkName = chainModel.getLinkName(chainModelLinkIndex);
+            linkToCalibrateIndices.push_back(kinDynComputations->model().getLinkIndex(chainLinkName));
+        }
+
+        // add joints found in the submodel to [jointZeroIndices]
+        for (size_t chainModelJointIndex = 0; chainModelJointIndex < chainModel.getNrOfJoints(); chainModelJointIndex++) {
+            std::string jointName = chainModel.getJointName(chainModelJointIndex);
+            jointZeroIndices.push_back(kinDynComputations->model().getJointIndex(jointName));
+        }
+    }
+}
+
+void HumanStateProvider::impl::computeSecondaryCalibrationRotations(const std::vector<iDynTree::JointIndex>& jointZeroIndices, const std::vector<iDynTree::LinkIndex>& linkToCalibrateIndices)
+{
+    // setting to zero all the selected joints
+    iDynTree::VectorDynSize jointPos(jointConfigurationSolution);
+    for (auto const& jointZeroIdx: jointZeroIndices) {
+        jointPos.setVal(jointZeroIdx, 0);
+    }
+    kinDynComputations->setJointPos(jointPos);
+
+    // computing the secondary calibration matrices
+    for (auto const& linkToCalibrateIdx: linkToCalibrateIndices) {
+        std::string linkToCalibrateName = kinDynComputations->model().getLinkName(linkToCalibrateIdx);
+        if (!(wearableStorage.modelToWearable_LinkName.find(linkToCalibrateName) == wearableStorage.modelToWearable_LinkName.end())) {
+            // discarding previous calibration
+            if (!(secondaryCalibrationRotations.find(linkToCalibrateName) == secondaryCalibrationRotations.end()))
+            {
+                yWarning() << LogPrefix << "discarting previous secondary calibration for " << linkToCalibrateName;
+                secondaryCalibrationRotations.erase(linkToCalibrateName);
+            }
+            // computing new calibration
+            iDynTree::Rotation linkRotationZero = kinDynComputations->getWorldTransform(kinDynComputations->model().getLinkIndex(linkToCalibrateName)).getRotation();
+            iDynTree::Rotation secondaryCalibrationRotation = linkTransformMatricesRaw.at(linkToCalibrateName).getRotation().inverse() * linkRotationZero;
+            // add new calibration
+            secondaryCalibrationRotations.emplace(linkToCalibrateName,secondaryCalibrationRotation);
+            yInfo() << LogPrefix << "secondary calibration for " << linkToCalibrateName << " is set";
+        }
+    }
+}
+
+bool HumanStateProvider::impl::applyRpcCommand()
+{
+    // check is the choosen links are valid
+    std::string linkName = commandPro->parentLinkName;
+    std::string childLinkName = commandPro->childLinkName;
+    if (!(linkName == "") && (wearableStorage.modelToWearable_LinkName.find(linkName) == wearableStorage.modelToWearable_LinkName.end())) {
+        yWarning() << LogPrefix << "link " << linkName << " choosen for secondaty calibration is not valid";
+        return false;
+    }
+    if (!(childLinkName == "") && (wearableStorage.modelToWearable_LinkName.find(childLinkName) == wearableStorage.modelToWearable_LinkName.end())) {
+        yWarning() << LogPrefix << "link " << childLinkName << " choosen for secondaty calibration is not valid";
+        return false;
+    }
+
+    if (commandPro->cmdErease) {
+        ereaseSecondaryCalibration(linkName);
+        return true;
+    }
+    else {
+        // Select the joints to be set to zero and the link to be add the secondary calibration
+        std::vector<iDynTree::JointIndex> jointZeroIndices;
+        std::vector<iDynTree::LinkIndex> linkToCalibrateIndices;
+        selectJointsAndLinksForSecondaryCalibration(linkName, childLinkName, jointZeroIndices, linkToCalibrateIndices);
+
+        // Compute secondary calibration for the selected links setting to zero the given joints
+        computeSecondaryCalibrationRotations(jointZeroIndices, linkToCalibrateIndices);
+        return true;
+    }
 }
 
 bool HumanStateProvider::impl::getLinkTransformFromInputData(
@@ -1089,6 +1383,25 @@ bool HumanStateProvider::impl::getLinkTransformFromInputData(
         // Note that this map is used during the IK step for setting a target transform to a
         // link of the model. For this reason the map keys are model names.
         transforms[modelLinkName] = std::move(transform);
+    }
+
+    return true;
+}
+
+bool HumanStateProvider::impl::applySecondaryCalibration(
+        const std::unordered_map<std::string, iDynTree::Transform> &transforms_in, std::unordered_map<std::string, iDynTree::Transform> &transforms_out)
+{
+    transforms_out = transforms_in;
+    for (const auto& linkMapEntry : wearableStorage.modelToWearable_LinkName) {
+        const ModelLinkName& modelLinkName = linkMapEntry.first;
+        auto secondaryCalibrationRotationsIt = secondaryCalibrationRotations.find(modelLinkName);
+        if (!(secondaryCalibrationRotationsIt
+              == secondaryCalibrationRotations.end())) {
+            iDynTree::Rotation rotation = transforms_out[modelLinkName].getRotation();
+            rotation = rotation * secondaryCalibrationRotationsIt->second;
+
+            transforms_out[modelLinkName].setRotation(rotation);
+        }
     }
 
     return true;
@@ -1194,7 +1507,7 @@ bool HumanStateProvider::impl::getJointAnglesFromInputData(iDynTree::VectorDynSi
     return true;
 }
 
-bool HumanStateProvider::impl::initializePairwisedInverseKinematicsSolver()
+bool HumanStateProvider::impl::createLinkPairs()
 {
     // Get the model link names according to the modelToWearable link sensor map
     const size_t nrOfSegments = wearableStorage.modelToWearable_LinkName.size();
@@ -1236,6 +1549,7 @@ bool HumanStateProvider::impl::initializePairwisedInverseKinematicsSolver()
         pairInfo.childFrameName = pairNames[index].second;
         pairInfo.childFrameSegmentsIndex = pairSegmentIndeces[index].second;
 
+        yInfo() << "getting the reduced model from: " << pairInfo.parentFrameName << " to " << pairInfo.childFrameName;
         // Get the reduced pair model
         if (!getReducedModel(humanModel,
                              pairInfo.parentFrameName,
@@ -1248,69 +1562,80 @@ bool HumanStateProvider::impl::initializePairwisedInverseKinematicsSolver()
             continue;
         }
 
+        // Move the link pair instance into the vector
+        linkPairs.push_back(std::move(pairInfo));
+    }
+
+    return true;
+}
+
+bool HumanStateProvider::impl::initializePairwisedInverseKinematicsSolver()
+{
+    for (auto pairInfo = linkPairs.begin(); pairInfo != linkPairs.end(); pairInfo++)
+    {
         // Allocate the ik solver
-        pairInfo.ikSolver = std::make_unique<iDynTree::InverseKinematics>();
+        pairInfo->ikSolver = std::make_unique<iDynTree::InverseKinematics>();
 
         // Set ik parameters
-        pairInfo.ikSolver->setVerbosity(1);
-        pairInfo.ikSolver->setLinearSolverName(linearSolverName);
-        pairInfo.ikSolver->setMaxIterations(maxIterationsIK);
-        pairInfo.ikSolver->setCostTolerance(costTolerance);
-        pairInfo.ikSolver->setDefaultTargetResolutionMode(
+        pairInfo->ikSolver->setVerbosity(1);
+        pairInfo->ikSolver->setLinearSolverName(linearSolverName);
+        pairInfo->ikSolver->setMaxIterations(maxIterationsIK);
+        pairInfo->ikSolver->setCostTolerance(costTolerance);
+        pairInfo->ikSolver->setDefaultTargetResolutionMode(
             iDynTree::InverseKinematicsTreatTargetAsConstraintNone);
-        pairInfo.ikSolver->setRotationParametrization(
+        pairInfo->ikSolver->setRotationParametrization(
             iDynTree::InverseKinematicsRotationParametrizationRollPitchYaw);
 
         // Set ik model
-        if (!pairInfo.ikSolver->setModel(pairInfo.pairModel)) {
+        if (!pairInfo->ikSolver->setModel(pairInfo->pairModel)) {
             yWarning() << LogPrefix << "failed to configure IK solver for the segment pair"
-                       << pairInfo.parentFrameName.c_str() << ", "
-                       << pairInfo.childFrameName.c_str() << " Skipping pair";
+                       << pairInfo->parentFrameName.c_str() << ", "
+                       << pairInfo->childFrameName.c_str() << " Skipping pair";
             continue;
         }
 
         // Add parent link as fixed base constraint with identity transform
-        pairInfo.ikSolver->addFrameConstraint(pairInfo.parentFrameName,
+        pairInfo->ikSolver->addFrameConstraint(pairInfo->parentFrameName,
                                               iDynTree::Transform::Identity());
 
         // Add child link as a target and set initial transform to be identity
-        pairInfo.ikSolver->addTarget(pairInfo.childFrameName, iDynTree::Transform::Identity());
+        pairInfo->ikSolver->addTarget(pairInfo->childFrameName, iDynTree::Transform::Identity());
 
         // Add target position and rotation weights
-        pairInfo.positionTargetWeight = posTargetWeight;
-        pairInfo.rotationTargetWeight = rotTargetWeight;
+        pairInfo->positionTargetWeight = posTargetWeight;
+        pairInfo->rotationTargetWeight = rotTargetWeight;
 
         // Add cost regularization term
-        pairInfo.costRegularization = costRegularization;
+        pairInfo->costRegularization = costRegularization;
 
         // Get floating base for the pair model
-        pairInfo.floatingBaseIndex = pairInfo.pairModel.getFrameLink(
-            pairInfo.pairModel.getFrameIndex(pairInfo.parentFrameName));
+        pairInfo->floatingBaseIndex = pairInfo->pairModel.getFrameLink(
+            pairInfo->pairModel.getFrameIndex(pairInfo->parentFrameName));
 
         // Set ik floating base
-        if (!pairInfo.ikSolver->setFloatingBaseOnFrameNamed(
-                pairInfo.pairModel.getLinkName(pairInfo.floatingBaseIndex))) {
+        if (!pairInfo->ikSolver->setFloatingBaseOnFrameNamed(
+                pairInfo->pairModel.getLinkName(pairInfo->floatingBaseIndex))) {
             yError() << "Failed to set floating base frame for the segment pair"
-                     << pairInfo.parentFrameName.c_str() << ", " << pairInfo.childFrameName.c_str()
+                     << pairInfo->parentFrameName.c_str() << ", " << pairInfo->childFrameName.c_str()
                      << " Skipping pair";
             return false;
         }
 
         // Set initial joint positions size
-        pairInfo.sInitial.resize(pairInfo.pairModel.getNrOfJoints());
+        pairInfo->sInitial.resize(pairInfo->pairModel.getNrOfJoints());
 
         // Obtain the joint location index in full model and the lenght of DoFs i.e joints map
         // This information will be used to put the IK solutions together for the full model
         std::vector<std::string> solverJoints;
 
         // Resize to number of joints in the pair model
-        solverJoints.resize(pairInfo.pairModel.getNrOfJoints());
+        solverJoints.resize(pairInfo->pairModel.getNrOfJoints());
 
-        for (int i = 0; i < pairInfo.pairModel.getNrOfJoints(); i++) {
-            solverJoints[i] = pairInfo.pairModel.getJointName(i);
+        for (int i = 0; i < pairInfo->pairModel.getNrOfJoints(); i++) {
+            solverJoints[i] = pairInfo->pairModel.getJointName(i);
         }
 
-        pairInfo.consideredJointLocations.reserve(solverJoints.size());
+        pairInfo->consideredJointLocations.reserve(solverJoints.size());
         for (auto& jointName : solverJoints) {
             iDynTree::JointIndex jointIndex = humanModel.getJointIndex(jointName);
             if (jointIndex == iDynTree::JOINT_INVALID_INDEX) {
@@ -1321,34 +1646,31 @@ bool HumanStateProvider::impl::initializePairwisedInverseKinematicsSolver()
             iDynTree::IJointConstPtr joint = humanModel.getJoint(jointIndex);
 
             // Save location index and length of each DoFs
-            pairInfo.consideredJointLocations.push_back(
+            pairInfo->consideredJointLocations.push_back(
                 std::pair<size_t, size_t>(joint->getDOFsOffset(), joint->getNrOfDOFs()));
         }
 
         // Set the joint configurations size and initialize to zero
-        pairInfo.jointConfigurations.resize(solverJoints.size());
-        pairInfo.jointConfigurations.zero();
+        pairInfo->jointConfigurations.resize(solverJoints.size());
+        pairInfo->jointConfigurations.zero();
 
         // Set the joint velocities size and initialize to zero
-        pairInfo.jointVelocities.resize(solverJoints.size());
-        pairInfo.jointVelocities.zero();
+        pairInfo->jointVelocities.resize(solverJoints.size());
+        pairInfo->jointVelocities.zero();
 
         // Save the indeces
         // TODO: check if link or frame
-        pairInfo.parentFrameModelIndex = pairInfo.pairModel.getFrameIndex(pairInfo.parentFrameName);
-        pairInfo.childFrameModelIndex = pairInfo.pairModel.getFrameIndex(pairInfo.childFrameName);
+        pairInfo->parentFrameModelIndex = pairInfo->pairModel.getFrameIndex(pairInfo->parentFrameName);
+        pairInfo->childFrameModelIndex = pairInfo->pairModel.getFrameIndex(pairInfo->childFrameName);
 
         // Configure KinDynComputation
-        pairInfo.kinDynComputations =
+        pairInfo->kinDynComputations =
             std::unique_ptr<iDynTree::KinDynComputations>(new iDynTree::KinDynComputations());
-        pairInfo.kinDynComputations->loadRobotModel(pairInfo.pairModel);
+        pairInfo->kinDynComputations->loadRobotModel(pairInfo->pairModel);
 
         // Configure relative Jacobian
-        pairInfo.relativeJacobian.resize(6, pairInfo.pairModel.getNrOfDOFs());
-        pairInfo.relativeJacobian.zero();
-
-        // Move the link pair instance into the vector
-        linkPairs.push_back(std::move(pairInfo));
+        pairInfo->relativeJacobian.resize(6, pairInfo->pairModel.getNrOfDOFs());
+        pairInfo->relativeJacobian.zero();
     }
 
     // Initialize IK Worker Pool

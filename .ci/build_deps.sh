@@ -91,9 +91,8 @@ cmake --build . --config ${TRAVIS_BUILD_TYPE} --target install
 # Build and install osqp
 cd $GIT_FOLDER
 rm -rf osqp
-git clone --recursive https://github.com/robotology-dependencies/osqp.git
+git clone --recursive https://github.com/oxfordcontrol/osqp.git
 cd osqp
-git checkout fix-lf-problems
 mkdir -p build && cd build
 cmake -G"${TRAVIS_CMAKE_GENERATOR}" \
       -DCMAKE_BUILD_TYPE=${TRAVIS_BUILD_TYPE} \
@@ -106,7 +105,6 @@ cd $GIT_FOLDER
 rm -rf OsqpEigen
 git clone https://github.com/robotology/osqp-eigen.git OsqpEigen
 cd OsqpEigen
-git checkout v0.4.1
 mkdir -p build && cd build
 cmake -G"${TRAVIS_CMAKE_GENERATOR}" \
       -DCMAKE_BUILD_TYPE=${TRAVIS_BUILD_TYPE} \
