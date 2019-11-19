@@ -723,7 +723,7 @@ bool XsensSuit::open(yarp::os::Searchable& config)
         yWarning() << logPrefix << "Using highest supported sampling rate";
     }
     else {
-        scanTimeout = config.find("sampling-rate").asInt();
+        samplingRate = config.find("sampling-rate").asInt();
     }
 
     // Get subject-specific body dimensions from the configuration file and push them to
