@@ -48,27 +48,11 @@ if [ "${TRAVIS_OS_NAME}" = "osx" ] ; then
     cmake --build . --config $TRAVIS_BUILD_TYPE --target install
 fi
 
-# Build and install xsens-mvn
-cd $GIT_FOLDER
-rm -rf xsens-mvn
-
-git clone https://github.com/robotology-playground/xsens-mvn
-cd xsens-mvn
-mkdir -p build && cd build
-cmake -G"${TRAVIS_CMAKE_GENERATOR}" \
-      -DCMAKE_BUILD_TYPE=${TRAVIS_BUILD_TYPE} \
-      -DENABLE_xsens_mvn=OFF \
-      -DENABLE_xsens_mvn_wrapper=OFF \
-      -DENABLE_xsens_mvn_remote=OFF \
-      ..
-cmake --build . --config ${TRAVIS_BUILD_TYPE} --target install
-
 # Build and install wearables
 cd $GIT_FOLDER
 rm -rf wearables
-git clone https://github.com/robotology-playground/wearables.git
+git clone https://github.com/robotology/wearables.git
 cd wearables
-git checkout feature/cleanup
 mkdir -p build && cd build
 cmake -G"${TRAVIS_CMAKE_GENERATOR}" \
       -DCMAKE_BUILD_TYPE=${TRAVIS_BUILD_TYPE} \
