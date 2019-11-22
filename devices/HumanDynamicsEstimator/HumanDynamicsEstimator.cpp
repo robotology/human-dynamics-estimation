@@ -983,11 +983,11 @@ public:
         if (command.read(connection)) {
 
             if (command.get(0).asString() == "help") {
-                response.addString("Enter <removeWrenchOffset> to remove the wrench estimates offset");
-                response.addString("Enter <removeWrenchOffset> <wrenchSourceName> to set the offset for the given wrench source (works only if removeOffsetOption is source-dynamic)");
-                response.addString("Enter <resetOffset> to clear the wrench estimates offset on real wrench sources");
-                response.addString("Enter <fixEstimatedWrenches> to skip the task1 and fix the estimated external wrenches");
-                response.addString("Enter <resetEstimatedWrenches> to restart the task1 for estimating external wrenches");
+                response.addString("Enter <removeWrenchOffset> to remove the wrench estimates offset \n");
+                response.addString("Enter <removeWrenchOffset> <wrenchSourceName> to set the offset for the given wrench source (works only if removeOffsetOption is source-dynamic) \n");
+                response.addString("Enter <resetOffset> to clear the wrench estimates offset on real wrench sources \n");
+                response.addString("Enter <fixEstimatedWrenches> to skip the task1 and fix the estimated external wrenches \n");
+                response.addString("Enter <resetEstimatedWrenches> to restart the task1 for estimating external wrenches \n");
             }
             else if (command.get(0).asString() == "removeWrenchOffset" && command.get(1).isNull()) {
                 response.addString("Entered command <removeWrenchOffset> is correct");
