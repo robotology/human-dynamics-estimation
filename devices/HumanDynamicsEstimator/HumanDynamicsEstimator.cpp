@@ -1081,11 +1081,12 @@ public:
         if (command.read(connection)) {
 
             if (command.get(0).asString() == "help") {
-                response.addString("Enter <removeWrenchOffset> to remove the wrench estimates offset \n");
-                response.addString("Enter <removeWrenchOffset> <wrenchSourceName> to set the offset for the given wrench source (works only if removeOffsetOption is source-dynamic) \n");
-                response.addString("Enter <resetOffset> to clear the wrench estimates offset on real wrench sources \n");
-                response.addString("Enter <fixEstimatedWrenches> to skip the task1 and fix the estimated external wrenches \n");
-                response.addString("Enter <resetEstimatedWrenches> to restart the task1 for estimating external wrenches \n");
+                response.addVocab(yarp::os::Vocab::encode("many"));
+                response.addString("Enter <removeWrenchOffset> to remove the wrench estimates offset \n"
+                                   "Enter <removeWrenchOffset> <wrenchSourceName> to set the offset for the given wrench source (works only if removeOffsetOption is source-dynamic) \n"
+                                   "Enter <resetOffset> to clear the wrench estimates offset on real wrench sources \n"
+                                   "Enter <fixEstimatedWrenches> to skip the task1 and fix the estimated external wrenches \n"
+                                   "Enter <resetEstimatedWrenches> to restart the task1 for estimating external wrenches");
             }
             else if (command.get(0).asString() == "removeWrenchOffset" && command.get(1).isNull()) {
                 response.addString("Entered command <removeWrenchOffset> is correct");
