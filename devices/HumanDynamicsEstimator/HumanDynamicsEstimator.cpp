@@ -965,88 +965,13 @@ static bool parseSensorRemovalGroup(const yarp::os::Bottle& sensorRemovalGroup,
     return true;
 }
 
-class CmdParser : public yarp::os::PortReader
-{
-
-public:
-    std::atomic<bool> cmdOffsetStatus{false};
-    std::atomic<bool> cmdDynamicStatus{false};
-    std::atomic<bool> resetOffset{false};
-    std::atomic<bool> dynamicOffset{false};
-    std::atomic<bool> cmdTask1Status{false};
-    std::atomic<bool> resetTask1{false};
-    std::string wrenchSourceName;
-
-    bool read(yarp::os::ConnectionReader& connection) override
-    {
-        yarp::os::Bottle command, response;
-        if (command.read(connection)) {
-
-            if (command.get(0).asString() == "help") {
-                response.addString("Enter <removeWrenchOffset> to remove the wrench estimates offset \n");
-                response.addString("Enter <removeWrenchOffset> <wrenchSourceName> to set the offset for the given wrench source (works only if removeOffsetOption is source-dynamic) \n");
-                response.addString("Enter <resetOffset> to clear the wrench estimates offset on real wrench sources \n");
-                response.addString("Enter <fixEstimatedWrenches> to skip the task1 and fix the estimated external wrenches \n");
-                response.addString("Enter <resetEstimatedWrenches> to restart the task1 for estimating external wrenches \n");
-            }
-            else if (command.get(0).asString() == "removeWrenchOffset" && command.get(1).isNull()) {
-                response.addString("Entered command <removeWrenchOffset> is correct");
-                this->cmdOffsetStatus = true;
-            }
-            else if (dynamicOffset && command.get(0).asString() == "removeWrenchOffset" && !command.get(1).isNull()) {
-                wrenchSourceName = command.get(1).asString();
-                response.addString("Entered command <removeWrenchOffset> is correct, setting the offset for the source " + wrenchSourceName);
-                this->cmdDynamicStatus = true;
-                this->cmdOffsetStatus = true;
-            }
-            else if (command.get(0).asString() == "resetOffset") {
-                response.addString("Entered command <resetOffset> is correct, clearing all wrench estimates and offsets");
-                this->cmdOffsetStatus = true;
-                this->resetOffset = true;
-            }
-            else if (command.get(0).asString() == "fixEstimatedWrenches") {
-                response.addString("Entered command <fixEstimatedWrenches> is correct, fixing estimated external wrenches");
-                this->cmdTask1Status = true;
-            }
-            else if (command.get(0).asString() == "resetEstimatedWrenches") {
-                response.addString("Entered command <resetEstimatedWrenches> is correct, estimating external hands wrenches");
-                this->cmdTask1Status = true;
-                this->resetTask1 = true;
-            }
-            else {
-                response.addString(
-                    "Entered command is incorrect, Enter help to know available commands");
-            }
-        }
-        else {
-            this->cmdOffsetStatus = false;
-            this->cmdTask1Status = false;
-            return false;
-        }
-
-        yarp::os::ConnectionWriter* reply = connection.getWriter();
-
-        if (reply != NULL) {
-            response.write(*reply);
-        }
-        else
-            return false;
-
-        return true;
-    }
-};
-
 class HumanDynamicsEstimator::Impl
 {
 public:
-    Impl()
-    {
-        gravity.zero();
-        gravity(2) = -9.81;
-    }
 
     // Rpc
-    CmdParser commandPro;
+    class CmdParser;
+    std::unique_ptr<CmdParser> commandPro;
     yarp::os::RpcServer rpcPort;
 
     // Stack of tasks berdy flags
@@ -1129,7 +1054,96 @@ public:
     // TODO: In case of using multiple analog sensor usage in the future, we can remove this variable
     // Analog sensor variable containing the offset removed wrench measurements and the extimates link net external wrench estimates
     AllWrenchAnalogSensorData allWrenchAnalogSensorData;
+
+    // Constructor
+    Impl();
 };
+
+// ===============
+// RPC PORT PARSER
+// ===============
+
+class HumanDynamicsEstimator::Impl::CmdParser : public yarp::os::PortReader
+{
+
+public:
+    std::atomic<bool> cmdOffsetStatus{false};
+    std::atomic<bool> cmdDynamicStatus{false};
+    std::atomic<bool> resetOffset{false};
+    std::atomic<bool> dynamicOffset{false};
+    std::atomic<bool> cmdTask1Status{false};
+    std::atomic<bool> resetTask1{false};
+    std::string wrenchSourceName;
+
+    bool read(yarp::os::ConnectionReader& connection) override
+    {
+        yarp::os::Bottle command, response;
+        if (command.read(connection)) {
+
+            if (command.get(0).asString() == "help") {
+                response.addString("Enter <removeWrenchOffset> to remove the wrench estimates offset \n");
+                response.addString("Enter <removeWrenchOffset> <wrenchSourceName> to set the offset for the given wrench source (works only if removeOffsetOption is source-dynamic) \n");
+                response.addString("Enter <resetOffset> to clear the wrench estimates offset on real wrench sources \n");
+                response.addString("Enter <fixEstimatedWrenches> to skip the task1 and fix the estimated external wrenches \n");
+                response.addString("Enter <resetEstimatedWrenches> to restart the task1 for estimating external wrenches \n");
+            }
+            else if (command.get(0).asString() == "removeWrenchOffset" && command.get(1).isNull()) {
+                response.addString("Entered command <removeWrenchOffset> is correct");
+                this->cmdOffsetStatus = true;
+            }
+            else if (dynamicOffset && command.get(0).asString() == "removeWrenchOffset" && !command.get(1).isNull()) {
+                wrenchSourceName = command.get(1).asString();
+                response.addString("Entered command <removeWrenchOffset> is correct, setting the offset for the source " + wrenchSourceName);
+                this->cmdDynamicStatus = true;
+                this->cmdOffsetStatus = true;
+            }
+            else if (command.get(0).asString() == "resetOffset") {
+                response.addString("Entered command <resetOffset> is correct, clearing all wrench estimates and offsets");
+                this->cmdOffsetStatus = true;
+                this->resetOffset = true;
+            }
+            else if (command.get(0).asString() == "fixEstimatedWrenches") {
+                response.addString("Entered command <fixEstimatedWrenches> is correct, fixing estimated external wrenches");
+                this->cmdTask1Status = true;
+            }
+            else if (command.get(0).asString() == "resetEstimatedWrenches") {
+                response.addString("Entered command <resetEstimatedWrenches> is correct, estimating external hands wrenches");
+                this->cmdTask1Status = true;
+                this->resetTask1 = true;
+            }
+            else {
+                response.addString(
+                    "Entered command is incorrect, Enter help to know available commands");
+            }
+        }
+        else {
+            this->cmdOffsetStatus = false;
+            this->cmdTask1Status = false;
+            return false;
+        }
+
+        yarp::os::ConnectionWriter* reply = connection.getWriter();
+
+        if (reply != NULL) {
+            response.write(*reply);
+        }
+        else
+            return false;
+
+        return true;
+    }
+};
+
+HumanDynamicsEstimator::Impl::Impl()
+    : commandPro(new CmdParser())
+{
+    gravity.zero();
+    gravity(2) = -9.81;
+}
+
+// =============================
+// HUMANDYNAMICSESTIMATOR DEVICE
+// =============================
 
 HumanDynamicsEstimator::HumanDynamicsEstimator()
     : PeriodicThread(DefaultPeriod)
@@ -1188,7 +1202,7 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
     }
 
     // Set rpc port reader
-    pImpl->rpcPort.setReader(pImpl->commandPro);
+    pImpl->rpcPort.setReader(*pImpl->commandPro);
 
     // ===============================
     // PARSE THE CONFIGURATION OPTIONS
@@ -1204,7 +1218,7 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
     pImpl->removeOffsetOption = config.check("removeOffsetOption",yarp::os::Value("model")).asString();
     pImpl->dynamicWrenchOffsetSD = config.check("dynamicWrenchOffsetSD",yarp::os::Value(1.0)).asDouble();
     if (pImpl->removeOffsetOption == "source-dynamic") {
-        pImpl->commandPro.dynamicOffset = true;
+        pImpl->commandPro->dynamicOffset = true;
     }
 
     // Configuration option to set a threshold to the estimated wrenches
@@ -1921,8 +1935,8 @@ void HumanDynamicsEstimator::run()
     }
 
     // Check for rpc command status for the offset, and in case update or reset the offsets
-    if (pImpl->commandPro.cmdOffsetStatus && !pImpl->commandPro.resetOffset) {
-        if (pImpl->removeOffsetOption == "source" || (!pImpl->commandPro.cmdDynamicStatus && pImpl->removeOffsetOption == "source-dynamic")) {
+    if (pImpl->commandPro->cmdOffsetStatus && !pImpl->commandPro->resetOffset) {
+        if (pImpl->removeOffsetOption == "source" || (!pImpl->commandPro->cmdDynamicStatus && pImpl->removeOffsetOption == "source-dynamic")) {
             for (int idx = 0; idx < pImpl->wrenchSensorsLinkNames.size(); idx++) {
                 std::string wrenchSensorLinkName = pImpl->wrenchSensorsLinkNames.at(idx);
                 iDynTree::Transform world_H_link = kinDynComputations.getWorldTransform(wrenchSensorLinkName);
@@ -1975,8 +1989,8 @@ void HumanDynamicsEstimator::run()
                 }
             }
         }
-        else if (pImpl->removeOffsetOption == "source-dynamic" && pImpl->commandPro.cmdDynamicStatus) {
-            std::string wrenchSensorLinkName = pImpl->commandPro.wrenchSourceName;
+        else if (pImpl->removeOffsetOption == "source-dynamic" && pImpl->commandPro->cmdDynamicStatus) {
+            std::string wrenchSensorLinkName = pImpl->commandPro->wrenchSourceName;
 
             if (pImpl->realWrenchDynamicOffsetMap.find(wrenchSensorLinkName) != pImpl->realWrenchDynamicOffsetMap.end()) {
                 iDynTree::Transform world_H_link = kinDynComputations.getWorldTransform(wrenchSensorLinkName);
@@ -2002,7 +2016,7 @@ void HumanDynamicsEstimator::run()
             yWarning() << LogPrefix << "The choosen removeOffsetOption " << pImpl->removeOffsetOption << " is not valid";
         }
     }
-    else if (pImpl->commandPro.cmdOffsetStatus && pImpl->commandPro.resetOffset) {
+    else if (pImpl->commandPro->cmdOffsetStatus && pImpl->commandPro->resetOffset) {
 
         yInfo() << LogPrefix << "Clearing offsets";
         for (int idx = 0; idx < pImpl->wrenchSensorsLinkNames.size(); idx++) {
@@ -2018,7 +2032,7 @@ void HumanDynamicsEstimator::run()
     }
 
     // Check for rpc command status for the offset, and in case update or reset the offsets
-    if (pImpl->commandPro.cmdTask1Status && !pImpl->commandPro.resetTask1) {
+    if (pImpl->commandPro->cmdTask1Status && !pImpl->commandPro->resetTask1) {
         if (!pImpl->enableTask1ExternalWrenchEstimation) {
             yWarning() << LogPrefix << "External wrench estimation is already fixed, reset it before fixing a new estimation";
         }
@@ -2036,17 +2050,17 @@ void HumanDynamicsEstimator::run()
             pImpl->enableTask1ExternalWrenchEstimation = false;
         }
     }
-    else if (pImpl->commandPro.cmdTask1Status && pImpl->commandPro.resetTask1) {
+    else if (pImpl->commandPro->cmdTask1Status && pImpl->commandPro->resetTask1) {
         yInfo() << LogPrefix << "Clearing fixed estimated wrenches and enabling task1 estimation";
         pImpl->enableTask1ExternalWrenchEstimation = true;
     }
 
     // Set rpc command status to false
-    pImpl->commandPro.cmdOffsetStatus = false;
-    pImpl->commandPro.cmdDynamicStatus = false;
-    pImpl->commandPro.resetOffset = false;
-    pImpl->commandPro.cmdTask1Status = false;
-    pImpl->commandPro.resetTask1 = false;
+    pImpl->commandPro->cmdOffsetStatus = false;
+    pImpl->commandPro->cmdDynamicStatus = false;
+    pImpl->commandPro->resetOffset = false;
+    pImpl->commandPro->cmdTask1Status = false;
+    pImpl->commandPro->resetTask1 = false;
 
     // Get the berdy sensors following its internal order
     std::vector<iDynTree::BerdySensor> berdySensors = pImpl->berdyData.helper.getSensorsOrdering();
