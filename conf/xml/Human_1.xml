@@ -11,7 +11,7 @@
 
     <device type="human_state_provider" name="HumanStateProvider_1">
         <param name="period">0.02</param>
-        <param name="urdf">humanSubject01_66dof.urdf</param>
+        <param name="urdf">humanSubject05_66dof.urdf</param>
         <param name="floatingBaseFrame">(Pelvis, XsensSuit::vLink::Pelvis)</param>
         <!--Use none for Zero values, gravity for compensating gravity acceleration, proper for proper sensor acceleration-->
         <param name="accelerometerSensorMeasurementsOption">gravity</param>
@@ -29,7 +29,7 @@
         <param name="costRegularization">0.000001</param>
         <param name="costTolerance">0.001</param>
         <param name="rpcPortPrefix">first</param>
-        <!-- inverse velocity kinematics parameters -->
+        <!-- inverse velocity kinematics parameteremoveWrenchOffsetrs -->
         <!-- inverseVelocityKinematicsSolver values:
         QP
         moorePenrose,
@@ -308,14 +308,14 @@
 
     <device type="human_dynamics_estimator" name="HumanDynamicsEstimator_1">
         <param name="period">0.020</param>
-        <param name="urdf">humanSubject01_66dof.urdf</param>
+        <param name="urdf">humanSubject05_66dof.urdf</param>
         <param name="baseLink">Pelvis</param>
         <param name="number_of_wrench_sensors">4</param>
         <param name="wrench_sensors_link_name">(LeftFoot RightFoot LeftHand RightHand)</param>
         <param name="comConstraintIncludeAllLinks">false</param>
         <param name="saveStateToFile">false</param>
         <param name="removeOffsetOption">source-dynamic</param>
-        <param name="dynamicWrenchOffsetSD">30.0</param>
+        <param name="dynamicWrenchOffsetSD">100.0</param>
         <param name="wrenchEstimationForceLowerThreshold">30</param>
         <param name="rpcPortPrefix">first</param>
         <group name="PRIORS">

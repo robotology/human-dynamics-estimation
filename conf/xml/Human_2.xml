@@ -210,6 +210,8 @@
         <param name="baseTFName">/Human_2/Pelvis</param>
         <param name="humanJointsTopic">/Human_2/joint_states</param>
         <param name="portprefix">second</param>
+        <param name="basePositionOffset">(1.2 0.6 0.0)</param>
+        <!-- param name="basePositionOffset">(1.0 1.0 0.0)</param -->
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
                 <elem name="HumanStatePublisherLabel">HumanStateProvider_2</elem>
@@ -308,14 +310,14 @@
 
     <device type="human_dynamics_estimator" name="HumanDynamicsEstimator_2">
         <param name="period">0.020</param>
-        <param name="urdf">humanSubject05_66dof.urdf</param>
+        <param name="urdf">humanSubject01_66dof.urdf</param>
         <param name="baseLink">Pelvis</param>
         <param name="number_of_wrench_sensors">4</param>
         <param name="wrench_sensors_link_name">(LeftFoot RightFoot LeftHand RightHand)</param>
         <param name="comConstraintIncludeAllLinks">false</param>
         <param name="saveStateToFile">false</param>
         <param name="removeOffsetOption">source-dynamic</param>
-        <param name="dynamicWrenchOffsetSD">30.0</param>
+        <param name="dynamicWrenchOffsetSD">100.0</param>
         <param name="wrenchEstimationForceLowerThreshold">10</param>
         <param name="rpcPortPrefix">second</param>
         <group name="PRIORS">
