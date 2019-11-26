@@ -8,7 +8,7 @@
 
 #include "HumanStateWrapper.h"
 #include "IHumanState.h"
-#include "thrift/HumanState.h"
+#include "HumanState.h"
 
 #include <yarp/os/BufferedPort.h>
 #include <yarp/os/LogStream.h>
