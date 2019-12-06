@@ -1073,6 +1073,7 @@ public:
     std::atomic<bool> dynamicOffset{false};
     std::atomic<bool> cmdTask1Status{false};
     std::atomic<bool> resetTask1{false};
+    std::atomic<bool> zeroWrench{false};
     std::string wrenchSourceName;
 
     bool read(yarp::os::ConnectionReader& connection) override
@@ -1086,6 +1087,7 @@ public:
                                    "Enter <removeWrenchOffset> <wrenchSourceName> to set the offset for the given wrench source (works only if removeOffsetOption is source-dynamic) \n"
                                    "Enter <resetOffset> to clear the wrench estimates offset on real wrench sources \n"
                                    "Enter <fixEstimatedWrenches> to skip the task1 and fix the estimated external wrenches \n"
+                                   "Enter <zeroEstimatedWrenches> to force external wrenches to be zero \n"
                                    "Enter <resetEstimatedWrenches> to restart the task1 for estimating external wrenches");
             }
             else if (command.get(0).asString() == "removeWrenchOffset" && command.get(1).isNull()) {
@@ -1106,6 +1108,11 @@ public:
             else if (command.get(0).asString() == "fixEstimatedWrenches") {
                 response.addString("Entered command <fixEstimatedWrenches> is correct, fixing estimated external wrenches");
                 this->cmdTask1Status = true;
+            }
+            else if (command.get(0).asString() == "zeroEstimatedWrenches") {
+                response.addString("Entered command <zeroEstimatedWrenches> is correct, estimating external hands wrenches");
+                this->cmdTask1Status = true;
+                this->zeroWrench = true;
             }
             else if (command.get(0).asString() == "resetEstimatedWrenches") {
                 response.addString("Entered command <resetEstimatedWrenches> is correct, estimating external hands wrenches");
@@ -1881,9 +1888,7 @@ void HumanDynamicsEstimator::run()
         // Extract links net external wrench from  task1 estimated dynamic variables
         pImpl->berdyData.helper.extractLinkNetExternalWrenchesFromDynamicVariables(task1_estimatedDynamicVariables,
                                                                                    pImpl->berdyData.estimates.task1_linkNetExternalWrenchEstimates,
-                                                                                   pImpl->task1);
-
-
+                                                                                   pImpl->task1);            
 
         // Update wrench values with the estimates from task1
         for (int idx = 0; idx < pImpl->wrenchSensorsLinkNames.size(); idx++) {
@@ -1892,6 +1897,17 @@ void HumanDynamicsEstimator::run()
             iDynTree::LinkIndex linkIndex = pImpl->berdyData.helper.model().getLinkIndex(wrenchSensorLinkName);
 
             iDynTree::Wrench linkWrench = pImpl->berdyData.estimates.task1_linkNetExternalWrenchEstimates(linkIndex);
+
+            // project estimated wrench on z
+            if (pImpl->ficticiousWrenchOffsetMap.find(wrenchSensorLinkName) != pImpl->ficticiousWrenchOffsetMap.end()) {
+                iDynTree::Transform world_H_link = kinDynComputations.getWorldTransform(wrenchSensorLinkName);
+                iDynTree::Wrench worldWrench = world_H_link.getRotation() * linkWrench;
+
+                worldWrench.setVal(0, 0);
+                worldWrench.setVal(1, 0);
+
+                linkWrench = world_H_link.getRotation().inverse() * worldWrench;
+            }
 
             // TODO: Double check if updating only the hands wrench measurements is better
             task1EstiamtedWrenchValues.at(idx*6 + 0) = linkWrench.getVal(0);
@@ -2045,6 +2061,9 @@ void HumanDynamicsEstimator::run()
                     iDynTree::Transform world_H_link = kinDynComputations.getWorldTransform(wrenchSensorLinkName);
                     pImpl->fixedExternalWrenchEstimationInWorldFrameMap.at(wrenchSensorLinkName) = world_H_link.getRotation() * pImpl->berdyData.estimates.task1_linkNetExternalWrenchEstimates(linkIndex);
                     yInfo() << LogPrefix << "Setting fixed wrench value for wrench source: "<< wrenchSensorLinkName;
+                    if (pImpl->commandPro->zeroWrench) {
+                        pImpl->fixedExternalWrenchEstimationInWorldFrameMap.at(wrenchSensorLinkName).zero();
+                    }
                 }
             }
             yInfo() << LogPrefix << "Disabling task1 estimation";
@@ -2062,6 +2081,7 @@ void HumanDynamicsEstimator::run()
     pImpl->commandPro->resetOffset = false;
     pImpl->commandPro->cmdTask1Status = false;
     pImpl->commandPro->resetTask1 = false;
+    pImpl->commandPro->zeroWrench = false;
 
     // Get the berdy sensors following its internal order
     std::vector<iDynTree::BerdySensor> berdySensors = pImpl->berdyData.helper.getSensorsOrdering();
