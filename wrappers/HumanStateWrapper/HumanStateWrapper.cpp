@@ -8,7 +8,11 @@
 
 #include "HumanStateWrapper.h"
 #include "IHumanState.h"
+<<<<<<< devel
 #include <HumanDynamicsEstimation/HumanState.h>
+=======
+#include "thrift/HumanState.h"
+>>>>>>> gRevert "fix compilation with YARP 3.2.101"
 
 #include <yarp/os/BufferedPort.h>
 #include <yarp/os/LogStream.h>
