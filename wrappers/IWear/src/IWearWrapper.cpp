@@ -8,8 +8,8 @@
 
 #include "IWearWrapper.h"
 #include "Wearable/IWear/IWear.h"
-#include "WearableData.h"
-#include "WearableMetadataService.h"
+#include "thrift/WearableData.h"
+#include "thrift/WearableMetadataService.h"
 
 #include <yarp/dev/PreciselyTimed.h>
 #include <yarp/os/BufferedPort.h>

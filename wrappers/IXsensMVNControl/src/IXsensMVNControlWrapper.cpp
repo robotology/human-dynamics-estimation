@@ -9,7 +9,7 @@
 #include "IXsensMVNControlWrapper.h"
 #include "IXsensMVNControl.h"
 
-#include "XsensSuitControlService.h"
+#include "thrift/XsensSuitControlService.h"
 
 #include <yarp/os/BufferedPort.h>
 #include <yarp/os/LogStream.h>
