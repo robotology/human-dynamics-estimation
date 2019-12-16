@@ -12,7 +12,7 @@ add_library(HumanStateMsg ${HUMANSTATE_FILES} thrift/HumanState.thrift)
 target_link_libraries(HumanStateMsg YARP::YARP_OS YARP::YARP_sig)
 
 target_include_directories(HumanStateMsg PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>)
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>)
 
 install(TARGETS HumanStateMsg
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
@@ -29,7 +29,7 @@ add_library(HumanDynamicsMsg ${HUMANDYNAMICS_FILES} thrift/HumanDynamics.thrift)
 target_link_libraries(HumanDynamicsMsg YARP::YARP_OS)
 
 target_include_directories(HumanDynamicsMsg PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>)
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>)
 
 install(TARGETS HumanDynamicsMsg
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
