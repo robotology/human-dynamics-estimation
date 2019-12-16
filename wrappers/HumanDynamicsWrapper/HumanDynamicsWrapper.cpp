@@ -8,7 +8,7 @@
 
 #include "HumanDynamicsWrapper.h"
 #include "IHumanDynamics.h"
-#include "HumanDynamics.h"
+#include "thrift/HumanDynamics.h"
 
 #include <yarp/os/BufferedPort.h>
 #include <yarp/os/LogStream.h>
