@@ -1371,21 +1371,20 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
     // This is an berdy option that has to be initialized before calling berdy initialization
     // If only the links that are having know measurements are to be considered, use the wrench sensor link names
     if ((berdyOptions.includeCoMAccelerometerAsSensorInTask1 || berdyOptions.includeCoMAccelerometerAsSensorInTask2) && !comConstraintIncludeAllLinks) {
-        berdyOptions.comConstraintLinkIndexVector.resize(pImpl->wrenchSensorsLinkNames.size());
+        berdyOptions.comConstraintLinkNamesVector.resize(pImpl->wrenchSensorsLinkNames.size());
 
         for (size_t idx = 0; idx < pImpl->wrenchSensorsLinkNames.size(); idx++)
         {
-            berdyOptions.comConstraintLinkIndexVector.at(idx) = modelLoader.model().getLinkIndex(pImpl->wrenchSensorsLinkNames.at(idx));
+            berdyOptions.comConstraintLinkNamesVector.at(idx) = pImpl->wrenchSensorsLinkNames.at(idx);
         }
     }
     else if ((berdyOptions.includeCoMAccelerometerAsSensorInTask1 || berdyOptions.includeCoMAccelerometerAsSensorInTask2) && comConstraintIncludeAllLinks) { // Include all the model links
-        berdyOptions.comConstraintLinkIndexVector.resize(modelLoader.model().getNrOfLinks());
+        berdyOptions.comConstraintLinkNamesVector.resize(modelLoader.model().getNrOfLinks());
 
         for (size_t idx = 0; idx < modelLoader.model().getNrOfLinks(); idx++) {
-            berdyOptions.comConstraintLinkIndexVector.at(idx) = idx;
+            berdyOptions.comConstraintLinkNamesVector.at(idx) = modelLoader.model().getLinkName(idx);
         }
     }
-
 
     // Check berdy options
     if (!berdyOptions.checkConsistency()) {
