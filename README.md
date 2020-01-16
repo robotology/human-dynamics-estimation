@@ -93,6 +93,7 @@ Accordingly to what presented in [previous section](https://github.com/robotolog
 Documentation for running the wearable data source can be found in [`wearables`](https://github.com/robotology/wearables) at the following links:
 - [FTShoes](https://github.com/robotology/wearables/blob/master/doc/How-to-run-FTshoes.md)
 - [XsensSuit](https://github.com/robotology/wearables/blob/master/doc/How-to-run-XsensSuit.md)
+- [iCub robot](https://github.com/robotology/wearables/blob/master/doc/How-to-run-iCub-as-wearable-source.md)
 
 ## Citing this work
 
