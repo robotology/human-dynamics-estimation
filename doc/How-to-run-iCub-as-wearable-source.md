@@ -9,7 +9,7 @@ yarprobotinterface --config ICubWearableDevice.xml
 ```
 
 
-**Before running**
+#### Before running
 Before running the device make sure that:
 - [`yarpserver`](https://www.yarp.it/yarpserver.html) is running
 - The `YARP_ROBOT_NAME` is set to the proper robot name. 
@@ -25,7 +25,7 @@ Before running the device make sure that:
   - `joint-sensors`: joints for which the state has to be exposed as wearable data.
 
 
-**Calibration**
+#### Calibration
 The estimated wrench data computed by `whole-body-dynamics` may be characterized by an offset due to ft sensors meaasurement.
 If using the real-robot, the following command can be sent to remove the offset (while the robot is lifted from the ground):
 ```
@@ -38,7 +38,7 @@ yarp rpc /wholeBodyDynamics/rpc
 resetOffset all 300
 ```
 
-**Data**
+#### Data
 If the device is running correctly, the stream of wearable data can be read with:
 ```
 /ICub/WearableData/data:o
