@@ -18,10 +18,10 @@ Before running the device make sure that:
   ```
   yarprobotinterface --config launch-wholebodydynamics.xml
   ```
-  It the real robot is running, `whole-body-dynamics` estimatior should be running if the robot is launched with the [proper configuration](https://github.com/robotology/whole-body-controllers/blob/master/doc/How-to-setup-the-robot-for-wbc-experiments.md). 
-  To verify if the estimator is running, you can check weather data are streamed for the end-effectors to be used as sensors (e.g. `/wholeBodyDynamics/right_arm/endEffectorWrench:o`).
-- In the [configuration file](https://github.com/robotology/wearables/blob/master/app/xml/ICubWearableDevice.xml), the following parameters are set propery:
-  - `ft-sensors`: wrenche measurements that have to be exposed as wearable data. Those measurements should be provide by `whole-body-dynamics` estimator, or directly from sensors measurement.
+  When the real robot is running, `whole-body-dynamics` estimatior should be running if the robot is launched with the [proper configuration](https://github.com/robotology/whole-body-controllers/blob/master/doc/How-to-setup-the-robot-for-wbc-experiments.md). 
+  To verify if the estimator is running, you can check whether data are streamed for the end-effectors to be used as sensors (e.g. `/wholeBodyDynamics/right_arm/endEffectorWrench:o`).
+- In the [configuration file](https://github.com/robotology/wearables/blob/master/app/xml/ICubWearableDevice.xml), the following parameters are set properly:
+  - `ft-sensors`: wrenche measurements that have to be exposed as wearable data. Those measurements should be provided by `whole-body-dynamics` estimator, or directly from sensors measurement.
   - `joint-sensors`: joints for which the state has to be exposed as wearable data.
 
 
