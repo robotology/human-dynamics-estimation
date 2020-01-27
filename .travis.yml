@@ -20,8 +20,6 @@ env:
     - TRAVIS_CMAKE_GENERATOR="Ninja"
     - DEPS_BRANCH="master"
   matrix:
-    - TRAVIS_BUILD_TYPE="Release" UBUNTU="xenial"
-    - TRAVIS_BUILD_TYPE="Debug" UBUNTU="xenial"
     - TRAVIS_BUILD_TYPE="Release" UBUNTU="bionic"
     - TRAVIS_BUILD_TYPE="Debug" UBUNTU="bionic"
 
@@ -38,9 +36,7 @@ before_install:
 before_script:
   - echo "Using $DEPS_BRANCH for dependencies"
   - >-
-    if [ "$UBUNTU" = "xenial" ] ; then
-      export DOCKER_IMAGE_NAME=robotology/robotology-tdd:gazebo8${DEPS_BRANCH}
-    elif [ "$UBUNTU" = "bionic" ] ; then
+    if [ "$UBUNTU" = "bionic" ] ; then
       export DOCKER_IMAGE_NAME=robotology/robotology-tdd:gazebo9${DEPS_BRANCH}
     else
       travis_terminate 1
