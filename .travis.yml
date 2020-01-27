@@ -25,8 +25,6 @@ env:
     - TRAVIS_CMAKE_GENERATOR="Ninja"
     - DEPS_BRANCH="master"
   matrix:
-    - TRAVIS_BUILD_TYPE="Release" UBUNTU="xenial"
-    - TRAVIS_BUILD_TYPE="Debug" UBUNTU="xenial"
     - TRAVIS_BUILD_TYPE="Release" UBUNTU="bionic"
     - TRAVIS_BUILD_TYPE="Debug" UBUNTU="bionic"
 
@@ -82,10 +80,8 @@ stage_osx:
     - export PATH=$PATH:$DEPS_INSTALL_PREFIX/bin
     #- export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$DEPS_INSTALL_PREFIX/lib
     - export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$DEPS_INSTALL_PREFIX
-    # Fix https://github.com/travis-ci/travis-ci/issues/8826
-    - brew cask uninstall oclint
     # Install dependencies
-    - brew install eigen ace tinyxml gsl dartsim/dart/ipopt qt
+    - brew install eigen ace tinyxml gsl ipopt qt
     - export PATH="/usr/local/opt/qt/bin/:$PATH"
     # Build other dependencies
     - cd $TRAVIS_BUILD_DIR
@@ -149,7 +145,7 @@ jobs:
     - &osx_template
       stage: osx
       os: osx
-      osx_image: xcode9.3
+      osx_image: xcode10
       before_install: *before_install
       install: *osx_install
       before_script: skip
@@ -157,10 +153,6 @@ jobs:
       after_failure: skip
       after_success: skip
       after_script: skip
-      env:
-        TRAVIS_CMAKE_GENERATOR="Xcode"
-        TRAVIS_BUILD_TYPE="Debug"
-    - <<: *osx_template
       compiler: clang
       env:
         TRAVIS_CMAKE_GENERATOR="Unix Makefiles"

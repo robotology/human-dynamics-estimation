@@ -479,8 +479,6 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
 
 bool HumanWrenchProvider::close()
 {
-    stop();
-    detachAll();
     return true;
 }
 
@@ -787,9 +785,14 @@ bool HumanWrenchProvider::attach(yarp::dev::PolyDriver* poly)
     return true;
 }
 
+void HumanWrenchProvider::threadRelease()
+{}
+
 bool HumanWrenchProvider::detach()
 {
-    askToStop();
+    while(isRunning()) {
+        stop();
+    }
 
     pImpl->iHumanState = nullptr;
     pImpl->iWear = nullptr;

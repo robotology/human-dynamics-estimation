@@ -4,6 +4,7 @@
 
 find_package(IWear REQUIRED)
 find_package(iDynTree REQUIRED)
+find_package(ICUB REQUIRED)
 
 yarp_prepare_plugin(robot_position_controller
     TYPE hde::devices::RobotPositionController
@@ -18,6 +19,8 @@ yarp_add_plugin(RobotPositionController
 
 target_include_directories(RobotPositionController PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
+
+add_definitions(-D_USE_MATH_DEFINES)
 
 target_link_libraries(RobotPositionController PUBLIC
     IHumanState

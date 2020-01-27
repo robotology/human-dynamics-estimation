@@ -15,7 +15,7 @@
 #include <yarp/sig/Vector.h>
 
 const std::string DeviceName = "HumanStateWrapper";
-const std::string logPrefix = DeviceName + " :";
+const std::string LogPrefix = DeviceName + " :";
 constexpr double DefaultPeriod = 0.01;
 
 using namespace hde::wrappers;
@@ -23,7 +23,7 @@ using namespace hde::wrappers;
 class HumanStateWrapper::impl
 {
 public:
-    hde::interfaces::IHumanState* humanState = nullptr;
+    hde::interfaces::IHumanState* iHumanState = nullptr;
     yarp::os::BufferedPort<human::HumanState> outputPort;
 };
 
@@ -33,10 +33,7 @@ HumanStateWrapper::HumanStateWrapper()
 {}
 
 HumanStateWrapper::~HumanStateWrapper()
-{
-    close();
-    detachAll();
-}
+{}
 
 bool HumanStateWrapper::open(yarp::os::Searchable& config)
 {
@@ -45,11 +42,11 @@ bool HumanStateWrapper::open(yarp::os::Searchable& config)
     // ===============================
 
     if (!(config.check("period") && config.find("period").isDouble())) {
-        yInfo() << logPrefix << "Using default period:" << DefaultPeriod << "s";
+        yInfo() << LogPrefix << "Using default period:" << DefaultPeriod << "s";
     }
 
     if (!(config.check("outputPort") && config.find("outputPort").isString())) {
-        yError() << logPrefix << "outputPort option not found or not valid";
+        yError() << LogPrefix << "outputPort option not found or not valid";
         return false;
     }
 
@@ -65,7 +62,7 @@ bool HumanStateWrapper::open(yarp::os::Searchable& config)
     // =============
 
     if (!pImpl->outputPort.open(outputPortName)) {
-        yError() << logPrefix << "Failed to open port" << outputPortName;
+        yError() << LogPrefix << "Failed to open port" << outputPortName;
         return false;
     }
 
@@ -78,22 +75,23 @@ bool HumanStateWrapper::open(yarp::os::Searchable& config)
     return true;
 }
 
+#include <iostream>
+
 bool HumanStateWrapper::close()
 {
-    pImpl->outputPort.close();
     return true;
 }
 
 void HumanStateWrapper::run()
 {
     // Get data from the interface
-    std::array<double, 3> basePositionInterface = pImpl->humanState->getBasePosition();
-    std::array<double, 4> baseOrientationInterface = pImpl->humanState->getBaseOrientation();
-    std::array<double, 6> baseVelocity = pImpl->humanState->getBaseVelocity();
-    std::vector<double> jointPositionsInterface = pImpl->humanState->getJointPositions();
-    std::vector<double> jointVelocitiesInterface = pImpl->humanState->getJointVelocities();
-    std::vector<std::string> jointNames = pImpl->humanState->getJointNames();
-    std::string baseName = pImpl->humanState->getBaseName();
+    std::array<double, 3> basePositionInterface = pImpl->iHumanState->getBasePosition();
+    std::array<double, 4> baseOrientationInterface = pImpl->iHumanState->getBaseOrientation();
+    std::array<double, 6> baseVelocity = pImpl->iHumanState->getBaseVelocity();
+    std::vector<double> jointPositionsInterface = pImpl->iHumanState->getJointPositions();
+    std::vector<double> jointVelocitiesInterface = pImpl->iHumanState->getJointVelocities();
+    std::vector<std::string> jointNames = pImpl->iHumanState->getJointNames();
+    std::string baseName = pImpl->iHumanState->getBaseName();
 
     // Prepare the message
     human::HumanState& humanStateData = pImpl->outputPort.prepare();
@@ -144,12 +142,12 @@ void HumanStateWrapper::run()
 bool HumanStateWrapper::attach(yarp::dev::PolyDriver* poly)
 {
     if (!poly) {
-        yError() << logPrefix << "Passed PolyDriver is nullptr";
+        yError() << LogPrefix << "Passed PolyDriver is nullptr";
         return false;
     }
 
-    if (pImpl->humanState || !poly->view(pImpl->humanState) || !pImpl->humanState) {
-        yError() << logPrefix << "Failed to view the IHumanState interface from the PolyDriver";
+    if (pImpl->iHumanState || !poly->view(pImpl->iHumanState) || !pImpl->iHumanState) {
+        yError() << LogPrefix << "Failed to view the IHumanState interface from the PolyDriver";
         return false;
     }
 
@@ -157,13 +155,13 @@ bool HumanStateWrapper::attach(yarp::dev::PolyDriver* poly)
     // CHECK THE INTERFACE
     // ===================
 
-    if (pImpl->humanState->getNumberOfJoints() == 0
-        || pImpl->humanState->getNumberOfJoints() != pImpl->humanState->getJointNames().size()) {
+    if (pImpl->iHumanState->getNumberOfJoints() == 0
+        || pImpl->iHumanState->getNumberOfJoints() != pImpl->iHumanState->getJointNames().size()) {
         yError() << "The IHumanState interface might not be ready";
         return false;
     }
 
-    yDebug() << logPrefix << "Read" << pImpl->humanState->getNumberOfJoints() << "joints";
+    yDebug() << LogPrefix << "Read" << pImpl->iHumanState->getNumberOfJoints() << "joints";
 
     // ====
     // MISC
@@ -171,30 +169,41 @@ bool HumanStateWrapper::attach(yarp::dev::PolyDriver* poly)
 
     // Start the PeriodicThread loop
     if (!start()) {
-        yError() << logPrefix << "Failed to start the loop";
+        yError() << LogPrefix << "Failed to start the loop";
         return false;
     }
 
     return true;
 }
 
+void HumanStateWrapper::threadRelease()
+{}
+
 bool HumanStateWrapper::detach()
 {
-    pImpl->humanState = nullptr;
+    while (isRunning()) {
+        stop();
+    }
+
+    while (!pImpl->outputPort.isClosed()) {
+        pImpl->outputPort.close();
+    }
+    pImpl->iHumanState = nullptr;
+
     return true;
 }
 
 bool HumanStateWrapper::attachAll(const yarp::dev::PolyDriverList& driverList)
 {
     if (driverList.size() > 1) {
-        yError() << logPrefix << "This wrapper accepts only one attached PolyDriver";
+        yError() << LogPrefix << "This wrapper accepts only one attached PolyDriver";
         return false;
     }
 
     const yarp::dev::PolyDriverDescriptor* driver = driverList[0];
 
     if (!driver) {
-        yError() << logPrefix << "Passed PolyDriverDescriptor is nullptr";
+        yError() << LogPrefix << "Passed PolyDriverDescriptor is nullptr";
         return false;
     }
 

@@ -44,7 +44,7 @@ HumanIKWorkerPool::HumanIKWorkerPool(int size,
     }
 }
 
-HumanIKWorkerPool::~HumanIKWorkerPool()
+int HumanIKWorkerPool::closeIKWorkerPool()
 {
     m_terminateCounter.resize(m_poolSize);
     m_terminateCounter.assign(m_poolSize, true); //dummy
@@ -54,6 +54,12 @@ HumanIKWorkerPool::~HumanIKWorkerPool()
 
     m_inputSynchronizer.notify_all();
     m_inputSynchronizer.wait(lock, [&]() {return m_terminateCounter.empty(); });
+
+    return m_shouldTerminate;
+}
+
+HumanIKWorkerPool::~HumanIKWorkerPool()
+{
 }
 
 void HumanIKWorkerPool::runAndWait()

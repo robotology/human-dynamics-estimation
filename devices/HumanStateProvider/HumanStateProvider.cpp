@@ -88,8 +88,8 @@ struct SolutionIK
 
     void clear()
     {
-        jointPositions = {};
-        jointVelocities = {};
+        jointPositions.clear();
+        jointVelocities.clear();
     }
 };
 
@@ -173,9 +173,7 @@ HumanStateProvider::HumanStateProvider()
 {}
 
 HumanStateProvider::~HumanStateProvider()
-{
-    detachAll();
-}
+{}
 
 bool HumanStateProvider::open(yarp::os::Searchable& config)
 {
@@ -616,6 +614,11 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     return true;
 }
 
+bool HumanStateProvider::close()
+{
+    return true;
+}
+
 // This method returns the all link pair names from the full human model
 static void createEndEffectorsPairs(const iDynTree::Model& model,
                                     std::vector<SegmentInfo>& humanSegments,
@@ -748,15 +751,6 @@ static bool getReducedModel(const iDynTree::Model& modelInput,
 
     modelOutput = loader.model();
 
-    return true;
-}
-
-
-
-bool HumanStateProvider::close()
-{
-    stop();
-    detachAll();
     return true;
 }
 
@@ -1282,9 +1276,18 @@ bool HumanStateProvider::attach(yarp::dev::PolyDriver* poly)
     return true;
 }
 
+void HumanStateProvider::threadRelease()
+{
+    if(!pImpl->ikPool->closeIKWorkerPool()) {
+        yError() << LogPrefix << "Failed to close the IKWorker pool";
+    }
+}
+
 bool HumanStateProvider::detach()
 {
-    askToStop();
+    while (isRunning()) {
+        stop();
+    }
 
     {
         std::lock_guard<std::mutex>(pImpl->mutex);
@@ -1293,6 +1296,11 @@ bool HumanStateProvider::detach()
 
     pImpl->iWear = nullptr;
     return true;
+}
+
+bool HumanStateProvider::detachAll()
+{
+    return detach();
 }
 
 bool HumanStateProvider::attachAll(const yarp::dev::PolyDriverList& driverList)
@@ -1310,11 +1318,6 @@ bool HumanStateProvider::attachAll(const yarp::dev::PolyDriverList& driverList)
     }
 
     return attach(driver->poly);
-}
-
-bool HumanStateProvider::detachAll()
-{
-    return detach();
 }
 
 std::vector<std::string> HumanStateProvider::getJointNames() const

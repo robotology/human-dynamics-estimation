@@ -24,10 +24,11 @@
         <arg name="gui" default="False" />
         <arg name="vel" default="True" />
         <arg name="eff" default="True"/>
-        <arg name="robotModel" default="$(find HDERviz)/urdfs/iCubGenova02.urdf"/>
+	<arg name="YARP_ROBOT_NAME" default="$(env YARP_ROBOT_NAME)"/>
+        <arg name="robotModel" default="$(find iCub)/robots/$(arg YARP_ROBOT_NAME)/model.urdf"/>
 
         <param name="use_gui" value="$(arg gui)"/>
-        <param name="robot_description" command="$(find xacro)/xacro.py $(arg robotModel)" />
+        <param name="robot_description" command="$(find xacro)/xacro $(arg robotModel)" />
 
         <param name="tf_prefix" value="robot" type="str"/>
     </group>

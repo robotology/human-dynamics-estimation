@@ -36,10 +36,7 @@ HumanDynamicsWrapper::HumanDynamicsWrapper()
 {}
 
 HumanDynamicsWrapper::~HumanDynamicsWrapper()
-{
-    close();
-    detachAll();
-}
+{}
 
 bool HumanDynamicsWrapper::open(yarp::os::Searchable& config)
 {
@@ -149,8 +146,15 @@ bool HumanDynamicsWrapper::attach(yarp::dev::PolyDriver* poly)
     return true;
 }
 
+void HumanDynamicsWrapper::threadRelease()
+{}
+
 bool HumanDynamicsWrapper::detach()
 {
+    while(isRunning()) {
+        stop();
+    }
+
     pImpl->humanDynamics = nullptr;
     return true;
 }

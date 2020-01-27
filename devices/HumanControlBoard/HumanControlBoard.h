@@ -51,6 +51,7 @@ public:
 
     // PeriodicThread
     void run() override;
+    void threadRelease() override;
 
     // IWrapper interface
     bool attach(yarp::dev::PolyDriver* poly) override;
@@ -79,8 +80,8 @@ public:
     bool setEncoders(const double* vals) override { return false; }
 
     // IEncodersTimed interface
-    bool getEncoderTimed(int j, double* encs, double* time) override { return false; }
-    bool getEncodersTimed(double* encs, double* time) override { return false; }
+    bool getEncoderTimed(int j, double* encs, double* time) override;
+    bool getEncodersTimed(double* encs, double* time) override;
 
     // IPositionControl Interface
     bool stop() override { return false; }

@@ -159,7 +159,7 @@
                 <elem name="HumanStatePublisherLabel">HumanStateProvider</elem>
             </paramlist>
         </action>
-        <action phase="shutdown" level="5" type="detach"/>
+        <action phase="shutdown" level="4" type="detach"/>
     </device>
 
     <device type="iwear_remapper" name="FTSourcesIWearRemapper">
@@ -270,7 +270,7 @@
                 <elem name="HumanWrenchPublisherLabel">HumanWrenchProvider</elem>
             </paramlist>
         </action>
-        <action phase="shutdown" level="5" type="detach" />
+        <action phase="shutdown" level="4" type="detach" />
     </device>
 
     <device type="human_dynamics_estimator" name="HumanDynamicsEstimator">
@@ -328,7 +328,7 @@
                 <elem name="HumanDynamicsPublisherLabel">HumanDynamicsEstimator</elem>
             </paramlist>
         </action>
-        <action phase="shutdown" level="5" type="detach"/>
+        <action phase="shutdown" level="4" type="detach"/>
     </device>
 
     <device type="human_control_board" name="HumanControlBoard">

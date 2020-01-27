@@ -181,6 +181,8 @@ public:
      */
     void runAndWait();
 
+    int closeIKWorkerPool();
+
 };
 
 #endif // HUMANIKWORKERPOOL_H
