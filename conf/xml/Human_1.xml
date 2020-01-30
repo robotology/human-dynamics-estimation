@@ -28,7 +28,7 @@
         <param name="rotTargetWeight">1.0</param>
         <param name="costRegularization">0.000001</param>
         <param name="costTolerance">0.001</param>
-        <param name="rpcPortPrefix">first</param>
+        <param name="rpcPortPrefix">HDE_1</param>
         <!-- inverse velocity kinematics parameteremoveWrenchOffsetrs -->
         <!-- inverseVelocityKinematicsSolver values:
         QP
@@ -209,7 +209,7 @@
         <param name="period">0.02</param>
         <param name="baseTFName">/Human_1/Pelvis</param>
         <param name="humanJointsTopic">/Human_1/joint_states</param>
-        <param name="portprefix">first</param>
+        <param name="portprefix">HDE_1</param>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
                 <elem name="HumanStatePublisherLabel">HumanStateProvider_1</elem>
@@ -317,7 +317,7 @@
         <param name="removeOffsetOption">source-dynamic</param>
         <param name="dynamicWrenchOffsetSD">100.0</param>
         <param name="wrenchEstimationForceLowerThreshold">30</param>
-        <param name="rpcPortPrefix">first</param>
+        <param name="rpcPortPrefix">HDE_1</param>
         <group name="PRIORS">
            <param name="mu_dyn_variables">1e-6</param>
            <param name="cov_dyn_variables">1e6</param>
@@ -350,7 +350,7 @@
     </device>
 
     <device type="analogServer" name="HumanEstimatedWrenchWrapper_1">
-        <param name="name">/HDE_2/HumanEstimatedWrenchWrapper/wrench:o</param>
+        <param name="name">/HDE_1/HumanEstimatedWrenchWrapper/wrench:o</param>
         <param name="period">10</param>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
