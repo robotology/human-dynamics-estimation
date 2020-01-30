@@ -64,7 +64,7 @@ public:
     std::vector<double> jointTorques;
 
     // ROS Publisher
-    yarp::os::Node node = {"/" + DeviceName};
+    yarp::os::Node node;
 };
 
 HumanDynamicsPublisher::HumanDynamicsPublisher()
@@ -145,6 +145,7 @@ bool HumanDynamicsPublisher::open(yarp::os::Searchable& config)
                                         listOfJointNames->get(joint).asString());
     }
 
+    pImpl->node.prepare(topicPrefix);
     // Initialize JointEffortData
     for (const auto& sphericalJoint : SphericalJointData) {
         JointEffortData jointEffortData;

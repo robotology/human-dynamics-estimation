@@ -152,124 +152,6 @@ struct HumanSensorData
     std::vector<std::array<double, 6>> accelerometerSensorMeasurements;
 };
 
-class CmdParser : public yarp::os::PortReader
-{
-
-public:
-    std::array<std::atomic_bool,3> positionOffsetFlag{{ATOMIC_VAR_INIT(false), ATOMIC_VAR_INIT(false), ATOMIC_VAR_INIT(false)}};
-    std::array<std::atomic_bool,3> orientationOffsetFlag{{ATOMIC_VAR_INIT(false), ATOMIC_VAR_INIT(false), ATOMIC_VAR_INIT(false)}};
-    std::atomic<bool> cmdStatus{false};
-
-    bool read(yarp::os::ConnectionReader& connection) override
-    {
-        yarp::os::Bottle command, response;
-        if (command.read(connection)) {
-
-            if (command.get(0).asString() == "help") {
-                response.addVocab(yarp::os::Vocab::encode("many"));
-                response.addString("Enter <removePositionOffset> to remove the base position offset from all the axis \n"
-                                   "   or <removePositionOffset> <axis> <axis_list> for removing position offset of specific axis (e.g. 'removePositionOffset axis xy') \n"
-                                   "Enter <removeOrientationOffset> to remove the base orientation offset \n"
-                                   "   or <removeOrientationOffset> <axis> <axis_list> for removing orientatino offset on specific axis \n"
-                                   "Enter <resetPositionOffset> to reset the base position \n"
-                                   "Enter <resetOrientationOffset> to reset the base orientation \n"
-                                   "Enter <resetOffset> to reset the base position and orientation"
-                                    );
-            }
-            else if (command.get(0).asString() == "removePositionOffset") {
-                if (command.size() == 1) {
-                    response.addString("Entered command <removePositionOffset> is correct, removing position offset for all the axis");
-                    this->positionOffsetFlag.at(0) = true;
-                    this->positionOffsetFlag.at(1) = true;
-                    this->positionOffsetFlag.at(2) = true;
-                    this->cmdStatus = true;
-                }
-                else if (command.get(1).isString() && command.get(1).asString() == "axis" && command.get(2).isString()) {
-                    response.addString("Entered command <removePositionOffset> is correct, removing position offset for the selected axis");
-                    std::string axis = command.get(2).asString();
-                    if (axis.find('x')!=std::string::npos)
-                         this->positionOffsetFlag[0] = true;
-                    if (axis.find('y')!=std::string::npos)
-                         this->positionOffsetFlag[1] = true;
-                    if (axis.find('z')!=std::string::npos)
-                         this->positionOffsetFlag[2] = true;
-                    this->cmdStatus = true;
-                }
-                else {
-                    response.addString(
-                        "Entered command is incorrect, Enter help to know available commands");
-                }
-            }
-            else if (command.get(0).asString() == "removeOrientationOffset") {
-                if (command.size() == 1) {
-                    response.addString("Entered command <removeOrientationOffset> is correct, removing orientation offset for all the axis");
-                    this->orientationOffsetFlag.at(0) = true;
-                    this->orientationOffsetFlag.at(1) = true;
-                    this->orientationOffsetFlag.at(2) = true;
-                    this->cmdStatus = true;
-                }
-                else if (command.get(1).isString() && command.get(1).asString() == "axis" && command.get(2).isString()) {
-                    response.addString("Entered command <removeOrientationOffset> is correct, removing orientation offset for the selected axis");
-                    std::string axis = command.get(2).asString();
-                    if (axis.find('x')!=std::string::npos)
-                         this->orientationOffsetFlag[0] = true;
-                    if (axis.find('y')!=std::string::npos)
-                         this->orientationOffsetFlag[1] = true;
-                    if (axis.find('z')!=std::string::npos)
-                         this->orientationOffsetFlag[2] = true;
-                    this->cmdStatus = true;
-                }
-                else {
-                    response.addString(
-                        "Entered command is incorrect, Enter help to know available commands");
-                }
-            }
-            else if (command.get(0).asString() == "resetPositionOffset") {
-                response.addString("Entered command <resetPositionOffset> is correct, resetting the position offset");
-                this->positionOffsetFlag.at(0) = false;
-                this->positionOffsetFlag.at(1) = false;
-                this->positionOffsetFlag.at(2) = false;
-                this->cmdStatus = true;
-            }
-            else if (command.get(0).asString() == "resetOrientationOffset") {
-                response.addString("Entered command <resetOrientationOffset> is correct, resetting the orientation offset");
-                this->orientationOffsetFlag.at(0) = false;
-                this->orientationOffsetFlag.at(1) = false;
-                this->orientationOffsetFlag.at(2) = false;
-                this->cmdStatus = true;
-            }
-            else if (command.get(0).asString() == "resetOffset") {
-                response.addString("Entered command <resetOffset> is correct, resetting position and orientation offsets");
-                this->positionOffsetFlag.at(0) = false;
-                this->positionOffsetFlag.at(1) = false;
-                this->positionOffsetFlag.at(2) = false;
-                this->orientationOffsetFlag.at(0) = false;
-                this->orientationOffsetFlag.at(1) = false;
-                this->orientationOffsetFlag.at(2) = false;
-                this->cmdStatus = true;
-            }
-            else {
-                response.addString(
-                    "Entered command is incorrect, Enter help to know available commands");
-            }
-        }
-        else {
-            this->cmdStatus = false;
-            return false;
-        }
-
-        yarp::os::ConnectionWriter* reply = connection.getWriter();
-
-        if (reply != NULL) {
-            response.write(*reply);
-        }
-        else
-            return false;
-
-        return true;
-    }
-};
-
 class HumanStateProvider::impl
 {
 public:
@@ -294,7 +176,8 @@ public:
     std::vector<LinkPairInfo> linkPairs;
 
     // Rpc
-    CmdParser commandPro;
+    class CmdParser;
+    std::unique_ptr<CmdParser> commandPro;
     yarp::os::RpcServer rpcPort;
 
     // Link wearable data buffers
@@ -422,7 +305,136 @@ public:
         iDynTree::VectorDynSize jointVelocities,
         iDynTree::Twist baseVelocity,
         std::unordered_map<std::string, iDynTree::Vector3>& linkAngularVelocityError);
+
+    // constructor
+    impl();
 };
+
+// ===============
+// RPC PORT PARSER
+// ===============
+
+class HumanStateProvider::impl::CmdParser : public yarp::os::PortReader
+{
+
+public:
+    std::array<std::atomic_bool,3> positionOffsetFlag{{ATOMIC_VAR_INIT(false), ATOMIC_VAR_INIT(false), ATOMIC_VAR_INIT(false)}};
+    std::array<std::atomic_bool,3> orientationOffsetFlag{{ATOMIC_VAR_INIT(false), ATOMIC_VAR_INIT(false), ATOMIC_VAR_INIT(false)}};
+    std::atomic<bool> cmdStatus{false};
+
+    bool read(yarp::os::ConnectionReader& connection) override
+    {
+        yarp::os::Bottle command, response;
+        if (command.read(connection)) {
+
+            if (command.get(0).asString() == "help") {
+                response.addVocab(yarp::os::Vocab::encode("many"));
+                response.addString("Enter <removePositionOffset> to remove the base position offset from all the axis \n"
+                                   "   or <removePositionOffset> <axis> <axis_list> for removing position offset of specific axis (e.g. 'removePositionOffset axis xy') \n"
+                                   "Enter <removeOrientationOffset> to remove the base orientation offset \n"
+                                   "   or <removeOrientationOffset> <axis> <axis_list> for removing orientatino offset on specific axis \n"
+                                   "Enter <resetPositionOffset> to reset the base position \n"
+                                   "Enter <resetOrientationOffset> to reset the base orientation \n"
+                                   "Enter <resetOffset> to reset the base position and orientation"
+                                    );
+            }
+            else if (command.get(0).asString() == "removePositionOffset") {
+                if (command.size() == 1) {
+                    response.addString("Entered command <removePositionOffset> is correct, removing position offset for all the axis");
+                    this->positionOffsetFlag.at(0) = true;
+                    this->positionOffsetFlag.at(1) = true;
+                    this->positionOffsetFlag.at(2) = true;
+                    this->cmdStatus = true;
+                }
+                else if (command.get(1).isString() && command.get(1).asString() == "axis" && command.get(2).isString()) {
+                    response.addString("Entered command <removePositionOffset> is correct, removing position offset for the selected axis");
+                    std::string axis = command.get(2).asString();
+                    if (axis.find('x')!=std::string::npos)
+                         this->positionOffsetFlag[0] = true;
+                    if (axis.find('y')!=std::string::npos)
+                         this->positionOffsetFlag[1] = true;
+                    if (axis.find('z')!=std::string::npos)
+                         this->positionOffsetFlag[2] = true;
+                    this->cmdStatus = true;
+                }
+                else {
+                    response.addString(
+                        "Entered command is incorrect, Enter help to know available commands");
+                }
+            }
+            else if (command.get(0).asString() == "removeOrientationOffset") {
+                if (command.size() == 1) {
+                    response.addString("Entered command <removeOrientationOffset> is correct, removing orientation offset for all the axis");
+                    this->orientationOffsetFlag.at(0) = true;
+                    this->orientationOffsetFlag.at(1) = true;
+                    this->orientationOffsetFlag.at(2) = true;
+                    this->cmdStatus = true;
+                }
+                else if (command.get(1).isString() && command.get(1).asString() == "axis" && command.get(2).isString()) {
+                    response.addString("Entered command <removeOrientationOffset> is correct, removing orientation offset for the selected axis");
+                    std::string axis = command.get(2).asString();
+                    if (axis.find('x')!=std::string::npos)
+                         this->orientationOffsetFlag[0] = true;
+                    if (axis.find('y')!=std::string::npos)
+                         this->orientationOffsetFlag[1] = true;
+                    if (axis.find('z')!=std::string::npos)
+                         this->orientationOffsetFlag[2] = true;
+                    this->cmdStatus = true;
+                }
+                else {
+                    response.addString(
+                        "Entered command is incorrect, Enter help to know available commands");
+                }
+            }
+            else if (command.get(0).asString() == "resetPositionOffset") {
+                response.addString("Entered command <resetPositionOffset> is correct, resetting the position offset");
+                this->positionOffsetFlag.at(0) = false;
+                this->positionOffsetFlag.at(1) = false;
+                this->positionOffsetFlag.at(2) = false;
+                this->cmdStatus = true;
+            }
+            else if (command.get(0).asString() == "resetOrientationOffset") {
+                response.addString("Entered command <resetOrientationOffset> is correct, resetting the orientation offset");
+                this->orientationOffsetFlag.at(0) = false;
+                this->orientationOffsetFlag.at(1) = false;
+                this->orientationOffsetFlag.at(2) = false;
+                this->cmdStatus = true;
+            }
+            else if (command.get(0).asString() == "resetOffset") {
+                response.addString("Entered command <resetOffset> is correct, resetting position and orientation offsets");
+                this->positionOffsetFlag.at(0) = false;
+                this->positionOffsetFlag.at(1) = false;
+                this->positionOffsetFlag.at(2) = false;
+                this->orientationOffsetFlag.at(0) = false;
+                this->orientationOffsetFlag.at(1) = false;
+                this->orientationOffsetFlag.at(2) = false;
+                this->cmdStatus = true;
+            }
+            else {
+                response.addString(
+                    "Entered command is incorrect, Enter help to know available commands");
+            }
+        }
+        else {
+            this->cmdStatus = false;
+            return false;
+        }
+
+        yarp::os::ConnectionWriter* reply = connection.getWriter();
+
+        if (reply != NULL) {
+            response.write(*reply);
+        }
+        else
+            return false;
+
+        return true;
+    }
+};
+
+HumanStateProvider::impl::impl()
+    : commandPro(new CmdParser())
+{}
 
 // =========================
 // HUMANSTATEPROVIDER DEVICE
@@ -636,7 +648,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     }
 
     // Set rpc port reader
-    pImpl->rpcPort.setReader(pImpl->commandPro);
+    pImpl->rpcPort.setReader(*pImpl->commandPro);
 
     // =======================================
     // PARSE THE GENERAL CONFIGURATION OPTIONS
@@ -1353,44 +1365,43 @@ void HumanStateProvider::run()
         pImpl->baseVelocitySolution = measuredBaseVelocity;
     }
 
+    // Update kinDyn computations based on IK solution
+    iDynTree::VectorDynSize solvedJointPositions(pImpl->solution.jointPositions.size());
+
+    for (size_t j = 0; j < pImpl->solution.jointPositions.size(); j++) {
+        solvedJointPositions.setVal(j, pImpl->solution.jointPositions.at(j));
+    }
+
+    iDynTree::VectorDynSize solvedJointVelocities(pImpl->solution.jointVelocities.size());
+
+    for (size_t j = 0; j < pImpl->solution.jointVelocities.size(); j++) {
+        solvedJointVelocities.setVal(j, pImpl->solution.jointVelocities.at(j));
+    }
+
+    pImpl->kinDynComputations->setRobotState(pImpl->baseTransformSolution,
+                                             solvedJointPositions,
+                                             pImpl->baseVelocitySolution,
+                                             solvedJointVelocities,
+                                             pImpl->worldGravity);
+
     // CoM position and velocity
     std::array<double, 3> CoM_position, CoM_velocity;
-    iDynTree::KinDynComputations* kindyncomputations = pImpl->kinDynComputations.get();
-    CoM_position = {kindyncomputations->getCenterOfMassPosition().getVal(0),
-                    kindyncomputations->getCenterOfMassPosition().getVal(1),
-                    kindyncomputations->getCenterOfMassPosition().getVal(2)};
+    CoM_position = {pImpl->kinDynComputations->getCenterOfMassPosition().getVal(0),
+                    pImpl->kinDynComputations->getCenterOfMassPosition().getVal(1),
+                    pImpl->kinDynComputations->getCenterOfMassPosition().getVal(2)};
 
-    CoM_velocity = {kindyncomputations->getCenterOfMassVelocity().getVal(0),
-                    kindyncomputations->getCenterOfMassVelocity().getVal(1),
-                    kindyncomputations->getCenterOfMassVelocity().getVal(2)};
+    CoM_velocity = {pImpl->kinDynComputations->getCenterOfMassVelocity().getVal(0),
+                    pImpl->kinDynComputations->getCenterOfMassVelocity().getVal(1),
+                    pImpl->kinDynComputations->getCenterOfMassVelocity().getVal(2)};
 
     // CoM acceleration
     std::array<double, 3> CoM_biasacceleration;
-    CoM_biasacceleration = {kindyncomputations->getCenterOfMassBiasAcc().getVal(0),
-                            kindyncomputations->getCenterOfMassBiasAcc().getVal(1),
-                            kindyncomputations->getCenterOfMassBiasAcc().getVal(2)};
+    CoM_biasacceleration = {pImpl->kinDynComputations->getCenterOfMassBiasAcc().getVal(0),
+                            pImpl->kinDynComputations->getCenterOfMassBiasAcc().getVal(1),
+                            pImpl->kinDynComputations->getCenterOfMassBiasAcc().getVal(2)};
 
     // Compute proper acceleration
     if (pImpl->useFBAccelerationFromWearableData) {
-
-        // Update kinDyn computations based on IK solution
-        iDynTree::VectorDynSize solvedJointPositions(pImpl->solution.jointPositions.size());
-
-        for (size_t j = 0; j < pImpl->solution.jointPositions.size(); j++) {
-            solvedJointPositions.setVal(j, pImpl->solution.jointPositions.at(j));
-        }
-
-        iDynTree::VectorDynSize solvedJointVelocities(pImpl->solution.jointVelocities.size());
-
-        for (size_t j = 0; j < pImpl->solution.jointVelocities.size(); j++) {
-            solvedJointVelocities.setVal(j, pImpl->solution.jointVelocities.at(j));
-        }
-
-        pImpl->kinDynComputations->setRobotState(pImpl->baseTransformSolution,
-                                                 solvedJointPositions,
-                                                 pImpl->baseVelocitySolution,
-                                                 solvedJointVelocities,
-                                                 pImpl->worldGravity);
 
         // Iterate over the stored model sensors
         int accelerometerCount = 0;
@@ -1408,7 +1419,7 @@ void HumanStateProvider::run()
                 continue;
             }
 
-            iDynTree::Transform base_H_sensor = kindyncomputations->getRelativeTransform(pImpl->humanModel.getFrameIndex(pImpl->floatingBaseFrame.model),
+            iDynTree::Transform base_H_sensor = pImpl->kinDynComputations->getRelativeTransform(pImpl->humanModel.getFrameIndex(pImpl->floatingBaseFrame.model),
                                                                                          pImpl->humanModel.getFrameIndex(pImpl->humanSensorData.accelerometerSensorNames.at(accelerometerCount)));
 
             iDynTree::Transform world_H_accelerometer = pImpl->baseTransformSolution *
@@ -1468,16 +1479,11 @@ void HumanStateProvider::run()
         }
 
         // Compute CoM proper acceleration
-        iDynTree::SpatialAcc comSpatialAccExpressedInBase; // abuse of notation
         iDynTree::SpatialAcc comSpatialAccExpressedInWorld;
 
         if (pImpl->humanSensorData.accelerometerSensorMeasurementsOption == "proper") {
 
             // Set the linear part of com spatial acceleartion
-            comSpatialAccExpressedInBase.setVal(0, pImpl->humanModel.getTotalMass() * (CoM_biasacceleration[0] - pImpl->worldGravity(0)));
-            comSpatialAccExpressedInBase.setVal(1, pImpl->humanModel.getTotalMass() * (CoM_biasacceleration[1] - pImpl->worldGravity(1)));
-            comSpatialAccExpressedInBase.setVal(2, pImpl->humanModel.getTotalMass() * (CoM_biasacceleration[2] - pImpl->worldGravity(2)));
-
             comSpatialAccExpressedInWorld.setVal(0, pImpl->humanModel.getTotalMass() * (CoM_biasacceleration[0] - pImpl->worldGravity(0)));
             comSpatialAccExpressedInWorld.setVal(1, pImpl->humanModel.getTotalMass() * (CoM_biasacceleration[1] - pImpl->worldGravity(1)));
             comSpatialAccExpressedInWorld.setVal(2, pImpl->humanModel.getTotalMass() * (CoM_biasacceleration[2] - pImpl->worldGravity(2)));
@@ -1485,26 +1491,18 @@ void HumanStateProvider::run()
         else if (pImpl->humanSensorData.accelerometerSensorMeasurementsOption == "gravity") {
 
             // Set the linear part of com spatial acceleartion
-            comSpatialAccExpressedInBase.setVal(0,  - pImpl->worldGravity(0) * pImpl->humanModel.getTotalMass());
-            comSpatialAccExpressedInBase.setVal(1,  - pImpl->worldGravity(1) * pImpl->humanModel.getTotalMass());
-            comSpatialAccExpressedInBase.setVal(2,  - pImpl->worldGravity(2) * pImpl->humanModel.getTotalMass());
-
             comSpatialAccExpressedInWorld.setVal(0,  - pImpl->worldGravity(0) * pImpl->humanModel.getTotalMass());
             comSpatialAccExpressedInWorld.setVal(1,  - pImpl->worldGravity(1) * pImpl->humanModel.getTotalMass());
             comSpatialAccExpressedInWorld.setVal(2,  - pImpl->worldGravity(2) * pImpl->humanModel.getTotalMass());
         }
 
         // Set the angular part of com spatial acceleration to zero
-        comSpatialAccExpressedInBase.setVal(3, 0.0);
-        comSpatialAccExpressedInBase.setVal(4, 0.0);
-        comSpatialAccExpressedInBase.setVal(5, 0.0);
-
         comSpatialAccExpressedInWorld.setVal(3, 0.0);
         comSpatialAccExpressedInWorld.setVal(4, 0.0);
         comSpatialAccExpressedInWorld.setVal(5, 0.0);
 
         // Compute com proper acceleration and multiply with the total model mass
-        iDynTree::SpatialAcc CoMProperAccelerationExpressedInBaseFrame = pImpl->baseTransformSolution.getRotation().inverse() * comSpatialAccExpressedInBase;
+        iDynTree::SpatialAcc CoMProperAccelerationExpressedInBaseFrame = pImpl->baseTransformSolution.getRotation().inverse() * comSpatialAccExpressedInWorld;
 
         // Expose proper com acceleration for IHumanState interface
         {
@@ -1585,10 +1583,10 @@ void HumanStateProvider::run()
     //                                          pImpl->linkErrorAngularVelocities);
 
     // Check for rpc command status and update offsets
-    if (pImpl->commandPro.cmdStatus) {
-        if (pImpl->commandPro.positionOffsetFlag.at(0) || pImpl->commandPro.positionOffsetFlag.at(1) || pImpl->commandPro.positionOffsetFlag.at(2)) {
+    if (pImpl->commandPro->cmdStatus) {
+        if (pImpl->commandPro->positionOffsetFlag.at(0) || pImpl->commandPro->positionOffsetFlag.at(1) || pImpl->commandPro->positionOffsetFlag.at(2)) {
             for (size_t idx=0; idx<3; idx++) {
-                if (pImpl->commandPro.positionOffsetFlag.at(idx) & !pImpl->basePositionOffsetFlag.at(idx)) {
+                if (pImpl->commandPro->positionOffsetFlag.at(idx) & !pImpl->basePositionOffsetFlag.at(idx)) {
                     pImpl->basePositionOffset.setVal(idx, pImpl->baseTransformSolution.getPosition().getVal(idx));
                     pImpl->basePositionOffsetFlag.at(idx) = true;
                 }
@@ -1599,9 +1597,9 @@ void HumanStateProvider::run()
             pImpl->basePositionOffsetFlag.fill(false);
         }
 
-        if (pImpl->commandPro.orientationOffsetFlag.at(0) || pImpl->commandPro.orientationOffsetFlag.at(1) || pImpl->commandPro.orientationOffsetFlag.at(2)) {
+        if (pImpl->commandPro->orientationOffsetFlag.at(0) || pImpl->commandPro->orientationOffsetFlag.at(1) || pImpl->commandPro->orientationOffsetFlag.at(2)) {
             for (size_t idx=0; idx<3; idx++) {
-                if (pImpl->commandPro.orientationOffsetFlag.at(idx) & !pImpl->baseOrientationOffsetFlag.at(idx)) {
+                if (pImpl->commandPro->orientationOffsetFlag.at(idx) & !pImpl->baseOrientationOffsetFlag.at(idx)) {
                     pImpl->baseOrientationOffsetRPY.setVal(idx, pImpl->baseTransformSolution.getRotation().asRPY().getVal(idx));
                     pImpl->baseOrientationOffsetFlag.at(idx) = true;
                 }
@@ -1613,7 +1611,7 @@ void HumanStateProvider::run()
         }
 
     }
-    pImpl->commandPro.cmdStatus = false;
+    pImpl->commandPro->cmdStatus = false;
 }
 
 bool HumanStateProvider::impl::getLinkQuantitiesFromInputData(
