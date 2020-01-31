@@ -29,6 +29,10 @@ target_link_libraries(HumanStatePublisher PUBLIC
     iDynTree::idyntree-model
     iDynTree::idyntree-inverse-kinematics
     iDynTree::idyntree-high-level)
+    
+if(MSVC)
+  target_compile_options(HumanStatePublisher PRIVATE /bigobj)
+endif()
 
 yarp_install(
     TARGETS HumanStatePublisher
