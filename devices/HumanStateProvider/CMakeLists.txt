@@ -40,6 +40,10 @@ target_link_libraries(HumanStateProvider PUBLIC
     osqp::osqp
     )
 
+if(MSVC)
+  target_compile_options(HumanStateProvider PRIVATE /bigobj)
+endif()
+
 yarp_install(
     TARGETS HumanStateProvider
     COMPONENT runtime
