@@ -32,6 +32,10 @@ target_link_libraries(HumanDynamicsEstimator PUBLIC
     iDynTree::idyntree-model
     iDynTree::idyntree-estimation)
 
+if(MSVC)
+  target_compile_options(HumanDynamicsEstimator PRIVATE /bigobj)
+endif()
+
 yarp_install(
     TARGETS HumanDynamicsEstimator
     COMPONENT runtime
