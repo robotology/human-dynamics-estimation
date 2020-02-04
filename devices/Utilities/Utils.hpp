@@ -149,5 +149,21 @@ private:
     double saturate(double val, double lowerLimit, double upperLimit);
 };
 
+// Yarp
+#include <yarp/sig/Vector.h>
+
+class DataBuffersConversionHelper {
+
+public:
+
+    DataBuffersConversionHelper();
+    ~DataBuffersConversionHelper();
+
+    void setBufferVecSize(yarp::sig::Vector&, size_t&);
+    void setBuffer(yarp::sig::Vector&, std::vector<double>&);
+    void setBuffer(yarp::os::Bottle&, std::vector<std::string>&);
+
+};
+
 
 #endif
