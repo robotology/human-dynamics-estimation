@@ -11,6 +11,8 @@
 #include "IHumanWrench.h"
 #include "IHumanDynamics.h"
 
+#include "Utils.hpp"
+
 #include <yarp/os/LogStream.h>
 #include <yarp/os/BufferedPort.h>
 #include <yarp/sig/Vector.h>
@@ -29,6 +31,8 @@ public:
     std::string portPrefix;
     bool firstData = true;
 
+    DataBuffersConversionHelper dataBuffersConversionHelper;
+
     hde::interfaces::IHumanState* iHumanState = nullptr;
     hde::interfaces::IHumanWrench* iHumanWrenchMeasurements = nullptr;
     hde::interfaces::IHumanWrench* iHumanWrenchEstimates = nullptr; //This interface points to HumanDynamicsEstimator, which gives offset removed wrench measurements and the estimates
@@ -38,9 +42,52 @@ public:
     bool isWrenchProviderDevice = false;
     bool isDynamicsEstimatorDevice = false;
 
+    // Interface data buffers
+
+    // Base Quantities
+    std::string baseName;
+    std::array<double, 3> basePosition;
+    std::array<double, 4> baseOrientation;
+    std::array<double, 6> baseVelocity;
+
+    // Joint Quantities
+    size_t stateNumberOfJoints;
+    std::vector<std::string> stateJointNames;
+    std::vector<double> jointPositions;
+    std::vector<double> jointVelocities;
+
+    // CoM Quantities
+    std::array<double, 3> comPosition;
+    std::array<double, 3> comVelocity;
+    std::array<double, 6> comProperAccInBaseFrame;
+    std::array<double, 6> comProperAccInWorldFrame;
+
+    // Wrench Measurements
+    size_t numberOfWrenchMeasurementSources;
+    std::vector<std::string> wrenchMeasurementsSourceNames;
+    std::vector<double> wrenchMeasurementsValues;
+
+    // Wrench Estimates
+    size_t numberOfWrenchEstimatesSources;
+    std::vector<std::string> wrenchEstimatesSourceNames;
+    std::vector<double> wrenchEstimatesValues;
+
+    // Joint Torques
+    size_t dynamicsNumberOfJoints;
+    std::vector<std::string> dynamicsJointNames;
+    std::vector<double> jointTorques;
+
     //TODO: Decide the names and the number of ports needed for IHumanState interface data
     // Yarp ports for streaming data from IHumanState of HumanStateProvider
     yarp::os::BufferedPort<yarp::sig::Vector> basePoseDataPort;
+    yarp::os::BufferedPort<yarp::sig::Vector> baseVelocityDataPort;
+    yarp::os::BufferedPort<yarp::os::Bottle> stateJointNamesDataPort;
+    yarp::os::BufferedPort<yarp::sig::Vector> jointPositionsDataPort;
+    yarp::os::BufferedPort<yarp::sig::Vector> jointVelocitiesDataPort;
+    yarp::os::BufferedPort<yarp::sig::Vector> comPositionDataPort;
+    yarp::os::BufferedPort<yarp::sig::Vector> comVelocityDataPort;
+    yarp::os::BufferedPort<yarp::sig::Vector> comProperAccelerationInBaseFrameDataPort;
+    yarp::os::BufferedPort<yarp::sig::Vector> comProperAccelerationInWorldFrameDataPort;
 };
 
 HumanDataCollector::HumanDataCollector()
@@ -101,11 +148,68 @@ void HumanDataCollector::run()
         if (pImpl->isStateProviderDevice) {
 
             // Open base pose data port
-            const std::string basePosePortName = "/" + pImpl->portPrefix + "/" + DeviceName + "/basePose:0";
+            const std::string basePosePortName = "/" + pImpl->portPrefix + "/" + DeviceName + "/basePose:o";
             if (!pImpl->basePoseDataPort.open(basePosePortName)) {
                 yError() << LogPrefix << "Failed to open port " << basePosePortName;
                 askToStop();
             }
+
+            // Open base velocity data port
+            const std::string baseVelocityPortName = "/" + pImpl->portPrefix + "/" + DeviceName + "/baseVelocity:o";
+            if (!pImpl->baseVelocityDataPort.open(baseVelocityPortName)) {
+                yError() << LogPrefix << "Failed to open port " << baseVelocityPortName;
+                askToStop();
+            }
+
+            // Open state jonit names data port
+            const std::string stateJointNamesPortName = "/" + pImpl->portPrefix + "/" + DeviceName + "/stateJointNames:o";
+            if (!pImpl->stateJointNamesDataPort.open(stateJointNamesPortName)) {
+                yError() << LogPrefix << "Failed to open port " << stateJointNamesPortName;
+                askToStop();
+            }
+
+            // Open joint positions data port
+            const std::string jointPositionsPortName = "/" + pImpl->portPrefix + "/" + DeviceName + "/jointPositions:o";
+            if (!pImpl->jointPositionsDataPort.open(jointPositionsPortName)) {
+                yError() << LogPrefix << "Failed to open port " << jointPositionsPortName;
+                askToStop();
+            }
+
+            // Open joint velocities data port
+            const std::string jointVelocitiesPortName = "/" + pImpl->portPrefix + "/" + DeviceName + "/jointVelocities:o";
+            if (!pImpl->jointVelocitiesDataPort.open(jointVelocitiesPortName)) {
+                yError() << LogPrefix << "Failed to open port " << jointVelocitiesPortName;
+                askToStop();
+            }
+
+            // Open CoM position data port
+            const std::string comPositionPortName = "/" + pImpl->portPrefix + "/" + DeviceName + "/comPosition:o";
+            if (!pImpl->comPositionDataPort.open(comPositionPortName)) {
+                yError() << LogPrefix << "Failed to open port " << comPositionPortName;
+                askToStop();
+            }
+
+            // Open CoM velocity data port
+            const std::string comVelocityPortName = "/" + pImpl->portPrefix + "/" + DeviceName + "/comVelocity:o";
+            if (!pImpl->comVelocityDataPort.open(comVelocityPortName)) {
+                yError() << LogPrefix << "Failed to open port " << comVelocityPortName;
+                askToStop();
+            }
+
+            // Open CoM acceleration in base frame data port
+            const std::string comProperAccelerationInBaseFramePortName = "/" + pImpl->portPrefix + "/" + DeviceName + "/comProperAccelerationInBaseFrame:o";
+            if (!pImpl->comProperAccelerationInBaseFrameDataPort.open(comProperAccelerationInBaseFramePortName)) {
+                yError() << LogPrefix << "Failed to open port " << comProperAccelerationInBaseFramePortName;
+                askToStop();
+            }
+
+            // Open CoM acceleration in world frame data port
+            const std::string comProperAccelerationInWorldFramePortName = "/" + pImpl->portPrefix + "/" + DeviceName + "/comProperAccelerationInWorldFrame:o";
+            if (!pImpl->comProperAccelerationInWorldFrameDataPort.open(comProperAccelerationInWorldFramePortName)) {
+                yError() << LogPrefix << "Failed to open port " << comProperAccelerationInWorldFramePortName;
+                askToStop();
+            }
+
 
         }
 
@@ -120,20 +224,23 @@ void HumanDataCollector::run()
     // Get data from IHumanState interface of HumanStateProvider
     if (pImpl->isStateProviderDevice) {
 
-        std::array<double, 3> CoMPositionInterface = pImpl->iHumanState->getCoMPosition();
-        std::array<double, 3> CoMVelocityInterface = pImpl->iHumanState->getCoMVelocity();
-
         // Base Quantities
-        std::string baseName = pImpl->iHumanState->getBaseName();
-        std::array<double, 3> basePositionInterface = pImpl->iHumanState->getBasePosition();
-        std::array<double, 4> baseOrientationInterface = pImpl->iHumanState->getBaseOrientation();
-        std::array<double, 6> baseVelocity = pImpl->iHumanState->getBaseVelocity();
+        pImpl->baseName = pImpl->iHumanState->getBaseName();
+        pImpl->basePosition = pImpl->iHumanState->getBasePosition();
+        pImpl->baseOrientation = pImpl->iHumanState->getBaseOrientation();
+        pImpl->baseVelocity = pImpl->iHumanState->getBaseVelocity();
 
         // Joint Quantities
-        size_t stateJoints = pImpl->iHumanState->getNumberOfJoints();
-        std::vector<std::string> stateJointNames = pImpl->iHumanState->getJointNames();
-        std::vector<double> jointPositionsInterface = pImpl->iHumanState->getJointPositions();
-        std::vector<double> jointVelocitiesInterface = pImpl->iHumanState->getJointVelocities();
+        pImpl->stateNumberOfJoints = pImpl->iHumanState->getNumberOfJoints();
+        pImpl->stateJointNames = pImpl->iHumanState->getJointNames();
+        pImpl->jointPositions = pImpl->iHumanState->getJointPositions();
+        pImpl->jointVelocities = pImpl->iHumanState->getJointVelocities();
+
+        // CoM Quantities
+        pImpl->comPosition = pImpl->iHumanState->getCoMPosition();
+        pImpl->comVelocity = pImpl->iHumanState->getCoMVelocity();
+        pImpl->comProperAccInBaseFrame = pImpl->iHumanState->getCoMProperAccelerationExpressedInBaseFrame();
+        pImpl->comProperAccInWorldFrame = pImpl->iHumanState->getCoMProperAccelerationExpressedInWorldFrame();
 
     }
 
@@ -150,14 +257,14 @@ void HumanDataCollector::run()
     // NOTE: The wrench values coming from HumanDynamicsEstimators are (offsetRemovedWrenchMeasurements & WrenchEstimates) of each link
     if (pImpl->isDynamicsEstimatorDevice) {
 
-        size_t numberOfWrenchEstimatesSources = pImpl->iHumanWrenchEstimates->getNumberOfWrenchSources();
-        std::vector<std::string> wrenchEstimatesSourceNames = pImpl->iHumanWrenchEstimates->getWrenchSourceNames();
-        std::vector<double> wrenchEstimatesValues = pImpl->iHumanWrenchEstimates->getWrenches();
+        pImpl->numberOfWrenchEstimatesSources = pImpl->iHumanWrenchEstimates->getNumberOfWrenchSources();
+        pImpl->wrenchEstimatesSourceNames = pImpl->iHumanWrenchEstimates->getWrenchSourceNames();
+        pImpl->wrenchEstimatesValues = pImpl->iHumanWrenchEstimates->getWrenches();
 
         // Get data from IHumanDynamics interface of HumanDynamicsEstimator
-        size_t dynamicsJoints = pImpl->iHumanDynamics->getNumberOfJoints();
-        std::vector<std::string> dynamicsJointNames = pImpl->iHumanDynamics->getJointNames();
-        std::vector<double> jointTorques = pImpl->iHumanDynamics->getJointTorques();
+        pImpl->dynamicsNumberOfJoints = pImpl->iHumanDynamics->getNumberOfJoints();
+        pImpl->dynamicsJointNames = pImpl->iHumanDynamics->getJointNames();
+        pImpl->jointTorques = pImpl->iHumanDynamics->getJointTorques();
 
     }
 
@@ -169,6 +276,73 @@ void HumanDataCollector::run()
     // ============================
     // Put human data to yarp ports
     // ============================
+
+    if (pImpl->isStateProviderDevice) {
+
+        // Prepare base pose data
+        yarp::sig::Vector& basePoseYarpVector = pImpl->basePoseDataPort.prepare();
+        std::array<double, 7> basePoseArray = {pImpl->basePosition[0],
+                                               pImpl->basePosition[1],
+                                               pImpl->basePosition[2],
+                                               pImpl->baseOrientation[0],
+                                               pImpl->baseOrientation[1],
+                                               pImpl->baseOrientation[2],
+                                               pImpl->baseOrientation[3]};
+
+
+        std::vector<double> basePoseInputVector(basePoseArray.begin(), basePoseArray.end());
+
+        pImpl->dataBuffersConversionHelper.setBuffer(basePoseYarpVector, basePoseInputVector);
+
+        // Prepare base velocity data
+        std::vector<double> baseVelocityInputVector(pImpl->baseVelocity.begin(), pImpl->baseVelocity.end());
+        yarp::sig::Vector& baseVelocityYarpVector = pImpl->baseVelocityDataPort.prepare();
+        pImpl->dataBuffersConversionHelper.setBuffer(baseVelocityYarpVector, baseVelocityInputVector);
+
+        // Prepare stateJointNames
+        yarp::os::Bottle& stateJointNamesYarpBottle = pImpl->stateJointNamesDataPort.prepare();
+        pImpl->dataBuffersConversionHelper.setBuffer(stateJointNamesYarpBottle, pImpl->stateJointNames);
+
+        // Prepare joint positions
+        yarp::sig::Vector& jointPositionsYarpVector = pImpl->jointPositionsDataPort.prepare();
+        pImpl->dataBuffersConversionHelper.setBuffer(jointPositionsYarpVector, pImpl->jointPositions);
+
+        // Prepare joint velocities
+        yarp::sig::Vector& jointVelocitiesYarpVector = pImpl->jointVelocitiesDataPort.prepare();
+        pImpl->dataBuffersConversionHelper.setBuffer(jointVelocitiesYarpVector, pImpl->jointVelocities);
+
+        // Preprare com position
+        std::vector<double> comPositionInputVector(pImpl->comPosition.begin(), pImpl->comPosition.end());
+        yarp::sig::Vector& comPositionYarpVector = pImpl->comPositionDataPort.prepare();
+        pImpl->dataBuffersConversionHelper.setBuffer(comPositionYarpVector, comPositionInputVector);
+
+        // Preprate com velocity
+        std::vector<double> comVelocityInputVector(pImpl->comVelocity.begin(), pImpl->comVelocity.end());
+        yarp::sig::Vector& comVelocityYarpVector = pImpl->comVelocityDataPort.prepare();
+        pImpl->dataBuffersConversionHelper.setBuffer(comVelocityYarpVector, comVelocityInputVector);
+
+        // Prepare com proper acceleration in base frame
+        std::vector<double> comProperAccelerationInBaseFrameInputVector(pImpl->comProperAccInBaseFrame.begin(), pImpl->comProperAccInBaseFrame.end());
+        yarp::sig::Vector& comProperAccelerationInBaseFrameYarpVector = pImpl->comProperAccelerationInBaseFrameDataPort.prepare();
+        pImpl->dataBuffersConversionHelper.setBuffer(comProperAccelerationInBaseFrameYarpVector, comProperAccelerationInBaseFrameInputVector);
+
+
+        // Prepare com proper acceleration in world frame
+        std::vector<double> comProperAccelerationInWorldFrameInputVector(pImpl->comProperAccInWorldFrame.begin(), pImpl->comProperAccInWorldFrame.end());
+        yarp::sig::Vector& comProperAccelerationInWorldFrameYarpVector = pImpl->comProperAccelerationInWorldFrameDataPort.prepare();
+        pImpl->dataBuffersConversionHelper.setBuffer(comProperAccelerationInWorldFrameYarpVector, comProperAccelerationInWorldFrameInputVector);
+
+        // Send data through yarp ports
+        pImpl->basePoseDataPort.write(true);
+        pImpl->baseVelocityDataPort.write(true);
+        pImpl->stateJointNamesDataPort.write(true);
+        pImpl->jointPositionsDataPort.write(true);
+        pImpl->jointVelocitiesDataPort.write(true);
+        pImpl->comPositionDataPort.write(true);
+        pImpl->comVelocityDataPort.write(true);
+        pImpl->comProperAccelerationInBaseFrameDataPort.write(true);
+        pImpl->comProperAccelerationInWorldFrameDataPort.write(true);
+    }
 
 
 
