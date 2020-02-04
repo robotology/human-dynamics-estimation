@@ -420,6 +420,17 @@
         <action phase="shutdown" level="4" type="detach"/>
     </device>
 
+    <device type="human_data_collector" name="HumanDataCollector">
+        <param name="period">0.1</param>
+        <param name="portPrefix">Human</param>
+        <action phase="startup" level="5" type="attach">
+            <paramlist name="networks">
+                <elem name="HumanStateProvideLabel">HumanStateProvider</elem>
+            </paramlist>
+        </action>
+        <action phase="shutdown" level="5" type="detach"/>
+    </device>
+
     <!-- <device type="human_control_board" name="HumanControlBoard">
         <param name="period">0.100</param>
         <param name="urdf">humanSubject01_66dof.urdf</param>

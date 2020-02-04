@@ -18,6 +18,8 @@ target_include_directories(HumanDataCollector PUBLIC
 
 target_link_libraries(HumanDataCollector PUBLIC
     IHumanState
+    IHumanWrench
+    IHumanDynamics
     YARP::YARP_OS
     YARP::YARP_dev
     YARP::YARP_init)
