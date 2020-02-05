@@ -14,6 +14,7 @@
 #include <yarp/dev/Wrapper.h>
 #include <yarp/os/PeriodicThread.h>
 
+#include "IHumanWrench.h"
 #include "IHumanDynamics.h"
 
 #include <memory>
@@ -30,6 +31,7 @@ class hde::devices::HumanDynamicsEstimator final
     , public yarp::dev::IMultipleWrapper
     , public yarp::os::PeriodicThread
     , public yarp::dev::IAnalogSensor
+    , public hde::interfaces::IHumanWrench
     , public hde::interfaces::IHumanDynamics
 {
 private:
@@ -64,6 +66,11 @@ public:
     int calibrateSensor(const yarp::sig::Vector& value) override;
     int calibrateChannel(int ch) override;
     int calibrateChannel(int ch, double value) override;
+
+    // IHumanWrench
+    std::vector<std::string> getWrenchSourceNames() const override;
+    size_t getNumberOfWrenchSources() const override;
+    std::vector<double> getWrenches() const override;
 
     // IHumanDynamics
     std::vector<std::string> getJointNames() const override;

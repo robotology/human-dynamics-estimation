@@ -2604,3 +2604,39 @@ int HumanDynamicsEstimator::calibrateChannel(int /*ch*/, double /*value*/)
 {
     return IAnalogSensor::AS_ERROR;
 }
+
+// ============
+// IHumanWrench
+// ============
+
+std::vector<std::string> HumanDynamicsEstimator::getWrenchSourceNames() const
+{
+    std::lock_guard<std::mutex> lock(pImpl->mutex);
+    std::vector<std::string> sourcesNames;
+    for (size_t idx = 0; idx < pImpl->wrenchSensorsLinkNames.size(); idx++) {
+        sourcesNames.emplace_back(pImpl->wrenchSensorsLinkNames.at(idx) + "OffSetRemovedMeasurementWrench");
+        sourcesNames.emplace_back(pImpl->wrenchSensorsLinkNames.at(idx) + "EstimatedWrench");
+    }
+
+    return sourcesNames;
+}
+
+size_t HumanDynamicsEstimator::getNumberOfWrenchSources() const
+{
+    std::lock_guard<std::mutex> lock(pImpl->mutex);
+    return 2 * pImpl->wrenchSensorsLinkNames.size();
+}
+
+std::vector<double> HumanDynamicsEstimator::getWrenches() const
+{
+    std::lock_guard<std::mutex> lock(pImpl->mutex);
+    std::vector<double> wrenchValues;
+    size_t vecSize = pImpl->allWrenchAnalogSensorData.measurements.size();
+    wrenchValues.resize(vecSize);
+    for (size_t idx = 0; idx < vecSize; idx++) {
+        wrenchValues.at(idx) = pImpl->allWrenchAnalogSensorData.measurements.at(idx);
+    }
+
+    return wrenchValues;
+}
+
