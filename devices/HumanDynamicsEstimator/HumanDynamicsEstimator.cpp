@@ -2521,6 +2521,10 @@ bool HumanDynamicsEstimator::detachAll()
     return detach();
 }
 
+// =============
+// IHumanDynamics
+// =============
+
 std::vector<std::string> HumanDynamicsEstimator::getJointNames() const
 {
     std::lock_guard<std::mutex> lock(pImpl->mutex);
@@ -2578,7 +2582,7 @@ int HumanDynamicsEstimator::getState(int ch)
 int HumanDynamicsEstimator::getChannels()
 {
     std::lock_guard<std::mutex> lock(pImpl->mutex);
-    return pImpl->linkNetExternalWrenchEstimatesAnalogSensorData.numberOfChannels;
+    return pImpl->allWrenchAnalogSensorData.numberOfChannels;
 }
 
 int HumanDynamicsEstimator::calibrateSensor()
