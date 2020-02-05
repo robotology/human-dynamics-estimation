@@ -64,21 +64,20 @@ public:
 
     // Wrench Measurements
     size_t numberOfWrenchMeasurementSources;
-    std::vector<std::string> wrenchMeasurementsSourceNames;
-    std::vector<double> wrenchMeasurementsValues;
+    std::vector<std::string> wrenchMeasurementSourceNames;
+    std::vector<double> wrenchMeasurementValues;
 
     // Wrench Estimates
-    size_t numberOfWrenchEstimatesSources;
-    std::vector<std::string> wrenchEstimatesSourceNames;
-    std::vector<double> wrenchEstimatesValues;
+    size_t numberOfWrenchEstimateSources;
+    std::vector<std::string> wrenchEstimateSourceNames;
+    std::vector<double> wrenchEstimateValues;
 
     // Joint Torques
     size_t dynamicsNumberOfJoints;
     std::vector<std::string> dynamicsJointNames;
     std::vector<double> jointTorques;
 
-    //TODO: Decide the names and the number of ports needed for IHumanState interface data
-    // Yarp ports for streaming data from IHumanState of HumanStateProvider
+    // Yarp ports for streaming data from IHumanState interface of HumanStateProvider
     yarp::os::BufferedPort<yarp::sig::Vector> basePoseDataPort;
     yarp::os::BufferedPort<yarp::sig::Vector> baseVelocityDataPort;
     yarp::os::BufferedPort<yarp::os::Bottle> stateJointNamesDataPort;
@@ -88,6 +87,17 @@ public:
     yarp::os::BufferedPort<yarp::sig::Vector> comVelocityDataPort;
     yarp::os::BufferedPort<yarp::sig::Vector> comProperAccelerationInBaseFrameDataPort;
     yarp::os::BufferedPort<yarp::sig::Vector> comProperAccelerationInWorldFrameDataPort;
+
+    // Yarp ports for streaming data from IHumanWrench interface of HumanWrenchProvider
+    yarp::os::BufferedPort<yarp::os::Bottle> wrenchMeasurementSourceNamesDataPort;
+    yarp::os::BufferedPort<yarp::sig::Vector> wrenchMeasurementValuesDataPort;
+
+    // Yarp ports for streaming data from IHumanWrench interfce and IHumanDynamics interface of HumanDynamicsEstimator
+    yarp::os::BufferedPort<yarp::os::Bottle> wrenchEstimateSourceNamesDataPort;
+    yarp::os::BufferedPort<yarp::sig::Vector> wrenchEstimateValuesDataPort;
+
+    yarp::os::BufferedPort<yarp::os::Bottle> dynamicsJointNamesDataPort;
+    yarp::os::BufferedPort<yarp::sig::Vector> jointTorquesDataPort;
 };
 
 HumanDataCollector::HumanDataCollector()
@@ -213,6 +223,56 @@ void HumanDataCollector::run()
 
         }
 
+        if (pImpl->isWrenchProviderDevice) {
+
+            // Open wrench measurements source names data port
+            const std::string wrenchMeasurementsSourceNamesPortName = "/" + pImpl->portPrefix + "/" + DeviceName + "/wrenchMeasurementSourceNames:o";
+            if (!pImpl->wrenchMeasurementSourceNamesDataPort.open(wrenchMeasurementsSourceNamesPortName)) {
+                yError() << LogPrefix << "Failed to open port " << wrenchMeasurementsSourceNamesPortName;
+                askToStop();
+            }
+
+            // Open wrench measurement values data port
+            const std::string wrenchMeausurementsDataPortName = "/" + pImpl->portPrefix + "/" + DeviceName + "/wrenchMeasurements:o";
+            if (!pImpl->wrenchMeasurementValuesDataPort.open(wrenchMeausurementsDataPortName)) {
+                yError() << LogPrefix << "Failed to open port " << wrenchMeausurementsDataPortName;
+                askToStop();
+            }
+
+        }
+
+        if (pImpl->isDynamicsEstimatorDevice) {
+
+            // Open wrench estimates source names data port
+            const std::string wrenchEstimatesSourceNamesPortName = "/" + pImpl->portPrefix + "/" + DeviceName + "/wrenchEstimateSourceNames:o";
+            if (!pImpl->wrenchEstimateSourceNamesDataPort.open(wrenchEstimatesSourceNamesPortName)) {
+                yError() << LogPrefix << "Failed to open port " << wrenchEstimatesSourceNamesPortName;
+                askToStop();
+            }
+
+            // Open wrench estimate values data port
+            const std::string wrenchEstimatesDataPortName = "/" + pImpl->portPrefix + "/" + DeviceName + "/wrenchEstimates:o";
+            if (!pImpl->wrenchEstimateValuesDataPort.open(wrenchEstimatesDataPortName)) {
+                yError() << LogPrefix << "Failed to open port " << wrenchEstimatesDataPortName;
+                askToStop();
+            }
+
+            // Open dynamics joint names data port
+            const std::string dynamicsJointNamesDataPortName = "/" + pImpl->portPrefix + "/" + DeviceName + "/dynamicsJointNames:o";
+            if (!pImpl->dynamicsJointNamesDataPort.open(dynamicsJointNamesDataPortName)) {
+                yError() << LogPrefix << "Failed to open port " << dynamicsJointNamesDataPortName;
+                askToStop();
+            }
+
+            // Open joint torques data port
+            const std::string jointTorquesDataPortName = "/" + pImpl->portPrefix + "/" + DeviceName + "/jointTorques:o";
+            if (!pImpl->jointTorquesDataPort.open(jointTorquesDataPortName)) {
+                yError() << LogPrefix << "Failed to open port " << jointTorquesDataPortName;
+                askToStop();
+            }
+
+        }
+
 
     }
 
@@ -247,19 +307,19 @@ void HumanDataCollector::run()
     // Get data from IHumanWrench interface of HumanWrenchProvider
     if (pImpl->isWrenchProviderDevice) {
 
-        size_t numberOfWrenchMeasurementSources = pImpl->iHumanWrenchMeasurements->getNumberOfWrenchSources();
-        std::vector<std::string> wrenchMeasurementsSourceNames = pImpl->iHumanWrenchMeasurements->getWrenchSourceNames();
-        std::vector<double> wrenchMeasurementsValues = pImpl->iHumanWrenchMeasurements->getWrenches();
+        pImpl->numberOfWrenchMeasurementSources = pImpl->iHumanWrenchMeasurements->getNumberOfWrenchSources();
+        pImpl->wrenchMeasurementSourceNames = pImpl->iHumanWrenchMeasurements->getWrenchSourceNames();
+        pImpl->wrenchMeasurementValues = pImpl->iHumanWrenchMeasurements->getWrenches();
 
-    }
+    }    
 
-    // Get data from IHumanWrench interface of HumanDynamicsEstimator
-    // NOTE: The wrench values coming from HumanDynamicsEstimators are (offsetRemovedWrenchMeasurements & WrenchEstimates) of each link
     if (pImpl->isDynamicsEstimatorDevice) {
 
-        pImpl->numberOfWrenchEstimatesSources = pImpl->iHumanWrenchEstimates->getNumberOfWrenchSources();
-        pImpl->wrenchEstimatesSourceNames = pImpl->iHumanWrenchEstimates->getWrenchSourceNames();
-        pImpl->wrenchEstimatesValues = pImpl->iHumanWrenchEstimates->getWrenches();
+        // Get data from IHumanWrench interface of HumanDynamicsEstimator
+        // NOTE: The wrench values coming from HumanDynamicsEstimators are (offsetRemovedWrenchMeasurements & WrenchEstimates) of each link
+        pImpl->numberOfWrenchEstimateSources = pImpl->iHumanWrenchEstimates->getNumberOfWrenchSources();
+        pImpl->wrenchEstimateSourceNames = pImpl->iHumanWrenchEstimates->getWrenchSourceNames();
+        pImpl->wrenchEstimateValues = pImpl->iHumanWrenchEstimates->getWrenches();
 
         // Get data from IHumanDynamics interface of HumanDynamicsEstimator
         pImpl->dynamicsNumberOfJoints = pImpl->iHumanDynamics->getNumberOfJoints();
@@ -342,6 +402,47 @@ void HumanDataCollector::run()
         pImpl->comVelocityDataPort.write(true);
         pImpl->comProperAccelerationInBaseFrameDataPort.write(true);
         pImpl->comProperAccelerationInWorldFrameDataPort.write(true);
+    }
+
+    if (pImpl->isWrenchProviderDevice) {
+
+        // Prepare wrench measurements source names data
+        yarp::os::Bottle& wrenchMeasurementSourceNamesYarpBottle = pImpl->wrenchMeasurementSourceNamesDataPort.prepare();
+        pImpl->dataBuffersConversionHelper.setBuffer(wrenchMeasurementSourceNamesYarpBottle, pImpl->wrenchMeasurementSourceNames);
+
+        // Prepare wrench measurement values data
+        yarp::sig::Vector& wrenchMeasurementValuesYarpVector = pImpl->wrenchMeasurementValuesDataPort.prepare();
+        pImpl->dataBuffersConversionHelper.setBuffer(wrenchMeasurementValuesYarpVector, pImpl->wrenchMeasurementValues);
+
+        // Send data through yarp ports
+        pImpl->wrenchMeasurementSourceNamesDataPort.write(true);
+        pImpl->wrenchMeasurementValuesDataPort.write(true);
+    }
+
+    if (pImpl->isDynamicsEstimatorDevice) {
+
+        // Prepare wrench estimates source names data
+        yarp::os::Bottle& wrenchEstimateSourceNamesYarpBottle = pImpl->wrenchEstimateSourceNamesDataPort.prepare();
+        pImpl->dataBuffersConversionHelper.setBuffer(wrenchEstimateSourceNamesYarpBottle, pImpl->wrenchEstimateSourceNames);
+
+        // Prepare wrench estimate values data
+        yarp::sig::Vector& wrenchEstimateValuesYarpVector = pImpl->wrenchEstimateValuesDataPort.prepare();
+        pImpl->dataBuffersConversionHelper.setBuffer(wrenchEstimateValuesYarpVector, pImpl->wrenchEstimateValues);
+
+        // Prepare dynamics joint names data
+        yarp::os::Bottle& dynamicsJointNamesYarpBottle = pImpl->dynamicsJointNamesDataPort.prepare();
+        pImpl->dataBuffersConversionHelper.setBuffer(dynamicsJointNamesYarpBottle, pImpl->dynamicsJointNames);
+
+        // Prepare joint torques data
+        yarp::sig::Vector& jointTorqesYarpVector = pImpl->jointTorquesDataPort.prepare();
+        pImpl->dataBuffersConversionHelper.setBuffer(jointTorqesYarpVector, pImpl->jointTorques);
+
+
+        // Send data through yarp ports
+        pImpl->wrenchEstimateSourceNamesDataPort.write(true);
+        pImpl->wrenchEstimateValuesDataPort.write(true);
+        pImpl->dynamicsJointNamesDataPort.write(true);
+        pImpl->jointTorquesDataPort.write(true);
     }
 
 
@@ -440,14 +541,87 @@ bool HumanDataCollector::detach()
         stop();
     }
 
-    //TODO: Close all the yarp ports
+    if (pImpl->isStateProviderDevice) {
 
-    pImpl->iHumanState = nullptr;
-    pImpl->iHumanWrenchMeasurements = nullptr;
-    pImpl->iHumanWrenchEstimates = nullptr;
-    pImpl->iHumanDynamics = nullptr;
+        if (!pImpl->basePoseDataPort.isClosed()) {
+            pImpl->basePoseDataPort.close();
+        }
 
-    return false;
+        if (!pImpl->baseVelocityDataPort.isClosed()) {
+            pImpl->baseVelocityDataPort.close();
+        }
+
+        if (!pImpl->stateJointNamesDataPort.isClosed()) {
+            pImpl->stateJointNamesDataPort.close();
+        }
+
+        if (!pImpl->jointPositionsDataPort.isClosed()) {
+            pImpl->jointPositionsDataPort.close();
+        }
+
+        if (!pImpl->jointVelocitiesDataPort.isClosed()) {
+            pImpl->jointVelocitiesDataPort.close();
+        }
+
+        if (!pImpl->comPositionDataPort.isClosed()) {
+            pImpl->comPositionDataPort.close();
+        }
+
+        if (!pImpl->comVelocityDataPort.isClosed()) {
+            pImpl->comVelocityDataPort.close();
+        }
+
+        if (!pImpl->comProperAccelerationInBaseFrameDataPort.isClosed()) {
+            pImpl->comProperAccelerationInBaseFrameDataPort.close();
+        }
+
+        if (!pImpl->comProperAccelerationInWorldFrameDataPort.isClosed()) {
+            pImpl->comProperAccelerationInWorldFrameDataPort.close();
+        }
+
+        pImpl->iHumanState = nullptr;
+        pImpl->isStateProviderDevice = false;
+
+    }
+
+    if (pImpl->isWrenchProviderDevice) {
+
+        if (!pImpl->wrenchMeasurementSourceNamesDataPort.isClosed()) {
+            pImpl->wrenchMeasurementSourceNamesDataPort.close();
+        }
+
+        if (!pImpl->wrenchMeasurementValuesDataPort.isClosed()) {
+            pImpl->wrenchMeasurementValuesDataPort.close();
+        }
+
+        pImpl->iHumanWrenchMeasurements = nullptr;
+        pImpl->isWrenchProviderDevice = false;
+    }
+
+    if (pImpl->isDynamicsEstimatorDevice) {
+
+        if (!pImpl->wrenchEstimateSourceNamesDataPort.isClosed()) {
+            pImpl->wrenchEstimateSourceNamesDataPort.close();
+        }
+
+        if (!pImpl->wrenchEstimateValuesDataPort.isClosed()) {
+            pImpl->wrenchEstimateValuesDataPort.close();
+        }
+
+        if (!pImpl->dynamicsJointNamesDataPort.isClosed()) {
+            pImpl->dynamicsJointNamesDataPort.close();
+        }
+
+        if (!pImpl->jointTorquesDataPort.isClosed()) {
+            pImpl->jointTorquesDataPort.close();
+        }
+
+        pImpl->iHumanWrenchEstimates = nullptr;
+        pImpl->iHumanDynamics = nullptr;
+        pImpl->isDynamicsEstimatorDevice = false;
+    }
+
+    return true;
 }
 
 bool HumanDataCollector::attachAll(const yarp::dev::PolyDriverList &driverList)

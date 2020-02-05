@@ -426,6 +426,8 @@
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
                 <elem name="HumanStateProvideLabel">HumanStateProvider</elem>
+                <elem name="HumanWrenchProvideLabel">HumanWrenchProvider</elem>
+                <elem name="HumanDynamicsEstimatorLabel">HumanDynamicsEstimator</elem>
             </paramlist>
         </action>
         <action phase="shutdown" level="5" type="detach"/>
