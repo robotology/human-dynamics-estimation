@@ -10,7 +10,6 @@
 #include "IHumanState.h"
 #include "IHumanWrench.h"
 #include "IHumanDynamics.h"
-
 #include "Utils.hpp"
 
 #include <yarp/os/LogStream.h>
@@ -23,6 +22,7 @@ constexpr double DefaultPeriod = 0.01;
 
 using namespace hde::devices;
 
+
 class HumanDataCollector::impl
 {
 public:
@@ -31,16 +31,16 @@ public:
     std::string portPrefix;
     bool firstData = true;
 
-    DataBuffersConversionHelper dataBuffersConversionHelper;
-
     hde::interfaces::IHumanState* iHumanState = nullptr;
     hde::interfaces::IHumanWrench* iHumanWrenchMeasurements = nullptr;
     hde::interfaces::IHumanWrench* iHumanWrenchEstimates = nullptr; //This interface points to HumanDynamicsEstimator, which gives offset removed wrench measurements and the estimates
     hde::interfaces::IHumanDynamics* iHumanDynamics = nullptr;
 
-    bool isStateProviderDevice = false;
-    bool isWrenchProviderDevice = false;
-    bool isDynamicsEstimatorDevice = false;
+    struct {
+        bool stateProvider = false;
+        bool wrenchProvider = false;
+        bool dynamicsEstimator = false;
+    } isAttached;
 
     // Interface data buffers
 
@@ -105,7 +105,7 @@ HumanDataCollector::HumanDataCollector()
     , pImpl{new impl()}
 {}
 
-HumanDataCollector::~HumanDataCollector() {}
+HumanDataCollector::~HumanDataCollector() = default;
 
 bool HumanDataCollector::open(yarp::os::Searchable &config) {
 
@@ -126,7 +126,7 @@ bool HumanDataCollector::open(yarp::os::Searchable &config) {
     // ===============================
 
     double period = config.check("period", yarp::os::Value(0.01)).asFloat64();
-    pImpl->portPrefix = config.check("portPrefix", yarp::os::Value("HDE")).asString();
+    pImpl->portPrefix = "/" + config.check("portPrefix", yarp::os::Value("HDE")).asString() + "/";
 
     //TODO: Define rpc to reset the data dump or restarting the visualization??
 
@@ -145,134 +145,146 @@ bool HumanDataCollector::close() {
     return true;
 }
 
-void HumanDataCollector::threadRelease() {}
-
 void HumanDataCollector::run()
 {
     if (pImpl->firstData) {
+        pImpl->firstData = false;
 
         // =====================================================================
         // Open yarp ports base on the attached devices for streaming human data
         // =====================================================================
 
-        if (pImpl->isStateProviderDevice) {
+        if (pImpl->isAttached.stateProvider) {
 
             // Open base pose data port
-            const std::string basePosePortName = "/" + pImpl->portPrefix + "/" + DeviceName + "/basePose:o";
+            const std::string basePosePortName = pImpl->portPrefix + DeviceName + "/basePose:o";
             if (!pImpl->basePoseDataPort.open(basePosePortName)) {
                 yError() << LogPrefix << "Failed to open port " << basePosePortName;
                 askToStop();
+                return;
             }
 
             // Open base velocity data port
-            const std::string baseVelocityPortName = "/" + pImpl->portPrefix + "/" + DeviceName + "/baseVelocity:o";
+            const std::string baseVelocityPortName = pImpl->portPrefix + DeviceName + "/baseVelocity:o";
             if (!pImpl->baseVelocityDataPort.open(baseVelocityPortName)) {
                 yError() << LogPrefix << "Failed to open port " << baseVelocityPortName;
                 askToStop();
+                return;
             }
 
             // Open state jonit names data port
-            const std::string stateJointNamesPortName = "/" + pImpl->portPrefix + "/" + DeviceName + "/stateJointNames:o";
+            const std::string stateJointNamesPortName = pImpl->portPrefix + DeviceName + "/stateJointNames:o";
             if (!pImpl->stateJointNamesDataPort.open(stateJointNamesPortName)) {
                 yError() << LogPrefix << "Failed to open port " << stateJointNamesPortName;
                 askToStop();
+                return;
             }
 
             // Open joint positions data port
-            const std::string jointPositionsPortName = "/" + pImpl->portPrefix + "/" + DeviceName + "/jointPositions:o";
+            const std::string jointPositionsPortName = pImpl->portPrefix + DeviceName + "/jointPositions:o";
             if (!pImpl->jointPositionsDataPort.open(jointPositionsPortName)) {
                 yError() << LogPrefix << "Failed to open port " << jointPositionsPortName;
                 askToStop();
+                return;
             }
 
             // Open joint velocities data port
-            const std::string jointVelocitiesPortName = "/" + pImpl->portPrefix + "/" + DeviceName + "/jointVelocities:o";
+            const std::string jointVelocitiesPortName = pImpl->portPrefix + DeviceName + "/jointVelocities:o";
             if (!pImpl->jointVelocitiesDataPort.open(jointVelocitiesPortName)) {
                 yError() << LogPrefix << "Failed to open port " << jointVelocitiesPortName;
                 askToStop();
+                return;
             }
 
             // Open CoM position data port
-            const std::string comPositionPortName = "/" + pImpl->portPrefix + "/" + DeviceName + "/comPosition:o";
+            const std::string comPositionPortName = pImpl->portPrefix + DeviceName + "/comPosition:o";
             if (!pImpl->comPositionDataPort.open(comPositionPortName)) {
                 yError() << LogPrefix << "Failed to open port " << comPositionPortName;
                 askToStop();
+                return;
             }
 
             // Open CoM velocity data port
-            const std::string comVelocityPortName = "/" + pImpl->portPrefix + "/" + DeviceName + "/comVelocity:o";
+            const std::string comVelocityPortName = pImpl->portPrefix + DeviceName + "/comVelocity:o";
             if (!pImpl->comVelocityDataPort.open(comVelocityPortName)) {
                 yError() << LogPrefix << "Failed to open port " << comVelocityPortName;
                 askToStop();
+                return;
             }
 
             // Open CoM acceleration in base frame data port
-            const std::string comProperAccelerationInBaseFramePortName = "/" + pImpl->portPrefix + "/" + DeviceName + "/comProperAccelerationInBaseFrame:o";
+            const std::string comProperAccelerationInBaseFramePortName = pImpl->portPrefix + DeviceName + "/comProperAccelerationInBaseFrame:o";
             if (!pImpl->comProperAccelerationInBaseFrameDataPort.open(comProperAccelerationInBaseFramePortName)) {
                 yError() << LogPrefix << "Failed to open port " << comProperAccelerationInBaseFramePortName;
                 askToStop();
+                return;
             }
 
             // Open CoM acceleration in world frame data port
-            const std::string comProperAccelerationInWorldFramePortName = "/" + pImpl->portPrefix + "/" + DeviceName + "/comProperAccelerationInWorldFrame:o";
+            const std::string comProperAccelerationInWorldFramePortName = pImpl->portPrefix + DeviceName + "/comProperAccelerationInWorldFrame:o";
             if (!pImpl->comProperAccelerationInWorldFrameDataPort.open(comProperAccelerationInWorldFramePortName)) {
                 yError() << LogPrefix << "Failed to open port " << comProperAccelerationInWorldFramePortName;
                 askToStop();
+                return;
             }
-
 
         }
 
-        if (pImpl->isWrenchProviderDevice) {
+        if (pImpl->isAttached.wrenchProvider) {
 
             // Open wrench measurements source names data port
-            const std::string wrenchMeasurementsSourceNamesPortName = "/" + pImpl->portPrefix + "/" + DeviceName + "/wrenchMeasurementSourceNames:o";
+            const std::string wrenchMeasurementsSourceNamesPortName = pImpl->portPrefix + DeviceName + "/wrenchMeasurementSourceNames:o";
             if (!pImpl->wrenchMeasurementSourceNamesDataPort.open(wrenchMeasurementsSourceNamesPortName)) {
                 yError() << LogPrefix << "Failed to open port " << wrenchMeasurementsSourceNamesPortName;
                 askToStop();
+                return;
             }
 
             // Open wrench measurement values data port
-            const std::string wrenchMeausurementsDataPortName = "/" + pImpl->portPrefix + "/" + DeviceName + "/wrenchMeasurements:o";
+            const std::string wrenchMeausurementsDataPortName = pImpl->portPrefix + DeviceName + "/wrenchMeasurements:o";
             if (!pImpl->wrenchMeasurementValuesDataPort.open(wrenchMeausurementsDataPortName)) {
                 yError() << LogPrefix << "Failed to open port " << wrenchMeausurementsDataPortName;
                 askToStop();
+                return;
             }
 
         }
 
-        if (pImpl->isDynamicsEstimatorDevice) {
+        if (pImpl->isAttached.dynamicsEstimator) {
 
             // Open wrench estimates source names data port
-            const std::string wrenchEstimatesSourceNamesPortName = "/" + pImpl->portPrefix + "/" + DeviceName + "/wrenchEstimateSourceNames:o";
+            const std::string wrenchEstimatesSourceNamesPortName = pImpl->portPrefix + DeviceName + "/wrenchEstimateSourceNames:o";
             if (!pImpl->wrenchEstimateSourceNamesDataPort.open(wrenchEstimatesSourceNamesPortName)) {
                 yError() << LogPrefix << "Failed to open port " << wrenchEstimatesSourceNamesPortName;
                 askToStop();
+                return;
             }
 
             // Open wrench estimate values data port
-            const std::string wrenchEstimatesDataPortName = "/" + pImpl->portPrefix + "/" + DeviceName + "/wrenchEstimates:o";
+            const std::string wrenchEstimatesDataPortName = pImpl->portPrefix + DeviceName + "/wrenchEstimates:o";
             if (!pImpl->wrenchEstimateValuesDataPort.open(wrenchEstimatesDataPortName)) {
                 yError() << LogPrefix << "Failed to open port " << wrenchEstimatesDataPortName;
                 askToStop();
+                return;
             }
 
             // Open dynamics joint names data port
-            const std::string dynamicsJointNamesDataPortName = "/" + pImpl->portPrefix + "/" + DeviceName + "/dynamicsJointNames:o";
+            const std::string dynamicsJointNamesDataPortName = pImpl->portPrefix + DeviceName + "/dynamicsJointNames:o";
             if (!pImpl->dynamicsJointNamesDataPort.open(dynamicsJointNamesDataPortName)) {
                 yError() << LogPrefix << "Failed to open port " << dynamicsJointNamesDataPortName;
                 askToStop();
+                return;
             }
 
             // Open joint torques data port
-            const std::string jointTorquesDataPortName = "/" + pImpl->portPrefix + "/" + DeviceName + "/jointTorques:o";
+            const std::string jointTorquesDataPortName = pImpl->portPrefix + DeviceName + "/jointTorques:o";
             if (!pImpl->jointTorquesDataPort.open(jointTorquesDataPortName)) {
                 yError() << LogPrefix << "Failed to open port " << jointTorquesDataPortName;
                 askToStop();
+                return;
             }
 
         }
-
 
     }
 
@@ -282,7 +294,7 @@ void HumanDataCollector::run()
     // =========================================================
 
     // Get data from IHumanState interface of HumanStateProvider
-    if (pImpl->isStateProviderDevice) {
+    if (pImpl->isAttached.stateProvider) {
 
         // Base Quantities
         pImpl->baseName = pImpl->iHumanState->getBaseName();
@@ -305,7 +317,7 @@ void HumanDataCollector::run()
     }
 
     // Get data from IHumanWrench interface of HumanWrenchProvider
-    if (pImpl->isWrenchProviderDevice) {
+    if (pImpl->isAttached.wrenchProvider) {
 
         pImpl->numberOfWrenchMeasurementSources = pImpl->iHumanWrenchMeasurements->getNumberOfWrenchSources();
         pImpl->wrenchMeasurementSourceNames = pImpl->iHumanWrenchMeasurements->getWrenchSourceNames();
@@ -313,7 +325,7 @@ void HumanDataCollector::run()
 
     }    
 
-    if (pImpl->isDynamicsEstimatorDevice) {
+    if (pImpl->isAttached.dynamicsEstimator) {
 
         // Get data from IHumanWrench interface of HumanDynamicsEstimator
         // NOTE: The wrench values coming from HumanDynamicsEstimators are (offsetRemovedWrenchMeasurements & WrenchEstimates) of each link
@@ -328,16 +340,11 @@ void HumanDataCollector::run()
 
     }
 
-    // Flip firstData flag false
-    if (pImpl->firstData) {
-        pImpl->firstData = false;
-    }
-
     // ============================
     // Put human data to yarp ports
     // ============================
 
-    if (pImpl->isStateProviderDevice) {
+    if (pImpl->isAttached.stateProvider) {
 
         // Prepare base pose data
         yarp::sig::Vector& basePoseYarpVector = pImpl->basePoseDataPort.prepare();
@@ -352,45 +359,45 @@ void HumanDataCollector::run()
 
         std::vector<double> basePoseInputVector(basePoseArray.begin(), basePoseArray.end());
 
-        pImpl->dataBuffersConversionHelper.setBuffer(basePoseYarpVector, basePoseInputVector);
+        YarpConversionsHelper::toYarp(basePoseYarpVector, basePoseInputVector);
 
         // Prepare base velocity data
         std::vector<double> baseVelocityInputVector(pImpl->baseVelocity.begin(), pImpl->baseVelocity.end());
         yarp::sig::Vector& baseVelocityYarpVector = pImpl->baseVelocityDataPort.prepare();
-        pImpl->dataBuffersConversionHelper.setBuffer(baseVelocityYarpVector, baseVelocityInputVector);
+        YarpConversionsHelper::toYarp(baseVelocityYarpVector, baseVelocityInputVector);
 
         // Prepare stateJointNames
         yarp::os::Bottle& stateJointNamesYarpBottle = pImpl->stateJointNamesDataPort.prepare();
-        pImpl->dataBuffersConversionHelper.setBuffer(stateJointNamesYarpBottle, pImpl->stateJointNames);
+        YarpConversionsHelper::toYarp(stateJointNamesYarpBottle, pImpl->stateJointNames);
 
         // Prepare joint positions
         yarp::sig::Vector& jointPositionsYarpVector = pImpl->jointPositionsDataPort.prepare();
-        pImpl->dataBuffersConversionHelper.setBuffer(jointPositionsYarpVector, pImpl->jointPositions);
+        YarpConversionsHelper::toYarp(jointPositionsYarpVector, pImpl->jointPositions);
 
         // Prepare joint velocities
         yarp::sig::Vector& jointVelocitiesYarpVector = pImpl->jointVelocitiesDataPort.prepare();
-        pImpl->dataBuffersConversionHelper.setBuffer(jointVelocitiesYarpVector, pImpl->jointVelocities);
+        YarpConversionsHelper::toYarp(jointVelocitiesYarpVector, pImpl->jointVelocities);
 
         // Preprare com position
         std::vector<double> comPositionInputVector(pImpl->comPosition.begin(), pImpl->comPosition.end());
         yarp::sig::Vector& comPositionYarpVector = pImpl->comPositionDataPort.prepare();
-        pImpl->dataBuffersConversionHelper.setBuffer(comPositionYarpVector, comPositionInputVector);
+        YarpConversionsHelper::toYarp(comPositionYarpVector, comPositionInputVector);
 
         // Preprate com velocity
         std::vector<double> comVelocityInputVector(pImpl->comVelocity.begin(), pImpl->comVelocity.end());
         yarp::sig::Vector& comVelocityYarpVector = pImpl->comVelocityDataPort.prepare();
-        pImpl->dataBuffersConversionHelper.setBuffer(comVelocityYarpVector, comVelocityInputVector);
+        YarpConversionsHelper::toYarp(comVelocityYarpVector, comVelocityInputVector);
 
         // Prepare com proper acceleration in base frame
         std::vector<double> comProperAccelerationInBaseFrameInputVector(pImpl->comProperAccInBaseFrame.begin(), pImpl->comProperAccInBaseFrame.end());
         yarp::sig::Vector& comProperAccelerationInBaseFrameYarpVector = pImpl->comProperAccelerationInBaseFrameDataPort.prepare();
-        pImpl->dataBuffersConversionHelper.setBuffer(comProperAccelerationInBaseFrameYarpVector, comProperAccelerationInBaseFrameInputVector);
+        YarpConversionsHelper::toYarp(comProperAccelerationInBaseFrameYarpVector, comProperAccelerationInBaseFrameInputVector);
 
 
         // Prepare com proper acceleration in world frame
         std::vector<double> comProperAccelerationInWorldFrameInputVector(pImpl->comProperAccInWorldFrame.begin(), pImpl->comProperAccInWorldFrame.end());
         yarp::sig::Vector& comProperAccelerationInWorldFrameYarpVector = pImpl->comProperAccelerationInWorldFrameDataPort.prepare();
-        pImpl->dataBuffersConversionHelper.setBuffer(comProperAccelerationInWorldFrameYarpVector, comProperAccelerationInWorldFrameInputVector);
+        YarpConversionsHelper::toYarp(comProperAccelerationInWorldFrameYarpVector, comProperAccelerationInWorldFrameInputVector);
 
         // Send data through yarp ports
         pImpl->basePoseDataPort.write(true);
@@ -404,39 +411,38 @@ void HumanDataCollector::run()
         pImpl->comProperAccelerationInWorldFrameDataPort.write(true);
     }
 
-    if (pImpl->isWrenchProviderDevice) {
+    if (pImpl->isAttached.wrenchProvider) {
 
         // Prepare wrench measurements source names data
         yarp::os::Bottle& wrenchMeasurementSourceNamesYarpBottle = pImpl->wrenchMeasurementSourceNamesDataPort.prepare();
-        pImpl->dataBuffersConversionHelper.setBuffer(wrenchMeasurementSourceNamesYarpBottle, pImpl->wrenchMeasurementSourceNames);
+        YarpConversionsHelper::toYarp(wrenchMeasurementSourceNamesYarpBottle, pImpl->wrenchMeasurementSourceNames);
 
         // Prepare wrench measurement values data
         yarp::sig::Vector& wrenchMeasurementValuesYarpVector = pImpl->wrenchMeasurementValuesDataPort.prepare();
-        pImpl->dataBuffersConversionHelper.setBuffer(wrenchMeasurementValuesYarpVector, pImpl->wrenchMeasurementValues);
+        YarpConversionsHelper::toYarp(wrenchMeasurementValuesYarpVector, pImpl->wrenchMeasurementValues);
 
         // Send data through yarp ports
         pImpl->wrenchMeasurementSourceNamesDataPort.write(true);
         pImpl->wrenchMeasurementValuesDataPort.write(true);
     }
 
-    if (pImpl->isDynamicsEstimatorDevice) {
+    if (pImpl->isAttached.dynamicsEstimator) {
 
         // Prepare wrench estimates source names data
         yarp::os::Bottle& wrenchEstimateSourceNamesYarpBottle = pImpl->wrenchEstimateSourceNamesDataPort.prepare();
-        pImpl->dataBuffersConversionHelper.setBuffer(wrenchEstimateSourceNamesYarpBottle, pImpl->wrenchEstimateSourceNames);
+        YarpConversionsHelper::toYarp(wrenchEstimateSourceNamesYarpBottle, pImpl->wrenchEstimateSourceNames);
 
         // Prepare wrench estimate values data
         yarp::sig::Vector& wrenchEstimateValuesYarpVector = pImpl->wrenchEstimateValuesDataPort.prepare();
-        pImpl->dataBuffersConversionHelper.setBuffer(wrenchEstimateValuesYarpVector, pImpl->wrenchEstimateValues);
+        YarpConversionsHelper::toYarp(wrenchEstimateValuesYarpVector, pImpl->wrenchEstimateValues);
 
         // Prepare dynamics joint names data
         yarp::os::Bottle& dynamicsJointNamesYarpBottle = pImpl->dynamicsJointNamesDataPort.prepare();
-        pImpl->dataBuffersConversionHelper.setBuffer(dynamicsJointNamesYarpBottle, pImpl->dynamicsJointNames);
+        YarpConversionsHelper::toYarp(dynamicsJointNamesYarpBottle, pImpl->dynamicsJointNames);
 
         // Prepare joint torques data
         yarp::sig::Vector& jointTorqesYarpVector = pImpl->jointTorquesDataPort.prepare();
-        pImpl->dataBuffersConversionHelper.setBuffer(jointTorqesYarpVector, pImpl->jointTorques);
-
+        YarpConversionsHelper::toYarp(jointTorqesYarpVector, pImpl->jointTorques);
 
         // Send data through yarp ports
         pImpl->wrenchEstimateSourceNamesDataPort.write(true);
@@ -444,15 +450,19 @@ void HumanDataCollector::run()
         pImpl->dynamicsJointNamesDataPort.write(true);
         pImpl->jointTorquesDataPort.write(true);
     }
-
-
-
 }
 
 bool HumanDataCollector::attach(yarp::dev::PolyDriver *poly)
 {
     if (!poly) {
         yError() << LogPrefix << "Passed PolyDriver device is nullptr";
+        return false;
+    }
+
+    // Check the polydriver options for device option
+    yarp::os::Bottle driverOptions = poly->getOptions();
+    if (!driverOptions.check("device")) {
+        yError() << LogPrefix << "Passed polydriver does not have <device> as an option";
         return false;
     }
 
@@ -480,7 +490,7 @@ bool HumanDataCollector::attach(yarp::dev::PolyDriver *poly)
         }
 
         yInfo() << LogPrefix << deviceName << "attach() successful";
-        pImpl->isStateProviderDevice = true;
+        pImpl->isAttached.stateProvider = true;
     }
 
     if (deviceName == "human_wrench_provider") {
@@ -498,7 +508,7 @@ bool HumanDataCollector::attach(yarp::dev::PolyDriver *poly)
         }
 
         yInfo() << LogPrefix << deviceName << "attach() successful";
-        pImpl->isWrenchProviderDevice = true;
+        pImpl->isAttached.wrenchProvider = true;
 
     }
 
@@ -529,7 +539,7 @@ bool HumanDataCollector::attach(yarp::dev::PolyDriver *poly)
         }
 
         yInfo() << LogPrefix << deviceName << "attach() successful";
-        pImpl->isDynamicsEstimatorDevice = true;
+        pImpl->isAttached.dynamicsEstimator = true;
     }
 
     return true;
@@ -541,7 +551,7 @@ bool HumanDataCollector::detach()
         stop();
     }
 
-    if (pImpl->isStateProviderDevice) {
+    if (pImpl->isAttached.stateProvider) {
 
         if (!pImpl->basePoseDataPort.isClosed()) {
             pImpl->basePoseDataPort.close();
@@ -580,11 +590,11 @@ bool HumanDataCollector::detach()
         }
 
         pImpl->iHumanState = nullptr;
-        pImpl->isStateProviderDevice = false;
+        pImpl->isAttached.stateProvider = false;
 
     }
 
-    if (pImpl->isWrenchProviderDevice) {
+    if (pImpl->isAttached.wrenchProvider) {
 
         if (!pImpl->wrenchMeasurementSourceNamesDataPort.isClosed()) {
             pImpl->wrenchMeasurementSourceNamesDataPort.close();
@@ -595,10 +605,10 @@ bool HumanDataCollector::detach()
         }
 
         pImpl->iHumanWrenchMeasurements = nullptr;
-        pImpl->isWrenchProviderDevice = false;
+        pImpl->isAttached.wrenchProvider = false;
     }
 
-    if (pImpl->isDynamicsEstimatorDevice) {
+    if (pImpl->isAttached.dynamicsEstimator) {
 
         if (!pImpl->wrenchEstimateSourceNamesDataPort.isClosed()) {
             pImpl->wrenchEstimateSourceNamesDataPort.close();
@@ -618,7 +628,7 @@ bool HumanDataCollector::detach()
 
         pImpl->iHumanWrenchEstimates = nullptr;
         pImpl->iHumanDynamics = nullptr;
-        pImpl->isDynamicsEstimatorDevice = false;
+        pImpl->isAttached.dynamicsEstimator = false;
     }
 
     return true;
@@ -649,7 +659,7 @@ bool HumanDataCollector::attachAll(const yarp::dev::PolyDriverList &driverList)
     // ====
 
     // Start the PeriodicThread loop
-    if (attachStatus && !start()) {
+    if (!(attachStatus && start())) {
         yError() << LogPrefix << "Failed to start the loop.";
         return false;
     }

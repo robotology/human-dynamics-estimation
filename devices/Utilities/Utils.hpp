@@ -17,6 +17,9 @@
 
 #include <vector>
 
+// Yarp
+#include <yarp/sig/Vector.h>
+
 /**
  * Helper for iDynTree library.
  */
@@ -149,21 +152,11 @@ private:
     double saturate(double val, double lowerLimit, double upperLimit);
 };
 
-// Yarp
-#include <yarp/sig/Vector.h>
+namespace  YarpConversionsHelper {
 
-class DataBuffersConversionHelper {
+    void toYarp(yarp::sig::Vector& out, const std::vector<double>& in);
+    void toYarp(yarp::os::Bottle& out, const std::vector<std::string>& in);
 
-public:
-
-    DataBuffersConversionHelper();
-    ~DataBuffersConversionHelper();
-
-    void setBufferVecSize(yarp::sig::Vector&, size_t&);
-    void setBuffer(yarp::sig::Vector&, std::vector<double>&);
-    void setBuffer(yarp::os::Bottle&, std::vector<std::string>&);
-
-};
-
+}
 
 #endif

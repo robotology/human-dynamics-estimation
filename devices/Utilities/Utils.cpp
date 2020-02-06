@@ -410,18 +410,10 @@ double iDynTreeHelper::State::integrator::saturate(double val, double lowerLimit
 
 // DataBuffersConversionHelper
 
-DataBuffersConversionHelper::DataBuffersConversionHelper() {}
-DataBuffersConversionHelper::~DataBuffersConversionHelper() {}
-
-void DataBuffersConversionHelper::setBufferVecSize(yarp::sig::Vector& vec, size_t& s) {
-        vec.resize(s, 0.0); // Initialize the vector size with zero elements
-}
-
-void DataBuffersConversionHelper::setBuffer(yarp::sig::Vector& out, std::vector<double>& in) {
+void YarpConversionsHelper::toYarp(yarp::sig::Vector& out, const std::vector<double>& in) {
 
     // Set buffer vector size
-    size_t s = in.size();
-    setBufferVecSize(out, s);
+    out.resize(in.size(), 0.0);
 
     for (size_t i = 0;  i < in.size(); i++) {
         out[i] = in.at(i);
@@ -429,7 +421,7 @@ void DataBuffersConversionHelper::setBuffer(yarp::sig::Vector& out, std::vector<
 
 }
 
-void DataBuffersConversionHelper::setBuffer(yarp::os::Bottle& out, std::vector<std::string>& in) {
+void YarpConversionsHelper::toYarp(yarp::os::Bottle& out, const std::vector<std::string>& in) {
 
     out.clear();
 
