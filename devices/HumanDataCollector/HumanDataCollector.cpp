@@ -16,6 +16,8 @@
 #include <yarp/os/BufferedPort.h>
 #include <yarp/sig/Vector.h>
 
+#include "matio.h"
+
 const std::string DeviceName = "HumanDataCollector";
 const std::string LogPrefix = DeviceName + " :";
 constexpr double DefaultPeriod = 0.01;
