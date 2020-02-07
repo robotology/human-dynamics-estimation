@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<portscope rows="2" columns="2" carrier="mcast">
+
+    <!-- The color scheme for the graphs is similar to>
+    <matlab plots color order-->
+
+		<!--comPosition-->
+    <plot gridx="0"
+          gridy="0"
+          title="Center of Mass Position"
+          size="60"
+          minval="-5"
+          maxval="5"
+          bgcolor="white">
+        <graph remote="/Human/HumanDataCollector/comPosition:o"
+               index="0"
+               color="#0173BC"
+               title="x"
+               type="lines" />
+	      <graph remote="/Human/HumanDataCollector/comPosition:o"
+               index="1"
+               color="#D95218"
+               title="y"
+               type="lines" />
+	      <graph remote="/Human/HumanDataCollector/comPosition:o"
+               index="2"
+               color="#EDB022"
+               title="z"
+               type="lines" />
+    </plot>
+
+		<!--comVelocity-->
+    <plot gridx="1"
+          gridy="0"
+          title="Center of Mass Velocity"
+          size="60"
+          minval="-15"
+          maxval="15"
+          bgcolor="white">
+        <graph remote="/Human/HumanDataCollector/comVelocity:o"
+               index="0"
+               color="#0173BC"
+               title="x"
+               type="lines" />
+	      <graph remote="/Human/HumanDataCollector/comVelocity:o"
+               index="1"
+               color="#D95218"
+               title="y"
+               type="lines" />
+	      <graph remote="/Human/HumanDataCollector/comVelocity:o"
+               index="2"
+               color="#EDB022"
+               title="z"
+               type="lines" />
+    </plot>
+
+    <!--comProperAccelerationInWorldFrame-->
+    <plot gridx="0"
+          gridy="1"
+          title="CoM Proper Acceleration In Base Frame"
+          size="60"
+          minval="-2"
+          maxval="2"
+          bgcolor="white">
+        <graph remote="/Human/HumanDataCollector/comProperAccelerationInWorldFrame:o"
+               index="0"
+               color="#0173BC"
+               title="Lin_x"
+               type="lines" />
+	      <graph remote="/Human/HumanDataCollector/comProperAccelerationInWorldFrame:o"
+               index="1"
+               color="#D95218"
+               title="Lin_y"
+               type="lines" />
+	      <graph remote="/Human/HumanDataCollector/comProperAccelerationInWorldFrame:o"
+               index="2"
+               color="#EDB022"
+               title="Lin_z"
+               type="lines" />
+	      <graph remote="/Human/HumanDataCollector/comProperAccelerationInWorldFrame:o"
+               index="3"
+               color="#7E2E8D"
+               title="Ang_x"
+               type="lines" />
+	      <graph remote="/Human/HumanDataCollector/comProperAccelerationInWorldFrame:o"
+               index="4"
+               color="#78AC30"
+               title="Ang_y"
+               type="lines" />
+	      <graph remote="/Human/HumanDataCollector/comProperAccelerationInWorldFrame:o"
+               index="5"
+               color="#4EBEEE"
+               title="Ang_z"
+               type="lines" />
+    </plot>
+
+    <!--comProperAccelerationInBaseFrame-->
+    <plot gridx="1"
+          gridy="1"
+          title="CoM Proper Acceleration In Base Frame"
+          size="60"
+          minval="-2"
+          maxval="2"
+          bgcolor="white">
+        <graph remote="/Human/HumanDataCollector/comProperAccelerationInBaseFrame:o"
+               index="0"
+               color="#0173BC"
+               title="Lin_x"
+               type="lines" />
+	      <graph remote="/Human/HumanDataCollector/comProperAccelerationInBaseFrame:o"
+               index="1"
+               color="#D95218"
+               title="Lin_y"
+               type="lines" />
+	      <graph remote="/Human/HumanDataCollector/comProperAccelerationInBaseFrame:o"
+               index="2"
+               color="#EDB022"
+               title="Lin_z"
+               type="lines" />
+	      <graph remote="/Human/HumanDataCollector/comProperAccelerationInBaseFrame:o"
+               index="3"
+               color="#7E2E8D"
+               title="Ang_x"
+               type="lines" />
+	      <graph remote="/Human/HumanDataCollector/comProperAccelerationInBaseFrame:o"
+               index="4"
+               color="#78AC30"
+               title="Ang_y"
+               type="lines" />
+	      <graph remote="/Human/HumanDataCollector/comProperAccelerationInBaseFrame:o"
+               index="5"
+               color="#4EBEEE"
+               title="Ang_z"
+               type="lines" />
+    </plot>
+
+</portscope>
