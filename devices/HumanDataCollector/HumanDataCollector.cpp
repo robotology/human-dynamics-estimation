@@ -18,6 +18,10 @@
 
 #include "matio.h"
 
+// TODO: Double check if the header works on WINDOWS
+#include <experimental/filesystem>
+#include <sys/stat.h>
+
 const std::string DeviceName = "HumanDataCollector";
 const std::string LogPrefix = DeviceName + " :";
 constexpr double DefaultPeriod = 0.01;
@@ -100,6 +104,15 @@ public:
 
     yarp::os::BufferedPort<yarp::os::Bottle> dynamicsJointNamesDataPort;
     yarp::os::BufferedPort<yarp::sig::Vector> jointTorquesDataPort;
+
+
+    // MATIO Logging
+    bool matioLogger = false;
+    const std::experimental::filesystem::path originalWorkingDirectory = std::experimental::filesystem::current_path();
+    std::string matLogDirectory = "";
+    std::string matLogFileName = "matLogFile.mat"; //TODO: Improve file handling for multiple file logging
+    mat_t *matFilePtr = nullptr;
+
 };
 
 HumanDataCollector::HumanDataCollector()
@@ -129,12 +142,29 @@ bool HumanDataCollector::open(yarp::os::Searchable &config) {
 
     double period = config.check("period", yarp::os::Value(0.01)).asFloat64();
     pImpl->portPrefix = "/" + config.check("portPrefix", yarp::os::Value("HDE")).asString() + "/";
+    pImpl->matioLogger = config.check("matioLogger", yarp::os::Value(false)).asBool();
+
+    if (pImpl->matioLogger) {
+        pImpl->matLogDirectory =  pImpl->originalWorkingDirectory.string() + "/" + config.check("matLogDirectory", yarp::os::Value("matLogDirectory")).asString() + "/";
+
+        struct stat info;
+
+        // check if matLogDirectory exists
+        if (stat(pImpl->matLogDirectory.c_str(), &info) != 0 && mkdir(config.check("matLogDirectory", yarp::os::Value("matLogDirectory")).asString().c_str(), 0777) == -1) {
+            yError() << LogPrefix << "Failed to created the matLogDirectory " << config.check("matLogDirectory", yarp::os::Value("matLogDirectory")).asString();
+            return false;
+        }
+
+        std::experimental::filesystem::current_path(pImpl->matLogDirectory);
+    }
 
     //TODO: Define rpc to reset the data dump or restarting the visualization??
 
     yInfo() << LogPrefix << "*** ===========================";
     yInfo() << LogPrefix << "*** Period                    :" << period;
     yInfo() << LogPrefix << "*** portPrefix                :" << pImpl->portPrefix;
+    yInfo() << LogPrefix << "*** matioLogger               :" << pImpl->matioLogger;
+    yInfo() << LogPrefix << "*** matLogDirectory           :" << pImpl->matLogDirectory;
     yInfo() << LogPrefix << "*** ===========================";
 
     // Set period
@@ -282,6 +312,21 @@ void HumanDataCollector::run()
             const std::string jointTorquesDataPortName = pImpl->portPrefix + DeviceName + "/jointTorques:o";
             if (!pImpl->jointTorquesDataPort.open(jointTorquesDataPortName)) {
                 yError() << LogPrefix << "Failed to open port " << jointTorquesDataPortName;
+                askToStop();
+                return;
+            }
+
+        }
+
+        // Initialize  matio logging
+        if (pImpl->matioLogger) {
+
+            // TODO: Handle multiple files
+            std::string matLogFileFullPathName = pImpl->matLogDirectory + pImpl->matLogFileName;
+            pImpl->matFilePtr = Mat_CreateVer(matLogFileFullPathName.c_str(), nullptr, MAT_FT_MAT73);
+
+            if (pImpl->matFilePtr == nullptr) {
+                yError() << LogPrefix << "Failed to create " << pImpl->matLogFileName << " MAT file for logging";
                 askToStop();
                 return;
             }
@@ -552,6 +597,13 @@ bool HumanDataCollector::detach()
     while (isRunning()) {
         stop();
     }
+
+    // Handle matio logger termination
+    // TODO: Save the main data cell array to the mat file before closing
+    Mat_Close(pImpl->matFilePtr);
+
+    // Moving back a directory above the matLogDirectory
+    std::experimental::filesystem::current_path(pImpl->originalWorkingDirectory);
 
     if (pImpl->isAttached.stateProvider) {
 
