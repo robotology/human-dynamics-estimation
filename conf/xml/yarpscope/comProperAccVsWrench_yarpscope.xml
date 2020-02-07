@@ -1,0 +1,637 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<portscope rows="6" columns="6" carrier="mcast">
+
+    <!-- The color scheme for the graphs is similar to>
+    <matlab plots color order-->
+
+    <!--comProperAccelerationInWorldFrame-->
+    <plot gridx="0"
+          gridy="0"
+          title="CoM Proper Acceleration In Base Frame (Lin_x)"
+          size="60"
+          minval="-1000"
+          maxval="1000"
+          bgcolor="white">
+        <graph remote="/Human/HumanDataCollector/comProperAccelerationInWorldFrame:o"
+               index="0"
+               color="#0173BC"
+               title="Lin_x"
+               type="lines" />
+    </plot>
+
+    <plot gridx="0"
+          gridy="1"
+          title="Lin_y"
+          size="60"
+          minval="-1000"
+          maxval="1000"
+          bgcolor="white">
+	      <graph remote="/Human/HumanDataCollector/comProperAccelerationInWorldFrame:o"
+               index="1"
+               color="#D95218"
+               title="Lin_y"
+               type="lines" />
+    </plot>
+
+    <plot gridx="0"
+          gridy="2"
+          title="Lin_z"
+          size="60"
+          minval="-1000"
+          maxval="1000"
+          bgcolor="white">
+	      <graph remote="/Human/HumanDataCollector/comProperAccelerationInWorldFrame:o"
+               index="2"
+               color="#EDB022"
+               title="Lin_z"
+               type="lines" />
+    </plot>
+
+    <plot gridx="0"
+          gridy="3"
+          title="Ang_x"
+          size="60"
+          minval="-1000"
+          maxval="1000"
+          bgcolor="white">
+	      <graph remote="/Human/HumanDataCollector/comProperAccelerationInWorldFrame:o"
+               index="3"
+               color="#7E2E8D"
+               title="Ang_x"
+               type="lines" />
+    </plot>
+
+    <plot gridx="0"
+          gridy="4"
+          title="Ang_y"
+          size="60"
+          minval="-1000"
+          maxval="1000"
+          bgcolor="white">
+	      <graph remote="/Human/HumanDataCollector/comProperAccelerationInWorldFrame:o"
+               index="4"
+               color="#78AC30"
+               title="Ang_y"
+               type="lines" />
+    </plot>
+
+    <plot gridx="0"
+          gridy="5"
+          title="Ang_z"
+          size="60"
+          minval="-1000"
+          maxval="1000"
+          bgcolor="white">
+	      <graph remote="/Human/HumanDataCollector/comProperAccelerationInWorldFrame:o"
+               index="5"
+               color="#4EBEEE"
+               title="Ang_z"
+               type="lines" />
+    </plot>
+
+    <!--comProperAccelerationInBaseFrame-->
+    <plot gridx="1"
+          gridy="0"
+          title="CoM Proper Acceleration In Base Frame (Lin_x)"
+          size="60"
+          minval="-1000"
+          maxval="1000"
+          bgcolor="white">
+        <graph remote="/Human/HumanDataCollector/comProperAccelerationInBaseFrame:o"
+               index="0"
+               color="#0173BC"
+               title="Lin_x"
+               type="lines" />
+    </plot>
+
+    <plot gridx="1"
+          gridy="1"
+          title="Lin_y"
+          size="60"
+          minval="-1000"
+          maxval="1000"
+          bgcolor="white">
+	      <graph remote="/Human/HumanDataCollector/comProperAccelerationInBaseFrame:o"
+               index="1"
+               color="#D95218"
+               title="Lin_y"
+               type="lines" />
+    </plot>
+
+    <plot gridx="1"
+          gridy="2"
+          title="Lin_z"
+          size="60"
+          minval="-1000"
+          maxval="1000"
+          bgcolor="white">
+	      <graph remote="/Human/HumanDataCollector/comProperAccelerationInBaseFrame:o"
+               index="2"
+               color="#EDB022"
+               title="Lin_z"
+               type="lines" />
+    </plot>
+
+    <plot gridx="1"
+          gridy="3"
+          title="Ang_x"
+          size="60"
+          minval="-1000"
+          maxval="1000"
+          bgcolor="white">
+	      <graph remote="/Human/HumanDataCollector/comProperAccelerationInBaseFrame:o"
+               index="3"
+               color="#7E2E8D"
+               title="Ang_x"
+               type="lines" />
+    </plot>
+
+    <plot gridx="1"
+          gridy="4"
+          title="Ang_y"
+          size="60"
+          minval="-1000"
+          maxval="1000"
+          bgcolor="white">
+	      <graph remote="/Human/HumanDataCollector/comProperAccelerationInBaseFrame:o"
+               index="4"
+               color="#78AC30"
+               title="Ang_y"
+               type="lines" />
+    </plot>
+
+    <plot gridx="1"
+          gridy="5"
+          title="Ang_z"
+          size="60"
+          minval="-1000"
+          maxval="1000"
+          bgcolor="white">
+	      <graph remote="/Human/HumanDataCollector/comProperAccelerationInBaseFrame:o"
+               index="5"
+               color="#4EBEEE"
+               title="Ang_z"
+               type="lines" />
+    </plot>
+
+    <!--OffsetRemovedWrench Vs Estimates Left Foot-->
+    <plot gridx="2"
+          gridy="0"
+          title="Offset Removed Wrench Measurements vs Estimates Left Foot (Fx)"
+          size="60"
+          minval="-1000"
+          maxval="1000"
+          bgcolor="white">
+        <graph remote="/Human/HumanDataCollector/wrenchEstimates:o"
+               index="0"
+               color="#000000"
+               title="Fx"
+               type="bars" />
+        <graph remote="/Human/HumanDataCollector/wrenchEstimates:o"
+               index="6"
+               color="#0173BC"
+               title="Fx"
+               type="lines" />
+    </plot>
+
+    <plot gridx="2"
+          gridy="1"
+          title="Fy"
+          size="60"
+          minval="-1000"
+          maxval="1000"
+          bgcolor="white">
+	      <graph remote="/Human/HumanDataCollector/wrenchEstimates:o"
+               index="1"
+               color="#000000"
+               title="Fy"
+               type="bars" />
+        <graph remote="/Human/HumanDataCollector/wrenchEstimates:o"
+               index="7"
+               color="#D95218"
+               title="Fy"
+               type="lines" />
+    </plot>
+
+    <plot gridx="2"
+          gridy="2"
+          title="Fz"
+          size="60"
+          minval="-1000"
+          maxval="1000"
+          bgcolor="white">
+	      <graph remote="/Human/HumanDataCollector/wrenchEstimates:o"
+               index="2"
+               color="#000000"
+               title="Fz"
+               type="bars" />
+       <graph remote="/Human/HumanDataCollector/wrenchEstimates:o"
+              index="8"
+              color="#EDB022"
+              title="Fz"
+              type="lines" />
+    </plot>
+
+    <plot gridx="2"
+          gridy="3"
+          title="Mx"
+          size="60"
+          minval="-1000"
+          maxval="1000"
+          bgcolor="white">
+	      <graph remote="/Human/HumanDataCollector/wrenchEstimates:o"
+               index="3"
+               color="#000000"
+               title="Mx"
+               type="bars" />
+        <graph remote="/Human/HumanDataCollector/wrenchEstimates:o"
+               index="9"
+               color="#7E2E8D"
+               title="Mx"
+               type="lines" />
+    </plot>
+
+    <plot gridx="2"
+          gridy="4"
+          title="My"
+          size="60"
+          minval="-1000"
+          maxval="1000"
+          bgcolor="white">
+	      <graph remote="/Human/HumanDataCollector/wrenchEstimates:o"
+               index="4"
+               color="#000000"
+               title="My"
+               type="bars" />
+        <graph remote="/Human/HumanDataCollector/wrenchEstimates:o"
+               index="10"
+               color="#78AC30"
+               title="My"
+               type="lines" />
+    </plot>
+
+    <plot gridx="2"
+          gridy="5"
+          title="Mz"
+          size="60"
+          minval="-1000"
+          maxval="1000"
+          bgcolor="white">
+	      <graph remote="/Human/HumanDataCollector/wrenchEstimates:o"
+               index="5"
+               color="#000000"
+               title="Mz"
+               type="bars" />
+        <graph remote="/Human/HumanDataCollector/wrenchEstimates:o"
+               index="11"
+               color="#4EBEEE"
+               title="Mz"
+               type="lines" />
+    </plot>
+
+    <!--OffsetRemovedWrench Vs Estimates Right Foot-->
+    <plot gridx="3"
+          gridy="0"
+          title="Offset Removed Wrench Measurements vs Estimates Right Foot (Fx)"
+          size="60"
+          minval="-1000"
+          maxval="1000"
+          bgcolor="white">
+        <graph remote="/Human/HumanDataCollector/wrenchEstimates:o"
+               index="12"
+               color="#000000"
+               title="Fx"
+               type="bars" />
+        <graph remote="/Human/HumanDataCollector/wrenchEstimates:o"
+               index="18"
+               color="#000000"
+               title="Fx"
+               type="lines" />
+    </plot>
+
+    <plot gridx="3"
+          gridy="1"
+          title="Fy"
+          size="60"
+          minval="-1000"
+          maxval="1000"
+          bgcolor="white">
+	      <graph remote="/Human/HumanDataCollector/wrenchEstimates:o"
+               index="13"
+               color="#000000"
+               title="Fy"
+               type="bars" />
+        <graph remote="/Human/HumanDataCollector/wrenchEstimates:o"
+               index="19"
+               color="#D95218"
+               title="Fy"
+               type="lines" />
+    </plot>
+
+    <plot gridx="3"
+          gridy="2"
+          title="Fz"
+          size="60"
+          minval="-1000"
+          maxval="1000"
+          bgcolor="white">
+	      <graph remote="/Human/HumanDataCollector/wrenchEstimates:o"
+               index="14"
+               color="#000000"
+               title="Fz"
+               type="bars" />
+       <graph remote="/Human/HumanDataCollector/wrenchEstimates:o"
+              index="20"
+              color="#EDB022"
+              title="Fz"
+              type="lines" />
+    </plot>
+
+    <plot gridx="3"
+          gridy="3"
+          title="Mx"
+          size="60"
+          minval="-1000"
+          maxval="1000"
+          bgcolor="white">
+	      <graph remote="/Human/HumanDataCollector/wrenchEstimates:o"
+               index="15"
+               color="#000000"
+               title="Mx"
+               type="bars" />
+        <graph remote="/Human/HumanDataCollector/wrenchEstimates:o"
+               index="21"
+               color="#7E2E8D"
+               title="Mx"
+               type="lines" />
+    </plot>
+
+    <plot gridx="3"
+          gridy="4"
+          title="My"
+          size="60"
+          minval="-1000"
+          maxval="1000"
+          bgcolor="white">
+	      <graph remote="/Human/HumanDataCollector/wrenchEstimates:o"
+               index="16"
+               color="#000000"
+               title="My"
+               type="bars" />
+        <graph remote="/Human/HumanDataCollector/wrenchEstimates:o"
+               index="22"
+               color="#78AC30"
+               title="My"
+               type="lines" />
+    </plot>
+
+    <plot gridx="3"
+          gridy="5"
+          title="Mz"
+          size="60"
+          minval="-1000"
+          maxval="1000"
+          bgcolor="white">
+	      <graph remote="/Human/HumanDataCollector/wrenchEstimates:o"
+               index="17"
+               color="#000000"
+               title="Mz"
+               type="bars" />
+        <graph remote="/Human/HumanDataCollector/wrenchEstimates:o"
+               index="23"
+               color="#4EBEEE"
+               title="Mz"
+               type="lines" />
+    </plot>
+
+    <!--Wrench Measurements Vs Estimates Left Hand-->
+    <plot gridx="4"
+          gridy="0"
+          title="Wrench Estimates Left Hand (Fx)"
+          size="60"
+          minval="-1000"
+          maxval="1000"
+          bgcolor="white">
+        <graph remote="/Human/HumanDataCollector/wrenchEstimates:o"
+               index="24"
+               color="#000000"
+               title="Fx"
+               type="bars" />
+        <graph remote="/Human/HumanDataCollector/wrenchEstimates:o"
+               index="30"
+               color="#0173BC"
+               title="Fx"
+               type="lines" />
+    </plot>
+
+    <plot gridx="4"
+          gridy="1"
+          title="Fy"
+          size="60"
+          minval="-1000"
+          maxval="1000"
+          bgcolor="white">
+	      <graph remote="/Human/HumanDataCollector/wrenchEstimates:o"
+               index="25"
+               color="#000000"
+               title="Fy"
+               type="bars" />
+        <graph remote="/Human/HumanDataCollector/wrenchEstimates:o"
+               index="31"
+               color="#D95218"
+               title="Fy"
+               type="lines" />
+    </plot>
+
+    <plot gridx="4"
+          gridy="2"
+          title="Fz"
+          size="60"
+          minval="-1000"
+          maxval="1000"
+          bgcolor="white">
+	      <graph remote="/Human/HumanDataCollector/wrenchEstimates:o"
+               index="26"
+               color="#000000"
+               title="Fz"
+               type="bars" />
+       <graph remote="/Human/HumanDataCollector/wrenchEstimates:o"
+              index="32"
+              color="#EDB022"
+              title="Fz"
+              type="lines" />
+    </plot>
+
+    <plot gridx="4"
+          gridy="3"
+          title="Mx"
+          size="60"
+          minval="-1000"
+          maxval="1000"
+          bgcolor="white">
+	      <graph remote="/Human/HumanDataCollector/wrenchEstimates:o"
+               index="27"
+               color="#000000"
+               title="Mx"
+               type="bars" />
+        <graph remote="/Human/HumanDataCollector/wrenchEstimates:o"
+               index="33"
+               color="#7E2E8D"
+               title="Mx"
+               type="lines" />
+    </plot>
+
+    <plot gridx="4"
+          gridy="4"
+          title="My"
+          size="60"
+          minval="-1000"
+          maxval="1000"
+          bgcolor="white">
+	      <graph remote="/Human/HumanDataCollector/wrenchEstimates:o"
+               index="28"
+               color="#000000"
+               title="My"
+               type="bars" />
+        <graph remote="/Human/HumanDataCollector/wrenchEstimates:o"
+               index="34"
+               color="#78AC30"
+               title="My"
+               type="lines" />
+    </plot>
+
+    <plot gridx="4"
+          gridy="5"
+          title="Mz"
+          size="60"
+          minval="-1000"
+          maxval="1000"
+          bgcolor="white">
+	      <graph remote="/Human/HumanDataCollector/wrenchEstimates:o"
+               index="29"
+               color="#000000"
+               title="Mz"
+               type="bars" />
+        <graph remote="/Human/HumanDataCollector/wrenchEstimates:o"
+               index="35"
+               color="#4EBEEE"
+               title="Mz"
+               type="lines" />
+    </plot>
+
+    <!--Wrench Measurements Vs Estimates Right Hand-->
+    <plot gridx="5"
+          gridy="0"
+          title="Wrench Estimates Right Hand (Fx)"
+          size="60"
+          minval="-1000"
+          maxval="1000"
+          bgcolor="white">
+        <graph remote="/Human/HumanDataCollector/wrenchEstimates:o"
+               index="36"
+               color="#000000"
+               title="Fx"
+               type="bars" />
+        <graph remote="/Human/HumanDataCollector/wrenchEstimates:o"
+               index="42"
+               color="#0173BC"
+               title="Fx"
+               type="lines" />
+    </plot>
+
+    <plot gridx="5"
+          gridy="1"
+          title="Fy"
+          size="60"
+          minval="-1000"
+          maxval="1000"
+          bgcolor="white">
+	      <graph remote="/Human/HumanDataCollector/wrenchEstimates:o"
+               index="37"
+               color="#000000"
+               title="Fy"
+               type="bars" />
+        <graph remote="/Human/HumanDataCollector/wrenchEstimates:o"
+               index="43"
+               color="#D95218"
+               title="Fy"
+               type="lines" />
+    </plot>
+
+    <plot gridx="5"
+          gridy="2"
+          title="Fz"
+          size="60"
+          minval="-1000"
+          maxval="1000"
+          bgcolor="white">
+	      <graph remote="/Human/HumanDataCollector/wrenchEstimates:o"
+               index="38"
+               color="#000000"
+               title="Fz"
+               type="bars" />
+       <graph remote="/Human/HumanDataCollector/wrenchEstimates:o"
+              index="44"
+              color="#EDB022"
+              title="Fz"
+              type="lines" />
+    </plot>
+
+    <plot gridx="5"
+          gridy="3"
+          title="Mx"
+          size="60"
+          minval="-1000"
+          maxval="1000"
+          bgcolor="white">
+	      <graph remote="/Human/HumanDataCollector/wrenchEstimates:o"
+               index="39"
+               color="#000000"
+               title="Mx"
+               type="bars" />
+        <graph remote="/Human/HumanDataCollector/wrenchEstimates:o"
+               index="45"
+               color="#7E2E8D"
+               title="Mx"
+               type="lines" />
+    </plot>
+
+    <plot gridx="5"
+          gridy="4"
+          title="My"
+          size="60"
+          minval="-1000"
+          maxval="1000"
+          bgcolor="white">
+	      <graph remote="/Human/HumanDataCollector/wrenchEstimates:o"
+               index="40"
+               color="#000000"
+               title="My"
+               type="bars" />
+        <graph remote="/Human/HumanDataCollector/wrenchEstimates:o"
+               index="46"
+               color="#78AC30"
+               title="My"
+               type="lines" />
+    </plot>
+
+    <plot gridx="5"
+          gridy="5"
+          title="Mz"
+          size="60"
+          minval="-1000"
+          maxval="1000"
+          bgcolor="white">
+	      <graph remote="/Human/HumanDataCollector/wrenchEstimates:o"
+               index="41"
+               color="#000000"
+               title="Mz"
+               type="bars" />
+        <graph remote="/Human/HumanDataCollector/wrenchEstimates:o"
+               index="47"
+               color="#4EBEEE"
+               title="Mz"
+               type="lines" />
+    </plot>
+
+</portscope>

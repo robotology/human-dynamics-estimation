@@ -407,3 +407,27 @@ double iDynTreeHelper::State::integrator::saturate(double val, double lowerLimit
     else
         return val;
 }
+
+// DataBuffersConversionHelper
+
+void YarpConversionsHelper::toYarp(yarp::sig::Vector& out, const std::vector<double>& in) {
+
+    // Set buffer vector size
+    out.resize(in.size(), 0.0);
+
+    for (size_t i = 0;  i < in.size(); i++) {
+        out[i] = in.at(i);
+    }
+
+}
+
+void YarpConversionsHelper::toYarp(yarp::os::Bottle& out, const std::vector<std::string>& in) {
+
+    out.clear();
+
+    for (size_t i = 0;  i < in.size(); i++) {
+        out.addString(in.at(i));
+    }
+
+}
+
