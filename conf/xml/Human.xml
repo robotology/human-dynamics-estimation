@@ -209,7 +209,7 @@
                 <elem name="HumanStateWrapperLabel">HumanStateProvider</elem>
             </paramlist>
         </action>
-        <action phase="shutdown" level="5" type="detach"/>
+        <action phase="shutdown" level="4" type="detach"/>
     </device>
 
     <device type="human_state_publisher" name="HumanStatePublisher">
@@ -221,7 +221,7 @@
                 <elem name="HumanStatePublisherLabel">HumanStateProvider</elem>
             </paramlist>
         </action>
-        <action phase="shutdown" level="5" type="detach"/>
+        <action phase="shutdown" level="4" type="detach"/>
     </device>
 
     <device type="iwear_remapper" name="FTSourcesIWearRemapper">
@@ -283,7 +283,7 @@
                 <elem name="HumanWrenchWrapperLabel">HumanWrenchProvider</elem>
             </paramlist>
         </action>
-        <action phase="shutdown" level="5" type="detach" />
+        <action phase="shutdown" level="4" type="detach" />
     </device>
 
     <!--Wrapper to publish WrenchStamped message to Rviz-->
@@ -396,7 +396,7 @@
         <action phase="shutdown" level="4" type="detach" />
     </device>
 
-    <!--device type="human_dynamics_wrapper" name="HumanDynamicsWrapper">
+    <device type="human_dynamics_wrapper" name="HumanDynamicsWrapper">
         <param name="period">0.1</param>
         <param name="outputPort">/HDE/HumanDynamicsWrapper/torques:o</param>
         <action phase="startup" level="5" type="attach">
@@ -404,8 +404,8 @@
                 <elem name="HumanDynamicsWrapperLabel">HumanDynamicsEstimator</elem>
             </paramlist>
         </action>
-        <action phase="shutdown" level="5" type="detach"/>
-    </device-->
+        <action phase="shutdown" level="4" type="detach"/>
+    </device>
 
     <device type="human_dynamics_publisher" name="HumanDynamicsPublisher">
         <param name="period">0.02</param>
@@ -431,7 +431,7 @@
                 <elem name="HumanDynamicsEstimatorLabel">HumanDynamicsEstimator</elem>
             </paramlist>
         </action>
-        <action phase="shutdown" level="5" type="detach"/>
+        <action phase="shutdown" level="4" type="detach"/>
     </device>
 
     <!-- <device type="human_control_board" name="HumanControlBoard">

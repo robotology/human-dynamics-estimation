@@ -291,10 +291,6 @@ bool HumanStatePublisher::open(yarp::os::Searchable& config)
 
 bool HumanStatePublisher::close()
 {
-    pImpl->humanBasePoseROS.publisher.close();
-    pImpl->humanJointStateROS.publisher.close();
-    pImpl->node->interrupt();
-
     return true;
 }
 
@@ -332,7 +328,6 @@ void HumanStatePublisher::run()
         pImpl->humanJointStateROS.message.position.resize(dofs, 0);
         pImpl->humanJointStateROS.message.velocity.resize(dofs, 0);
 
-        yInfo() << LogPrefix << "Run properly initialized";
         pImpl->firstRun = false;
     }
 
@@ -387,7 +382,7 @@ void HumanStatePublisher::run()
     pImpl->humanStateBuffers.baseOrientation[3] = pImpl->humanStateBuffers.baseOrientation[3] + pImpl->baseOrientationOffset->get(3).asFloat64();
 
     // This is the buffer of the message with base data which will be sent.
-    // Here we get the handlt to the first (and only) tf which is sent.
+    // Here we get the handle to the first (and only) tf which is sent.
     auto& baseMessageBufferTransform = pImpl->humanBasePoseROS.message.transforms[0];
 
     // Update metadata
@@ -484,11 +479,15 @@ bool HumanStatePublisher::detach()
         stop();
     }
 
-    pImpl->humanBasePoseROS.publisher.interrupt();
-    pImpl->humanJointStateROS.publisher.interrupt();
+    pImpl->humanBasePoseROS.publisher.close();
+    pImpl->humanJointStateROS.publisher.close();
+    pImpl->node->interrupt();
+    pImpl->transformClientDevice.close();
+
     pImpl->humanState = nullptr;
     pImpl->basePositionOffset = nullptr;
     pImpl->baseOrientationOffset = nullptr;
+    pImpl->iFrameTransform = nullptr;
     return true;
 }
 
