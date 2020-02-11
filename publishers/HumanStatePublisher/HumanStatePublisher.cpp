@@ -106,7 +106,7 @@ bool HumanStatePublisher::open(yarp::os::Searchable& config)
         useDefaultPeriod = true;
     }
 
-    yarp::os::Bottle* fixedBasePosition;
+    yarp::os::Bottle* fixedBasePosition = nullptr;
     if (config.check("fixBasePosition")) {
         if (config.find("fixBasePosition").isList() &&
                 config.find("fixBasePosition").asList()->size() == 3) {
@@ -121,7 +121,7 @@ bool HumanStatePublisher::open(yarp::os::Searchable& config)
         }
     }
 
-    yarp::os::Bottle* fixedBaseOrientation;
+    yarp::os::Bottle* fixedBaseOrientation = nullptr;
     if (config.check("fixBaseOrientation")) {
         if (config.find("fixBaseOrientation").isList() &&
                 config.find("fixBaseOrientation").asList()->size() == 4) {
@@ -416,6 +416,7 @@ void HumanStatePublisher::run()
                                     pImpl->humanStateBuffers.basePosition[2]);
 
     iDynTree::Vector4  quaternion;
+    quaternion.zero();
     quaternion.setVal(0, pImpl->humanStateBuffers.baseOrientation[0]);
     quaternion.setVal(1, pImpl->humanStateBuffers.baseOrientation[1]);
     quaternion.setVal(2, pImpl->humanStateBuffers.baseOrientation[2]);

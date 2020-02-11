@@ -1318,7 +1318,7 @@ void HumanStateProvider::run()
 
     // Solve Inverse Kinematics and Inverse Velocity Problems
     auto tick = std::chrono::high_resolution_clock::now();
-    bool inverseKinematicsFailure;
+    bool inverseKinematicsFailure = true;
     if (pImpl->ikSolver == SolverIK::pairwised) {
         inverseKinematicsFailure = !(pImpl->solvePairwisedInverseKinematicsSolver());
     }
