@@ -22,6 +22,10 @@
 #include <experimental/filesystem>
 #include <sys/stat.h>
 
+#include <chrono>
+#include <ratio>
+#include <algorithm>
+
 const std::string DeviceName = "HumanDataCollector";
 const std::string LogPrefix = DeviceName + " :";
 constexpr double DefaultPeriod = 0.01;
@@ -112,6 +116,16 @@ public:
     std::string matLogDirectory = "";
     std::string matLogFileName = "matLogFile.mat"; //TODO: Improve file handling for multiple file logging
     mat_t *matFilePtr = nullptr;
+    matvar_t *matDataStruct = nullptr;
+
+    // MATIO Buffers
+    std::chrono::system_clock::time_point startTime;
+    std::chrono::system_clock::time_point currentTime;
+    std::vector<long> matTimeVec;
+    matvar_t *matTime = nullptr;
+
+
+    matvar_t *matStateJointNames;
 
 };
 
@@ -180,6 +194,7 @@ bool HumanDataCollector::close() {
 void HumanDataCollector::run()
 {
     if (pImpl->firstData) {
+
         pImpl->firstData = false;
 
         // =====================================================================
@@ -321,6 +336,9 @@ void HumanDataCollector::run()
         // Initialize  matio logging
         if (pImpl->matioLogger) {
 
+            // Get the start time
+            pImpl->startTime = std::chrono::system_clock::now();
+
             // TODO: Handle multiple files
             std::string matLogFileFullPathName = pImpl->matLogDirectory + pImpl->matLogFileName;
             pImpl->matFilePtr = Mat_CreateVer(matLogFileFullPathName.c_str(), nullptr, MAT_FT_MAT73);
@@ -339,6 +357,20 @@ void HumanDataCollector::run()
     // =========================================================
     // Get data from different interfaces from attached devices
     // =========================================================
+
+    if (pImpl->matioLogger) {
+
+        // Get the current time
+        pImpl->currentTime = std::chrono::system_clock::now();
+
+        // Get the duration from start time to current time
+        std::chrono::duration<long, std::nano> timeDuration = pImpl->currentTime - pImpl->startTime;
+        //yInfo() << LogPrefix << "Duration is " << timeDuration.count();
+
+        // Push back time duration to a vector
+        pImpl->matTimeVec.push_back(timeDuration.count());
+
+    }
 
     // Get data from IHumanState interface of HumanStateProvider
     if (pImpl->isAttached.stateProvider) {
@@ -384,6 +416,11 @@ void HumanDataCollector::run()
         pImpl->dynamicsNumberOfJoints = pImpl->iHumanDynamics->getNumberOfJoints();
         pImpl->dynamicsJointNames = pImpl->iHumanDynamics->getJointNames();
         pImpl->jointTorques = pImpl->iHumanDynamics->getJointTorques();
+
+    }
+
+    // Update interface data to matio buffers
+    if (pImpl->matioLogger) {
 
     }
 
@@ -598,9 +635,56 @@ bool HumanDataCollector::detach()
         stop();
     }
 
-    // Handle matio logger termination
-    // TODO: Save the main data cell array to the mat file before closing
-    Mat_Close(pImpl->matFilePtr);
+    if (pImpl->matioLogger) {
+
+        // Initialize the mat cell
+        size_t matDataStructDims[2] = {1,1};
+        const char *structFieldNames[2] = {"time1", "time2"};
+        pImpl->matDataStruct = Mat_VarCreateStruct("data", 1, matDataStructDims, structFieldNames, 2);
+
+        if (pImpl->matDataStruct == nullptr) {
+            yError() << LogPrefix << "Failed to initialize matio struct variable";
+            Mat_VarFree(pImpl->matDataStruct);
+            Mat_Close(pImpl->matFilePtr);
+            return false;
+        }
+
+        // Handle time vector to mat cell array
+        // Correct the time values stored in the time vector to zero start value
+        std::transform( pImpl->matTimeVec.begin(), pImpl->matTimeVec.end(), pImpl->matTimeVec.begin(), std::bind2nd( std::plus<long>(), -pImpl->matTimeVec.at(0) ) );
+
+        yInfo() << LogPrefix << "Duration vector size is " << pImpl->matTimeVec.size() << " first element is " << pImpl->matTimeVec.at(0);
+
+        long time[pImpl->matTimeVec.size()];
+        std::copy(pImpl->matTimeVec.begin(), pImpl->matTimeVec.end(), time);
+
+        yInfo() << LogPrefix << "Array size is " << sizeof(time)/sizeof(time[0]) << " first element of the array is " << time[0];
+
+        size_t dims[2] {sizeof(time)/sizeof(time[0]),1};
+        pImpl->matTime = Mat_VarCreate(structFieldNames[0], MAT_C_UINT64, MAT_T_UINT64, 2, dims, time, 0);
+        matvar_t *time2 = Mat_VarCreate(structFieldNames[1], MAT_C_UINT64, MAT_T_UINT64, 2, dims, time, 0);
+
+        if (pImpl->matTime == nullptr) {
+            yError() << LogPrefix << "Failed to created a numeric cell array of time variable";
+            Mat_VarFree(pImpl->matTime);
+            Mat_Close(pImpl->matFilePtr);
+            return false;
+        }
+
+        // Pad mat struct with data
+        Mat_VarSetStructFieldByName(pImpl->matDataStruct, structFieldNames[0], 0, pImpl->matTime);
+        Mat_VarSetStructFieldByName(pImpl->matDataStruct, structFieldNames[1], 0, time2);
+
+
+        // Write mat struct to mat file before closing
+        Mat_VarWrite(pImpl->matFilePtr, pImpl->matDataStruct, MAT_COMPRESSION_NONE);
+        Mat_VarFree(pImpl->matDataStruct);
+
+
+        // Close the mat file
+        Mat_Close(pImpl->matFilePtr);
+
+    }
 
     // Moving back a directory above the matLogDirectory
     std::experimental::filesystem::current_path(pImpl->originalWorkingDirectory);
