@@ -25,6 +25,7 @@
 #include <chrono>
 #include <ratio>
 #include <algorithm>
+#include <unordered_map>
 
 const std::string DeviceName = "HumanDataCollector";
 const std::string LogPrefix = DeviceName + " :";
@@ -52,40 +53,60 @@ public:
         bool dynamicsEstimator = false;
     } isAttached;
 
+    // Human data buffer structs
+    struct {
+
+        std::vector<double> time;
+        std::vector<std::string> stateJointNames;
+        std::vector<std::string>  wrenchMeasurementSourceNames;
+        std::vector<std::string> wrenchEstimateSourceNames;
+        std::vector<std::string> dynamicsJointNames;
+        std::unordered_map<std::string, std::vector<std::vector<double>>> data;
+
+    } humanDataStruct;
+
     // Interface data buffers
 
     // Base Quantities
     std::string baseName;
     std::array<double, 3> basePosition;
     std::array<double, 4> baseOrientation;
+    std::array<double, 7> basePoseArray;
+    std::vector<double> basePoseVec;
+
     std::array<double, 6> baseVelocity;
+    std::vector<double> baseVeclocityVec;
 
     // Joint Quantities
     size_t stateNumberOfJoints;
     std::vector<std::string> stateJointNames;
-    std::vector<double> jointPositions;
-    std::vector<double> jointVelocities;
+    std::vector<double> jointPositionsVec;
+    std::vector<double> jointVelocitiesVec;
 
     // CoM Quantities
     std::array<double, 3> comPosition;
+    std::vector<double> comPositionVec;
     std::array<double, 3> comVelocity;
+    std::vector<double> comVelocityVec;
     std::array<double, 6> comProperAccInBaseFrame;
+    std::vector<double> comProperAccInBaseFrameVec;
     std::array<double, 6> comProperAccInWorldFrame;
+    std::vector<double> comProperAccInWorldFrameVec;
 
     // Wrench Measurements
     size_t numberOfWrenchMeasurementSources;
     std::vector<std::string> wrenchMeasurementSourceNames;
-    std::vector<double> wrenchMeasurementValues;
+    std::vector<double> wrenchMeasurementValuesVec;
 
     // Wrench Estimates
     size_t numberOfWrenchEstimateSources;
     std::vector<std::string> wrenchEstimateSourceNames;
-    std::vector<double> wrenchEstimateValues;
+    std::vector<double> wrenchEstimateValuesVec;
 
     // Joint Torques
     size_t dynamicsNumberOfJoints;
     std::vector<std::string> dynamicsJointNames;
-    std::vector<double> jointTorques;
+    std::vector<double> jointTorquesVec;
 
     // Yarp ports for streaming data from IHumanState interface of HumanStateProvider
     yarp::os::BufferedPort<yarp::sig::Vector> basePoseDataPort;
@@ -349,6 +370,40 @@ void HumanDataCollector::run()
                 return;
             }
 
+            // Initialize time vector
+            pImpl->humanDataStruct.time.clear();
+
+            // Initialize human data struct buffers
+            if (pImpl->isAttached.stateProvider) {
+
+                pImpl->humanDataStruct.stateJointNames.clear();
+                pImpl->humanDataStruct.data["basePose"] = std::vector<std::vector<double>>();
+                pImpl->humanDataStruct.data["baseVelocity"] = std::vector<std::vector<double>>();
+
+                pImpl->humanDataStruct.data["comPosition"] = std::vector<std::vector<double>>();
+                pImpl->humanDataStruct.data["comVelocity"] = std::vector<std::vector<double>>();
+                pImpl->humanDataStruct.data["comProperAccelerationInBaseFrame"] = std::vector<std::vector<double>>();
+                pImpl->humanDataStruct.data["comProperAccelerationInWorldFrame"] = std::vector<std::vector<double>>();
+
+                pImpl->humanDataStruct.data["jointPositions"] = std::vector<std::vector<double>>();
+                pImpl->humanDataStruct.data["jointVelocities"] = std::vector<std::vector<double>>();
+            }
+
+            if (pImpl->isAttached.wrenchProvider) {
+
+                pImpl->humanDataStruct.wrenchEstimateSourceNames.clear();
+                pImpl->humanDataStruct.data["wrenchMeasurements"] = std::vector<std::vector<double>>();
+            }
+
+            if (pImpl->isAttached.dynamicsEstimator) {
+
+                pImpl->humanDataStruct.wrenchEstimateSourceNames.clear();
+                pImpl->humanDataStruct.data["wrenchEstimates"] = std::vector<std::vector<double>>();
+
+                pImpl->humanDataStruct.dynamicsJointNames.clear();
+                pImpl->humanDataStruct.data["jointTorques"] = std::vector<std::vector<double>>();
+            }
+
         }
 
     }
@@ -369,6 +424,7 @@ void HumanDataCollector::run()
 
         // Push back time duration to a vector
         pImpl->matTimeVec.push_back(timeDuration.count());
+        pImpl->humanDataStruct.time.push_back(timeDuration.count());
 
     }
 
@@ -384,8 +440,8 @@ void HumanDataCollector::run()
         // Joint Quantities
         pImpl->stateNumberOfJoints = pImpl->iHumanState->getNumberOfJoints();
         pImpl->stateJointNames = pImpl->iHumanState->getJointNames();
-        pImpl->jointPositions = pImpl->iHumanState->getJointPositions();
-        pImpl->jointVelocities = pImpl->iHumanState->getJointVelocities();
+        pImpl->jointPositionsVec = pImpl->iHumanState->getJointPositions();
+        pImpl->jointVelocitiesVec = pImpl->iHumanState->getJointVelocities();
 
         // CoM Quantities
         pImpl->comPosition = pImpl->iHumanState->getCoMPosition();
@@ -400,7 +456,7 @@ void HumanDataCollector::run()
 
         pImpl->numberOfWrenchMeasurementSources = pImpl->iHumanWrenchMeasurements->getNumberOfWrenchSources();
         pImpl->wrenchMeasurementSourceNames = pImpl->iHumanWrenchMeasurements->getWrenchSourceNames();
-        pImpl->wrenchMeasurementValues = pImpl->iHumanWrenchMeasurements->getWrenches();
+        pImpl->wrenchMeasurementValuesVec = pImpl->iHumanWrenchMeasurements->getWrenches();
 
     }    
 
@@ -410,17 +466,93 @@ void HumanDataCollector::run()
         // NOTE: The wrench values coming from HumanDynamicsEstimators are (offsetRemovedWrenchMeasurements & WrenchEstimates) of each link
         pImpl->numberOfWrenchEstimateSources = pImpl->iHumanWrenchEstimates->getNumberOfWrenchSources();
         pImpl->wrenchEstimateSourceNames = pImpl->iHumanWrenchEstimates->getWrenchSourceNames();
-        pImpl->wrenchEstimateValues = pImpl->iHumanWrenchEstimates->getWrenches();
+        pImpl->wrenchEstimateValuesVec = pImpl->iHumanWrenchEstimates->getWrenches();
 
         // Get data from IHumanDynamics interface of HumanDynamicsEstimator
         pImpl->dynamicsNumberOfJoints = pImpl->iHumanDynamics->getNumberOfJoints();
         pImpl->dynamicsJointNames = pImpl->iHumanDynamics->getJointNames();
-        pImpl->jointTorques = pImpl->iHumanDynamics->getJointTorques();
+        pImpl->jointTorquesVec = pImpl->iHumanDynamics->getJointTorques();
+
+    }
+
+    // Prepare buffer vectors
+    // Get base pose array from base position and orientation
+    if (pImpl->isAttached.stateProvider) {
+
+        pImpl->basePoseArray[0] = pImpl->basePosition[0];
+        pImpl->basePoseArray[1] = pImpl->basePosition[1];
+        pImpl->basePoseArray[2] = pImpl->basePosition[2];
+        pImpl->basePoseArray[3] = pImpl->baseOrientation[0];
+        pImpl->basePoseArray[4] = pImpl->baseOrientation[1];
+        pImpl->basePoseArray[5] = pImpl->baseOrientation[2];
+        pImpl->basePoseArray[6] = pImpl->baseOrientation[3];
+
+        pImpl->basePoseVec = std::vector<double>(pImpl->basePoseArray.begin(), pImpl->basePoseArray.end());
+
+        pImpl->baseVeclocityVec = std::vector<double>(pImpl->baseVelocity.begin(), pImpl->baseVelocity.end());
+
+        pImpl->comPositionVec = std::vector<double>(pImpl->comPosition.begin(), pImpl->comPosition.end());
+
+        pImpl->comVelocityVec = std::vector<double>(pImpl->comVelocity.begin(), pImpl->comVelocity.end());
+
+        pImpl->comProperAccInBaseFrameVec = std::vector<double>(pImpl->comProperAccInBaseFrame.begin(), pImpl->comProperAccInBaseFrame.end());
+
+        pImpl->comProperAccInWorldFrameVec = std::vector<double>(pImpl->comProperAccInWorldFrame.begin(), pImpl->comProperAccInWorldFrame.end());
 
     }
 
     // Update interface data to matio buffers
     if (pImpl->matioLogger) {
+
+        if (pImpl->isAttached.stateProvider) {
+
+            // Set state joint names once
+            if (pImpl->humanDataStruct.stateJointNames.empty()) {
+                pImpl->humanDataStruct.stateJointNames = pImpl->stateJointNames;
+            }
+
+
+            pImpl->humanDataStruct.data.at("basePose").push_back(pImpl->basePoseVec);
+            pImpl->humanDataStruct.data.at("baseVelocity").push_back(pImpl->baseVeclocityVec);
+
+            pImpl->humanDataStruct.data.at("comPosition").push_back(pImpl->comPositionVec);
+            pImpl->humanDataStruct.data.at("comVelocity").push_back(pImpl->comVelocityVec);
+            pImpl->humanDataStruct.data.at("comProperAccelerationInBaseFrame").push_back(pImpl->comProperAccInBaseFrameVec);
+            pImpl->humanDataStruct.data.at("comProperAccelerationInWorldFrame").push_back(pImpl->comProperAccInWorldFrameVec);
+
+            pImpl->humanDataStruct.data.at("jointPositions").push_back(pImpl->jointPositionsVec);
+            pImpl->humanDataStruct.data.at("jointVelocities").push_back(pImpl->jointVelocitiesVec);
+
+
+        }
+
+        if (pImpl->isAttached.wrenchProvider) {
+
+            // Set wrench measurements source names once
+            if (pImpl->humanDataStruct.wrenchMeasurementSourceNames.empty()) {
+                pImpl->humanDataStruct.wrenchMeasurementSourceNames = pImpl->wrenchMeasurementSourceNames;
+            }
+
+            pImpl->humanDataStruct.data["wrenchMeasurements"].push_back(pImpl->wrenchMeasurementValuesVec);
+
+        }
+
+        if (pImpl->isAttached.dynamicsEstimator) {
+
+            // Set wrench estimates source names once
+            if (pImpl->humanDataStruct.wrenchEstimateSourceNames.empty()) {
+                pImpl->humanDataStruct.wrenchEstimateSourceNames = pImpl->wrenchEstimateSourceNames;
+            }
+
+            pImpl->humanDataStruct.data["wrenchEstimates"].push_back(pImpl->wrenchEstimateValuesVec);
+
+            // Set dynamics joint names once
+            if (pImpl->humanDataStruct.dynamicsJointNames.empty()) {
+                pImpl->humanDataStruct.dynamicsJointNames = pImpl->dynamicsJointNames;
+            }
+
+            pImpl->humanDataStruct.data["jointTorques"].push_back(pImpl->jointTorquesVec);
+        }
 
     }
 
@@ -432,23 +564,11 @@ void HumanDataCollector::run()
 
         // Prepare base pose data
         yarp::sig::Vector& basePoseYarpVector = pImpl->basePoseDataPort.prepare();
-        std::array<double, 7> basePoseArray = {pImpl->basePosition[0],
-                                               pImpl->basePosition[1],
-                                               pImpl->basePosition[2],
-                                               pImpl->baseOrientation[0],
-                                               pImpl->baseOrientation[1],
-                                               pImpl->baseOrientation[2],
-                                               pImpl->baseOrientation[3]};
-
-
-        std::vector<double> basePoseInputVector(basePoseArray.begin(), basePoseArray.end());
-
-        YarpConversionsHelper::toYarp(basePoseYarpVector, basePoseInputVector);
+        YarpConversionsHelper::toYarp(basePoseYarpVector, pImpl->basePoseVec);
 
         // Prepare base velocity data
-        std::vector<double> baseVelocityInputVector(pImpl->baseVelocity.begin(), pImpl->baseVelocity.end());
         yarp::sig::Vector& baseVelocityYarpVector = pImpl->baseVelocityDataPort.prepare();
-        YarpConversionsHelper::toYarp(baseVelocityYarpVector, baseVelocityInputVector);
+        YarpConversionsHelper::toYarp(baseVelocityYarpVector, pImpl->baseVeclocityVec);
 
         // Prepare stateJointNames
         yarp::os::Bottle& stateJointNamesYarpBottle = pImpl->stateJointNamesDataPort.prepare();
@@ -456,32 +576,28 @@ void HumanDataCollector::run()
 
         // Prepare joint positions
         yarp::sig::Vector& jointPositionsYarpVector = pImpl->jointPositionsDataPort.prepare();
-        YarpConversionsHelper::toYarp(jointPositionsYarpVector, pImpl->jointPositions);
+        YarpConversionsHelper::toYarp(jointPositionsYarpVector, pImpl->jointPositionsVec);
 
         // Prepare joint velocities
         yarp::sig::Vector& jointVelocitiesYarpVector = pImpl->jointVelocitiesDataPort.prepare();
-        YarpConversionsHelper::toYarp(jointVelocitiesYarpVector, pImpl->jointVelocities);
+        YarpConversionsHelper::toYarp(jointVelocitiesYarpVector, pImpl->jointVelocitiesVec);
 
         // Preprare com position
-        std::vector<double> comPositionInputVector(pImpl->comPosition.begin(), pImpl->comPosition.end());
         yarp::sig::Vector& comPositionYarpVector = pImpl->comPositionDataPort.prepare();
-        YarpConversionsHelper::toYarp(comPositionYarpVector, comPositionInputVector);
+        YarpConversionsHelper::toYarp(comPositionYarpVector, pImpl->comPositionVec);
 
         // Preprate com velocity
-        std::vector<double> comVelocityInputVector(pImpl->comVelocity.begin(), pImpl->comVelocity.end());
         yarp::sig::Vector& comVelocityYarpVector = pImpl->comVelocityDataPort.prepare();
-        YarpConversionsHelper::toYarp(comVelocityYarpVector, comVelocityInputVector);
+        YarpConversionsHelper::toYarp(comVelocityYarpVector, pImpl->comVelocityVec);
 
         // Prepare com proper acceleration in base frame
-        std::vector<double> comProperAccelerationInBaseFrameInputVector(pImpl->comProperAccInBaseFrame.begin(), pImpl->comProperAccInBaseFrame.end());
         yarp::sig::Vector& comProperAccelerationInBaseFrameYarpVector = pImpl->comProperAccelerationInBaseFrameDataPort.prepare();
-        YarpConversionsHelper::toYarp(comProperAccelerationInBaseFrameYarpVector, comProperAccelerationInBaseFrameInputVector);
+        YarpConversionsHelper::toYarp(comProperAccelerationInBaseFrameYarpVector, pImpl->comProperAccInBaseFrameVec);
 
 
         // Prepare com proper acceleration in world frame
-        std::vector<double> comProperAccelerationInWorldFrameInputVector(pImpl->comProperAccInWorldFrame.begin(), pImpl->comProperAccInWorldFrame.end());
         yarp::sig::Vector& comProperAccelerationInWorldFrameYarpVector = pImpl->comProperAccelerationInWorldFrameDataPort.prepare();
-        YarpConversionsHelper::toYarp(comProperAccelerationInWorldFrameYarpVector, comProperAccelerationInWorldFrameInputVector);
+        YarpConversionsHelper::toYarp(comProperAccelerationInWorldFrameYarpVector, pImpl->comProperAccInWorldFrameVec);
 
         // Send data through yarp ports
         pImpl->basePoseDataPort.write(true);
@@ -503,7 +619,7 @@ void HumanDataCollector::run()
 
         // Prepare wrench measurement values data
         yarp::sig::Vector& wrenchMeasurementValuesYarpVector = pImpl->wrenchMeasurementValuesDataPort.prepare();
-        YarpConversionsHelper::toYarp(wrenchMeasurementValuesYarpVector, pImpl->wrenchMeasurementValues);
+        YarpConversionsHelper::toYarp(wrenchMeasurementValuesYarpVector, pImpl->wrenchMeasurementValuesVec);
 
         // Send data through yarp ports
         pImpl->wrenchMeasurementSourceNamesDataPort.write(true);
@@ -518,7 +634,7 @@ void HumanDataCollector::run()
 
         // Prepare wrench estimate values data
         yarp::sig::Vector& wrenchEstimateValuesYarpVector = pImpl->wrenchEstimateValuesDataPort.prepare();
-        YarpConversionsHelper::toYarp(wrenchEstimateValuesYarpVector, pImpl->wrenchEstimateValues);
+        YarpConversionsHelper::toYarp(wrenchEstimateValuesYarpVector, pImpl->wrenchEstimateValuesVec);
 
         // Prepare dynamics joint names data
         yarp::os::Bottle& dynamicsJointNamesYarpBottle = pImpl->dynamicsJointNamesDataPort.prepare();
@@ -526,7 +642,7 @@ void HumanDataCollector::run()
 
         // Prepare joint torques data
         yarp::sig::Vector& jointTorqesYarpVector = pImpl->jointTorquesDataPort.prepare();
-        YarpConversionsHelper::toYarp(jointTorqesYarpVector, pImpl->jointTorques);
+        YarpConversionsHelper::toYarp(jointTorqesYarpVector, pImpl->jointTorquesVec);
 
         // Send data through yarp ports
         pImpl->wrenchEstimateSourceNamesDataPort.write(true);
