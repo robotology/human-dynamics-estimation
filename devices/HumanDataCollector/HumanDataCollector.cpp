@@ -33,6 +33,44 @@ constexpr double DefaultPeriod = 0.01;
 
 using namespace hde::devices;
 
+void writeVectorOfStringToMat(const std::string name, const std::vector<std::string>& strings, mat_t* mat)
+{
+    if (strings.empty()) {
+        yError() << LogPrefix << "Passed string is empty";
+        return;
+    }
+
+    size_t dims[2] = {strings.size(), 1};
+    matvar_t* cell_array = Mat_VarCreate(name.c_str(), MAT_C_CELL, MAT_T_CELL, 2, dims, nullptr, 0);
+
+    if (cell_array == nullptr) {
+        yError() << LogPrefix << "Failed to create mat cell array " << name;
+        Mat_VarFree(cell_array);
+        Mat_Close(mat);
+        return;
+    }
+
+    for(size_t i = 0 ; i < strings.size(); i++)
+    {
+        std::string stringToWrite = strings[i];
+
+        size_t stringDim[2] = { 1, stringToWrite.size() };
+        matvar_t *cell_element = Mat_VarCreate("dummy", MAT_C_CHAR, MAT_T_UTF8, 2, stringDim, const_cast<char *>(stringToWrite.c_str()), 0);
+
+        if (cell_element == nullptr) {
+            yError() << LogPrefix << "Failed to create mat cell element";
+            Mat_VarFree(cell_array);
+            Mat_Close(mat);
+            return;
+        }
+
+        Mat_VarSetCell(cell_array, i, cell_element);
+    }
+
+    Mat_VarWrite(mat, cell_array, MAT_COMPRESSION_NONE);
+    Mat_VarFree(cell_array);
+}
+
 
 class HumanDataCollector::impl
 {
@@ -469,7 +507,7 @@ void HumanDataCollector::run()
     }
 
     // Prepare buffer vectors
-    // Get base pose array from base position and orientation
+    // Handle arrays to vectors
     if (pImpl->isAttached.stateProvider) {
 
         pImpl->basePoseArray[0] = pImpl->basePosition[0];
@@ -747,17 +785,17 @@ bool HumanDataCollector::detach()
     if (pImpl->matioLogger) {
 
         // Initialize the mat struct
-        size_t matDataStructDims[2] = {1,1};
+        size_t matDataStructDims[2] = {1, 1};
+
+        // Set the string variables as cell arrays
+        writeVectorOfStringToMat("stateJointNames", pImpl->humanDataStruct.stateJointNames, pImpl->matFilePtr);
+        writeVectorOfStringToMat("wrenchMeasurementSourceNames", pImpl->humanDataStruct.wrenchMeasurementSourceNames, pImpl->matFilePtr);
+        writeVectorOfStringToMat("wrenchEstimateSourceNames", pImpl->humanDataStruct.wrenchEstimateSourceNames, pImpl->matFilePtr);
+        writeVectorOfStringToMat("dynamicsJointNames", pImpl->humanDataStruct.dynamicsJointNames, pImpl->matFilePtr);
 
         // Set the mat struct field names
-
-        // Handle individual filed names
         std::vector<std::string> matStructFieldNamesVec;
         matStructFieldNamesVec.push_back("time");
-        matStructFieldNamesVec.push_back("stateJointNames");
-        matStructFieldNamesVec.push_back("wrenchMeasurementSourceNames");
-        matStructFieldNamesVec.push_back("wrenchEstimateSourceNames");
-        matStructFieldNamesVec.push_back("dynamicsJointNames");
 
         for (std::unordered_map<std::string, std::vector<std::vector<double>>>::iterator it = pImpl->humanDataStruct.data.begin(); it != pImpl->humanDataStruct.data.end(); it++) {
             matStructFieldNamesVec.push_back(it->first);
@@ -782,16 +820,13 @@ bool HumanDataCollector::detach()
         // Correct the time values stored in the time vector to zero start value
         std::transform( pImpl->humanDataStruct.time.begin(), pImpl->humanDataStruct.time.end(), pImpl->humanDataStruct.time.begin(), std::bind2nd( std::plus<long>(), -pImpl->humanDataStruct.time.at(0) ) );
 
-        yInfo() << LogPrefix << "Duration vector size is " << pImpl->humanDataStruct.time.size() << " first element is " << pImpl->humanDataStruct.time.at(0);
-
+        // Create an array with time elements
         long time[pImpl->humanDataStruct.time.size()];
         std::copy(pImpl->humanDataStruct.time.begin(), pImpl->humanDataStruct.time.end(), time);
 
-        yInfo() << LogPrefix << "Array size is " << sizeof(time)/sizeof(time[0]) << " first element of the array is " << time[0];
-
-        size_t dims[2] {sizeof(time)/sizeof(time[0]),1};
-        matvar_t *matTime = Mat_VarCreate(fieldNames[0], MAT_C_UINT64, MAT_T_UINT64, 2, dims, time, 0);
-        matvar_t *time2 = Mat_VarCreate(fieldNames[1], MAT_C_UINT64, MAT_T_UINT64, 2, dims, time, 0);
+        // Create mat variable with time array
+        size_t timeDims[2] {sizeof(time)/sizeof(time[0]), 1};
+        matvar_t *matTime = Mat_VarCreate(fieldNames[0], MAT_C_UINT64, MAT_T_UINT64, 2, timeDims, time, 0);
 
         if (matTime == nullptr) {
             yError() << LogPrefix << "Failed to created a numeric cell array of time variable";
@@ -800,15 +835,17 @@ bool HumanDataCollector::detach()
             return false;
         }
 
-        // Pad mat struct with data
+        // Pad mat struct with time data
         Mat_VarSetStructFieldByName(pImpl->matDataStruct, fieldNames[0], 0, matTime);
-        Mat_VarSetStructFieldByName(pImpl->matDataStruct, fieldNames[1], 0, time2);
 
+        // TODO: Remove this dummy variable
+        matvar_t *time2 = Mat_VarCreate(fieldNames[1], MAT_C_UINT64, MAT_T_UINT64, 2, timeDims, time, 0);
+
+        Mat_VarSetStructFieldByName(pImpl->matDataStruct, fieldNames[2], 0, time2);
 
         // Write mat struct to mat file before closing
         Mat_VarWrite(pImpl->matFilePtr, pImpl->matDataStruct, MAT_COMPRESSION_NONE);
         Mat_VarFree(pImpl->matDataStruct);
-
 
         // Close the mat file
         Mat_Close(pImpl->matFilePtr);
