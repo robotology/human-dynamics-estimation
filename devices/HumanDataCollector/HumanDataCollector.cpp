@@ -139,15 +139,9 @@ public:
     mat_t *matFilePtr = nullptr;
     matvar_t *matDataStruct = nullptr;
 
-    // MATIO Buffers
+    // Time Buffers
     std::chrono::system_clock::time_point startTime;
     std::chrono::system_clock::time_point currentTime;
-    std::vector<long> matTimeVec;
-    matvar_t *matTime = nullptr;
-
-
-    matvar_t *matStateJointNames;
-
 };
 
 HumanDataCollector::HumanDataCollector()
@@ -423,7 +417,6 @@ void HumanDataCollector::run()
         //yInfo() << LogPrefix << "Duration is " << timeDuration.count();
 
         // Push back time duration to a vector
-        pImpl->matTimeVec.push_back(timeDuration.count());
         pImpl->humanDataStruct.time.push_back(timeDuration.count());
 
     }
@@ -753,10 +746,31 @@ bool HumanDataCollector::detach()
 
     if (pImpl->matioLogger) {
 
-        // Initialize the mat cell
+        // Initialize the mat struct
         size_t matDataStructDims[2] = {1,1};
-        const char *structFieldNames[2] = {"time1", "time2"};
-        pImpl->matDataStruct = Mat_VarCreateStruct("data", 1, matDataStructDims, structFieldNames, 2);
+
+        // Set the mat struct field names
+
+        // Handle individual filed names
+        std::vector<std::string> matStructFieldNamesVec;
+        matStructFieldNamesVec.push_back("time");
+        matStructFieldNamesVec.push_back("stateJointNames");
+        matStructFieldNamesVec.push_back("wrenchMeasurementSourceNames");
+        matStructFieldNamesVec.push_back("wrenchEstimateSourceNames");
+        matStructFieldNamesVec.push_back("dynamicsJointNames");
+
+        for (std::unordered_map<std::string, std::vector<std::vector<double>>>::iterator it = pImpl->humanDataStruct.data.begin(); it != pImpl->humanDataStruct.data.end(); it++) {
+            matStructFieldNamesVec.push_back(it->first);
+        }
+
+        // Construct vector of character pointers to field names
+        std::vector<const char*> fieldNames;
+        for (size_t i = 0; i < matStructFieldNamesVec.size(); i++) {
+            fieldNames.push_back(matStructFieldNamesVec[i].c_str());
+        }
+
+        // Initialize mat struct variabel
+        pImpl->matDataStruct = Mat_VarCreateStruct("data", 1, matDataStructDims, fieldNames.data(), matStructFieldNamesVec.size());
 
         if (pImpl->matDataStruct == nullptr) {
             yError() << LogPrefix << "Failed to initialize matio struct variable";
@@ -765,31 +779,30 @@ bool HumanDataCollector::detach()
             return false;
         }
 
-        // Handle time vector to mat cell array
         // Correct the time values stored in the time vector to zero start value
-        std::transform( pImpl->matTimeVec.begin(), pImpl->matTimeVec.end(), pImpl->matTimeVec.begin(), std::bind2nd( std::plus<long>(), -pImpl->matTimeVec.at(0) ) );
+        std::transform( pImpl->humanDataStruct.time.begin(), pImpl->humanDataStruct.time.end(), pImpl->humanDataStruct.time.begin(), std::bind2nd( std::plus<long>(), -pImpl->humanDataStruct.time.at(0) ) );
 
-        yInfo() << LogPrefix << "Duration vector size is " << pImpl->matTimeVec.size() << " first element is " << pImpl->matTimeVec.at(0);
+        yInfo() << LogPrefix << "Duration vector size is " << pImpl->humanDataStruct.time.size() << " first element is " << pImpl->humanDataStruct.time.at(0);
 
-        long time[pImpl->matTimeVec.size()];
-        std::copy(pImpl->matTimeVec.begin(), pImpl->matTimeVec.end(), time);
+        long time[pImpl->humanDataStruct.time.size()];
+        std::copy(pImpl->humanDataStruct.time.begin(), pImpl->humanDataStruct.time.end(), time);
 
         yInfo() << LogPrefix << "Array size is " << sizeof(time)/sizeof(time[0]) << " first element of the array is " << time[0];
 
         size_t dims[2] {sizeof(time)/sizeof(time[0]),1};
-        pImpl->matTime = Mat_VarCreate(structFieldNames[0], MAT_C_UINT64, MAT_T_UINT64, 2, dims, time, 0);
-        matvar_t *time2 = Mat_VarCreate(structFieldNames[1], MAT_C_UINT64, MAT_T_UINT64, 2, dims, time, 0);
+        matvar_t *matTime = Mat_VarCreate(fieldNames[0], MAT_C_UINT64, MAT_T_UINT64, 2, dims, time, 0);
+        matvar_t *time2 = Mat_VarCreate(fieldNames[1], MAT_C_UINT64, MAT_T_UINT64, 2, dims, time, 0);
 
-        if (pImpl->matTime == nullptr) {
+        if (matTime == nullptr) {
             yError() << LogPrefix << "Failed to created a numeric cell array of time variable";
-            Mat_VarFree(pImpl->matTime);
+            Mat_VarFree(matTime);
             Mat_Close(pImpl->matFilePtr);
             return false;
         }
 
         // Pad mat struct with data
-        Mat_VarSetStructFieldByName(pImpl->matDataStruct, structFieldNames[0], 0, pImpl->matTime);
-        Mat_VarSetStructFieldByName(pImpl->matDataStruct, structFieldNames[1], 0, time2);
+        Mat_VarSetStructFieldByName(pImpl->matDataStruct, fieldNames[0], 0, matTime);
+        Mat_VarSetStructFieldByName(pImpl->matDataStruct, fieldNames[1], 0, time2);
 
 
         // Write mat struct to mat file before closing
