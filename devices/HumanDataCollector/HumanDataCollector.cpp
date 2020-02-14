@@ -94,7 +94,7 @@ public:
     // Human data buffer structs
     struct {
 
-        std::vector<double> time;
+        std::vector<long> time;
         std::vector<std::string> stateJointNames;
         std::vector<std::string>  wrenchMeasurementSourceNames;
         std::vector<std::string> wrenchEstimateSourceNames;
@@ -404,6 +404,7 @@ void HumanDataCollector::run()
 
             // Initialize time vector
             pImpl->humanDataStruct.time.clear();
+            pImpl->humanDataStruct.data["time"] = std::vector<std::vector<double>>();
 
             // Initialize human data struct buffers
             if (pImpl->isAttached.stateProvider) {
@@ -452,7 +453,6 @@ void HumanDataCollector::run()
 
         // Get the duration from start time to current time
         std::chrono::duration<long, std::nano> timeDuration = pImpl->currentTime - pImpl->startTime;
-        //yInfo() << LogPrefix << "Duration is " << timeDuration.count();
 
         // Push back time duration to a vector
         pImpl->humanDataStruct.time.push_back(timeDuration.count());
@@ -784,18 +784,17 @@ bool HumanDataCollector::detach()
 
     if (pImpl->matioLogger) {
 
-        // Initialize the mat struct
-        size_t matDataStructDims[2] = {1, 1};
-
-        // Set the string variables as cell arrays
+        // Set the string variables elements as cell arrays to mat cell variables
         writeVectorOfStringToMat("stateJointNames", pImpl->humanDataStruct.stateJointNames, pImpl->matFilePtr);
         writeVectorOfStringToMat("wrenchMeasurementSourceNames", pImpl->humanDataStruct.wrenchMeasurementSourceNames, pImpl->matFilePtr);
         writeVectorOfStringToMat("wrenchEstimateSourceNames", pImpl->humanDataStruct.wrenchEstimateSourceNames, pImpl->matFilePtr);
         writeVectorOfStringToMat("dynamicsJointNames", pImpl->humanDataStruct.dynamicsJointNames, pImpl->matFilePtr);
 
+        // Initialize the mat struct
+        size_t matDataStructDims[2] = {1, 1};
+
         // Set the mat struct field names
         std::vector<std::string> matStructFieldNamesVec;
-        matStructFieldNamesVec.push_back("time");
 
         for (std::unordered_map<std::string, std::vector<std::vector<double>>>::iterator it = pImpl->humanDataStruct.data.begin(); it != pImpl->humanDataStruct.data.end(); it++) {
             matStructFieldNamesVec.push_back(it->first);
@@ -818,11 +817,20 @@ bool HumanDataCollector::detach()
         }
 
         // Correct the time values stored in the time vector to zero start value
-        std::transform( pImpl->humanDataStruct.time.begin(), pImpl->humanDataStruct.time.end(), pImpl->humanDataStruct.time.begin(), std::bind2nd( std::plus<long>(), -pImpl->humanDataStruct.time.at(0) ) );
+        std::transform( pImpl->humanDataStruct.time.begin(), pImpl->humanDataStruct.time.end(), pImpl->humanDataStruct.time.begin(), std::bind2nd( std::plus<long>(), - pImpl->humanDataStruct.time.at(0) ) );
 
         // Create an array with time elements
         long time[pImpl->humanDataStruct.time.size()];
         std::copy(pImpl->humanDataStruct.time.begin(), pImpl->humanDataStruct.time.end(), time);
+
+        for (long timeCount : pImpl->humanDataStruct.time) {
+
+            //TODO: Double check the long double conversion handling
+            std::vector<double> count;
+            count.push_back(timeCount);
+            pImpl->humanDataStruct.data.at("time").push_back(count);
+
+        }
 
         // Create mat variable with time array
         size_t timeDims[2] {sizeof(time)/sizeof(time[0]), 1};
