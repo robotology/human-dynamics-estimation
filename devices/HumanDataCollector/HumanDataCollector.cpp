@@ -25,6 +25,7 @@
 #include <chrono>
 #include <ratio>
 #include <algorithm>
+#include <utility>
 #include <unordered_map>
 
 const std::string DeviceName = "HumanDataCollector";
@@ -33,7 +34,7 @@ constexpr double DefaultPeriod = 0.01;
 
 using namespace hde::devices;
 
-void writeVectorOfStringToMat(const std::string name, const std::vector<std::string>& strings, mat_t* mat)
+void writeVectorOfStringToMatCell(const std::string name, const std::vector<std::string>& strings, mat_t* matFile)
 {
     if (strings.empty()) {
         yError() << LogPrefix << "Passed string is empty";
@@ -41,12 +42,12 @@ void writeVectorOfStringToMat(const std::string name, const std::vector<std::str
     }
 
     size_t dims[2] = {strings.size(), 1};
-    matvar_t* cell_array = Mat_VarCreate(name.c_str(), MAT_C_CELL, MAT_T_CELL, 2, dims, nullptr, 0);
+    matvar_t* matCellArray = Mat_VarCreate(name.c_str(), MAT_C_CELL, MAT_T_CELL, 2, dims, nullptr, 0);
 
-    if (cell_array == nullptr) {
+    if (matCellArray == nullptr) {
         yError() << LogPrefix << "Failed to create mat cell array " << name;
-        Mat_VarFree(cell_array);
-        Mat_Close(mat);
+        Mat_VarFree(matCellArray);
+        Mat_Close(matFile);
         return;
     }
 
@@ -55,20 +56,99 @@ void writeVectorOfStringToMat(const std::string name, const std::vector<std::str
         std::string stringToWrite = strings[i];
 
         size_t stringDim[2] = { 1, stringToWrite.size() };
-        matvar_t *cell_element = Mat_VarCreate("dummy", MAT_C_CHAR, MAT_T_UTF8, 2, stringDim, const_cast<char *>(stringToWrite.c_str()), 0);
+        matvar_t *matCellElement = Mat_VarCreate("dummy", MAT_C_CHAR, MAT_T_UTF8, 2, stringDim, const_cast<char *>(stringToWrite.c_str()), 0);
 
-        if (cell_element == nullptr) {
+        if (matCellElement == nullptr) {
             yError() << LogPrefix << "Failed to create mat cell element";
-            Mat_VarFree(cell_array);
-            Mat_Close(mat);
+            Mat_VarFree(matCellElement);
+            Mat_VarFree(matCellArray);
+            Mat_Close(matFile);
             return;
         }
 
-        Mat_VarSetCell(cell_array, i, cell_element);
+        Mat_VarSetCell(matCellArray, i, matCellElement);
     }
 
-    Mat_VarWrite(mat, cell_array, MAT_COMPRESSION_NONE);
-    Mat_VarFree(cell_array);
+    Mat_VarWrite(matFile, matCellArray, MAT_COMPRESSION_NONE);
+    Mat_VarFree(matCellArray);
+}
+
+void writeVectorOfVectorDoubleToMatStruct(const std::unordered_map<std::string, std::vector<std::vector<double>>>& humanData, mat_t* matFile) {
+
+    yInfo() << LogPrefix << "Inside writeVectorOfVectorDoubleToMatStruct";
+
+    // Set the mat struct field names
+    std::vector<std::string> matStructFieldNamesVec;
+
+    for (const std::pair<std::string, std::vector<std::vector<double>>> pair : humanData) {
+        matStructFieldNamesVec.push_back(pair.first);
+    }
+
+    // Construct vector of character pointers to field names
+    std::vector<const char*> fieldNames;
+    for (size_t i = 0; i < matStructFieldNamesVec.size(); i++) {
+        fieldNames.push_back(matStructFieldNamesVec[i].c_str());
+    }
+
+    // Set mat struct dimensions
+    size_t matDataStructDims[2] = {1, 1};
+
+    // Initialize mat struct variable
+     matvar_t *matDataStruct = Mat_VarCreateStruct("data", 1, matDataStructDims, fieldNames.data(), matStructFieldNamesVec.size());
+
+    if (matDataStruct == nullptr) {
+        yError() << LogPrefix << "Failed to initialize matio struct variable";
+        Mat_VarFree(matDataStruct);
+        Mat_Close(matFile);
+        return;
+    }
+
+    // Iterate over human data and set to numeric arrays of mat struct
+    // TODO: Seg fault occurs during this loop - to be fixed
+    for (const std::pair<std::string, std::vector<std::vector<double>>> pair : humanData) {
+
+        const size_t rows = pair.second.size();
+        const size_t cols = pair.second.at(0).size(); // Assuming same number of elements in the vector
+        yInfo() << LogPrefix << "map variable " << pair.first.c_str() << " rows : " << rows << " cols : " << cols;
+        double array2d[rows][cols];
+
+        yInfo() << LogPrefix << "Size of " << pair.first.c_str() << " array2d " << sizeof (array2d);
+
+        for (size_t r = 0; r < rows; r++) {
+            for (size_t c = 0; c < cols; c++) {
+                array2d[r][c] = pair.second[r].at(c);
+            }
+        }
+
+//        ////
+//        std::vector<double> row = pair.second[0];
+//        double* data = row.data();
+//        ////
+
+        // Create a mat variable for 2d numeric array
+        // NOTE: rows and cols are reversed from the regular array
+        size_t dims[2] = {cols, rows};
+        matvar_t *mat2darray = Mat_VarCreate(pair.first.c_str(), MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &array2d, 0);
+
+        if (mat2darray == nullptr) {
+            yError() << LogPrefix << "Failed to create a 2d numeric array to store in the mat struct variable";
+            Mat_VarFree(mat2darray);
+            Mat_VarFree(matDataStruct);
+            Mat_Close(matFile);
+            return;
+        }
+
+        // Set the 2d numeric array to the mat struct variable
+        Mat_VarSetStructFieldByName(matDataStruct, pair.first.c_str(), 0, mat2darray);
+
+    }
+
+    // Write mat struct to mat file before closing
+    Mat_VarWrite(matFile, matDataStruct, MAT_COMPRESSION_NONE);
+    Mat_VarFree(matDataStruct);
+
+    yInfo() << LogPrefix << "Finished writing mat struct to the mat file";
+
 }
 
 
@@ -175,7 +255,6 @@ public:
     std::string matLogDirectory = "";
     std::string matLogFileName = "matLogFile.mat"; //TODO: Improve file handling for multiple file logging
     mat_t *matFilePtr = nullptr;
-    matvar_t *matDataStruct = nullptr;
 
     // Time Buffers
     std::chrono::system_clock::time_point startTime;
@@ -785,36 +864,10 @@ bool HumanDataCollector::detach()
     if (pImpl->matioLogger) {
 
         // Set the string variables elements as cell arrays to mat cell variables
-        writeVectorOfStringToMat("stateJointNames", pImpl->humanDataStruct.stateJointNames, pImpl->matFilePtr);
-        writeVectorOfStringToMat("wrenchMeasurementSourceNames", pImpl->humanDataStruct.wrenchMeasurementSourceNames, pImpl->matFilePtr);
-        writeVectorOfStringToMat("wrenchEstimateSourceNames", pImpl->humanDataStruct.wrenchEstimateSourceNames, pImpl->matFilePtr);
-        writeVectorOfStringToMat("dynamicsJointNames", pImpl->humanDataStruct.dynamicsJointNames, pImpl->matFilePtr);
-
-        // Initialize the mat struct
-        size_t matDataStructDims[2] = {1, 1};
-
-        // Set the mat struct field names
-        std::vector<std::string> matStructFieldNamesVec;
-
-        for (std::unordered_map<std::string, std::vector<std::vector<double>>>::iterator it = pImpl->humanDataStruct.data.begin(); it != pImpl->humanDataStruct.data.end(); it++) {
-            matStructFieldNamesVec.push_back(it->first);
-        }
-
-        // Construct vector of character pointers to field names
-        std::vector<const char*> fieldNames;
-        for (size_t i = 0; i < matStructFieldNamesVec.size(); i++) {
-            fieldNames.push_back(matStructFieldNamesVec[i].c_str());
-        }
-
-        // Initialize mat struct variabel
-        pImpl->matDataStruct = Mat_VarCreateStruct("data", 1, matDataStructDims, fieldNames.data(), matStructFieldNamesVec.size());
-
-        if (pImpl->matDataStruct == nullptr) {
-            yError() << LogPrefix << "Failed to initialize matio struct variable";
-            Mat_VarFree(pImpl->matDataStruct);
-            Mat_Close(pImpl->matFilePtr);
-            return false;
-        }
+        writeVectorOfStringToMatCell("stateJointNames", pImpl->humanDataStruct.stateJointNames, pImpl->matFilePtr);
+        writeVectorOfStringToMatCell("wrenchMeasurementSourceNames", pImpl->humanDataStruct.wrenchMeasurementSourceNames, pImpl->matFilePtr);
+        writeVectorOfStringToMatCell("wrenchEstimateSourceNames", pImpl->humanDataStruct.wrenchEstimateSourceNames, pImpl->matFilePtr);
+        writeVectorOfStringToMatCell("dynamicsJointNames", pImpl->humanDataStruct.dynamicsJointNames, pImpl->matFilePtr);
 
         // Correct the time values stored in the time vector to zero start value
         std::transform( pImpl->humanDataStruct.time.begin(), pImpl->humanDataStruct.time.end(), pImpl->humanDataStruct.time.begin(), std::bind2nd( std::plus<long>(), - pImpl->humanDataStruct.time.at(0) ) );
@@ -832,31 +885,15 @@ bool HumanDataCollector::detach()
 
         }
 
-        // Create mat variable with time array
-        size_t timeDims[2] {sizeof(time)/sizeof(time[0]), 1};
-        matvar_t *matTime = Mat_VarCreate(fieldNames[0], MAT_C_UINT64, MAT_T_UINT64, 2, timeDims, time, 0);
-
-        if (matTime == nullptr) {
-            yError() << LogPrefix << "Failed to created a numeric cell array of time variable";
-            Mat_VarFree(matTime);
-            Mat_Close(pImpl->matFilePtr);
-            return false;
-        }
-
-        // Pad mat struct with time data
-        Mat_VarSetStructFieldByName(pImpl->matDataStruct, fieldNames[0], 0, matTime);
-
-        // TODO: Remove this dummy variable
-        matvar_t *time2 = Mat_VarCreate(fieldNames[1], MAT_C_UINT64, MAT_T_UINT64, 2, timeDims, time, 0);
-
-        Mat_VarSetStructFieldByName(pImpl->matDataStruct, fieldNames[2], 0, time2);
-
-        // Write mat struct to mat file before closing
-        Mat_VarWrite(pImpl->matFilePtr, pImpl->matDataStruct, MAT_COMPRESSION_NONE);
-        Mat_VarFree(pImpl->matDataStruct);
+        // Set human data to mat struct
+        writeVectorOfVectorDoubleToMatStruct(pImpl->humanDataStruct.data, pImpl->matFilePtr);
 
         // Close the mat file
         Mat_Close(pImpl->matFilePtr);
+
+        yInfo() << LogPrefix << "Closed mat file";
+
+        pImpl->matFilePtr = nullptr;
 
     }
 
