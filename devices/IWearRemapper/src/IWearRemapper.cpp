@@ -345,6 +345,8 @@ void IWearRemapper::threadRelease()
 
 bool IWearRemapper::close()
 {
+    pImpl->terminationCall = true;
+
     while(isRunning()) {
         stop();
     }
