@@ -75,8 +75,6 @@ void writeVectorOfStringToMatCell(const std::string name, const std::vector<std:
 
 void writeVectorOfVectorDoubleToMatStruct(const std::unordered_map<std::string, std::vector<std::vector<double>>>& humanData, mat_t* matFile) {
 
-    yInfo() << LogPrefix << "Inside writeVectorOfVectorDoubleToMatStruct";
-
     // Set the mat struct field names
     std::vector<std::string> matStructFieldNamesVec;
 
@@ -104,31 +102,24 @@ void writeVectorOfVectorDoubleToMatStruct(const std::unordered_map<std::string, 
     }
 
     // Iterate over human data and set to numeric arrays of mat struct
-    // TODO: Seg fault occurs during this loop - to be fixed
     for (const std::pair<std::string, std::vector<std::vector<double>>> pair : humanData) {
 
         const size_t rows = pair.second.size();
         const size_t cols = pair.second.at(0).size(); // Assuming same number of elements in the vector
-        yInfo() << LogPrefix << "map variable " << pair.first.c_str() << " rows : " << rows << " cols : " << cols;
-        double array2d[rows][cols];
 
-        yInfo() << LogPrefix << "Size of " << pair.first.c_str() << " array2d " << sizeof (array2d);
+        std::vector<double> values;
 
+        // TODO: Check if this can be improved through STL
         for (size_t r = 0; r < rows; r++) {
             for (size_t c = 0; c < cols; c++) {
-                array2d[r][c] = pair.second[r].at(c);
+                values.push_back(pair.second[r].at(c));
             }
         }
 
-//        ////
-//        std::vector<double> row = pair.second[0];
-//        double* data = row.data();
-//        ////
-
         // Create a mat variable for 2d numeric array
-        // NOTE: rows and cols are reversed from the regular array
+        // NOTE: rows and cols are reversed from the regular array because mat variables are column major
         size_t dims[2] = {cols, rows};
-        matvar_t *mat2darray = Mat_VarCreate(pair.first.c_str(), MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &array2d, 0);
+        matvar_t *mat2darray = Mat_VarCreate(pair.first.c_str(), MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, values.data(), 0);
 
         if (mat2darray == nullptr) {
             yError() << LogPrefix << "Failed to create a 2d numeric array to store in the mat struct variable";
@@ -147,7 +138,7 @@ void writeVectorOfVectorDoubleToMatStruct(const std::unordered_map<std::string, 
     Mat_VarWrite(matFile, matDataStruct, MAT_COMPRESSION_NONE);
     Mat_VarFree(matDataStruct);
 
-    yInfo() << LogPrefix << "Finished writing mat struct to the mat file";
+    yDebug() << LogPrefix << "Finished writing mat struct to the mat file";
 
 }
 
@@ -891,7 +882,7 @@ bool HumanDataCollector::detach()
         // Close the mat file
         Mat_Close(pImpl->matFilePtr);
 
-        yInfo() << LogPrefix << "Closed mat file";
+        yDebug() << LogPrefix << "Closed mat file";
 
         pImpl->matFilePtr = nullptr;
 
