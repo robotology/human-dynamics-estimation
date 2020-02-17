@@ -23,7 +23,7 @@ target_include_directories(XsensTFPublisher PRIVATE
 target_link_libraries(XsensTFPublisher PRIVATE
     HumanROSMsgs
     IWear::IWear
-    YARP::YARP_OS
+    YARP::YARP_os
     YARP::YARP_dev
     YARP::YARP_init
     YARP::YARP_math

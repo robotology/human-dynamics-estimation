@@ -24,7 +24,7 @@ add_definitions(-D_USE_MATH_DEFINES)
 target_link_libraries(HumanControlBoard PUBLIC
     IHumanState
     IHumanDynamics
-    YARP::YARP_OS
+    YARP::YARP_os
     YARP::YARP_dev
     YARP::YARP_init
     iDynTree::idyntree-model

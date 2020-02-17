@@ -19,7 +19,7 @@ target_include_directories(HumanDynamicsWrapper PUBLIC
 target_link_libraries(HumanDynamicsWrapper PUBLIC
     IHumanDynamics
     HumanDynamicsMsg
-    YARP::YARP_OS
+    YARP::YARP_os
     YARP::YARP_dev
     YARP::YARP_init)
 

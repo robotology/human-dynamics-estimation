@@ -23,7 +23,7 @@ target_link_libraries(HumanDataCollector PUBLIC
     UtilityLibrary
     matio
     stdc++fs
-    YARP::YARP_OS
+    YARP::YARP_os
     YARP::YARP_dev
     YARP::YARP_init)
 

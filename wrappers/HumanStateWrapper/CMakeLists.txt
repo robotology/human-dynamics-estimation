@@ -19,7 +19,7 @@ target_include_directories(HumanStateWrapper PUBLIC
 target_link_libraries(HumanStateWrapper PUBLIC
     IHumanState
     HumanStateMsg
-    YARP::YARP_OS
+    YARP::YARP_os
     YARP::YARP_dev
     YARP::YARP_init)
 
