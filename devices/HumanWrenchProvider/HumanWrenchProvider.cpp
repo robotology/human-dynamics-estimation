@@ -78,7 +78,7 @@ public:
 
     AnalogSensorData analogSensorData;
     std::vector<WrenchSourceData> wrenchSources;
-    std::map<std::string, WrenchSourceType> wrenchSourceNameAndTypeMap;
+    std::vector<std::pair<std::string, WrenchSourceType>> wrenchSourceNameAndType;
 
     // Human variables
     iDynTree::Model humanModel;
@@ -486,12 +486,10 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
         pImpl->wrenchSources.emplace_back(std::move(WrenchSourceData));
     }
 
-    // Update wrenchSourceNameAndType map once
+    // Update wrenchSourceNameAndType once
     for (auto& wrenchSource : pImpl->wrenchSources) {
-        pImpl->wrenchSourceNameAndTypeMap[wrenchSource.name] = wrenchSource.type;
+        pImpl->wrenchSourceNameAndType.push_back(std::pair<std::string, WrenchSourceType>(wrenchSource.name, wrenchSource.type));
     }
-
-    yInfo() << LogPrefix << "Size of map" << pImpl->wrenchSourceNameAndTypeMap.size();
 
     return true;
 }
@@ -947,10 +945,10 @@ int HumanWrenchProvider::calibrateChannel(int /*ch*/, double /*value*/)
 // IHumanWrench
 // ============
 
-std::map<std::string, hde::interfaces::IHumanWrench::WrenchSourceType> HumanWrenchProvider::getWrenchSourceNameAndTypeMap() const
+std::vector<std::pair<std::string, hde::interfaces::IHumanWrench::WrenchSourceType>> HumanWrenchProvider::getWrenchSourceNameAndType() const
 {
     std::lock_guard<std::mutex> lock(pImpl->mutex);
-    return pImpl->wrenchSourceNameAndTypeMap;
+    return pImpl->wrenchSourceNameAndType;
 }
 
 std::vector<std::string> HumanWrenchProvider::getWrenchSourceNames() const
