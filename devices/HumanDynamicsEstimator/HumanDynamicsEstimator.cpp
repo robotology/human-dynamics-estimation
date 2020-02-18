@@ -1027,6 +1027,9 @@ public:
     // Wrench sensor link names variable
     std::vector<std::string> wrenchSensorsLinkNames;
 
+    // Wrench source name and type map
+    std::map<std::string, WrenchSourceType> wrenchSourceNameAndTypeMap;
+
     // Vector of links with ficticious wrench sources
     std::vector<std::string> ficticiousWrenchLinks;
 
@@ -2457,9 +2460,27 @@ bool HumanDynamicsEstimator::attach(yarp::dev::PolyDriver* poly)
 
         // Check the interface
         if (pImpl->iHumanWrench->getNumberOfWrenchSources() == 0
-                || pImpl->iHumanWrench->getNumberOfWrenchSources() != pImpl->iHumanWrench->getWrenchSourceNames().size()) {
+                || pImpl->iHumanWrench->getNumberOfWrenchSources() != pImpl->iHumanWrench->getWrenchSourceNames().size()
+                || pImpl->iHumanWrench->getNumberOfWrenchSources() != pImpl->iHumanWrench->getWrenchSourceNameAndTypeMap().size()) {
             yError() << "The IHumanWrench interface might not be ready";
             return false;
+        }
+
+        // Get wrench source name and types map from the attached IHumanWrench interface
+        std::map<std::string, WrenchSourceType> nameAndType = pImpl->iHumanWrench->getWrenchSourceNameAndTypeMap();
+
+        // Update wrenchSourceNameAndTypeMap with link names from wrench_sensors_link_name config parameter
+        // NOTE: Assuming wrench_sensors_link_name passes the links corresponding
+        // to the sensors associated from HumanWrenchProvider
+        if (nameAndType.size() != pImpl->wrenchSensorsLinkNames.size()) {
+            yError() << LogPrefix << "Size mismatch between the number of elements in source name and type map from " << deviceName << " and the elements of list wrench_sensors_link_name in config parameters";
+            return false;
+        }
+
+        int index = 0;
+        for (auto& element : nameAndType) {
+            pImpl->wrenchSourceNameAndTypeMap[pImpl->wrenchSensorsLinkNames.at(index)] = element.second;
+            index++;
         }
 
         yInfo() << LogPrefix << deviceName << "attach() successful";
@@ -2608,6 +2629,12 @@ int HumanDynamicsEstimator::calibrateChannel(int /*ch*/, double /*value*/)
 // ============
 // IHumanWrench
 // ============
+
+std::map<std::string, hde::interfaces::IHumanWrench::WrenchSourceType> HumanDynamicsEstimator::getWrenchSourceNameAndTypeMap() const
+{
+    std::lock_guard<std::mutex> lock(pImpl->mutex);
+    return pImpl->wrenchSourceNameAndTypeMap;
+}
 
 std::vector<std::string> HumanDynamicsEstimator::getWrenchSourceNames() const
 {

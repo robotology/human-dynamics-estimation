@@ -11,6 +11,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 
 namespace hde {
     namespace interfaces {
@@ -23,6 +24,14 @@ class hde::interfaces::IHumanWrench
 public:
     virtual ~IHumanWrench() = default;
 
+    enum class WrenchSourceType
+    {
+        Fixed,
+        Robot,
+        Dummy, // TODO
+    };
+
+    virtual std::map<std::string, WrenchSourceType> getWrenchSourceNameAndTypeMap() const = 0;
     virtual std::vector<std::string> getWrenchSourceNames() const = 0;
     virtual size_t getNumberOfWrenchSources() const = 0;
 
