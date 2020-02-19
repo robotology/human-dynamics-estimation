@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed 
+- Fixed segmentation failt on `IWearRemapper` termination (https://github.com/robotology/wearables/issues/55).
+
 ## [1.0.0] - 2020-01-28
 
 First release of `wearables`, compatible with YARP 3.3.
