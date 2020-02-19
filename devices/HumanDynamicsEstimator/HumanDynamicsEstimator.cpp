@@ -1000,6 +1000,9 @@ public:
 
     bool saveStateToFile;
 
+    // Flag to express the dummy sources wrench estimtates with orientation of world frame
+    bool expressDummyWrenchEstimatesInWorldOrientation;
+
     const std::unordered_map<iDynTree::BerdySensorTypes, std::string> mapBerdySensorType = {
         {iDynTree::BerdySensorTypes::SIX_AXIS_FORCE_TORQUE_SENSOR, "SIX_AXIS_FORCE_TORQUE_SENSOR"},
         {iDynTree::BerdySensorTypes::ACCELEROMETER_SENSOR, "ACCELEROMETER_SENSOR"},
@@ -1368,6 +1371,9 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
 
     // Get the saveStateToFile option. The default value is false
     pImpl->saveStateToFile = config.check("saveStateToFile",yarp::os::Value(false)).asBool();
+
+    // Get expressDummyWrenchEstimatesInWorldOrientation option from the config params. Default value is false.
+    pImpl->expressDummyWrenchEstimatesInWorldOrientation = config.check("expressDummyWrenchEstimatesInWorldOrientation", yarp::os::Value(false)).asBool();
 
     // Set the links to be considered for com acceleration constraint
     // TODO: Check if initializing the default case in berdy init is a better approach. At the moment there is no back compatibility problem
@@ -2287,35 +2293,39 @@ void HumanDynamicsEstimator::run()
         pImpl->berdyData.helper.extractLinkNetExternalWrenchesFromDynamicVariables(estimatedDynamicVariables,
                                                                                    pImpl->berdyData.estimates.linkNetExternalWrenchEstimates);
 
-        for (auto& element : pImpl->wrenchSourceNameAndType) {
+        // Express the dummy sources wrench esitmates with orientation of world frame
+        if (pImpl->expressDummyWrenchEstimatesInWorldOrientation) {
 
-            // Iterate over all the dummy wrench sources
-            if (element.second == WrenchSourceType::Dummy) {
+            for (auto& element : pImpl->wrenchSourceNameAndType) {
 
-                // Get link index
-                std::string linkName = element.first;
-                int linkIndex = pImpl->humanModel.getLinkIndex(element.first);
+                // Iterate over all the dummy wrench sources
+                if (element.second == WrenchSourceType::Dummy) {
 
-                // Get link to world transform
-                iDynTree::Transform world_H_link = kinDynComputations.getWorldTransform(linkName);
+                    // Get link index
+                    std::string linkName = element.first;
+                    int linkIndex = pImpl->humanModel.getLinkIndex(element.first);
 
-                // Set the position to zero
-                world_H_link.setPosition(iDynTree::Position());
+                    // Get link to world transform
+                    iDynTree::Transform world_H_link = kinDynComputations.getWorldTransform(linkName);
 
-                // Get extracted wrench
-                iDynTree::Wrench linkWrench = pImpl->berdyData.estimates.linkNetExternalWrenchEstimates(linkIndex);
+                    // Set the position to zero
+                    world_H_link.setPosition(iDynTree::Position());
 
-                // Transform extracted wrench estimate with orietation of world frame
-                Eigen::Matrix<double,6,1> transformedWrenchEigen = iDynTree::toEigen(world_H_link.asAdjointTransformWrench()) * iDynTree::toEigen(linkWrench.asVector());
+                    // Get extracted wrench
+                    iDynTree::Wrench linkWrench = pImpl->berdyData.estimates.linkNetExternalWrenchEstimates(linkIndex);
 
-                iDynTree::Wrench transformedLinkWrench;
-                iDynTree::fromEigen(transformedLinkWrench, transformedWrenchEigen);
+                    // Transform extracted wrench estimate with orietation of world frame
+                    Eigen::Matrix<double,6,1> transformedWrenchEigen = iDynTree::toEigen(world_H_link.asAdjointTransformWrench()) * iDynTree::toEigen(linkWrench.asVector());
 
-                pImpl->berdyData.estimates.linkNetExternalWrenchEstimates(linkIndex) = transformedLinkWrench;
+                    iDynTree::Wrench transformedLinkWrench;
+                    iDynTree::fromEigen(transformedLinkWrench, transformedWrenchEigen);
 
+                    pImpl->berdyData.estimates.linkNetExternalWrenchEstimates(linkIndex) = transformedLinkWrench;
+
+                }
             }
-        }
 
+        }
 
         // Check to ensure all the links net external wrenches are extracted correctly
         if (!pImpl->berdyData.estimates.linkNetExternalWrenchEstimates.isConsistent(pImpl->humanModel))
