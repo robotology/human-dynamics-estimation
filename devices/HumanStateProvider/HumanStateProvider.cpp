@@ -671,6 +671,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     pImpl->floatingBaseFrame.wearable = floatingBaseFrameList->get(1).asString();
     pImpl->period = config.check("period", yarp::os::Value(DefaultPeriod)).asFloat64();
 
+    // Set periodicThread period
     setPeriod(pImpl->period);
 
     // Parse linksGroup parameters

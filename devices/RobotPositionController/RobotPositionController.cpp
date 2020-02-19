@@ -125,7 +125,7 @@ bool RobotPositionController::open(yarp::os::Searchable& config)
     // PARSE THE CONFIGURATION OPTIONS
     // ===============================
 
-    double period = config.check("period", yarp::os::Value(DefaultPeriod)).asDouble();
+    const double period = config.check("period", yarp::os::Value(DefaultPeriod)).asDouble();
     pImpl->controlMode = config.find("controlMode").asString();
     pImpl->refSpeed = config.find("refSpeed").asDouble();
     pImpl->samplingTime = config.find("samplingTime").asDouble();
@@ -144,6 +144,9 @@ bool RobotPositionController::open(yarp::os::Searchable& config)
     yInfo() << LogPrefix << "*** Remote prefix          :" << remotePrefix;
     yInfo() << LogPrefix << "*** Local prefix           :" << localPrefix;
     yInfo() << LogPrefix << "*** ========================";
+
+    // Set periodicThread period
+    setPeriod(period);
 
     // ====================================
     // INITIALIZE THE REMOTE CONTROL BOARDS

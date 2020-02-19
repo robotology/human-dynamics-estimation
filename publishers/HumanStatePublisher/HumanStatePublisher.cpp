@@ -198,10 +198,7 @@ bool HumanStatePublisher::open(yarp::os::Searchable& config)
     // READ PARAMETERS
     // ===============
 
-    float period = DefaultPeriod;
-    if (!useDefaultPeriod) {
-        period = config.find("period").asFloat64();
-    }
+    const double period = config.check("period", yarp::os::Value(DefaultPeriod)).asFloat64();
 
     pImpl->baseTFName = config.find("baseTFName").asString(); // e.g. /Human/Pelvis
     std::string humanJointsTopicName = config.find("humanJointsTopic").asString();

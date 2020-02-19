@@ -803,8 +803,6 @@ static bool parsePriorsGroup(const yarp::os::Bottle& priorsGroup,
             }
             else
             {
-                yInfo() << LogPrefix << "Found cov_task1_measurements for sensor"
-                        << berdySensorTypeString << ", it will be used in second task";
                 if (!getTripletsFromPriorGroup(
                         priorsGroup, covTask1MeasurementOptionPrefix, berdySensorTypeString, triplets, berdySensor)) {
                     yError() << LogPrefix << "Failed to get triplets for sensor"
@@ -1222,11 +1220,14 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
     // PARSE THE CONFIGURATION OPTIONS
     // ===============================
 
-    double period = config.find("period").asFloat64();
-    std::string urdfFileName = config.find("urdf").asString();
-    std::string baseLink = config.find("baseLink").asString();
+    const double period = config.check("period", yarp::os::Value(DefaultPeriod)).asFloat64();
+    const std::string urdfFileName = config.find("urdf").asString();
+    const std::string baseLink = config.find("baseLink").asString();
     int number_of_wrench_sensors = config.find("number_of_wrench_sensors").asInt();
     yarp::os::Bottle* linkNames = config.find("wrench_sensors_link_name").asList();
+
+    // Set periodicThread period
+    this->setPeriod(period);
 
     // Configuration option for removing the offset
     pImpl->removeOffsetOption = config.check("removeOffsetOption",yarp::os::Value("model")).asString();
@@ -1428,11 +1429,6 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
     size_t task1_numberOfDynVariables = pImpl->berdyData.helper.getNrOfDynamicVariables(true);
     size_t task1_numberOfDynEquations = pImpl->berdyData.helper.getNrOfDynamicEquations(true);
     size_t task1_numberOfMeasurements = pImpl->berdyData.helper.getNrOfSensorsMeasurements(true);
-
-    // Debug info
-    yInfo() << LogPrefix << "Task1 number of dynamic variables : " << task1_numberOfDynVariables;
-    yInfo() << LogPrefix << "Task1 number of dynamic equations : " << task1_numberOfDynEquations;
-    yInfo() << LogPrefix << "Task1 number of measurements : " << task1_numberOfMeasurements;
 
     // Set measurements size and initialize to zero
     pImpl->berdyData.buffers.measurements.resize(numberOfMeasurements);

@@ -147,7 +147,6 @@ class HumanDataCollector::impl
 {
 public:
 
-    double period;
     std::string portPrefix;
     bool firstData = true;
 
@@ -277,7 +276,7 @@ bool HumanDataCollector::open(yarp::os::Searchable &config) {
     // PARSE THE CONFIGURATION OPTIONS
     // ===============================
 
-    double period = config.check("period", yarp::os::Value(0.01)).asFloat64();
+    const double period = config.check("period", yarp::os::Value(DefaultPeriod)).asFloat64();
     pImpl->portPrefix = "/" + config.check("portPrefix", yarp::os::Value("HDE")).asString() + "/";
     pImpl->matioLogger = config.check("matioLogger", yarp::os::Value(false)).asBool();
 
@@ -304,8 +303,8 @@ bool HumanDataCollector::open(yarp::os::Searchable &config) {
     yInfo() << LogPrefix << "*** matLogDirectory           :" << pImpl->matLogDirectory;
     yInfo() << LogPrefix << "*** ===========================";
 
-    // Set period
-    setPeriod(pImpl->period);
+    // Set periodicThread period
+    this->setPeriod(period);
 
     return true;
 }

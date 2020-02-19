@@ -57,7 +57,7 @@ bool HumanDynamicsWrapper::open(yarp::os::Searchable& config)
     // PARSE THE CONFIGURATION OPTIONS
     // ===============================
 
-    double period = config.check("period", yarp::os::Value(DefaultPeriod)).asDouble();
+    const double period = config.check("period", yarp::os::Value(DefaultPeriod)).asFloat64();
     std::string outputPortName = config.find("outputPort").asString();
 
     // =============
