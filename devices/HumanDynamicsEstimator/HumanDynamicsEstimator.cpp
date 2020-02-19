@@ -2309,7 +2309,7 @@ void HumanDynamicsEstimator::run()
                     iDynTree::Transform world_H_link = kinDynComputations.getWorldTransform(linkName);
 
                     // Set the position to zero
-                    world_H_link.setPosition(iDynTree::Position());
+                    world_H_link.setPosition(iDynTree::Position(0.0, 0.0, 0.0));
 
                     // Get extracted wrench
                     iDynTree::Wrench linkWrench = pImpl->berdyData.estimates.linkNetExternalWrenchEstimates(linkIndex);
