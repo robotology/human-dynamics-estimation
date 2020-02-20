@@ -1000,6 +1000,9 @@ public:
 
     bool saveStateToFile;
 
+    // Flag to express the dummy sources wrench estimtates with orientation of world frame
+    bool expressDummyWrenchEstimatesInWorldOrientation;
+
     const std::unordered_map<iDynTree::BerdySensorTypes, std::string> mapBerdySensorType = {
         {iDynTree::BerdySensorTypes::SIX_AXIS_FORCE_TORQUE_SENSOR, "SIX_AXIS_FORCE_TORQUE_SENSOR"},
         {iDynTree::BerdySensorTypes::ACCELEROMETER_SENSOR, "ACCELEROMETER_SENSOR"},
@@ -1026,6 +1029,9 @@ public:
 
     // Wrench sensor link names variable
     std::vector<std::string> wrenchSensorsLinkNames;
+
+    // Wrench source name and type
+    std::vector<std::pair<std::string, WrenchSourceType>> wrenchSourceNameAndType;
 
     // Vector of links with ficticious wrench sources
     std::vector<std::string> ficticiousWrenchLinks;
@@ -1365,6 +1371,9 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
 
     // Get the saveStateToFile option. The default value is false
     pImpl->saveStateToFile = config.check("saveStateToFile",yarp::os::Value(false)).asBool();
+
+    // Get expressDummyWrenchEstimatesInWorldOrientation option from the config params. Default value is false.
+    pImpl->expressDummyWrenchEstimatesInWorldOrientation = config.check("expressDummyWrenchEstimatesInWorldOrientation", yarp::os::Value(false)).asBool();
 
     // Set the links to be considered for com acceleration constraint
     // TODO: Check if initializing the default case in berdy init is a better approach. At the moment there is no back compatibility problem
@@ -2230,14 +2239,6 @@ void HumanDynamicsEstimator::run()
         pImpl->measurementsFile << pImpl->berdyData.buffers.measurements.toString().c_str() << std::endl;
     }
 
-    // TODO: Check if this call to updateKinematicsFromFloatingBase is needed
-    // updateEstimateInformationFloatingBase calls updateKinematicsFromFloatingBase in the backend of berdy helper
-    // Set the kinematic information necessary for the dynamics estimation
-    pImpl->berdyData.helper.updateKinematicsFromFloatingBase(pImpl->berdyData.state.jointsPosition,
-                                                             pImpl->berdyData.state.jointsVelocity,
-                                                             pImpl->berdyData.state.floatingBaseFrameIndex,
-                                                             pImpl->berdyData.state.baseAngularVelocity);
-
     // Update estimator information
     pImpl->berdyData.solver->updateEstimateInformationFloatingBase(pImpl->berdyData.state.jointsPosition,
                                                                    pImpl->berdyData.state.jointsVelocity,
@@ -2292,51 +2293,39 @@ void HumanDynamicsEstimator::run()
         pImpl->berdyData.helper.extractLinkNetExternalWrenchesFromDynamicVariables(estimatedDynamicVariables,
                                                                                    pImpl->berdyData.estimates.linkNetExternalWrenchEstimates);
 
-//        pImpl->berdyData.estimates.linkNetExternalWrenchEstimates = pImpl->berdyData.estimates.task1_linkNetExternalWrenchEstimates;
+        // Express the dummy sources wrench esitmates with orientation of world frame
+        if (pImpl->expressDummyWrenchEstimatesInWorldOrientation) {
 
-        // Using kindyn to compute link
-        iDynTree::KinDynComputations kinDynComputations;
-        kinDynComputations.loadRobotModel(pImpl->humanModel);
-        kinDynComputations.setFloatingBase(pImpl->humanModel.getLinkName(pImpl->berdyData.state.floatingBaseFrameIndex));
-        iDynTree::Vector4 quat;
-        quat.setVal(0, baseOrientation[0]);
-        quat.setVal(1, baseOrientation[1]);
-        quat.setVal(2, baseOrientation[2]);
-        quat.setVal(3, baseOrientation[3]);
+            for (auto& element : pImpl->wrenchSourceNameAndType) {
 
-        iDynTree::Rotation rot;
-        rot.fromQuaternion(quat);
+                // Iterate over all the dummy wrench sources
+                if (element.second == WrenchSourceType::Dummy) {
 
-        iDynTree::Position pos;
-        pos.setVal(0, basePosition[0]);
-        pos.setVal(1, basePosition[1]);
-        pos.setVal(2, basePosition[2]);
+                    // Get link index
+                    std::string linkName = element.first;
+                    int linkIndex = pImpl->humanModel.getLinkIndex(element.first);
 
-        iDynTree::Transform baseTransform;
-        baseTransform.setPosition(pos);
-        baseTransform.setRotation(rot);
+                    // Get link to world transform
+                    iDynTree::Transform world_H_link = kinDynComputations.getWorldTransform(linkName);
 
-        iDynTree::VectorDynSize s, sdot;
-        s.resize(jointsPosition.size());
-        sdot.resize(jointsPosition.size());
-        for (size_t idx = 0; idx < jointsPosition.size(); idx++)
-        {
-            s.setVal(idx, jointsPosition[idx]);
-            sdot.setVal(idx, jointsVelocity[idx]);
+                    // Set the position to zero
+                    world_H_link.setPosition(iDynTree::Position(0.0, 0.0, 0.0));
+
+                    // Get extracted wrench
+                    iDynTree::Wrench linkWrench = pImpl->berdyData.estimates.linkNetExternalWrenchEstimates(linkIndex);
+
+                    // Transform extracted wrench estimate with orietation of world frame
+                    Eigen::Matrix<double,6,1> transformedWrenchEigen = iDynTree::toEigen(world_H_link.asAdjointTransformWrench()) * iDynTree::toEigen(linkWrench.asVector());
+
+                    iDynTree::Wrench transformedLinkWrench;
+                    iDynTree::fromEigen(transformedLinkWrench, transformedWrenchEigen);
+
+                    pImpl->berdyData.estimates.linkNetExternalWrenchEstimates(linkIndex) = transformedLinkWrench;
+
+                }
+            }
+
         }
-
-        // TODO clean this workaround
-        iDynTree::Vector3 gravity;
-        gravity.zero();
-        gravity(0) = pImpl->gravity(0);
-        gravity(1) = pImpl->gravity(1);
-        gravity(2) = pImpl->gravity(2);
-        kinDynComputations.setRobotState(baseTransform,
-                                         s,
-                                         iDynTree::Twist::Zero(),
-                                         sdot,
-                                         gravity);
-
 
         // Check to ensure all the links net external wrenches are extracted correctly
         if (!pImpl->berdyData.estimates.linkNetExternalWrenchEstimates.isConsistent(pImpl->humanModel))
@@ -2457,9 +2446,27 @@ bool HumanDynamicsEstimator::attach(yarp::dev::PolyDriver* poly)
 
         // Check the interface
         if (pImpl->iHumanWrench->getNumberOfWrenchSources() == 0
-                || pImpl->iHumanWrench->getNumberOfWrenchSources() != pImpl->iHumanWrench->getWrenchSourceNames().size()) {
+                || pImpl->iHumanWrench->getNumberOfWrenchSources() != pImpl->iHumanWrench->getWrenchSourceNames().size()
+                || pImpl->iHumanWrench->getNumberOfWrenchSources() != pImpl->iHumanWrench->getWrenchSourceNameAndType().size()) {
             yError() << "The IHumanWrench interface might not be ready";
             return false;
+        }
+
+        // Get wrench source name and types from the attached IHumanWrench interface
+        std::vector<std::pair<std::string, WrenchSourceType>> nameAndType = pImpl->iHumanWrench->getWrenchSourceNameAndType();
+
+        // Update wrenchSourceNameAndType with link names from wrench_sensors_link_name config parameter
+        // NOTE: Assuming wrench_sensors_link_name passes the links corresponding
+        // to the sensors associated from HumanWrenchProvider
+        if (nameAndType.size() != pImpl->wrenchSensorsLinkNames.size()) {
+            yError() << LogPrefix << "Size mismatch between the number of elements in source name and type map from " << deviceName << " and the elements of list wrench_sensors_link_name in config parameters";
+            return false;
+        }
+
+        size_t index = 0;
+        for (auto& element : nameAndType) {
+            pImpl->wrenchSourceNameAndType.push_back(std::pair<std::string, WrenchSourceType>(pImpl->wrenchSensorsLinkNames.at(index), element.second));
+            index++;
         }
 
         yInfo() << LogPrefix << deviceName << "attach() successful";
@@ -2608,6 +2615,12 @@ int HumanDynamicsEstimator::calibrateChannel(int /*ch*/, double /*value*/)
 // ============
 // IHumanWrench
 // ============
+
+std::vector<std::pair<std::string, hde::interfaces::IHumanWrench::WrenchSourceType>> HumanDynamicsEstimator::getWrenchSourceNameAndType() const
+{
+    std::lock_guard<std::mutex> lock(pImpl->mutex);
+    return pImpl->wrenchSourceNameAndType;
+}
 
 std::vector<std::string> HumanDynamicsEstimator::getWrenchSourceNames() const
 {

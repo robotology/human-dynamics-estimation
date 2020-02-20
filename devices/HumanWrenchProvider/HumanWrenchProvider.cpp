@@ -41,17 +41,10 @@ struct AnalogSensorData
     std::vector<double> measurements;
 };
 
-enum class WrenchSourceType
-{
-    Fixed,
-    Robot,
-    Dummy, // TODO
-};
-
 struct WrenchSourceData
 {
     std::string name;
-    WrenchSourceType type;
+    hde::interfaces::IHumanWrench::WrenchSourceType type;
 
     std::string outputFrame;
     std::unique_ptr<IWrenchFrameTransformer> frameTransformer;
@@ -85,6 +78,7 @@ public:
 
     AnalogSensorData analogSensorData;
     std::vector<WrenchSourceData> wrenchSources;
+    std::vector<std::pair<std::string, WrenchSourceType>> wrenchSourceNameAndType;
 
     // Human variables
     iDynTree::Model humanModel;
@@ -490,6 +484,11 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
 
         // Store the wrench source data
         pImpl->wrenchSources.emplace_back(std::move(WrenchSourceData));
+    }
+
+    // Update wrenchSourceNameAndType once
+    for (auto& wrenchSource : pImpl->wrenchSources) {
+        pImpl->wrenchSourceNameAndType.push_back(std::pair<std::string, WrenchSourceType>(wrenchSource.name, wrenchSource.type));
     }
 
     return true;
@@ -945,6 +944,12 @@ int HumanWrenchProvider::calibrateChannel(int /*ch*/, double /*value*/)
 // ============
 // IHumanWrench
 // ============
+
+std::vector<std::pair<std::string, hde::interfaces::IHumanWrench::WrenchSourceType>> HumanWrenchProvider::getWrenchSourceNameAndType() const
+{
+    std::lock_guard<std::mutex> lock(pImpl->mutex);
+    return pImpl->wrenchSourceNameAndType;
+}
 
 std::vector<std::string> HumanWrenchProvider::getWrenchSourceNames() const
 {

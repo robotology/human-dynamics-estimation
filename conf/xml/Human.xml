@@ -323,6 +323,7 @@
         <param name="removeOffsetOption">source</param>
         <param name="dynamicWrenchOffsetSD">30.0</param>
         <param name="wrenchEstimationForceLowerThreshold">10</param>
+        <param name="expressDummyWrenchEstimatesInWorldOrientation">true</param>
         <group name="PRIORS">
            <param name="mu_dyn_variables">1e-6</param>
            <param name="cov_dyn_variables">1e6</param>

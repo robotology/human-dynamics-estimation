@@ -68,6 +68,7 @@ public:
     int calibrateChannel(int ch, double value) override;
 
     // IHumanWrench
+    std::vector<std::pair<std::string, WrenchSourceType>> getWrenchSourceNameAndType() const override;
     std::vector<std::string> getWrenchSourceNames() const override;
     size_t getNumberOfWrenchSources() const override;
     std::vector<double> getWrenches() const override;
