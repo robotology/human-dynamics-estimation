@@ -11,7 +11,6 @@
 
 #include <string>
 #include <vector>
-#include <utility>
 
 namespace hde {
     namespace interfaces {
