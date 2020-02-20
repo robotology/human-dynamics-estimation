@@ -74,8 +74,6 @@ bool HumanStateWrapper::open(yarp::os::Searchable& config)
     return true;
 }
 
-#include <iostream>
-
 bool HumanStateWrapper::close()
 {
     return true;
@@ -165,21 +163,11 @@ bool HumanStateWrapper::attach(yarp::dev::PolyDriver* poly)
     // CHECK THE INTERFACE
     // ===================
 
-    yInfo() << pImpl->iHumanState->getNumberOfJoints() << " "
-            << pImpl->iHumanState->getJointNames().size();
-
-    // std::vector<std::string> jointNames=pImpl->humanState->getJointNames();
-    for (int i = 0; i < pImpl->iHumanState->getJointNames().size(); i++) {
-        yInfo() << "Joint name (" << i << "): " << pImpl->iHumanState->getJointNames()[i];
-    }
-
     if (pImpl->iHumanState->getNumberOfJoints() == 0
         || pImpl->iHumanState->getNumberOfJoints() != pImpl->iHumanState->getJointNames().size()) {
         yError() << "The IHumanState interface might not be ready";
         return false;
     }
-
-    yDebug() << LogPrefix << "Read" << pImpl->iHumanState->getNumberOfJoints() << "joints";
 
     // ====
     // MISC

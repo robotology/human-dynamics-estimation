@@ -564,7 +564,6 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
             std::string modelParentLinkName = listContent->get(0).asString();
             std::string wearableParentLinkName =listContent->get(1).asString();
 
-            yInfo() << LogPrefix << "Read accelerometer parent link map: " << modelParentLinkName << "==>" << wearableParentLinkName;
             pImpl->wearableStorage.modelToWearable_AccelerometerParentLinkName[modelParentLinkName] = wearableParentLinkName;
         }
 
@@ -602,7 +601,6 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
             std::string modelParentLinkName = listContent->get(0).asString();
             std::string wearableParentLinkName =listContent->get(1).asString();
 
-            yInfo() << LogPrefix << "Read orientation parent link map: " << modelParentLinkName << "==>" << wearableParentLinkName;
             pImpl->wearableStorage.modelToWearable_SensorOrientationParentLinkName[modelParentLinkName] = wearableParentLinkName;
         }
 
@@ -682,7 +680,6 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         std::string modelLinkName = listContent->get(0).asString();
         std::string wearableLinkName = listContent->get(1).asString();
 
-        yInfo() << LogPrefix << "Read link map:" << modelLinkName << "==>" << wearableLinkName;
         pImpl->wearableStorage.modelToWearable_LinkName[modelLinkName] = wearableLinkName;
     }
 
@@ -956,13 +953,6 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         yError() << LogPrefix << "Failed to load model" << urdfFilePath;
         return false;
     }
-    yInfo() << LogPrefix << "----------------------------------------" << modelLoader.isValid();
-    //yInfo() << LogPrefix << modelLoader.model().toString();
-    yInfo() << LogPrefix << "Links : " << modelLoader.model().getNrOfLinks()
-            << " , Joints: " << modelLoader.model().getNrOfJoints();
-
-    yInfo() << LogPrefix << "Base Link: "
-            << modelLoader.model().getLinkName(modelLoader.model().getDefaultBaseLink());
 
     // ====================
     // INITIALIZE VARIABLES
@@ -1011,9 +1001,6 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     // Initialize CoM proper acceleration to zero
     pImpl->CoMProperAccelerationExpressedInBaseFrame = std::array<double, 6>{0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
     pImpl->CoMProperAccelerationExpressedInWorldFrame = std::array<double, 6>{0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-
-    // Debug Info
-    yInfo() << LogPrefix << "Accelerometers size : " << pImpl->humanSensorData.accelerometerSensorNames.size();
 
     // =========================
     // INITIALIZE JOINTS BUFFERS
@@ -1210,9 +1197,6 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
             }
         }
     }
-    else {
-        yInfo() << "CUSTOM CONSTRAINTS are not defined in xml file.";
-    }
 
     // check sizes
     if (pImpl->custom_jointsVelocityLimitsNames.size()
@@ -1235,7 +1219,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
                  << pImpl->customConstraintMatrix.cols() << ") are not equal";
         return false;
     }
-    yInfo() << "******* DOF: " << modelLoader.model().getNrOfDOFs();
+
     for (size_t i = 0; i < pImpl->custom_jointsVelocityLimitsNames.size(); i++) {
         pImpl->custom_jointsVelocityLimitsIndexes.push_back(
             modelLoader.model().getJointIndex(pImpl->custom_jointsVelocityLimitsNames[i]));
@@ -1331,7 +1315,7 @@ void HumanStateProvider::run()
 
     // Solve Inverse Kinematics and Inverse Velocity Problems
     auto tick = std::chrono::high_resolution_clock::now();
-    bool inverseKinematicsFailure;
+    bool inverseKinematicsFailure = true;
     if (pImpl->ikSolver == SolverIK::pairwised) {
         inverseKinematicsFailure = !(pImpl->solvePairwisedInverseKinematicsSolver());
     }
@@ -2838,8 +2822,9 @@ bool HumanStateProvider::attach(yarp::dev::PolyDriver* poly)
 
 void HumanStateProvider::threadRelease()
 {
-    if (!pImpl->ikPool->closeIKWorkerPool()) {
+    if (pImpl->ikSolver == SolverIK::pairwised && !pImpl->ikPool->closeIKWorkerPool()) {
         yError() << LogPrefix << "Failed to close the IKWorker pool";
+        return;
     }
 }
 

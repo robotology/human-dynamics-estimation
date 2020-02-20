@@ -209,7 +209,7 @@
                 <elem name="HumanStateWrapperLabel">HumanStateProvider</elem>
             </paramlist>
         </action>
-        <action phase="shutdown" level="5" type="detach"/>
+        <action phase="shutdown" level="4" type="detach"/>
     </device>
 
     <device type="human_state_publisher" name="HumanStatePublisher">
@@ -221,7 +221,7 @@
                 <elem name="HumanStatePublisherLabel">HumanStateProvider</elem>
             </paramlist>
         </action>
-        <action phase="shutdown" level="5" type="detach"/>
+        <action phase="shutdown" level="4" type="detach"/>
     </device>
 
     <device type="iwear_remapper" name="FTSourcesIWearRemapper">
@@ -283,7 +283,7 @@
                 <elem name="HumanWrenchWrapperLabel">HumanWrenchProvider</elem>
             </paramlist>
         </action>
-        <action phase="shutdown" level="5" type="detach" />
+        <action phase="shutdown" level="4" type="detach" />
     </device>
 
     <!--Wrapper to publish WrenchStamped message to Rviz-->
@@ -331,7 +331,7 @@
            <param name="cov_measurements_ACCELEROMETER_SENSOR">(0.0011 0.0011 0.0011)</param>
            <param name="cov_measurements_THREE_AXIS_ANGULAR_ACCELEROMETER_SENSOR">(1e-3 1e-3 1e-3)</param>
            <param name="cov_measurements_DOF_ACCELERATION_SENSOR">0.666e-5</param>
-           <param name="cov_measurements_COM_ACCELEROMETER_SENSOR">(1e-2 1e-2 1e-2)</param>
+           <param name="cov_measurements_COM_ACCELEROMETER_SENSOR">(1e-2 1e-2 1e-2 1e-2 1e-2 1e-2)</param>
            <group name="cov_measurements_NET_EXT_WRENCH_SENSOR">
                <param name="value">1e-6</param>
                <param name="specific_elements">(LeftFoot RightFoot LeftHand RightHand)</param>
@@ -396,7 +396,7 @@
         <action phase="shutdown" level="4" type="detach" />
     </device>
 
-    <!--device type="human_dynamics_wrapper" name="HumanDynamicsWrapper">
+    <device type="human_dynamics_wrapper" name="HumanDynamicsWrapper">
         <param name="period">0.1</param>
         <param name="outputPort">/HDE/HumanDynamicsWrapper/torques:o</param>
         <action phase="startup" level="5" type="attach">
@@ -404,8 +404,8 @@
                 <elem name="HumanDynamicsWrapperLabel">HumanDynamicsEstimator</elem>
             </paramlist>
         </action>
-        <action phase="shutdown" level="5" type="detach"/>
-    </device-->
+        <action phase="shutdown" level="4" type="detach"/>
+    </device>
 
     <device type="human_dynamics_publisher" name="HumanDynamicsPublisher">
         <param name="period">0.02</param>
@@ -431,7 +431,7 @@
                 <elem name="HumanDynamicsEstimatorLabel">HumanDynamicsEstimator</elem>
             </paramlist>
         </action>
-        <action phase="shutdown" level="5" type="detach"/>
+        <action phase="shutdown" level="4" type="detach"/>
     </device>
 
     <!-- <device type="human_control_board" name="HumanControlBoard">

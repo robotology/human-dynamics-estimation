@@ -106,7 +106,7 @@ bool HumanStatePublisher::open(yarp::os::Searchable& config)
         useDefaultPeriod = true;
     }
 
-    yarp::os::Bottle* fixedBasePosition;
+    yarp::os::Bottle* fixedBasePosition = nullptr;
     if (config.check("fixBasePosition")) {
         if (config.find("fixBasePosition").isList() &&
                 config.find("fixBasePosition").asList()->size() == 3) {
@@ -121,7 +121,7 @@ bool HumanStatePublisher::open(yarp::os::Searchable& config)
         }
     }
 
-    yarp::os::Bottle* fixedBaseOrientation;
+    yarp::os::Bottle* fixedBaseOrientation = nullptr;
     if (config.check("fixBaseOrientation")) {
         if (config.find("fixBaseOrientation").isList() &&
                 config.find("fixBaseOrientation").asList()->size() == 4) {
@@ -291,10 +291,6 @@ bool HumanStatePublisher::open(yarp::os::Searchable& config)
 
 bool HumanStatePublisher::close()
 {
-    pImpl->humanBasePoseROS.publisher.close();
-    pImpl->humanJointStateROS.publisher.close();
-    pImpl->node->interrupt();
-
     return true;
 }
 
@@ -332,7 +328,6 @@ void HumanStatePublisher::run()
         pImpl->humanJointStateROS.message.position.resize(dofs, 0);
         pImpl->humanJointStateROS.message.velocity.resize(dofs, 0);
 
-        yInfo() << LogPrefix << "Run properly initialized";
         pImpl->firstRun = false;
     }
 
@@ -387,7 +382,7 @@ void HumanStatePublisher::run()
     pImpl->humanStateBuffers.baseOrientation[3] = pImpl->humanStateBuffers.baseOrientation[3] + pImpl->baseOrientationOffset->get(3).asFloat64();
 
     // This is the buffer of the message with base data which will be sent.
-    // Here we get the handlt to the first (and only) tf which is sent.
+    // Here we get the handle to the first (and only) tf which is sent.
     auto& baseMessageBufferTransform = pImpl->humanBasePoseROS.message.transforms[0];
 
     // Update metadata
@@ -421,6 +416,7 @@ void HumanStatePublisher::run()
                                     pImpl->humanStateBuffers.basePosition[2]);
 
     iDynTree::Vector4  quaternion;
+    quaternion.zero();
     quaternion.setVal(0, pImpl->humanStateBuffers.baseOrientation[0]);
     quaternion.setVal(1, pImpl->humanStateBuffers.baseOrientation[1]);
     quaternion.setVal(2, pImpl->humanStateBuffers.baseOrientation[2]);
@@ -484,11 +480,15 @@ bool HumanStatePublisher::detach()
         stop();
     }
 
-    pImpl->humanBasePoseROS.publisher.interrupt();
-    pImpl->humanJointStateROS.publisher.interrupt();
+    pImpl->humanBasePoseROS.publisher.close();
+    pImpl->humanJointStateROS.publisher.close();
+    pImpl->node->interrupt();
+    pImpl->transformClientDevice.close();
+
     pImpl->humanState = nullptr;
     pImpl->basePositionOffset = nullptr;
     pImpl->baseOrientationOffset = nullptr;
+    pImpl->iFrameTransform = nullptr;
     return true;
 }
 
