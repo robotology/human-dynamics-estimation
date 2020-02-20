@@ -14,8 +14,6 @@
 #include <yarp/os/LogStream.h>
 #include <yarp/sig/Vector.h>
 
-#include <iostream>
-
 const std::string DeviceName = "HumanStateWrapper";
 const std::string LogPrefix = DeviceName + " :";
 constexpr double DefaultPeriod = 0.01;

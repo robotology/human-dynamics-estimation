@@ -1197,9 +1197,6 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
             }
         }
     }
-    else {
-        //yInfo() << "CUSTOM CONSTRAINTS are not defined in xml file.";
-    }
 
     // check sizes
     if (pImpl->custom_jointsVelocityLimitsNames.size()
@@ -1222,7 +1219,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
                  << pImpl->customConstraintMatrix.cols() << ") are not equal";
         return false;
     }
-    //yInfo() << "******* DOF: " << modelLoader.model().getNrOfDOFs();
+
     for (size_t i = 0; i < pImpl->custom_jointsVelocityLimitsNames.size(); i++) {
         pImpl->custom_jointsVelocityLimitsIndexes.push_back(
             modelLoader.model().getJointIndex(pImpl->custom_jointsVelocityLimitsNames[i]));
