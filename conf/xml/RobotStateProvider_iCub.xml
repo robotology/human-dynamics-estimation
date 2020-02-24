@@ -160,7 +160,7 @@
                 <elem name="RobotPositionController">RobotStateProvider</elem>
             </paramlist>
         </action>
-        <action phase="shutdown" level="5" type="detach"/>
+        <action phase="shutdown" level="4" type="detach"/>
     </device-->
 
 </robot>

@@ -266,12 +266,6 @@ bool RobotPositionController::open(yarp::os::Searchable& config)
 
     // resize and initialize vectors
     pImpl->desiredJointPositionVector.resize(pImpl->jointNameListFromConfigControlBoards.size());
-    pImpl->encodersJointPositionsVector.resize(remoteControlBoardJoints);
-
-    /*if (pImpl->totalControlBoardJoints != pImpl->jointNameListFromConfigControlBoards.size()) {
-     yError() << LogPrefix << "Control board joints number and names mismatch";
-     return false;
-     }*/
 
     return true;
 }
@@ -331,6 +325,7 @@ void RobotPositionController::run()
             pImpl->iEncoders->getAxes(&joints);
 
             // Read joint position through IEncoder interface
+            pImpl->encodersJointPositionsVector.resize(joints);
             pImpl->iEncoders->getEncoders(pImpl->encodersJointPositionsVector.data());
 
             if (pImpl->controlMode == "position") {
