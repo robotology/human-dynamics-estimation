@@ -266,12 +266,6 @@ bool RobotPositionController::open(yarp::os::Searchable& config)
 
     // resize and initialize vectors
     pImpl->desiredJointPositionVector.resize(pImpl->jointNameListFromConfigControlBoards.size());
-    pImpl->encodersJointPositionsVector.resize(remoteControlBoardJoints);
-
-    /*if (pImpl->totalControlBoardJoints != pImpl->jointNameListFromConfigControlBoards.size()) {
-     yError() << LogPrefix << "Control board joints number and names mismatch";
-     return false;
-     }*/
 
     return true;
 }
@@ -331,6 +325,7 @@ void RobotPositionController::run()
             pImpl->iEncoders->getAxes(&joints);
 
             // Read joint position through IEncoder interface
+            pImpl->encodersJointPositionsVector.resize(joints);
             pImpl->iEncoders->getEncoders(pImpl->encodersJointPositionsVector.data());
 
             if (pImpl->controlMode == "position") {
@@ -437,30 +432,33 @@ void RobotPositionController::threadRelease()
 
 bool RobotPositionController::detach()
 {
-    // Set the position control mode
-    for (size_t boardCount = 0; boardCount < pImpl->remoteControlBoards.size(); boardCount++) {
+    if (pImpl->controlMode == "positionDirect") {
 
-        // Get encoder interface
-        if (!pImpl->remoteControlBoards.at(boardCount)->view(pImpl->iEncoders) || !pImpl->iEncoders) {
-            yError() << LogPrefix << "Failed to view the IEncoder interface from the (" << boardCount << ") remote control board device";
-            return false;
+        // Set the position control mode
+        for (size_t boardCount = 0; boardCount < pImpl->remoteControlBoards.size(); boardCount++) {
+
+            // Get encoder interface
+            if (!pImpl->remoteControlBoards.at(boardCount)->view(pImpl->iEncoders) || !pImpl->iEncoders) {
+                yError() << LogPrefix << "Failed to view the IEncoder interface from the (" << boardCount << ") remote control board device";
+                return false;
+            }
+
+            // Get joint axes from encoder interface
+            int remoteControlBoardJoints;
+            pImpl->iEncoders->getAxes(&remoteControlBoardJoints);
+
+            // Get control mode interface
+            if (!pImpl->remoteControlBoards.at(boardCount)->view(pImpl->iControlMode) || !pImpl->iControlMode) {
+                yError() << LogPrefix << "Failed to view the IControlMode interface from the (" << boardCount << ") remote control board device";
+                return false;
+            }
+
+            // Set control mode
+            for (unsigned joint = 0; joint < remoteControlBoardJoints; joint++) {
+                pImpl->iControlMode->setControlMode(joint,VOCAB_CM_POSITION);
+            }
+
         }
-
-        // Get joint axes from encoder interface
-        int remoteControlBoardJoints;
-        pImpl->iEncoders->getAxes(&remoteControlBoardJoints);
-
-        // Get control mode interface
-        if (!pImpl->remoteControlBoards.at(boardCount)->view(pImpl->iControlMode) || !pImpl->iControlMode) {
-            yError() << LogPrefix << "Failed to view the IControlMode interface from the (" << boardCount << ") remote control board device";
-            return false;
-        }
-
-        // Set control mode
-        for (unsigned joint = 0; joint < remoteControlBoardJoints; joint++) {
-            pImpl->iControlMode->setControlMode(joint,VOCAB_CM_POSITION);
-        }
-
     }
 
     while (isRunning()) {
