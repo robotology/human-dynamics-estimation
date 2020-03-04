@@ -285,7 +285,8 @@ bool HumanDataCollector::open(yarp::os::Searchable &config) {
     pImpl->matioLogger = config.check("matioLogger", yarp::os::Value(false)).asBool();
 
     if (pImpl->matioLogger) {
-        pImpl->matLogDirectory =  pImpl->originalWorkingDirectory.string() + "/" + config.check("matLogDirectory", yarp::os::Value("matLogDirectory")).asString() + "/";
+        pImpl->matLogDirectory =  pImpl->originalWorkingDirectory.string() + "/" +
+                                  config.check("matLogDirectory", yarp::os::Value("matLogDirectory")).asString() + "/";
 
         struct stat info;
 
@@ -868,7 +869,8 @@ bool HumanDataCollector::detach()
         writeVectorOfStringToMatCell("dynamicsJointNames", pImpl->humanDataStruct.dynamicsJointNames, pImpl->matFilePtr);
 
         // Correct the time values stored in the time vector to zero start value
-        std::transform( pImpl->humanDataStruct.time.begin(), pImpl->humanDataStruct.time.end(), pImpl->humanDataStruct.time.begin(), std::bind2nd( std::plus<long>(), - pImpl->humanDataStruct.time.at(0) ) );
+        std::transform( pImpl->humanDataStruct.time.begin(), pImpl->humanDataStruct.time.end(), pImpl->humanDataStruct.time.begin(),
+                        std::bind2nd( std::plus<long>(), - pImpl->humanDataStruct.time.at(0) ) );
 
         // Create an array with time elements
         long time[pImpl->humanDataStruct.time.size()];
