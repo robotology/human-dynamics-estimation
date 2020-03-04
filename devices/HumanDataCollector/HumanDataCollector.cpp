@@ -620,18 +620,16 @@ void HumanDataCollector::run()
                 pImpl->humanDataStruct.stateJointNames = pImpl->stateJointNames;
             }
 
+            pImpl->humanDataStruct.data["basePose"].push_back(pImpl->basePoseVec);
+            pImpl->humanDataStruct.data["baseVelocity"].push_back(pImpl->baseVeclocityVec);
 
-            pImpl->humanDataStruct.data.at("basePose").push_back(pImpl->basePoseVec);
-            pImpl->humanDataStruct.data.at("baseVelocity").push_back(pImpl->baseVeclocityVec);
+            pImpl->humanDataStruct.data["comPosition"].push_back(pImpl->comPositionVec);
+            pImpl->humanDataStruct.data["comVelocity"].push_back(pImpl->comVelocityVec);
+            pImpl->humanDataStruct.data["comProperAccelerationInBaseFrame"].push_back(pImpl->comProperAccInBaseFrameVec);
+            pImpl->humanDataStruct.data["comProperAccelerationInWorldFrame"].push_back(pImpl->comProperAccInWorldFrameVec);
 
-            pImpl->humanDataStruct.data.at("comPosition").push_back(pImpl->comPositionVec);
-            pImpl->humanDataStruct.data.at("comVelocity").push_back(pImpl->comVelocityVec);
-            pImpl->humanDataStruct.data.at("comProperAccelerationInBaseFrame").push_back(pImpl->comProperAccInBaseFrameVec);
-            pImpl->humanDataStruct.data.at("comProperAccelerationInWorldFrame").push_back(pImpl->comProperAccInWorldFrameVec);
-
-            pImpl->humanDataStruct.data.at("jointPositions").push_back(pImpl->jointPositionsVec);
-            pImpl->humanDataStruct.data.at("jointVelocities").push_back(pImpl->jointVelocitiesVec);
-
+            pImpl->humanDataStruct.data["jointPositions"].push_back(pImpl->jointPositionsVec);
+            pImpl->humanDataStruct.data["jointVelocities"].push_back(pImpl->jointVelocitiesVec);
 
         }
 
@@ -881,7 +879,7 @@ bool HumanDataCollector::detach()
             //TODO: Double check the long double conversion handling
             std::vector<double> count;
             count.push_back(timeCount);
-            pImpl->humanDataStruct.data.at("time").push_back(count);
+            pImpl->humanDataStruct.data["time"].push_back(count);
 
         }
 
