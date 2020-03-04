@@ -243,7 +243,7 @@ public:
     bool matioLogger = false;
     const std::experimental::filesystem::path originalWorkingDirectory = std::experimental::filesystem::current_path();
     std::string matLogDirectory = "";
-    std::string matLogFileName = "matLogFile.mat"; //TODO: Improve file handling for multiple file logging
+    std::string matLogFileName; //TODO: Improve file handling for multiple file logging
     mat_t *matFilePtr = nullptr;
 
     // Time Buffers
@@ -272,6 +272,10 @@ bool HumanDataCollector::open(yarp::os::Searchable &config) {
         yInfo() << LogPrefix << "Using default portPrefix HDE ";
     }
 
+    if (!(config.check("matLogFileName") && config.find("matLogFileName").isString())) {
+        yInfo() << LogPrefix << "Using default file name matLogFile.mat";
+    }
+
     // ===============================
     // PARSE THE CONFIGURATION OPTIONS
     // ===============================
@@ -294,6 +298,9 @@ bool HumanDataCollector::open(yarp::os::Searchable &config) {
         std::experimental::filesystem::current_path(pImpl->matLogDirectory);
     }
 
+    // Get matLogFileName value from config
+    pImpl->matLogFileName = config.check("matLogFileName", yarp::os::Value("matLogFile")).asString() + ".mat";
+
     //TODO: Define rpc to reset the data dump or restarting the visualization??
 
     yInfo() << LogPrefix << "*** ===========================";
@@ -301,6 +308,7 @@ bool HumanDataCollector::open(yarp::os::Searchable &config) {
     yInfo() << LogPrefix << "*** portPrefix                :" << pImpl->portPrefix;
     yInfo() << LogPrefix << "*** matioLogger               :" << pImpl->matioLogger;
     yInfo() << LogPrefix << "*** matLogDirectory           :" << pImpl->matLogDirectory;
+    yInfo() << LogPrefix << "*** matLogFileName            :" << pImpl->matLogFileName;
     yInfo() << LogPrefix << "*** ===========================";
 
     // Set periodicThread period

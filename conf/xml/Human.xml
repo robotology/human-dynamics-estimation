@@ -426,6 +426,7 @@
         <param name="portPrefix">Human</param>
         <param name="matioLogger">true</param>
         <param name="matLogDirectory">testData</param>
+        <param name="matLogFileName">matLogFile</param>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
                 <elem name="HumanStateProvideLabel">HumanStateProvider</elem>
