@@ -34,7 +34,7 @@ constexpr double DefaultPeriod = 0.01;
 
 using namespace hde::devices;
 
-void writeVectorOfStringToMatCell(const std::string name, const std::vector<std::string>& strings, mat_t* matFile)
+void writeVectorOfStringToMatCell(const std::string& name, const std::vector<std::string>& strings, mat_t* matFile)
 {
     if (strings.empty()) {
         yError() << LogPrefix << "Passed string is empty";
