@@ -8,7 +8,7 @@
 
 #include "HumanStateWrapper.h"
 #include "IHumanState.h"
-#include "thrift/HumanState.h"
+#include <HumanDynamicsEstimation/HumanState.h>
 
 #include <yarp/os/BufferedPort.h>
 #include <yarp/os/LogStream.h>
@@ -53,7 +53,7 @@ bool HumanStateWrapper::open(yarp::os::Searchable& config)
     // PARSE THE CONFIGURATION OPTIONS
     // ===============================
 
-    double period = config.check("period", yarp::os::Value(DefaultPeriod)).asDouble();
+    const double period = config.check("period", yarp::os::Value(DefaultPeriod)).asFloat64();
     std::string outputPortName = config.find("outputPort").asString();
 
     // =============

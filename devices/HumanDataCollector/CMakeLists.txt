@@ -21,7 +21,9 @@ target_link_libraries(HumanDataCollector PUBLIC
     IHumanWrench
     IHumanDynamics
     UtilityLibrary
-    YARP::YARP_OS
+    matio
+    stdc++fs
+    YARP::YARP_os
     YARP::YARP_dev
     YARP::YARP_init)
 

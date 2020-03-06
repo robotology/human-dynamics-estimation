@@ -16,18 +16,140 @@
 #include <yarp/os/BufferedPort.h>
 #include <yarp/sig/Vector.h>
 
+#include "matio.h"
+
+// TODO: Double check if the header works on WINDOWS
+#include <experimental/filesystem>
+#include <sys/stat.h>
+
+#include <chrono>
+#include <ratio>
+#include <algorithm>
+#include <utility>
+#include <unordered_map>
+#include <functional>
+
 const std::string DeviceName = "HumanDataCollector";
 const std::string LogPrefix = DeviceName + " :";
 constexpr double DefaultPeriod = 0.01;
 
 using namespace hde::devices;
 
+// Inline functions for matio variables destructor calls
+auto matVarFree = [](matvar_t* matvar) -> void {Mat_VarFree(matvar);};
+
+auto matFileClose = [](mat_t* mat) -> void {Mat_Close(mat);
+                                            yInfo() << LogPrefix << "Closed mat file";};
+
+// Unique pointer wrapping of matio variables
+template <typename T>
+using MatVarPtr = std::unique_ptr<T, std::function<void(T*)>>;
+
+void writeVectorOfStringToMatCell(const std::string& name, const std::vector<std::string>& strings, mat_t* matFile)
+{
+    if (strings.empty()) {
+        yError() << LogPrefix << "Passed string is empty";
+        return;
+    }
+
+    size_t dims[2] = {strings.size(), 1};
+    MatVarPtr<matvar_t> matCellArray(Mat_VarCreate(name.c_str(), MAT_C_CELL, MAT_T_CELL, 2, dims, nullptr, 0),
+                                     matVarFree);
+
+    if (matCellArray == nullptr) {
+        yError() << LogPrefix << "Failed to create mat cell array " << name;
+        return;
+    }
+
+    for(size_t i = 0 ; i < strings.size(); i++)
+    {
+        std::string stringToWrite = strings[i];
+
+        size_t stringDim[2] = { 1, stringToWrite.size() };
+        matvar_t *matCellElement = Mat_VarCreate("dummy", MAT_C_CHAR, MAT_T_UTF8, 2, stringDim, const_cast<char *>(stringToWrite.c_str()), 0);
+
+        if (matCellElement == nullptr) {
+            yError() << LogPrefix << "Failed to create mat cell element";
+            Mat_VarFree(matCellElement);
+            return;
+        }
+
+        Mat_VarSetCell(matCellArray.get(), i, matCellElement);
+    }
+
+    Mat_VarWrite(matFile, matCellArray.get(), MAT_COMPRESSION_NONE);
+}
+
+void writeVectorOfVectorDoubleToMatStruct(const std::unordered_map<std::string, std::vector<std::vector<double>>>& humanData, mat_t* matFile) {
+
+    // Set the mat struct field names
+    std::vector<std::string> matStructFieldNamesVec;
+
+    for (const std::pair<std::string, std::vector<std::vector<double>>> pair : humanData) {
+        matStructFieldNamesVec.push_back(pair.first);
+    }
+
+    // Construct vector of character pointers to field names
+    std::vector<const char*> fieldNames;
+    for (size_t i = 0; i < matStructFieldNamesVec.size(); i++) {
+        fieldNames.push_back(matStructFieldNamesVec[i].c_str());
+    }
+
+    // Set mat struct dimensions
+    size_t matDataStructDims[2] = {1, 1};
+
+    // Initialize mat struct variable
+     MatVarPtr<matvar_t> matDataStruct(Mat_VarCreateStruct("data", 1, matDataStructDims, fieldNames.data(), matStructFieldNamesVec.size()),
+                                       matVarFree);
+
+    if (matDataStruct == nullptr) {
+        yError() << LogPrefix << "Failed to initialize matio struct variable";
+        return;
+    }
+
+    // Iterate over human data and set to numeric arrays of mat struct
+    for (const std::pair<std::string, std::vector<std::vector<double>>> pair : humanData) {
+
+        const size_t rows = pair.second.size();
+        const size_t cols = pair.second.at(0).size(); // Assuming same number of elements in the vector
+
+        std::vector<double> values;
+
+        // TODO: Check if this can be improved through STL
+        for (size_t r = 0; r < rows; r++) {
+            for (size_t c = 0; c < cols; c++) {
+                values.push_back(pair.second[r].at(c));
+            }
+        }
+
+        // Create a mat variable for 2d numeric array
+        // NOTE: rows and cols are reversed from the regular array because mat variables are column major
+        size_t dims[2] = {cols, rows};
+        matvar_t *mat2darray = Mat_VarCreate(pair.first.c_str(), MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, values.data(), 0);
+
+        if (mat2darray == nullptr) {
+            yError() << LogPrefix << "Failed to create a 2d numeric array to store in the mat struct variable";
+            Mat_VarFree(mat2darray);
+            return;
+        }
+
+        // Set the 2d numeric array to the mat struct variable
+        Mat_VarSetStructFieldByName(matDataStruct.get(), pair.first.c_str(), 0, mat2darray);
+
+    }
+
+    // Write mat struct to mat file before closing
+    Mat_VarWrite(matFile, matDataStruct.get(), MAT_COMPRESSION_NONE);
+
+    yDebug() << LogPrefix << "Finished writing mat struct to the mat file";
+
+}
+
 
 class HumanDataCollector::impl
 {
 public:
 
-    double period;
     std::string portPrefix;
     bool firstData = true;
 
@@ -42,40 +164,60 @@ public:
         bool dynamicsEstimator = false;
     } isAttached;
 
+    // Human data buffer structs
+    struct {
+
+        std::vector<long> time;
+        std::vector<std::string> stateJointNames;
+        std::vector<std::string>  wrenchMeasurementSourceNames;
+        std::vector<std::string> wrenchEstimateSourceNames;
+        std::vector<std::string> dynamicsJointNames;
+        std::unordered_map<std::string, std::vector<std::vector<double>>> data;
+
+    } humanDataStruct;
+
     // Interface data buffers
 
     // Base Quantities
     std::string baseName;
     std::array<double, 3> basePosition;
     std::array<double, 4> baseOrientation;
+    std::array<double, 7> basePoseArray;
+    std::vector<double> basePoseVec;
+
     std::array<double, 6> baseVelocity;
+    std::vector<double> baseVeclocityVec;
 
     // Joint Quantities
     size_t stateNumberOfJoints;
     std::vector<std::string> stateJointNames;
-    std::vector<double> jointPositions;
-    std::vector<double> jointVelocities;
+    std::vector<double> jointPositionsVec;
+    std::vector<double> jointVelocitiesVec;
 
     // CoM Quantities
     std::array<double, 3> comPosition;
+    std::vector<double> comPositionVec;
     std::array<double, 3> comVelocity;
+    std::vector<double> comVelocityVec;
     std::array<double, 6> comProperAccInBaseFrame;
+    std::vector<double> comProperAccInBaseFrameVec;
     std::array<double, 6> comProperAccInWorldFrame;
+    std::vector<double> comProperAccInWorldFrameVec;
 
     // Wrench Measurements
     size_t numberOfWrenchMeasurementSources;
     std::vector<std::string> wrenchMeasurementSourceNames;
-    std::vector<double> wrenchMeasurementValues;
+    std::vector<double> wrenchMeasurementValuesVec;
 
     // Wrench Estimates
     size_t numberOfWrenchEstimateSources;
     std::vector<std::string> wrenchEstimateSourceNames;
-    std::vector<double> wrenchEstimateValues;
+    std::vector<double> wrenchEstimateValuesVec;
 
     // Joint Torques
     size_t dynamicsNumberOfJoints;
     std::vector<std::string> dynamicsJointNames;
-    std::vector<double> jointTorques;
+    std::vector<double> jointTorquesVec;
 
     // Yarp ports for streaming data from IHumanState interface of HumanStateProvider
     yarp::os::BufferedPort<yarp::sig::Vector> basePoseDataPort;
@@ -98,6 +240,18 @@ public:
 
     yarp::os::BufferedPort<yarp::os::Bottle> dynamicsJointNamesDataPort;
     yarp::os::BufferedPort<yarp::sig::Vector> jointTorquesDataPort;
+
+
+    // MATIO Logging
+    bool matioLogger = false;
+    const std::experimental::filesystem::path originalWorkingDirectory = std::experimental::filesystem::current_path();
+    std::string matLogDirectory = "";
+    std::string matLogFileName; //TODO: Improve file handling for multiple file logging
+    MatVarPtr<mat_t> matFilePtr = nullptr;
+
+    // Time Buffers
+    std::chrono::system_clock::time_point startTime;
+    std::chrono::system_clock::time_point currentTime;
 };
 
 HumanDataCollector::HumanDataCollector()
@@ -121,22 +275,48 @@ bool HumanDataCollector::open(yarp::os::Searchable &config) {
         yInfo() << LogPrefix << "Using default portPrefix HDE ";
     }
 
+    if (!(config.check("matLogFileName") && config.find("matLogFileName").isString())) {
+        yInfo() << LogPrefix << "Using default file name matLogFile.mat";
+    }
+
     // ===============================
     // PARSE THE CONFIGURATION OPTIONS
     // ===============================
 
-    double period = config.check("period", yarp::os::Value(0.01)).asFloat64();
+    const double period = config.check("period", yarp::os::Value(DefaultPeriod)).asFloat64();
     pImpl->portPrefix = "/" + config.check("portPrefix", yarp::os::Value("HDE")).asString() + "/";
+    pImpl->matioLogger = config.check("matioLogger", yarp::os::Value(false)).asBool();
+
+    if (pImpl->matioLogger) {
+        pImpl->matLogDirectory =  pImpl->originalWorkingDirectory.string() + "/" +
+                                  config.check("matLogDirectory", yarp::os::Value("matLogDirectory")).asString() + "/";
+
+        struct stat info;
+
+        // check if matLogDirectory exists
+        if (stat(pImpl->matLogDirectory.c_str(), &info) != 0 && mkdir(config.check("matLogDirectory", yarp::os::Value("matLogDirectory")).asString().c_str(), 0777) == -1) {
+            yError() << LogPrefix << "Failed to created the matLogDirectory " << config.check("matLogDirectory", yarp::os::Value("matLogDirectory")).asString();
+            return false;
+        }
+
+        std::experimental::filesystem::current_path(pImpl->matLogDirectory);
+    }
+
+    // Get matLogFileName value from config
+    pImpl->matLogFileName = config.check("matLogFileName", yarp::os::Value("matLogFile")).asString() + ".mat";
 
     //TODO: Define rpc to reset the data dump or restarting the visualization??
 
     yInfo() << LogPrefix << "*** ===========================";
     yInfo() << LogPrefix << "*** Period                    :" << period;
     yInfo() << LogPrefix << "*** portPrefix                :" << pImpl->portPrefix;
+    yInfo() << LogPrefix << "*** matioLogger               :" << pImpl->matioLogger;
+    yInfo() << LogPrefix << "*** matLogDirectory           :" << pImpl->matLogDirectory;
+    yInfo() << LogPrefix << "*** matLogFileName            :" << pImpl->matLogFileName;
     yInfo() << LogPrefix << "*** ===========================";
 
-    // Set period
-    setPeriod(pImpl->period);
+    // Set periodicThread period
+    this->setPeriod(period);
 
     return true;
 }
@@ -148,6 +328,7 @@ bool HumanDataCollector::close() {
 void HumanDataCollector::run()
 {
     if (pImpl->firstData) {
+
         pImpl->firstData = false;
 
         // =====================================================================
@@ -286,12 +467,78 @@ void HumanDataCollector::run()
 
         }
 
+        // Initialize  matio logging
+        if (pImpl->matioLogger) {
+
+            // Get the start time
+            pImpl->startTime = std::chrono::system_clock::now();
+
+            // TODO: Handle multiple files
+            std::string matLogFileFullPathName = pImpl->matLogDirectory + pImpl->matLogFileName;
+            pImpl->matFilePtr = {Mat_CreateVer(matLogFileFullPathName.c_str(), nullptr, MAT_FT_MAT73), matFileClose};
+
+            if (pImpl->matFilePtr == nullptr) {
+                yError() << LogPrefix << "Failed to create " << pImpl->matLogFileName << " MAT file for logging";
+                askToStop();
+                return;
+            }
+
+            // Initialize time vector
+            pImpl->humanDataStruct.time.clear();
+            pImpl->humanDataStruct.data["time"] = std::vector<std::vector<double>>();
+
+            // Initialize human data struct buffers
+            if (pImpl->isAttached.stateProvider) {
+
+                pImpl->humanDataStruct.stateJointNames.clear();
+                pImpl->humanDataStruct.data["basePose"] = std::vector<std::vector<double>>();
+                pImpl->humanDataStruct.data["baseVelocity"] = std::vector<std::vector<double>>();
+
+                pImpl->humanDataStruct.data["comPosition"] = std::vector<std::vector<double>>();
+                pImpl->humanDataStruct.data["comVelocity"] = std::vector<std::vector<double>>();
+                pImpl->humanDataStruct.data["comProperAccelerationInBaseFrame"] = std::vector<std::vector<double>>();
+                pImpl->humanDataStruct.data["comProperAccelerationInWorldFrame"] = std::vector<std::vector<double>>();
+
+                pImpl->humanDataStruct.data["jointPositions"] = std::vector<std::vector<double>>();
+                pImpl->humanDataStruct.data["jointVelocities"] = std::vector<std::vector<double>>();
+            }
+
+            if (pImpl->isAttached.wrenchProvider) {
+
+                pImpl->humanDataStruct.wrenchEstimateSourceNames.clear();
+                pImpl->humanDataStruct.data["wrenchMeasurements"] = std::vector<std::vector<double>>();
+            }
+
+            if (pImpl->isAttached.dynamicsEstimator) {
+
+                pImpl->humanDataStruct.wrenchEstimateSourceNames.clear();
+                pImpl->humanDataStruct.data["wrenchEstimates"] = std::vector<std::vector<double>>();
+
+                pImpl->humanDataStruct.dynamicsJointNames.clear();
+                pImpl->humanDataStruct.data["jointTorques"] = std::vector<std::vector<double>>();
+            }
+
+        }
+
     }
 
 
     // =========================================================
     // Get data from different interfaces from attached devices
     // =========================================================
+
+    if (pImpl->matioLogger) {
+
+        // Get the current time
+        pImpl->currentTime = std::chrono::system_clock::now();
+
+        // Get the duration from start time to current time
+        std::chrono::duration<long, std::nano> timeDuration = pImpl->currentTime - pImpl->startTime;
+
+        // Push back time duration to a vector
+        pImpl->humanDataStruct.time.push_back(timeDuration.count());
+
+    }
 
     // Get data from IHumanState interface of HumanStateProvider
     if (pImpl->isAttached.stateProvider) {
@@ -305,8 +552,8 @@ void HumanDataCollector::run()
         // Joint Quantities
         pImpl->stateNumberOfJoints = pImpl->iHumanState->getNumberOfJoints();
         pImpl->stateJointNames = pImpl->iHumanState->getJointNames();
-        pImpl->jointPositions = pImpl->iHumanState->getJointPositions();
-        pImpl->jointVelocities = pImpl->iHumanState->getJointVelocities();
+        pImpl->jointPositionsVec = pImpl->iHumanState->getJointPositions();
+        pImpl->jointVelocitiesVec = pImpl->iHumanState->getJointVelocities();
 
         // CoM Quantities
         pImpl->comPosition = pImpl->iHumanState->getCoMPosition();
@@ -321,7 +568,7 @@ void HumanDataCollector::run()
 
         pImpl->numberOfWrenchMeasurementSources = pImpl->iHumanWrenchMeasurements->getNumberOfWrenchSources();
         pImpl->wrenchMeasurementSourceNames = pImpl->iHumanWrenchMeasurements->getWrenchSourceNames();
-        pImpl->wrenchMeasurementValues = pImpl->iHumanWrenchMeasurements->getWrenches();
+        pImpl->wrenchMeasurementValuesVec = pImpl->iHumanWrenchMeasurements->getWrenches();
 
     }    
 
@@ -331,12 +578,91 @@ void HumanDataCollector::run()
         // NOTE: The wrench values coming from HumanDynamicsEstimators are (offsetRemovedWrenchMeasurements & WrenchEstimates) of each link
         pImpl->numberOfWrenchEstimateSources = pImpl->iHumanWrenchEstimates->getNumberOfWrenchSources();
         pImpl->wrenchEstimateSourceNames = pImpl->iHumanWrenchEstimates->getWrenchSourceNames();
-        pImpl->wrenchEstimateValues = pImpl->iHumanWrenchEstimates->getWrenches();
+        pImpl->wrenchEstimateValuesVec = pImpl->iHumanWrenchEstimates->getWrenches();
 
         // Get data from IHumanDynamics interface of HumanDynamicsEstimator
         pImpl->dynamicsNumberOfJoints = pImpl->iHumanDynamics->getNumberOfJoints();
         pImpl->dynamicsJointNames = pImpl->iHumanDynamics->getJointNames();
-        pImpl->jointTorques = pImpl->iHumanDynamics->getJointTorques();
+        pImpl->jointTorquesVec = pImpl->iHumanDynamics->getJointTorques();
+
+    }
+
+    // Prepare buffer vectors
+    // Handle arrays to vectors
+    if (pImpl->isAttached.stateProvider) {
+
+        pImpl->basePoseArray[0] = pImpl->basePosition[0];
+        pImpl->basePoseArray[1] = pImpl->basePosition[1];
+        pImpl->basePoseArray[2] = pImpl->basePosition[2];
+        pImpl->basePoseArray[3] = pImpl->baseOrientation[0];
+        pImpl->basePoseArray[4] = pImpl->baseOrientation[1];
+        pImpl->basePoseArray[5] = pImpl->baseOrientation[2];
+        pImpl->basePoseArray[6] = pImpl->baseOrientation[3];
+
+        pImpl->basePoseVec = std::vector<double>(pImpl->basePoseArray.begin(), pImpl->basePoseArray.end());
+
+        pImpl->baseVeclocityVec = std::vector<double>(pImpl->baseVelocity.begin(), pImpl->baseVelocity.end());
+
+        pImpl->comPositionVec = std::vector<double>(pImpl->comPosition.begin(), pImpl->comPosition.end());
+
+        pImpl->comVelocityVec = std::vector<double>(pImpl->comVelocity.begin(), pImpl->comVelocity.end());
+
+        pImpl->comProperAccInBaseFrameVec = std::vector<double>(pImpl->comProperAccInBaseFrame.begin(), pImpl->comProperAccInBaseFrame.end());
+
+        pImpl->comProperAccInWorldFrameVec = std::vector<double>(pImpl->comProperAccInWorldFrame.begin(), pImpl->comProperAccInWorldFrame.end());
+
+    }
+
+    // Update interface data to matio buffers
+    if (pImpl->matioLogger) {
+
+        if (pImpl->isAttached.stateProvider) {
+
+            // Set state joint names once
+            if (pImpl->humanDataStruct.stateJointNames.empty()) {
+                pImpl->humanDataStruct.stateJointNames = pImpl->stateJointNames;
+            }
+
+            pImpl->humanDataStruct.data["basePose"].push_back(pImpl->basePoseVec);
+            pImpl->humanDataStruct.data["baseVelocity"].push_back(pImpl->baseVeclocityVec);
+
+            pImpl->humanDataStruct.data["comPosition"].push_back(pImpl->comPositionVec);
+            pImpl->humanDataStruct.data["comVelocity"].push_back(pImpl->comVelocityVec);
+            pImpl->humanDataStruct.data["comProperAccelerationInBaseFrame"].push_back(pImpl->comProperAccInBaseFrameVec);
+            pImpl->humanDataStruct.data["comProperAccelerationInWorldFrame"].push_back(pImpl->comProperAccInWorldFrameVec);
+
+            pImpl->humanDataStruct.data["jointPositions"].push_back(pImpl->jointPositionsVec);
+            pImpl->humanDataStruct.data["jointVelocities"].push_back(pImpl->jointVelocitiesVec);
+
+        }
+
+        if (pImpl->isAttached.wrenchProvider) {
+
+            // Set wrench measurements source names once
+            if (pImpl->humanDataStruct.wrenchMeasurementSourceNames.empty()) {
+                pImpl->humanDataStruct.wrenchMeasurementSourceNames = pImpl->wrenchMeasurementSourceNames;
+            }
+
+            pImpl->humanDataStruct.data["wrenchMeasurements"].push_back(pImpl->wrenchMeasurementValuesVec);
+
+        }
+
+        if (pImpl->isAttached.dynamicsEstimator) {
+
+            // Set wrench estimates source names once
+            if (pImpl->humanDataStruct.wrenchEstimateSourceNames.empty()) {
+                pImpl->humanDataStruct.wrenchEstimateSourceNames = pImpl->wrenchEstimateSourceNames;
+            }
+
+            pImpl->humanDataStruct.data["wrenchEstimates"].push_back(pImpl->wrenchEstimateValuesVec);
+
+            // Set dynamics joint names once
+            if (pImpl->humanDataStruct.dynamicsJointNames.empty()) {
+                pImpl->humanDataStruct.dynamicsJointNames = pImpl->dynamicsJointNames;
+            }
+
+            pImpl->humanDataStruct.data["jointTorques"].push_back(pImpl->jointTorquesVec);
+        }
 
     }
 
@@ -348,23 +674,11 @@ void HumanDataCollector::run()
 
         // Prepare base pose data
         yarp::sig::Vector& basePoseYarpVector = pImpl->basePoseDataPort.prepare();
-        std::array<double, 7> basePoseArray = {pImpl->basePosition[0],
-                                               pImpl->basePosition[1],
-                                               pImpl->basePosition[2],
-                                               pImpl->baseOrientation[0],
-                                               pImpl->baseOrientation[1],
-                                               pImpl->baseOrientation[2],
-                                               pImpl->baseOrientation[3]};
-
-
-        std::vector<double> basePoseInputVector(basePoseArray.begin(), basePoseArray.end());
-
-        YarpConversionsHelper::toYarp(basePoseYarpVector, basePoseInputVector);
+        YarpConversionsHelper::toYarp(basePoseYarpVector, pImpl->basePoseVec);
 
         // Prepare base velocity data
-        std::vector<double> baseVelocityInputVector(pImpl->baseVelocity.begin(), pImpl->baseVelocity.end());
         yarp::sig::Vector& baseVelocityYarpVector = pImpl->baseVelocityDataPort.prepare();
-        YarpConversionsHelper::toYarp(baseVelocityYarpVector, baseVelocityInputVector);
+        YarpConversionsHelper::toYarp(baseVelocityYarpVector, pImpl->baseVeclocityVec);
 
         // Prepare stateJointNames
         yarp::os::Bottle& stateJointNamesYarpBottle = pImpl->stateJointNamesDataPort.prepare();
@@ -372,32 +686,28 @@ void HumanDataCollector::run()
 
         // Prepare joint positions
         yarp::sig::Vector& jointPositionsYarpVector = pImpl->jointPositionsDataPort.prepare();
-        YarpConversionsHelper::toYarp(jointPositionsYarpVector, pImpl->jointPositions);
+        YarpConversionsHelper::toYarp(jointPositionsYarpVector, pImpl->jointPositionsVec);
 
         // Prepare joint velocities
         yarp::sig::Vector& jointVelocitiesYarpVector = pImpl->jointVelocitiesDataPort.prepare();
-        YarpConversionsHelper::toYarp(jointVelocitiesYarpVector, pImpl->jointVelocities);
+        YarpConversionsHelper::toYarp(jointVelocitiesYarpVector, pImpl->jointVelocitiesVec);
 
         // Preprare com position
-        std::vector<double> comPositionInputVector(pImpl->comPosition.begin(), pImpl->comPosition.end());
         yarp::sig::Vector& comPositionYarpVector = pImpl->comPositionDataPort.prepare();
-        YarpConversionsHelper::toYarp(comPositionYarpVector, comPositionInputVector);
+        YarpConversionsHelper::toYarp(comPositionYarpVector, pImpl->comPositionVec);
 
         // Preprate com velocity
-        std::vector<double> comVelocityInputVector(pImpl->comVelocity.begin(), pImpl->comVelocity.end());
         yarp::sig::Vector& comVelocityYarpVector = pImpl->comVelocityDataPort.prepare();
-        YarpConversionsHelper::toYarp(comVelocityYarpVector, comVelocityInputVector);
+        YarpConversionsHelper::toYarp(comVelocityYarpVector, pImpl->comVelocityVec);
 
         // Prepare com proper acceleration in base frame
-        std::vector<double> comProperAccelerationInBaseFrameInputVector(pImpl->comProperAccInBaseFrame.begin(), pImpl->comProperAccInBaseFrame.end());
         yarp::sig::Vector& comProperAccelerationInBaseFrameYarpVector = pImpl->comProperAccelerationInBaseFrameDataPort.prepare();
-        YarpConversionsHelper::toYarp(comProperAccelerationInBaseFrameYarpVector, comProperAccelerationInBaseFrameInputVector);
+        YarpConversionsHelper::toYarp(comProperAccelerationInBaseFrameYarpVector, pImpl->comProperAccInBaseFrameVec);
 
 
         // Prepare com proper acceleration in world frame
-        std::vector<double> comProperAccelerationInWorldFrameInputVector(pImpl->comProperAccInWorldFrame.begin(), pImpl->comProperAccInWorldFrame.end());
         yarp::sig::Vector& comProperAccelerationInWorldFrameYarpVector = pImpl->comProperAccelerationInWorldFrameDataPort.prepare();
-        YarpConversionsHelper::toYarp(comProperAccelerationInWorldFrameYarpVector, comProperAccelerationInWorldFrameInputVector);
+        YarpConversionsHelper::toYarp(comProperAccelerationInWorldFrameYarpVector, pImpl->comProperAccInWorldFrameVec);
 
         // Send data through yarp ports
         pImpl->basePoseDataPort.write(true);
@@ -419,7 +729,7 @@ void HumanDataCollector::run()
 
         // Prepare wrench measurement values data
         yarp::sig::Vector& wrenchMeasurementValuesYarpVector = pImpl->wrenchMeasurementValuesDataPort.prepare();
-        YarpConversionsHelper::toYarp(wrenchMeasurementValuesYarpVector, pImpl->wrenchMeasurementValues);
+        YarpConversionsHelper::toYarp(wrenchMeasurementValuesYarpVector, pImpl->wrenchMeasurementValuesVec);
 
         // Send data through yarp ports
         pImpl->wrenchMeasurementSourceNamesDataPort.write(true);
@@ -434,7 +744,7 @@ void HumanDataCollector::run()
 
         // Prepare wrench estimate values data
         yarp::sig::Vector& wrenchEstimateValuesYarpVector = pImpl->wrenchEstimateValuesDataPort.prepare();
-        YarpConversionsHelper::toYarp(wrenchEstimateValuesYarpVector, pImpl->wrenchEstimateValues);
+        YarpConversionsHelper::toYarp(wrenchEstimateValuesYarpVector, pImpl->wrenchEstimateValuesVec);
 
         // Prepare dynamics joint names data
         yarp::os::Bottle& dynamicsJointNamesYarpBottle = pImpl->dynamicsJointNamesDataPort.prepare();
@@ -442,7 +752,7 @@ void HumanDataCollector::run()
 
         // Prepare joint torques data
         yarp::sig::Vector& jointTorqesYarpVector = pImpl->jointTorquesDataPort.prepare();
-        YarpConversionsHelper::toYarp(jointTorqesYarpVector, pImpl->jointTorques);
+        YarpConversionsHelper::toYarp(jointTorqesYarpVector, pImpl->jointTorquesVec);
 
         // Send data through yarp ports
         pImpl->wrenchEstimateSourceNamesDataPort.write(true);
@@ -550,6 +860,39 @@ bool HumanDataCollector::detach()
     while (isRunning()) {
         stop();
     }
+
+    if (pImpl->matioLogger) {
+
+        // Set the string variables elements as cell arrays to mat cell variables
+        writeVectorOfStringToMatCell("stateJointNames", pImpl->humanDataStruct.stateJointNames, pImpl->matFilePtr.get());
+        writeVectorOfStringToMatCell("wrenchMeasurementSourceNames", pImpl->humanDataStruct.wrenchMeasurementSourceNames, pImpl->matFilePtr.get());
+        writeVectorOfStringToMatCell("wrenchEstimateSourceNames", pImpl->humanDataStruct.wrenchEstimateSourceNames, pImpl->matFilePtr.get());
+        writeVectorOfStringToMatCell("dynamicsJointNames", pImpl->humanDataStruct.dynamicsJointNames, pImpl->matFilePtr.get());
+
+        // Correct the time values stored in the time vector to zero start value
+        std::transform( pImpl->humanDataStruct.time.begin(), pImpl->humanDataStruct.time.end(), pImpl->humanDataStruct.time.begin(),
+                        std::bind2nd( std::plus<long>(), - pImpl->humanDataStruct.time.at(0) ) );
+
+        // Create an array with time elements
+        long time[pImpl->humanDataStruct.time.size()];
+        std::copy(pImpl->humanDataStruct.time.begin(), pImpl->humanDataStruct.time.end(), time);
+
+        for (long timeCount : pImpl->humanDataStruct.time) {
+
+            //TODO: Double check the long double conversion handling
+            std::vector<double> count;
+            count.push_back(timeCount);
+            pImpl->humanDataStruct.data["time"].push_back(count);
+
+        }
+
+        // Set human data to mat struct
+        writeVectorOfVectorDoubleToMatStruct(pImpl->humanDataStruct.data, pImpl->matFilePtr.get());
+
+    }
+
+    // Moving back a directory above the matLogDirectory
+    std::experimental::filesystem::current_path(pImpl->originalWorkingDirectory);
 
     if (pImpl->isAttached.stateProvider) {
 

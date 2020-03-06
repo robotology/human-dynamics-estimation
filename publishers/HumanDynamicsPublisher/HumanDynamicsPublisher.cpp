@@ -117,7 +117,9 @@ bool HumanDynamicsPublisher::open(yarp::os::Searchable& config)
     // READ PARAMETERS
     // ===============
 
-    double period = config.find("period").asFloat64();
+    // Set periodicTheard period
+    const double period = config.check("period", yarp::os::Value(DefaultPeriod)).asFloat64();
+    setPeriod(period);
 
     yarp::os::Bottle* listOfLinkNames = config.find("parentLinkNames").asList();
     yarp::os::Bottle* listOfJointNames = config.find("sphericalJointNames").asList();
@@ -173,7 +175,6 @@ bool HumanDynamicsPublisher::open(yarp::os::Searchable& config)
         pImpl->modelEffortData.push_back(jointEffortData);
     }
 
-    setPeriod(period);
     return true;
 }
 

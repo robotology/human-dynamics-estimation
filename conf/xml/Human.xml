@@ -422,8 +422,11 @@
     </device>
 
     <device type="human_data_collector" name="HumanDataCollector">
-        <param name="period">0.1</param>
+        <param name="period">0.02</param>
         <param name="portPrefix">Human</param>
+        <param name="matioLogger">true</param>
+        <param name="matLogDirectory">testData</param>
+        <param name="matLogFileName">matLogFile</param>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
                 <elem name="HumanStateProvideLabel">HumanStateProvider</elem>

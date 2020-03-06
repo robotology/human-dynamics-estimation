@@ -24,7 +24,7 @@ target_link_libraries(HumanDynamicsEstimator PUBLIC
     IHumanState
     IHumanWrench
     IHumanDynamics
-    YARP::YARP_OS
+    YARP::YARP_os
     YARP::YARP_dev
     YARP::YARP_sig
     YARP::YARP_init

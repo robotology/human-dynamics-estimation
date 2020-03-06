@@ -21,7 +21,7 @@ target_include_directories(HumanDynamicsPublisher PUBLIC
 
 target_link_libraries(HumanDynamicsPublisher PUBLIC
     IHumanDynamics
-    YARP::YARP_OS
+    YARP::YARP_os
     YARP::YARP_dev
     YARP::YARP_init
     YARP::YARP_rosmsg)

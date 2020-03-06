@@ -149,6 +149,10 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
         yInfo() << LogPrefix << "Using default period:" << DefaultPeriod << "s";
     }
 
+    // Set periodicThread period
+    const double period = config.check("period", yarp::os::Value(DefaultPeriod)).asFloat64();
+    this->setPeriod(period);
+
     if (!(config.check("pHRIScenario") && config.find("pHRIScenario").isBool())) {
         yError() << LogPrefix << "Option 'pHRIScenario' not found or not a valid bool";
         return false;

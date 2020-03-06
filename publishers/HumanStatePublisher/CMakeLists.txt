@@ -22,7 +22,7 @@ target_include_directories(HumanStatePublisher PUBLIC
 target_link_libraries(HumanStatePublisher PUBLIC
     IHumanState
     HumanROSMsgs
-    YARP::YARP_OS
+    YARP::YARP_os
     YARP::YARP_dev
     YARP::YARP_init
     YARP::YARP_rosmsg
