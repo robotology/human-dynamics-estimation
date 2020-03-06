@@ -211,8 +211,12 @@ public:
     bool useFBAccelerationFromWearableData;
     HumanSensorData humanSensorData;
 
-    std::array<double, 6> CoMProperAccelerationExpressedInBaseFrame;
-    std::array<double, 6> CoMProperAccelerationExpressedInWorldFrame;
+    // Rate of change of momentum buffers
+    std::array<double, 6> rateOfChangeOfMomentumInCentroidalFrame;
+    std::array<double, 6> rateOfChangeOfMomentumInBaseFrame;
+    std::array<double, 6> rateOfChangeOfMomentumInWorldFrame;
+
+    void computeRateOfChangeOfMomentum();
 
     // IK parameters
     int ikPoolSize{1};
@@ -309,6 +313,85 @@ public:
     // constructor
     impl();
 };
+
+void HumanStateProvider::impl::computeRateOfChangeOfMomentum() {
+
+    // Compute rate of change of momentum in centroidal frame
+    iDynTree::SpatialAcc rateOfChangeOfMomentumInCentroidalFrame;
+    rateOfChangeOfMomentumInCentroidalFrame.zero();
+
+    // Get center of mass bias acceleration
+
+    // Set the linear part of rate of change of momentum in centroidal frame
+    rateOfChangeOfMomentumInCentroidalFrame.setVal(0, this->humanModel.getTotalMass() * (kinDynComputations->getCenterOfMassBiasAcc().getVal(0) - this->worldGravity(0)));
+    rateOfChangeOfMomentumInCentroidalFrame.setVal(1, this->humanModel.getTotalMass() * (kinDynComputations->getCenterOfMassBiasAcc().getVal(1) - this->worldGravity(1)));
+    rateOfChangeOfMomentumInCentroidalFrame.setVal(2, this->humanModel.getTotalMass() * (kinDynComputations->getCenterOfMassBiasAcc().getVal(2) - this->worldGravity(2)));
+
+    // Set the angular part of rate of change of momentum in centroidal frame
+    rateOfChangeOfMomentumInCentroidalFrame.setVal(3, 0.0);
+    rateOfChangeOfMomentumInCentroidalFrame.setVal(4, 0.0);
+    rateOfChangeOfMomentumInCentroidalFrame.setVal(5, 0.0);
+
+    // Compute centroidal frame (G[I]) to inertial frame transform
+    iDynTree::Transform world_H_centroidal = iDynTree::Transform::Identity();
+    iDynTree::Position comPosition(kinDynComputations->getCenterOfMassPosition().getVal(0),
+                                   kinDynComputations->getCenterOfMassPosition().getVal(1),
+                                   kinDynComputations->getCenterOfMassPosition().getVal(2));
+    world_H_centroidal.setPosition(comPosition);
+
+    // Compute centroidal frame to base frame transform
+    iDynTree::Transform base_H_centroidal = iDynTree::Transform::Identity();
+    base_H_centroidal = this->baseTransformSolution.inverse() * world_H_centroidal;
+
+    // Transform rate of change of momentum to base frame from centroidal frame
+    iDynTree::SpatialAcc rateOfChangeOfMomentumInWorldFrame;
+    rateOfChangeOfMomentumInWorldFrame.zero();
+
+    Eigen::Matrix<double,6,1> rateOfChangeOfMomentumInWorldEigen = iDynTree::toEigen(world_H_centroidal.asAdjointTransformWrench()) *
+            iDynTree::toEigen(rateOfChangeOfMomentumInCentroidalFrame.asVector());
+
+    iDynTree::fromEigen(rateOfChangeOfMomentumInWorldFrame, rateOfChangeOfMomentumInWorldEigen);
+
+
+    // Transform rate of change of momentum to base frame from centroidal frame
+    iDynTree::SpatialAcc rateOfChangeOfMomentumInBaseFrame;
+    rateOfChangeOfMomentumInBaseFrame.zero();
+
+    Eigen::Matrix<double,6,1> rateOfChangeOfMomentumInBaseEigen = iDynTree::toEigen(base_H_centroidal.asAdjointTransformWrench()) *
+            iDynTree::toEigen(rateOfChangeOfMomentumInCentroidalFrame.asVector());
+
+    iDynTree::fromEigen(rateOfChangeOfMomentumInBaseFrame, rateOfChangeOfMomentumInBaseEigen);
+
+    // Expose rate of change of momentum for IHumanState interface
+    {
+
+        std::lock_guard<std::mutex> lock(this->mutex);
+
+        this->rateOfChangeOfMomentumInCentroidalFrame = {rateOfChangeOfMomentumInCentroidalFrame.getVal(0),
+                                                         rateOfChangeOfMomentumInCentroidalFrame.getVal(1),
+                                                         rateOfChangeOfMomentumInCentroidalFrame.getVal(2),
+                                                         rateOfChangeOfMomentumInCentroidalFrame.getVal(3),
+                                                         rateOfChangeOfMomentumInCentroidalFrame.getVal(4),
+                                                         rateOfChangeOfMomentumInCentroidalFrame.getVal(5)};
+
+        this->rateOfChangeOfMomentumInBaseFrame       = {rateOfChangeOfMomentumInBaseFrame.getVal(0),
+                                                         rateOfChangeOfMomentumInBaseFrame.getVal(1),
+                                                         rateOfChangeOfMomentumInBaseFrame.getVal(2),
+                                                         rateOfChangeOfMomentumInBaseFrame.getVal(3),
+                                                         rateOfChangeOfMomentumInBaseFrame.getVal(4),
+                                                         rateOfChangeOfMomentumInBaseFrame.getVal(5)};
+
+        this->rateOfChangeOfMomentumInWorldFrame      = {rateOfChangeOfMomentumInWorldFrame.getVal(0),
+                                                         rateOfChangeOfMomentumInWorldFrame.getVal(1),
+                                                         rateOfChangeOfMomentumInWorldFrame.getVal(2),
+                                                         rateOfChangeOfMomentumInWorldFrame.getVal(3),
+                                                         rateOfChangeOfMomentumInWorldFrame.getVal(4),
+                                                         rateOfChangeOfMomentumInWorldFrame.getVal(5)};
+
+    }
+
+
+}
 
 // ===============
 // RPC PORT PARSER
@@ -999,9 +1082,10 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
 
     }
 
-    // Initialize CoM proper acceleration to zero
-    pImpl->CoMProperAccelerationExpressedInBaseFrame = std::array<double, 6>{0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-    pImpl->CoMProperAccelerationExpressedInWorldFrame = std::array<double, 6>{0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+    // Initialize rate of change of momentum buffers to zero
+    pImpl->rateOfChangeOfMomentumInCentroidalFrame = std::array<double, 6>{0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+    pImpl->rateOfChangeOfMomentumInBaseFrame = std::array<double, 6>{0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+    pImpl->rateOfChangeOfMomentumInWorldFrame = std::array<double, 6>{0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
     // =========================
     // INITIALIZE JOINTS BUFFERS
@@ -1385,7 +1469,10 @@ void HumanStateProvider::run()
                             pImpl->kinDynComputations->getCenterOfMassBiasAcc().getVal(1),
                             pImpl->kinDynComputations->getCenterOfMassBiasAcc().getVal(2)};
 
-    // Compute proper acceleration
+    // Compute rate of change of momentum in different frames
+    pImpl->computeRateOfChangeOfMomentum();
+
+    // Compute proper acceleration of links from sensor measuremens
     if (pImpl->useFBAccelerationFromWearableData) {
 
         // Iterate over the stored model sensors
@@ -1460,53 +1547,6 @@ void HumanStateProvider::run()
 
 
             }
-
-        }
-
-        // Compute CoM proper acceleration
-        iDynTree::SpatialAcc comSpatialAccExpressedInWorld;
-
-        if (pImpl->humanSensorData.accelerometerSensorMeasurementsOption == "proper") {
-
-            // Set the linear part of com spatial acceleartion
-            comSpatialAccExpressedInWorld.setVal(0, pImpl->humanModel.getTotalMass() * (CoM_biasacceleration[0] - pImpl->worldGravity(0)));
-            comSpatialAccExpressedInWorld.setVal(1, pImpl->humanModel.getTotalMass() * (CoM_biasacceleration[1] - pImpl->worldGravity(1)));
-            comSpatialAccExpressedInWorld.setVal(2, pImpl->humanModel.getTotalMass() * (CoM_biasacceleration[2] - pImpl->worldGravity(2)));
-        }
-        else if (pImpl->humanSensorData.accelerometerSensorMeasurementsOption == "gravity") {
-
-            // Set the linear part of com spatial acceleartion
-            comSpatialAccExpressedInWorld.setVal(0,  - pImpl->worldGravity(0) * pImpl->humanModel.getTotalMass());
-            comSpatialAccExpressedInWorld.setVal(1,  - pImpl->worldGravity(1) * pImpl->humanModel.getTotalMass());
-            comSpatialAccExpressedInWorld.setVal(2,  - pImpl->worldGravity(2) * pImpl->humanModel.getTotalMass());
-        }
-
-        // Set the angular part of com spatial acceleration to zero
-        comSpatialAccExpressedInWorld.setVal(3, 0.0);
-        comSpatialAccExpressedInWorld.setVal(4, 0.0);
-        comSpatialAccExpressedInWorld.setVal(5, 0.0);
-
-        // Compute com proper acceleration and multiply with the total model mass
-        iDynTree::SpatialAcc CoMProperAccelerationExpressedInBaseFrame = pImpl->baseTransformSolution.getRotation().inverse() * comSpatialAccExpressedInWorld;
-
-        // Expose proper com acceleration for IHumanState interface
-        {
-
-            std::lock_guard<std::mutex> lock(pImpl->mutex);
-
-            pImpl->CoMProperAccelerationExpressedInBaseFrame = {CoMProperAccelerationExpressedInBaseFrame.getVal(0),
-                                                                CoMProperAccelerationExpressedInBaseFrame.getVal(1),
-                                                                CoMProperAccelerationExpressedInBaseFrame.getVal(2),
-                                                                0.0,
-                                                                0.0,
-                                                                0.0};
-
-            pImpl->CoMProperAccelerationExpressedInWorldFrame = {comSpatialAccExpressedInWorld.getVal(0),
-                                                                 comSpatialAccExpressedInWorld.getVal(1),
-                                                                 comSpatialAccExpressedInWorld.getVal(2),
-                                                                 comSpatialAccExpressedInWorld.getVal(3),
-                                                                 comSpatialAccExpressedInWorld.getVal(4),
-                                                                 comSpatialAccExpressedInWorld.getVal(5)};
 
         }
 
@@ -2939,16 +2979,22 @@ std::array<double, 3> HumanStateProvider::getCoMBiasAcceleration() const
     return pImpl->solution.CoMBiasAcceleration;
 }
 
-std::array<double, 6> HumanStateProvider::getCoMProperAccelerationExpressedInBaseFrame() const
+std::array<double, 6> HumanStateProvider::getRateOfChangeOfMomentumInCentroidalFrame() const
 {
     std::lock_guard<std::mutex> lock(pImpl->mutex);
-    return pImpl->CoMProperAccelerationExpressedInBaseFrame;
+    return pImpl->rateOfChangeOfMomentumInCentroidalFrame;
 }
 
-std::array<double, 6> HumanStateProvider::getCoMProperAccelerationExpressedInWorldFrame() const
+std::array<double, 6> HumanStateProvider::getRateOfChangeOfMomentumInBaseFrame() const
 {
     std::lock_guard<std::mutex> lock(pImpl->mutex);
-    return pImpl->CoMProperAccelerationExpressedInWorldFrame;
+    return pImpl->rateOfChangeOfMomentumInBaseFrame;
+}
+
+std::array<double, 6> HumanStateProvider::getRateOfChangeOfMomentumInWorldFrame() const
+{
+    std::lock_guard<std::mutex> lock(pImpl->mutex);
+    return pImpl->rateOfChangeOfMomentumInWorldFrame;
 }
 
 std::vector<std::string> HumanStateProvider::getAccelerometerNames() const

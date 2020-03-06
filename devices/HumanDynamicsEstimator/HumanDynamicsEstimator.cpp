@@ -1683,8 +1683,9 @@ void HumanDynamicsEstimator::run()
     std::vector<std::string> accelerometerSensorNames = pImpl->iHumanState->getAccelerometerNames();
     std::vector<std::array<double, 6>> properAccelerations = pImpl->iHumanState->getProperAccelerations();
 
-    std::array<double, 6> comProperAccelerationInBaseFrame = pImpl->iHumanState->getCoMProperAccelerationExpressedInBaseFrame();
-    std::array<double, 6> comProperAccelerationInWorldFrame = pImpl->iHumanState->getCoMProperAccelerationExpressedInWorldFrame();
+    std::array<double, 6> rateOfChangeOfMomentumInCentroidalFrame = pImpl->iHumanState->getRateOfChangeOfMomentumInCentroidalFrame();
+    std::array<double, 6> rateOfChangeOfMomentumInBaseFrame = pImpl->iHumanState->getRateOfChangeOfMomentumInBaseFrame();
+    std::array<double, 6> rateOfChangeOfMomentumInWorldFrame = pImpl->iHumanState->getRateOfChangeOfMomentumInWorldFrame();
 
     // Set base angular velocity
     pImpl->berdyData.state.baseAngularVelocity.setVal(0, baseVelocity.at(3));
@@ -1778,12 +1779,12 @@ void HumanDynamicsEstimator::run()
                     iDynTree::Wrench modelWrenchOffsetInWorldFrame = pImpl->modelWrenchOffset;
                     iDynTree::Transform world_H_base = kinDynComputations.getWorldBaseTransform();
                     iDynTree::Wrench modelWrenchOffsetInBaseFrame = world_H_base.inverse() * modelWrenchOffsetInWorldFrame;
-                    pImpl->berdyData.buffers.task1_measurements(found->second.offset + 0) = comProperAccelerationInBaseFrame[0] - modelWrenchOffsetInBaseFrame.getLinearVec3().getVal(0);
-                    pImpl->berdyData.buffers.task1_measurements(found->second.offset + 1) = comProperAccelerationInBaseFrame[1] - modelWrenchOffsetInBaseFrame.getLinearVec3().getVal(1);
-                    pImpl->berdyData.buffers.task1_measurements(found->second.offset + 2) = comProperAccelerationInBaseFrame[2] - modelWrenchOffsetInBaseFrame.getLinearVec3().getVal(2);
-                    pImpl->berdyData.buffers.task1_measurements(found->second.offset + 3) = comProperAccelerationInBaseFrame[3] - modelWrenchOffsetInBaseFrame.getAngularVec3().getVal(0);
-                    pImpl->berdyData.buffers.task1_measurements(found->second.offset + 4) = comProperAccelerationInBaseFrame[4] - modelWrenchOffsetInBaseFrame.getAngularVec3().getVal(1);
-                    pImpl->berdyData.buffers.task1_measurements(found->second.offset + 5) = comProperAccelerationInBaseFrame[5] - modelWrenchOffsetInBaseFrame.getAngularVec3().getVal(2);
+                    pImpl->berdyData.buffers.task1_measurements(found->second.offset + 0) = rateOfChangeOfMomentumInBaseFrame[0] - modelWrenchOffsetInBaseFrame.getLinearVec3().getVal(0);
+                    pImpl->berdyData.buffers.task1_measurements(found->second.offset + 1) = rateOfChangeOfMomentumInBaseFrame[1] - modelWrenchOffsetInBaseFrame.getLinearVec3().getVal(1);
+                    pImpl->berdyData.buffers.task1_measurements(found->second.offset + 2) = rateOfChangeOfMomentumInBaseFrame[2] - modelWrenchOffsetInBaseFrame.getLinearVec3().getVal(2);
+                    pImpl->berdyData.buffers.task1_measurements(found->second.offset + 3) = rateOfChangeOfMomentumInBaseFrame[3] - modelWrenchOffsetInBaseFrame.getAngularVec3().getVal(0);
+                    pImpl->berdyData.buffers.task1_measurements(found->second.offset + 4) = rateOfChangeOfMomentumInBaseFrame[4] - modelWrenchOffsetInBaseFrame.getAngularVec3().getVal(1);
+                    pImpl->berdyData.buffers.task1_measurements(found->second.offset + 5) = rateOfChangeOfMomentumInBaseFrame[5] - modelWrenchOffsetInBaseFrame.getAngularVec3().getVal(2);
                 }
                 break;
                 case iDynTree::NET_EXT_WRENCH_SENSOR:
@@ -1976,12 +1977,12 @@ void HumanDynamicsEstimator::run()
 
                     // Set real wrench offset
                     iDynTree::Wrench rateOfChangeOfMomentum = iDynTree::Wrench::Zero();
-                    rateOfChangeOfMomentum.setVal(0, comProperAccelerationInWorldFrame[0]/numberOfRealWrench);
-                    rateOfChangeOfMomentum.setVal(1, comProperAccelerationInWorldFrame[1]/numberOfRealWrench);
-                    rateOfChangeOfMomentum.setVal(2, comProperAccelerationInWorldFrame[2]/numberOfRealWrench);
-                    rateOfChangeOfMomentum.setVal(3, comProperAccelerationInWorldFrame[3]/numberOfRealWrench);
-                    rateOfChangeOfMomentum.setVal(4, comProperAccelerationInWorldFrame[4]/numberOfRealWrench);
-                    rateOfChangeOfMomentum.setVal(5, comProperAccelerationInWorldFrame[5]/numberOfRealWrench);
+                    rateOfChangeOfMomentum.setVal(0, rateOfChangeOfMomentumInWorldFrame[0]/numberOfRealWrench);
+                    rateOfChangeOfMomentum.setVal(1, rateOfChangeOfMomentumInWorldFrame[1]/numberOfRealWrench);
+                    rateOfChangeOfMomentum.setVal(2, rateOfChangeOfMomentumInWorldFrame[2]/numberOfRealWrench);
+                    rateOfChangeOfMomentum.setVal(3, rateOfChangeOfMomentumInWorldFrame[3]/numberOfRealWrench);
+                    rateOfChangeOfMomentum.setVal(4, rateOfChangeOfMomentumInWorldFrame[4]/numberOfRealWrench);
+                    rateOfChangeOfMomentum.setVal(5, rateOfChangeOfMomentumInWorldFrame[5]/numberOfRealWrench);
 
                     pImpl->realWrenchOffsetMap.at(wrenchSensorLinkName) = world_H_link.getRotation() * linkWrench -  rateOfChangeOfMomentum;
 
@@ -1990,12 +1991,12 @@ void HumanDynamicsEstimator::run()
         }
         else if (pImpl->removeOffsetOption == "model") {
             iDynTree::Wrench bufferOffsetWrench;
-            bufferOffsetWrench.setVal(0, comProperAccelerationInWorldFrame[0]);
-            bufferOffsetWrench.setVal(1, comProperAccelerationInWorldFrame[1]);
-            bufferOffsetWrench.setVal(2, comProperAccelerationInWorldFrame[2]);
-            bufferOffsetWrench.setVal(3, comProperAccelerationInWorldFrame[3]);
-            bufferOffsetWrench.setVal(4, comProperAccelerationInWorldFrame[4]);
-            bufferOffsetWrench.setVal(5, comProperAccelerationInWorldFrame[5]);
+            bufferOffsetWrench.setVal(0, rateOfChangeOfMomentumInWorldFrame[0]);
+            bufferOffsetWrench.setVal(1, rateOfChangeOfMomentumInWorldFrame[1]);
+            bufferOffsetWrench.setVal(2, rateOfChangeOfMomentumInWorldFrame[2]);
+            bufferOffsetWrench.setVal(3, rateOfChangeOfMomentumInWorldFrame[3]);
+            bufferOffsetWrench.setVal(4, rateOfChangeOfMomentumInWorldFrame[4]);
+            bufferOffsetWrench.setVal(5, rateOfChangeOfMomentumInWorldFrame[5]);
             pImpl->modelWrenchOffset = bufferOffsetWrench;
 
             for (int idx = 0; idx < pImpl->wrenchSensorsLinkNames.size(); idx++) {
@@ -2023,12 +2024,12 @@ void HumanDynamicsEstimator::run()
 
                 // Set real wrench offset
                 iDynTree::Wrench rateOfChangeOfMomentum = iDynTree::Wrench::Zero();
-                rateOfChangeOfMomentum.setVal(0, comProperAccelerationInWorldFrame[0]);
-                rateOfChangeOfMomentum.setVal(1, comProperAccelerationInWorldFrame[1]);
-                rateOfChangeOfMomentum.setVal(2, comProperAccelerationInWorldFrame[2]);
-                rateOfChangeOfMomentum.setVal(3, comProperAccelerationInWorldFrame[3]);
-                rateOfChangeOfMomentum.setVal(4, comProperAccelerationInWorldFrame[4]);
-                rateOfChangeOfMomentum.setVal(5, comProperAccelerationInWorldFrame[5]);
+                rateOfChangeOfMomentum.setVal(0, rateOfChangeOfMomentumInWorldFrame[0]);
+                rateOfChangeOfMomentum.setVal(1, rateOfChangeOfMomentumInWorldFrame[1]);
+                rateOfChangeOfMomentum.setVal(2, rateOfChangeOfMomentumInWorldFrame[2]);
+                rateOfChangeOfMomentum.setVal(3, rateOfChangeOfMomentumInWorldFrame[3]);
+                rateOfChangeOfMomentum.setVal(4, rateOfChangeOfMomentumInWorldFrame[4]);
+                rateOfChangeOfMomentum.setVal(5, rateOfChangeOfMomentumInWorldFrame[5]);
 
                 pImpl->realWrenchDynamicOffsetMap.at(wrenchSensorLinkName) = world_H_link.getRotation() * linkWrench -  rateOfChangeOfMomentum;
             }
@@ -2116,12 +2117,12 @@ void HumanDynamicsEstimator::run()
                 case iDynTree::COM_ACCELEROMETER_SENSOR:
                 {
                     // Set com proper acceleration measurements
-                    pImpl->berdyData.buffers.measurements(found->second.offset + 0) = comProperAccelerationInBaseFrame[0];
-                    pImpl->berdyData.buffers.measurements(found->second.offset + 1) = comProperAccelerationInBaseFrame[1];
-                    pImpl->berdyData.buffers.measurements(found->second.offset + 2) = comProperAccelerationInBaseFrame[2];
-                    pImpl->berdyData.buffers.measurements(found->second.offset + 3) = comProperAccelerationInBaseFrame[3];
-                    pImpl->berdyData.buffers.measurements(found->second.offset + 4) = comProperAccelerationInBaseFrame[4];
-                    pImpl->berdyData.buffers.measurements(found->second.offset + 5) = comProperAccelerationInBaseFrame[5];
+                    pImpl->berdyData.buffers.measurements(found->second.offset + 0) = rateOfChangeOfMomentumInBaseFrame[0];
+                    pImpl->berdyData.buffers.measurements(found->second.offset + 1) = rateOfChangeOfMomentumInBaseFrame[1];
+                    pImpl->berdyData.buffers.measurements(found->second.offset + 2) = rateOfChangeOfMomentumInBaseFrame[2];
+                    pImpl->berdyData.buffers.measurements(found->second.offset + 3) = rateOfChangeOfMomentumInBaseFrame[3];
+                    pImpl->berdyData.buffers.measurements(found->second.offset + 4) = rateOfChangeOfMomentumInBaseFrame[4];
+                    pImpl->berdyData.buffers.measurements(found->second.offset + 5) = rateOfChangeOfMomentumInBaseFrame[5];
                 }
                 break;
                 case iDynTree::THREE_AXIS_ANGULAR_ACCELEROMETER_SENSOR:
