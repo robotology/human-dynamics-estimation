@@ -785,7 +785,11 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     pImpl->jointVelocitiesSolution.resize(nrOfDOFs);
     pImpl->jointVelocitiesSolution.zero();
 
-    pImpl->baseTransformSolution.setRotation(iDynTree::Rotation::Identity());
+    // =======================
+    // INITIALIZE BASE BUFFERS
+    // =======================
+    pImpl->baseTransformSolution = iDynTree::Transform::Identity();
+    pImpl->baseVelocitySolution.zero();
 
     // ================================================
     // INITIALIZE CUSTOM CONSTRAINTS FOR INTEGRATION-IK
