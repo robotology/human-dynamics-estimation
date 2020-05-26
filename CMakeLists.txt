@@ -59,7 +59,7 @@ add_subdirectory(interfaces)
 add_subdirectory(impl)
 
 # Prepare YARP wrapper and devices
-find_package(YARP 3.0 REQUIRED)
+find_package(YARP 3.2 REQUIRED)
 set(YARP_FORCE_DYNAMIC_PLUGINS ON)
 yarp_configure_plugins_installation(wearable)
 
