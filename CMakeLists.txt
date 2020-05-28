@@ -26,7 +26,7 @@ option(BUILD_TESTING "Build tests" OFF)
 
 # Find packages needed for this main CMakeLists.txt.
 # Subfolders will find the dependencies they need.
-find_package(YARP 3.0 REQUIRED)
+find_package(YARP 3.2 REQUIRED)
 find_package(YCM REQUIRED)
 #find_package(Eigen3 REQUIRED)
 #find_package(iDynTree REQUIRED)
