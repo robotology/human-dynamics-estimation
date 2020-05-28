@@ -13,6 +13,17 @@ set -u
 mkdir $HOME/git
 export CXXFLAGS="-Wno-unused-command-line-argument"
 
+# Install YCM
+cd $HOME/git
+git clone --depth 1 -b $DEPS_BRANCH https://github.com/robotology/ycm.git
+cd ycm
+mkdir build && cd build
+cmake .. \
+    -G"$TRAVIS_CMAKE_GENERATOR" \
+    -DCMAKE_BUILD_TYPE=$TRAVIS_BUILD_TYPE \
+    -DCMAKE_INSTALL_PREFIX=$DEPS_INSTALL_PREFIX \
+cmake --build . --config $TRAVIS_BUILD_TYPE --target install
+
 # Install Yarp
 cd $HOME/git
 git clone --depth 1 -b $DEPS_BRANCH https://github.com/robotology/yarp.git
