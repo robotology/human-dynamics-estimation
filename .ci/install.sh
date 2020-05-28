@@ -21,7 +21,7 @@ mkdir build && cd build
 cmake .. \
     -G"$TRAVIS_CMAKE_GENERATOR" \
     -DCMAKE_BUILD_TYPE=$TRAVIS_BUILD_TYPE \
-    -DCMAKE_INSTALL_PREFIX=$DEPS_INSTALL_PREFIX \
+    -DCMAKE_INSTALL_PREFIX=$DEPS_INSTALL_PREFIX
 cmake --build . --config $TRAVIS_BUILD_TYPE --target install
 
 # Install Yarp
