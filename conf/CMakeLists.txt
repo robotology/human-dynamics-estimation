@@ -6,7 +6,7 @@ set (HDE_XML_FILES xml/TransformServer.xml
                    xml/RobotPosePublisher.xml
                    xml/RobotStateProvider_Human.xml
                    xml/RobotStateProvider_iCub.xml
-            		   xml/RobotStateProvider_iCub_Pole.xml
+                   xml/RobotStateProvider_iCub_Pole.xml
                    xml/RobotStateProvider_Nao.xml
                    xml/RobotStateProvider_Walkman.xml
                    xml/RobotStateProvider_Atlas.xml
