@@ -134,7 +134,7 @@ bool RobotPositionController::open(yarp::os::Searchable& config)
     pImpl->refSpeed = config.find("refSpeed").asDouble();
     pImpl->samplingTime = config.find("samplingTime").asDouble();
     pImpl->smoothingTime = config.find("smoothingTime").asDouble();
-    pImpl->initialSmoothingTime = 1;
+    pImpl->initialSmoothingTime = 2.5;
     pImpl->initialSmoothingCount = 0;
     yarp::os::Bottle* controlBoardsList = config.find("controlBoardsList").asList();
     const std::string remotePrefix  = config.find("remotePrefix").asString();
@@ -373,10 +373,11 @@ void RobotPositionController::run()
                 // Call min jerk trajecotry to smooth reference positions
 
                 // Update initial smoothing counter
-                if (pImpl->initialSmoothingCount < 100)
+                if (pImpl->initialSmoothingCount < 5000)
                 {
                     pImpl->initialSmoothingCount++;
                     pImpl->minJerkTrajGeneratorVec.at(boardCount)->setT(pImpl->initialSmoothingTime);
+
                 }
                 else
                 {
