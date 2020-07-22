@@ -55,6 +55,8 @@ public:
     // Min jerk trajectory
     double samplingTime;
     double smoothingTime;
+    double initialSmoothingTime;
+    int initialSmoothingCount;
     yarp::sig::Vector posDirectRefJointPosVector;
     yarp::sig::Vector posDirectInputJointPosVector;
     std::vector<iCub::ctrl::minJerkTrajGen*> minJerkTrajGeneratorVec;
@@ -132,6 +134,8 @@ bool RobotPositionController::open(yarp::os::Searchable& config)
     pImpl->refSpeed = config.find("refSpeed").asDouble();
     pImpl->samplingTime = config.find("samplingTime").asDouble();
     pImpl->smoothingTime = config.find("smoothingTime").asDouble();
+    pImpl->initialSmoothingTime = 1;
+    pImpl->initialSmoothingCount = 0;
     yarp::os::Bottle* controlBoardsList = config.find("controlBoardsList").asList();
     const std::string remotePrefix  = config.find("remotePrefix").asString();
     const std::string localPrefix  = config.find("localPrefix").asString();
@@ -236,7 +240,7 @@ bool RobotPositionController::open(yarp::os::Searchable& config)
             }
 
             // Initialize min jerk object pointer
-            pImpl->minJerkTrajGeneratorVec.at(boardCount) = new iCub::ctrl::minJerkTrajGen(remoteControlBoardJoints, pImpl->samplingTime, pImpl->smoothingTime);
+            pImpl->minJerkTrajGeneratorVec.at(boardCount) = new iCub::ctrl::minJerkTrajGen(remoteControlBoardJoints, pImpl->samplingTime, pImpl->initialSmoothingTime);
 
             // Set min jerk object initial values
             pImpl->minJerkTrajGeneratorVec.at(boardCount)->init(initEncoderJointPositionsVector);
@@ -367,6 +371,18 @@ void RobotPositionController::run()
             if (pImpl->controlMode == "positionDirect") {
 
                 // Call min jerk trajecotry to smooth reference positions
+
+                // Update initial smoothing counter
+                if (pImpl->initialSmoothingCount < 100)
+                {
+                    pImpl->initialSmoothingCount++;
+                    pImpl->minJerkTrajGeneratorVec.at(boardCount)->setT(pImpl->initialSmoothingTime);
+                }
+                else
+                {
+                    pImpl->minJerkTrajGeneratorVec.at(boardCount)->setT(pImpl->smoothingTime);
+                }
+
                 pImpl->minJerkTrajGeneratorVec.at(boardCount)->computeNextValues(pImpl->posDirectRefJointPosVector);
                 pImpl->posDirectInputJointPosVector = pImpl->minJerkTrajGeneratorVec.at(boardCount)->getPos();
                 pImpl->iPosDirectControl->setPositions(pImpl->posDirectInputJointPosVector.data());
