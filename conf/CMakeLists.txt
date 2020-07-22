@@ -26,7 +26,7 @@ set(HDE_APP_FILES xml/applications/HumanDynamicsEstimation.xml
                   xml/applications/HumanDynamicsEstimation-TransformServer.xml
                   xml/applications/HumanDynamicsEstimation-YarpScope.xml
                   xml/applications/XsensRetargetingVisualization.xml
-		  xml/applications/XsensRetargetingPositionControlPole.xml)
+                  xml/applications/XsensRetargetingPositionControlPole.xml)
 
 yarp_install(FILES ${HDE_APP_FILES} DESTINATION ${YARP_APPLICATIONS_INSTALL_DIR})
 
