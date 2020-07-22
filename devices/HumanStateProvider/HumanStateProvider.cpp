@@ -223,7 +223,7 @@ public:
     std::unordered_map<std::string, iDynTree::Rotation> secondaryCalibrationRotations;
     void ereaseSecondaryCalibration(const std::string& linkName);
     void selectJointsAndLinksForSecondaryCalibration(const std::string& linkName, const std::string& childLinkName,
-                                                  std::vector<iDynTree::JointIndex> jointZeroIndices, std::vector<iDynTree::LinkIndex> linkToCalibrateIndices);
+                                                  std::vector<iDynTree::JointIndex>& jointZeroIndices, std::vector<iDynTree::LinkIndex>& linkToCalibrateIndices);
     void computeSecondaryCalibrationRotations(const std::vector<iDynTree::JointIndex>& jointZeroIndices, const std::vector<iDynTree::LinkIndex>& linkToCalibrateIndices);
 
     SolverIK ikSolver;
@@ -1222,7 +1222,7 @@ void HumanStateProvider::impl::ereaseSecondaryCalibration(const std::string& lin
 }
 
 void HumanStateProvider::impl::selectJointsAndLinksForSecondaryCalibration(const std::string& linkName, const std::string& childLinkName,
-                                              std::vector<iDynTree::JointIndex> jointZeroIndices, std::vector<iDynTree::LinkIndex> linkToCalibrateIndices)
+                                              std::vector<iDynTree::JointIndex>& jointZeroIndices, std::vector<iDynTree::LinkIndex>& linkToCalibrateIndices)
 {
     if (linkName == "") {
         // Select all the links and the joints
