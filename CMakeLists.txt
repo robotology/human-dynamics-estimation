@@ -81,6 +81,7 @@ add_subdirectory(msgs)
 add_subdirectory(interfaces)
 add_subdirectory(devices)
 add_subdirectory(wrappers)
+add_subdirectory(remappers)
 add_subdirectory(publishers)
 
 include(InstallBasicPackageFiles)
