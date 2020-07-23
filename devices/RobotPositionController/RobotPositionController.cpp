@@ -57,6 +57,7 @@ public:
     double smoothingTime;
     double initialSmoothingTime;
     int initialSmoothingCount;
+    int maxSmoothingCount;
     yarp::sig::Vector posDirectRefJointPosVector;
     yarp::sig::Vector posDirectInputJointPosVector;
     std::vector<iCub::ctrl::minJerkTrajGen*> minJerkTrajGeneratorVec;
@@ -134,11 +135,26 @@ bool RobotPositionController::open(yarp::os::Searchable& config)
     pImpl->refSpeed = config.find("refSpeed").asDouble();
     pImpl->samplingTime = config.find("samplingTime").asDouble();
     pImpl->smoothingTime = config.find("smoothingTime").asDouble();
-    pImpl->initialSmoothingTime = 2.5;
     pImpl->initialSmoothingCount = 0;
     yarp::os::Bottle* controlBoardsList = config.find("controlBoardsList").asList();
     const std::string remotePrefix  = config.find("remotePrefix").asString();
     const std::string localPrefix  = config.find("localPrefix").asString();
+
+    if (pImpl->controlMode == "positionDirect")
+    {
+        if (!(config.check("initialSmoothingTime") && config.find("initialSmoothingTime").isDouble())) {
+            yInfo() << LogPrefix << "initialSmoothingTime option not found or not valid, using default value of 2.5 Seconds";
+            pImpl->initialSmoothingTime = 2.5;
+        }
+        else {
+            pImpl->initialSmoothingTime = config.find("initialSmoothingTime").asDouble();
+        }
+
+        if (!(config.check("maxSmoothingCount") && config.find("maxSmoothingCount").isInt())) {
+            yInfo() << LogPrefix << "initialSmoothingCount option not found or not valid, using default value of 5000";
+            pImpl->maxSmoothingCount = 5000;
+        }
+    }
 
     yInfo() << LogPrefix << "*** ========================";
     yInfo() << LogPrefix << "*** Period                 :" << period;
@@ -146,6 +162,11 @@ bool RobotPositionController::open(yarp::os::Searchable& config)
     yInfo() << LogPrefix << "*** Reference speed        :" << pImpl->refSpeed;
     yInfo() << LogPrefix << "*** Sampling time          :" << pImpl->samplingTime;
     yInfo() << LogPrefix << "*** Smoothing time         :" << pImpl->smoothingTime;
+    if (pImpl->controlMode == "positionDirect")
+    {
+        yInfo() << LogPrefix << "*** Initial Smoothing time :" << pImpl->initialSmoothingTime;
+        yInfo() << LogPrefix << "*** Max smoothing count    :" << pImpl->maxSmoothingCount;
+    }
     yInfo() << LogPrefix << "*** Control boards list    :" << controlBoardsList->toString();
     yInfo() << LogPrefix << "*** Remote prefix          :" << remotePrefix;
     yInfo() << LogPrefix << "*** Local prefix           :" << localPrefix;
@@ -373,7 +394,7 @@ void RobotPositionController::run()
                 // Call min jerk trajecotry to smooth reference positions
 
                 // Update initial smoothing counter
-                if (pImpl->initialSmoothingCount < 5000)
+                if (pImpl->initialSmoothingCount < pImpl->maxSmoothingCount)
                 {
                     pImpl->initialSmoothingCount++;
                     pImpl->minJerkTrajGeneratorVec.at(boardCount)->setT(pImpl->initialSmoothingTime);
