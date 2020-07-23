@@ -154,6 +154,9 @@ bool RobotPositionController::open(yarp::os::Searchable& config)
             yInfo() << LogPrefix << "initialSmoothingCount option not found or not valid, using default value of 5000";
             pImpl->maxSmoothingCount = 5000;
         }
+        else {
+            pImpl->maxSmoothingCount = config.find("maxSmoothingCount").asInt();
+        }
     }
 
     yInfo() << LogPrefix << "*** ========================";
