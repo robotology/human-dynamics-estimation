@@ -67,10 +67,10 @@
         <!-- note that a group can not be empty, otherwise it returns error-->
         <!-- custom joint limits velocities-->
             <!--param name="custom_joints_velocity_limits_names">(neck_roll, neck_pitch)</param-->
-            <param name="custom_joints_velocity_limits_names">()</param>
+            <param name="custom_joints_velocity_limits_names">(l_shoulder_pitch, l_shoulder_roll, l_shoulder_yaw, r_shoulder_pitch, r_shoulder_roll, r_shoulder_yaw, torso_roll, torso_pitch, torso_yaw)</param>
             <!-- the upper bound is "+", while the lower bounds are "-" -->
             <!--param name="custom_joints_velocity_limits_values">(10.0, 15.0)</param-->
-            <param name="custom_joints_velocity_limits_values">()</param>
+            <param name="custom_joints_velocity_limits_values">(2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 1.0, 1.0, 1.0)</param>
         <!-- **** base velocity limit: roll, pitch, yaw, x, y, z ****-->
             <!--param name="base_velocity_limit_upper_buond">(1.0, 1.0, 1.0, 1.0, 1.0, 1.0 )</param>
             <param name="base_velocity_limit_lower_buond">(-1.0, -1.0, -1.0, -1.0, -1.0, -1.0 )</param-->
