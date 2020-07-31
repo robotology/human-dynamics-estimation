@@ -1,1 +1,1 @@
-add_subdirectory(IHumanStateRemapper)
+add_subdirectory(HumanStateRemapper)

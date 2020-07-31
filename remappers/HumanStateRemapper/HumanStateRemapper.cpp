@@ -6,7 +6,7 @@
  * GNU Lesser General Public License v2.1 or any later version.
  */
 
-#include "IHumanStateRemapper.h"
+#include "HumanStateRemapper.h"
 
 #include <HumanDynamicsEstimation/HumanState.h>
 
@@ -15,7 +15,7 @@
 
 #include <iostream>
 
-const std::string RemapperName = "IHumanStateRemapper";
+const std::string RemapperName = "HumanStateRemapper";
 const std::string logPrefix = RemapperName + " :";
 
 using namespace hde::devices;
@@ -25,7 +25,7 @@ using namespace human;
 // IMPL AND UTILS
 // ==============
 
-class IHumanStateRemapper::impl
+class HumanStateRemapper::impl
 {
 public:
     yarp::os::Network network;
@@ -51,14 +51,14 @@ public:
 // IWEAR REMAPPER
 // ==============
 
-IHumanStateRemapper::IHumanStateRemapper()
+HumanStateRemapper::HumanStateRemapper()
     : PeriodicThread(1)
     , pImpl{new impl()}
 {}
 
-IHumanStateRemapper::~IHumanStateRemapper() = default;
+HumanStateRemapper::~HumanStateRemapper() = default;
 
-bool IHumanStateRemapper::open(yarp::os::Searchable& config)
+bool HumanStateRemapper::open(yarp::os::Searchable& config)
 {
     // ===============================
     // CHECK THE CONFIGURATION OPTIONS
@@ -115,10 +115,10 @@ bool IHumanStateRemapper::open(yarp::os::Searchable& config)
     return true;
 }
 
-void IHumanStateRemapper::threadRelease()
+void HumanStateRemapper::threadRelease()
 {}
 
-bool IHumanStateRemapper::close()
+bool HumanStateRemapper::close()
 {
     pImpl->terminationCall = true;
 
@@ -129,12 +129,12 @@ bool IHumanStateRemapper::close()
     return true;
 }
 
-void IHumanStateRemapper::run()
+void HumanStateRemapper::run()
 {
     return;
 }
 
-void IHumanStateRemapper::onRead(human::HumanState& humanStateData)
+void HumanStateRemapper::onRead(human::HumanState& humanStateData)
 {
     if(!pImpl->terminationCall) {
         pImpl->jointNames = humanStateData.jointNames;
@@ -154,51 +154,51 @@ void IHumanStateRemapper::onRead(human::HumanState& humanStateData)
     }
 }
 
-std::vector<std::string> IHumanStateRemapper::getJointNames() const
+std::vector<std::string> HumanStateRemapper::getJointNames() const
 {
     return pImpl->jointNames;
 }
 
-std::string IHumanStateRemapper::getBaseName() const
+std::string HumanStateRemapper::getBaseName() const
 {
     return pImpl->baseName;
 }
-size_t IHumanStateRemapper::getNumberOfJoints() const
+size_t HumanStateRemapper::getNumberOfJoints() const
 {
     return pImpl->jointPositions.size();
 }
 
-std::vector<double> IHumanStateRemapper::getJointPositions() const
+std::vector<double> HumanStateRemapper::getJointPositions() const
 {
     return pImpl->jointPositions;
 }
 
-std::vector<double> IHumanStateRemapper::getJointVelocities() const
+std::vector<double> HumanStateRemapper::getJointVelocities() const
 {
     return pImpl->jointVelocities;
 }
 
-std::array<double, 3> IHumanStateRemapper::getBasePosition() const
+std::array<double, 3> HumanStateRemapper::getBasePosition() const
 {
     return pImpl->basePosition;
 }
 
-std::array<double, 4> IHumanStateRemapper::getBaseOrientation() const
+std::array<double, 4> HumanStateRemapper::getBaseOrientation() const
 {
     return pImpl->baseOrientation;
 }
 
-std::array<double, 6> IHumanStateRemapper::getBaseVelocity() const
+std::array<double, 6> HumanStateRemapper::getBaseVelocity() const
 {
     return pImpl->baseVelocity;
 }
 
-std::array<double, 3> IHumanStateRemapper::getCoMPosition() const
+std::array<double, 3> HumanStateRemapper::getCoMPosition() const
 {
     return pImpl->CoMPosition;
 }
 
-std::array<double, 3> IHumanStateRemapper::getCoMVelocity() const
+std::array<double, 3> HumanStateRemapper::getCoMVelocity() const
 {
     return pImpl->CoMVelocity;
 }

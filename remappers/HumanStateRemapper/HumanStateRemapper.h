@@ -6,8 +6,8 @@
  * GNU Lesser General Public License v2.1 or any later version.
  */
 
-#ifndef HDE_DEVICES_IHUMANSTATEREMAPPER
-#define HDE_DEVICES_IHUMANSTATEREMAPPER
+#ifndef HDE_DEVICES_HUMANSTATEREMAPPER
+#define HDE_DEVICES_HUMANSTATEREMAPPER
 
 #include "IHumanState.h"
 
@@ -21,11 +21,11 @@ namespace human {
 }
 namespace hde {
     namespace devices {
-        class IHumanStateRemapper;
+        class HumanStateRemapper;
     } // namespace devices
 } // namespace hde
 
-class hde::devices::IHumanStateRemapper final
+class hde::devices::HumanStateRemapper final
     : public yarp::dev::DeviceDriver
     , public hde::interfaces::IHumanState
     , public yarp::os::TypedReaderCallback<human::HumanState>
@@ -37,8 +37,8 @@ private:
     std::unique_ptr<impl> pImpl;
 
 public:
-    IHumanStateRemapper();
-    ~IHumanStateRemapper() override;
+    HumanStateRemapper();
+    ~HumanStateRemapper() override;
 
 	// DeviceDriver interface
     bool open(yarp::os::Searchable& config) override;
@@ -68,4 +68,4 @@ public:
     std::array<double, 3> getCoMVelocity() const override;
 };
 
-#endif // HDE_DEVICES_IHUMANSTATEREMAPPER
+#endif // HDE_DEVICES_HUMANSTATEREMAPPER

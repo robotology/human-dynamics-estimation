@@ -2,7 +2,7 @@
 <!DOCTYPE robot PUBLIC "-//YARP//DTD yarprobotinterface 3.0//EN" "http://www.yarp.it/DTD/yarprobotinterfaceV3.0.dtd">
 <robot name="Human-HDE" build=0 portprefix="">
 
-    <device type="ihuman_state_remapper" name="HumanStateRemapper">
+    <device type="human_state_remapper" name="HumanStateRemapper">
       <param name="humanStateDataPort">/HDE/HumanStateWrapper/state:o</param>
     </device>
 

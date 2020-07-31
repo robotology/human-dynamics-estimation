@@ -3,7 +3,7 @@
 <robot name="iCub-Retargeting" build=0 portprefix="">
 
 
-    <device type="ihuman_state_remapper" name="RobotStateRemapper">
+    <device type="human_state_remapper" name="RobotStateRemapper">
        <param name="humanStateDataPort">/iCub/RobotStateWrapper/state:o</param>
     </device>
 

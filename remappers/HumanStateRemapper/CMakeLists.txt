@@ -2,21 +2,21 @@
 # This software may be modified and distributed under the terms of the
 # GNU Lesser General Public License v2.1 or any later version.
 
-yarp_prepare_plugin(ihuman_state_remapper
-    TYPE hde::devices::IHumanStateRemapper
-    INCLUDE IHumanStateRemapper.h
+yarp_prepare_plugin(human_state_remapper
+    TYPE hde::devices::HumanStateRemapper
+    INCLUDE HumanStateRemapper.h
     CATEGORY device
     ADVANCED
     DEFAULT ON)
 
-yarp_add_plugin(IHumanStateRemapper
-    IHumanStateRemapper.cpp
-    IHumanStateRemapper.h)
+yarp_add_plugin(HumanStateRemapper
+    HumanStateRemapper.cpp
+    HumanStateRemapper.h)
 
-target_include_directories(IHumanStateRemapper PUBLIC
+target_include_directories(HumanStateRemapper PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
 
-target_link_libraries(IHumanStateRemapper PUBLIC
+target_link_libraries(HumanStateRemapper PUBLIC
     IHumanState
     HumanStateMsg
     YARP::YARP_OS
@@ -24,7 +24,7 @@ target_link_libraries(IHumanStateRemapper PUBLIC
     YARP::YARP_init)
 
 yarp_install(
-    TARGETS IHumanStateRemapper
+    TARGETS HumanStateRemapper
     COMPONENT runtime
     LIBRARY DESTINATION ${YARP_DYNAMIC_PLUGINS_INSTALL_DIR}
     ARCHIVE DESTINATION ${YARP_STATIC_PLUGINS_INSTALL_DIR}
