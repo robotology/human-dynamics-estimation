@@ -14,6 +14,8 @@
         <param name="refSpeed">15.0</param>
         <param name="samplingTime">0.01</param>
         <param name="smoothingTime">0.25</param>
+        <param name="initialSmoothingTime">2.5</param>
+        <param name="maxSmoothingCount">5000</param>
         <param name="controlBoardsList">(head torso left_arm right_arm left_leg right_leg)</param>
         <param name="remotePrefix">/icub</param>
         <param name="localPrefix">/robotPositionController</param>
