@@ -12,6 +12,7 @@ set (HDE_XML_FILES xml/TransformServer.xml
                    xml/RobotStateProvider_Atlas.xml
                    xml/RobotStateProvider_Baxter.xml
                    xml/HumanJointTorquesYarpScope.xml
+                   xml/RobotPositionController_iCub.xml
                    xml/applications/HumanDynamicsEstimation-HumanDumper.xml
                    )
 
@@ -26,7 +27,8 @@ set(HDE_APP_FILES xml/applications/HumanDynamicsEstimation.xml
                   xml/applications/HumanDynamicsEstimation-TransformServer.xml
                   xml/applications/HumanDynamicsEstimation-YarpScope.xml
                   xml/applications/XsensRetargetingVisualization.xml
-                  xml/applications/XsensRetargetingPositionControlPole.xml)
+                  xml/applications/XsensRetargetingPositionControlPole.xml
+                  xml/applications/iCubRobotPositionControllerRetargeting.xml)
 
 yarp_install(FILES ${HDE_APP_FILES} DESTINATION ${YARP_APPLICATIONS_INSTALL_DIR})
 
