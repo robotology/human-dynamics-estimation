@@ -331,7 +331,7 @@ public:
                 response.addString("Enter <reset <linkName>> to remove secondary calibration for the given link \n");
                 response.addString("Enter <reset> to remove all the secondary calibrations");
             }
-            else if (command.get(0).asString() == "calibrateRelativeLink" && !command.get(1).isNull()) && !command.get(2).isNull()) {
+            else if (command.get(0).asString() == "calibrateRelativeLink" && !command.get(1).isNull() && !command.get(2).isNull()) {
                 this->parentLinkName = command.get(1).asString();
                 this->childLinkName = command.get(2).asString();
                 response.addString("Entered command <calibrateRelativeLink> is correct, setting the offset to " + this->childLinkName + " using " + this->parentLinkName + " as reference");
