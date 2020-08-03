@@ -335,22 +335,22 @@ public:
             else if (command.get(0).asString() == "calibrateRelativeLink" && !command.get(1).isNull() && !command.get(2).isNull()) {
                 this->parentLinkName = command.get(1).asString();
                 this->childLinkName = command.get(2).asString();
-                response.addString("Entered command <calibrateRelativeLink> is correct, setting the offset to " + this->childLinkName + " using " + this->parentLinkName + " as reference");
+                response.addString("Entered command <calibrateRelativeLink> is correct, trying to set offset to " + this->childLinkName + " using " + this->parentLinkName + " as reference");
                 this->cmdStatus = rpcCommand::calibrateRelativeLink;
             }
             else if (command.get(0).asString() == "calibrateSubTree" && !command.get(1).isNull() && !command.get(2).isNull()) {
                 this->parentLinkName = command.get(1).asString();
                 this->childLinkName = command.get(2).asString();
-                response.addString("Entered command <calibrateSubTree> is correct, setting the offset for the chain from " + this->parentLinkName + " to " + this->childLinkName);
+                response.addString("Entered command <calibrateSubTree> is correct, trying to set offset for the chain from " + this->parentLinkName + " to " + this->childLinkName);
                 this->cmdStatus = rpcCommand::calibrateSubTree;
             }
             else if (command.get(0).asString() == "calibrateAll") {
                 this->parentLinkName = command.get(1).asString();
-                response.addString("Entered command <calibrateAll> is correct, setting the offset calibartion for all the links");
+                response.addString("Entered command <calibrateAll> is correct, trying to set offset calibartion for all the links");
                 this->cmdStatus = rpcCommand::calibrateAll;
             }
             else if (command.get(0).asString() == "calibrate" && !(command.get(1).isNull())) {
-                response.addString("Entered command <calibrate> is correct, setting the offset calibration for the link " + this->parentLinkName);
+                response.addString("Entered command <calibrate> is correct, trying to set offset calibration for the link " + this->parentLinkName);
                 this->cmdStatus = rpcCommand::calibrate;
             }
             else if (command.get(0).asString() == "setRotationOffset" && !command.get(1).isNull() && command.get(2).isDouble() && command.get(3).isDouble() && command.get(4).isDouble()) {
@@ -358,7 +358,7 @@ public:
                 this->roll = command.get(2).asDouble();
                 this->pitch = command.get(3).asDouble();
                 this->yaw = command.get(4).asDouble();
-                response.addString("Entered command <calibrate> is correct, setting the rotation offset for the link " + this->parentLinkName);
+                response.addString("Entered command <calibrate> is correct, trying to set rotation offset for the link " + this->parentLinkName);
                 this->cmdStatus = rpcCommand::setRotationOffset;
             }
             else if (command.get(0).asString() == "reset" && command.get(1).isNull()) {
@@ -367,7 +367,7 @@ public:
             }
             else if (command.get(0).asString() == "reset" && !command.get(1).isNull()) {
                 this->parentLinkName = command.get(1).asString();
-                response.addString("Entered command <reset> is correct, removing the secondaty calibration for the link " + this->parentLinkName);
+                response.addString("Entered command <reset> is correct, trying to remove secondaty calibration for the link " + this->parentLinkName);
                 this->cmdStatus = rpcCommand::resetCalibration;
             }
             else {
