@@ -1359,11 +1359,7 @@ bool HumanStateProvider::impl::applyRpcCommand()
         std::iota(jointZeroIndices.begin(), jointZeroIndices.end(), 0);
 
         // Compute secondary calibration for the selected links setting to zero the given joints
-        iDynTree::Transform baseTransform;
-        baseTransform.setPosition(iDynTree::Position(0,0,0));
-        baseTransform.setRotation(iDynTree::Rotation::Identity());
-
-        computeSecondaryCalibrationRotationsForChain(jointZeroIndices, baseTransform, linkToCalibrateIndices);
+        computeSecondaryCalibrationRotationsForChain(jointZeroIndices, baseTransformSolution, linkToCalibrateIndices);
         break;
     }
     case rpcCommand::calibrate: {
@@ -1476,10 +1472,12 @@ bool HumanStateProvider::impl::applySecondaryCalibration(
         auto secondaryCalibrationRotationsIt = secondaryCalibrationRotations.find(modelLinkName);
         if (!(secondaryCalibrationRotationsIt
               == secondaryCalibrationRotations.end())) {
-            iDynTree::Rotation rotation = transforms_out[modelLinkName].getRotation();
-            rotation = rotation * secondaryCalibrationRotationsIt->second;
 
-            transforms_out[modelLinkName].setRotation(rotation);
+            iDynTree::Transform calibrationTransform;
+            calibrationTransform.setPosition(iDynTree::Position(0,0,0));
+            calibrationTransform.setRotation(secondaryCalibrationRotationsIt->second);
+
+            transforms_out[modelLinkName] = transforms_out[modelLinkName] * calibrationTransform;
         }
     }
 
