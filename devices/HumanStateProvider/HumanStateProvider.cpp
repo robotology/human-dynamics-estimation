@@ -1155,8 +1155,8 @@ void HumanStateProvider::run()
     }
 
     auto tock = std::chrono::high_resolution_clock::now();
-    // yDebug() << LogPrefix << "IK took"
-    //          << std::chrono::duration_cast<std::chrono::milliseconds>(tock - tick).count() << "ms";
+    yDebug() << LogPrefix << "IK took"
+             << std::chrono::duration_cast<std::chrono::milliseconds>(tock - tick).count() << "ms";
 
     // If useDirectBaseMeasurement is true, set the measured base pose and velocity as solution
     if (pImpl->useDirectBaseMeasurement) {
