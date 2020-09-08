@@ -16,6 +16,8 @@
 #include <yarp/os/PeriodicThread.h>
 #include <yarp/os/TypedReaderCallback.h>
 
+#include <memory>
+
 namespace human {
     class HumanState;
 }
