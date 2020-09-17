@@ -145,7 +145,7 @@ jobs:
     - &osx_template
       stage: osx
       os: osx
-      osx_image: xcode10
+      osx_image: xcode12
       before_install: *before_install
       install: *osx_install
       before_script: skip
