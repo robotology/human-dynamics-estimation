@@ -32,7 +32,6 @@ class hde::devices::HumanStateRemapper final
     , public hde::interfaces::IHumanState
     , public yarp::os::TypedReaderCallback<human::HumanState>
     , public yarp::os::PeriodicThread
-    //, public yarp::dev::IPreciselyTimed
 {
 private:
     class impl;
