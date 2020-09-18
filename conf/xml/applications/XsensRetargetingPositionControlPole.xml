@@ -37,4 +37,10 @@
     <node>icub30</node>
   </module>
 
+  <module>
+    <name>yarprobotinterface</name>
+    <parameters>--config RobotPositionController_iCub.xml</parameters>
+    <node>icub30</node>
+  </module>
+
 </application>

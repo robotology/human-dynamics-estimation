@@ -6,7 +6,6 @@ add_subdirectory(HumanStateProvider)
 add_subdirectory(HumanWrenchProvider)
 add_subdirectory(HumanDynamicsEstimator)
 add_subdirectory(HumanControlBoard)
-#add_subdirectory(XsensHumanStateProvider)
 add_subdirectory(RobotPositionController)
 add_subdirectory(Utilities)
 

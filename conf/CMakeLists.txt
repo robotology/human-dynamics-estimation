@@ -12,6 +12,7 @@ set (HDE_XML_FILES xml/TransformServer.xml
                    xml/RobotStateProvider_Atlas.xml
                    xml/RobotStateProvider_Baxter.xml
                    xml/HumanJointTorquesYarpScope.xml
+                   xml/RobotPositionController_iCub.xml
                    xml/applications/HumanDynamicsEstimation-HumanDumper.xml
                    )
 

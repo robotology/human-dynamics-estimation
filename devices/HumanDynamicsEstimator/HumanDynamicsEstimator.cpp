@@ -1195,8 +1195,8 @@ bool HumanDynamicsEstimator::attach(yarp::dev::PolyDriver* poly)
 
     // Get the device name from the driver
     const std::string deviceName = poly->getValue("device").asString();
-
-    if (deviceName == "human_state_provider" || deviceName == "xsens_human_state_provider") {
+    std::cerr << "attaching " << deviceName << std::endl;
+    if (deviceName == "human_state_provider" || deviceName == "human_state_remapper") {
 
         // Attach IHumanState interface from HumanStateProvider
         if (pImpl->iHumanState || !poly->view(pImpl->iHumanState) || !pImpl->iHumanState) {

@@ -142,7 +142,7 @@
     </device>
 
    <!-- uncomment if you want to use the RobotStateProvider data to control the robot position -->
-    <device type="robot_position_controller" name="RobotPositionController">
+    <!--device type="robot_position_controller" name="RobotPositionController">
         <param name="period">0.100</param>
         <param name="controlMode">positionDirect</param>
         <param name="refSpeed">15.0</param>
@@ -165,6 +165,6 @@
             </paramlist>
         </action>
         <action phase="shutdown" level="4" type="detach"/>
-    </device>
+    </device-->
 
 </robot>

@@ -171,6 +171,11 @@
         <action phase="shutdown" level="5" type="detach"/>
     </device> -->
 
+    <!-- An HumanStateRemapper device can be used to attach directly to a HumanStateWrapper port without running HumanStateProvider device -->
+    <!-- <device type="human_state_remapper" name="HumanStateRemapper">
+      <param name="humanStateDataPort">/HDE/HumanStateWrapper/state:o</param>
+    </device> -->
+
     <device type="human_state_publisher" name="HumanStatePublisher">
         <param name="period">0.02</param>
         <param name="baseTFName">/Human/Pelvis</param>
