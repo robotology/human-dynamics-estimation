@@ -14,6 +14,7 @@ Before running the device make sure that:
 - The shoes are connected and recognized by the laptop
 - The can address of the FT sensors in the shoes is the same of the configuration file (e.g. `ftShoe_Left_Front` -> `<param name="canAddress"> 0x01 </param>`)
 - There is not another device running that is using the port names. In case multiple pairs of shoes have to run simultaneously, it is necessary to differentiate the name of the ports like in [`FTShoesWearableDevice_2.xml`](https://github.com/robotology/wearables/blob/master/app/xml/FTShoesWearableDevice_2.xml).
+- The `inSituMatrices` contained in the configuration file correspond to the shoes you are using.
 
 
 #### Calibration
