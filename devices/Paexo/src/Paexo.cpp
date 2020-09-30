@@ -69,6 +69,7 @@ void Paexo::run()
     int size = pImpl->iSerialDevice->receiveLine(charMsg, 5000);
 
     //TODO: Check how the data needs to be handled
+    yInfo() << "Received Message : " << charMsg;
 }
 
 bool Paexo::close()
