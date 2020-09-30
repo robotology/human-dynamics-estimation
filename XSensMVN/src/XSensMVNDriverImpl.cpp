@@ -42,6 +42,13 @@ XSensMVNDriverImpl::XSensMVNDriverImpl(
 
 XSensMVNDriverImpl::~XSensMVNDriverImpl()
 {
+    // Save .mvn recording file
+    m_connection->stopRecording();
+    while(m_connection->status().isRecording() || m_connection->status().isFlushing()){
+        std::this_thread::sleep_for(std::chrono::microseconds(10));
+    }
+    m_connection->saveAndCloseFile();
+
     m_connection->removeCallbackHandler(static_cast<XmeCallback*>(this));
 }
 
@@ -647,6 +654,15 @@ bool XSensMVNDriverImpl::calibrate(const std::string calibrationType)
     if (calibrationCompleted) {
         // Record the success of the calibration
         m_driverStatus = DriverStatus::CalibratedAndReadyToRecord;
+
+        //Start recording .mvn file
+        std::time_t time_point = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+        std::string time_string = std::ctime(&time_point);
+        const XsString mvnFileName("recording_" + time_string);
+
+        m_connection->createMvnFile(mvnFileName);
+        m_connection->startRecording();
+
         m_calibrator->getLastCalibrationInfo(m_calibrationInfo.type, m_calibrationInfo.quality);
     }
 

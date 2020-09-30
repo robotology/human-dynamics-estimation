@@ -44,6 +44,7 @@ endif()
 
 if(WIN32)
   option(XSENS_MVN_USE_SDK "Build the driver and the wrapper for the real MVN system using the MVN SDK" ON)
+  add_compile_definitions(_SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING)
   if(XSENS_MVN_USE_SDK)
     find_package(XsensXME REQUIRED)
     if(NOT ${XsensXME_FOUND})
