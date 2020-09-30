@@ -10,6 +10,9 @@
 #include <yarp/os/Bottle.h>
 #include <yarp/os/Time.h>
 
+#include <yarp/os/BufferedPort.h>
+#include <yarp/os/RpcServer.h>
+
 #include <mutex>
 #include <string>
 #include <stdio.h>
@@ -29,9 +32,52 @@ public:
     mutable std::mutex mutex;
     yarp::dev::ISerialDevice *iSerialDevice = nullptr;
 
+    std::string portsPrefix;
+    yarp::os::BufferedPort<yarp::os::Bottle> dataPort;
+
+    // RPC related
+    class CmdParser;
+    std::unique_ptr<CmdParser> cmdPro;
+    yarp::os::RpcServer rpcPort;
+
     std::string serialComPortName;
+
+    // constructor
+    Impl();
 };
 
+class Paexo::Impl::CmdParser : public yarp::os::PortReader
+{
+
+public:
+    yarp::os::Bottle cmd;
+    bool cmdUpdated = false;
+
+    bool read(yarp::os::ConnectionReader& connection) override
+    {
+        yarp::os::Bottle command, response;
+        //TODO: Check if this works for complex commands with : as seperator
+        if(command.read(connection))
+        {
+            command.toString().append("\n"); //TODO: Define a macro for EOL character
+            cmd = command;
+            cmdUpdated = true;
+            response.addString("Entered commands is " + command.toString());
+            yarp::os::ConnectionWriter* reply = connection.getWriter();
+
+            if (reply != NULL) {
+                response.write(*reply);
+            }
+            else return false;
+        }
+
+        return true;
+    }
+};
+
+Paexo::Impl::Impl()
+    : cmdPro(new CmdParser())
+{}
 
 // Default constructor
 Paexo::Paexo()
@@ -58,6 +104,30 @@ bool Paexo::open(yarp::os::Searchable& config)
     }
 
     //TODO: Open rpc port
+    // Get port prefix name
+    if (!(config.check("portsPrefixName") && config.find("portsPrefixName").isString())) {
+        yInfo() << LogPrefix << "Using default port prefix /wearable/paexo";
+    }
+    else {
+        pImpl->portsPrefix = config.find("portsPrefixName").asString();
+        yInfo() << LogPrefix << "Using the ports prefix " << pImpl->portsPrefix;
+    }
+
+    // ===================
+    // Ports configuration
+    // ===================
+    if(!pImpl->dataPort.open(pImpl->portsPrefix + ":o")) {
+        yError() << LogPrefix << "Failed to open data port " << pImpl->portsPrefix + ":o";
+        return false;
+    }
+
+    if(!pImpl->rpcPort.open(pImpl->portsPrefix + "/rpc:i")) {
+        yError() << LogPrefix << "Failed to open rpc port " << pImpl->portsPrefix + "/rpc:i";
+        return false;
+    }
+
+    // Set rpc port reader
+    pImpl->rpcPort.setReader(*pImpl->cmdPro);
 
     return true;
 
@@ -65,11 +135,27 @@ bool Paexo::open(yarp::os::Searchable& config)
 
 void Paexo::run()
 {
+    {
+        std::lock_guard<std::mutex> lock(pImpl->mutex);
+        if (pImpl->cmdPro->cmdUpdated) {
+
+            int s = pImpl->cmdPro->cmd.toString().length();
+            char c[s+1];
+            std::strcpy(c, pImpl->cmdPro->cmd.toString().c_str());
+            if (pImpl->iSerialDevice->send(c, s)) {
+                pImpl->cmdPro->cmdUpdated = false;
+            }
+        }
+    }
+
+
     char charMsg[5000];
     int size = pImpl->iSerialDevice->receiveLine(charMsg, 5000);
 
     //TODO: Check how the data needs to be handled
-    yInfo() << "Received Message : " << charMsg;
+    if (size != 0) {
+        yInfo() << "Received Message : " << charMsg;
+    }
 }
 
 bool Paexo::close()
