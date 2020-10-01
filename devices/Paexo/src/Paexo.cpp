@@ -26,6 +26,7 @@ using namespace wearable;
 using namespace wearable::devices;
 
 const std::string EOL = "\n"; //EOL character
+const int MAX_LINE_LENGTH = 5000; // Maximum line length to read from serial port
 
 class Paexo::Impl
 {
@@ -156,12 +157,12 @@ void Paexo::run()
     }
 
 
-    char charMsg[5000];
-    int size = pImpl->iSerialDevice->receiveLine(charMsg, 5000);
+    char msg[MAX_LINE_LENGTH];
+    int size = pImpl->iSerialDevice->receiveLine(msg, MAX_LINE_LENGTH);
 
     //TODO: Check how the data needs to be handled
-    if (size != 0) {
-        yInfo() << "Received Message : " << charMsg;
+    if (size > 1) {
+        yInfo() << LogPrefix << msg;
     }
 }
 
