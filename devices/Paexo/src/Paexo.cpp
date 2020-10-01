@@ -54,6 +54,8 @@ class Paexo::Impl::CmdParser : public yarp::os::PortReader
 public:
     std::string cmdString;
     bool cmdUpdated = false;
+    bool data_broadcast = false;
+    bool measurement_status = false;
 
     bool read(yarp::os::ConnectionReader& connection) override
     {
@@ -67,6 +69,23 @@ public:
             }
 
             response.addString("Entered commands is " + cmdString);
+
+            // TODO: This check can be better if status returns the measurement and broadcast information
+            // Check for measurement related command
+            if (cmdString == "start") {
+                measurement_status = true;
+            }
+            else if (cmdString == "stop") {
+                measurement_status = false;
+            }
+
+            // Check for data boardcast related command
+            if (cmdString == "en_bc_data") {
+                data_broadcast = true;
+            }
+            else if (cmdString == "di_bc_data") {
+                data_broadcast = false;
+            }
 
             cmdString.append(EOL);
             cmdUpdated = true;
@@ -143,6 +162,7 @@ bool Paexo::open(yarp::os::Searchable& config)
 
 void Paexo::run()
 {
+    // Send commands to BLE central serial port
     {
         std::lock_guard<std::mutex> lock(pImpl->mutex);
         if (pImpl->cmdPro->cmdUpdated) {
@@ -160,9 +180,24 @@ void Paexo::run()
     char msg[MAX_LINE_LENGTH];
     int size = pImpl->iSerialDevice->receiveLine(msg, MAX_LINE_LENGTH);
 
-    //TODO: Check how the data needs to be handled
     if (size > 1) {
-        yInfo() << LogPrefix << msg;
+
+        // Check if the first char is a digit, if it is the received message is broadcast information
+        if (isdigit(msg[0]) && (pImpl->cmdPro->measurement_status && pImpl->cmdPro->data_broadcast)) {
+
+            // Prepare yarp bottle with serial message and write to yarp port
+            yarp::os::Bottle& bc_data = pImpl->dataPort.prepare();
+            bc_data.clear();
+            bc_data.fromString(msg);
+
+            pImpl->dataPort.write();
+
+            // Add baroadcast data to Wearable interface
+
+        }
+        else if(!isdigit(msg[0])) {
+            yInfo() << LogPrefix << msg;
+        }
     }
 }
 
