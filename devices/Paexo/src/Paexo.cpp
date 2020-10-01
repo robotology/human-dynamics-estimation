@@ -57,7 +57,6 @@ public:
     bool read(yarp::os::ConnectionReader& connection) override
     {
         yarp::os::Bottle command, response;
-        //TODO: Check if this works for complex commands with : as seperator
         if(command.read(connection) && !cmdUpdated)
         {
             cmdString = command.toString();
