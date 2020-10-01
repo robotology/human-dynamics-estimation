@@ -25,6 +25,7 @@ double period = 0.01;
 using namespace wearable;
 using namespace wearable::devices;
 
+const std::string EOL = "\n"; //EOL character
 
 class Paexo::Impl
 {
@@ -50,19 +51,26 @@ class Paexo::Impl::CmdParser : public yarp::os::PortReader
 {
 
 public:
-    yarp::os::Bottle cmd;
+    std::string cmdString;
     bool cmdUpdated = false;
 
     bool read(yarp::os::ConnectionReader& connection) override
     {
         yarp::os::Bottle command, response;
         //TODO: Check if this works for complex commands with : as seperator
-        if(command.read(connection))
+        if(command.read(connection) && !cmdUpdated)
         {
-            command.toString().append("\n"); //TODO: Define a macro for EOL character
-            cmd = command;
+            cmdString = command.toString();
+
+            if (*cmdString.begin() == '"' && *(cmdString.end() - 1) == '"') {
+                cmdString = cmdString.substr(1, cmdString.size()-2);
+            }
+
+            response.addString("Entered commands is " + cmdString);
+
+            cmdString.append(EOL);
             cmdUpdated = true;
-            response.addString("Entered commands is " + command.toString());
+
             yarp::os::ConnectionWriter* reply = connection.getWriter();
 
             if (reply != NULL) {
@@ -139,9 +147,9 @@ void Paexo::run()
         std::lock_guard<std::mutex> lock(pImpl->mutex);
         if (pImpl->cmdPro->cmdUpdated) {
 
-            int s = pImpl->cmdPro->cmd.toString().length();
+            int s = pImpl->cmdPro->cmdString.length();
             char c[s+1];
-            std::strcpy(c, pImpl->cmdPro->cmd.toString().c_str());
+            std::strcpy(c, pImpl->cmdPro->cmdString.c_str());
             if (pImpl->iSerialDevice->send(c, s)) {
                 pImpl->cmdPro->cmdUpdated = false;
             }

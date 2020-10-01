@@ -7,7 +7,7 @@
     <device type="serialport" name="SerialportDevice">
         <param name="verbose"> 0 </param>
         <!--param name="comport"> COM2 </param-->        <!--  //windows     -->
-        <param name="comport">  /dev/ttyACM1 </param>   <!--    //linux     -->
+        <param name="comport">  /dev/ttyACM0 </param>   <!--    //linux     -->
         <param name="baudrate"> 115200 </param>
         <param name="xonlim"> 0 </param>
         <param name="xofflim"> 0 </param>
