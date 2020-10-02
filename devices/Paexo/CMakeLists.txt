@@ -17,7 +17,12 @@ yarp_add_plugin(Paexo src/Paexo.cpp include/Paexo.h)
 target_include_directories(Paexo PRIVATE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
 
-target_link_libraries(Paexo PUBLIC ${YARP_LIBRARIES} Wearable::IWear)
+target_link_libraries(Paexo
+    PUBLIC
+    YARP::YARP_dev
+    YARP::YARP_init
+    Wearable::IWear)
+
 yarp_install(TARGETS Paexo
              COMPONENT runtime
              LIBRARY DESTINATION ${YARP_DYNAMIC_PLUGINS_INSTALL_DIR}

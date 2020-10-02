@@ -17,6 +17,7 @@
 #include <string>
 #include <stdio.h>
 #include <vector>
+#include <assert.h>
 
 const std::string DeviceName = "Paexo";
 const std::string LogPrefix = DeviceName + ":";
@@ -28,11 +29,21 @@ using namespace wearable::devices;
 const std::string EOL = "\n"; //EOL character
 const int MAX_LINE_LENGTH = 5000; // Maximum line length to read from serial port
 
-class Paexo::Impl
+struct PaexoData
+{
+    bool   updated;
+    double angle;
+    double force;
+    double leverarm;
+};
+
+class Paexo::PaexoImpl
 {
 public:
     mutable std::mutex mutex;
     yarp::dev::ISerialDevice *iSerialDevice = nullptr;
+
+    wearable::TimeStamp timeStamp;
 
     std::string portsPrefix;
     yarp::os::BufferedPort<yarp::os::Bottle> dataPort;
@@ -44,11 +55,41 @@ public:
 
     std::string serialComPortName;
 
+    // Paexo data buffer
+    PaexoData paexoData;
+
+    // Wearable variables
+    wearable::WearableName wearableName;
+
+    // Joint Sensor
+    std::string jointSensorPrefix;
+    const std::string jointSensorName = "Angle";
+    class PaexoVirtualJointKinSensor;
+    SensorPtr<PaexoVirtualJointKinSensor> paexoJointSensor;
+
+    // 3D Force Sensor
+    std::string forceSensorPrefix;
+    const std::string forceSensorName = "SupportForce";
+    class PaexoForce3DSensor;
+    SensorPtr<PaexoForce3DSensor> paexoForceSensor;
+
+    // 3D Torque Sensor
+    std::string torqueSensorPrefix;
+    const std::string torqueSensorName = "LeverArm";
+    class PaexoTorque3DSensor;
+    SensorPtr<PaexoTorque3DSensor> paexoTorqueSensor;
+
+    // Number of sensors
+    const int nSensors = 3; // Hardcoded for Paexo
+
+    // First data flag
+    bool firstDataRead;
+
     // constructor
-    Impl();
+    PaexoImpl();
 };
 
-class Paexo::Impl::CmdParser : public yarp::os::PortReader
+class Paexo::PaexoImpl::CmdParser : public yarp::os::PortReader
 {
 
 public:
@@ -102,14 +143,14 @@ public:
     }
 };
 
-Paexo::Impl::Impl()
+Paexo::PaexoImpl::PaexoImpl()
     : cmdPro(new CmdParser())
 {}
 
 // Default constructor
 Paexo::Paexo()
     : PeriodicThread(period)
-    , pImpl{new Impl()}
+    , pImpl{new PaexoImpl()}
 {}
 
 // Destructor
@@ -130,7 +171,6 @@ bool Paexo::open(yarp::os::Searchable& config)
         yInfo() << LogPrefix << "Using the period : " << period << "s";
     }
 
-    //TODO: Open rpc port
     // Get port prefix name
     if (!(config.check("portsPrefixName") && config.find("portsPrefixName").isString())) {
         yInfo() << LogPrefix << "Using default port prefix /wearable/paexo";
@@ -138,6 +178,15 @@ bool Paexo::open(yarp::os::Searchable& config)
     else {
         pImpl->portsPrefix = config.find("portsPrefixName").asString();
         yInfo() << LogPrefix << "Using the ports prefix " << pImpl->portsPrefix;
+    }
+
+    if (!(config.check("wearableName") && config.find("wearableName").isString())) {
+        yInfo() << LogPrefix << "Using default wearable name Paexo";
+        pImpl->wearableName = DeviceName;
+    }
+    else {
+        pImpl->wearableName = config.find("wearableName").asString();
+        yInfo() << LogPrefix << "Using the wearable name " << pImpl->wearableName;
     }
 
     // ===================
@@ -156,9 +205,145 @@ bool Paexo::open(yarp::os::Searchable& config)
     // Set rpc port reader
     pImpl->rpcPort.setReader(*pImpl->cmdPro);
 
+    // Intialize wearable sensors
+    pImpl->jointSensorPrefix = getWearableName() + wearable::Separator + sensor::IVirtualJointKinSensor::getPrefix();
+    pImpl->paexoJointSensor = SensorPtr<PaexoImpl::PaexoVirtualJointKinSensor>{std::make_shared<PaexoImpl::PaexoVirtualJointKinSensor>(pImpl.get(),
+                                                                                                                                       pImpl->jointSensorPrefix + pImpl->jointSensorName)};
+
+    pImpl->forceSensorPrefix = getWearableName() + wearable::Separator + sensor::IForce3DSensor::getPrefix();
+    pImpl->paexoForceSensor = SensorPtr<PaexoImpl::PaexoForce3DSensor>{std::make_shared<PaexoImpl::PaexoForce3DSensor>(pImpl.get(),
+                                                                                                                      pImpl->forceSensorPrefix + pImpl->forceSensorName)};
+
+    pImpl->torqueSensorPrefix = getWearableName() + wearable::Separator + sensor::ITorque3DSensor::getPrefix();
+    pImpl->paexoTorqueSensor = SensorPtr<PaexoImpl::PaexoTorque3DSensor>{std::make_shared<PaexoImpl::PaexoTorque3DSensor>(pImpl.get(), pImpl->torqueSensorPrefix + pImpl->torqueSensorName)};
+
+    // Initialize paexo data buffer
+    pImpl->paexoData.angle    = 0.0;
+    pImpl->paexoData.force    = 0.0;
+    pImpl->paexoData.leverarm = 0.0;
+    pImpl->paexoData.updated  = false;
+
+    // Initialize first data flag
+    pImpl->firstDataRead = false;
+
     return true;
 
 }
+
+// =============================================
+// Paexo implementation of VirtualJointKinSensor
+// =============================================
+class Paexo::PaexoImpl::PaexoVirtualJointKinSensor : public wearable::sensor::IVirtualJointKinSensor
+{
+public:
+    Paexo::PaexoImpl* paexoImpl = nullptr;
+
+    PaexoVirtualJointKinSensor(Paexo::PaexoImpl* impl,
+                               const wearable::sensor::SensorName name = {},
+                               const wearable::sensor::SensorStatus status = wearable::sensor::SensorStatus::Ok) // Default sensors status is set Ok
+        : IVirtualJointKinSensor(name, status)
+        , paexoImpl(impl)
+    {
+        // TODO: Initialization
+    }
+
+    ~PaexoVirtualJointKinSensor() override = default;
+
+    void setStatus(const wearable::sensor::SensorStatus status) { m_status = status; }
+
+    bool getJointPosition(double &position) const override
+    {
+        assert(paexoImpl != nullptr);
+
+        std::lock_guard<std::mutex> lock(paexoImpl->mutex);
+        position = paexoImpl->paexoData.angle;
+        return true;
+    }
+
+    bool getJointVelocity(double &velocity) const override
+    {
+        assert(paexoImpl != nullptr);
+
+        velocity = 0.0;
+
+        return true;
+    }
+
+    bool getJointAcceleration(double &acceleration) const override
+    {
+        assert(paexoImpl != nullptr);
+
+        acceleration = 0.0;
+
+        return true;
+    }
+};
+
+// =====================================
+// Paexo implementation of Force3DSensor
+// =====================================
+class Paexo::PaexoImpl::PaexoForce3DSensor : public wearable::sensor::IForce3DSensor
+{
+public:
+    Paexo::PaexoImpl* paexoImpl = nullptr;
+
+    PaexoForce3DSensor(Paexo::PaexoImpl* impl,
+                       const wearable::sensor::SensorName name = {},
+                       const wearable::sensor::SensorStatus status = wearable::sensor::SensorStatus::Ok) // Default sensors status is set Ok
+        : IForce3DSensor(name, status)
+        , paexoImpl(impl)
+    {
+        // TODO: Initialization
+    }
+
+    ~PaexoForce3DSensor() override = default;
+
+    void setStatus(const wearable::sensor::SensorStatus status) { m_status = status; }
+
+    bool getForce3D(Vector3 &force) const override
+    {
+        assert(paexoImpl != nullptr);
+
+        std::lock_guard<std::mutex> lock(paexoImpl->mutex);
+        force[0] = paexoImpl->paexoData.force;
+        force[1] = 0.0;
+        force[2] = 0.0;
+        return true;
+    }
+};
+
+// ======================================
+// Paexo implementation of Torque3DSensor
+// ======================================
+class Paexo::PaexoImpl::PaexoTorque3DSensor : public wearable::sensor::ITorque3DSensor
+{
+public:
+    Paexo::PaexoImpl* paexoImpl = nullptr;
+
+    PaexoTorque3DSensor(Paexo::PaexoImpl* impl,
+                        const wearable::sensor::SensorName name = {},
+                        const wearable::sensor::SensorStatus status = wearable::sensor::SensorStatus::Ok) // Default sensors status is set Ok
+        : ITorque3DSensor(name, status)
+        , paexoImpl(impl)
+    {
+        // TODO: Initialization
+    }
+
+    ~PaexoTorque3DSensor() override = default;
+
+    void setStatus(const wearable::sensor::SensorStatus status) { m_status = status; }
+
+    bool getTorque3D(Vector3 &torque) const override
+    {
+        assert(paexoImpl != nullptr);
+
+        std::lock_guard<std::mutex> lock(paexoImpl->mutex);
+        torque[0] = paexoImpl->paexoData.leverarm;
+        torque[1] = 0.0;
+        torque[2] = 0.0;
+        return true;
+    }
+};
 
 void Paexo::run()
 {
@@ -182,6 +367,9 @@ void Paexo::run()
 
     if (size > 1) {
 
+        // Get timestamp
+        pImpl->timeStamp.time = yarp::os::Time::now();
+
         // Check if the first char is a digit, if it is the received message is broadcast information
         if (isdigit(msg[0]) && (pImpl->cmdPro->measurement_status && pImpl->cmdPro->data_broadcast)) {
 
@@ -192,12 +380,24 @@ void Paexo::run()
 
             pImpl->dataPort.write();
 
-            // Add baroadcast data to Wearable interface
+            // Add baroadcast data to buffer
+            std::lock_guard<std::mutex> lock(pImpl->mutex);
+            pImpl->paexoData.angle = bc_data.get(0).asDouble();
+            pImpl->paexoData.force = bc_data.get(1).asDouble();
+            pImpl->paexoData.leverarm = bc_data.get(2).asDouble();
+            pImpl->paexoData.updated = true;
 
         }
         else if(!isdigit(msg[0])) {
             yInfo() << LogPrefix << msg;
         }
+    }
+
+    if (!pImpl->firstDataRead && pImpl->paexoData.updated) {
+
+        // Set sensor status
+        // TODO: Check if the sensor status can be modified from here
+        pImpl->firstDataRead = true;
     }
 }
 
@@ -274,3 +474,136 @@ bool Paexo::detachAll()
 
 void Paexo::threadRelease()
 {}
+
+// =========================
+// IPreciselyTimed interface
+// =========================
+yarp::os::Stamp Paexo::getLastInputStamp()
+{
+    // Stamp count should be always zero
+    std::lock_guard<std::mutex> lock(pImpl->mutex);
+    return yarp::os::Stamp(0, pImpl->timeStamp.time);
+}
+
+// ---------------------------
+// Implement Sensors Methods
+// ---------------------------
+
+wearable::WearableName Paexo::getWearableName() const
+{
+    return pImpl->wearableName + wearable::Separator;
+}
+
+wearable::WearStatus Paexo::getStatus() const
+{
+    wearable::WearStatus status = wearable::WearStatus::Ok;
+
+    for (const auto& s : getAllSensors()) {
+        if (s->getSensorStatus() != sensor::SensorStatus::Ok) {
+            status = wearable::WearStatus::Error;
+        }
+    }
+
+    // Default return status is Ok
+    return status;
+}
+
+wearable::TimeStamp Paexo::getTimeStamp() const
+{
+    std::lock_guard<std::mutex> lock(pImpl->mutex);
+    return {pImpl->timeStamp.time, 0};
+}
+
+
+wearable::SensorPtr<const wearable::sensor::ISensor>
+Paexo::getSensor(const wearable::sensor::SensorName name) const
+{
+    wearable::VectorOfSensorPtr<const wearable::sensor::ISensor> sensors = getAllSensors();
+    for (const auto& s : sensors) {
+        if (s->getSensorName() == name) {
+            return s;
+        }
+    }
+    yWarning() << LogPrefix << "User specified name <" << name << "> not found";
+    return nullptr;
+}
+
+wearable::VectorOfSensorPtr<const wearable::sensor::ISensor>
+Paexo::getSensors(const wearable::sensor::SensorType aType) const
+{
+    wearable::VectorOfSensorPtr<const wearable::sensor::ISensor> outVec;
+    outVec.reserve(pImpl->nSensors);
+    switch (aType) {
+        case sensor::SensorType::VirtualJointKinSensor: {
+            outVec.push_back(static_cast<SensorPtr<sensor::ISensor>>(pImpl->paexoJointSensor));
+            break;
+        }
+        case sensor::SensorType::Force3DSensor: {
+            outVec.push_back(static_cast<SensorPtr<sensor::ISensor>>(pImpl->paexoForceSensor));
+            break;
+        }
+        case sensor::SensorType::Torque3DSensor: {
+            outVec.push_back(static_cast<SensorPtr<sensor::ISensor>>(pImpl->paexoTorqueSensor));
+            break;
+        }
+        default: {
+            return {};
+        }
+    }
+
+    return outVec;
+}
+
+// ------------
+// JOINT Sensor
+// ------------
+wearable::SensorPtr<const wearable::sensor::IVirtualJointKinSensor>
+Paexo::getVirtualJointKinSensor(const wearable::sensor::SensorName name) const
+{
+
+    // Check if user-provided name corresponds to an available sensor
+    if (name == pImpl->jointSensorPrefix + pImpl->jointSensorName) {
+        yError() << LogPrefix << "Invalid sensor name " << name;
+        return nullptr;
+    }
+
+    // Return a shared point to the required sensor
+    return dynamic_cast<wearable::SensorPtr<const wearable::sensor::IVirtualJointKinSensor>&>(
+        *pImpl->paexoJointSensor);
+}
+
+// ------------
+// FORCE Sensor
+// ------------
+wearable::SensorPtr<const wearable::sensor::IForce3DSensor>
+Paexo::getForce3DSensor(const wearable::sensor::SensorName name) const
+{
+
+    // Check if user-provided name corresponds to an available sensor
+    if (name == pImpl->forceSensorPrefix + pImpl->forceSensorName) {
+        yError() << LogPrefix << "Invalid sensor name " << name;
+        return nullptr;
+    }
+
+    // Return a shared point to the required sensor
+    return dynamic_cast<wearable::SensorPtr<const wearable::sensor::IForce3DSensor>&>(
+        *pImpl->paexoForceSensor);
+}
+
+// -------------
+// TORQUE Sensor
+// -------------
+wearable::SensorPtr<const wearable::sensor::ITorque3DSensor>
+Paexo::getTorque3DSensor(const wearable::sensor::SensorName name) const
+{
+
+    // Check if user-provided name corresponds to an available sensor
+    if (name == pImpl->torqueSensorPrefix + pImpl->torqueSensorName) {
+        yError() << LogPrefix << "Invalid sensor name " << name;
+        return nullptr;
+    }
+
+    // Return a shared point to the required sensor
+    return dynamic_cast<wearable::SensorPtr<const wearable::sensor::ITorque3DSensor>&>(
+        *pImpl->paexoTorqueSensor);
+}

@@ -7,7 +7,7 @@
     <device type="serialport" name="SerialportDevice">
         <param name="verbose"> 0 </param>
         <!--param name="comport"> COM2 </param-->        <!--  //windows     -->
-        <param name="comport">  /dev/ttyACM0 </param>   <!--    //linux     -->
+        <param name="comport">  /dev/ttyACM1 </param>   <!--    //linux     -->
         <param name="baudrate"> 115200 </param>
         <param name="xonlim"> 0 </param>
         <param name="xofflim"> 0 </param>
@@ -39,6 +39,18 @@
             </paramlist>
         </action>
         <action phase="shutdown" level="5" type="detach"/>
+    </device>
+
+    <device type="iwear_wrapper" name="PaexoWearableDeviceWrapper">
+        <param name="period">0.01</param>
+        <param name="dataPortName">/Paexo/WearableData/data:o</param>
+        <param name="rpcPortName">/Paexo/WearableData/metadataRpc:o</param>
+        <action phase="startup" level="5" type="attach">
+            <paramlist name="networks">
+                <elem name="PaexoWearableDeviceWrapperLabel"> PaexoWearableDevice </elem>
+            </paramlist>
+        </action>
+        <action phase="shutdown" level="4" type="detach"/>
     </device>
 
 </robot>
