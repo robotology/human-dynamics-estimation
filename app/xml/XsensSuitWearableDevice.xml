@@ -25,6 +25,8 @@
         <!-- Sampling rate [Hz]. Available values are:-->
         <!-- 240 - 120 - 80 - 60 -->
         <param name="sampling-rate">120</param>
+        <!-- Flag to save mvn recording -->
+        <param name="saveMVNRecording">false</param>
         <!-- Quantities to be extracted from the driver for each time sample -->
         <group name="output-stream-configuration">
             <param name="enable-joint-data">true</param>

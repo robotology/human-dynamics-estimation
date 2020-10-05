@@ -43,13 +43,16 @@ XSensMVNDriverImpl::XSensMVNDriverImpl(
 
 XSensMVNDriverImpl::~XSensMVNDriverImpl()
 {
-    // Save .mvn recording file
-    m_connection->stopRecording();
-    while(m_connection->status().isRecording() || m_connection->status().isFlushing()){
-        std::this_thread::sleep_for(std::chrono::microseconds(10));
+    if(m_driverConfiguration.saveMVNRecording)
+    {
+        // Save .mvn recording file
+        m_connection->stopRecording();
+        while(m_connection->status().isRecording() || m_connection->status().isFlushing()){
+            std::this_thread::sleep_for(std::chrono::microseconds(10));
+        }
+        m_connection->saveAndCloseFile();
     }
-    m_connection->saveAndCloseFile();
-
+    
     m_connection->removeCallbackHandler(static_cast<XmeCallback*>(this));
 }
 
@@ -656,28 +659,31 @@ bool XSensMVNDriverImpl::calibrate(const std::string calibrationType)
         // Record the success of the calibration
         m_driverStatus = DriverStatus::CalibratedAndReadyToRecord;
 
-        //Start recording .mvn file
-        time_t rawtime;
-        struct tm * timeinfo;
-        char buffer[80];
+        if(m_driverConfiguration.saveMVNRecording)
+        {
+            //Start recording .mvn file
+            time_t rawtime;
+            struct tm * timeinfo;
+            char buffer[80];
 
-        time(&rawtime);
-        timeinfo = localtime(&rawtime);
+            time(&rawtime);
+            timeinfo = localtime(&rawtime);
 
-        strftime(buffer, sizeof(buffer), "%d-%m-%Y %H:%M:%S", timeinfo);
-        std::string time_string(buffer);
+            strftime(buffer, sizeof(buffer), "%d-%m-%Y %H:%M:%S", timeinfo);
+            std::string time_string(buffer);
 
-        // Replace separators with underscore
-        std::replace(time_string.begin(), time_string.end(), ' ', '_'); //Replace space with underscore
-        std::replace(time_string.begin(), time_string.end(), '-', '_'); //Replace - with underscore
-        std::replace(time_string.begin(), time_string.end(), ':', '_'); //Replace : with underscore
+            // Replace separators with underscore
+            std::replace(time_string.begin(), time_string.end(), ' ', '_'); //Replace space with underscore
+            std::replace(time_string.begin(), time_string.end(), '-', '_'); //Replace - with underscore
+            std::replace(time_string.begin(), time_string.end(), ':', '_'); //Replace : with underscore
         
-        const XsString mvnFileName("recording_" + time_string);
+            const XsString mvnFileName("recording_" + time_string);
 
-        xsInfo << "Recording to " << mvnFileName.toStdString() << ".mvn file";
+            xsInfo << "Recording to " << mvnFileName.toStdString() << ".mvn file";
 
-        m_connection->createMvnFile(mvnFileName);
-        m_connection->startRecording();
+            m_connection->createMvnFile(mvnFileName);
+            m_connection->startRecording();
+        }
 
         m_calibrator->getLastCalibrationInfo(m_calibrationInfo.type, m_calibrationInfo.quality);
     }
