@@ -12,6 +12,7 @@
 #include <experimental/filesystem>
 #include <map>
 #include <string>
+#include <ctime>
 
 #include <xme.h>
 
@@ -656,9 +657,24 @@ bool XSensMVNDriverImpl::calibrate(const std::string calibrationType)
         m_driverStatus = DriverStatus::CalibratedAndReadyToRecord;
 
         //Start recording .mvn file
-        std::time_t time_point = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-        std::string time_string = std::ctime(&time_point);
+        time_t rawtime;
+        struct tm * timeinfo;
+        char buffer[80];
+
+        time(&rawtime);
+        timeinfo = localtime(&rawtime);
+
+        strftime(buffer, sizeof(buffer), "%d-%m-%Y %H:%M:%S", timeinfo);
+        std::string time_string(buffer);
+
+        // Replace separators with underscore
+        std::replace(time_string.begin(), time_string.end(), ' ', '_'); //Replace space with underscore
+        std::replace(time_string.begin(), time_string.end(), '-', '_'); //Replace - with underscore
+        std::replace(time_string.begin(), time_string.end(), ':', '_'); //Replace : with underscore
+        
         const XsString mvnFileName("recording_" + time_string);
+
+        xsInfo << "Recording to " << mvnFileName.toStdString() << ".mvn file";
 
         m_connection->createMvnFile(mvnFileName);
         m_connection->startRecording();
