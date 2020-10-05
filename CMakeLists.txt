@@ -70,4 +70,5 @@ add_subdirectory(devices)
 add_subdirectory(wrappers)
 add_subdirectory(app)
 
-option(ENABLE_Paexo "Flag that enables building Paexo wearable device" ON)
+# Flag to enable Paexo wearable device
+option(ENABLE_Paexo "Flag that enables building Paexo wearable device" OFF)
