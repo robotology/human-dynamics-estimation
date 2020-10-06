@@ -762,6 +762,17 @@ bool XsensSuit::open(yarp::os::Searchable& config)
     outputStreamConfig.enableSensorData =
         streamGroup.check("enable-sensor-data", yarp::os::Value(true)).asBool();
 
+    // Check for mvn recording flag
+    bool saveMVNRecording;
+    if (!config.check("saveMVNRecording")) {
+        yWarning() << logPrefix << "OPTIONAL parameter <saveMVNRecording> NOT found, setting it to False.";
+        saveMVNRecording = false;
+    }
+    else {
+        yInfo() << logPrefix << "<saveMVNRecording> parameter set to " << saveMVNRecording;
+        saveMVNRecording = config.find("saveMVNRecording").asBool();        
+    }
+
     xsensmvn::DriverConfiguration driverConfig{rundepsFolder,
                                                suitConfiguration,
                                                acquisitionScenario,
@@ -770,7 +781,8 @@ bool XsensSuit::open(yarp::os::Searchable& config)
                                                scanTimeout,
                                                samplingRate,
                                                subjectBodyDimensions,
-                                               outputStreamConfig};
+                                               outputStreamConfig,
+                                               saveMVNRecording};
 
     pImpl->driver.reset(new xsensmvn::XSensMVNDriver(driverConfig));
 
