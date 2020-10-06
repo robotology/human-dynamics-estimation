@@ -7,6 +7,10 @@ find_package(iDynTree)
 add_subdirectory(IWearRemapper)
 add_subdirectory(IAnalogSensorToIWear)
 
+if(ENABLE_Paexo)
+    add_subdirectory(Paexo)
+endif()
+
 if(XSENS_MVN_USE_SDK)
   add_subdirectory(XsensSuit)
 endif()

@@ -69,3 +69,6 @@ add_subdirectory(msgs)
 add_subdirectory(devices)
 add_subdirectory(wrappers)
 add_subdirectory(app)
+
+# Flag to enable Paexo wearable device
+option(ENABLE_Paexo "Flag that enables building Paexo wearable device" OFF)
