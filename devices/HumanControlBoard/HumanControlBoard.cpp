@@ -385,3 +385,19 @@ bool HumanControlBoard::getTorques(double* t)
     }
     return true;
 }
+
+bool HumanControlBoard::getLimits(int axis, double *min, double *max)
+{
+    *min = 0;
+    *max = 0;
+    yWarning() << LogPrefix << " no limits defined, all the values will be set to zero.";
+    return true;
+}
+
+bool HumanControlBoard::getVelLimits(int axis, double *min, double *max)
+{
+    *min = 0;
+    *max = 0;
+    yWarning() << LogPrefix << " no velocity limits defined, all the values will be set to zero.";
+    return true;
+}

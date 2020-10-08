@@ -17,6 +17,7 @@
 #include <yarp/dev/IVelocityControl.h>
 #include <yarp/dev/Wrapper.h>
 #include <yarp/os/PeriodicThread.h>
+#include <yarp/dev/IControlLimits.h>
 
 #include <memory>
 
@@ -36,6 +37,7 @@ class hde::devices::HumanControlBoard final
     , public yarp::dev::IPositionControl
     , public yarp::dev::IVelocityControl
     , public yarp::dev::ITorqueControl
+    , public yarp::dev::IControlLimits
 {
 private:
     class impl;
@@ -130,6 +132,12 @@ public:
     bool getTorqueRanges(double* min, double* max) override { return false; }
     bool getMotorTorqueParams(int j, yarp::dev::MotorTorqueParameters* params) override { return false; }
     bool setMotorTorqueParams(int j, const yarp::dev::MotorTorqueParameters params) override { return false; }
+
+    // IControlLimits
+    bool setLimits(int axis, double min, double max) override  { return false; }
+    bool getLimits(int axis, double *min, double *max) override;
+    bool setVelLimits(int axis, double min, double max) override  { return false; }
+    bool getVelLimits(int axis, double *min, double *max) override;
 };
 
 #endif // HDE_DEVICES_HUMANCONTROLBOARD
