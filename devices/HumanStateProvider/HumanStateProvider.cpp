@@ -232,7 +232,7 @@ public:
 
     // Secondary calibration
     std::unordered_map<std::string, iDynTree::Rotation> secondaryCalibrationRotations;
-    void ereaseSecondaryCalibration(const std::string& linkName);
+    void eraseSecondaryCalibration(const std::string& linkName);
     void selectChainJointsAndLinksForSecondaryCalibration(const std::string& linkName, const std::string& childLinkName,
                                                   std::vector<iDynTree::JointIndex>& jointZeroIndices, std::vector<iDynTree::LinkIndex>& linkToCalibrateIndices);
     void computeSecondaryCalibrationRotationsForChain(const std::vector<iDynTree::JointIndex>& jointZeroIndices, const iDynTree::Transform &baseTransform, const std::vector<iDynTree::LinkIndex>& linkToCalibrateIndices);
@@ -335,7 +335,7 @@ public:
             else if (command.get(0).asString() == "calibrateRelativeLink" && !command.get(1).isNull() && !command.get(2).isNull()) {
                 this->parentLinkName = command.get(1).asString();
                 this->childLinkName = command.get(2).asString();
-                response.addString("Entered command <calibrateRelativeLink> is correct, trying to set offset to " + this->childLinkName + " using " + this->parentLinkName + " as reference");
+                response.addString("Entered command <calibrateRelativeLink> is correct, trying to set offset of " + this->childLinkName + " using " + this->parentLinkName + " as reference");
                 this->cmdStatus = rpcCommand::calibrateRelativeLink;
             }
             else if (command.get(0).asString() == "calibrateSubTree" && !command.get(1).isNull() && !command.get(2).isNull()) {
@@ -1235,7 +1235,7 @@ void HumanStateProvider::run()
     //                                          pImpl->linkErrorAngularVelocities);
 }
 
-void HumanStateProvider::impl::ereaseSecondaryCalibration(const std::string& linkName)
+void HumanStateProvider::impl::eraseSecondaryCalibration(const std::string& linkName)
 {
     if (linkName == "") {
         secondaryCalibrationRotations.clear();
@@ -1296,7 +1296,7 @@ void HumanStateProvider::impl::computeSecondaryCalibrationRotationsForChain(cons
 {
     // initialize vectors
     iDynTree::VectorDynSize jointPos(jointConfigurationSolution);
-    iDynTree::VectorDynSize jointVel(jointConfigurationSolution);
+    iDynTree::VectorDynSize jointVel(jointVelocitiesSolution);
     jointVel.zero();
     iDynTree::Twist baseVel;
     baseVel.zero();
@@ -1313,7 +1313,7 @@ void HumanStateProvider::impl::computeSecondaryCalibrationRotationsForChain(cons
         std::string linkToCalibrateName = kinDynComputations->model().getLinkName(linkToCalibrateIdx);
         if (!(wearableStorage.modelToWearable_LinkName.find(linkToCalibrateName) == wearableStorage.modelToWearable_LinkName.end())) {
             // discarding previous calibration
-            ereaseSecondaryCalibration(linkToCalibrateName);
+            eraseSecondaryCalibration(linkToCalibrateName);
             // computing new calibration
             iDynTree::Rotation linkRotationZero = kinDynComputations->getWorldTransform(linkToCalibrateName).getRotation();
             iDynTree::Rotation secondaryCalibrationRotation = linkTransformMatricesRaw.at(linkToCalibrateName).getRotation().inverse() * linkRotationZero;
@@ -1345,7 +1345,7 @@ bool HumanStateProvider::impl::applyRpcCommand()
 
     switch(commandPro->cmdStatus) {
     case rpcCommand::resetCalibration: {
-        ereaseSecondaryCalibration(linkName);
+        eraseSecondaryCalibration(linkName);
         break;
     }
     case rpcCommand::calibrateAll: {
@@ -1376,7 +1376,7 @@ bool HumanStateProvider::impl::applyRpcCommand()
         computeSecondaryCalibrationRotationsForChain(jointZeroIndices, baseTransformSolution, linkToCalibrateIndices);
     }
     case rpcCommand::calibrateRelativeLink: {
-        ereaseSecondaryCalibration(childLinkName);
+        eraseSecondaryCalibration(childLinkName);
         // Compute the relative transform at zero configuration
         // setting to zero all the joints
         iDynTree::VectorDynSize jointPos;
@@ -1390,7 +1390,7 @@ bool HumanStateProvider::impl::applyRpcCommand()
         break;
      }
     case rpcCommand::setRotationOffset: {
-        ereaseSecondaryCalibration(linkName);
+        eraseSecondaryCalibration(linkName);
         secondaryCalibrationRotation = iDynTree::Rotation::RPY( 180 * commandPro->roll / 3.14 , 180 * commandPro->pitch / 3.14 , 180 * commandPro->yaw / 3.14 );
         // add new calibration
         secondaryCalibrationRotations.emplace(linkName,secondaryCalibrationRotation);
