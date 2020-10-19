@@ -73,7 +73,7 @@ script:
 stage_osx:    
   install: &osx_install
     # Define brewInstallOrUpgrade function
-    - sh .ci/brewInstallOrUpgrade.sh
+    - source .ci/brewInstallOrUpgrade.sh
     # Install ccache
     - brewInstallOrUpgrade ccache
     - export PATH="/usr/local/opt/ccache/libexec:$PATH"
