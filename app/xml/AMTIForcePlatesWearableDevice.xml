@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE robot PUBLIC "-//YARP//DTD yarprobotinterface 3.0//EN" "http://www.yarp.it/DTD/yarprobotinterfaceV3.0.dtd">
+<robot name="forcePlates_ianalogsensor_to_iwear">
+
+    <device type="amtiplatforms" name="FPplatform">
+	<param name="rate"> 100 </param>
+	<param name="genlock"> off </param>
+	<param name="dataFormat"> data </param>
+    </device>
+	
+    <device name="first_plaftform" type="amtiforceplate">
+        <param name="platformID"> 2897 </param>
+	<param name="platformZRotation"> 90 </param> <!-- Degree of rotation around z-axis -->
+        <action phase="startup" level="5" type="attach">
+            <paramlist name="networks">
+                 <elem name="Platform">  FPplatform </elem>
+            </paramlist>
+        </action>
+
+        <action phase="shutdown" level="5" type="detach" />
+    </device>
+	
+    <device name="second_plaftform" type="amtiforceplate">
+        <param name="platformID"> 2896 </param>
+	<param name="platformZRotation"> 270 </param> <!-- Degree of rotation around z-axis -->
+        <action phase="startup" level="5" type="attach">
+            <paramlist name="networks">
+                 <elem name="Platform">  FPplatform </elem>
+            </paramlist>
+        </action>
+        <action phase="shutdown" level="5" type="detach" />
+    </device>
+	
+    <device name="first_platform_wrapper" type="analogServer">
+	<param name="period"> 10 </param>
+	<param name="name"> /amti/first/analog:o </param>
+	<action phase="startup" level="10" type="attach">
+	    <paramlist name="networks">
+		<elem name="FirstStrain">  first_plaftform </elem>
+	    </paramlist>
+	</action>
+	<action phase="shutdown" level="10" type="detach" />
+    </device>
+	
+    <device name="second_platform_wrapper" type="analogServer">
+	<param name="period"> 10 </param>
+	<param name="name"> /amti/second/analog:o </param>
+	<action phase="startup" level="10" type="attach">
+	    <paramlist name="networks">
+	        <elem name="FirstStrain">  second_plaftform </elem>
+	    </paramlist>
+	</action>
+	<action phase="shutdown" level="10" type="detach" />
+    </device>
+
+    <device type="ianalogsensor_to_iwear" name="AMTIFirstPlatformtIAnalogSensorToIWear">
+    <param name="sensorName">FTShoeRightFTSensors</param>
+    <param name="wearableName">FTShoeRight</param>
+    <param name="numberOfChannels">6</param>
+    <param name="channelOffset">0</param>
+    <param name="wearableSensorType">ForceTorque6DSensor</param>
+    <param name="getGroundReactionFT">true</param>
+    <action phase="startup" level="5" type="attach">
+        <paramlist name="networks">
+            <elem name="FTShoeRightIAnalogSensorToIWearLabel">first_plaftform</elem>
+        </paramlist>
+    </action>
+    <action phase="shutdown" level="5" type="detach"/>
+    </device>
+
+    <device type="ianalogsensor_to_iwear" name="AMTISecondPlatformtIAnalogSensorToIWear">
+    <param name="sensorName">FTShoeLeftFTSensors</param>
+    <param name="wearableName">FTShoeLeft</param>
+    <param name="numberOfChannels">6</param>
+    <param name="channelOffset">0</param>
+    <param name="wearableSensorType">ForceTorque6DSensor</param>
+    <param name="getGroundReactionFT">true</param>
+    <action phase="startup" level="5" type="attach">
+        <paramlist name="networks">
+            <elem name="FTShoeRightIAnalogSensorToIWearLabel">second_plaftform</elem>
+        </paramlist>
+    </action>
+    <action phase="shutdown" level="5" type="detach"/>
+    </device>
+
+    
+    <device type="iwear_wrapper" name="FTShoeRightIWearWrapper">
+    <param name="period">0.01</param>
+    <param name="dataPortName">/FTShoeRight/WearableData/data:o</param>
+    <param name="rpcPortName">/FTShoeRight/WearableData/metadataRpc:o</param>
+    <action phase="startup" level="5" type="attach">
+        <paramlist name="networks">
+            <elem name="FTShoeRightIWearWrapperLabel">AMTIFirstPlatformtIAnalogSensorToIWear</elem>
+        </paramlist>
+    </action>
+    <action phase="shutdown" level="5" type="detach"/>
+    </device>
+
+    <device type="iwear_wrapper" name="FTShoeLeftIWearWrapper">
+    <param name="period">0.01</param>
+    <param name="dataPortName">/FTShoeLeft/WearableData/data:o</param>
+    <param name="rpcPortName">/FTShoeLeft/WearableData/metadataRpc:o</param>
+    <action phase="startup" level="5" type="attach">
+        <paramlist name="networks">
+            <elem name="FTShoeLeftIWearWrapperLabel">AMTISecondPlatformtIAnalogSensorToIWear</elem>
+        </paramlist>
+    </action>
+    <action phase="shutdown" level="5" type="detach"/>
+    </device>
+
+  
+</robot> 
