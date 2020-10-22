@@ -72,8 +72,10 @@ script:
 
 stage_osx:    
   install: &osx_install
+    # Define brewInstallOrUpgrade function
+    - source .ci/brewInstallOrUpgrade.sh
     # Install ccache
-    - brew install ccache
+    - brewInstallOrUpgrade ccache
     - export PATH="/usr/local/opt/ccache/libexec:$PATH"
     # Setup the dependencies folder
     - export DEPS_INSTALL_PREFIX=$HOME/deps
@@ -81,7 +83,12 @@ stage_osx:
     #- export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$DEPS_INSTALL_PREFIX/lib
     - export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$DEPS_INSTALL_PREFIX
     # Install dependencies
-    - brew install eigen ace tinyxml gsl ipopt qt
+    - brewInstallOrUpgrade eigen
+    - brewInstallOrUpgrade ace
+    - brewInstallOrUpgrade tinyxml
+    - brewInstallOrUpgrade gsl
+    - brewInstallOrUpgrade ipopt
+    - brewInstallOrUpgrade qt
     - export PATH="/usr/local/opt/qt/bin/:$PATH"
     # Build other dependencies
     - cd $TRAVIS_BUILD_DIR
