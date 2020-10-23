@@ -1,0 +1,46 @@
+<application>
+    <name>HumanDumper</name>
+    <description>Dumper for Wearable Data to run Human Dynamics Estimation</description>
+
+	<var name="generic_node">localhost</var>
+
+  <module>
+        <name>yarpdatadumper</name>
+        <parameters>--name /human_dump/wearable/FTshoes/left --type bottle --txTime --rxTime</parameters>
+        <node>${generic_node}</node>
+        <tag>yarpdatadumper</tag>
+  </module>
+
+  <module>
+        <name>yarpdatadumper</name>
+        <parameters>--name /human_dump/wearable/FTshoes/right --type bottle --txTime --rxTime</parameters>
+        <node>${generic_node}</node>
+        <tag>yarpdatadumper</tag>
+  </module>
+
+  <module>
+        <name>yarpdatadumper</name>
+        <parameters>--name /human_dump/wearable/xsens --type bottle --txTime --rxTime</parameters>
+        <node>${generic_node}</node>
+        <tag>yarpdatadumper</tag>
+  </module>
+
+  <connection>
+        <from>/FTShoeLeft/WearableData/data:o</from>
+        <to>/human_dump/wearable/FTshoes/left</to>
+        <protocol>udp</protocol>
+  </connection>
+
+  <connection>
+        <from>/FTShoeRight/WearableData/data:o</from>
+        <to>/human_dump/wearable/FTshoes/right</to>
+        <protocol>udp</protocol>
+  </connection>
+
+  <connection>
+        <from>/XSensSuit/WearableData/data:o</from>
+        <to>/human_dump/wearable/xsens</to>
+        <protocol>udp</protocol>
+  </connection>
+
+</application>
