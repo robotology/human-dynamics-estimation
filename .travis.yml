@@ -65,11 +65,16 @@ stage_osx:
     - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$DEPS_INSTALL_PREFIX/lib
     - export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$DEPS_INSTALL_PREFIX
     - export CMAKE_BUILD_OPTIONS=""
+    # Define brewInstallOrUpgrade function
+    - source .ci/brewInstallOrUpgrade.sh
     # Setup ccache
-    - brew install ccache
+    - brewInstallOrUpgrade ccache
     - export PATH="/usr/local/opt/ccache/libexec:$PATH"
     # Install dependencies
-    - brew install eigen ace tinyxml gsl
+    - brewInstallOrUpgrade eigen
+    - brewInstallOrUpgrade ace
+    - brewInstallOrUpgrade tinyxml
+    - brewInstallOrUpgrade gsl
     - cd $TRAVIS_BUILD_DIR/.ci
     - ./install.sh || travis_terminate 1
   script: &osx_script
