@@ -306,9 +306,9 @@ public:
     std::string parentLinkName;
     std::string childLinkName;
     // variables for manual calibration
-    std::atomic<double> roll;
-    std::atomic<double> pitch;
-    std::atomic<double> yaw;
+    std::atomic<double> roll;  // [deg]
+    std::atomic<double> pitch; // [deg]
+    std::atomic<double> yaw;   // [deg]
 
     void resetInternalVariables()
     {
@@ -330,7 +330,7 @@ public:
                 response.addString("Enter <calibrateSubTree <parentLinkName> <childLinkName>> to apply a secondary calibration for the given chain \n");
                 response.addString("Enter <calibrateRelativeLink <parentLinkName> <childLinkName>> to apply a secondary calibration for the child link using the parent link as reference \n");
                 response.addString("Enter <reset <linkName>> to remove secondary calibration for the given link \n");
-                response.addString("Enter <reset> to remove all the secondary calibrations");
+                response.addString("Enter <resetAll> to remove all the secondary calibrations");
             }
             else if (command.get(0).asString() == "calibrateRelativeLink" && !command.get(1).isNull() && !command.get(2).isNull()) {
                 this->parentLinkName = command.get(1).asString();
@@ -350,6 +350,7 @@ public:
                 this->cmdStatus = rpcCommand::calibrateAll;
             }
             else if (command.get(0).asString() == "calibrate" && !(command.get(1).isNull())) {
+                this->parentLinkName = command.get(1).asString();
                 response.addString("Entered command <calibrate> is correct, trying to set offset calibration for the link " + this->parentLinkName);
                 this->cmdStatus = rpcCommand::calibrate;
             }
@@ -361,8 +362,8 @@ public:
                 response.addString("Entered command <calibrate> is correct, trying to set rotation offset for the link " + this->parentLinkName);
                 this->cmdStatus = rpcCommand::setRotationOffset;
             }
-            else if (command.get(0).asString() == "reset" && command.get(1).isNull()) {
-                response.addString("Entered command <reset> is correct, removing all the secondary calibrations ");
+            else if (command.get(0).asString() == "resetAll") {
+                response.addString("Entered command <resetAll> is correct, removing all the secondary calibrations ");
                 this->cmdStatus = rpcCommand::resetCalibration;
             }
             else if (command.get(0).asString() == "reset" && !command.get(1).isNull()) {
@@ -1391,7 +1392,7 @@ bool HumanStateProvider::impl::applyRpcCommand()
      }
     case rpcCommand::setRotationOffset: {
         eraseSecondaryCalibration(linkName);
-        secondaryCalibrationRotation = iDynTree::Rotation::RPY( 180 * commandPro->roll / 3.14 , 180 * commandPro->pitch / 3.14 , 180 * commandPro->yaw / 3.14 );
+        secondaryCalibrationRotation = iDynTree::Rotation::RPY( 3.14 * commandPro->roll / 180 , 3.14 * commandPro->pitch / 180 , 3.14 * commandPro->yaw / 180 );
         // add new calibration
         secondaryCalibrationRotations.emplace(linkName,secondaryCalibrationRotation);
         yInfo() << LogPrefix << "secondary calibration for " << linkName << " is set";
