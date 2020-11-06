@@ -30,6 +30,12 @@ class hde::wrappers::HumanStateWrapper final
 private:
     class impl;
     std::unique_ptr<impl> pImpl;
+    bool publishJointPositionVector;
+    bool publishJointVelocityVector;
+    bool publishBasePositionVector;
+    bool publishBaseVelocityVector;
+    bool publishCoMPositionVector;
+    bool publishCoMVelocityVector;
 
 public:
     HumanStateWrapper();
