@@ -6,7 +6,7 @@
     <arg name="robotModel" default="$(find HDERviz)/urdfs/iCubGazeboV2_5.urdf  "/>
     <arg name="rvizconfig" default="$(find HDERviz)/rviz/iCubRviz.rviz" />
 
-    <param name="robot_description" command="$(find xacro)/xacro.py $(arg robotModel)" />
+    <param name="robot_description" command="$(find xacro)/xacro --inorder $(arg robotModel)" />
     <param name="use_gui" value="$(arg gui)"/>
 
     <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" />
