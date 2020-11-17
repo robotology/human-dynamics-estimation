@@ -127,9 +127,6 @@ enum rpcCommand
 // Container of data coming from the wearable interface
 struct WearableStorage
 {
-    // Sensor associated with the base
-    SensorPtr<const sensor::IVirtualLinkKinSensor> baseLinkSensor;
-
     // Maps [model joint / link name] ==> [wearable virtual sensor name]
     //
     // E.g. [Pelvis] ==> [XsensSuit::vLink::Pelvis]. Read from the configuration.
@@ -2413,19 +2410,6 @@ bool HumanStateProvider::attach(yarp::dev::PolyDriver* poly)
         pImpl->wearableStorage.linkSensorsMap[wearableLinkName] =
             pImpl->iWear->getVirtualLinkKinSensor(wearableLinkName);
     }
-
-    // Store the sensor associated as base
-    std::string baseLinkSensorName = pImpl->floatingBaseFrame.wearable;
-    if (pImpl->wearableStorage.linkSensorsMap.find(baseLinkSensorName)
-        == pImpl->wearableStorage.linkSensorsMap.end()) {
-        yError() << LogPrefix
-                 << "Failed to find sensor associated with the base passed in the configuration"
-                 << baseLinkSensorName;
-        return false;
-    }
-
-    pImpl->wearableStorage.baseLinkSensor =
-        pImpl->wearableStorage.linkSensorsMap.at(baseLinkSensorName);
 
     // ============
     // CHECK JOINTS
