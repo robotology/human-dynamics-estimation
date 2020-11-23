@@ -6,7 +6,8 @@ set (WEARABLES_XML_FILES xml/FTShoeLeftWearableDevice.xml
                    xml/ICubWearableDevice.xml
                    xml/SkinInsolesWearableDevice.xml
                    xml/XsensSuitWearableDevice.xml
-
+                   xml/applications/WearableDevices-Dumper.xml
+                   xml/applications/HumanDynamicsEstimation-WearableDumper.xml
                    xml/applications/WearableDevices.xml)
 
 install(FILES ${WEARABLES_XML_FILES}

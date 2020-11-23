@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added xsens `.mvn` save option (https://github.com/robotology/wearables/pull/82)
 - Added force-plate wearable device configuratio (https://github.com/robotology/wearables/pull/84)
 - Added yarpdatadumper application (https://github.com/robotology/wearables/pull/87)
+- Install `Wearable-devices-dubmer` application (https://github.com/robotology/wearables/pull/92)
 
 ### Fixed 
 - Fixed segmentation failt on `IWearRemapper` termination (https://github.com/robotology/wearables/issues/55).
