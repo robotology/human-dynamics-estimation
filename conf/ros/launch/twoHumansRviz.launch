@@ -7,7 +7,7 @@
         <arg name="humanModel" default="$(find HDERviz)/urdfs/humanSubject01_66dof.urdf"/>
         <arg name="rvizconfig" default="$(find HDERviz)/rviz/twoHumansRviz.rviz" />
 
-        <param name="robot_description" command="$(find xacro)/xacro.py $(arg humanModel)" />
+        <param name="robot_description" command="$(find xacro)/xacro --inorder $(arg humanModel)" />
         <param name="use_gui" value="$(arg gui)"/>
 
         <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" />
@@ -27,7 +27,7 @@
         <arg name="humanModel_2" default="$(find HDERviz)/urdfs/humanSubject02_66dof.urdf"/>
 
         <param name="use_gui" value="$(arg gui)"/>
-        <param name="robot_description" command="$(find xacro)/xacro.py $(arg humanModel_2)" />
+        <param name="robot_description" command="$(find xacro)/xacro --inorder $(arg humanModel_2)" />
 
         <param name="tf_prefix" value="human_2" type="str"/>
     </group>
