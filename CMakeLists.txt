@@ -2,8 +2,12 @@
 # This software may be modified and distributed under the terms of the
 # GNU Lesser General Public License v2.1 or any later version.
 
-project(Wearables LANGUAGES CXX)
 cmake_minimum_required(VERSION 3.5)
+
+set(PROJECT_VERSION "1.1.0")
+
+project(Wearables VERSION ${PROJECT_VERSION}
+                  LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

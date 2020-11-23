@@ -3,7 +3,7 @@
 # GNU Lesser General Public License v2.1 or any later version.
 
 cmake_minimum_required(VERSION 3.5)
-project(IWear LANGUAGES CXX VERSION 0.1)
+project(IWear LANGUAGES CXX VERSION ${PROJECT_VERSION})
 
 include(GNUInstallDirs)
 
