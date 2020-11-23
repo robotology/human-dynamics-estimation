@@ -12,12 +12,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added force-plate wearable device configuratio (https://github.com/robotology/wearables/pull/84)
 - Added yarpdatadumper application (https://github.com/robotology/wearables/pull/87)
 - Install `Wearable-devices-dubmer` application (https://github.com/robotology/wearables/pull/92)
+- Install `Wearable-devices-dubmer` application (https://github.com/robotology/wearables/pull/92)
 
 ### Fixed 
 - Fixed segmentation failt on `IWearRemapper` termination (https://github.com/robotology/wearables/issues/55).
 - Plugin `.ini` files are now automatially generated (https://github.com/robotology/yarp/blob/2522239984ef3e6c26939fe740001ec08189a8cb/doc/release/v3_2_0.md#new-features)
 - Change YARP required version to `3.2`
 - Fix MacOS CI (https://github.com/robotology/wearables/pull/85)
+
+### Changed
+- Travis CI has been replaced by Github Actions (https://github.com/robotology/wearables/pull/94)
 
 ## [1.0.0] - 2020-01-28
 
