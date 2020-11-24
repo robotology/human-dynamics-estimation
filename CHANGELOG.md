@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Added documentation for compiling the project in the `README.md` (https://github.com/robotology/wearables/pull/96)
+
 ## [1.1.0] - 2020-01-28
 
 ### Added
