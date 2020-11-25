@@ -9,6 +9,7 @@
 #ifndef HDE_DEVICES_HUMANSTATEWRAPPER
 #define HDE_DEVICES_HUMANSTATEWRAPPER
 
+#include <vector>
 #include <yarp/dev/DeviceDriver.h>
 #include <yarp/dev/Wrapper.h>
 #include <yarp/os/PeriodicThread.h>
@@ -36,6 +37,8 @@ private:
     bool publishBaseVelocityVector;
     bool publishCoMPositionVector;
     bool publishCoMVelocityVector;
+    bool changeJointsOrder;
+    std::vector<std::string> jointsNameDesiredOrder;
 
 public:
     HumanStateWrapper();
@@ -56,6 +59,13 @@ public:
     // IMultipleWrapper interface
     bool attachAll(const yarp::dev::PolyDriverList& driverList) override;
     bool detachAll() override;
+
+    // Parse Joints Order Output
+    bool parseJointsOrder(yarp::os::Bottle* list, std::vector<std::string>& jointsOrderOut);
+
+    bool computeJointsOrderIndex(std::vector<std::string> jointsOrderIn,
+                                 std::vector<std::string> jointsOrderDesired,
+                                 std::vector<int>& indexJointsOrder);
 };
 
 #endif // HDE_DEVICES_HUMANSTATEWRAPPER

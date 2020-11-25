@@ -10,6 +10,7 @@
 #include "IHumanState.h"
 #include <HumanDynamicsEstimation/HumanState.h>
 
+#include <algorithm>
 #include <yarp/os/BufferedPort.h>
 #include <yarp/os/LogStream.h>
 #include <yarp/sig/Vector.h>
@@ -42,6 +43,7 @@ HumanStateWrapper::HumanStateWrapper()
     , publishBaseVelocityVector(true)
     , publishCoMPositionVector(true)
     , publishCoMVelocityVector(true)
+    , changeJointsOrder(true)
 {}
 
 HumanStateWrapper::~HumanStateWrapper() {}
@@ -99,6 +101,10 @@ bool HumanStateWrapper::open(yarp::os::Searchable& config)
         yInfo() << LogPrefix << "Not Opening  pure Vector port for publishing robot information";
         publishCoMVelocityVector = false;
     }
+    if (!(config.check("JointsDesiredOrder") && config.find("JointsDesiredOrder").asList())) {
+        yInfo() << LogPrefix << "Not Found Desired Joints Order, using default IK Output";
+        changeJointsOrder = false;
+    }
 
     // =============
     // OPEN THE PORT
@@ -117,7 +123,7 @@ bool HumanStateWrapper::open(yarp::os::Searchable& config)
         // Joint position port
         std::string jointPositionPortName = config.find("jointPositionPortName").asString();
         if (!pImpl->jointPositionPort.open(jointPositionPortName)) {
-            yError() << LogPrefix << 'Failed to open port' << jointPositionPortName;
+            yError() << LogPrefix << "Failed to open port" << jointPositionPortName;
             return false;
         }
     }
@@ -127,7 +133,7 @@ bool HumanStateWrapper::open(yarp::os::Searchable& config)
         // Joint velocity port
         std::string jointVelocityPortName = config.find("jointVelocityPortName").asString();
         if (!pImpl->jointVelocityPort.open(jointVelocityPortName)) {
-            yError() << LogPrefix << 'Failed to open port' << jointVelocityPortName;
+            yError() << LogPrefix << "Failed to open port" << jointVelocityPortName;
             return false;
         }
     }
@@ -137,7 +143,7 @@ bool HumanStateWrapper::open(yarp::os::Searchable& config)
         // Base Position port
         std::string basePositionPortName = config.find("basePositionPortName").asString();
         if (!pImpl->basePositionPort.open(basePositionPortName)) {
-            yError() << LogPrefix << 'Failed to open port' << basePositionPortName;
+            yError() << LogPrefix << "Failed to open port" << basePositionPortName;
             return false;
         }
     }
@@ -147,7 +153,7 @@ bool HumanStateWrapper::open(yarp::os::Searchable& config)
         // Base Velocity port
         std::string baseVelocityPortName = config.find("baseVelocityPortName").asString();
         if (!pImpl->baseVelocityPort.open(baseVelocityPortName)) {
-            yError() << LogPrefix << 'Failed to open port' << baseVelocityPortName;
+            yError() << LogPrefix << "Failed to open port" << baseVelocityPortName;
             return false;
         }
     }
@@ -157,7 +163,7 @@ bool HumanStateWrapper::open(yarp::os::Searchable& config)
         // CoM Position port
         std::string CoMPositionPortName = config.find("CoMPositionPortName").asString();
         if (!pImpl->CoMPositionPort.open(CoMPositionPortName)) {
-            yError() << LogPrefix << 'Failed to open port' << CoMPositionPortName;
+            yError() << LogPrefix << "Failed to open port" << CoMPositionPortName;
             return false;
         }
     }
@@ -167,9 +173,14 @@ bool HumanStateWrapper::open(yarp::os::Searchable& config)
         // CoM Velocity port
         std::string CoMVelocityPortName = config.find("CoMVelocityPortName").asString();
         if (!pImpl->CoMVelocityPort.open(CoMVelocityPortName)) {
-            yError() << LogPrefix << 'Failed to open port' << CoMVelocityPortName;
+            yError() << LogPrefix << "Failed to open port" << CoMVelocityPortName;
             return false;
         }
+    }
+
+    // Reading the change joints order list
+    if (changeJointsOrder) {
+        parseJointsOrder(config.find("JointsDesiredOrder").asList(), jointsNameDesiredOrder);
     }
 
     // ================
@@ -258,13 +269,29 @@ void HumanStateWrapper::run()
 
     // joint position
     if (publishJointPositionVector) {
-
         int size_joint = jointPositionsInterface.size();
         yarp::sig::Vector& jointPositionsOut = pImpl->jointPositionPort.prepare();
         jointPositionsOut.resize(size_joint);
+        std::vector<int> jointsOrderIndex;
+
+        if (changeJointsOrder) {
+
+            if (computeJointsOrderIndex(jointNames, jointsNameDesiredOrder, jointsOrderIndex)) {
+            }
+            else {
+                yError() << LogPrefix << "Given Wrong Joints order";
+                changeJointsOrder = false;
+            }
+        }
 
         for (int j = 0; j < size_joint; j++) {
-            jointPositionsOut[j] = jointPositionsInterface[j];
+            if (changeJointsOrder) {
+
+                jointPositionsOut[j] = jointPositionsInterface[jointsOrderIndex.at(j)];
+            }
+            else {
+                jointPositionsOut[j] = jointPositionsInterface[j];
+            }
         }
 
         pImpl->jointPositionPort.write(/*forceStrict=*/true);
@@ -275,10 +302,27 @@ void HumanStateWrapper::run()
 
         int size_joint = jointPositionsInterface.size();
         yarp::sig::Vector& jointVelocityOut = pImpl->jointVelocityPort.prepare();
+
         jointVelocityOut.resize(size_joint);
+        std::vector<int> jointsOrderIndex;
+
+        if (changeJointsOrder) {
+            if (computeJointsOrderIndex(jointNames, jointsNameDesiredOrder, jointsOrderIndex)) {
+            }
+            else {
+                yError() << LogPrefix << "Given Wrong Joints order";
+                changeJointsOrder = false;
+            }
+        }
 
         for (int j = 0; j < size_joint; j++) {
-            jointVelocityOut[j] = jointVelocitiesInterface[j];
+            if (changeJointsOrder) {
+
+                jointVelocityOut[j] = jointVelocitiesInterface[jointsOrderIndex.at(j)];
+            }
+            else {
+                jointVelocityOut[j] = jointVelocitiesInterface[j];
+            }
         }
 
         pImpl->jointVelocityPort.write(/*forceStrict=*/true);
@@ -421,4 +465,32 @@ bool HumanStateWrapper::attachAll(const yarp::dev::PolyDriverList& driverList)
 bool HumanStateWrapper::detachAll()
 {
     return detach();
+}
+
+bool HumanStateWrapper::parseJointsOrder(yarp::os::Bottle* list,
+                                         std::vector<std::string>& jointsOrderOut)
+{
+
+    for (auto i = 0; i < list->size(); i++) {
+        jointsOrderOut.push_back(list->get(i).asString());
+    }
+    return true;
+}
+
+bool HumanStateWrapper::computeJointsOrderIndex(std::vector<std::string> jointsOrderIn,
+                                                std::vector<std::string> jointsOrderDesired,
+                                                std::vector<int>& indexJointsOrder)
+{
+
+    if (jointsOrderIn.size() == jointsOrderDesired.size()) {
+        for (auto i = 0; i < jointsOrderDesired.size(); i++) {
+            auto index = find(jointsOrderIn.begin(), jointsOrderIn.end(), jointsOrderDesired.at(i));
+            int index_int = index - jointsOrderIn.begin();
+            indexJointsOrder.push_back(index_int);
+        }
+        return true;
+    }
+    else {
+        return false;
+    }
 }
