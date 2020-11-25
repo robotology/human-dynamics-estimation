@@ -275,7 +275,7 @@ void HumanStateWrapper::run()
         std::vector<int> jointsOrderIndex;
 
         if (changeJointsOrder) {
-
+            //TODO this should be replaced by an unordered map, to decrease the complexity
             if (computeJointsOrderIndex(jointNames, jointsNameDesiredOrder, jointsOrderIndex)) {
             }
             else {
@@ -286,7 +286,7 @@ void HumanStateWrapper::run()
 
         for (int j = 0; j < size_joint; j++) {
             if (changeJointsOrder) {
-
+            //TODO this should be replaced by an unordered map, to decrease the complexity
                 jointPositionsOut[j] = jointPositionsInterface[jointsOrderIndex.at(j)];
             }
             else {
@@ -477,8 +477,8 @@ bool HumanStateWrapper::parseJointsOrder(yarp::os::Bottle* list,
     return true;
 }
 
-bool HumanStateWrapper::computeJointsOrderIndex(std::vector<std::string> jointsOrderIn,
-                                                std::vector<std::string> jointsOrderDesired,
+bool HumanStateWrapper::computeJointsOrderIndex(const std::vector<std::string> &jointsOrderIn,
+                                                const std::vector<std::string> &jointsOrderDesired,
                                                 std::vector<int>& indexJointsOrder)
 {
 

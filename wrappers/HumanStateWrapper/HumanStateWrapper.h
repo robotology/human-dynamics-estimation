@@ -63,8 +63,8 @@ public:
     // Parse Joints Order Output
     bool parseJointsOrder(yarp::os::Bottle* list, std::vector<std::string>& jointsOrderOut);
 
-    bool computeJointsOrderIndex(std::vector<std::string> jointsOrderIn,
-                                 std::vector<std::string> jointsOrderDesired,
+    bool computeJointsOrderIndex(const std::vector<std::string> &jointsOrderIn,
+                                 const std::vector<std::string> &jointsOrderDesired,
                                  std::vector<int>& indexJointsOrder);
 };
 
