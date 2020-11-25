@@ -19,6 +19,7 @@ env:
     iDynTree_TAG: v2.0.0 
     wearables_TAG: v1.1.0 
     icub_main_TAG: v1.17.0    
+    osqp_TAG: v0.6.0
     OsqpEigen_TAG: v0.6.2
     # Overwrite the VCPKG_INSTALLATION_ROOT env variable defined by Github Actions to point to our vcpkg
     VCPKG_INSTALLATION_ROOT: C:\robotology\vcpkg
@@ -152,6 +153,16 @@ jobs:
                          -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/install/deps ..
             cmake --build . --config ${{matrix.build_type}} --target INSTALL
 
+            # osqp
+            cd ${GITHUB_WORKSPACE}
+            git clone --recursive -b ${osqp_TAG} https://github.com/oxfordcontrol/osqp
+            cd osqp
+            mkdir -p build
+            cd build
+            cmake -A x64 -DCMAKE_TOOLCHAIN_FILE=${VCPKG_INSTALLATION_ROOT}/scripts/buildsystems/vcpkg.cmake \
+                         -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/install/deps ..
+            cmake --build . --config ${{ matrix.build_type }} --target INSTALL
+
             # OsqpEigen
             cd ${GITHUB_WORKSPACE}
             git clone https://github.com/robotology/osqp-eigen
@@ -222,6 +233,15 @@ jobs:
             cmake -DCMAKE_PREFIX_PATH=${GITHUB_WORKSPACE}/install/deps \
                   -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/install/deps ..
             cmake --build . --config ${{matrix.build_type}} --target install
+
+            # osqp
+            cd ${GITHUB_WORKSPACE}
+            git clone --recursive -b ${osqp_TAG} https://github.com/oxfordcontrol/osqp
+            cd osqp
+            mkdir -p build
+            cd build
+            cmake -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/install/deps ..
+            cmake --build . --config ${{ matrix.build_type }} --target install
 
             # OsqpEigen
             cd ${GITHUB_WORKSPACE}
