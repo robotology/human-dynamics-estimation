@@ -4,7 +4,7 @@
 
 <application>
 
-  <name>Xsens Retargeting Visualization</name>
+  <name>XsensRetargetingVisualization</name>
   <description>visualization of IK for retargeting</description>
   <version>1.0</version>
   <authors>

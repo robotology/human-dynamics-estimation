@@ -2,6 +2,12 @@
   <name>HumanDynamicsEstimation-Human</name>
   <description>An application for running Human Dynamics Estimation (HDE) for only human</description>
 
+  <module>
+    <name>yarprobotinterface</name>
+    <parameters>--config TransformServer.xml</parameters>
+    <node>localhost</node>
+  </module>
+  
   <!--yarprobotinterface with HDE config file for only human-->
   <module>
     <name>yarprobotinterface</name>
@@ -21,7 +27,7 @@
   <!--yarprobotstatepublisher for human-->
   <module>
     <name>yarprobotstatepublisher</name>
-    <parameters>--namePrefix Human --tfPrefix /Human/ --model Claudia66DoF.urdf --base-frame Pelvis --jointstates-topic "/Human/joint_states"</parameters>
+    <parameters>--period 0.0001 --name-prefix Human --tf-prefix /Human/ --model humanSubject01_66dof.urdf --reduced-model true --base-frame Pelvis --jointstates-topic "/Human/joint_states"</parameters>
     <dependencies>
       <port timeout="5.0">/HumanDynamicsPublisher</port>
       <port timeout="5.0">/Human/joint_states+@/HumanStatePublisher</port>
@@ -29,6 +35,15 @@
     </dependencies>
     <environment>YARP_FORWARD_LOG_ENABLE=1</environment>
     <description>Run yarprobotstatepublisher with correct human model</description>
+    <node>localhost</node>
+  </module>
+  
+  <!--Rviz-->
+  <module>
+    <name>roslaunch</name>
+    <parameters>HDERviz HDERviz.launch</parameters>
+    <environment>YARP_FORWARD_LOG_ENABLE=1</environment>
+    <description>Run rviz</description>
     <node>localhost</node>
   </module>
 
