@@ -3,7 +3,7 @@
   <description>An application for running Human Dynamics Estimation (HDE) for only human or for physical Human-Robot interaction (pHRI) experiments</description>
 
   <application>
-    <name>HumanDynamicsEstimation-TransformServer</name>
+    <name>HumanDynamicsEstimation-HumanDumper</name>
   </application>
 
   <application>
@@ -15,11 +15,11 @@
   </application>
 
   <application>
-    <name>HumanDynamicsEstimation-Rviz</name>
+    <name>XsensRetargetingPositionControlPole</name>
   </application>
 
   <application>
-    <name>HumanDynamicsEstimation-YarpScope</name>
+    <name>XsensRetargetingVisualization</name>
   </application>
 
 </application>

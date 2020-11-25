@@ -1,5 +1,5 @@
 <application>
-    <name>HumanDumper</name>
+    <name>HumanDynamicsEstimation-HumanDumper</name>
     <description>Dumper for HDE modules</description>
 	
 	<var name="generic_node">localhost</var>

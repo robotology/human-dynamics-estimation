@@ -21,7 +21,7 @@ yarp_install(FILES ${scripts} DESTINATION ${YARP_CONTEXTS_INSTALL_DIR})
 
 
 # ROS related installation
-file (GLOB ROS_PROJECT_NAME HDERviz)
+set (ROS_PROJECT_NAME HDERviz)
 file (GLOB ROS_PACKAGE_FILE ros/package.xml)
 file (GLOB ROS_LAUNCH_FILES ros/launch/*.launch)
 file (GLOB ROS_RVIZ_FILES ros/rviz/*.rviz)
