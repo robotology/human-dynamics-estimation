@@ -1,5 +1,5 @@
 <application>
-  <name>HumanDynamicsEstimation-Human</name>
+  <name>HumanDynamicsEstimation-HumanDynamics</name>
   <description>An application for running Human Dynamics Estimation (HDE) for only human</description>
 
   <module>
