@@ -28,8 +28,6 @@ option(BUILD_TESTING "Build tests" OFF)
 # Subfolders will find the dependencies they need.
 find_package(YARP 3.2 REQUIRED)
 find_package(YCM REQUIRED)
-#find_package(Eigen3 REQUIRED)
-#find_package(iDynTree REQUIRED)
 
 # Import cmake utilities
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
