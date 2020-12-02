@@ -1002,6 +1002,16 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         yInfo() << "CUSTOM CONSTRAINTS are not defined in xml file.";
     }
 
+    // set base velocity constraint to zero if the base is fixed
+    if (pImpl->useFixedBase) {
+        pImpl->baseVelocityLowerLimit.resize(6);
+        pImpl->baseVelocityLowerLimit.zero();
+        pImpl->baseVelocityUpperLimit.resize(6);
+        pImpl->baseVelocityUpperLimit.zero();
+
+        yInfo() << "Using fixed base model, base velocity limits are set to zero";
+    }
+
     // check sizes
     if (pImpl->custom_jointsVelocityLimitsNames.size()
         != pImpl->custom_jointsVelocityLimitsValues.size()) {
