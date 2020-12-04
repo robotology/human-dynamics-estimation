@@ -11,6 +11,10 @@ include(GNUInstallDirs)
 # IWEAR INTERFACE
 # ===============
 
+# Policy to suppress An interface source of target "IWear" has a relative path warning
+# Policy CMP0076 is not set: target_sources() command converts relative pathsto absolute.
+cmake_policy(SET CMP0076 OLD)
+
 # Group files with the correct path for the target_sources command
 file(GLOB_RECURSE IWEAR_HEADERS_BUILD include/*.h)
 file(GLOB_RECURSE IWEAR_HEADERS_INSTALL
