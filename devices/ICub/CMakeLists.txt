@@ -4,7 +4,7 @@
 
 yarp_prepare_plugin(icub_wearable_device
     TYPE wearable::devices::ICub
-    INCLUDE ICub.h
+    INCLUDE include/ICub.h
     CATEGORY device
     ADVANCED
     DEFAULT ON)

@@ -4,7 +4,7 @@
 
 yarp_prepare_plugin(ianalogsensor_to_iwear
     TYPE wearable::devices::IAnalogSensorToIWear
-    INCLUDE IAnalogSensorToIWear.h
+    INCLUDE include/IAnalogSensorToIWear.h
     CATEGORY device
     ADVANCED
     DEFAULT ON)

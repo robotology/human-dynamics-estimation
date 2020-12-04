@@ -4,7 +4,7 @@
 
 yarp_prepare_plugin(iwear_remapper
     TYPE wearable::devices::IWearRemapper
-    INCLUDE IWearRemapper.h
+    INCLUDE include/IWearRemapper.h
     CATEGORY device
     ADVANCED
     DEFAULT ON)
