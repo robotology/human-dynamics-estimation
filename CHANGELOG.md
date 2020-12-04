@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - FTShoes configuration files have been cleaned (https://github.com/robotology/wearables/pull/97)
+- Cleanup: (https://github.com/robotology/wearables/pull/99)
+    - Updated `yarp_prepare_plugin` header file path
+    - Added cmake policy to handle `IWear` interface relative path warning
 
 ## [1.1.0] - 2020-01-28
 
