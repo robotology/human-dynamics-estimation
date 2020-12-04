@@ -6,7 +6,7 @@
 
 # Compile the plugin by default
 yarp_prepare_plugin(paexo  TYPE wearable::devices::Paexo
-                    INCLUDE Paexo.h
+                    INCLUDE include/Paexo.h
                     CATEGORY device
                     ADVANCED
                     DEFAULT ON

@@ -4,7 +4,7 @@
 
 yarp_prepare_plugin(ixsensmvncontrol_wrapper
     TYPE wearable::wrappers::IXsensMVNControlWrapper
-    INCLUDE IXsensMVNControlWrapper.h
+    INCLUDE include/IXsensMVNControlWrapper.h
     CATEGORY device
     ADVANCED
     DEFAULT ON)

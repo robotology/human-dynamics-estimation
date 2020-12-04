@@ -4,7 +4,7 @@
 
 yarp_prepare_plugin(iwear_wrapper
     TYPE wearable::wrappers::IWearWrapper
-    INCLUDE IWearWrapper.h
+    INCLUDE include/IWearWrapper.h
     CATEGORY device
     ADVANCED
     DEFAULT ON)

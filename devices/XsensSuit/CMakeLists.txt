@@ -4,7 +4,7 @@
 
 yarp_prepare_plugin(xsens_suit
     TYPE wearable::devices::XsensSuit
-    INCLUDE XsensSuit.h
+    INCLUDE include/XsensSuit.h
     CATEGORY device
     ADVANCED
     DEFAULT ON)
