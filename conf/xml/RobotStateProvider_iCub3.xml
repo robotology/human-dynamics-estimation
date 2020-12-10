@@ -37,7 +37,7 @@
         sparseCholeskyDecomposition,
         robustCholeskyDecomposition,
         sparseRobustCholeskyDecomposition -->
-        <param name='inverseVelocityKinematicsSolver'>QP</param>
+        <param name='inverseVelocityKinematicsSolver'>sparseCholeskyDecomposition</param>
         <param name="linVelTargetWeight">0.0</param>
         <param name="angVelTargetWeight">1.0</param>
         <!-- integration based IK parameters -->
@@ -57,10 +57,10 @@
             <param name="map_LeftHand">(l_hand_fake, XsensSuit::vLink::LeftHand)</param>
             <param name="map_RightUpperLeg">(r_upper_leg, XsensSuit::vLink::RightUpperLeg)</param>
             <param name="map_RightLowerLeg">(r_lower_leg, XsensSuit::vLink::RightLowerLeg)</param>
-            <param name="map_RightFoot">(r_foot, XsensSuit::vLink::RightFoot)</param>
+            <param name="map_RightFoot">(r_foot_rear, XsensSuit::vLink::RightFoot)</param>
             <param name="map_LeftUpperLeg">(l_upper_leg, XsensSuit::vLink::LeftUpperLeg)</param>
             <param name="map_LeftLowerLeg">(l_lower_leg, XsensSuit::vLink::LeftLowerLeg)</param>
-            <param name="map_LeftFoot">(l_foot, XsensSuit::vLink::LeftFoot)</param>
+            <param name="map_LeftFoot">(l_foot_rear, XsensSuit::vLink::LeftFoot)</param>
         </group>
         <group name="CUSTOM_CONSTRAINTS">
         <!-- check issue https://github.com/robotology/human-dynamics-estimation/issues/132 for more info-->
@@ -128,9 +128,9 @@
         <param name="period">0.02</param>
         <param name="baseTFName">/iCub/root_link</param>
         <param name="humanJointsTopic">/iCub/joint_states</param>
-	<param name="portprefix">icub</param>
-	<param name="basePositionOffset">(0.0 3.0 0.0)</param>
-	<!--param name="baseOrientationOffset">(0.7071068 0.0 0.0 0.7071068)</param-->
+	      <param name="portprefix">icub</param>
+	      <param name="basePositionOffset">(0.0 3.0 0.0)</param>
+       	<!--param name="baseOrientationOffset">(0.7071068 0.0 0.0 0.7071068)</param-->
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
                 <elem name="HumanStatePublisherLabel">RobotStateProvider</elem>
