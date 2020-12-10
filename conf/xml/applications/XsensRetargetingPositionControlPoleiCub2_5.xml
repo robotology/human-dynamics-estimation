@@ -32,7 +32,7 @@
 
   <module>
     <name>yarprobotinterface</name>
-    <parameters>--config RobotStateProvider_iCub_Pole.xml</parameters>
+    <parameters>--config RobotStateProvider_iCub2_5_Pole.xml</parameters>
     <node>localhost</node>
   </module>
 

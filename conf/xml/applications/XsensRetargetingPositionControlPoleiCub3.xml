@@ -1,0 +1,45 @@
+<!-- Copyright (C) 2018 Fondazione Istituto Italiano di Tecnologia (IIT) -->
+<!-- All Rights Reserved. -->
+
+<application>
+
+  <name>XsensRetargetingPositionControlPoleiCub3</name>
+  <description>Retargeting iCub On Pole using Xsens</description>
+  <version>1.0</version>
+  <authors>
+    <author email="kourosh.darvish@iit.it">Kourosh Darvish</author>
+  </authors>
+
+  <!-- Devices -->
+
+  <module>
+    <name>yarprobotinterface</name>
+    <parameters>--config TransformServer.xml</parameters>
+    <node>localhost</node>
+  </module>
+
+  <module>
+      <name>yarprobotstatepublisher</name>
+      <parameters> --period 0.01 --tf-prefix /iCub/ --model teleoperation_iCub_model_3.urdf --reduced-model true --base-frame root_link --jointstates-topic "/iCub/joint_states"</parameters>
+      <node>localhost</node>
+  </module>
+
+  <module>
+      <name>roslaunch</name>
+      <parameters>HDERviz iCub3Rviz.launch</parameters>
+      <node>localhost</node>
+  </module>
+
+  <module>
+    <name>yarprobotinterface</name>
+    <parameters>--config RobotStateProvider_iCub3_Pole.xml</parameters>
+    <node>localhost</node>
+  </module>
+
+  <module>
+    <name>yarprobotinterface</name>
+    <parameters>--config RobotPositionController_iCub.xml</parameters>
+    <node>localhost</node>
+  </module>
+
+</application>
