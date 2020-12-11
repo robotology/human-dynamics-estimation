@@ -12,7 +12,7 @@
     <device type="human_state_provider" name="RobotStateProvider">
         <param name="period">0.02</param>
         <param name="urdf">walkman.urdf</param>
-        <param name="floatingBaseFrame">(base_link, XsensSuit::vLink::Pelvis)</param>
+        <param name="floatingBaseFrame">base_link</param>
         <!-- ikSolver options: pairwised, global, integrationbased -->
         <param name="ikSolver">integrationbased</param>
         <param name="useXsensJointsAngles">false</param>

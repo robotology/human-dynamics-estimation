@@ -12,7 +12,7 @@
     <device type="human_state_provider" name="RobotStateProvider">
         <param name="period">0.02</param>
         <param name="urdf">teleoperation_iCub_model_V_2_5.urdf</param>
-        <param name="floatingBaseFrame">(root_link_fake, XsensSuit::vLink::Pelvis)</param>
+        <param name="floatingBaseFrame">root_link_fake</param>
         <!-- ikSolver options: pairwised, global, integrationbased -->
         <param name="ikSolver">integrationbased</param>
         <param name="useXsensJointsAngles">false</param>

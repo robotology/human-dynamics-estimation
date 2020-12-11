@@ -12,7 +12,7 @@
     <device type="human_state_provider" name="RobotStateProvider">
         <param name="period">0.02</param>
         <param name="urdf">atlas.urdf</param>
-        <param name="floatingBaseFrame">(pelvis, XsensSuit::vLink::Pelvis)</param>
+        <param name="floatingBaseFrame">Pelvis</param>
         <!-- ikSolver options: pairwised, global, integrationbased -->
         <param name="ikSolver">integrationbased</param>
         <param name="useXsensJointsAngles">false</param>
