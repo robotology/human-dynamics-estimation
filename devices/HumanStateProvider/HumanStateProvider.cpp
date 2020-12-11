@@ -73,11 +73,7 @@ using WearableJointName = std::string;
 
 using InverseVelocityKinematicsSolverName = std::string;
 
-struct FloatingBaseName
-{
-    std::string model;
-    std::string wearable;
-};
+using FloatingBaseName = std::string;
 
 struct WearableJointInfo
 {
@@ -437,15 +433,23 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         return false;
     }
 
-    yarp::os::Bottle* floatingBaseFrameList;
-    if(config.check("floatingBaseFrame") && config.find("floatingBaseFrame").isList()
-          && config.find("floatingBaseFrame").asList()->size() == 2) {
-              floatingBaseFrameList = config.find("floatingBaseFrame").asList();
+    std::string baseFrameName;
+    if(config.check("floatingBaseFrame") && config.find("floatingBaseFrame").isList() ) {
+              baseFrameName = config.find("floatingBaseFrame").asList()->get(0).asString();
+              pImpl->useFixedBase = false;
+              yWarning() << LogPrefix << "'floatingBaseFrame' configuration option as list is deprecated. Please use a string with the model base name only.";
+    }
+    else if(config.check("floatingBaseFrame") && config.find("floatingBaseFrame").isString() ) {
+              baseFrameName = config.find("floatingBaseFrame").asString();
               pImpl->useFixedBase = false;
     }
-    else if(config.check("fixedBaseFrame") && config.find("fixedBaseFrame").isList()
-          && config.find("fixedBaseFrame").asList()->size() == 2) {
-              floatingBaseFrameList = config.find("fixedBaseFrame").asList();
+    else if(config.check("fixedBaseFrame") && config.find("fixedBaseFrame").isList() ) {
+              baseFrameName = config.find("fixedBaseFrame").asList()->get(0).asString();
+              pImpl->useFixedBase = true;
+              yWarning() << LogPrefix << "'fixedBaseFrame' configuration option as list is deprecated. Please use a string with the model base name only.";
+    }
+    else if(config.check("fixedBaseFrame") && config.find("fixedBaseFrame").isString() ) {
+              baseFrameName = config.find("fixedBaseFrame").asString();
               pImpl->useFixedBase = true;
     }
     else {
@@ -493,8 +497,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
 
     pImpl->useXsensJointsAngles = config.find("useXsensJointsAngles").asBool();
     const std::string urdfFileName = config.find("urdf").asString();
-    pImpl->floatingBaseFrame.model = floatingBaseFrameList->get(0).asString();
-    pImpl->floatingBaseFrame.wearable = floatingBaseFrameList->get(1).asString();
+    pImpl->floatingBaseFrame = baseFrameName;
     pImpl->period = config.check("period", yarp::os::Value(DefaultPeriod)).asFloat64();
 
     setPeriod(pImpl->period);
@@ -802,7 +805,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     pImpl->kinDynComputations =
         std::unique_ptr<iDynTree::KinDynComputations>(new iDynTree::KinDynComputations());
     pImpl->kinDynComputations->loadRobotModel(modelLoader.model());
-    pImpl->kinDynComputations->setFloatingBase(pImpl->floatingBaseFrame.model);
+    pImpl->kinDynComputations->setFloatingBase(pImpl->floatingBaseFrame);
 
     // =========================
     // INITIALIZE JOINTS BUFFERS
@@ -1176,8 +1179,8 @@ void HumanStateProvider::run()
         pImpl->baseVelocitySolution.zero();
     }
     else if (pImpl->useDirectBaseMeasurement) {
-        pImpl->baseTransformSolution = pImpl->linkTransformMatrices.at(pImpl->floatingBaseFrame.model);
-        pImpl->baseVelocitySolution = pImpl->linkVelocities.at(pImpl->floatingBaseFrame.model);
+        pImpl->baseTransformSolution = pImpl->linkTransformMatrices.at(pImpl->floatingBaseFrame);
+        pImpl->baseVelocitySolution = pImpl->linkVelocities.at(pImpl->floatingBaseFrame);
     }
 
     // CoM position and velocity
@@ -1806,9 +1809,9 @@ bool HumanStateProvider::impl::initializeGlobalInverseKinematicsSolver()
         return false;
     }
 
-    if (!globalIK.setFloatingBaseOnFrameNamed(floatingBaseFrame.model)) {
+    if (!globalIK.setFloatingBaseOnFrameNamed(floatingBaseFrame)) {
         yError() << LogPrefix << "Failed to set the globalIK floating base frame on link"
-                 << floatingBaseFrame.model;
+                 << floatingBaseFrame;
         return false;
     }
 
@@ -1826,9 +1829,9 @@ bool HumanStateProvider::impl::initializeGlobalInverseKinematicsSolver()
         return false;
     }
 
-    if (!inverseVelocityKinematics.setFloatingBaseOnFrameNamed(floatingBaseFrame.model)) {
+    if (!inverseVelocityKinematics.setFloatingBaseOnFrameNamed(floatingBaseFrame)) {
         yError() << LogPrefix << "Failed to set the IBIK floating base frame on link"
-                 << floatingBaseFrame.model;
+                 << floatingBaseFrame;
         return false;
     }
 
@@ -1867,9 +1870,9 @@ bool HumanStateProvider::impl::initializeIntegrationBasedInverseKinematicsSolver
         return false;
     }
 
-    if (!inverseVelocityKinematics.setFloatingBaseOnFrameNamed(floatingBaseFrame.model)) {
+    if (!inverseVelocityKinematics.setFloatingBaseOnFrameNamed(floatingBaseFrame)) {
         yError() << LogPrefix << "Failed to set the IBIK floating base frame on link"
-                 << floatingBaseFrame.model;
+                 << floatingBaseFrame;
         return false;
     }
 
@@ -2060,7 +2063,7 @@ bool HumanStateProvider::impl::solveIntegrationBasedInverseKinematics()
 
         // for floating base link use error also on position if not useDirectBaseMeasurement or useFixedBase,
         // otherwise skip or fix the link.
-        if (linkName == floatingBaseFrame.model) {
+        if (linkName == floatingBaseFrame) {
             if (useDirectBaseMeasurement) {
                 continue;
             }
@@ -2171,7 +2174,7 @@ bool HumanStateProvider::impl::updateInverseKinematicTargets()
 
         // For the link used as base insert both the rotation and position cost if not using direcly
         // base measurements and the base is not fixed.
-        if (linkName == floatingBaseFrame.model) {
+        if (linkName == floatingBaseFrame) {
             if (!(useDirectBaseMeasurement || useFixedBase)) {
                 if (!globalIK.updateTarget(linkName, linkTransformMatrices.at(linkName), 1.0, 1.0)) {
                     yError() << LogPrefix << "Failed to update target for floating base" << linkName;
@@ -2190,7 +2193,7 @@ bool HumanStateProvider::impl::updateInverseKinematicTargets()
         // if useDirectBaseMeasurement, use the link transform relative to the base
         if (useDirectBaseMeasurement) {
             linkTransform =
-                linkTransformMatrices.at(floatingBaseFrame.model).inverse() * linkTransform;
+                linkTransformMatrices.at(floatingBaseFrame).inverse() * linkTransform;
         }
 
         if (!globalIK.updateTarget(linkName, linkTransform, posTargetWeight, rotTargetWeight)) {
@@ -2213,7 +2216,7 @@ bool HumanStateProvider::impl::addInverseKinematicTargets()
         }
 
         // Insert in the cost the rotation and position of the link used as base, or add it as a target
-        if (linkName == floatingBaseFrame.model) {
+        if (linkName == floatingBaseFrame) {
             if ((useDirectBaseMeasurement || useFixedBase )
                      && !globalIK.addFrameConstraint(linkName, iDynTree::Transform::Identity())) {
                 yError() << LogPrefix << "Failed to add constraint for base link" << linkName;
@@ -2251,7 +2254,7 @@ bool HumanStateProvider::impl::updateInverseVelocityKinematicTargets()
 
         // For the link used as base insert both the rotation and position cost if not using direcly
         // measurement from xsens
-        if (linkName == floatingBaseFrame.model) {
+        if (linkName == floatingBaseFrame) {
             if (!useDirectBaseMeasurement
                 && !inverseVelocityKinematics.updateTarget(
                     linkName, linkVelocities.at(linkName), 1.0, 1.0)) {
@@ -2269,7 +2272,7 @@ bool HumanStateProvider::impl::updateInverseVelocityKinematicTargets()
 
         linkTwist = linkVelocities.at(linkName);
         if (useDirectBaseMeasurement) {
-            linkTwist = linkTwist - linkVelocities.at(floatingBaseFrame.model);
+            linkTwist = linkTwist - linkVelocities.at(floatingBaseFrame);
         }
 
         if (!inverseVelocityKinematics.updateTarget(
@@ -2294,7 +2297,7 @@ bool HumanStateProvider::impl::addInverseVelocityKinematicsTargets()
         }
 
         // Insert in the cost the twist of the link used as base
-        if (linkName == floatingBaseFrame.model) {
+        if (linkName == floatingBaseFrame) {
             if (!useDirectBaseMeasurement
                 && !inverseVelocityKinematics.addTarget(
                     linkName, iDynTree::Twist::Zero(), 1.0, 1.0)) {
@@ -2539,7 +2542,7 @@ size_t HumanStateProvider::getNumberOfJoints() const
 std::string HumanStateProvider::getBaseName() const
 {
     std::lock_guard<std::mutex> lock(pImpl->mutex);
-    return pImpl->floatingBaseFrame.model;
+    return pImpl->floatingBaseFrame;
 }
 
 std::vector<double> HumanStateProvider::getJointPositions() const
