@@ -212,7 +212,6 @@ bool RobotPositionController::open(yarp::os::Searchable& config)
         for (unsigned index = 0; index < jointsList->size(); index++) {
             pImpl->jointNameListFromConfigControlBoards.push_back(jointsList->get(index).asString());
             axesList.addString(jointsList->get(index).asString());
-            yInfo() << "For the part " << controlBoard << " joint name " << jointsList->get(index).asString();
         }
 
 
@@ -223,12 +222,7 @@ bool RobotPositionController::open(yarp::os::Searchable& config)
         yarp::os::Bottle & remoteControlBoardsList = remoteControlBoards.addList();
         remoteControlBoardsList.addString( remotePrefix + "/" + controlBoard);
 
-        yInfo() << "remoteControlBoards string " << remotePrefix << "/" << controlBoard;
         pImpl->options.put("remoteControlBoards",remoteControlBoards.get(0));
-
-
-        //pImpl->options.put("remote", remotePrefix + "/" + controlBoard);
-        //pImpl->options.put("remoteControlBoards",axesNames.get(0));
         pImpl->options.put("localPortPrefix", localPrefix);
 
         yarp::os::Property & remoteControlBoardsOpts = pImpl->options.addGroup("REMOTE_CONTROLBOARD_OPTIONS");
