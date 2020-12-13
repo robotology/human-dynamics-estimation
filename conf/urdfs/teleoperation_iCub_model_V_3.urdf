@@ -983,7 +983,7 @@
   </link>
   <joint name="neck_yaw" type="revolute">
     <origin xyz="0 0 0.06915000000000002" rpy="0 0 0"/>
-    <axis xyz="1.6255499221370677e-21 1.0999983743979075e-15 -1.0"/>
+    <axis xyz="1.6255499221370677e-21 1.0999983743979075e-15 1.0"/>
     <parent link="neck_3"/>
     <child link="head"/>
     <limit effort="50000" lower="-0.7853981633974483" upper="0.7853981633974483" velocity="120.0"/>
