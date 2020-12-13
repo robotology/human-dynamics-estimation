@@ -20,7 +20,7 @@
 
   <module>
       <name>yarprobotstatepublisher</name>
-      <parameters> --period 0.01 --tf-prefix /iCub/ --model teleoperation_iCub_model_3.urdf --reduced-model true --base-frame root_link --jointstates-topic "/iCub/joint_states"</parameters>
+      <parameters> --period 0.01 --tf-prefix /iCub/ --model teleoperation_iCub_model_V_3.urdf --reduced-model true --base-frame root_link --jointstates-topic "/iCub/joint_states"</parameters>
       <node>localhost</node>
   </module>
 
