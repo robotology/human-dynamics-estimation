@@ -194,9 +194,40 @@ bool RobotPositionController::open(yarp::os::Searchable& config)
     size_t boardCount = 0;
     int remoteControlBoardJoints = 0;
     for (const auto& controlBoard : controlBoards) {
-        pImpl->options.put("device", "remote_controlboard");
-        pImpl->options.put("remote", remotePrefix + "/" + controlBoard);
-        pImpl->options.put("local", localPrefix + "/" + controlBoard);
+
+
+        // Get joint names of the control board from configuration
+        if (!(config.check(controlBoard) && config.find(controlBoard).isList())) {
+            yError() << LogPrefix << "joint list option not found or not valid for " << controlBoard << " control board";
+            return false;
+        }
+
+        yarp::os::Bottle* jointsList = config.find(controlBoard).asList();
+        yarp::os::Bottle axesNames;
+        yarp::os::Bottle & axesList = axesNames.addList();
+
+        // Set the number of joints from config file
+        pImpl->nJointsVectorFromConfig.at(boardCount) = jointsList->size();
+
+        for (unsigned index = 0; index < jointsList->size(); index++) {
+            pImpl->jointNameListFromConfigControlBoards.push_back(jointsList->get(index).asString());
+            axesList.addString(jointsList->get(index).asString());
+        }
+
+
+        pImpl->options.put("device", "remotecontrolboardremapper");
+        pImpl->options.put("axesNames",axesNames.get(0));
+
+        yarp::os::Bottle remoteControlBoards;
+        yarp::os::Bottle & remoteControlBoardsList = remoteControlBoards.addList();
+        remoteControlBoardsList.addString( remotePrefix + "/" + controlBoard);
+
+        pImpl->options.put("remoteControlBoards",remoteControlBoards.get(0));
+        pImpl->options.put("localPortPrefix", localPrefix);
+
+        yarp::os::Property & remoteControlBoardsOpts = pImpl->options.addGroup("REMOTE_CONTROLBOARD_OPTIONS");
+        remoteControlBoardsOpts.put("writeStrict","on");
+
 
         pImpl->remoteControlBoards.at(boardCount) = new yarp::dev::PolyDriver;
         pImpl->remoteControlBoards.at(boardCount)->open(pImpl->options);
@@ -270,20 +301,6 @@ bool RobotPositionController::open(yarp::os::Searchable& config)
             pImpl->minJerkTrajGeneratorVec.at(boardCount)->init(initEncoderJointPositionsVector);
         }
 
-        // Get joint names of the control board from configuration
-        if (!(config.check(controlBoard) && config.find(controlBoard).isList())) {
-            yError() << LogPrefix << "joint list option not found or not valid for " << controlBoard << " control board";
-            return false;
-        }
-
-        yarp::os::Bottle* jointsList = config.find(controlBoard).asList();
-
-        // Set the number of joints from config file
-        pImpl->nJointsVectorFromConfig.at(boardCount) = jointsList->size();
-
-        for (unsigned index = 0; index < jointsList->size(); index++) {
-            pImpl->jointNameListFromConfigControlBoards.push_back(jointsList->get(index).asString());
-        }
 
         pImpl->options.clear();
         boardCount++;
