@@ -52,6 +52,12 @@ install(
 install(
     DIRECTORY include/Wearable/IWear/Sensors
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/Wearable/IWear)
+install(
+    FILES include/Wearable/IWear/IWearActuators.h
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/Wearable/IWear)
+install(
+    DIRECTORY include/Wearable/IWear/Actuators
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/Wearable/IWear)
 
 # Generate the PackageConfig.cmake file
 install_basic_package_files(IWear

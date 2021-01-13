@@ -32,16 +32,6 @@
 #include <string>
 #include <vector>
 
-#ifndef wError
-#include <iostream>
-#define wError std::cerr
-#endif
-
-#ifndef wWarning
-#include <iostream>
-#define wWarning std::cout
-#endif
-
 namespace wearable {
     using WearableName = std::string;
 

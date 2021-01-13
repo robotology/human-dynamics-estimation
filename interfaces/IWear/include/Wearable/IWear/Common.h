@@ -9,6 +9,16 @@
 #ifndef WEARABLE_COMMON_H
 #define WEARABLE_COMMON_H
 
+#ifndef wError
+#include <iostream>
+#define wError std::cerr
+#endif
+
+#ifndef wWarning
+#include <iostream>
+#define wWarning std::cout
+#endif
+
 #include <string>
 
 namespace wearable {
