@@ -9,13 +9,13 @@
 #ifndef WEARABLE_ISENSOR_H
 #define WEARABLE_ISENSOR_H
 
+#include "Wearable/IWear/Common.h"
+
 #include <array>
 #include <atomic>
-#include <string>
 
 namespace wearable {
 
-    const std::string Separator = "::";
     using Vector3 = std::array<double, 3>;
     using Vector6 = std::array<double, 6>;
     using Vector7 = std::array<double, 7>;
