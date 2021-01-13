@@ -122,6 +122,21 @@ public:
     inline SensorPtr<const sensor::ITorque3DSensor>
     getTorque3DSensor(const sensor::SensorName /*name*/) const override;
 
+    inline DevicePtr<const actuator::IActuator>
+    getActuator(const actuator::ActuatorName name) const override;
+
+    inline VectorOfDevicePtr<const actuator::IActuator>
+    getActuators(const actuator::ActuatorType type) const override;
+
+    inline DevicePtr<const actuator::IHaptic>
+    getHapticActuator(const actuator::ActuatorName) const override;
+
+    inline DevicePtr<const actuator::IMotor>
+    getMotorActuator(const actuator::ActuatorName) const override;
+
+    inline DevicePtr<const actuator::IHeater>
+    getHeaterActuator(const actuator::ActuatorName) const override;
+
 };
 
 inline wearable::SensorPtr<const wearable::sensor::IFreeBodyAccelerationSensor>
@@ -198,6 +213,36 @@ wearable::devices::ICub::getTemperatureSensor(const sensor::SensorName /*name*/)
 
 inline wearable::SensorPtr<const wearable::sensor::ITorque3DSensor>
 wearable::devices::ICub::getTorque3DSensor(const sensor::SensorName /*name*/) const
+{
+    return nullptr;
+}
+
+inline wearable::DevicePtr<const wearable::actuator::IActuator>
+wearable::devices::ICub::getActuator(const actuator::ActuatorName name) const
+{
+    return nullptr;
+}
+
+inline wearable::VectorOfDevicePtr<const wearable::actuator::IActuator>
+wearable::devices::ICub::getActuators(const actuator::ActuatorType type) const
+{
+    return {};
+}
+
+inline wearable::DevicePtr<const wearable::actuator::IHaptic>
+wearable::devices::ICub::getHapticActuator(const actuator::ActuatorName) const
+{
+    return nullptr;
+}
+
+inline wearable::DevicePtr<const wearable::actuator::IMotor>
+wearable::devices::ICub::getMotorActuator(const actuator::ActuatorName) const
+{
+    return nullptr;
+}
+
+inline wearable::DevicePtr<const wearable::actuator::IHeater>
+wearable::devices::ICub::getHeaterActuator(const actuator::ActuatorName) const
 {
     return nullptr;
 }
