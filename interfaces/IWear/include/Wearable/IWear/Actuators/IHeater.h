@@ -6,36 +6,36 @@
  * GNU Lesser General Public License v2.1 or any later version.
  */
 
-#ifndef WEARABLE_IHAPTIC_H
-#define WEARABLE_IHAPTIC_H
+#ifndef WEARABLE_IHEATER_H
+#define WEARABLE_IHEATER_H
 
 #include "Wearable/IWear/Actuators/IActuator.h"
 
 namespace wearable {
     namespace actuator {
-        class IHaptic;
+        class IHeater;
     } // namespace actuator
 } // namespace wearable
 
-class wearable::actuator::IHaptic : public wearable::actuator::IActuator
+class wearable::actuator::IHeater : public wearable::actuator::IActuator
 {
 public:
-    IHaptic(ActuatorName aName = {},
+    IHeater(ActuatorName aName = {},
             ActuatorStatus aStatus = ActuatorStatus::Unknown)
     {
-        m_type = ActuatorType::Haptic;
+        m_type = ActuatorType::Heater;
     }
 
-    virtual ~IHaptic() = default;
+    virtual ~IHeater() = default;
 
     inline static const std::string getPrefix();
 
     //TODO: Update set and get methods
 };
 
-inline const std::string wearable::actuator::IHaptic::getPrefix()
+inline const std::string wearable::actuator::IHeater::getPrefix()
 {
-    return "haptic" + wearable::Separator;
+    return "heater" + wearable::Separator;
 }
 
-#endif // WEARABLE_IHAPTIC_H
+#endif // WEARABLE_IHEATER_H

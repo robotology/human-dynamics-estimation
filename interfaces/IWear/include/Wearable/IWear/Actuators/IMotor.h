@@ -6,36 +6,36 @@
  * GNU Lesser General Public License v2.1 or any later version.
  */
 
-#ifndef WEARABLE_IHAPTIC_H
-#define WEARABLE_IHAPTIC_H
+#ifndef WEARABLE_IMOTOR_H
+#define WEARABLE_IMOTOR_H
 
 #include "Wearable/IWear/Actuators/IActuator.h"
 
 namespace wearable {
     namespace actuator {
-        class IHaptic;
+        class IMotor;
     } // namespace actuator
 } // namespace wearable
 
-class wearable::actuator::IHaptic : public wearable::actuator::IActuator
+class wearable::actuator::IMotor : public wearable::actuator::IActuator
 {
 public:
-    IHaptic(ActuatorName aName = {},
-            ActuatorStatus aStatus = ActuatorStatus::Unknown)
+    IMotor(ActuatorName aName = {},
+           ActuatorStatus aStatus = ActuatorStatus::Unknown)
     {
-        m_type = ActuatorType::Haptic;
+        m_type = ActuatorType::Motor;
     }
 
-    virtual ~IHaptic() = default;
+    virtual ~IMotor() = default;
 
     inline static const std::string getPrefix();
 
     //TODO: Update set and get methods
 };
 
-inline const std::string wearable::actuator::IHaptic::getPrefix()
+inline const std::string wearable::actuator::IMotor::getPrefix()
 {
-    return "haptic" + wearable::Separator;
+    return "motor" + wearable::Separator;
 }
 
-#endif // WEARABLE_IHAPTIC_H
+#endif // WEARABLE_IMOTOR_H
