@@ -44,6 +44,83 @@ install(TARGETS WearableData
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
+# =====================
+# WearableActuatorsData
+# =====================
+
+yarp_add_idl(WEARABLEACTUATORSDATA_FILES thrift/WearableActuatorsData.thrift)
+
+add_library(WearableActuatorsData ${WEARABLEACTUATORSDATA_FILES} thrift/WearableActuatorsData.thrift)
+add_library(Wearable::WearableActuatorsData ALIAS WearableActuatorsData)
+target_link_libraries(WearableActuatorsData YARP::YARP_OS)
+
+# Extract the include directory from the files names
+foreach(file ${WEARABLEACTUATORSDATA_FILES})
+    STRING(REGEX MATCH ".+\\.h?h$" file ${file})
+    if(file)
+        get_filename_component(include_dir ${file} DIRECTORY)
+        list(APPEND WEARABLEACTUATORSDATA_INCLUDE_DIRS ${include_dir})
+        list(REMOVE_DUPLICATES WEARABLEACTUATORSDATA_INCLUDE_DIRS)
+    endif()
+endforeach()
+
+foreach(dir ${WEARABLEACTUATORSDATA_INCLUDE_DIRS})
+    get_filename_component(parent_dir_name ${dir} NAME)
+    if(${parent_dir_name} STREQUAL thrift)
+        list(REMOVE_ITEM WEARABLEACTUATORSDATA_INCLUDE_DIRS ${dir})
+        get_filename_component(parent_dir_path ${dir} DIRECTORY)
+        list(APPEND WEARABLEACTUATORSDATA_INCLUDE_DIRS ${parent_dir_path})
+    endif()
+endforeach()
+
+# Setup the include directories
+target_include_directories(WearableActuatorsData PUBLIC
+    $<BUILD_INTERFACE:${WEARABLEACTUATORSDATA_INCLUDE_DIRS}>)
+
+install(TARGETS WearableActuatorsData
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
+
+# ========================
+# WearableActuationCommand
+# ========================
+
+yarp_add_idl(WEARABLEACTUATORCOMMAND_FILES thrift/WearableActuatorCommand.thrift)
+
+add_library(WearableActuatorCommand ${WEARABLEACTUATORCOMMAND_FILES} thrift/WearableActuatorCommand.thrift)
+add_library(Wearable::WearableActuatorCommand ALIAS WearableActuatorCommand)
+target_link_libraries(WearableActuatorCommand YARP::YARP_OS)
+
+# Extract the include directory from the files names
+foreach(file ${WEARABLEACTUATORCOMMAND_FILES})
+    STRING(REGEX MATCH ".+\\.h?h$" file ${file})
+    if(file)
+        get_filename_component(include_dir ${file} DIRECTORY)
+        list(APPEND WEARABLEACTUATORCOMMAND_INCLUDE_DIRS ${include_dir})
+        list(REMOVE_DUPLICATES WEARABLEACTUATORCOMMAND_INCLUDE_DIRS)
+    endif()
+endforeach()
+
+foreach(dir ${WEARABLEACTUATORCOMMAND_INCLUDE_DIRS})
+    get_filename_component(parent_dir_name ${dir} NAME)
+    if(${parent_dir_name} STREQUAL thrift)
+        list(REMOVE_ITEM WEARABLEACTUATORCOMMAND_INCLUDE_DIRS ${dir})
+        get_filename_component(parent_dir_path ${dir} DIRECTORY)
+        list(APPEND WEARABLEACTUATORCOMMAND_INCLUDE_DIRS ${parent_dir_path})
+    endif()
+endforeach()
+
+# Setup the include directories
+target_include_directories(WearableActuatorCommand PUBLIC
+    $<BUILD_INTERFACE:${WEARABLEACTUATORCOMMAND_INCLUDE_DIRS}>)
+
+install(TARGETS WearableActuatorCommand
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
 # =======================
 # XsensSuitControlService
 # =======================
