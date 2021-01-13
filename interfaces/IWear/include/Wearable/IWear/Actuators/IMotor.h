@@ -30,7 +30,7 @@ public:
 
     inline static const std::string getPrefix();
 
-    //TODO: Update set and get methods
+    virtual bool setMotorPosition(double& value) const = 0; //TODO: Double check if rads or deg
 };
 
 inline const std::string wearable::actuator::IMotor::getPrefix()

@@ -28,13 +28,21 @@
 #include "Wearable/IWear/Sensors/IVirtualJointKinSensor.h"
 #include "Wearable/IWear/Sensors/IVirtualSphericalJointKinSensor.h"
 
+#include "Wearable/IWear/Actuators/IActuator.h"
+
+#include "Wearable/IWear/Actuators/IHaptic.h"
+#include "Wearable/IWear/Actuators/IMotor.h"
+#include "Wearable/IWear/Actuators/IHeater.h"
+
 #include <memory>
 #include <string>
 #include <vector>
 
 namespace wearable {
     using WearableName = std::string;
+    using WearStatus = sensor::SensorStatus;
 
+    // Wearable sensors generic variables
     template <typename S>
     using SensorVector = std::vector<S>;
 
@@ -44,8 +52,20 @@ namespace wearable {
     template <typename S>
     using VectorOfSensorPtr = SensorVector<SensorPtr<S>>;
 
-    using WearStatus = sensor::SensorStatus;
     using VectorOfSensorNames = SensorVector<sensor::SensorName>;
+
+    // Wearable device (referes to either sensors or actuator) generic variables
+    template <typename D>
+    using DeviceVector = std::vector<D>;
+
+    template <typename D>
+    using DevicePtr = std::shared_ptr<D>;
+
+    template <typename D>
+    using VectorOfDevicePtr = DeviceVector<DevicePtr<D>>;
+
+    template <typename D>
+    using VectorOfDeviceNames = DeviceVector<D>;
 
     using TimeStamp = struct
     {
@@ -56,12 +76,34 @@ namespace wearable {
     class IWear;
 } // namespace wearable
 
+/*TODO: Instead code duplication, change the variable names from using the word sensor
+ * to device (which indicates a sensor or an actuator)
+ *
+    template <typename D>
+    using DeviceVector = std::vector<D>;
+
+    template <typename D>
+    using DevicePtr = std::shared_ptr<D>;
+
+    template <typename D>
+    using VectorOfDevicePtr = DeviceVector<DevicePtr<D>>;
+
+    template <typename D, typename T>
+    static VectorOfDevicePtr<const D>
+    castVectorOfDevicePtr(const VectorOfDevicePtr<const T>& iActuators);
+ *
+ */
+
 class wearable::IWear
 {
 private:
     template <typename S>
     static VectorOfSensorPtr<const S>
     castVectorOfSensorPtr(const VectorOfSensorPtr<const sensor::ISensor>& iSensors);
+
+    template <typename D, typename T> // Device, Type
+    static VectorOfDevicePtr<const D>
+    castVectorOfDevicePtr(const VectorOfDevicePtr<const T>& iDevices);
 
 public:
     virtual ~IWear() = default;
@@ -202,6 +244,33 @@ wearable::IWear::castVectorOfSensorPtr(const VectorOfSensorPtr<const sensor::ISe
     }
 
     return sensors;
+}
+
+template <typename D, typename T>
+wearable::VectorOfDevicePtr<const D>
+wearable::IWear::castVectorOfDevicePtr(const VectorOfDevicePtr<const T>& iDevices)
+{
+    VectorOfDevicePtr<const D> devices;
+    devices.reserve(iDevices.size());
+
+    for (const auto& iDevice : iDevices)
+    {
+        wearable::DevicePtr<D> castDevice = std::dynamic_pointer_cast<const D>(iDevice);
+
+        if (!castDevice)
+        {
+
+            if (castDevice->getWearableDeviceType() == wearable::DeviceType::WearableSensor)
+            {
+                wError << "Failed to cast wearable sensor device";
+            }
+            else if (castDevice->getWearableDeviceType() == wearable::DeviceType::WearableActuator)
+            {
+                wError << "Failed to case wearable actuator device";
+            }
+        }
+    }
+
 }
 
 inline wearable::VectorOfSensorPtr<const wearable::sensor::ISensor>

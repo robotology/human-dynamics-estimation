@@ -60,9 +60,10 @@ namespace wearable {
     } // namespace sensor
 } // namespace wearable
 
-class wearable::sensor::ISensor
+class wearable::sensor::ISensor : public wearable::IWearableDevice
 {
 protected:
+
     SensorName m_name;
     SensorType m_type;
     std::atomic<SensorStatus> m_status;
@@ -71,15 +72,22 @@ public:
     ISensor(SensorName aName = {}, SensorStatus aStatus = SensorStatus::Unknown)
         : m_name{aName}
         , m_status{aStatus}
-    {}
+    { m_wearable_device_type = DeviceType::WearableSensor; }
 
     virtual ~ISensor() = default;
+
+    inline DeviceType getWearableDeviceType() const;
 
     // TODO: timestamp? sequence number?
     inline SensorName getSensorName() const;
     inline SensorStatus getSensorStatus() const;
     inline SensorType getSensorType() const;
 };
+
+inline wearable::DeviceType wearable::sensor::ISensor::getWearableDeviceType() const
+{
+    return m_wearable_device_type;
+}
 
 inline wearable::sensor::SensorName wearable::sensor::ISensor::getSensorName() const
 {

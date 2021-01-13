@@ -37,7 +37,7 @@ namespace wearable {
     } // namespace actuator
 } // namespace wearable
 
-class wearable::actuator::IActuator
+class wearable::actuator::IActuator : public wearable::IWearableDevice
 {
 protected:
     ActuatorName m_name;
@@ -49,14 +49,21 @@ public:
               ActuatorStatus aStatus = ActuatorStatus::Unknown)
         : m_name{aName}
         , m_status{aStatus}
-    {}
+    { m_wearable_device_type = DeviceType::WearableActuator; }
 
     virtual ~IActuator() = default;
+
+    inline DeviceType getWearableDeviceType() const;
 
     inline ActuatorName getActuatorName() const;
     inline ActuatorType getActuatorType() const;
     inline ActuatorStatus getActuatorStatus() const;
 };
+
+inline wearable::DeviceType wearable::actuator::IActuator::getWearableDeviceType() const
+{
+    return m_wearable_device_type;
+}
 
 inline wearable::actuator::ActuatorName wearable::actuator::IActuator::getActuatorName() const
 {

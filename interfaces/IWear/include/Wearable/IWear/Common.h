@@ -22,7 +22,25 @@
 #include <string>
 
 namespace wearable {
+
     const std::string Separator = "::";
+
+    enum class DeviceType
+    {
+        WearableSensor = 0,
+        WearableActuator,
+    };
+
+    class IWearableDevice;
+
 } // namespace wearable
+
+class wearable::IWearableDevice
+{
+protected:
+    DeviceType m_wearable_device_type;
+
+    virtual DeviceType getWearableDeviceType() const = 0;
+};
 
 #endif // WEARABLE_COMMON_H
