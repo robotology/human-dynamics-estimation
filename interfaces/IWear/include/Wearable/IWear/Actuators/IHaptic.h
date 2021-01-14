@@ -22,6 +22,7 @@ class wearable::actuator::IHaptic : public wearable::actuator::IActuator
 public:
     IHaptic(ActuatorName aName = {},
             ActuatorStatus aStatus = ActuatorStatus::Unknown)
+        : IActuator(aName, aStatus)
     {
         m_type = ActuatorType::Haptic;
     }

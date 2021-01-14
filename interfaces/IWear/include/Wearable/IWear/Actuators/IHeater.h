@@ -22,6 +22,7 @@ class wearable::actuator::IHeater : public wearable::actuator::IActuator
 public:
     IHeater(ActuatorName aName = {},
             ActuatorStatus aStatus = ActuatorStatus::Unknown)
+        : IActuator(aName, aStatus)
     {
         m_type = ActuatorType::Heater;
     }

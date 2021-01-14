@@ -22,6 +22,7 @@ class wearable::actuator::IMotor : public wearable::actuator::IActuator
 public:
     IMotor(ActuatorName aName = {},
            ActuatorStatus aStatus = ActuatorStatus::Unknown)
+        : IActuator(aName, aStatus)
     {
         m_type = ActuatorType::Motor;
     }
