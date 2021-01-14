@@ -77,6 +77,10 @@ public:
 
     VectorOfSensorPtr<const sensor::ISensor> getSensors(const sensor::SensorType) const override;
 
+    DevicePtr<const actuator::IActuator> getActuator(const actuator::ActuatorName name) const override;
+
+    VectorOfDevicePtr<const actuator::IActuator> getActuators(const actuator::ActuatorType type) const override;
+
     // IMPLEMENTED SENSORS
     // -------------------
 
@@ -88,6 +92,12 @@ public:
 
     SensorPtr<const sensor::ITorque3DSensor>
     getTorque3DSensor(const sensor::SensorName name) const override;
+
+    // IMPLEMENTED ACTUATORS
+    // ---------------------
+
+    DevicePtr<const actuator::IMotor>
+    getMotorActuator(const actuator::ActuatorName) const override;
 
     // UNIMPLEMENTED SENSORS
     // ---------------------
@@ -131,17 +141,11 @@ public:
     inline SensorPtr<const sensor::ITemperatureSensor>
     getTemperatureSensor(const sensor::SensorName /*name*/) const override;
 
-    inline DevicePtr<const actuator::IActuator>
-    getActuator(const actuator::ActuatorName name) const override;
-
-    inline VectorOfDevicePtr<const actuator::IActuator>
-    getActuators(const actuator::ActuatorType type) const override;
+    // UNIMPLEMENTED ACTUATORS
+    // -----------------------
 
     inline DevicePtr<const actuator::IHaptic>
     getHapticActuator(const actuator::ActuatorName) const override;
-
-    inline DevicePtr<const actuator::IMotor>
-    getMotorActuator(const actuator::ActuatorName) const override;
 
     inline DevicePtr<const actuator::IHeater>
     getHeaterActuator(const actuator::ActuatorName) const override;
@@ -226,26 +230,8 @@ wearable::devices::Paexo::getTemperatureSensor(const sensor::SensorName /*name*/
     return nullptr;
 }
 
-inline wearable::DevicePtr<const wearable::actuator::IActuator>
-wearable::devices::Paexo::getActuator(const actuator::ActuatorName name) const
-{
-    return nullptr;
-}
-
-inline wearable::VectorOfDevicePtr<const wearable::actuator::IActuator>
-wearable::devices::Paexo::getActuators(const actuator::ActuatorType type) const
-{
-    return {};
-}
-
 inline wearable::DevicePtr<const wearable::actuator::IHaptic>
 wearable::devices::Paexo::getHapticActuator(const actuator::ActuatorName) const
-{
-    return nullptr;
-}
-
-inline wearable::DevicePtr<const wearable::actuator::IMotor>
-wearable::devices::Paexo::getMotorActuator(const actuator::ActuatorName) const
 {
     return nullptr;
 }

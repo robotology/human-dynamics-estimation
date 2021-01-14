@@ -92,13 +92,27 @@ void IWearActuatorsWrapper::onRead(msg::WearableActuatorCommand& wearableActuato
    wearable::msg::ActuatorInfo info = wearableActuatorCommand.info;
 
    // Check if the commanded actuator name is available
-   if (pImpl->actuatorsMap.find(info.name) != pImpl->actuatorsMap.end())
-   {
-       // TODO: Call to set method of the actuator
-   }
-   else
+   if (pImpl->actuatorsMap.find(info.name) == pImpl->actuatorsMap.end())
    {
        yError() << "Requested actuator with name " << info.name << " is not available in " << pImpl->attachedWearableDeviceName << " wearable device!";
+   }
+
+   wearable::actuator::ActuatorType aType = pImpl->actuatorsMap[info.name]->getActuatorType();
+   switch (aType) {
+    case wearable::actuator::ActuatorType::Motor: {
+
+       // Check if the actuator type in the command is correct
+       // TODO: May be this is redundant check ?
+       if (info.type == wearable::msg::ActuatorType::MOTOR)
+       {
+           // Sent the command value to the motor actuator
+            wearable::DevicePtr<const wearable::actuator::IMotor> castActuator = std::dynamic_pointer_cast<const wearable::actuator::IMotor>(pImpl->actuatorsMap[info.name]);
+            castActuator->setMotorPosition(wearableActuatorCommand.value);
+       }
+    }
+    default: {
+       return;
+    }
    }
 }
 
@@ -128,9 +142,11 @@ bool IWearActuatorsWrapper::attach(yarp::dev::PolyDriver* poly)
 
     wearable::VectorOfDevicePtr<const actuator::IActuator> actuators = pImpl->iWear->getAllActuators();
 
+    yInfo() << LogPrefix << "Finding available actuators from " << pImpl->attachedWearableDeviceName << " wearable deive";
     for (const auto& actuator : actuators)
     {
         pImpl->actuatorsMap[actuator->getActuatorName()] = actuator;
+        yInfo() << LogPrefix << "Found Actuator : " << actuator->getActuatorName();
     }
 
     // Start the PeriodicThread loop

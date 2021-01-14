@@ -20,7 +20,7 @@
 #include <assert.h>
 
 const std::string DeviceName = "Paexo";
-const std::string LogPrefix = DeviceName + ":";
+const std::string LogPrefix = DeviceName + wearable::Separator;
 double period = 0.01;
 
 using namespace wearable;
@@ -79,8 +79,17 @@ public:
     class PaexoTorque3DSensor;
     SensorPtr<PaexoTorque3DSensor> paexoTorqueSensor;
 
+    // Motor Actuator
+    std::string motorActuatorPrefix;
+    const std::string motorActuatorName = "Motor";
+    class PaexoMotorActuator;
+    DevicePtr<PaexoMotorActuator> paexoMotorActuator;
+
     // Number of sensors
     const int nSensors = 3; // Hardcoded for Paexo
+
+    // Numbe of actuators
+    const int nActuators = 1; // Hardcoded for Paexo
 
     // First data flag
     bool firstDataRead;
@@ -345,6 +354,31 @@ public:
     }
 };
 
+// =======================================
+// Paexo implementation of Motor actutator
+// =======================================
+class Paexo::PaexoImpl::PaexoMotorActuator : public wearable::actuator::IMotor
+{
+public:
+    Paexo::PaexoImpl* paexoImpl = nullptr;
+
+    PaexoMotorActuator(Paexo::PaexoImpl* impl,
+                       const wearable::actuator::ActuatorName name = {},
+                       const wearable::actuator::ActuatorStatus status = wearable::actuator::ActuatorStatus::Ok) // Default actuator status is set ok
+        : IMotor(name, status)
+        , paexoImpl(impl)
+    {
+        //TODO: Initialization
+    }
+
+    bool setMotorPosition(double& value) const override
+    {
+        // TODO: Set the commanded value to the serial write
+        yInfo() << LogPrefix << "Trying to set the Paexo actuation motion to : " << value;
+        return true;
+    }
+};
+
 void Paexo::run()
 {
     // Send commands to BLE central serial port
@@ -544,6 +578,41 @@ Paexo::getSensors(const wearable::sensor::SensorType aType) const
         }
         case sensor::SensorType::Torque3DSensor: {
             outVec.push_back(static_cast<SensorPtr<sensor::ISensor>>(pImpl->paexoTorqueSensor));
+            break;
+        }
+        default: {
+            return {};
+        }
+    }
+
+    return outVec;
+}
+
+wearable::DevicePtr<const wearable::actuator::IActuator>
+Paexo::getActuator(const wearable::actuator::ActuatorName name) const
+{
+    wearable::VectorOfDevicePtr<const wearable::actuator::IActuator> actuators = getAllActuators();
+
+    for (const auto& a : actuators)
+    {
+        if (a->getActuatorName() == name)
+        {
+            return a;
+        }
+    }
+    yWarning() << LogPrefix << "User specified actuator name <" << name << "> not found";
+    return nullptr;
+}
+
+wearable::VectorOfDevicePtr<const wearable::actuator::IActuator>
+Paexo::getActuators(const wearable::actuator::ActuatorType aType) const
+{
+    wearable::VectorOfDevicePtr<const wearable::actuator::IActuator> outVec;
+    outVec.reserve(pImpl->nActuators);
+
+    switch (aType) {
+        case wearable::actuator::ActuatorType::Motor: {
+            outVec.push_back(static_cast<DevicePtr<actuator::IActuator>>(pImpl->paexoMotorActuator));
             break;
         }
         default: {
