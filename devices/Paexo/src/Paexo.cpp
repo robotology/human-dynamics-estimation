@@ -81,7 +81,7 @@ public:
 
     // Motor Actuator
     std::string motorActuatorPrefix;
-    const std::string motorActuatorName = "Motor";
+    const std::string motorActuatorName = "Actuator";
     class PaexoMotorActuator;
     DevicePtr<PaexoMotorActuator> paexoMotorActuator;
 
@@ -215,16 +215,21 @@ bool Paexo::open(yarp::os::Searchable& config)
     pImpl->rpcPort.setReader(*pImpl->cmdPro);
 
     // Intialize wearable sensors
-    pImpl->jointSensorPrefix = getWearableName() + wearable::Separator + sensor::IVirtualJointKinSensor::getPrefix();
+    pImpl->jointSensorPrefix = getWearableName() + sensor::IVirtualJointKinSensor::getPrefix();
     pImpl->paexoJointSensor = SensorPtr<PaexoImpl::PaexoVirtualJointKinSensor>{std::make_shared<PaexoImpl::PaexoVirtualJointKinSensor>(pImpl.get(),
                                                                                                                                        pImpl->jointSensorPrefix + pImpl->jointSensorName)};
 
-    pImpl->forceSensorPrefix = getWearableName() + wearable::Separator + sensor::IForce3DSensor::getPrefix();
+    pImpl->forceSensorPrefix = getWearableName() + sensor::IForce3DSensor::getPrefix();
     pImpl->paexoForceSensor = SensorPtr<PaexoImpl::PaexoForce3DSensor>{std::make_shared<PaexoImpl::PaexoForce3DSensor>(pImpl.get(),
                                                                                                                       pImpl->forceSensorPrefix + pImpl->forceSensorName)};
 
-    pImpl->torqueSensorPrefix = getWearableName() + wearable::Separator + sensor::ITorque3DSensor::getPrefix();
+    pImpl->torqueSensorPrefix = getWearableName() + sensor::ITorque3DSensor::getPrefix();
     pImpl->paexoTorqueSensor = SensorPtr<PaexoImpl::PaexoTorque3DSensor>{std::make_shared<PaexoImpl::PaexoTorque3DSensor>(pImpl.get(), pImpl->torqueSensorPrefix + pImpl->torqueSensorName)};
+
+    // Initialize wearable actuators
+    pImpl->motorActuatorPrefix = getWearableName() + actuator::IMotor::getPrefix();
+    pImpl->paexoMotorActuator = DevicePtr<PaexoImpl::PaexoMotorActuator>{std::make_shared<PaexoImpl::PaexoMotorActuator>(pImpl.get(),
+                                                                                                                         pImpl->motorActuatorPrefix + pImpl->motorActuatorName)};
 
     // Initialize paexo data buffer
     pImpl->paexoData.angle    = 0.0;
@@ -675,4 +680,21 @@ Paexo::getTorque3DSensor(const wearable::sensor::SensorName name) const
     // Return a shared point to the required sensor
     return dynamic_cast<wearable::SensorPtr<const wearable::sensor::ITorque3DSensor>&>(
         *pImpl->paexoTorqueSensor);
+}
+
+// ---------------
+// MOTORO Actuator
+// ---------------
+wearable::DevicePtr<const actuator::IMotor>
+Paexo::getMotorActuator(const actuator::ActuatorName name) const
+{
+    // Check if user-provided name corresponds to an available actuator
+    if (name == pImpl->motorActuatorPrefix + pImpl->motorActuatorName) {
+        yError() << LogPrefix << "Invalid actuator name " << name;
+        return nullptr;
+    }
+
+    // Return a shared point to the required sensor
+    return dynamic_cast<wearable::DevicePtr<const wearable::actuator::IMotor>&>(
+        *pImpl->paexoMotorActuator);
 }
