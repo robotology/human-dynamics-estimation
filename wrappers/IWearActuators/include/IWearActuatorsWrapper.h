@@ -13,6 +13,9 @@
 #include <yarp/dev/DeviceDriver.h>
 #include <yarp/dev/Wrapper.h>
 #include <yarp/os/PeriodicThread.h>
+#include <yarp/os/TypedReaderCallback.h>
+
+#include "thrift/WearableActuatorCommand.h"
 
 namespace wearable {
     namespace wrappers {
@@ -25,6 +28,7 @@ class wearable::wrappers::IWearActuatorsWrapper
     , public yarp::dev::IWrapper
     , public yarp::dev::IMultipleWrapper
     , public yarp::os::PeriodicThread
+    , public yarp::os::TypedReaderCallback<msg::WearableActuatorCommand>
 {
 private:
     class impl;
@@ -37,6 +41,9 @@ public:
     // DeviceDriver interface
     bool open(yarp::os::Searchable& config) override;
     bool close() override;
+
+    // TypedReaderCallback
+    void onRead(msg::WearableActuatorCommand& wearableActuatorCommand) override;
 
     // PeriodicThread
     void run() override;

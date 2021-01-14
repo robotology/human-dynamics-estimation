@@ -10,9 +10,8 @@
 
 #include "Wearable/IWear/IWear.h"
 
-#include "thrift/WearableActuatorCommand.h"
-
 #include <yarp/os/LogStream.h>
+#include <yarp/os/BufferedPort.h>
 
 using namespace wearable;
 using namespace wearable::wrappers;
@@ -25,7 +24,7 @@ class IWearActuatorsWrapper::impl : public wearable::msg::WearableActuatorComman
 {
 public:
     std::string actuatorCommandInputPortName;
-    //TODO: Add yarp port to read actuator command
+    yarp::os::BufferedPort<wearable::msg::WearableActuatorCommand> actuatorCommandInputPort;
 
     msg::WearableActuatorCommand wearableActuatorCommand;
 
@@ -61,19 +60,34 @@ bool IWearActuatorsWrapper::open(yarp::os::Searchable& config)
 
     // Parse configuration parameters
 
-    pImpl->actuatorCommandInputPortName = config.find("actuatorCommandInputPortName").asString();
-
     const double period = config.check("period", yarp::os::Value(DefaultPeriod)).asFloat64();
     setPeriod(period);
 
-    //TODO: Open yarp port to read actuator command
+    pImpl->actuatorCommandInputPortName = config.find("actuatorCommandInputPortName").asString();
+
+
+    // Configure yarp ports
+
+    if(!pImpl->actuatorCommandInputPort.open(pImpl->actuatorCommandInputPortName))
+    {
+        yError() << "Failed to open " << pImpl->actuatorCommandInputPortName << " yarp port";
+        return false;
+    }
+
+    // Set the callback to use onRead() method of this device
+    pImpl->actuatorCommandInputPort.useCallback(*this);
 
     return true;
 }
 
+void IWearActuatorsWrapper::onRead(msg::WearableActuatorCommand &wearableActuatorCommand)
+{
+    //TODO: Process received actuator commands
+}
+
 bool IWearActuatorsWrapper::close()
 {
-    //TODO: Close the yarp port
+    pImpl->actuatorCommandInputPort.close();
     return true;
 }
 
@@ -92,6 +106,8 @@ bool IWearActuatorsWrapper::attach(yarp::dev::PolyDriver* poly)
         yError() << LogPrefix << "Failed to view the IWear interface from the PolyDriver.";
         return false;
     }
+
+    //TODO: Configure the available actuators from the attached iwear interface
 
     // Start the PeriodicThread loop
     if (!start()) {
