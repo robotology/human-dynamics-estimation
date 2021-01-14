@@ -48,6 +48,11 @@ IWearActuatorsWrapper::~IWearActuatorsWrapper()
     close();
 }
 
+void IWearActuatorsWrapper::run()
+{
+    //TODO: Send the values of the actuators state ?
+}
+
 // ======================
 // DeviceDriver interface
 // ======================
@@ -140,13 +145,26 @@ bool IWearActuatorsWrapper::attach(yarp::dev::PolyDriver* poly)
         return false;
     }
 
-    wearable::VectorOfDevicePtr<const actuator::IActuator> actuators = pImpl->iWear->getAllActuators();
+    // Check and add all the available actuators
 
     yInfo() << LogPrefix << "Finding available actuators from " << pImpl->attachedWearableDeviceName << " wearable deive";
-    for (const auto& actuator : actuators)
+
+    for (const auto& a : pImpl->iWear->getHapticActuators())
     {
-        pImpl->actuatorsMap[actuator->getActuatorName()] = actuator;
-        yInfo() << LogPrefix << "Found Actuator : " << actuator->getActuatorName();
+        pImpl->actuatorsMap[a->getActuatorName()] = a;
+        yInfo() << LogPrefix << "Found Actuator : " << a->getActuatorName();
+    }
+
+    for (const auto& a : pImpl->iWear->getMotorActuators())
+    {
+        pImpl->actuatorsMap[a->getActuatorName()] = a;
+        yInfo() << LogPrefix << "Found Actuator : " << a->getActuatorName();
+    }
+
+    for (const auto& a : pImpl->iWear->getHeaterActuators())
+    {
+        pImpl->actuatorsMap[a->getActuatorName()] = a;
+        yInfo() << LogPrefix << "Found Actuator : " << a->getActuatorName();
     }
 
     // Start the PeriodicThread loop
