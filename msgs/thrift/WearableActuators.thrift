@@ -10,9 +10,16 @@ enum ActuatorStatus {
   UNKNOWN,
 }
 
+enum ActuatorType {
+  HAPTIC,
+  MOTOR,
+  HEATER,
+}
+
 struct ActuatorInfo {
   1: string name;
-  2: ActuatorStatus status = ActuatorStatus.UNKNOWN;
+  2: ActuatorType type;
+  3: ActuatorStatus status;
 }
 
 // =====================
@@ -37,7 +44,6 @@ struct Heater {
   2: double value;
 }
 
-
 // ============================
 // WearableActuatorsData struct
 // ============================
@@ -47,4 +53,14 @@ struct WearableActuatorsData {
 2: optional map<string, Haptic> hapticActuators;
 3: optional map<string, Motor> motorActuators;
 4: optional map<string, Heater> heaterActuators;
+}
+
+// ==========================
+// Actuator Command data type
+// ==========================
+
+struct WearableActuatorCommand {
+  1: ActuatorInfo info;
+  2: double value;
+  3: double duration;
 }
