@@ -322,6 +322,8 @@ wearable::IWear::castVectorOfDevicePtr(const VectorOfDevicePtr<const T>& iDevice
                 wError << "Failed to case wearable actuator device";
             }
         }
+
+        devices.push_back(castDevice);
     }
 
     return devices;
