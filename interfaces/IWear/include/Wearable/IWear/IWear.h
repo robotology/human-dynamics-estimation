@@ -344,7 +344,7 @@ wearable::IWear::getAllSensors() const
 inline wearable::VectorOfDevicePtr<const wearable::actuator::IActuator>
 wearable::IWear::getAllActuators() const
 {
-    VectorOfSensorPtr<const actuator::IActuator> allActuators;
+    VectorOfDevicePtr<const actuator::IActuator> allActuators;
 
     for (const auto& actuatorType : AllActuatorTypes) {
         VectorOfDevicePtr<const actuator::IActuator> tmp;

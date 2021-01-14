@@ -13,6 +13,8 @@
 #include <yarp/os/LogStream.h>
 #include <yarp/os/BufferedPort.h>
 
+#include <unordered_map>
+
 using namespace wearable;
 using namespace wearable::wrappers;
 
@@ -23,8 +25,12 @@ constexpr double DefaultPeriod = 0.01;
 class IWearActuatorsWrapper::impl : public wearable::msg::WearableActuatorCommand
 {
 public:
+    std::string attachedWearableDeviceName;
+
     std::string actuatorCommandInputPortName;
     yarp::os::BufferedPort<wearable::msg::WearableActuatorCommand> actuatorCommandInputPort;
+
+    std::unordered_map<std::string, wearable::DevicePtr<const actuator::IActuator>> actuatorsMap;
 
     msg::WearableActuatorCommand wearableActuatorCommand;
 
@@ -80,9 +86,20 @@ bool IWearActuatorsWrapper::open(yarp::os::Searchable& config)
     return true;
 }
 
-void IWearActuatorsWrapper::onRead(msg::WearableActuatorCommand &wearableActuatorCommand)
+void IWearActuatorsWrapper::onRead(msg::WearableActuatorCommand& wearableActuatorCommand)
 {
-    //TODO: Process received actuator commands
+   // Unpack the actuator in from incoming command
+   wearable::msg::ActuatorInfo info = wearableActuatorCommand.info;
+
+   // Check if the commanded actuator name is available
+   if (pImpl->actuatorsMap.find(info.name) != pImpl->actuatorsMap.end())
+   {
+       // TODO: Call to set method of the actuator
+   }
+   else
+   {
+       yError() << "Requested actuator with name " << info.name << " is not available in " << pImpl->attachedWearableDeviceName << " wearable device!";
+   }
 }
 
 bool IWearActuatorsWrapper::close()
@@ -102,12 +119,19 @@ bool IWearActuatorsWrapper::attach(yarp::dev::PolyDriver* poly)
         return false;
     }
 
+    pImpl->attachedWearableDeviceName = poly->getValue("device").asString();
+
     if (pImpl->iWear || !poly->view(pImpl->iWear) || !pImpl->iWear) {
         yError() << LogPrefix << "Failed to view the IWear interface from the PolyDriver.";
         return false;
     }
 
-    //TODO: Configure the available actuators from the attached iwear interface
+    wearable::VectorOfDevicePtr<const actuator::IActuator> actuators = pImpl->iWear->getAllActuators();
+
+    for (const auto& actuator : actuators)
+    {
+        pImpl->actuatorsMap[actuator->getActuatorName()] = actuator;
+    }
 
     // Start the PeriodicThread loop
     if (!start()) {
