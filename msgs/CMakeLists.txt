@@ -75,7 +75,8 @@ endforeach()
 
 # Setup the include directories
 target_include_directories(WearableActuators PUBLIC
-    $<BUILD_INTERFACE:${WEARABLEACTUATORS_INCLUDE_DIRS}>)
+    $<BUILD_INTERFACE:${WEARABLEACTUATORS_INCLUDE_DIRS}>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
 install(TARGETS WearableActuators
         EXPORT WearableActuators
@@ -88,6 +89,9 @@ install_basic_package_files(WearableActuators
         COMPATIBILITY AnyNewerVersion
         EXPORT WearableActuators
         NO_CHECK_REQUIRED_COMPONENTS_MACRO)
+
+install(DIRECTORY ${WEARABLEACTUATORS_FILES}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/thrift)
 
 # =======================
 # XsensSuitControlService
