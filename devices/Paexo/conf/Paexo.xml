@@ -55,7 +55,7 @@
 
     <device type="iwearactuators_wrapper" name="PaexoWearableDeviceActuatorsWrapper">
         <param name="period">0.01</param>
-        <param name="actuatorCommandInputPortName">/Paexo/WearableActuatorsData/input:i</param>
+        <param name="actuatorCommandInputPortName">/Paexo/WearableActuatorsCommand/input:i</param>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
                 <elem name="PaexoWearableDeviceActuatorsWrapperLabel"> PaexoWearableDevice </elem>
