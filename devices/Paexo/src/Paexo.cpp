@@ -379,7 +379,7 @@ public:
     bool setMotorPosition(double& value) const override
     {
         // TODO: Set the commanded value to the serial write
-        yInfo() << LogPrefix << "Trying to set the Paexo actuation motion to : " << value;
+        yInfo() << LogPrefix << "Trying to set the Paexo actuation motor position to : " << value << " deg"; //NOTE: This is a dummy debug comment
         return true;
     }
 };

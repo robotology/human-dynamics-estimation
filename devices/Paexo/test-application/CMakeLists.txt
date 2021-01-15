@@ -12,12 +12,10 @@ find_package(YARP COMPONENTS os REQUIRED)
 message(STATUS ${WEARABLEACTUATORS_INCLUDE_DIRS})
 add_executable(${PROJECT_NAME} paexo-test-application.cpp)
 
-#target_include_directories(${PROJECT_NAME} PUBLIC
-#    $<BUILD_INTERFACE:${WearableActuators_INCLUDE_DIRS}>)
-
 target_link_libraries(${PROJECT_NAME} PUBLIC
     IWear::IWear
     WearableActuators::WearableActuators
-    YARP::YARP_OS)
+    YARP::YARP_OS
+    YARP::YARP_init)
 
 

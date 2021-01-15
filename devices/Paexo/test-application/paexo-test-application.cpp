@@ -9,18 +9,20 @@
 #include <stdio.h>
 #include <yarp/os/Network.h>
 #include <yarp/os/BufferedPort.h>
+#include <yarp/os/LogStream.h>
 
-#include "thrift/WearableActuatorCommand.h"
+#include <thrift/WearableActuatorCommand.h>
 
 using namespace yarp::os;
 //using namespace wearable;
 
 int main() {
 
+    yarp::os::Network::init();
+
     BufferedPort<wearable::msg::WearableActuatorCommand> port;
     port.open("/Paexo/WearableActuatorsCommand/output:o");
 
-    yarp::os::Network::init(); // is this needed ?
     yarp::os::Network::connect("/Paexo/WearableActuatorsCommand/output:o",
                                "/Paexo/WearableActuatorsCommand/input:i");
 
@@ -34,12 +36,15 @@ int main() {
         wearableActuatorCommand.info.status = wearable::msg::ActuatorStatus::OK;
 
         wearableActuatorCommand.duration = 10;
-        wearableActuatorCommand.value = 30;
+        wearableActuatorCommand.value = 20;
+
+        yInfo() << "Command " << wearableActuatorCommand.info.name << " to position "
+                <<  wearableActuatorCommand.value << " deg";
 
         // Send the actuator command to the output port
         port.write();
 
-        Time::delay(1);
+        Time::delay(2);
     }
 
     return 0;
