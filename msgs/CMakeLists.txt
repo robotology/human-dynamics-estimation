@@ -78,9 +78,16 @@ target_include_directories(WearableActuators PUBLIC
     $<BUILD_INTERFACE:${WEARABLEACTUATORS_INCLUDE_DIRS}>)
 
 install(TARGETS WearableActuators
+        EXPORT WearableActuators
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
+install_basic_package_files(WearableActuators
+        VERSION ${PROJECT_VERSION}
+        COMPATIBILITY AnyNewerVersion
+        EXPORT WearableActuators
+        NO_CHECK_REQUIRED_COMPONENTS_MACRO)
 
 # =======================
 # XsensSuitControlService
