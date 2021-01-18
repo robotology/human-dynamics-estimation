@@ -31,7 +31,7 @@ public:
 
     inline static const std::string getPrefix();
 
-    //TODO: Update set and get methods
+    virtual bool setHapticCommand(double& value) const = 0;
 };
 
 inline const std::string wearable::actuator::IHaptic::getPrefix()

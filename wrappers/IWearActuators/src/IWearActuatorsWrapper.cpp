@@ -104,6 +104,15 @@ void IWearActuatorsWrapper::onRead(msg::WearableActuatorCommand& wearableActuato
 
    wearable::actuator::ActuatorType aType = pImpl->actuatorsMap[info.name]->getActuatorType();
    switch (aType) {
+    case wearable::actuator::ActuatorType::Haptic: {
+
+       if(info.type == wearable::msg::ActuatorType::HAPTIC)
+       {
+           wearable::ElementPtr<const wearable::actuator::IHaptic> castActuator = std::static_pointer_cast<const wearable::actuator::IHaptic>(pImpl->actuatorsMap[info.name]);
+           castActuator->setHapticCommand(wearableActuatorCommand.value);
+       }
+
+    }
     case wearable::actuator::ActuatorType::Motor: {
 
        // Check if the actuator type in the command is correct
