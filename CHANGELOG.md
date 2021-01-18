@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.1] - 2021-01-18
+
 ### Added
 - Added documentation for compiling the project in the `README.md` (https://github.com/robotology/wearables/pull/96)
 - Added configuratin file for `PRO.01` FT Shoes (https://github.com/robotology/wearables/pull/97)
@@ -16,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Updated `yarp_prepare_plugin` header file path
     - Added cmake policy to handle `IWear` interface relative path warning
 
-## [1.1.0] - 2020-01-28
+## [1.1.0] - 2020-11-24
 
 ### Added
 - Added exoskeleton wearable device (https://github.com/robotology/wearables/pull/81)

@@ -4,7 +4,7 @@
 
 cmake_minimum_required(VERSION 3.5)
 
-set(PROJECT_VERSION "1.1.0")
+set(PROJECT_VERSION "1.1.1")
 
 project(Wearables VERSION ${PROJECT_VERSION}
                   LANGUAGES CXX)
