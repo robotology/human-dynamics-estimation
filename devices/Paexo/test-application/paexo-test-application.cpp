@@ -14,7 +14,7 @@
 #include <thrift/WearableActuatorCommand.h>
 
 using namespace yarp::os;
-//using namespace wearable;
+using namespace wearable;
 
 int main() {
 

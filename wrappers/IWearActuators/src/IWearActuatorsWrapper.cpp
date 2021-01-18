@@ -111,7 +111,7 @@ void IWearActuatorsWrapper::onRead(msg::WearableActuatorCommand& wearableActuato
        if (info.type == wearable::msg::ActuatorType::MOTOR)
        {
            // Sent the command value to the motor actuator
-            wearable::ElementPtr<const wearable::actuator::IMotor> castActuator = std::dynamic_pointer_cast<const wearable::actuator::IMotor>(pImpl->actuatorsMap[info.name]);
+            wearable::ElementPtr<const wearable::actuator::IMotor> castActuator = std::static_pointer_cast<const wearable::actuator::IMotor>(pImpl->actuatorsMap[info.name]);
             castActuator->setMotorPosition(wearableActuatorCommand.value);
        }
     }
