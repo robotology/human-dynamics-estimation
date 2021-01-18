@@ -77,9 +77,9 @@ public:
 
     VectorOfSensorPtr<const sensor::ISensor> getSensors(const sensor::SensorType) const override;
 
-    DevicePtr<const actuator::IActuator> getActuator(const actuator::ActuatorName name) const override;
+    ElementPtr<const actuator::IActuator> getActuator(const actuator::ActuatorName name) const override;
 
-    VectorOfDevicePtr<const actuator::IActuator> getActuators(const actuator::ActuatorType type) const override;
+    VectorOfElementPtr<const actuator::IActuator> getActuators(const actuator::ActuatorType type) const override;
 
     // IMPLEMENTED SENSORS
     // -------------------
@@ -96,7 +96,7 @@ public:
     // IMPLEMENTED ACTUATORS
     // ---------------------
 
-    DevicePtr<const actuator::IMotor>
+    ElementPtr<const actuator::IMotor>
     getMotorActuator(const actuator::ActuatorName) const override;
 
     // UNIMPLEMENTED SENSORS
@@ -144,10 +144,10 @@ public:
     // UNIMPLEMENTED ACTUATORS
     // -----------------------
 
-    inline DevicePtr<const actuator::IHaptic>
+    inline ElementPtr<const actuator::IHaptic>
     getHapticActuator(const actuator::ActuatorName) const override;
 
-    inline DevicePtr<const actuator::IHeater>
+    inline ElementPtr<const actuator::IHeater>
     getHeaterActuator(const actuator::ActuatorName) const override;
 
 };
@@ -230,13 +230,13 @@ wearable::devices::Paexo::getTemperatureSensor(const sensor::SensorName /*name*/
     return nullptr;
 }
 
-inline wearable::DevicePtr<const wearable::actuator::IHaptic>
+inline wearable::ElementPtr<const wearable::actuator::IHaptic>
 wearable::devices::Paexo::getHapticActuator(const actuator::ActuatorName) const
 {
     return nullptr;
 }
 
-inline wearable::DevicePtr<const wearable::actuator::IHeater>
+inline wearable::ElementPtr<const wearable::actuator::IHeater>
 wearable::devices::Paexo::getHeaterActuator(const actuator::ActuatorName) const
 {
     return nullptr;

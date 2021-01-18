@@ -30,7 +30,7 @@ public:
     std::string actuatorCommandInputPortName;
     yarp::os::BufferedPort<wearable::msg::WearableActuatorCommand> actuatorCommandInputPort;
 
-    std::unordered_map<std::string, wearable::DevicePtr<const actuator::IActuator>> actuatorsMap;
+    std::unordered_map<std::string, wearable::ElementPtr<const actuator::IActuator>> actuatorsMap;
 
     msg::WearableActuatorCommand wearableActuatorCommand;
 
@@ -111,7 +111,7 @@ void IWearActuatorsWrapper::onRead(msg::WearableActuatorCommand& wearableActuato
        if (info.type == wearable::msg::ActuatorType::MOTOR)
        {
            // Sent the command value to the motor actuator
-            wearable::DevicePtr<const wearable::actuator::IMotor> castActuator = std::dynamic_pointer_cast<const wearable::actuator::IMotor>(pImpl->actuatorsMap[info.name]);
+            wearable::ElementPtr<const wearable::actuator::IMotor> castActuator = std::dynamic_pointer_cast<const wearable::actuator::IMotor>(pImpl->actuatorsMap[info.name]);
             castActuator->setMotorPosition(wearableActuatorCommand.value);
        }
     }

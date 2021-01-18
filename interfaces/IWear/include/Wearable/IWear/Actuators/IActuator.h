@@ -49,20 +49,20 @@ public:
               ActuatorStatus aStatus = ActuatorStatus::Unknown)
         : m_name{aName}
         , m_status{aStatus}
-    { m_wearable_device_type = DeviceType::WearableActuator; }
+    { m_wearable_element_type = ElementType::WearableActuator; }
 
     virtual ~IActuator() = default;
 
-    inline DeviceType getWearableDeviceType() const;
+    inline ElementType getWearableElementType() const;
 
     inline ActuatorName getActuatorName() const;
     inline ActuatorType getActuatorType() const;
     inline ActuatorStatus getActuatorStatus() const;
 };
 
-inline wearable::DeviceType wearable::actuator::IActuator::getWearableDeviceType() const
+inline wearable::ElementType wearable::actuator::IActuator::getWearableElementType() const
 {
-    return m_wearable_device_type;
+    return m_wearable_element_type;
 }
 
 inline wearable::actuator::ActuatorName wearable::actuator::IActuator::getActuatorName() const

@@ -139,19 +139,19 @@ public:
     inline SensorPtr<const sensor::IVirtualJointKinSensor>
     getVirtualJointKinSensor(const sensor::SensorName /*name*/) const override;
 
-    inline DevicePtr<const actuator::IActuator>
+    inline ElementPtr<const actuator::IActuator>
     getActuator(const actuator::ActuatorName name) const override;
 
-    inline VectorOfDevicePtr<const actuator::IActuator>
+    inline VectorOfElementPtr<const actuator::IActuator>
     getActuators(const actuator::ActuatorType type) const override;
 
-    inline DevicePtr<const actuator::IHaptic>
+    inline ElementPtr<const actuator::IHaptic>
     getHapticActuator(const actuator::ActuatorName) const override;
 
-    inline DevicePtr<const actuator::IMotor>
+    inline ElementPtr<const actuator::IMotor>
     getMotorActuator(const actuator::ActuatorName) const override;
 
-    inline DevicePtr<const actuator::IHeater>
+    inline ElementPtr<const actuator::IHeater>
     getHeaterActuator(const actuator::ActuatorName) const override;
 };
 
@@ -209,31 +209,31 @@ wearable::devices::XsensSuit::getVirtualJointKinSensor(const sensor::SensorName 
     return nullptr;
 }
 
-inline wearable::DevicePtr<const wearable::actuator::IActuator>
+inline wearable::ElementPtr<const wearable::actuator::IActuator>
 wearable::devices::XsensSuit::getActuator(const actuator::ActuatorName name) const
 {
     return nullptr;
 }
 
-inline wearable::VectorOfDevicePtr<const wearable::actuator::IActuator>
+inline wearable::VectorOfElementPtr<const wearable::actuator::IActuator>
 wearable::devices::XsensSuit::getActuators(const actuator::ActuatorType type) const
 {
     return {};
 }
 
-inline wearable::DevicePtr<const wearable::actuator::IHaptic>
+inline wearable::ElementPtr<const wearable::actuator::IHaptic>
 wearable::devices::XsensSuit::getHapticActuator(const actuator::ActuatorName) const
 {
     return nullptr;
 }
 
-inline wearable::DevicePtr<const wearable::actuator::IMotor>
+inline wearable::ElementPtr<const wearable::actuator::IMotor>
 wearable::devices::XsensSuit::getMotorActuator(const actuator::ActuatorName) const
 {
     return nullptr;
 }
 
-inline wearable::DevicePtr<const wearable::actuator::IHeater>
+inline wearable::ElementPtr<const wearable::actuator::IHeater>
 wearable::devices::XsensSuit::getHeaterActuator(const actuator::ActuatorName) const
 {
     return nullptr;

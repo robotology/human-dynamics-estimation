@@ -83,7 +83,7 @@ public:
     std::string motorActuatorPrefix;
     const std::string motorActuatorName = "Actuator";
     class PaexoMotorActuator;
-    DevicePtr<PaexoMotorActuator> paexoMotorActuator;
+    ElementPtr<PaexoMotorActuator> paexoMotorActuator;
 
     // Number of sensors
     const int nSensors = 3; // Hardcoded for Paexo
@@ -228,7 +228,7 @@ bool Paexo::open(yarp::os::Searchable& config)
 
     // Initialize wearable actuators
     pImpl->motorActuatorPrefix = getWearableName() + actuator::IMotor::getPrefix();
-    pImpl->paexoMotorActuator = DevicePtr<PaexoImpl::PaexoMotorActuator>{std::make_shared<PaexoImpl::PaexoMotorActuator>(pImpl.get(),
+    pImpl->paexoMotorActuator = ElementPtr<PaexoImpl::PaexoMotorActuator>{std::make_shared<PaexoImpl::PaexoMotorActuator>(pImpl.get(),
                                                                                                                          pImpl->motorActuatorPrefix + pImpl->motorActuatorName)};
 
     // Initialize paexo data buffer
@@ -593,10 +593,10 @@ Paexo::getSensors(const wearable::sensor::SensorType aType) const
     return outVec;
 }
 
-wearable::DevicePtr<const wearable::actuator::IActuator>
+wearable::ElementPtr<const wearable::actuator::IActuator>
 Paexo::getActuator(const wearable::actuator::ActuatorName name) const
 {
-    wearable::VectorOfDevicePtr<const wearable::actuator::IActuator> actuators = getAllActuators();
+    wearable::VectorOfElementPtr<const wearable::actuator::IActuator> actuators = getAllActuators();
 
     for (const auto& a : actuators)
     {
@@ -609,15 +609,15 @@ Paexo::getActuator(const wearable::actuator::ActuatorName name) const
     return nullptr;
 }
 
-wearable::VectorOfDevicePtr<const wearable::actuator::IActuator>
+wearable::VectorOfElementPtr<const wearable::actuator::IActuator>
 Paexo::getActuators(const wearable::actuator::ActuatorType aType) const
 {
-    wearable::VectorOfDevicePtr<const wearable::actuator::IActuator> outVec;
+    wearable::VectorOfElementPtr<const wearable::actuator::IActuator> outVec;
     outVec.reserve(pImpl->nActuators);
 
     switch (aType) {
         case wearable::actuator::ActuatorType::Motor: {
-            outVec.push_back(static_cast<DevicePtr<actuator::IActuator>>(pImpl->paexoMotorActuator));
+            outVec.push_back(static_cast<ElementPtr<actuator::IActuator>>(pImpl->paexoMotorActuator));
             break;
         }
         default: {
@@ -685,7 +685,7 @@ Paexo::getTorque3DSensor(const wearable::sensor::SensorName name) const
 // ---------------
 // MOTORO Actuator
 // ---------------
-wearable::DevicePtr<const actuator::IMotor>
+wearable::ElementPtr<const actuator::IMotor>
 Paexo::getMotorActuator(const actuator::ActuatorName name) const
 {
     // Check if user-provided name corresponds to an available actuator
@@ -695,6 +695,6 @@ Paexo::getMotorActuator(const actuator::ActuatorName name) const
     }
 
     // Return a shared point to the required sensor
-    return dynamic_cast<wearable::DevicePtr<const wearable::actuator::IMotor>&>(
+    return dynamic_cast<wearable::ElementPtr<const wearable::actuator::IMotor>&>(
         *pImpl->paexoMotorActuator);
 }

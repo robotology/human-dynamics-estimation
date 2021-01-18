@@ -25,7 +25,7 @@ namespace wearable {
 
     const std::string Separator = "::";
 
-    enum class DeviceType
+    enum class ElementType
     {
         WearableSensor = 0,
         WearableActuator,
@@ -38,9 +38,9 @@ namespace wearable {
 class wearable::IWearableDevice
 {
 protected:
-    DeviceType m_wearable_device_type;
+    ElementType m_wearable_element_type;
 
-    virtual DeviceType getWearableDeviceType() const = 0;
+    virtual ElementType getWearableElementType() const = 0;
 };
 
 #endif // WEARABLE_COMMON_H

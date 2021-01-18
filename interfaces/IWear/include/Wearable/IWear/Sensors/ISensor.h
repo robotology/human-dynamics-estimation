@@ -72,11 +72,11 @@ public:
     ISensor(SensorName aName = {}, SensorStatus aStatus = SensorStatus::Unknown)
         : m_name{aName}
         , m_status{aStatus}
-    { m_wearable_device_type = DeviceType::WearableSensor; }
+    { m_wearable_element_type = ElementType::WearableSensor; }
 
     virtual ~ISensor() = default;
 
-    inline DeviceType getWearableDeviceType() const;
+    inline ElementType getWearableElementType() const;
 
     // TODO: timestamp? sequence number?
     inline SensorName getSensorName() const;
@@ -84,9 +84,9 @@ public:
     inline SensorType getSensorType() const;
 };
 
-inline wearable::DeviceType wearable::sensor::ISensor::getWearableDeviceType() const
+inline wearable::ElementType wearable::sensor::ISensor::getWearableElementType() const
 {
-    return m_wearable_device_type;
+    return m_wearable_element_type;
 }
 
 inline wearable::sensor::SensorName wearable::sensor::ISensor::getSensorName() const
