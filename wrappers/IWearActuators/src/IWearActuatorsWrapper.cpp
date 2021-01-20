@@ -99,42 +99,45 @@ void IWearActuatorsWrapper::onRead(msg::WearableActuatorCommand& wearableActuato
    // Check if the commanded actuator name is available
    if (pImpl->actuatorsMap.find(info.name) == pImpl->actuatorsMap.end())
    {
-       yError() << "Requested actuator with name " << info.name << " is not available in " << pImpl->attachedWearableDeviceName << " wearable device!";
+       yWarning() << "Requested actuator with name " << info.name << " is not available in " << pImpl->attachedWearableDeviceName << " wearable device \n \t Ignoring wearable actuation command.";
    }
+   else // process the wearable actuator command
+   {
+       wearable::actuator::ActuatorType aType = pImpl->actuatorsMap[info.name]->getActuatorType();
 
-   wearable::actuator::ActuatorType aType = pImpl->actuatorsMap[info.name]->getActuatorType();
-   switch (aType) {
-        case wearable::actuator::ActuatorType::Haptic: {
+       switch (aType) {
+            case wearable::actuator::ActuatorType::Haptic: {
 
-           // Check if the actuator type in the wearable command is correct
-           if(info.type == wearable::msg::ActuatorType::HAPTIC)
-           {
-               // Get haptic actuator
-               wearable::ElementPtr<const wearable::actuator::IHaptic> castActuator = std::static_pointer_cast<const wearable::actuator::IHaptic>(pImpl->actuatorsMap[info.name]);
+               // Check if the actuator type in the wearable command is correct
+               if(info.type == wearable::msg::ActuatorType::HAPTIC)
+               {
+                   // Get haptic actuator
+                   wearable::ElementPtr<const wearable::actuator::IHaptic> castActuator = std::static_pointer_cast<const wearable::actuator::IHaptic>(pImpl->actuatorsMap[info.name]);
 
-               // Send haptic command
-               castActuator->setHapticCommand(wearableActuatorCommand.value);
-           }
+                   // Send haptic command
+                   castActuator->setHapticCommand(wearableActuatorCommand.value);
+               }
 
-           break;
-        }
-        case wearable::actuator::ActuatorType::Motor: {
+               break;
+            }
+            case wearable::actuator::ActuatorType::Motor: {
 
-           // Check if the actuator type in the wearable command is correct
-           if (info.type == wearable::msg::ActuatorType::MOTOR)
-           {
-               // Get motor actuator
-               wearable::ElementPtr<const wearable::actuator::IMotor> castActuator = std::static_pointer_cast<const wearable::actuator::IMotor>(pImpl->actuatorsMap[info.name]);
+               // Check if the actuator type in the wearable command is correct
+               if (info.type == wearable::msg::ActuatorType::MOTOR)
+               {
+                   // Get motor actuator
+                   wearable::ElementPtr<const wearable::actuator::IMotor> castActuator = std::static_pointer_cast<const wearable::actuator::IMotor>(pImpl->actuatorsMap[info.name]);
 
-               // Send motor command
-               castActuator->setMotorPosition(wearableActuatorCommand.value);
-           }
+                   // Send motor command
+                   castActuator->setMotorPosition(wearableActuatorCommand.value);
+               }
 
-           break;
-        }
-        default: {
-           return;
-        }
+               break;
+            }
+            default: {
+               return;
+            }
+       }
    }
 }
 
