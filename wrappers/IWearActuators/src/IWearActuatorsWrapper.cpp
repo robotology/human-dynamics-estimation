@@ -104,29 +104,37 @@ void IWearActuatorsWrapper::onRead(msg::WearableActuatorCommand& wearableActuato
 
    wearable::actuator::ActuatorType aType = pImpl->actuatorsMap[info.name]->getActuatorType();
    switch (aType) {
-    case wearable::actuator::ActuatorType::Haptic: {
+        case wearable::actuator::ActuatorType::Haptic: {
 
-       if(info.type == wearable::msg::ActuatorType::HAPTIC)
-       {
-           wearable::ElementPtr<const wearable::actuator::IHaptic> castActuator = std::static_pointer_cast<const wearable::actuator::IHaptic>(pImpl->actuatorsMap[info.name]);
-           castActuator->setHapticCommand(wearableActuatorCommand.value);
-       }
+           // Check if the actuator type in the wearable command is correct
+           if(info.type == wearable::msg::ActuatorType::HAPTIC)
+           {
+               // Get haptic actuator
+               wearable::ElementPtr<const wearable::actuator::IHaptic> castActuator = std::static_pointer_cast<const wearable::actuator::IHaptic>(pImpl->actuatorsMap[info.name]);
 
-    }
-    case wearable::actuator::ActuatorType::Motor: {
+               // Send haptic command
+               castActuator->setHapticCommand(wearableActuatorCommand.value);
+           }
 
-       // Check if the actuator type in the command is correct
-       // TODO: May be this is redundant check ?
-       if (info.type == wearable::msg::ActuatorType::MOTOR)
-       {
-           // Sent the command value to the motor actuator
-            wearable::ElementPtr<const wearable::actuator::IMotor> castActuator = std::static_pointer_cast<const wearable::actuator::IMotor>(pImpl->actuatorsMap[info.name]);
-            castActuator->setMotorPosition(wearableActuatorCommand.value);
-       }
-    }
-    default: {
-       return;
-    }
+           break;
+        }
+        case wearable::actuator::ActuatorType::Motor: {
+
+           // Check if the actuator type in the wearable command is correct
+           if (info.type == wearable::msg::ActuatorType::MOTOR)
+           {
+               // Get motor actuator
+               wearable::ElementPtr<const wearable::actuator::IMotor> castActuator = std::static_pointer_cast<const wearable::actuator::IMotor>(pImpl->actuatorsMap[info.name]);
+
+               // Send motor command
+               castActuator->setMotorPosition(wearableActuatorCommand.value);
+           }
+
+           break;
+        }
+        default: {
+           return;
+        }
    }
 }
 
