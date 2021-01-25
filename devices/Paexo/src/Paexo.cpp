@@ -362,6 +362,7 @@ public:
 // =======================================
 // Paexo implementation of Motor actutator
 // =======================================
+//TODO: Check if the paexo needs left and right actuators
 class Paexo::PaexoImpl::PaexoMotorActuator : public wearable::actuator::IMotor
 {
 public:
@@ -378,8 +379,15 @@ public:
 
     bool setMotorPosition(double& value) const override
     {
-        // TODO: Set the commanded value to the serial write
-        yInfo() << LogPrefix << "Trying to set the Paexo actuation motor position to : " << value << " deg"; //NOTE: This is a dummy debug comment
+        // Prepare the move command
+        std::string motorCommand = "move::" + std::to_string(value);
+        char c[motorCommand.length() + 1];
+        std::strcpy(c, motorCommand.c_str());
+
+        // Set the commanded value to the serial write
+        // TODO: Check for serial write failure
+        paexoImpl->iSerialDevice->send(c, motorCommand.length());
+
         return true;
     }
 };

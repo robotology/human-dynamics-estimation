@@ -20,11 +20,27 @@ int main() {
 
     yarp::os::Network::init();
 
-    BufferedPort<wearable::msg::WearableActuatorCommand> port;
-    port.open("/Paexo/WearableActuatorsCommand/output:o");
+    std::string inPort = "/Paexo/WearableActuatorsCommand/input:i";
+    std::string outPort = "/Paexo/WearableActuatorsCommand/output:o";
 
-    yarp::os::Network::connect("/Paexo/WearableActuatorsCommand/output:o",
-                               "/Paexo/WearableActuatorsCommand/input:i");
+    if (!yarp::os::Network::exists(inPort))
+    {
+        yError() << "Port " << inPort << " does not exists";
+        return -1;
+    }
+
+    BufferedPort<wearable::msg::WearableActuatorCommand> port;
+    if(!port.open(outPort))
+    {
+        yError() << "Failed to open port " << outPort;
+        return -1;
+    }
+
+    if (!yarp::os::Network::connect(outPort,inPort))
+    {
+        yError() << "Failed to connect " << outPort << " to " << inPort;
+        return -1;
+    }
 
     while (true) {
 
@@ -36,7 +52,7 @@ int main() {
         wearableActuatorCommand.info.status = wearable::msg::ActuatorStatus::OK;
 
         wearableActuatorCommand.duration = 10;
-        wearableActuatorCommand.value = 20;
+        wearableActuatorCommand.value = 40;
 
         yInfo() << "Command " << wearableActuatorCommand.info.name << " to position "
                 <<  wearableActuatorCommand.value << " deg";
