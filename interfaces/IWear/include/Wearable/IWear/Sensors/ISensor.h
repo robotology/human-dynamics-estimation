@@ -9,13 +9,13 @@
 #ifndef WEARABLE_ISENSOR_H
 #define WEARABLE_ISENSOR_H
 
+#include "Wearable/IWear/Common.h"
+
 #include <array>
 #include <atomic>
-#include <string>
 
 namespace wearable {
 
-    const std::string Separator = "::";
     using Vector3 = std::array<double, 3>;
     using Vector6 = std::array<double, 6>;
     using Vector7 = std::array<double, 7>;
@@ -60,9 +60,10 @@ namespace wearable {
     } // namespace sensor
 } // namespace wearable
 
-class wearable::sensor::ISensor
+class wearable::sensor::ISensor : public wearable::IWearableDevice
 {
 protected:
+
     SensorName m_name;
     SensorType m_type;
     std::atomic<SensorStatus> m_status;
@@ -71,15 +72,22 @@ public:
     ISensor(SensorName aName = {}, SensorStatus aStatus = SensorStatus::Unknown)
         : m_name{aName}
         , m_status{aStatus}
-    {}
+    { m_wearable_element_type = ElementType::WearableSensor; }
 
     virtual ~ISensor() = default;
+
+    inline ElementType getWearableElementType() const;
 
     // TODO: timestamp? sequence number?
     inline SensorName getSensorName() const;
     inline SensorStatus getSensorStatus() const;
     inline SensorType getSensorType() const;
 };
+
+inline wearable::ElementType wearable::sensor::ISensor::getWearableElementType() const
+{
+    return m_wearable_element_type;
+}
 
 inline wearable::sensor::SensorName wearable::sensor::ISensor::getSensorName() const
 {

@@ -53,4 +53,15 @@
         <action phase="shutdown" level="4" type="detach"/>
     </device>
 
+    <device type="iwearactuators_wrapper" name="PaexoWearableDeviceActuatorsWrapper">
+        <param name="period">0.01</param>
+        <param name="actuatorCommandInputPortName">/Paexo/WearableActuatorsCommand/input:i</param>
+        <action phase="startup" level="5" type="attach">
+            <paramlist name="networks">
+                <elem name="PaexoWearableDeviceActuatorsWrapperLabel"> PaexoWearableDevice </elem>
+            </paramlist>
+        </action>
+        <action phase="shutdown" level="4" type="detach"/>
+    </device>
+
 </robot>

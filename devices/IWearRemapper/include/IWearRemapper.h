@@ -112,6 +112,51 @@ public:
 
     SensorPtr<const sensor::IVirtualSphericalJointKinSensor>
     getVirtualSphericalJointKinSensor(const sensor::SensorName /*name*/) const override;
+
+    inline ElementPtr<const actuator::IActuator>
+    getActuator(const actuator::ActuatorName name) const override;
+
+    inline VectorOfElementPtr<const actuator::IActuator>
+    getActuators(const actuator::ActuatorType type) const override;
+
+    inline ElementPtr<const actuator::IHaptic>
+    getHapticActuator(const actuator::ActuatorName) const override;
+
+    inline ElementPtr<const actuator::IMotor>
+    getMotorActuator(const actuator::ActuatorName) const override;
+
+    inline ElementPtr<const actuator::IHeater>
+    getHeaterActuator(const actuator::ActuatorName) const override;
 };
+
+inline wearable::ElementPtr<const wearable::actuator::IActuator>
+wearable::devices::IWearRemapper::getActuator(const actuator::ActuatorName name) const
+{
+    return nullptr;
+}
+
+inline wearable::VectorOfElementPtr<const wearable::actuator::IActuator>
+wearable::devices::IWearRemapper::getActuators(const actuator::ActuatorType type) const
+{
+    return {};
+}
+
+inline wearable::ElementPtr<const wearable::actuator::IHaptic>
+wearable::devices::IWearRemapper::getHapticActuator(const actuator::ActuatorName) const
+{
+    return nullptr;
+}
+
+inline wearable::ElementPtr<const wearable::actuator::IMotor>
+wearable::devices::IWearRemapper::getMotorActuator(const actuator::ActuatorName) const
+{
+    return nullptr;
+}
+
+inline wearable::ElementPtr<const wearable::actuator::IHeater>
+wearable::devices::IWearRemapper::getHeaterActuator(const actuator::ActuatorName) const
+{
+    return nullptr;
+}
 
 #endif // IWEARREMAPPER_H
