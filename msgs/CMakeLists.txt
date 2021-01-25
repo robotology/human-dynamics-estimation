@@ -90,7 +90,7 @@ install_basic_package_files(WearableActuators
         EXPORT WearableActuators
         NO_CHECK_REQUIRED_COMPONENTS_MACRO)
 
-install(DIRECTORY ${WEARABLEACTUATORS_FILES}
+install(FILES ${WEARABLEACTUATORS_FILES}
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/thrift)
 
 # =======================
