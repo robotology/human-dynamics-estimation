@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Added the major feature of actuators related interfaces that is discussed in issue (https://github.com/robotology/wearables/issues/104). The related PR (https://github.com/robotology/wearables/pull/105) adds the following changes:
+  - Implement wearable actuators related interfaces, and update `IWear` with actuators interfaces
+  - Update all the available devices with implementation of wearable actuators interfaces
+  - Add wearable actuator command thrift messages
+  - Add `IWearActuatorsWrapper` device which provides yarp port to communicate wearable actuator commands
+  - Update `Paexo` device with one wearable actuator motor implementation, and add a test application
+
+### Added
 - Added documentation for compiling the project in the `README.md` (https://github.com/robotology/wearables/pull/96)
 - Added configuratin file for `PRO.01` FT Shoes (https://github.com/robotology/wearables/pull/97)
 
@@ -26,7 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Install `Wearable-devices-dumper` application (https://github.com/robotology/wearables/pull/92)
 - Added project version to CMakeLists.txt
 
-### Fixed 
+### Fixed
 - Fixed segmentation fault on `IWearRemapper` termination (https://github.com/robotology/wearables/issues/55).
 - Fix MacOS CI (https://github.com/robotology/wearables/pull/85)
 
