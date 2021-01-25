@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.1.1] - 2021-01-18
+## [1.2.0] - 2021-01-25
 
 ### Added
 - Added the major feature of actuators related interfaces that is discussed in issue (https://github.com/robotology/wearables/issues/104). The related PR (https://github.com/robotology/wearables/pull/105) adds the following changes:
@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Add wearable actuator command thrift messages
   - Add `IWearActuatorsWrapper` device which provides yarp port to communicate wearable actuator commands
   - Update `Paexo` device with one wearable actuator motor implementation, and add a test application
+
+## [1.1.1] - 2021-01-18
 
 ### Added
 - Added documentation for compiling the project in the `README.md` (https://github.com/robotology/wearables/pull/96)
