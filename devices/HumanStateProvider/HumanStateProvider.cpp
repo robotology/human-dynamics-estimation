@@ -226,6 +226,7 @@ public:
 
     // Secondary calibration
     std::unordered_map<std::string, iDynTree::Rotation> secondaryCalibrationRotations;
+    std::unordered_map<std::string, iDynTree::Position> secondaryCalibrationPositions;
     void eraseSecondaryCalibration(const std::string& linkName);
     void selectChainJointsAndLinksForSecondaryCalibration(const std::string& linkName, const std::string& childLinkName,
                                                   std::vector<iDynTree::JointIndex>& jointZeroIndices, std::vector<iDynTree::LinkIndex>& linkToCalibrateIndices);
@@ -1267,11 +1268,18 @@ void HumanStateProvider::impl::eraseSecondaryCalibration(const std::string& link
 {
     if (linkName == "") {
         secondaryCalibrationRotations.clear();
+        secondaryCalibrationPositions.clear();
         yInfo() << LogPrefix << "Discarding all the secondary calibration matrices";
     }
-    else if ((secondaryCalibrationRotations.find(linkName) != secondaryCalibrationRotations.end())) {
-        secondaryCalibrationRotations.erase(linkName);
-        yInfo() << LogPrefix << "Discarding the secondary calibration matrix for link " << linkName;
+    else {
+        if ((secondaryCalibrationRotations.find(linkName) != secondaryCalibrationRotations.end())) {
+            secondaryCalibrationRotations.erase(linkName);
+            yInfo() << LogPrefix << "Discarding the secondary calibration rotation matrix for link " << linkName;
+        }
+        if ((secondaryCalibrationPositions.find(linkName) != secondaryCalibrationPositions.end())) {
+            secondaryCalibrationPositions.erase(linkName);
+            yInfo() << LogPrefix << "Discarding the secondary calibration position matrix for link " << linkName;
+        }
     }
 
 }
@@ -1353,11 +1361,18 @@ void HumanStateProvider::impl::computeSecondaryCalibrationRotationsForChain(cons
         if (!(wearableStorage.modelToWearable_LinkName.find(linkToCalibrateName) == wearableStorage.modelToWearable_LinkName.end())) {
             // discarding previous calibration
             eraseSecondaryCalibration(linkToCalibrateName);
-            // computing new calibration
-            iDynTree::Rotation linkRotationZero = kinDynComputations->getWorldTransform(linkToCalibrateName).getRotation();
-            iDynTree::Rotation secondaryCalibrationRotation = linkTransformMatricesRaw.at(linkToCalibrateName).getRotation().inverse() * linkRotationZero;
+
+            iDynTree::Transform linkTransformZero = kinDynComputations->getWorldTransform(linkToCalibrateName);
+
+            // computing new calibration for orientation
+            iDynTree::Rotation secondaryCalibrationRotation = linkTransformMatricesRaw.at(linkToCalibrateName).getRotation().inverse() * linkTransformZero.getRotation();
+
+            // compute secondary calibration for position
+            iDynTree::Position secondaryCalibrationPosition = linkTransformZero.getPosition() - linkTransformMatricesRaw.at(linkToCalibrateName).getPosition();
+
             // add new calibration
             secondaryCalibrationRotations.emplace(linkToCalibrateName,secondaryCalibrationRotation);
+            secondaryCalibrationPositions.emplace(linkToCalibrateName,secondaryCalibrationPosition);
             yInfo() << LogPrefix << "secondary calibration for " << linkToCalibrateName << " is set";
         }
     }
@@ -1530,6 +1545,8 @@ bool HumanStateProvider::impl::applySecondaryCalibration(
     transforms_out = transforms_in;
     for (const auto& linkMapEntry : wearableStorage.modelToWearable_LinkName) {
         const ModelLinkName& modelLinkName = linkMapEntry.first;
+
+        // Apply secondary calibration for rotation
         auto secondaryCalibrationRotationsIt = secondaryCalibrationRotations.find(modelLinkName);
         if (!(secondaryCalibrationRotationsIt
               == secondaryCalibrationRotations.end())) {
@@ -1537,6 +1554,18 @@ bool HumanStateProvider::impl::applySecondaryCalibration(
             iDynTree::Transform calibrationTransform;
             calibrationTransform.setPosition(iDynTree::Position(0,0,0));
             calibrationTransform.setRotation(secondaryCalibrationRotationsIt->second);
+
+            transforms_out[modelLinkName] = transforms_out[modelLinkName] * calibrationTransform;
+        }
+
+        // Apply secondary calibration for position
+        auto secondaryCalibrationPositionsIt = secondaryCalibrationPositions.find(modelLinkName);
+        if (!(secondaryCalibrationPositionsIt
+              == secondaryCalibrationPositions.end())) {
+            
+            iDynTree::Transform calibrationTransform;
+            calibrationTransform.setPosition(secondaryCalibrationPositionsIt->second);
+            calibrationTransform.setRotation(iDynTree::Rotation::Identity());
 
             transforms_out[modelLinkName] = transforms_out[modelLinkName] * calibrationTransform;
         }
