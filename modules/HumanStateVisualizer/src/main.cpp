@@ -51,7 +51,7 @@ int main()
     viz.init(options);
 
     viz.camera().setPosition(iDynTree::Position(2, 0, 0.5));
-    viz.camera().setTarget(iDynTree::Position(-0.15, -1.0, 0.15));
+    viz.camera().setTarget(iDynTree::Position(0, 0, 0));
 
     viz.addModel(modelLoader.model(), "human");
 
@@ -142,6 +142,10 @@ int main()
                 joints.setVal(jointIndex, jointVal);
             }
         }
+
+        viz.camera().setPosition(position + iDynTree::Position(2, 0, 0.5));
+        viz.camera().setTarget(position);
+        
 
         // Update the visulizer
         viz.modelViz("human").setPositions(wHb, joints);
