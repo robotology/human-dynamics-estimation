@@ -1,8 +1,15 @@
-# HDE xml files installation
 set (HDE_PROJECT_NAME HumanDynamicsEstimation)
+
+# HDE xml files installation
 file (GLOB HDE_XML_FILES xml/*.xml)
 
 install(FILES ${HDE_XML_FILES}
+             DESTINATION ${CMAKE_INSTALL_PREFIX}/share/${HDE_PROJECT_NAME}/)
+
+# HDE ini files installation
+file (GLOB HDE_INI_FILES app/*.ini)
+
+install(FILES ${HDE_INI_FILES}
              DESTINATION ${CMAKE_INSTALL_PREFIX}/share/${HDE_PROJECT_NAME}/)
 
 # Install yarpmanager application files
