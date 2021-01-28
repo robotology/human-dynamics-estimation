@@ -22,6 +22,8 @@ endif()
 include(GNUInstallDirs)
 include(CTest)
 
+option(HUMANSTATEPROVIDER_ENABLE_VISUALIZER "Enable the iDyntree-irricht based Human State Visualizer" OFF)
+
 option(BUILD_TESTING "Build tests" OFF)
 
 # Find packages needed for this main CMakeLists.txt.
