@@ -21,12 +21,58 @@
 #include <chrono>
 #include <cmath>
 #include <thread>
+#include <csignal>
 
 const std::string ModuleName = "HumanStateVisualizer";
 const std::string LogPrefix = ModuleName + " :";
 
+std::atomic<bool> isClosing{false};
+
+void my_handler(int signal)
+{
+    isClosing = true;
+}
+
+#ifdef WIN32
+
+#include <windows.h>
+
+BOOL WINAPI CtrlHandler(DWORD fdwCtrlType)
+{
+    switch (fdwCtrlType) {
+        // Handle the CTRL-C signal.
+    case CTRL_C_EVENT:
+    case CTRL_CLOSE_EVENT:
+    case CTRL_SHUTDOWN_EVENT:
+        my_handler(0);
+        return TRUE;
+
+    // Handle all other events
+    default:
+        return FALSE;
+    }
+}
+#endif
+
+void handleSigInt()
+{
+#ifdef WIN32
+    SetConsoleCtrlHandler(CtrlHandler, TRUE);
+#else
+    struct sigaction action;
+    memset(&action, 0, sizeof(action));
+    action.sa_handler = &my_handler;
+    sigaction(SIGINT, &action, NULL);
+    sigaction(SIGTERM, &action, NULL);
+    sigaction(SIGABRT, &action, NULL);
+#endif
+}
+
 int main(int argc, char* argv[])
 {
+
+    // Listen to signals for closing in a clean way the application
+    handleSigInt();
 
     // parse the configuraiton options
     yarp::os::ResourceFinder& rf = yarp::os::ResourceFinder::getResourceFinderSingleton();
@@ -102,10 +148,9 @@ int main(int argc, char* argv[])
 
 
     // load model
-    const std::string urdfFileName = urdfFile;
-    std::string urdfFilePath = rf.findFile(urdfFileName);
+    std::string urdfFilePath = rf.findFile(urdfFile);
     if (urdfFilePath.empty()) {
-        yError() << LogPrefix << "Failed to find file" << urdfFileName;
+        yError() << LogPrefix << "Failed to find file" << urdfFile;
         return EXIT_FAILURE;
     }
 
@@ -201,7 +246,7 @@ int main(int argc, char* argv[])
 
     long minimumMicroSecViz = std::round(1e6 / (double) maxVisualizationFPS);
 
-    while(viz.run())
+    while(viz.run() && !isClosing)
     {
         now = std::chrono::steady_clock::now();
         if (std::chrono::duration_cast<std::chrono::microseconds>(now - lastViz).count() < minimumMicroSecViz)
@@ -257,6 +302,7 @@ int main(int argc, char* argv[])
         lastViz = std::chrono::steady_clock::now();
     }
 
+    viz.close();
     remapperDevice.close();
 
     return 0;
