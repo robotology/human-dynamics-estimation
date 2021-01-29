@@ -186,6 +186,11 @@ int main(int argc, char* argv[])
     }
 
     // initialize state variables for visualization
+    std::array<double, 3> basePositionInterface;
+    std::array<double, 4> baseOrientationInterface;
+    std::vector<double> jointPositionsInterface;
+    std::vector<std::string> jointNames;
+
     iDynTree::Transform wHb = iDynTree::Transform::Identity();
     iDynTree::VectorDynSize joints(viz.modelViz("human").model().getNrOfDOFs());
     joints.zero();
@@ -206,11 +211,10 @@ int main(int argc, char* argv[])
         }
 
         // read values from iHumanState
-        std::array<double, 3> basePositionInterface = iHumanState->getBasePosition();
-        std::array<double, 4> baseOrientationInterface = iHumanState->getBaseOrientation();
-        std::vector<double> jointPositionsInterface = iHumanState->getJointPositions();
-        std::vector<std::string> jointNames = iHumanState->getJointNames();
-        std::string baseName = iHumanState->getBaseName();
+        basePositionInterface = iHumanState->getBasePosition();
+        baseOrientationInterface = iHumanState->getBaseOrientation();
+        jointPositionsInterface = iHumanState->getJointPositions();
+        jointNames = iHumanState->getJointNames();
 
         iDynTree::Vector4 baseOrientationQuaternion;
         baseOrientationQuaternion.setVal(0, baseOrientationInterface.at(0));
