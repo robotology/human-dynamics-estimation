@@ -1,0 +1,13 @@
+<launch>
+    <arg name="Robot"/>
+    <arg name="gui" default="False"/>
+    <arg name="vel" default="True"/>
+    <arg name="eff" default="True"/>
+    <arg name="robotModel" default="$(find HDERviz)/urdfs/teleoperation_iCub_model_V_3.urdf  "/>
+    <arg name="rvizconfig" default="$(find HDERviz)/rviz/iCubRviz.rviz" />
+
+    <param name="robot_description" command="$(find xacro)/xacro --inorder $(arg robotModel)" />
+    <param name="use_gui" value="$(arg gui)"/>
+
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" />
+</launch>

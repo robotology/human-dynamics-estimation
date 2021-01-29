@@ -45,6 +45,7 @@ For installing the dependencies you can decide to install them individually or t
 
 #### Optional dependencies
 - [**ROS**](http://wiki.ros.org) with [**rviz**](http://wiki.ros.org/rviz) package: an open-source provider of libraries and tools for creating robot applications.
+- [**irrlicht**](http://irrlicht.sourceforge.net/) and [**iDynTree**](https://github.com/robotology/idyntree) compiled with `IDYNTREE_USES_IRRLICHT` enabled: visualizer for floating-base rigid-body systems.
 
 ## How to install
 After installing all the dependencies, you can install the HDE project:
@@ -58,6 +59,8 @@ cd build
 cmake -DCMAKE_INSTALL_PREFIX=/path/to/your/installation/folder -G "name-of-your-cmake-generator" ..
 ```
 where the `name-of-your-cmake-generator` is your project generator, see [Cmake-Generators](https://cmake.org/cmake/help/latest/manual/cmake-generators.7.html). For example, on macOS you may choose `Xcode`, or on Unix `Unix Makefiles`.
+You can configure the following optional cmake options:
+- `HUMANSTATEPROVIDER_ENABLE_VISUALIZER`: enables the `irricht`-based iDynTree Visualizer
 
 Then, for compiling
 ```

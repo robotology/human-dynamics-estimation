@@ -73,11 +73,7 @@ using WearableJointName = std::string;
 
 using InverseVelocityKinematicsSolverName = std::string;
 
-struct FloatingBaseName
-{
-    std::string model;
-    std::string wearable;
-};
+using FloatingBaseName = std::string;
 
 struct WearableJointInfo
 {
@@ -113,12 +109,20 @@ enum SolverIK
     integrationbased
 };
 
+enum rpcCommand
+{
+    empty,
+    calibrate,
+    calibrateAll,
+    calibrateSubTree,
+    calibrateRelativeLink,
+    setRotationOffset,
+    resetCalibration,
+};
+
 // Container of data coming from the wearable interface
 struct WearableStorage
 {
-    // Sensor associated with the base
-    SensorPtr<const sensor::IVirtualLinkKinSensor> baseLinkSensor;
-
     // Maps [model joint / link name] ==> [wearable virtual sensor name]
     //
     // E.g. [Pelvis] ==> [XsensSuit::vLink::Pelvis]. Read from the configuration.
@@ -221,14 +225,16 @@ public:
 
     // Secondary calibration
     std::unordered_map<std::string, iDynTree::Rotation> secondaryCalibrationRotations;
-    void ereaseSecondaryCalibration(const std::string& linkName);
-    void selectJointsAndLinksForSecondaryCalibration(const std::string& linkName, const std::string& childLinkName,
-                                                  std::vector<iDynTree::JointIndex> jointZeroIndices, std::vector<iDynTree::LinkIndex> linkToCalibrateIndices);
-    void computeSecondaryCalibrationRotations(const std::vector<iDynTree::JointIndex>& jointZeroIndices, const std::vector<iDynTree::LinkIndex>& linkToCalibrateIndices);
+    void eraseSecondaryCalibration(const std::string& linkName);
+    void selectChainJointsAndLinksForSecondaryCalibration(const std::string& linkName, const std::string& childLinkName,
+                                                  std::vector<iDynTree::JointIndex>& jointZeroIndices, std::vector<iDynTree::LinkIndex>& linkToCalibrateIndices);
+    void computeSecondaryCalibrationRotationsForChain(const std::vector<iDynTree::JointIndex>& jointZeroIndices, const iDynTree::Transform &baseTransform, const std::vector<iDynTree::LinkIndex>& linkToCalibrateIndices);
 
     SolverIK ikSolver;
 
+    // flags
     bool useDirectBaseMeasurement;
+    bool useFixedBase;
 
     iDynTree::InverseKinematics globalIK;
     InverseVelocityKinematics inverseVelocityKinematics;
@@ -291,58 +297,74 @@ class HumanStateProvider::impl::CmdParser : public yarp::os::PortReader
 {
 
 public:
-    std::atomic<bool> cmdStatus{false};
-    std::atomic<bool> cmdErease{false};
+    std::atomic<rpcCommand> cmdStatus{rpcCommand::empty};
     std::string parentLinkName;
     std::string childLinkName;
+    // variables for manual calibration
+    std::atomic<double> roll;  // [deg]
+    std::atomic<double> pitch; // [deg]
+    std::atomic<double> yaw;   // [deg]
 
     void resetInternalVariables()
     {
         parentLinkName = "";
         childLinkName = "";
-        cmdStatus = false;
-        cmdErease = false;
+        cmdStatus = rpcCommand::empty;
     }
 
     bool read(yarp::os::ConnectionReader& connection) override
     {
         yarp::os::Bottle command, response;
         if (command.read(connection)) {
-
             if (command.get(0).asString() == "help") {
                 response.addVocab(yarp::os::Vocab::encode("many"));
                 response.addString("The following commands can be used to apply a secondary calibration assuming the subject is in the zero configuration of the model for the calibrated links. \n");
-                response.addString("Enter <calibrate> to apply a secondary calibration for all the links \n");
+                response.addString("Enter <calibrateAll> to apply a secondary calibration for all the links \n");
                 response.addString("Enter <calibrate <linkName>> to apply a secondary calibration for the given link \n");
-                response.addString("Enter <calibrate <parentLinkName> <childLinkName>> to apply a secondary calibration for the given chain \n");
+                response.addString("Enter <setRotationOffset <linkName> <r p y [deg]>> to apply a secondary calibration for the given link using the given rotation offset (defined using rpy)\n");
+                response.addString("Enter <calibrateSubTree <parentLinkName> <childLinkName>> to apply a secondary calibration for the given chain \n");
+                response.addString("Enter <calibrateRelativeLink <parentLinkName> <childLinkName>> to apply a secondary calibration for the child link using the parent link as reference \n");
                 response.addString("Enter <reset <linkName>> to remove secondary calibration for the given link \n");
-                response.addString("Enter <reset> to remove all the secondary calibrations");
+                response.addString("Enter <resetAll> to remove all the secondary calibrations");
             }
-            else if (command.get(0).asString() == "calibrate" && !command.get(1).isNull() && !command.get(2).isNull()) {
+            else if (command.get(0).asString() == "calibrateRelativeLink" && !command.get(1).isNull() && !command.get(2).isNull()) {
                 this->parentLinkName = command.get(1).asString();
                 this->childLinkName = command.get(2).asString();
-                response.addString("Entered command <calibrate> is correct, setting the offset for the chain from " + this->parentLinkName + " to " + this->childLinkName);
-                this->cmdStatus = true;
+                response.addString("Entered command <calibrateRelativeLink> is correct, trying to set offset of " + this->childLinkName + " using " + this->parentLinkName + " as reference");
+                this->cmdStatus = rpcCommand::calibrateRelativeLink;
             }
-            else if (command.get(0).asString() == "calibrate" && !command.get(1).isNull()) {
+            else if (command.get(0).asString() == "calibrateSubTree" && !command.get(1).isNull() && !command.get(2).isNull()) {
                 this->parentLinkName = command.get(1).asString();
-                response.addString("Entered command <calibrate> is correct, setting the offset calibration for the link " + this->parentLinkName);
-                this->cmdStatus = true;
+                this->childLinkName = command.get(2).asString();
+                response.addString("Entered command <calibrateSubTree> is correct, trying to set offset for the chain from " + this->parentLinkName + " to " + this->childLinkName);
+                this->cmdStatus = rpcCommand::calibrateSubTree;
             }
-            else if (command.get(0).asString() == "calibrate") {
-                response.addString("Setting the offset calibartion for all the links");
-                this->cmdStatus = true;
+            else if (command.get(0).asString() == "calibrateAll") {
+                this->parentLinkName = command.get(1).asString();
+                response.addString("Entered command <calibrateAll> is correct, trying to set offset calibartion for all the links");
+                this->cmdStatus = rpcCommand::calibrateAll;
             }
-            else if (command.get(0).asString() == "reset" && command.get(1).isNull()) {
-                response.addString("Entered command <reset> is correct, removing all the secondary calibrations ");
-                this->cmdStatus = true;
-                this->cmdErease = true;
+            else if (command.get(0).asString() == "calibrate" && !(command.get(1).isNull())) {
+                this->parentLinkName = command.get(1).asString();
+                response.addString("Entered command <calibrate> is correct, trying to set offset calibration for the link " + this->parentLinkName);
+                this->cmdStatus = rpcCommand::calibrate;
+            }
+            else if (command.get(0).asString() == "setRotationOffset" && !command.get(1).isNull() && command.get(2).isDouble() && command.get(3).isDouble() && command.get(4).isDouble()) {
+                this->parentLinkName = command.get(1).asString();
+                this->roll = command.get(2).asDouble();
+                this->pitch = command.get(3).asDouble();
+                this->yaw = command.get(4).asDouble();
+                response.addString("Entered command <calibrate> is correct, trying to set rotation offset for the link " + this->parentLinkName);
+                this->cmdStatus = rpcCommand::setRotationOffset;
+            }
+            else if (command.get(0).asString() == "resetAll") {
+                response.addString("Entered command <resetAll> is correct, removing all the secondary calibrations ");
+                this->cmdStatus = rpcCommand::resetCalibration;
             }
             else if (command.get(0).asString() == "reset" && !command.get(1).isNull()) {
                 this->parentLinkName = command.get(1).asString();
-                response.addString("Entered command <reset> is correct, removing the secondaty calibration for the link " + this->parentLinkName);
-                this->cmdStatus = true;
-                this->cmdErease = true;
+                response.addString("Entered command <reset> is correct, trying to remove secondaty calibration for the link " + this->parentLinkName);
+                this->cmdStatus = rpcCommand::resetCalibration;
             }
             else {
                 response.addString(
@@ -411,9 +433,27 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         return false;
     }
 
-    if (!(config.check("floatingBaseFrame") && config.find("floatingBaseFrame").isList()
-          && config.find("floatingBaseFrame").asList()->size() == 2)) {
-        yError() << LogPrefix << "floatingBaseFrame option not found or not valid";
+    std::string baseFrameName;
+    if(config.check("floatingBaseFrame") && config.find("floatingBaseFrame").isList() ) {
+              baseFrameName = config.find("floatingBaseFrame").asList()->get(0).asString();
+              pImpl->useFixedBase = false;
+              yWarning() << LogPrefix << "'floatingBaseFrame' configuration option as list is deprecated. Please use a string with the model base name only.";
+    }
+    else if(config.check("floatingBaseFrame") && config.find("floatingBaseFrame").isString() ) {
+              baseFrameName = config.find("floatingBaseFrame").asString();
+              pImpl->useFixedBase = false;
+    }
+    else if(config.check("fixedBaseFrame") && config.find("fixedBaseFrame").isList() ) {
+              baseFrameName = config.find("fixedBaseFrame").asList()->get(0).asString();
+              pImpl->useFixedBase = true;
+              yWarning() << LogPrefix << "'fixedBaseFrame' configuration option as list is deprecated. Please use a string with the model base name only.";
+    }
+    else if(config.check("fixedBaseFrame") && config.find("fixedBaseFrame").isString() ) {
+              baseFrameName = config.find("fixedBaseFrame").asString();
+              pImpl->useFixedBase = true;
+    }
+    else {
+        yError() << LogPrefix << "BaseFrame option not found or not valid";
         return false;
     }
 
@@ -455,11 +495,9 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         return false;
     }
 
-    yarp::os::Bottle* floatingBaseFrameList = config.find("floatingBaseFrame").asList();
     pImpl->useXsensJointsAngles = config.find("useXsensJointsAngles").asBool();
     const std::string urdfFileName = config.find("urdf").asString();
-    pImpl->floatingBaseFrame.model = floatingBaseFrameList->get(0).asString();
-    pImpl->floatingBaseFrame.wearable = floatingBaseFrameList->get(1).asString();
+    pImpl->floatingBaseFrame = baseFrameName;
     pImpl->period = config.check("period", yarp::os::Value(DefaultPeriod)).asFloat64();
 
     setPeriod(pImpl->period);
@@ -767,7 +805,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     pImpl->kinDynComputations =
         std::unique_ptr<iDynTree::KinDynComputations>(new iDynTree::KinDynComputations());
     pImpl->kinDynComputations->loadRobotModel(modelLoader.model());
-    pImpl->kinDynComputations->setFloatingBase(pImpl->floatingBaseFrame.model);
+    pImpl->kinDynComputations->setFloatingBase(pImpl->floatingBaseFrame);
 
     // =========================
     // INITIALIZE JOINTS BUFFERS
@@ -785,7 +823,11 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     pImpl->jointVelocitiesSolution.resize(nrOfDOFs);
     pImpl->jointVelocitiesSolution.zero();
 
-    pImpl->baseTransformSolution.setRotation(iDynTree::Rotation::Identity());
+    // =======================
+    // INITIALIZE BASE BUFFERS
+    // =======================
+    pImpl->baseTransformSolution = iDynTree::Transform::Identity();
+    pImpl->baseVelocitySolution.zero();
 
     // ================================================
     // INITIALIZE CUSTOM CONSTRAINTS FOR INTEGRATION-IK
@@ -963,6 +1005,16 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         yInfo() << "CUSTOM CONSTRAINTS are not defined in xml file.";
     }
 
+    // set base velocity constraint to zero if the base is fixed
+    if (pImpl->useFixedBase) {
+        pImpl->baseVelocityLowerLimit.resize(6);
+        pImpl->baseVelocityLowerLimit.zero();
+        pImpl->baseVelocityUpperLimit.resize(6);
+        pImpl->baseVelocityUpperLimit.zero();
+
+        yInfo() << "Using fixed base model, base velocity limits are set to zero";
+    }
+
     // check sizes
     if (pImpl->custom_jointsVelocityLimitsNames.size()
         != pImpl->custom_jointsVelocityLimitsValues.size()) {
@@ -1081,14 +1133,6 @@ void HumanStateProvider::run()
         return;
     }
 
-    // Get base transform from the suit
-    iDynTree::Transform measuredBaseTransform;
-    measuredBaseTransform = pImpl->linkTransformMatrices.at(pImpl->floatingBaseFrame.model);
-
-    // Get base velocity from the suit
-    iDynTree::Twist measuredBaseVelocity;
-    measuredBaseVelocity = pImpl->linkVelocities.at(pImpl->floatingBaseFrame.model);
-
     // If useXsensJointAngles is true get joint angles from input data
     if (pImpl->useXsensJointsAngles) {
         if (pImpl->getJointAnglesFromInputData(pImpl->jointConfigurationSolution)) {
@@ -1128,10 +1172,15 @@ void HumanStateProvider::run()
     yDebug() << LogPrefix << "IK took"
              << std::chrono::duration_cast<std::chrono::milliseconds>(tock - tick).count() << "ms";
 
-    // If useDirectBaseMeasurement is true, set the measured base pose and velocity as solution
-    if (pImpl->useDirectBaseMeasurement) {
-        pImpl->baseTransformSolution = measuredBaseTransform;
-        pImpl->baseVelocitySolution = measuredBaseVelocity;
+    // If useDirectBaseMeasurement is true, directly use the measured base pose and velocity. If useFixedBase is also enabled,
+    // identity transform and zero velocity will be used.
+    if (pImpl->useFixedBase) {
+        pImpl->baseTransformSolution = iDynTree::Transform::Identity();
+        pImpl->baseVelocitySolution.zero();
+    }
+    else if (pImpl->useDirectBaseMeasurement) {
+        pImpl->baseTransformSolution = pImpl->linkTransformMatrices.at(pImpl->floatingBaseFrame);
+        pImpl->baseVelocitySolution = pImpl->linkVelocities.at(pImpl->floatingBaseFrame);
     }
 
     // CoM position and velocity
@@ -1177,7 +1226,7 @@ void HumanStateProvider::run()
     }
 
     // Check for rpc command status and apply command
-    if (pImpl->commandPro->cmdStatus) {
+    if (pImpl->commandPro->cmdStatus != rpcCommand::empty) {
 
         // Apply rpc command
         if (!pImpl->applyRpcCommand()) {
@@ -1205,33 +1254,23 @@ void HumanStateProvider::run()
     //                                          pImpl->linkErrorAngularVelocities);
 }
 
-void HumanStateProvider::impl::ereaseSecondaryCalibration(const std::string& linkName)
+void HumanStateProvider::impl::eraseSecondaryCalibration(const std::string& linkName)
 {
-    if (linkName != "") {
-        secondaryCalibrationRotations.erase(linkName);
-        yInfo() << LogPrefix << "Discarding the secondary calibration matrix for link " << linkName;
-    }
-    else {
+    if (linkName == "") {
         secondaryCalibrationRotations.clear();
         yInfo() << LogPrefix << "Discarding all the secondary calibration matrices";
     }
+    else if ((secondaryCalibrationRotations.find(linkName) != secondaryCalibrationRotations.end())) {
+        secondaryCalibrationRotations.erase(linkName);
+        yInfo() << LogPrefix << "Discarding the secondary calibration matrix for link " << linkName;
+    }
+
 }
 
-void HumanStateProvider::impl::selectJointsAndLinksForSecondaryCalibration(const std::string& linkName, const std::string& childLinkName,
-                                              std::vector<iDynTree::JointIndex> jointZeroIndices, std::vector<iDynTree::LinkIndex> linkToCalibrateIndices)
+void HumanStateProvider::impl::selectChainJointsAndLinksForSecondaryCalibration(const std::string& linkName, const std::string& childLinkName,
+                                              std::vector<iDynTree::JointIndex>& jointZeroIndices, std::vector<iDynTree::LinkIndex>& linkToCalibrateIndices)
 {
-    if (linkName == "") {
-        // Select all the links and the joints
-
-        // add all the links of the model to [linkToCalibrateIndices]
-        linkToCalibrateIndices.resize(kinDynComputations->getNrOfLinks());
-        std::iota(linkToCalibrateIndices.begin(), linkToCalibrateIndices.end(), 0);
-
-        // add all the joints of the model to [jointZeroIndices]
-        jointZeroIndices.resize(kinDynComputations->getNrOfDegreesOfFreedom());
-        std::iota(jointZeroIndices.begin(), jointZeroIndices.end(), 0);
-    }
-    else if (childLinkName == "") {
+    if (childLinkName == "") {
         // Select the chosen link [linkName] and the joints between the link and its parend link
 
         // add link to [linkToCalibrateIndices]
@@ -1272,27 +1311,30 @@ void HumanStateProvider::impl::selectJointsAndLinksForSecondaryCalibration(const
     }
 }
 
-void HumanStateProvider::impl::computeSecondaryCalibrationRotations(const std::vector<iDynTree::JointIndex>& jointZeroIndices, const std::vector<iDynTree::LinkIndex>& linkToCalibrateIndices)
+void HumanStateProvider::impl::computeSecondaryCalibrationRotationsForChain(const std::vector<iDynTree::JointIndex>& jointZeroIndices, const iDynTree::Transform& baseTransform, const std::vector<iDynTree::LinkIndex>& linkToCalibrateIndices)
 {
-    // setting to zero all the selected joints
+    // initialize vectors
     iDynTree::VectorDynSize jointPos(jointConfigurationSolution);
+    iDynTree::VectorDynSize jointVel(jointVelocitiesSolution);
+    jointVel.zero();
+    iDynTree::Twist baseVel;
+    baseVel.zero();
+
+    // setting to zero all the selected joints
     for (auto const& jointZeroIdx: jointZeroIndices) {
         jointPos.setVal(jointZeroIdx, 0);
     }
-    kinDynComputations->setJointPos(jointPos);
+    kinDynComputations->setRobotState(baseTransform, jointPos, baseVel, jointVel, worldGravity);
 
     // computing the secondary calibration matrices
     for (auto const& linkToCalibrateIdx: linkToCalibrateIndices) {
+
         std::string linkToCalibrateName = kinDynComputations->model().getLinkName(linkToCalibrateIdx);
         if (!(wearableStorage.modelToWearable_LinkName.find(linkToCalibrateName) == wearableStorage.modelToWearable_LinkName.end())) {
             // discarding previous calibration
-            if (!(secondaryCalibrationRotations.find(linkToCalibrateName) == secondaryCalibrationRotations.end()))
-            {
-                yWarning() << LogPrefix << "discarting previous secondary calibration for " << linkToCalibrateName;
-                secondaryCalibrationRotations.erase(linkToCalibrateName);
-            }
+            eraseSecondaryCalibration(linkToCalibrateName);
             // computing new calibration
-            iDynTree::Rotation linkRotationZero = kinDynComputations->getWorldTransform(kinDynComputations->model().getLinkIndex(linkToCalibrateName)).getRotation();
+            iDynTree::Rotation linkRotationZero = kinDynComputations->getWorldTransform(linkToCalibrateName).getRotation();
             iDynTree::Rotation secondaryCalibrationRotation = linkTransformMatricesRaw.at(linkToCalibrateName).getRotation().inverse() * linkRotationZero;
             // add new calibration
             secondaryCalibrationRotations.emplace(linkToCalibrateName,secondaryCalibrationRotation);
@@ -1315,20 +1357,72 @@ bool HumanStateProvider::impl::applyRpcCommand()
         return false;
     }
 
-    if (commandPro->cmdErease) {
-        ereaseSecondaryCalibration(linkName);
-        return true;
+    // initialize buffer variable for calibration
+    std::vector<iDynTree::JointIndex> jointZeroIndices;
+    std::vector<iDynTree::LinkIndex> linkToCalibrateIndices;
+    iDynTree::Rotation secondaryCalibrationRotation;
+
+    switch(commandPro->cmdStatus) {
+    case rpcCommand::resetCalibration: {
+        eraseSecondaryCalibration(linkName);
+        break;
     }
-    else {
-        // Select the joints to be set to zero and the link to be add the secondary calibration
-        std::vector<iDynTree::JointIndex> jointZeroIndices;
-        std::vector<iDynTree::LinkIndex> linkToCalibrateIndices;
-        selectJointsAndLinksForSecondaryCalibration(linkName, childLinkName, jointZeroIndices, linkToCalibrateIndices);
+    case rpcCommand::calibrateAll: {
+        // Select all the links and the joints
+        // add all the links of the model to [linkToCalibrateIndices]
+        linkToCalibrateIndices.resize(kinDynComputations->getNrOfLinks());
+        std::iota(linkToCalibrateIndices.begin(), linkToCalibrateIndices.end(), 0);
+
+        // add all the joints of the model to [jointZeroIndices]
+        jointZeroIndices.resize(kinDynComputations->getNrOfDegreesOfFreedom());
+        std::iota(jointZeroIndices.begin(), jointZeroIndices.end(), 0);
 
         // Compute secondary calibration for the selected links setting to zero the given joints
-        computeSecondaryCalibrationRotations(jointZeroIndices, linkToCalibrateIndices);
-        return true;
+        computeSecondaryCalibrationRotationsForChain(jointZeroIndices, baseTransformSolution, linkToCalibrateIndices);
+        break;
     }
+    case rpcCommand::calibrate: {
+        // Select the joints to be set to zero and the link to be add the secondary calibration
+        selectChainJointsAndLinksForSecondaryCalibration(linkName, childLinkName, jointZeroIndices, linkToCalibrateIndices);
+        // Compute secondary calibration for the selected links setting to zero the given joints
+        computeSecondaryCalibrationRotationsForChain(jointZeroIndices, baseTransformSolution, linkToCalibrateIndices);
+        break;
+    }
+    case rpcCommand::calibrateSubTree: {
+        // Select the joints to be set to zero and the link to be add the secondary calibration
+        selectChainJointsAndLinksForSecondaryCalibration(linkName, childLinkName, jointZeroIndices, linkToCalibrateIndices);
+        // Compute secondary calibration for the selected links setting to zero the given joints
+        computeSecondaryCalibrationRotationsForChain(jointZeroIndices, baseTransformSolution, linkToCalibrateIndices);
+    }
+    case rpcCommand::calibrateRelativeLink: {
+        eraseSecondaryCalibration(childLinkName);
+        // Compute the relative transform at zero configuration
+        // setting to zero all the joints
+        iDynTree::VectorDynSize jointPos;
+        jointPos.resize(jointConfigurationSolution.size());
+        jointPos.zero();
+        kinDynComputations->setJointPos(jointPos);
+        iDynTree::Rotation relativeRotationZero = kinDynComputations->getWorldTransform(linkName).getRotation().inverse() * kinDynComputations->getWorldTransform(childLinkName).getRotation();
+        secondaryCalibrationRotation = linkTransformMatricesRaw.at(childLinkName).getRotation().inverse() * linkTransformMatrices.at(linkName).getRotation() * relativeRotationZero;
+        secondaryCalibrationRotations.emplace(childLinkName,secondaryCalibrationRotation);
+        yInfo() << LogPrefix << "secondary calibration for " << childLinkName << " is set";
+        break;
+     }
+    case rpcCommand::setRotationOffset: {
+        eraseSecondaryCalibration(linkName);
+        secondaryCalibrationRotation = iDynTree::Rotation::RPY( 3.14 * commandPro->roll / 180 , 3.14 * commandPro->pitch / 180 , 3.14 * commandPro->yaw / 180 );
+        // add new calibration
+        secondaryCalibrationRotations.emplace(linkName,secondaryCalibrationRotation);
+        yInfo() << LogPrefix << "secondary calibration for " << linkName << " is set";
+        break;
+    }
+    default: {
+        yWarning() << LogPrefix << "Command not valid";
+        return false;
+    }
+    }
+
+    return true;
 }
 
 bool HumanStateProvider::impl::getLinkTransformFromInputData(
@@ -1397,10 +1491,12 @@ bool HumanStateProvider::impl::applySecondaryCalibration(
         auto secondaryCalibrationRotationsIt = secondaryCalibrationRotations.find(modelLinkName);
         if (!(secondaryCalibrationRotationsIt
               == secondaryCalibrationRotations.end())) {
-            iDynTree::Rotation rotation = transforms_out[modelLinkName].getRotation();
-            rotation = rotation * secondaryCalibrationRotationsIt->second;
 
-            transforms_out[modelLinkName].setRotation(rotation);
+            iDynTree::Transform calibrationTransform;
+            calibrationTransform.setPosition(iDynTree::Position(0,0,0));
+            calibrationTransform.setRotation(secondaryCalibrationRotationsIt->second);
+
+            transforms_out[modelLinkName] = transforms_out[modelLinkName] * calibrationTransform;
         }
     }
 
@@ -1713,9 +1809,9 @@ bool HumanStateProvider::impl::initializeGlobalInverseKinematicsSolver()
         return false;
     }
 
-    if (!globalIK.setFloatingBaseOnFrameNamed(floatingBaseFrame.model)) {
+    if (!globalIK.setFloatingBaseOnFrameNamed(floatingBaseFrame)) {
         yError() << LogPrefix << "Failed to set the globalIK floating base frame on link"
-                 << floatingBaseFrame.model;
+                 << floatingBaseFrame;
         return false;
     }
 
@@ -1733,9 +1829,9 @@ bool HumanStateProvider::impl::initializeGlobalInverseKinematicsSolver()
         return false;
     }
 
-    if (!inverseVelocityKinematics.setFloatingBaseOnFrameNamed(floatingBaseFrame.model)) {
+    if (!inverseVelocityKinematics.setFloatingBaseOnFrameNamed(floatingBaseFrame)) {
         yError() << LogPrefix << "Failed to set the IBIK floating base frame on link"
-                 << floatingBaseFrame.model;
+                 << floatingBaseFrame;
         return false;
     }
 
@@ -1774,9 +1870,9 @@ bool HumanStateProvider::impl::initializeIntegrationBasedInverseKinematicsSolver
         return false;
     }
 
-    if (!inverseVelocityKinematics.setFloatingBaseOnFrameNamed(floatingBaseFrame.model)) {
+    if (!inverseVelocityKinematics.setFloatingBaseOnFrameNamed(floatingBaseFrame)) {
         yError() << LogPrefix << "Failed to set the IBIK floating base frame on link"
-                 << floatingBaseFrame.model;
+                 << floatingBaseFrame;
         return false;
     }
 
@@ -1965,10 +2061,15 @@ bool HumanStateProvider::impl::solveIntegrationBasedInverseKinematics()
             iDynTree::toEigen(integralOrientationError)
             + iDynTree::toEigen(angularVelocityError) * dt;
 
-        // for floating base link use error also on position if not useDirectBaseMeasurement,
-        // otherwise skip the link
-        if (linkName == floatingBaseFrame.model) {
+        // for floating base link use error also on position if not useDirectBaseMeasurement or useFixedBase,
+        // otherwise skip or fix the link.
+        if (linkName == floatingBaseFrame) {
             if (useDirectBaseMeasurement) {
+                continue;
+            }
+
+            if (useFixedBase) {
+                linkVelocities[linkName].zero();
                 continue;
             }
 
@@ -2072,12 +2173,13 @@ bool HumanStateProvider::impl::updateInverseKinematicTargets()
         }
 
         // For the link used as base insert both the rotation and position cost if not using direcly
-        // measurement from xsens
-        if (linkName == floatingBaseFrame.model) {
-            if (!useDirectBaseMeasurement
-                && !globalIK.updateTarget(linkName, linkTransformMatrices.at(linkName), 1.0, 1.0)) {
-                yError() << LogPrefix << "Failed to update target for floating base" << linkName;
-                return false;
+        // base measurements and the base is not fixed.
+        if (linkName == floatingBaseFrame) {
+            if (!(useDirectBaseMeasurement || useFixedBase)) {
+                if (!globalIK.updateTarget(linkName, linkTransformMatrices.at(linkName), 1.0, 1.0)) {
+                    yError() << LogPrefix << "Failed to update target for floating base" << linkName;
+                    return false;
+                }
             }
             continue;
         }
@@ -2091,7 +2193,7 @@ bool HumanStateProvider::impl::updateInverseKinematicTargets()
         // if useDirectBaseMeasurement, use the link transform relative to the base
         if (useDirectBaseMeasurement) {
             linkTransform =
-                linkTransformMatrices.at(floatingBaseFrame.model).inverse() * linkTransform;
+                linkTransformMatrices.at(floatingBaseFrame).inverse() * linkTransform;
         }
 
         if (!globalIK.updateTarget(linkName, linkTransform, posTargetWeight, rotTargetWeight)) {
@@ -2113,16 +2215,15 @@ bool HumanStateProvider::impl::addInverseKinematicTargets()
             continue;
         }
 
-        // Insert in the cost the rotation and position of the link used as base
-        if (linkName == floatingBaseFrame.model) {
-            if (!useDirectBaseMeasurement
-                && !globalIK.addTarget(linkName, iDynTree::Transform::Identity(), 1.0, 1.0)) {
-                yError() << LogPrefix << "Failed to add target for floating base link" << linkName;
-                return false;
-            }
-            else if (useDirectBaseMeasurement
+        // Insert in the cost the rotation and position of the link used as base, or add it as a target
+        if (linkName == floatingBaseFrame) {
+            if ((useDirectBaseMeasurement || useFixedBase )
                      && !globalIK.addFrameConstraint(linkName, iDynTree::Transform::Identity())) {
                 yError() << LogPrefix << "Failed to add constraint for base link" << linkName;
+                return false;
+            }
+            else if (!globalIK.addTarget(linkName, iDynTree::Transform::Identity(), 1.0, 1.0)) {
+                yError() << LogPrefix << "Failed to add target for floating base link" << linkName;
                 return false;
             }
             continue;
@@ -2153,7 +2254,7 @@ bool HumanStateProvider::impl::updateInverseVelocityKinematicTargets()
 
         // For the link used as base insert both the rotation and position cost if not using direcly
         // measurement from xsens
-        if (linkName == floatingBaseFrame.model) {
+        if (linkName == floatingBaseFrame) {
             if (!useDirectBaseMeasurement
                 && !inverseVelocityKinematics.updateTarget(
                     linkName, linkVelocities.at(linkName), 1.0, 1.0)) {
@@ -2171,7 +2272,7 @@ bool HumanStateProvider::impl::updateInverseVelocityKinematicTargets()
 
         linkTwist = linkVelocities.at(linkName);
         if (useDirectBaseMeasurement) {
-            linkTwist = linkTwist - linkVelocities.at(floatingBaseFrame.model);
+            linkTwist = linkTwist - linkVelocities.at(floatingBaseFrame);
         }
 
         if (!inverseVelocityKinematics.updateTarget(
@@ -2196,7 +2297,7 @@ bool HumanStateProvider::impl::addInverseVelocityKinematicsTargets()
         }
 
         // Insert in the cost the twist of the link used as base
-        if (linkName == floatingBaseFrame.model) {
+        if (linkName == floatingBaseFrame) {
             if (!useDirectBaseMeasurement
                 && !inverseVelocityKinematics.addTarget(
                     linkName, iDynTree::Twist::Zero(), 1.0, 1.0)) {
@@ -2323,19 +2424,6 @@ bool HumanStateProvider::attach(yarp::dev::PolyDriver* poly)
             pImpl->iWear->getVirtualLinkKinSensor(wearableLinkName);
     }
 
-    // Store the sensor associated as base
-    std::string baseLinkSensorName = pImpl->floatingBaseFrame.wearable;
-    if (pImpl->wearableStorage.linkSensorsMap.find(baseLinkSensorName)
-        == pImpl->wearableStorage.linkSensorsMap.end()) {
-        yError() << LogPrefix
-                 << "Failed to find sensor associated with the base passed in the configuration"
-                 << baseLinkSensorName;
-        return false;
-    }
-
-    pImpl->wearableStorage.baseLinkSensor =
-        pImpl->wearableStorage.linkSensorsMap.at(baseLinkSensorName);
-
     // ============
     // CHECK JOINTS
     // ============
@@ -2454,7 +2542,7 @@ size_t HumanStateProvider::getNumberOfJoints() const
 std::string HumanStateProvider::getBaseName() const
 {
     std::lock_guard<std::mutex> lock(pImpl->mutex);
-    return pImpl->floatingBaseFrame.model;
+    return pImpl->floatingBaseFrame;
 }
 
 std::vector<double> HumanStateProvider::getJointPositions() const
@@ -2632,13 +2720,12 @@ static bool getReducedModel(const iDynTree::Model& modelInput,
     }
 
     if (!loader.loadReducedModelFromFullModel(modelInput, consideredJoints)) {
-        std::cerr << LogPrefix << " failed to select joints: ";
+        yWarning() << LogPrefix << " failed to select joints: ";
         for (std::vector<std::string>::const_iterator i = consideredJoints.begin();
              i != consideredJoints.end();
              ++i) {
-            std::cerr << *i << ' ';
+            yWarning() << *i << ' ';
         }
-        std::cerr << std::endl;
         return false;
     }
 

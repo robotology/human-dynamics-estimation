@@ -2,14 +2,6 @@
 <!DOCTYPE robot PUBLIC "-//YARP//DTD yarprobotinterface 3.0//EN" "http://www.yarp.it/DTD/yarprobotinterfaceV3.0.dtd">
 <robot name="Human-HDE" build=0 portprefix="">
 
-    <device type="transformServer" name="TransformServer">
-        <param name="transforms_lifetime">0.2</param>
-        <group name="ROS">
-            <param name="enable_ros_publisher">true</param>
-            <param name="enable_ros_subscriber">false</param>
-        </group>
-    </device>
-
     <device type="iwear_remapper" name="XSenseIWearRemapper">
         <param name="wearableDataPorts">(/XSensSuit/WearableData/data:o)</param>
         <param name="useRPC">false</param>
@@ -20,7 +12,7 @@
     <device type="human_state_provider" name="HumanStateProvider">
         <param name="period">0.02</param>
         <param name="urdf">humanSubject01_66dof.urdf</param>
-        <param name="floatingBaseFrame">(Pelvis, XsensSuit::vLink::Pelvis)</param>
+        <param name="floatingBaseFrame">Pelvis</param>
         <!-- ikSolver options: pairwised, global, integrationbased -->
         <param name="ikSolver">integrationbased</param>
         <param name="useXsensJointsAngles">false</param>
@@ -44,7 +36,7 @@
         sparseCholeskyDecomposition,
         robustCholeskyDecomposition,
         sparseRobustCholeskyDecomposition -->
-        <param name='inverseVelocityKinematicsSolver'>QP</param>
+        <param name='inverseVelocityKinematicsSolver'>choleskyDecomposition</param>
         <param name="linVelTargetWeight">0.0</param>
         <param name="angVelTargetWeight">1.0</param>
         <!-- integration based IK parameters -->
@@ -161,7 +153,7 @@
     </device>
 
     <!-- Uncomment to stream the output of HumanStateProvider on a YARP port -->
-    <!-- <device type="human_state_wrapper" name="HumanStateWrapper">
+    <device type="human_state_wrapper" name="HumanStateWrapper">
         <param name="period">0.02</param>
         <param name="outputPort">/HDE/HumanStateWrapper/state:o</param>
         <action phase="startup" level="5" type="attach">
@@ -170,7 +162,7 @@
             </paramlist>
         </action>
         <action phase="shutdown" level="5" type="detach"/>
-    </device> -->
+    </device>
 
     <device type="human_state_publisher" name="HumanStatePublisher">
         <param name="period">0.02</param>

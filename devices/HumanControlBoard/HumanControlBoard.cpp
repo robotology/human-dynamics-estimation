@@ -176,7 +176,7 @@ bool HumanControlBoard::attach(yarp::dev::PolyDriver* poly)
     // Get the device name from the driver
     const std::string deviceName = poly->getValue("device").asString();
 
-    if (deviceName == "human_state_provider" || deviceName == "xsens_human_state_provider") {
+    if (deviceName == "human_state_provider" || deviceName == "human_state_remapper") {
 
         // Attach IHumanState interface from HumanStateProvider
         if (pImpl->iHumanState || !poly->view(pImpl->iHumanState) || !pImpl->iHumanState) {
@@ -383,5 +383,21 @@ bool HumanControlBoard::getTorques(double* t)
     for (size_t j = 0; j < pImpl->nJoints; ++j) {
         t[j] = pImpl->jointTorques[j];
     }
+    return true;
+}
+
+bool HumanControlBoard::getLimits(int axis, double *min, double *max)
+{
+    *min = 0;
+    *max = 0;
+    yWarning() << LogPrefix << " no limits defined, all the values will be set to zero.";
+    return true;
+}
+
+bool HumanControlBoard::getVelLimits(int axis, double *min, double *max)
+{
+    *min = 0;
+    *max = 0;
+    yWarning() << LogPrefix << " no velocity limits defined, all the values will be set to zero.";
     return true;
 }

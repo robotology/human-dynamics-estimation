@@ -22,14 +22,14 @@ endif()
 include(GNUInstallDirs)
 include(CTest)
 
+option(HUMANSTATEPROVIDER_ENABLE_VISUALIZER "Enable the iDyntree-irricht based Human State Visualizer" OFF)
+
 option(BUILD_TESTING "Build tests" OFF)
 
 # Find packages needed for this main CMakeLists.txt.
 # Subfolders will find the dependencies they need.
-find_package(YARP 3.0 REQUIRED)
+find_package(YARP 3.2 REQUIRED)
 find_package(YCM REQUIRED)
-#find_package(Eigen3 REQUIRED)
-#find_package(iDynTree REQUIRED)
 
 # Import cmake utilities
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
@@ -80,7 +80,9 @@ add_subdirectory(conf)
 add_subdirectory(msgs)
 add_subdirectory(interfaces)
 add_subdirectory(devices)
+add_subdirectory(modules)
 add_subdirectory(wrappers)
+add_subdirectory(remappers)
 add_subdirectory(publishers)
 
 include(InstallBasicPackageFiles)
