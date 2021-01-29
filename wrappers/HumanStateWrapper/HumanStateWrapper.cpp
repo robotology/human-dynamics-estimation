@@ -25,6 +25,17 @@ class HumanStateWrapper::impl
 public:
     hde::interfaces::IHumanState* iHumanState = nullptr;
     yarp::os::BufferedPort<human::HumanState> outputPort;
+
+    // buffer variables
+    std::array<double, 3> CoMPositionInterface;
+    std::array<double, 3> CoMVelocityInterface;
+    std::array<double, 3> basePositionInterface;
+    std::array<double, 4> baseOrientationInterface;
+    std::array<double, 6> baseVelocity;
+    std::vector<double> jointPositionsInterface;
+    std::vector<double> jointVelocitiesInterface;
+    std::vector<std::string> jointNames;
+    std::string baseName;
 };
 
 HumanStateWrapper::HumanStateWrapper()
@@ -85,65 +96,64 @@ void HumanStateWrapper::run()
 {
 
     // Get data from the interface
-    std::array<double, 3> CoMPositionInterface = pImpl->iHumanState->getCoMPosition();
-    std::array<double, 3> CoMVelocityInterface = pImpl->iHumanState->getCoMVelocity();
-    std::array<double, 3> basePositionInterface = pImpl->iHumanState->getBasePosition();
-    std::array<double, 4> baseOrientationInterface = pImpl->iHumanState->getBaseOrientation();
-    std::array<double, 6> baseVelocity = pImpl->iHumanState->getBaseVelocity();
-    std::vector<double> jointPositionsInterface = pImpl->iHumanState->getJointPositions();
-    std::vector<double> jointVelocitiesInterface = pImpl->iHumanState->getJointVelocities();
-    std::vector<std::string> jointNames = pImpl->iHumanState->getJointNames();
-    std::string baseName = pImpl->iHumanState->getBaseName();
+    pImpl->CoMPositionInterface = pImpl->iHumanState->getCoMPosition();
+    pImpl->CoMVelocityInterface = pImpl->iHumanState->getCoMVelocity();
+    pImpl->basePositionInterface = pImpl->iHumanState->getBasePosition();
+    pImpl->baseOrientationInterface = pImpl->iHumanState->getBaseOrientation();
+    pImpl->baseVelocity = pImpl->iHumanState->getBaseVelocity();
+    pImpl->jointPositionsInterface = pImpl->iHumanState->getJointPositions();
+    pImpl->jointVelocitiesInterface = pImpl->iHumanState->getJointVelocities();
+    pImpl->jointNames = pImpl->iHumanState->getJointNames();
+    pImpl->baseName = pImpl->iHumanState->getBaseName();
 
     // Prepare the message
     human::HumanState& humanStateData = pImpl->outputPort.prepare();
 
     // Convert the COM position
     humanStateData.CoMPositionWRTGlobal = {
-        CoMPositionInterface[0], CoMPositionInterface[1], CoMPositionInterface[2]};
+        pImpl->CoMPositionInterface[0], pImpl->CoMPositionInterface[1], pImpl->CoMPositionInterface[2]};
 
     // Convert the COM velocity
     humanStateData.CoMVelocityWRTGlobal = {
-        CoMVelocityInterface[0], CoMVelocityInterface[1], CoMVelocityInterface[2]};
+        pImpl->CoMVelocityInterface[0], pImpl->CoMVelocityInterface[1], pImpl->CoMVelocityInterface[2]};
 
     // Convert the base position
     humanStateData.baseOriginWRTGlobal = {
-        basePositionInterface[0], basePositionInterface[1], basePositionInterface[2]};
+        pImpl->basePositionInterface[0], pImpl->basePositionInterface[1], pImpl->basePositionInterface[2]};
 
     // Convert the base orientation
     humanStateData.baseOrientationWRTGlobal = {
-        baseOrientationInterface[0],
-        {baseOrientationInterface[1], baseOrientationInterface[2], baseOrientationInterface[3]}};
+        pImpl->baseOrientationInterface[0], {pImpl->baseOrientationInterface[1], pImpl->baseOrientationInterface[2], pImpl->baseOrientationInterface[3]}};
 
     // Convert the base velocity
     humanStateData.baseVelocityWRTGlobal.resize(6);
-    humanStateData.baseVelocityWRTGlobal[0] = baseVelocity[0];
-    humanStateData.baseVelocityWRTGlobal[1] = baseVelocity[1];
-    humanStateData.baseVelocityWRTGlobal[2] = baseVelocity[2];
-    humanStateData.baseVelocityWRTGlobal[3] = baseVelocity[3];
-    humanStateData.baseVelocityWRTGlobal[4] = baseVelocity[4];
-    humanStateData.baseVelocityWRTGlobal[5] = baseVelocity[5];
+    humanStateData.baseVelocityWRTGlobal[0] = pImpl->baseVelocity[0];
+    humanStateData.baseVelocityWRTGlobal[1] = pImpl->baseVelocity[1];
+    humanStateData.baseVelocityWRTGlobal[2] = pImpl->baseVelocity[2];
+    humanStateData.baseVelocityWRTGlobal[3] = pImpl->baseVelocity[3];
+    humanStateData.baseVelocityWRTGlobal[4] = pImpl->baseVelocity[4];
+    humanStateData.baseVelocityWRTGlobal[5] = pImpl->baseVelocity[5];
 
     // Convert the joint names
-    humanStateData.jointNames.resize(jointPositionsInterface.size());
-    for (unsigned i = 0; i < jointPositionsInterface.size(); ++i) {
-        humanStateData.jointNames[i] = jointNames[i];
+    humanStateData.jointNames.resize(pImpl->jointPositionsInterface.size());
+    for (unsigned i = 0; i < pImpl->jointPositionsInterface.size(); ++i) {
+        humanStateData.jointNames[i] = pImpl->jointNames[i];
     }
 
     // Convert the joint positions
-    humanStateData.positions.resize(jointPositionsInterface.size());
-    for (unsigned i = 0; i < jointPositionsInterface.size(); ++i) {
-        humanStateData.positions[i] = jointPositionsInterface[i];
+    humanStateData.positions.resize(pImpl->jointPositionsInterface.size());
+    for (unsigned i = 0; i < pImpl->jointPositionsInterface.size(); ++i) {
+        humanStateData.positions[i] = pImpl->jointPositionsInterface[i];
     }
 
     // Convert the joint velocities
-    humanStateData.velocities.resize(jointVelocitiesInterface.size());
-    for (unsigned i = 0; i < jointVelocitiesInterface.size(); ++i) {
-        humanStateData.velocities[i] = jointVelocitiesInterface[i];
+    humanStateData.velocities.resize(pImpl->jointVelocitiesInterface.size());
+    for (unsigned i = 0; i < pImpl->jointVelocitiesInterface.size(); ++i) {
+        humanStateData.velocities[i] = pImpl->jointVelocitiesInterface[i];
     }
 
     // Store the name of the base link
-    humanStateData.baseName = baseName;
+    humanStateData.baseName = pImpl->baseName;
 
     // Send the data
     pImpl->outputPort.write(/*forceStrict=*/true);
