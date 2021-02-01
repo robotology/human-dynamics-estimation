@@ -168,6 +168,8 @@ int main(int argc, char* argv[])
 
     viz.camera().setPosition(cameraDeltaPosition);
     viz.camera().setTarget(fixedCameraTarget);
+
+    viz.camera().animator()->enableMouseControl(true);
     
     viz.addModel(modelLoader.model(), "human");
 
@@ -235,6 +237,9 @@ int main(int argc, char* argv[])
     std::array<double, 4> baseOrientationInterface;
     std::vector<double> jointPositionsInterface;
     std::vector<std::string> jointNames;
+    iDynTree::Vector4 baseOrientationQuaternion;
+    iDynTree::Position basePosition;
+    iDynTree::Position basePositionOld = fixedCameraTarget;
 
     iDynTree::Transform wHb = iDynTree::Transform::Identity();
     iDynTree::VectorDynSize joints(viz.modelViz("human").model().getNrOfDOFs());
@@ -261,13 +266,11 @@ int main(int argc, char* argv[])
         jointPositionsInterface = iHumanState->getJointPositions();
         jointNames = iHumanState->getJointNames();
 
-        iDynTree::Vector4 baseOrientationQuaternion;
         baseOrientationQuaternion.setVal(0, baseOrientationInterface.at(0));
         baseOrientationQuaternion.setVal(1, baseOrientationInterface.at(1));
         baseOrientationQuaternion.setVal(2, baseOrientationInterface.at(2));
         baseOrientationQuaternion.setVal(3, baseOrientationInterface.at(3));
 
-        iDynTree::Position basePosition;
         basePosition.setVal(0, basePositionInterface.at(0));
         basePosition.setVal(1, basePositionInterface.at(1));
         basePosition.setVal(2, basePositionInterface.at(2));
@@ -290,8 +293,11 @@ int main(int argc, char* argv[])
         // follow the desired link with the camera
         if ( !useFixedCamera )
         {
+            cameraDeltaPosition = viz.camera().getPosition() - basePositionOld;
             viz.camera().setPosition(basePosition + cameraDeltaPosition);
             viz.camera().setTarget(basePosition);
+
+            basePositionOld = basePosition;
         }
         
         
