@@ -202,7 +202,7 @@ int main(int argc, char* argv[])
     if ( iHumanState->getBaseName() != model.getLinkName(model.getDefaultBaseLink()))
     {
         model.setDefaultBaseLink(model.getLinkIndex(iHumanState->getBaseName()));
-        yInfo() << LogPrefix << "Defaul base link of the visualized model is changed to " << iHumanState->getBaseName();
+        yInfo() << LogPrefix << "Default base link of the visualized model is changed to " << iHumanState->getBaseName();
     }
     yInfo() << LogPrefix << "Human State Interface providing data from [ " << iHumanState->getJointNames().size() << " ] joints";
     
