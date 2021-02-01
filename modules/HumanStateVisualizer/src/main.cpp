@@ -160,18 +160,7 @@ int main(int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
-    // initialize visualization
-    iDynTree::Visualizer viz;
-    iDynTree::VisualizerOptions options;
-
-    viz.init(options);
-
-    viz.camera().setPosition(cameraDeltaPosition);
-    viz.camera().setTarget(fixedCameraTarget);
-
-    viz.camera().animator()->enableMouseControl(true);
-    
-    viz.addModel(modelLoader.model(), "human");
+    iDynTree::Model model = modelLoader.model();
 
     // initialise yarp network
     yarp::os::Network yarp;
@@ -210,16 +199,16 @@ int main(int argc, char* argv[])
      
     // compare the iHumanState base and joint names with the visualization model
     yInfo() << LogPrefix << "Human State Interface providing data for the base link [ " << iHumanState->getBaseName() << " ]";
-    if ( iHumanState->getBaseName() != viz.modelViz("human").model().getLinkName(viz.modelViz("human").model().getDefaultBaseLink()))
+    if ( iHumanState->getBaseName() != model.getLinkName(model.getDefaultBaseLink()))
     {
-        viz.modelViz("human").model().setDefaultBaseLink(viz.modelViz("human").model().getLinkIndex(iHumanState->getBaseName()));
+        model.setDefaultBaseLink(model.getLinkIndex(iHumanState->getBaseName()));
         yInfo() << LogPrefix << "Defaul base link of the visualized model is changed to " << iHumanState->getBaseName();
     }
     yInfo() << LogPrefix << "Human State Interface providing data from [ " << iHumanState->getJointNames().size() << " ] joints";
     
     for (auto jointName : iHumanState->getJointNames())
     {
-        if (viz.modelViz("human").model().getJointIndex(jointName) == iDynTree::JOINT_INVALID_INDEX)
+        if (model.getJointIndex(jointName) == iDynTree::JOINT_INVALID_INDEX)
         {
             if (!ignoreMissingLinks)
             {
@@ -242,8 +231,21 @@ int main(int argc, char* argv[])
     iDynTree::Position basePositionOld = fixedCameraTarget;
 
     iDynTree::Transform wHb = iDynTree::Transform::Identity();
-    iDynTree::VectorDynSize joints(viz.modelViz("human").model().getNrOfDOFs());
+    iDynTree::VectorDynSize joints(model.getNrOfDOFs());
     joints.zero();
+
+    // initialize visualization
+    iDynTree::Visualizer viz;
+    iDynTree::VisualizerOptions options;
+
+    viz.init(options);
+
+    viz.camera().setPosition(cameraDeltaPosition);
+    viz.camera().setTarget(fixedCameraTarget);
+
+    viz.camera().animator()->enableMouseControl(true);
+    
+    viz.addModel(model, "human");
 
     // start Visualization
     std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
