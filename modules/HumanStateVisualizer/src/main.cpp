@@ -88,12 +88,14 @@ int main(int argc, char* argv[])
     if( !(rf.check("modelURDFName") && rf.find("modelURDFName").isString()) ) 
     {
         yError() << LogPrefix << "'modelURDFName' option not found or not valid.";
+        return EXIT_FAILURE;
     }
     std::string urdfFile = rf.find("modelURDFName").asString();
 
     if( !(rf.check("ignoreMissingLinks") && rf.find("ignoreMissingLinks").isBool()) ) 
     {
         yError() << LogPrefix << "'ignoreMissingLinks' option not found or not valid.";
+        return EXIT_FAILURE;
     }
     bool ignoreMissingLinks = rf.find("ignoreMissingLinks").asBool();
 
@@ -101,12 +103,14 @@ int main(int argc, char* argv[])
     if( !(rf.check("cameraDeltaPosition") && rf.find("cameraDeltaPosition").isList() && rf.find("cameraDeltaPosition").asList()->size() == 3) ) 
     {
         yError() << LogPrefix << "'cameraDeltaPosition' option not found or not valid.";
+        return EXIT_FAILURE;
     }
     for (size_t idx = 0; idx < 3; idx++)
     {
         if ( !(rf.find("cameraDeltaPosition").asList()->get(idx).isDouble()) )
         {
             yError() << LogPrefix << "'cameraDeltaPosition' entry [ " << idx << " ] is not valid.";
+            return EXIT_FAILURE;
         }
         cameraDeltaPosition.setVal(idx, rf.find("cameraDeltaPosition").asList()->get(idx).asDouble());
     }
@@ -114,6 +118,7 @@ int main(int argc, char* argv[])
     if( !(rf.check("useFixedCamera") && rf.find("useFixedCamera").isBool()) ) 
     {
         yError() << LogPrefix << "'useFixedCamera' option not found or not valid.";
+        return EXIT_FAILURE;
     }
     bool useFixedCamera = rf.find("useFixedCamera").asBool();
 
@@ -123,12 +128,14 @@ int main(int argc, char* argv[])
         if( !(rf.check("fixedCameraTarget") && rf.find("fixedCameraTarget").isList() && rf.find("fixedCameraTarget").asList()->size() == 3) ) 
         {
             yError() << LogPrefix << "'fixedCameraTarget' option not found or not valid.";
+            return EXIT_FAILURE;
         }
         for (size_t idx = 0; idx < 3; idx++)
         {
             if ( !(rf.find("fixedCameraTarget").asList()->get(idx).isDouble()) )
             {
                 yError() << LogPrefix << "'fixedCameraTarget' entry [ " << idx << " ] is not valid.";
+                return EXIT_FAILURE;
             }
             fixedCameraTarget.setVal(idx, rf.find("fixedCameraTarget").asList()->get(idx).asDouble());
         }
@@ -137,12 +144,14 @@ int main(int argc, char* argv[])
     if( !(rf.check("maxVisualizationFPS") && rf.find("maxVisualizationFPS").isInt() && rf.find("maxVisualizationFPS").asInt() > 0) ) 
     {
         yError() << LogPrefix << "'maxVisualizationFPS' option not found or not valid.";
+        return EXIT_FAILURE;
     }
     unsigned int maxVisualizationFPS = rf.find("maxVisualizationFPS").asInt();
 
     if( !(rf.check("humanStateDataPortName") && rf.find("humanStateDataPortName").isString()) ) 
     {
         yError() << LogPrefix << "'humanStateDataPortName' option not found or not valid.";
+        return EXIT_FAILURE;
     }
     std::string humanStateDataPortName = rf.find("humanStateDataPortName").asString();
 
