@@ -160,7 +160,7 @@
     </device>
 
     <!-- Uncomment to stream the output of HumanStateProvider on a YARP port -->
-    <!-- <device type="human_state_wrapper" name="HumanStateWrapper">
+    <device type="human_state_wrapper" name="HumanStateWrapper">
         <param name="period">0.02</param>
         <param name="outputPort">/HDE/HumanStateWrapper/state:o</param>
         <action phase="startup" level="5" type="attach">
@@ -169,7 +169,7 @@
             </paramlist>
         </action>
         <action phase="shutdown" level="5" type="detach"/>
-    </device> -->
+    </device>
 
     <!-- An HumanStateRemapper device can be used to attach directly to a HumanStateWrapper port without running HumanStateProvider device -->
     <!-- <device type="human_state_remapper" name="HumanStateRemapper">

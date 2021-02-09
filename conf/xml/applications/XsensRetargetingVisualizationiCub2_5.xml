@@ -4,7 +4,7 @@
 
 <application>
 
-  <name>XsensRetargetingVisualization</name>
+  <name>XsensRetargetingVisualization iCub2.5</name>
   <description>visualization of IK for retargeting</description>
   <version>1.0</version>
   <authors>
@@ -22,6 +22,18 @@
   <module>
     <name>yarprobotinterface</name>
     <parameters>--config RobotStateProvider_iCub2_5.xml</parameters>
+    <node>localhost</node>
+  </module>
+
+  <!--iDynTree human visualizer-->
+  <module>
+    <name>HumanStateVisualizer</name>
+    <parameters>--from HumanStateVisualizer_iCub2_5.ini</parameters>
+    <dependencies>
+          <port timeout="5.0">/iCub/RobotStateWrapper/state:o</port>
+    </dependencies>
+    <environment>YARP_FORWARD_LOG_ENABLE=1</environment>
+    <description>Run the iDynTree Visualizer</description>
     <node>localhost</node>
   </module>
 
