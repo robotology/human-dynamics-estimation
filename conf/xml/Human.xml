@@ -229,7 +229,7 @@
         <action phase="shutdown" level="5" type="detach" />
     </device>
 
-    <!--device type="analogServer" name="HumanWrenchWrapper">
+    <device type="analogServer" name="HumanWrenchWrapper">
         <param name="name">/HDE/HumanWrenchWrapper/wrench:o</param>
         <param name="period">10</param>
         <action phase="startup" level="5" type="attach">
@@ -238,7 +238,7 @@
             </paramlist>
         </action>
         <action phase="shutdown" level="5" type="detach" />
-    </device-->
+    </device>
 
     <!--Wrapper to publish WrenchStamped message to Rviz-->
     <device type="analogServer" name="HumanWrenchPublisher">

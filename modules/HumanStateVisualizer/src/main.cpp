@@ -14,6 +14,7 @@
 #include <yarp/os/LogStream.h>
 #include <yarp/os/ResourceFinder.h>
 #include <yarp/dev/PolyDriver.h>
+#include <yarp/sig/Vector.h>
 #include <iDynTree/ModelIO/ModelLoader.h>
 #include <iDynTree/Visualizer.h>
 
@@ -99,6 +100,13 @@ int main(int argc, char* argv[])
     }
     bool ignoreMissingLinks = rf.find("ignoreMissingLinks").asBool();
 
+    if( !(rf.check("visualizeWrenches") && rf.find("visualizeWrenches").isBool()) ) 
+    {
+        yError() << LogPrefix << "'visualizeWrenches' option not found or not valid.";
+        return EXIT_FAILURE;
+    }
+    bool visualizeWrenches = rf.find("visualizeWrenches").asBool();
+
     iDynTree::Position cameraDeltaPosition;
     if( !(rf.check("cameraDeltaPosition") && rf.find("cameraDeltaPosition").isList() && rf.find("cameraDeltaPosition").asList()->size() == 3) ) 
     {
@@ -155,6 +163,54 @@ int main(int argc, char* argv[])
     }
     std::string humanStateDataPortName = rf.find("humanStateDataPortName").asString();
 
+    std::string humanWrenchWrapperPortName;
+    std::vector<std::string> wrenchSourceLinks;
+    if (visualizeWrenches)
+    {
+        if( !(rf.check("humanWrenchWrapperPortName") && rf.find("humanWrenchWrapperPortName").isString()) )
+        {
+            yError() << LogPrefix << "'humanWrenchWrapperPortName' option not found or not valid. Wrench Visualization will be disabled";
+            visualizeWrenches = false;
+        }
+        else
+        {
+            humanWrenchWrapperPortName = rf.find("humanWrenchWrapperPortName").asString();
+        }
+    }
+
+    if (visualizeWrenches)
+    {
+        if( !(rf.check("wrenchSourceLinks") && rf.find("wrenchSourceLinks").isList()) )
+        {
+            yError() << LogPrefix << "'wrenchSourceLinks' option not found or not valid. Wrench Visualization will be disabled";
+            visualizeWrenches = false;
+        }
+        else
+        {
+            auto wrenchSourceLinksList = rf.find("wrenchSourceLinks").asList();
+            for (size_t it = 0; it < wrenchSourceLinksList->size(); it++)
+            {
+                if(!wrenchSourceLinksList->get(it).isString())
+                {
+                    yError() << LogPrefix << "in 'wrenchSourceLinks' there is a field that is not a string.";
+                    return EXIT_FAILURE;
+                }
+                wrenchSourceLinks.push_back(wrenchSourceLinksList->get(it).asString());
+            }
+        }
+    }
+    int numberOfWrenchElements = 6 * wrenchSourceLinks.size();
+
+    double forceScalingFactor;
+    if (visualizeWrenches)
+    {
+        if ( !(rf.check("forceScalingFactor") && rf.find("forceScalingFactor").isDouble()) )
+        {
+            yError() << LogPrefix << "'forceScalingFactor' option not found or not valid.";
+            return EXIT_FAILURE;
+        }
+        forceScalingFactor = rf.find("forceScalingFactor").asDouble();
+    }
 
     // load model
     std::string urdfFilePath = rf.findFile(urdfFile);
@@ -170,6 +226,22 @@ int main(int argc, char* argv[])
     }
 
     iDynTree::Model model = modelLoader.model();
+
+    // check if wrench sources are found in the model and save the link index
+    std::vector<iDynTree::LinkIndex> wrenchSourceLinkIndices;
+    if (visualizeWrenches)
+    {
+        for (auto wrenchSourceLink : wrenchSourceLinks)
+        {
+            auto frameIndex = model.getLinkIndex(wrenchSourceLink);
+            if (frameIndex == iDynTree::FRAME_INVALID_INDEX)
+            {
+                yError() << LogPrefix << "wrench source link [ " << wrenchSourceLink << " ] not found in the visualized model";
+                return EXIT_FAILURE;
+            }
+            wrenchSourceLinkIndices.push_back(frameIndex);
+        }
+    }
 
     // initialise yarp network
     yarp::os::Network yarp;
@@ -230,6 +302,36 @@ int main(int argc, char* argv[])
         }
     }
 
+    // initialize wrench port
+    yarp::os::BufferedPort<yarp::sig::Vector> wrenchPort;
+    yarp::sig::Vector* wrenchMeasuresVector;
+    if (visualizeWrenches)
+    {
+        wrenchPort.open("/HumanStateVisualizer" + humanWrenchWrapperPortName);
+        if (wrenchPort.isClosed())
+        {
+            yError() << LogPrefix << "failed to open the port /HumanStateVisualizer" << humanWrenchWrapperPortName;
+            return EXIT_FAILURE;
+        }
+        if (!yarp.connect(humanWrenchWrapperPortName, wrenchPort.getName()))
+        {
+            yError() << LogPrefix << "failed to connect to the port"  << humanWrenchWrapperPortName;
+            return EXIT_FAILURE;
+        }
+        wrenchMeasuresVector = wrenchPort.read(true);
+        if (wrenchMeasuresVector == nullptr)
+        {
+            yError() << LogPrefix << "no data coming from the port " << humanWrenchWrapperPortName;
+            return EXIT_FAILURE;
+        }
+        if(wrenchMeasuresVector->size() != (numberOfWrenchElements) )
+        {
+            yError() << LogPrefix << "expected " << numberOfWrenchElements << " elements in port " << humanWrenchWrapperPortName
+                    << ", received " << wrenchMeasuresVector->size();
+            return EXIT_FAILURE;
+        }
+    }
+
     // initialize state variables for visualization
     std::array<double, 3> basePositionInterface;
     std::array<double, 4> baseOrientationInterface;
@@ -238,6 +340,8 @@ int main(int argc, char* argv[])
     iDynTree::Vector4 baseOrientationQuaternion;
     iDynTree::Position basePosition;
     iDynTree::Position basePositionOld = fixedCameraTarget;
+    iDynTree::Transform linkTransform;
+    iDynTree::Direction force;
 
     iDynTree::Transform wHb = iDynTree::Transform::Identity();
     iDynTree::VectorDynSize joints(model.getNrOfDOFs());
@@ -255,6 +359,20 @@ int main(int argc, char* argv[])
     viz.camera().animator()->enableMouseControl(true);
     
     viz.addModel(model, "human");
+
+    if (visualizeWrenches)
+    {
+        for (size_t vectorIndex = 0; vectorIndex < wrenchSourceLinks.size(); vectorIndex++)
+        {
+            linkTransform = viz.modelViz("human").getWorldLinkTransform(wrenchSourceLinkIndices.at(vectorIndex));
+            for (size_t i = 0; i < 3; i++)
+            {
+                force.setVal(i, forceScalingFactor * wrenchMeasuresVector->data()[6 * vectorIndex + i]);
+            }
+            force = linkTransform.getRotation() * force;
+            viz.vectors().addVector(linkTransform.getPosition(), force);
+        }
+    }
 
     // start Visualization
     std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
@@ -301,6 +419,23 @@ int main(int argc, char* argv[])
             }
         }
 
+        viz.modelViz("human").setPositions(wHb, joints);
+
+        if (visualizeWrenches)
+        {
+            wrenchMeasuresVector = wrenchPort.read(true);
+            for (size_t vectorIndex = 0; vectorIndex < wrenchSourceLinks.size(); vectorIndex++)
+            {
+                linkTransform = viz.modelViz("human").getWorldLinkTransform(wrenchSourceLinkIndices.at(vectorIndex));
+                for (size_t i = 0; i < 3; i++)
+                {
+                    force.setVal(i, forceScalingFactor * wrenchMeasuresVector->data()[6 * vectorIndex + i]);
+                }
+                force = linkTransform.getRotation() * force;
+                viz.vectors().updateVector(vectorIndex, linkTransform.getPosition(), force);
+            }
+        }
+
         // follow the desired link with the camera
         if ( !useFixedCamera )
         {
@@ -311,16 +446,14 @@ int main(int argc, char* argv[])
             basePositionOld = basePosition;
         }
         
-        
-
-        // Update the visulizer
-        viz.modelViz("human").setPositions(wHb, joints);
+        // Update the visualizer
         viz.draw();
         lastViz = std::chrono::steady_clock::now();
     }
 
     viz.close();
     remapperDevice.close();
+    wrenchPort.close();
 
     return 0;
 }
