@@ -226,7 +226,6 @@ public:
 
     // Secondary calibration
     std::unordered_map<std::string, iDynTree::Rotation> secondaryCalibrationRotations;
-    std::unordered_map<std::string, iDynTree::Position> secondaryCalibrationPositions;
     iDynTree::Transform secondaryCalibrationWorld;
     void eraseSecondaryCalibration(const std::string& linkName);
     void selectChainJointsAndLinksForSecondaryCalibration(const std::string& linkName, const std::string& childLinkName,
@@ -818,6 +817,9 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     pImpl->kinDynComputations->loadRobotModel(modelLoader.model());
     pImpl->kinDynComputations->setFloatingBase(pImpl->floatingBaseFrame);
 
+    // Initialize World Secondary Calibration
+    pImpl->secondaryCalibrationWorld = iDynTree::Transform::Identity();
+
     // =========================
     // INITIALIZE JOINTS BUFFERS
     // =========================
@@ -1269,7 +1271,6 @@ void HumanStateProvider::impl::eraseSecondaryCalibration(const std::string& link
 {
     if (linkName == "") {
         secondaryCalibrationRotations.clear();
-        secondaryCalibrationPositions.clear();
         secondaryCalibrationWorld = iDynTree::Transform::Identity();
         yInfo() << LogPrefix << "Discarding all the secondary calibration matrices";
     }
@@ -1277,10 +1278,6 @@ void HumanStateProvider::impl::eraseSecondaryCalibration(const std::string& link
         if ((secondaryCalibrationRotations.find(linkName) != secondaryCalibrationRotations.end())) {
             secondaryCalibrationRotations.erase(linkName);
             yInfo() << LogPrefix << "Discarding the secondary calibration rotation matrix for link " << linkName;
-        }
-        if ((secondaryCalibrationPositions.find(linkName) != secondaryCalibrationPositions.end())) {
-            secondaryCalibrationPositions.erase(linkName);
-            yInfo() << LogPrefix << "Discarding the secondary calibration position matrix for link " << linkName;
         }
     }
 
@@ -1359,12 +1356,8 @@ void HumanStateProvider::impl::computeSecondaryCalibrationRotationsForChain(cons
             // computing new calibration for orientation
             iDynTree::Rotation secondaryCalibrationRotation = linkTransformMatricesRaw.at(linkToCalibrateName).getRotation().inverse() * linkTransformZero.getRotation();
 
-            // compute secondary calibration for position
-            iDynTree::Position secondaryCalibrationPosition = linkTransformZero.getPosition() - linkTransformMatricesRaw.at(linkToCalibrateName).getPosition();
-
             // add new calibration
             secondaryCalibrationRotations.emplace(linkToCalibrateName,secondaryCalibrationRotation);
-            secondaryCalibrationPositions.emplace(linkToCalibrateName,secondaryCalibrationPosition);
             yInfo() << LogPrefix << "secondary calibration for " << linkToCalibrateName << " is set";
         }
     }
@@ -1556,8 +1549,10 @@ bool HumanStateProvider::impl::applySecondaryCalibration(
             calibrationTransform.setPosition(iDynTree::Position(0,0,0));
             calibrationTransform.setRotation(secondaryCalibrationRotationsIt->second);
 
-            transforms_out[modelLinkName] = secondaryCalibrationWorld * transforms_out[modelLinkName] * calibrationTransform;
+            transforms_out[modelLinkName] = transforms_out[modelLinkName] * calibrationTransform;
         }
+
+        transforms_out[modelLinkName] = secondaryCalibrationWorld * transforms_out[modelLinkName];
     }
 
     return true;
