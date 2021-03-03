@@ -1,20 +1,12 @@
 <application>
   <name>HumanDynamicsEstimation-HumanDynamics</name>
   <description>An application for running Human Dynamics Estimation (HDE) for only human</description>
-
-  <module>
-    <name>yarprobotinterface</name>
-    <parameters>--config TransformServer.xml</parameters>
-    <node>localhost</node>
-  </module>
   
   <!--yarprobotinterface with HDE config file for only human-->
   <module>
     <name>yarprobotinterface</name>
     <parameters>--config Human.xml</parameters>
     <dependencies>
-          <port timeout="5.0">/transformServer/rpc</port>
-          <port timeout="5.0">/transformServer/transforms:o</port>
           <port timeout="5.0">/XSensSuit/WearableData/data:o</port>
           <port timeout="5.0">/FTShoeLeft/WearableData/data:o</port>
           <port timeout="5.0">/FTShoeRight/WearableData/data:o</port>
@@ -27,7 +19,7 @@
   <!--iDynTree human visualizer-->
   <module>
     <name>HumanStateVisualizer</name>
-    <parameters>--from HumanStateVisualizer.ini</parameters>
+    <parameters>--from HumanStateVisualizerWithDynamics.ini</parameters>
     <dependencies>
           <port timeout="5.0">/HDE/HumanStateWrapper/state:o</port>
     </dependencies>
