@@ -231,7 +231,7 @@ public:
     void eraseSecondaryCalibration(const std::string& linkName);
     void selectChainJointsAndLinksForSecondaryCalibration(const std::string& linkName, const std::string& childLinkName,
                                                   std::vector<iDynTree::JointIndex>& jointZeroIndices, std::vector<iDynTree::LinkIndex>& linkToCalibrateIndices);
-    void computeSecondaryCalibrationRotationsForChain(const std::vector<iDynTree::JointIndex>& jointZeroIndices, const iDynTree::Transform &baseTransform, const std::vector<iDynTree::LinkIndex>& linkToCalibrateIndices, const std::string& baseLinkName);
+    void computeSecondaryCalibrationRotationsForChain(const std::vector<iDynTree::JointIndex>& jointZeroIndices, const iDynTree::Transform &refLinkForCalibrationTransform, const std::vector<iDynTree::LinkIndex>& linkToCalibrateIndices, const std::string& refLinkForCalibrationName);
 
     SolverIK ikSolver;
 
@@ -303,7 +303,7 @@ public:
     std::atomic<rpcCommand> cmdStatus{rpcCommand::empty};
     std::string parentLinkName;
     std::string childLinkName;
-    std::string baseLinkName;
+    std::string refLinkName;
     // variables for manual calibration
     std::atomic<double> roll;  // [deg]
     std::atomic<double> pitch; // [deg]
@@ -324,7 +324,7 @@ public:
                 response.addVocab(yarp::os::Vocab::encode("many"));
                 response.addString("The following commands can be used to apply a secondary calibration assuming the subject is in the zero configuration of the model for the calibrated links. \n");
                 response.addString("Enter <calibrateAll> to apply a secondary calibration for all the links using the measured base pose \n");
-                response.addString("Enter <calibrateAllWithWorld <baseLink>> to apply a secondary calibration for all the links assuming the <baseLink> to be in the world origin \n");
+                response.addString("Enter <calibrateAllWithWorld <refLink>> to apply a secondary calibration for all the links assuming the <refLink> to be in the world origin \n");
                 response.addString("Enter <calibrate <linkName>> to apply a secondary calibration for the given link \n");
                 response.addString("Enter <setRotationOffset <linkName> <r p y [deg]>> to apply a secondary calibration for the given link using the given rotation offset (defined using rpy)\n");
                 response.addString("Enter <calibrateSubTree <parentLinkName> <childLinkName>> to apply a secondary calibration for the given chain \n");
@@ -351,8 +351,8 @@ public:
             }
             else if (command.get(0).asString() == "calibrateAllWithWorld") {
                 this->parentLinkName = "";
-                this->baseLinkName = command.get(1).asString();
-                response.addString("Entered command <calibrateAllWithWorld> is correct, trying to set offset calibration for all the links, and setting base link " + this->baseLinkName + " to the origin");
+                this->refLinkName = command.get(1).asString();
+                response.addString("Entered command <calibrateAllWithWorld> is correct, trying to set offset calibration for all the links, and setting base link " + this->refLinkName + " to the origin");
                 this->cmdStatus = rpcCommand::calibrateAllWithWorld;
             }
             else if (command.get(0).asString() == "calibrate" && !(command.get(1).isNull())) {
@@ -1330,7 +1330,7 @@ void HumanStateProvider::impl::selectChainJointsAndLinksForSecondaryCalibration(
     }
 }
 
-void HumanStateProvider::impl::computeSecondaryCalibrationRotationsForChain(const std::vector<iDynTree::JointIndex>& jointZeroIndices, const iDynTree::Transform& baseTransform, const std::vector<iDynTree::LinkIndex>& linkToCalibrateIndices, const std::string& baseLinkName)
+void HumanStateProvider::impl::computeSecondaryCalibrationRotationsForChain(const std::vector<iDynTree::JointIndex>& jointZeroIndices, const iDynTree::Transform& refLinkForCalibrationTransform, const std::vector<iDynTree::LinkIndex>& linkToCalibrateIndices, const std::string& refLinkForCalibrationName)
 {
     // initialize vectors
     iDynTree::VectorDynSize jointPos(jointConfigurationSolution);
@@ -1371,10 +1371,10 @@ void HumanStateProvider::impl::computeSecondaryCalibrationRotationsForChain(cons
 
     // computing the world calibration
     secondaryCalibrationWorld = iDynTree::Transform::Identity();
-    if (baseLinkName!="")
+    if (refLinkForCalibrationName!="")
     {
-        iDynTree::Transform baseLinkTransform = kinDynComputations->getWorldTransform(baseLinkName);
-        secondaryCalibrationWorld = baseTransform * baseLinkTransform.inverse();
+        iDynTree::Transform linkForCalibrationTransform = kinDynComputations->getWorldTransform(refLinkForCalibrationName);
+        secondaryCalibrationWorld = refLinkForCalibrationTransform * linkForCalibrationTransform.inverse();
         yInfo() << LogPrefix << "secondary calibration for the World is set";
     }
 }
@@ -1419,10 +1419,10 @@ bool HumanStateProvider::impl::applyRpcCommand()
     }
     case rpcCommand::calibrateAllWithWorld: {
         // Check if the chose baseLink exist in the model
-        std::string baseLinkName = commandPro->baseLinkName;
-        if(!(kinDynComputations->getRobotModel().isFrameNameUsed(baseLinkName)))
+        std::string refLinkForCalibrationName = commandPro->refLinkName;
+        if(!(kinDynComputations->getRobotModel().isFrameNameUsed(refLinkForCalibrationName)))
         {
-            yWarning() << LogPrefix << "link " << baseLinkName << " choosen as base for secondaty calibration is not valid";
+            yWarning() << LogPrefix << "link " << refLinkForCalibrationName << " choosen as base for secondaty calibration is not valid";
             return false;
         }
 
@@ -1436,7 +1436,7 @@ bool HumanStateProvider::impl::applyRpcCommand()
         std::iota(jointZeroIndices.begin(), jointZeroIndices.end(), 0);
 
         // Compute secondary calibration for the selected links setting to zero the given joints
-        computeSecondaryCalibrationRotationsForChain(jointZeroIndices, iDynTree::Transform::Identity(), linkToCalibrateIndices, baseLinkName);
+        computeSecondaryCalibrationRotationsForChain(jointZeroIndices, iDynTree::Transform::Identity(), linkToCalibrateIndices, refLinkForCalibrationName);
         break;
     }
     case rpcCommand::calibrate: {
