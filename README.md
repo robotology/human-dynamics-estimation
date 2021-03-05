@@ -1,5 +1,7 @@
 # Wearables
 
+[![C++ CI Action Status](https://github.com/robotology/wearables/workflows/C++%20CI%20Workflow/badge.svg)](https://github.com/robotology/wearables/actions/workflows/ci.yml)
+
 # Setting up
 ## Dependencies
 Here following there is a list of the required dependencies you need for using this repository. Instead, the optional dependencies, specific for each wearable-device, are listed in [wearable-device-sources](#wearable-device-sources).
