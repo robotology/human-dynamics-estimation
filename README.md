@@ -1,6 +1,6 @@
 # YARP devices for the Human Dynamics Estimation (HDE)
 
-[![C++ CI Action Status](https://github.com/robotology/human-dynamics-estimation/workflows/C++%20CI%20Workflow/badge.svg)](https://github.com/robotology/human-dynamics-estimation}/actions)
+[![C++ CI Action Status](https://github.com/robotology/human-dynamics-estimation/workflows/C++%20CI%20Workflow/badge.svg)](https://github.com/robotology/human-dynamics-estimation/actions/workflows/ci.yml)
 
 Human Dynamics Estimation (HDE) is a collection of YARP devices for the online estimation of the kinematics and dynamics of a human subject monitored with a set of wearable sensors and/or interacting with a robot. A ROS-based visualizer allows to visualize in real-time the output of the estimation. The devices can be installed and run in Linux, MacOS and Windows.
 
