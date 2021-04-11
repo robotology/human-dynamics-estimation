@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+  - Fixed linking-related bug in the CMake build system that ignored the `LDFLAGS`  environment variable, breaking the build on some environments (https://github.com/robotology/wearables/pull/110).
+
 ## [1.2.0] - 2021-01-25
 
 ### Added
