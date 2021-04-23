@@ -228,6 +228,7 @@ public:
 
     // Secondary calibration
     std::unordered_map<std::string, iDynTree::Rotation> secondaryCalibrationRotations;
+    std::unordered_map<std::string, iDynTree::Rotation> fixedSensorRotation;
     iDynTree::Transform secondaryCalibrationWorld;
     void eraseSecondaryCalibration(const std::string& linkName);
     void selectChainJointsAndLinksForSecondaryCalibration(const std::string& linkName, const std::string& childLinkName,
@@ -255,6 +256,7 @@ public:
     bool getJointAnglesFromInputData(iDynTree::VectorDynSize& jointAngles);
     bool getLinkTransformFromInputData(std::unordered_map<std::string, iDynTree::Transform>& t);
     bool computeRelativeTransformForInputData(std::unordered_map<std::string, iDynTree::Transform>& t);
+    bool applyFixedTransformForInputData(std::unordered_map<std::string, iDynTree::Transform>& t);
     bool getLinkVelocityFromInputData(std::unordered_map<std::string, iDynTree::Twist>& t);
 
     // calibrate data
@@ -505,6 +507,35 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         }
     }
 
+
+    yarp::os::Bottle& fixedRotationGroup = config.findGroup("FIXED_SENSOR_ROTATION");
+    if (!fixedRotationGroup.isNull()) {
+        for (size_t i = 1; i < fixedRotationGroup.size(); ++i) {
+            if (!(fixedRotationGroup.get(i).isList() && fixedRotationGroup.get(i).asList()->size() == 2)) {
+                yError() << LogPrefix
+                        << "Childs of FIXED_SENSOR_ROTATION must be lists of 2 elements";
+                return false;
+            }
+            yarp::os::Bottle* list = fixedRotationGroup.get(i).asList();
+            std::string key = list->get(0).asString();
+            yarp::os::Bottle* listContent = list->get(1).asList();
+
+            if (!(    (listContent->size() == 9)
+                   && (listContent->get(0).isDouble())
+                   && (listContent->get(1).isDouble())
+                   && (listContent->get(2).isDouble())
+                   && (listContent->get(3).isDouble())
+                   && (listContent->get(4).isDouble())
+                   && (listContent->get(5).isDouble())
+                   && (listContent->get(6).isDouble())
+                   && (listContent->get(7).isDouble())
+                   && (listContent->get(8).isDouble()) )) {
+                yError() << LogPrefix << "FIXED_SENSOR_ROTATION " << key << " must have 9 double values";
+                return false;
+            }
+        }
+    }
+
     // =======================================
     // PARSE THE GENERAL CONFIGURATION OPTIONS
     // =======================================
@@ -536,6 +567,26 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
 
         yInfo() << LogPrefix << "Read link map:" << modelLinkName << "==>" << wearableLinkName;
         pImpl->wearableStorage.modelToWearable_LinkName[modelLinkName] = wearableLinkName;
+    }
+
+    pImpl->fixedSensorRotation.clear();
+    for (size_t i = 1; i < fixedRotationGroup.size(); ++i) {
+        std::string modelLinkName = fixedRotationGroup.get(i).asList()->get(0).asString();
+        yarp::os::Bottle* fixedRotationMatrixValues = fixedRotationGroup.get(i).asList()->get(1).asList();
+
+        iDynTree::Rotation fixedRotation = iDynTree::Rotation( fixedRotationMatrixValues->get(0).asDouble(),
+                                                               fixedRotationMatrixValues->get(1).asDouble(),
+                                                               fixedRotationMatrixValues->get(2).asDouble(),
+                                                               fixedRotationMatrixValues->get(3).asDouble(),
+                                                               fixedRotationMatrixValues->get(4).asDouble(),
+                                                               fixedRotationMatrixValues->get(5).asDouble(),
+                                                               fixedRotationMatrixValues->get(6).asDouble(),
+                                                               fixedRotationMatrixValues->get(7).asDouble(),
+                                                               fixedRotationMatrixValues->get(8).asDouble());
+
+        pImpl->fixedSensorRotation.emplace(modelLinkName, fixedRotation);
+        yInfo() << LogPrefix << "Adding Fixed Rotation for " << modelLinkName << "==>" << fixedRotation.toString();
+
     }
 
     // ==========================================
@@ -1169,6 +1220,13 @@ void HumanStateProvider::run()
         }
     }
 
+    // Apply the secondary calibration to input data
+    if (!pImpl->applyFixedTransformForInputData(pImpl->linkTransformMatricesRaw)) {
+        yError() << LogPrefix << "Failed to apply fixed calibration to input data";
+        askToStop();
+        return;
+    }
+
 
     // Apply the secondary calibration to input data
     if (!pImpl->applySecondaryCalibration(pImpl->linkTransformMatricesRaw, pImpl->linkTransformMatrices)) {
@@ -1610,6 +1668,27 @@ bool HumanStateProvider::impl::applySecondaryCalibration(
         }
 
         transforms_out[modelLinkName] = secondaryCalibrationWorld * transforms_out[modelLinkName];
+    }
+
+    return true;
+}
+
+bool HumanStateProvider::impl::applyFixedTransformForInputData(std::unordered_map<std::string, iDynTree::Transform> &transforms_in)
+{
+    for (const auto& linkMapEntry : wearableStorage.modelToWearable_LinkName) {
+        const ModelLinkName& modelLinkName = linkMapEntry.first;
+
+        // Apply secondary calibration for rotation
+        auto secondaryCalibrationRotationsIt = fixedSensorRotation.find(modelLinkName);
+        if (!(secondaryCalibrationRotationsIt
+              == secondaryCalibrationRotations.end())) {
+
+            iDynTree::Transform calibrationTransform;
+            calibrationTransform.setPosition(iDynTree::Position(0,0,0));
+            calibrationTransform.setRotation(secondaryCalibrationRotationsIt->second);
+
+            transforms_in[modelLinkName] = transforms_in[modelLinkName] * calibrationTransform;
+        }
     }
 
     return true;
