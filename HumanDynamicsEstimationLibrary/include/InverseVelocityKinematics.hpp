@@ -21,6 +21,8 @@
 #include <memory>
 #include <yarp/os/LogStream.h>
 
+namespace HumanDynamicsEstimationLibrary {
+
 class InverseVelocityKinematics
 {
 protected:
@@ -131,5 +133,7 @@ public:
     bool solve();
     void clearProblem();
 };
+
+}
 
 #endif // INVERSEVELOCITYKINEMATICS_HPP

@@ -18,9 +18,7 @@ yarp_add_plugin(HumanStateProvider
     HumanStateProvider.cpp
     HumanStateProvider.h
     IKWorkerPool.cpp
-    IKWorkerPool.h
-    InverseVelocityKinematics/InverseVelocityKinematics.cpp
-    InverseVelocityKinematics/InverseVelocityKinematics.hpp)
+    IKWorkerPool.h)
 
 target_include_directories(HumanStateProvider PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
@@ -38,6 +36,7 @@ target_link_libraries(HumanStateProvider PUBLIC
     UtilityLibrary
     OsqpEigen::OsqpEigen
     osqp::osqp
+    HumanDynamicsEstimation
     )
 
 if(MSVC)

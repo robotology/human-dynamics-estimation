@@ -8,7 +8,8 @@
 
 #include "HumanStateProvider.h"
 #include "IKWorkerPool.h"
-#include "InverseVelocityKinematics/InverseVelocityKinematics.hpp"
+
+#include <InverseVelocityKinematics.hpp>
 
 #include <Wearable/IWear/IWear.h>
 #include <iDynTree/InverseKinematics.h>
@@ -239,7 +240,7 @@ public:
     bool useFixedBase;
 
     iDynTree::InverseKinematics globalIK;
-    InverseVelocityKinematics inverseVelocityKinematics;
+    HumanDynamicsEstimationLibrary::InverseVelocityKinematics inverseVelocityKinematics;
     iDynTreeHelper::State::integrator stateIntegrator;
 
     // clock

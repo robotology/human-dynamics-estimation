@@ -84,6 +84,7 @@ add_subdirectory(modules)
 add_subdirectory(wrappers)
 add_subdirectory(remappers)
 add_subdirectory(publishers)
+add_subdirectory(HumanDynamicsEstimationLibrary)
 
 include(InstallBasicPackageFiles)
 install_basic_package_files(${PROJECT_NAME}

@@ -11,6 +11,8 @@
 // osqp-eigen
 #include "OsqpEigen/OsqpEigen.h"
 
+using namespace HumanDynamicsEstimationLibrary;
+
 // ====
 // IMPL
 // ====
