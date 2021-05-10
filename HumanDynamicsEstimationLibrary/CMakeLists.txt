@@ -19,5 +19,6 @@ add_component(NAME ${PROJECT_NAME}
 								    iDynTree::idyntree-model
 								    iDynTree::idyntree-inverse-kinematics
 								    iDynTree::idyntree-high-level
-								    OsqpEigen::OsqpEigen
-								    osqp::osqp )
+			  PRIVATE_LINK_LIBRARIES OsqpEigen::OsqpEigen
+							    	 osqp::osqp
+			  )
