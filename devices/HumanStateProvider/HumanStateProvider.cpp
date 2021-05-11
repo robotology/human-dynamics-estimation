@@ -163,6 +163,8 @@ public:
     iDynTree::Model humanModel;
     FloatingBaseName floatingBaseFrame;
 
+    std::vector<std::string> jointList;
+
     std::vector<SegmentInfo> segments;
     std::vector<LinkPairInfo> linkPairs;
 
@@ -442,6 +444,19 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     if (!(config.check("useXsensJointsAngles") && config.find("useXsensJointsAngles").isBool())) {
         yError() << LogPrefix << "useXsensJointsAngles option not found or not valid";
         return false;
+    }
+
+    if (!(config.check("jointList") && config.find("jointList").isList())) {
+        yInfo() << LogPrefix << "jointList option not found or not valid, all the model joints are selected.";
+        pImpl->jointList.clear();
+    }
+    else
+    {
+        auto jointListBottle = config.find("jointList").asList();
+        for (size_t it = 0; it < jointListBottle->size(); it++)
+        {
+            pImpl->jointList.push_back(jointListBottle->get(it).asString());
+        }
     }
 
     std::string baseFrameName;
@@ -789,10 +804,21 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     }
 
     iDynTree::ModelLoader modelLoader;
-    if (!modelLoader.loadModelFromFile(urdfFilePath) || !modelLoader.isValid()) {
+    if ( pImpl->jointList.empty())
+    {
+        if (!modelLoader.loadModelFromFile(urdfFilePath) || !modelLoader.isValid()) {
         yError() << LogPrefix << "Failed to load model" << urdfFilePath;
         return false;
+        }
     }
+    else
+    {
+        if (!modelLoader.loadReducedModelFromFile(urdfFilePath, pImpl->jointList) || !modelLoader.isValid()) {
+        yError() << LogPrefix << "Failed to load model" << urdfFilePath;
+        return false;
+        }
+    }
+    
     yInfo() << LogPrefix << "----------------------------------------" << modelLoader.isValid();
     yInfo() << LogPrefix << modelLoader.model().toString();
     yInfo() << LogPrefix << modelLoader.model().getNrOfLinks()
