@@ -252,6 +252,7 @@ public:
     // get input data
     bool getJointAnglesFromInputData(iDynTree::VectorDynSize& jointAngles);
     bool getLinkTransformFromInputData(std::unordered_map<std::string, iDynTree::Transform>& t);
+    bool computeRelativeTransformForInputData(std::unordered_map<std::string, iDynTree::Transform>& t);
     bool getLinkVelocityFromInputData(std::unordered_map<std::string, iDynTree::Twist>& t);
 
     // calibrate data
@@ -1132,6 +1133,17 @@ void HumanStateProvider::run()
         return;
     }
 
+    // Get the link transformations from input data
+    if (pImpl->useFixedBase)
+    {
+        if (!pImpl->computeRelativeTransformForInputData(pImpl->linkTransformMatricesRaw)) {
+            yError() << LogPrefix << "Failed to compute relative link transforms";
+            askToStop();
+            return;
+        }
+    }
+
+
     // Apply the secondary calibration to input data
     if (!pImpl->applySecondaryCalibration(pImpl->linkTransformMatricesRaw, pImpl->linkTransformMatrices)) {
         yError() << LogPrefix << "Failed to apply secondary calibration to input data";
@@ -1368,7 +1380,7 @@ void HumanStateProvider::impl::computeSecondaryCalibrationRotationsForChain(cons
     {
         iDynTree::Transform linkForCalibrationTransform = kinDynComputations->getWorldTransform(refLinkForCalibrationName);
         secondaryCalibrationWorld = refLinkForCalibrationTransform * linkForCalibrationTransform.inverse();
-        yInfo() << LogPrefix << "secondary calibration for the World is set";
+        yInfo() << LogPrefix << "secondary calibration for the World is set to " << secondaryCalibrationWorld.toString();
     }
 }
 
@@ -1528,6 +1540,25 @@ bool HumanStateProvider::impl::getLinkTransformFromInputData(
         // Note that this map is used during the IK step for setting a target transform to a
         // link of the model. For this reason the map keys are model names.
         transforms[modelLinkName] = std::move(transform);
+    }
+
+    return true;
+}
+
+bool HumanStateProvider::impl::computeRelativeTransformForInputData(
+    std::unordered_map<std::string, iDynTree::Transform>& transforms)
+{
+    // if the there is a measurement for the floating base,
+    // use the relative transform for the other sensors measurement
+    if (transforms.find(floatingBaseFrame) != transforms.end())
+    {
+        iDynTree::Rotation baseFrameRotationInvese = transforms[floatingBaseFrame].getRotation().inverse();
+        for (const auto& linkMapEntry : wearableStorage.modelToWearable_LinkName) {
+            const ModelLinkName& modelLinkName = linkMapEntry.first;
+
+            iDynTree::Rotation rotation = baseFrameRotationInvese * transforms[modelLinkName].getRotation();
+            transforms[modelLinkName].setRotation(rotation);
+        }
     }
 
     return true;
