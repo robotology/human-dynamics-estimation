@@ -32,7 +32,6 @@ target_link_libraries(HumanStateProvider PUBLIC
     iDynTree::idyntree-model
     iDynTree::idyntree-inverse-kinematics
     iDynTree::idyntree-high-level
-    UtilityLibrary
     HumanDynamicsEstimation::${PROJECT_NAME}
     )
 

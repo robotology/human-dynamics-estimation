@@ -10,6 +10,7 @@
 #include "IKWorkerPool.h"
 
 #include <InverseVelocityKinematics.hpp>
+#include <Utils.hpp>
 
 #include <Wearable/IWear/IWear.h>
 #include <iDynTree/InverseKinematics.h>
@@ -32,8 +33,6 @@
 #include <thread>
 #include <unordered_map>
 #include <numeric>
-
-#include "Utils.hpp"
 
 /*!
  * @brief analyze model and list of segments to create all possible segment pairs

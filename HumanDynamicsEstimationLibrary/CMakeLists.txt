@@ -11,14 +11,16 @@ include(AddComponent)
 
 
 add_component(NAME ${PROJECT_NAME}
-			  SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/InverseVelocityKinematics.cpp
-			  PUBLIC_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/include/InverseVelocityKinematics.hpp
-			  PUBLIC_LINK_LIBRARIES YARP::YARP_OS
-								    YARP::YARP_dev
-								    YARP::YARP_init
-								    iDynTree::idyntree-model
-								    iDynTree::idyntree-inverse-kinematics
-								    iDynTree::idyntree-high-level
-			  PRIVATE_LINK_LIBRARIES OsqpEigen::OsqpEigen
-							    	 osqp::osqp
-			  )
+              SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/InverseVelocityKinematics.cpp
+                      ${CMAKE_CURRENT_SOURCE_DIR}/src/Utils.cpp
+              PUBLIC_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/include/InverseVelocityKinematics.hpp
+                             ${CMAKE_CURRENT_SOURCE_DIR}/include/Utils.hpp
+              PUBLIC_LINK_LIBRARIES YARP::YARP_OS
+                                    YARP::YARP_dev
+                                    YARP::YARP_init
+                                    iDynTree::idyntree-model
+                                    iDynTree::idyntree-inverse-kinematics
+                                    iDynTree::idyntree-high-level
+              PRIVATE_LINK_LIBRARIES OsqpEigen::OsqpEigen
+                                     osqp::osqp
+             )
