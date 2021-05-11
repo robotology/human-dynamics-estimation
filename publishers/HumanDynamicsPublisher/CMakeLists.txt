@@ -24,7 +24,8 @@ target_link_libraries(HumanDynamicsPublisher PUBLIC
     YARP::YARP_OS
     YARP::YARP_dev
     YARP::YARP_init
-    YARP::YARP_rosmsg)
+    YARP::YARP_rosmsg
+    iDynTree::idyntree-modelio-urdf)
 
 yarp_install(
     TARGETS HumanDynamicsPublisher
