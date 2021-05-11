@@ -4,6 +4,7 @@
 
 find_package(IWear REQUIRED)
 find_package(iDynTree REQUIRED)
+find_package(OsqpEigen 0.4.0 REQUIRED)
 
 
 yarp_prepare_plugin(human_state_provider
@@ -32,6 +33,7 @@ target_link_libraries(HumanStateProvider PUBLIC
     iDynTree::idyntree-model
     iDynTree::idyntree-inverse-kinematics
     iDynTree::idyntree-high-level
+    OsqpEigen::OsqpEigen
     HumanDynamicsEstimation::${PROJECT_NAME}
     )
 
