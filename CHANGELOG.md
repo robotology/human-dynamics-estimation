@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.2.1] - 2021-04-12
 
+### Added
+- Added `iwear_logger` wrapper device to log wearable sensors data using `yarp-telemetry`. (https://github.com/robotology/wearables/pull/113)
+- Added `AddInstallRPATHSupport` cmake module for linking shared objects of private dependencies. (https://github.com/robotology/wearables/pull/113)
+
 ### Fixed
   - Fixed linking-related bug in the CMake build system that ignored the `LDFLAGS`  environment variable, breaking the build on some environments (https://github.com/robotology/wearables/pull/110).
 
