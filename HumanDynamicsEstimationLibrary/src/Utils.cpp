@@ -20,6 +20,8 @@
 
 #include "Utils.hpp"
 
+using namespace HumanDynamicsEstimationLibrary;
+
 const std::string LogPrefixUtils = "HumanDynamicsEstimation::Utils:: ";
 
 // ================

@@ -17,6 +17,8 @@
 
 #include <vector>
 
+namespace HumanDynamicsEstimationLibrary {
+
 /**
  * Helper for iDynTree library.
  */
@@ -148,6 +150,8 @@ private:
     void resetJointLimits();
     double saturate(double val, double lowerLimit, double upperLimit);
 };
+
+}
 
 
 #endif
