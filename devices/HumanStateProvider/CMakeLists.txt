@@ -34,7 +34,7 @@ target_link_libraries(HumanStateProvider PUBLIC
     iDynTree::idyntree-inverse-kinematics
     iDynTree::idyntree-high-level
     OsqpEigen::OsqpEigen
-    HumanDynamicsEstimation::${PROJECT_NAME}
+    HumanDynamicsEstimation::HumanDynamicsEstimation
     )
 
 if(MSVC)
