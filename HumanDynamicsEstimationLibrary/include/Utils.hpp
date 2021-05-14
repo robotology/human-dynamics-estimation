@@ -36,7 +36,7 @@ namespace hde::utils::idyntree {
     } // namespace rotation
 
     namespace state {
-        struct state
+        struct State
         {
             iDynTree::VectorDynSize s;
             iDynTree::VectorDynSize dot_s;
@@ -61,79 +61,79 @@ private:
 public:
     RotationDistance() = default;
     RotationDistance(const RotationDistance& rotationDistance);
-    RotationDistance(const iDynTree::Rotation rotation1, const iDynTree::Rotation rotation2);
-    RotationDistance(const iDynTree::Transform transform1, const iDynTree::Transform transform2);
+    RotationDistance(const iDynTree::Rotation& rotation1, const iDynTree::Rotation& rotation2);
+    RotationDistance(const iDynTree::Transform& transform1, const iDynTree::Transform& transform2);
 
-    iDynTree::Rotation asRotation();
-    iDynTree::Vector3 asRPY();
-    iDynTree::Vector4 asQuaternion();
-    iDynTree::Vector3 asSkewVee();
+    iDynTree::Rotation asRotation() const;
+    iDynTree::Vector3 asRPY() const;
+    iDynTree::Vector4 asQuaternion() const;
+    iDynTree::Vector3 asSkewVee() const;
 
-    double asEuclideanDistanceOfEulerAngles();
-    double asTrace();
+    double asEuclideanDistanceOfEulerAngles() const;
+    double asTrace() const;
 };
 
 class hde::utils::idyntree::state::Integrator
 {
 public:
-    typedef enum
+    enum class InterpolationType
     {
         rectangular,
         trapezoidal
-    } interpolationType;
+    };
 
     Integrator();
-    Integrator(unsigned int nJoints, interpolationType interpolator = rectangular);
-    Integrator(state initialState, interpolationType interpolator = rectangular);
-    Integrator(iDynTree::VectorDynSize s,
-               iDynTree::VectorDynSize dot_s,
-               iDynTree::Vector3 W_p_B,
-               iDynTree::Vector3 dot_W_p_B,
-               iDynTree::Rotation W_R_B,
-               iDynTree::Vector3 omega_B,
-               interpolationType interpolator = rectangular);
+    Integrator(const unsigned int nJoints, const InterpolationType& interpolator = InterpolationType::rectangular);
+    Integrator(const State& initialState, const InterpolationType& interpolator = InterpolationType::rectangular);
+    Integrator(const iDynTree::VectorDynSize& s,
+               const iDynTree::VectorDynSize& dot_s,
+               const iDynTree::Vector3& W_p_B,
+               const iDynTree::Vector3& dot_W_p_B,
+               const iDynTree::Rotation& W_R_B,
+               const iDynTree::Vector3& omega_B,
+               const InterpolationType& interpolator = InterpolationType::rectangular);
 
-    void setInterpolatorType(interpolationType interpolator);
-    void setNJoints(unsigned int nJoints);
+    void setInterpolatorType(const InterpolationType& interpolator);
+    void setNJoints(const unsigned int nJoints);
 
-    void setState(state state);
-    void setState(iDynTree::VectorDynSize s,
-                  iDynTree::VectorDynSize dot_s,
-                  iDynTree::Vector3 W_p_B,
-                  iDynTree::Vector3 dot_W_p_B,
-                  iDynTree::Rotation W_R_B,
-                  iDynTree::Vector3 omega_B);
+    void setState(const State& state);
+    void setState(const iDynTree::VectorDynSize& s,
+                  const iDynTree::VectorDynSize& dot_s,
+                  const iDynTree::Vector3& W_p_B,
+                  const iDynTree::Vector3& dot_W_p_B,
+                  const iDynTree::Rotation& W_R_B,
+                  const iDynTree::Vector3& omega_B);
 
-    void setJointLimits(iDynTree::VectorDynSize lowerLimits,
-                        iDynTree::VectorDynSize upperLimits,
-                        bool active = true);
+    void setJointLimits(const iDynTree::VectorDynSize& lowerLimits,
+                        const iDynTree::VectorDynSize& upperLimits,
+                        const bool active = true);
 
-    void getState(state& state);
+    void getState(State& state) const;
     void getState(iDynTree::VectorDynSize& s,
                   iDynTree::VectorDynSize& dot_s,
                   iDynTree::Vector3& W_p_B,
                   iDynTree::Vector3& dot_W_p_B,
                   iDynTree::Rotation& W_R_B,
-                  iDynTree::Vector3& omega_B);
-    void getJointState(iDynTree::VectorDynSize& s, iDynTree::VectorDynSize& dot_s);
+                  iDynTree::Vector3& omega_B) const;
+    void getJointState(iDynTree::VectorDynSize& s, iDynTree::VectorDynSize& dot_s) const;
     void getBaseState(iDynTree::Vector3& W_p_B,
                       iDynTree::Vector3& dot_W_p_B,
                       iDynTree::Rotation& W_R_B,
-                      iDynTree::Vector3& omega_B);
-    void getJointConfiguration(iDynTree::VectorDynSize& s);
-    void getBasePose(iDynTree::Vector3& W_p_B, iDynTree::Rotation& W_R_B);
-    void getBasePose(iDynTree::Transform& W_T_B);
+                      iDynTree::Vector3& omega_B) const;
+    void getJointConfiguration(iDynTree::VectorDynSize& s) const;
+    void getBasePose(iDynTree::Vector3& W_p_B, iDynTree::Rotation& W_R_B) const;
+    void getBasePose(iDynTree::Transform& W_T_B) const;
 
-    void integrate(iDynTree::VectorDynSize dot_s, double dt);
-    void integrate(iDynTree::VectorDynSize dot_s,
-                   iDynTree::Vector3 dot_W_p_B,
-                   iDynTree::Vector3 omega_B,
-                   double dt);
+    void integrate(const iDynTree::VectorDynSize& dot_s,  const double dt);
+    void integrate(const iDynTree::VectorDynSize& dot_s,
+                   const iDynTree::Vector3& dot_W_p_B,
+                   const iDynTree::Vector3& omega_B,
+                   const double dt);
 
 private:
     unsigned int nJoints;
-    state oldState;
-    interpolationType interpolator;
+    State oldState;
+    InterpolationType interpolator;
 
     struct
     {
@@ -144,7 +144,7 @@ private:
 
     void resetState();
     void resetJointLimits();
-    double saturate(double val, double lowerLimit, double upperLimit);
+    double saturate(const double val, const double lowerLimit, const double upperLimit);
 };
 
 #endif

@@ -1900,7 +1900,7 @@ bool HumanStateProvider::impl::initializeGlobalInverseKinematicsSolver()
 bool HumanStateProvider::impl::initializeIntegrationBasedInverseKinematicsSolver()
 {
     // Initialize state integrator
-    stateIntegrator.setInterpolatorType(hde::utils::idyntree::state::Integrator::trapezoidal);
+    stateIntegrator.setInterpolatorType(hde::utils::idyntree::state::Integrator::InterpolationType::trapezoidal);
     stateIntegrator.setNJoints(humanModel.getNrOfDOFs());
 
     iDynTree::VectorDynSize jointLowerLimits;
