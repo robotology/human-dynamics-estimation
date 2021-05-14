@@ -22,119 +22,119 @@
 #include <yarp/os/LogStream.h>
 
 namespace hde {
+    class InverseVelocityKinematics;
+} // namespace hde
 
-    class InverseVelocityKinematics
+class hde::InverseVelocityKinematics
+{
+protected:
+    class impl;
+    std::unique_ptr<impl> pImpl;
+
+public:
+    enum class InverseVelocityKinematicsResolutionMode
     {
-    protected:
-        class impl;
-        std::unique_ptr<impl> pImpl;
-
-    public:
-        typedef enum
-        {
-            QP,
-            moorePenrose,
-            completeOrthogonalDecomposition,
-            leastSquare,
-            choleskyDecomposition,
-            sparseCholeskyDecomposition,
-            robustCholeskyDecomposition,
-            sparseRobustCholeskyDecomposition,
-        } InverseVelocityKinematicsResolutionMode;
-
-        InverseVelocityKinematics();
-        ~InverseVelocityKinematics();
-
-        bool setModel(iDynTree::Model model);
-        bool setFloatingBaseOnFrameNamed(std::string floatingBaseFrameName);
-        bool setResolutionMode(InverseVelocityKinematicsResolutionMode resolutionMode);
-        bool setResolutionMode(std::string resolutionModeName);
-        void setRegularization(double regularizationWeight);
-
-        bool addTarget(std::string linkName,
-                       iDynTree::Vector3 linearVelocity,
-                       iDynTree::Vector3 angularVelocity,
-                       double linearWeight = 1.0,
-                       double angularWeight = 1.0);
-        bool addTarget(std::string linkName,
-                       iDynTree::Twist twist,
-                       double linearWeight = 1.0,
-                       double angularWeight = 1.0);
-        bool addLinearVelocityTarget(std::string linkName,
-                                     iDynTree::Vector3 linearVelocity,
-                                     double linearWeight = 1.0);
-        bool addLinearVelocityTarget(std::string linkName,
-                                     iDynTree::Twist twist,
-                                     double linearWeight = 1.0);
-        bool addAngularVelocityTarget(std::string linkName,
-                                      iDynTree::Vector3 angularVelocity,
-                                      double angularWeight = 1.0);
-        bool addAngularVelocityTarget(std::string linkName,
-                                      iDynTree::Twist twist,
-                                      double angularWeight = 1.0);
-
-        // TODO
-        // addFrameVelocityConstraint
-        // addFrameLinearVelocityConstraint
-        // addFrameAngularVelocityConstraint
-
-        bool setJointConfiguration(std::string jointName, double jointConfiguration);
-        bool setJointsConfiguration(iDynTree::VectorDynSize jointsConfiguration);
-        bool setBasePose(iDynTree::Transform baseTransform);
-        bool setBasePose(iDynTree::Vector3 basePosition, iDynTree::Rotation baseRotation);
-        bool setConfiguration(iDynTree::Transform baseTransform,
-                              iDynTree::VectorDynSize jointsConfiguration);
-        bool setConfiguration(iDynTree::Vector3 basePosition,
-                              iDynTree::Rotation baseRotation,
-                              iDynTree::VectorDynSize jointsConfiguration);
-
-        // TODO
-        bool setCustomBaseVelocityLimit(iDynTree::VectorDynSize lowerBound,
-                                        iDynTree::VectorDynSize upperBound);
-        // bool setBaseLinearVelocityLimit();
-        // bool setBaseAngularVelocityLimit();
-        // bool setJointVelocityLimit(std::string jointName, double jointLimit);
-        bool setCustomJointsVelocityLimit(std::vector<iDynTree::JointIndex> jointsIndexList,
-                                          iDynTree::VectorDynSize jointsLimitList);
-        bool setCustomConstraintsJointsValues(std::vector<iDynTree::JointIndex> jointsIndexList,
-                                              iDynTree::VectorDynSize upperBoundary,
-                                              iDynTree::VectorDynSize lowerBoundary,
-                                              iDynTree::MatrixDynSize customConstraintMatrix,
-                                              double k_u,
-                                              double k_l);
-
-        bool setGeneralJointVelocityConstraints(double jointVelocityLimit);
-
-        bool setGeneralJointsUpperLowerConstraints(iDynTree::VectorDynSize jointUpperLimits,
-                                                   iDynTree::VectorDynSize jointLowerLimits);
-
-        bool updateTarget(std::string linkName,
-                          iDynTree::Vector3 linearVelocity,
-                          iDynTree::Vector3 angularVelocity,
-                          double linearWeight = 1.0,
-                          double angularWeight = 1.0);
-        bool updateTarget(std::string linkName,
-                          iDynTree::Twist twist,
-                          double linearWeight = 1.0,
-                          double angularWeight = 1.0);
-        bool updateLinearVelocityTarget(std::string linkName,
-                                        iDynTree::Vector3 linearVelocity,
-                                        double linearWeight = 1.0);
-        bool updateAngularVelocityTarget(std::string linkName,
-                                         iDynTree::Vector3 angularVelocity,
-                                         double angularWeight = 1.0);
-
-        bool getVelocitySolution(iDynTree::Twist& baseVelocity,
-                                 iDynTree::VectorDynSize& jointsVelocity);
-        bool getJointsVelocitySolution(iDynTree::VectorDynSize& jointsVelocity);
-        bool getBaseVelocitySolution(iDynTree::Twist& baseVelocity);
-        bool getBaseVelocitySolution(iDynTree::Vector3& linearVelocity,
-                                     iDynTree::Vector3& angularVelocity);
-
-        bool solve();
-        void clearProblem();
+        QP,
+        moorePenrose,
+        completeOrthogonalDecomposition,
+        leastSquare,
+        choleskyDecomposition,
+        sparseCholeskyDecomposition,
+        robustCholeskyDecomposition,
+        sparseRobustCholeskyDecomposition,
     };
 
-} // namespace HumanDynamicsEstimationLibrary
+    InverseVelocityKinematics();
+    ~InverseVelocityKinematics();
+
+    bool setModel(const iDynTree::Model& model);
+    bool setFloatingBaseOnFrameNamed(const std::string& floatingBaseFrameName);
+    bool setResolutionMode(const InverseVelocityKinematicsResolutionMode& resolutionMode);
+    bool setResolutionMode(const std::string& resolutionModeName);
+    void setRegularization(const double regularizationWeight);
+
+    bool addTarget(const std::string& linkName,
+                   const iDynTree::Vector3& linearVelocity,
+                   const iDynTree::Vector3& angularVelocity,
+                   const double linearWeight = 1.0,
+                   const double angularWeight = 1.0);
+    bool addTarget(const std::string& linkName,
+                   const iDynTree::Twist& twist,
+                   const double linearWeight = 1.0,
+                   const double angularWeight = 1.0);
+    bool addLinearVelocityTarget(const std::string& linkName,
+                                 const iDynTree::Vector3& linearVelocity,
+                                 const double linearWeight = 1.0);
+    bool addLinearVelocityTarget(const std::string& linkName,
+                                 const iDynTree::Twist& twist,
+                                 const double linearWeight = 1.0);
+    bool addAngularVelocityTarget(const std::string& linkName,
+                                  const iDynTree::Vector3& angularVelocity,
+                                  const double angularWeight = 1.0);
+    bool addAngularVelocityTarget(const std::string& linkName,
+                                  const iDynTree::Twist& twist,
+                                  const double angularWeight = 1.0);
+
+    // TODO
+    // addFrameVelocityConstraint
+    // addFrameLinearVelocityConstraint
+    // addFrameAngularVelocityConstraint
+
+    bool setJointConfiguration(const std::string& jointName, const double jointConfiguration);
+    bool setJointsConfiguration(const iDynTree::VectorDynSize& jointsConfiguration);
+    bool setBasePose(const iDynTree::Transform& baseTransform);
+    bool setBasePose(const iDynTree::Vector3& basePosition, const iDynTree::Rotation& baseRotation);
+    bool setConfiguration(const iDynTree::Transform& baseTransform,
+                          const iDynTree::VectorDynSize& jointsConfiguration);
+    bool setConfiguration(const iDynTree::Vector3& basePosition,
+                          const iDynTree::Rotation& baseRotation,
+                          const iDynTree::VectorDynSize& jointsConfiguration);
+
+    // TODO
+    bool setCustomBaseVelocityLimit(const iDynTree::VectorDynSize& lowerBound,
+                                    const iDynTree::VectorDynSize& upperBound);
+    // bool setBaseLinearVelocityLimit();
+    // bool setBaseAngularVelocityLimit();
+    // bool setJointVelocityLimit(std::string jointName, double jointLimit);
+    bool setCustomJointsVelocityLimit(const std::vector<iDynTree::JointIndex>& jointsIndexList,
+                                      const iDynTree::VectorDynSize& jointsLimitList);
+    bool setCustomConstraintsJointsValues(const std::vector<iDynTree::JointIndex>& jointsIndexList,
+                                          const iDynTree::VectorDynSize& upperBoundary,
+                                          const iDynTree::VectorDynSize& lowerBoundary,
+                                          const iDynTree::MatrixDynSize& customConstraintMatrix,
+                                          const double k_u,
+                                          const double k_l);
+
+    bool setGeneralJointVelocityConstraints(const double jointVelocityLimit);
+
+    bool setGeneralJointsUpperLowerConstraints(const iDynTree::VectorDynSize& jointUpperLimits,
+                                               const iDynTree::VectorDynSize& jointLowerLimits);
+
+    bool updateTarget(const std::string& linkName,
+                      const iDynTree::Vector3& linearVelocity,
+                      const iDynTree::Vector3& angularVelocity,
+                      const double linearWeight = 1.0,
+                      const double angularWeight = 1.0);
+    bool updateTarget(const std::string& linkName,
+                      const iDynTree::Twist& twist,
+                      const double linearWeight = 1.0,
+                      const double angularWeight = 1.0);
+    bool updateLinearVelocityTarget(const std::string& linkName,
+                                    const iDynTree::Vector3& linearVelocity,
+                                    const double linearWeight = 1.0);
+    bool updateAngularVelocityTarget(const std::string& linkName,
+                                     const iDynTree::Vector3& angularVelocity,
+                                     const double angularWeight = 1.0);
+
+    bool getVelocitySolution(iDynTree::Twist& baseVelocity,
+                             iDynTree::VectorDynSize& jointsVelocity) const;
+    bool getJointsVelocitySolution(iDynTree::VectorDynSize& jointsVelocity) const;
+    bool getBaseVelocitySolution(iDynTree::Twist& baseVelocity) const;
+    bool getBaseVelocitySolution(iDynTree::Vector3& linearVelocity,
+                                 iDynTree::Vector3& angularVelocity) const;
+
+    bool solve();
+    void clearProblem();
+};
 
 #endif // INVERSEVELOCITYKINEMATICS_HPP

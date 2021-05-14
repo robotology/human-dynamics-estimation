@@ -6,6 +6,8 @@
  * GNU Lesser General Public License v2.1 or any later version.
  */
 
+#include "Utils.hpp"
+
 // std
 #ifndef _USE_MATH_DEFINES
 #define _USE_MATH_DEFINES
@@ -17,8 +19,6 @@
 
 // YARP
 #include <yarp/os/LogStream.h>
-
-#include "Utils.hpp"
 
 using namespace hde::utils::idyntree;
 
@@ -47,42 +47,40 @@ iDynTree::Vector3 rotation::skewVee(const iDynTree::Matrix3x3& input)
     return output;
 }
 
-rotation::rotationDistance::rotationDistance() {}
-
-rotation::rotationDistance::rotationDistance(const rotationDistance& rotationDistance)
+rotation::RotationDistance::RotationDistance(const RotationDistance& rotationDistance)
     : rotation1(rotationDistance.rotation1)
     , rotation2(rotationDistance.rotation2)
 {}
 
-rotation::rotationDistance::rotationDistance(const iDynTree::Rotation rotation1,
+rotation::RotationDistance::RotationDistance(const iDynTree::Rotation rotation1,
                                              const iDynTree::Rotation rotation2)
     : rotation1(rotation1)
     , rotation2(rotation2)
 {}
 
-rotation::rotationDistance::rotationDistance(const iDynTree::Transform transform1,
+rotation::RotationDistance::RotationDistance(const iDynTree::Transform transform1,
                                              const iDynTree::Transform transform2)
     : rotation1(transform1.getRotation())
     , rotation2(transform2.getRotation())
 {}
 
-iDynTree::Rotation rotation::rotationDistance::asRotation()
+iDynTree::Rotation rotation::RotationDistance::asRotation()
 {
     iDynTree::Rotation distanceRotationMatrix = rotation1 * rotation2.inverse();
     return distanceRotationMatrix;
 }
 
-iDynTree::Vector3 rotation::rotationDistance::asRPY()
+iDynTree::Vector3 rotation::RotationDistance::asRPY()
 {
     return this->asRotation().asRPY();
 }
 
-iDynTree::Vector4 rotation::rotationDistance::asQuaternion()
+iDynTree::Vector4 rotation::RotationDistance::asQuaternion()
 {
     return this->asRotation().asQuaternion();
 }
 
-double rotation::rotationDistance::asEuclideanDistanceOfEulerAngles()
+double rotation::RotationDistance::asEuclideanDistanceOfEulerAngles()
 {
     iDynTree::Vector3 rpy1;
     iDynTree::Vector3 rpy2;
@@ -101,7 +99,7 @@ double rotation::rotationDistance::asEuclideanDistanceOfEulerAngles()
     return euclideanDistance;
 }
 
-iDynTree::Vector3 rotation::rotationDistance::asSkewVee()
+iDynTree::Vector3 rotation::RotationDistance::asSkewVee()
 {
     iDynTree::Vector3 output;
     output = rotation::skewVee(this->asRotation());
@@ -109,7 +107,7 @@ iDynTree::Vector3 rotation::rotationDistance::asSkewVee()
     return output;
 }
 
-double rotation::rotationDistance::asTrace()
+double rotation::RotationDistance::asTrace()
 {
     double output;
     iDynTree::Matrix3x3 matrix;
@@ -125,12 +123,11 @@ double rotation::rotationDistance::asTrace()
 // STATE HELPERS
 // =============
 
-state::integrator::integrator()
-{
-    integrator(0);
-}
+state::Integrator::Integrator()
+    : Integrator(0.0)
+{}
 
-state::integrator::integrator(unsigned int nJoints, interpolationType interpolator)
+state::Integrator::Integrator(unsigned int nJoints, interpolationType interpolator)
     : nJoints(nJoints)
     , interpolator(interpolator)
 {
@@ -138,7 +135,7 @@ state::integrator::integrator(unsigned int nJoints, interpolationType interpolat
     resetState();
 }
 
-state::integrator::integrator(state initialState, interpolationType interpolator)
+state::Integrator::Integrator(state initialState, interpolationType interpolator)
     : interpolator(interpolator)
 {
     if (!(initialState.s.size() == initialState.dot_s.size())) {
@@ -153,7 +150,7 @@ state::integrator::integrator(state initialState, interpolationType interpolator
     oldState = initialState;
 }
 
-state::integrator::integrator(iDynTree::VectorDynSize s,
+state::Integrator::Integrator(iDynTree::VectorDynSize s,
                               iDynTree::VectorDynSize dot_s,
                               iDynTree::Vector3 W_p_B,
                               iDynTree::Vector3 dot_W_p_B,
@@ -169,15 +166,15 @@ state::integrator::integrator(iDynTree::VectorDynSize s,
     initialState.W_R_B = W_R_B;
     initialState.omega_B = omega_B;
 
-    integrator(initialState, interpolator);
+    Integrator(initialState, interpolator);
 }
 
-void state::integrator::setInterpolatorType(interpolationType _interpolator)
+void state::Integrator::setInterpolatorType(interpolationType _interpolator)
 {
     interpolator = _interpolator;
 }
 
-void state::integrator::setNJoints(unsigned int _nJoints)
+void state::Integrator::setNJoints(unsigned int _nJoints)
 {
     nJoints = _nJoints;
     oldState.s.resize(nJoints);
@@ -191,7 +188,7 @@ void state::integrator::setNJoints(unsigned int _nJoints)
     resetJointLimits();
 }
 
-void state::integrator::resetState()
+void state::Integrator::resetState()
 {
     oldState.s.resize(nJoints);
     oldState.dot_s.resize(nJoints);
@@ -204,14 +201,14 @@ void state::integrator::resetState()
     oldState.omega_B.zero();
 }
 
-void state::integrator::resetJointLimits()
+void state::Integrator::resetJointLimits()
 {
     jointLimits.lowerLimits.resize(nJoints);
     jointLimits.upperLimits.resize(nJoints);
     jointLimits.active = false;
 }
 
-void state::integrator::setState(state newState)
+void state::Integrator::setState(state newState)
 {
     if (!(newState.s.size() == nJoints) || !(newState.dot_s.size() == nJoints)) {
         yError() << LogPrefixUtils << "invalid state. s and dot_s should have size " << nJoints;
@@ -220,7 +217,7 @@ void state::integrator::setState(state newState)
     oldState = newState;
 }
 
-void state::integrator::setState(iDynTree::VectorDynSize s,
+void state::Integrator::setState(iDynTree::VectorDynSize s,
                                  iDynTree::VectorDynSize dot_s,
                                  iDynTree::Vector3 W_p_B,
                                  iDynTree::Vector3 dot_W_p_B,
@@ -238,7 +235,7 @@ void state::integrator::setState(iDynTree::VectorDynSize s,
     setState(newState);
 }
 
-void state::integrator::setJointLimits(iDynTree::VectorDynSize lowerLimits,
+void state::Integrator::setJointLimits(iDynTree::VectorDynSize lowerLimits,
                                        iDynTree::VectorDynSize upperLimits,
                                        bool active)
 {
@@ -246,6 +243,7 @@ void state::integrator::setJointLimits(iDynTree::VectorDynSize lowerLimits,
         yError() << LogPrefixUtils
                  << "invalid joint limits. lowerLimits and upperLimits should have size "
                  << nJoints;
+        return;
     }
 
     jointLimits.upperLimits = upperLimits;
@@ -253,12 +251,12 @@ void state::integrator::setJointLimits(iDynTree::VectorDynSize lowerLimits,
     jointLimits.active = active;
 }
 
-void state::integrator::getState(state& _state)
+void state::Integrator::getState(state& _state)
 {
     getState(_state.s, _state.dot_s, _state.W_p_B, _state.dot_W_p_B, _state.W_R_B, _state.omega_B);
 }
 
-void state::integrator::getState(iDynTree::VectorDynSize& s,
+void state::Integrator::getState(iDynTree::VectorDynSize& s,
                                  iDynTree::VectorDynSize& dot_s,
                                  iDynTree::Vector3& W_p_B,
                                  iDynTree::Vector3& dot_W_p_B,
@@ -276,7 +274,7 @@ void state::integrator::getState(iDynTree::VectorDynSize& s,
     omega_B = oldState.omega_B;
 }
 
-void state::integrator::getJointState(iDynTree::VectorDynSize& s, iDynTree::VectorDynSize& dot_s)
+void state::Integrator::getJointState(iDynTree::VectorDynSize& s, iDynTree::VectorDynSize& dot_s)
 {
     s.resize(nJoints);
     dot_s.resize(nJoints);
@@ -284,7 +282,7 @@ void state::integrator::getJointState(iDynTree::VectorDynSize& s, iDynTree::Vect
     dot_s = oldState.dot_s;
 }
 
-void state::integrator::getBaseState(iDynTree::Vector3& W_p_B,
+void state::Integrator::getBaseState(iDynTree::Vector3& W_p_B,
                                      iDynTree::Vector3& dot_W_p_B,
                                      iDynTree::Rotation& W_R_B,
                                      iDynTree::Vector3& omega_B)
@@ -295,19 +293,19 @@ void state::integrator::getBaseState(iDynTree::Vector3& W_p_B,
     omega_B = oldState.omega_B;
 }
 
-void state::integrator::getJointConfiguration(iDynTree::VectorDynSize& s)
+void state::Integrator::getJointConfiguration(iDynTree::VectorDynSize& s)
 {
     s.resize(nJoints);
     s = oldState.s;
 }
 
-void state::integrator::getBasePose(iDynTree::Vector3& W_p_B, iDynTree::Rotation& W_R_B)
+void state::Integrator::getBasePose(iDynTree::Vector3& W_p_B, iDynTree::Rotation& W_R_B)
 {
     W_p_B = oldState.W_p_B;
     W_R_B = oldState.W_R_B;
 }
 
-void state::integrator::getBasePose(iDynTree::Transform& W_T_B)
+void state::Integrator::getBasePose(iDynTree::Transform& W_T_B)
 {
     iDynTree::Position basePosition;
     iDynTree::toEigen(basePosition) = iDynTree::toEigen(oldState.W_p_B);
@@ -315,7 +313,7 @@ void state::integrator::getBasePose(iDynTree::Transform& W_T_B)
     W_T_B.setRotation(oldState.W_R_B);
 }
 
-void state::integrator::integrate(iDynTree::VectorDynSize new_dot_s, double dt)
+void state::Integrator::integrate(iDynTree::VectorDynSize new_dot_s, double dt)
 {
     if (!(new_dot_s.size() == nJoints)) {
         yError() << LogPrefixUtils << "invalid dot_s. dot_s expected to have size " << nJoints;
@@ -351,7 +349,7 @@ void state::integrator::integrate(iDynTree::VectorDynSize new_dot_s, double dt)
     oldState.dot_s = new_dot_s;
 }
 
-void state::integrator::integrate(iDynTree::VectorDynSize new_dot_s,
+void state::Integrator::integrate(iDynTree::VectorDynSize new_dot_s,
                                   iDynTree::Vector3 new_dot_W_p_B,
                                   iDynTree::Vector3 new_omega_B,
                                   double dt)
@@ -389,7 +387,7 @@ void state::integrator::integrate(iDynTree::VectorDynSize new_dot_s,
     oldState.dot_omega_B = new_omega_B;
 }
 
-double state::integrator::saturate(double val, double lowerLimit, double upperLimit)
+double state::Integrator::saturate(double val, double lowerLimit, double upperLimit)
 {
     if (val > upperLimit)
         return upperLimit;

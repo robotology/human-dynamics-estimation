@@ -95,24 +95,24 @@ public:
 
     bool updateConfiguration();
 
-    bool addTarget(VelocityConstraint frameConstraint);
+    bool addTarget(const VelocityConstraint& frameConstraint);
 
-    void updateLinearVelocityTarget(VelocityMap::iterator target,
-                                    iDynTree::Vector3 newLinearVelocity,
-                                    double newLinearVelocityWeight);
-    void updateAngularVelocityTarget(VelocityMap::iterator target,
-                                     iDynTree::Vector3 newLAngularVelocity,
-                                     double newAngularVelocityWeight);
+    void updateLinearVelocityTarget(const VelocityMap::iterator& target,
+                                    const iDynTree::Vector3& newLinearVelocity,
+                                    const double newLinearVelocityWeight);
+    void updateAngularVelocityTarget(const VelocityMap::iterator& target,
+                                     const iDynTree::Vector3& newLAngularVelocity,
+                                     const double newAngularVelocityWeight);
 
-    VelocityMap::iterator getTargetRefIfItExists(const std::string targetFrameName);
+    VelocityMap::iterator getTargetRefIfItExists(const std::string& targetFrameName);
 
     bool solveProblem();
 
-    bool solveIntegrationBasedIK(iDynTree::MatrixDynSize matrix,
-                                 iDynTree::VectorDynSize inputVector,
+    bool solveIntegrationBasedIK(const iDynTree::MatrixDynSize& matrix,
+                                 const iDynTree::VectorDynSize& inputVector,
                                  iDynTree::VectorDynSize& outputVector,
-                                 iDynTree::VectorDynSize weightVector,
-                                 iDynTree::MatrixDynSize regularizationMatrix);
+                                 const iDynTree::VectorDynSize& weightVector,
+                                 const iDynTree::MatrixDynSize& regularizationMatrix);
 
     void computeTargetSize();
     void computeProblemSizeAndResizeBuffers();
@@ -143,44 +143,44 @@ public:
     double linearVelocityWeight;
     double angularVelocityWeight;
 
-    VelocityConstraint(std::string frameName, VelocityConstraintType type);
+    VelocityConstraint(const std::string& frameName, const VelocityConstraintType& type);
 
-    static VelocityConstraint linearVelocityConstraint(std::string frameName,
-                                                       iDynTree::Vector3 linearVelocity,
-                                                       double linearVelocityWeight = 1.0);
-    static VelocityConstraint angularVelocityConstraint(std::string frameName,
-                                                        iDynTree::Vector3 angularVelocity,
-                                                        double angularVelocityWeight = 1.0);
-    static VelocityConstraint TwistConstraint(std::string frameName,
-                                              iDynTree::Vector3 linearVelocity,
-                                              iDynTree::Vector3 angularVelocity,
-                                              double linearVelocityWeight = 1.0,
-                                              double angularVelocityWeight = 1.0);
-    static VelocityConstraint TwistConstraint(std::string frameName,
-                                              iDynTree::Twist twist,
-                                              double linearVelocityWeight = 1.0,
-                                              double angularVelocityWeight = 1.0);
+    static VelocityConstraint linearVelocityConstraint(const std::string& frameName,
+                                                       const iDynTree::Vector3& linearVelocity,
+                                                       const double linearVelocityWeight = 1.0);
+    static VelocityConstraint angularVelocityConstraint(const std::string& frameName,
+                                                        const iDynTree::Vector3& angularVelocity,
+                                                        const double angularVelocityWeight = 1.0);
+    static VelocityConstraint TwistConstraint(const std::string& frameName,
+                                              const iDynTree::Vector3& linearVelocity,
+                                              const iDynTree::Vector3& angularVelocity,
+                                              const double linearVelocityWeight = 1.0,
+                                              const double angularVelocityWeight = 1.0);
+    static VelocityConstraint TwistConstraint(const std::string& frameName,
+                                              const iDynTree::Twist& twist,
+                                              const double linearVelocityWeight = 1.0,
+                                              const double angularVelocityWeight = 1.0);
 
-    VelocityConstraintType getType();
-    std::string getFrameName();
+    VelocityConstraintType getType() const;
+    std::string getFrameName() const;
 
-    bool hasLinearVelocityConstraint();
-    bool hasAngularVelocityConstraint();
+    bool hasLinearVelocityConstraint() const;
+    bool hasAngularVelocityConstraint() const;
 
-    iDynTree::Vector3 getLinearVelocity();
-    void setLinearVelocity(iDynTree::Vector3 newLinearVelocity);
+    iDynTree::Vector3 getLinearVelocity() const;
+    void setLinearVelocity(const iDynTree::Vector3& newLinearVelocity);
 
-    iDynTree::Vector3 getAngularVelocity();
-    void setAngularVelocity(iDynTree::Vector3 newAngularVelocity);
+    iDynTree::Vector3 getAngularVelocity() const;
+    void setAngularVelocity(const iDynTree::Vector3& newAngularVelocity);
 
-    iDynTree::Twist getTwist();
-    void setTwist(iDynTree::Twist newTwist);
+    iDynTree::Twist getTwist() const;
+    void setTwist(const iDynTree::Twist& newTwist);
 
-    double getLinearVelocityWeight();
-    void setLinearVelocityWeight(double newLinearVelocityWeight);
+    double getLinearVelocityWeight() const;
+    void setLinearVelocityWeight(const double newLinearVelocityWeight);
 
-    double getAngularVelocityWeight();
-    void setAngularVelocityWeight(double newAngularVelocityWeight);
+    double getAngularVelocityWeight() const;
+    void setAngularVelocityWeight(const double newAngularVelocityWeight);
 };
 
 // ====
@@ -189,7 +189,7 @@ public:
 
 InverseVelocityKinematics::impl::impl()
     : dofs(0)
-    , resolutionMode(moorePenrose)
+    , resolutionMode(InverseVelocityKinematicsResolutionMode::moorePenrose)
     , numberOfTargetVariables(0)
     , regularizationWeight(1E-8)
     , problemInitialized(false)
@@ -208,7 +208,7 @@ bool InverseVelocityKinematics::impl::updateConfiguration()
                                   state.worldGravity);
 }
 
-bool InverseVelocityKinematics::impl::addTarget(VelocityConstraint frameConstraint)
+bool InverseVelocityKinematics::impl::addTarget(const VelocityConstraint& frameConstraint)
 {
     int frameIndex = dynamics.getFrameIndex(frameConstraint.getFrameName());
     if (frameIndex < 0)
@@ -222,25 +222,25 @@ bool InverseVelocityKinematics::impl::addTarget(VelocityConstraint frameConstrai
 }
 
 void InverseVelocityKinematics::impl::updateLinearVelocityTarget(
-    VelocityMap::iterator target,
-    iDynTree::Vector3 newLinearVelocity,
-    double newLinearVelocityWeight)
+    const VelocityMap::iterator& target,
+    const iDynTree::Vector3& newLinearVelocity,
+    const double newLinearVelocityWeight)
 {
     target->second.setLinearVelocity(newLinearVelocity);
     target->second.setLinearVelocityWeight(newLinearVelocityWeight);
 }
 
 void InverseVelocityKinematics::impl::updateAngularVelocityTarget(
-    VelocityMap::iterator target,
-    iDynTree::Vector3 newLAngularVelocity,
-    double newAngularVelocityWeight)
+    const VelocityMap::iterator& target,
+    const iDynTree::Vector3& newLAngularVelocity,
+    const double newAngularVelocityWeight)
 {
     target->second.setAngularVelocity(newLAngularVelocity);
     target->second.setAngularVelocityWeight(newAngularVelocityWeight);
 }
 
 InverseVelocityKinematics::impl::VelocityMap::iterator
-InverseVelocityKinematics::impl::getTargetRefIfItExists(const std::string targetFrameName)
+InverseVelocityKinematics::impl::getTargetRefIfItExists(const std::string& targetFrameName)
 {
     int frameIndex = dynamics.getFrameIndex(targetFrameName);
     if (frameIndex == iDynTree::FRAME_INVALID_INDEX)
@@ -279,11 +279,11 @@ bool InverseVelocityKinematics::impl::solveProblem()
 }
 
 bool InverseVelocityKinematics::impl::solveIntegrationBasedIK(
-    iDynTree::MatrixDynSize matrix,
-    iDynTree::VectorDynSize inputVector,
+    const iDynTree::MatrixDynSize& matrix,
+    const iDynTree::VectorDynSize& inputVector,
     iDynTree::VectorDynSize& outputVector,
-    iDynTree::VectorDynSize weightVector,
-    iDynTree::MatrixDynSize regularizationMatrix)
+    const iDynTree::VectorDynSize& weightVector,
+    const iDynTree::MatrixDynSize& regularizationMatrix)
 {
     if (inputVector.size() != matrix.rows() || matrix.cols() != regularizationMatrix.rows()) {
         return false;
@@ -295,7 +295,7 @@ bool InverseVelocityKinematics::impl::solveIntegrationBasedIK(
     weightInverse =
         Eigen::DiagonalMatrix<double, Eigen::Dynamic>(iDynTree::toEigen(weightVector)).inverse();
 
-    if (resolutionMode == QP) {
+    if (resolutionMode == InverseVelocityKinematicsResolutionMode::QP) {
 
         if (!m_optimizerSolver->isInitialized()) {
 
@@ -385,7 +385,7 @@ bool InverseVelocityKinematics::impl::solveIntegrationBasedIK(
         iDynTree::toEigen(outputVector) = m_optimizerSolver->getSolution().topRows(configSpaceSize);
         //        exit(0);
     }
-    else if (resolutionMode == moorePenrose) {
+    else if (resolutionMode == InverseVelocityKinematicsResolutionMode::moorePenrose) {
         iDynTree::toEigen(outputVector) =
             (iDynTree::toEigen(matrix).transpose() * weightInverse.toDenseMatrix()
                  * iDynTree::toEigen(matrix)
@@ -394,7 +394,8 @@ bool InverseVelocityKinematics::impl::solveIntegrationBasedIK(
             * iDynTree::toEigen(matrix).transpose() * weightInverse.toDenseMatrix()
             * iDynTree::toEigen(inputVector);
     }
-    else if (resolutionMode == completeOrthogonalDecomposition) {
+    else if (resolutionMode
+             == InverseVelocityKinematicsResolutionMode::completeOrthogonalDecomposition) {
         Eigen::CompleteOrthogonalDecomposition<
             Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
             WeightedJacobian = (iDynTree::toEigen(matrix).transpose()
@@ -409,7 +410,7 @@ bool InverseVelocityKinematics::impl::solveIntegrationBasedIK(
         std::cout << "rank: " << WeightedJacobian.rank()
                   << " threshhold: " << WeightedJacobian.threshold() << std::endl;
     }
-    else if (resolutionMode == leastSquare) {
+    else if (resolutionMode == InverseVelocityKinematicsResolutionMode::leastSquare) {
         iDynTree::toEigen(outputVector) =
             (iDynTree::toEigen(matrix).transpose() * weightInverse.toDenseMatrix()
                  * iDynTree::toEigen(matrix)
@@ -418,7 +419,7 @@ bool InverseVelocityKinematics::impl::solveIntegrationBasedIK(
                 .solve(iDynTree::toEigen(matrix).transpose() * weightInverse.toDenseMatrix()
                        * iDynTree::toEigen(inputVector));
     }
-    else if (resolutionMode == choleskyDecomposition) {
+    else if (resolutionMode == InverseVelocityKinematicsResolutionMode::choleskyDecomposition) {
         iDynTree::toEigen(outputVector) =
             (iDynTree::toEigen(matrix).transpose() * weightInverse.toDenseMatrix()
                  * iDynTree::toEigen(matrix)
@@ -427,7 +428,8 @@ bool InverseVelocityKinematics::impl::solveIntegrationBasedIK(
                 .solve(iDynTree::toEigen(matrix).transpose() * weightInverse.toDenseMatrix()
                        * iDynTree::toEigen(inputVector));
     }
-    else if (resolutionMode == sparseCholeskyDecomposition) {
+    else if (resolutionMode
+             == InverseVelocityKinematicsResolutionMode::sparseCholeskyDecomposition) {
         Eigen::SimplicialLLT<Eigen::SparseMatrix<double>> solver;
         solver.compute((iDynTree::toEigen(matrix).transpose() * weightInverse.toDenseMatrix()
                             * iDynTree::toEigen(matrix)
@@ -438,7 +440,8 @@ bool InverseVelocityKinematics::impl::solveIntegrationBasedIK(
             solver.solve(iDynTree::toEigen(matrix).transpose() * weightInverse.toDenseMatrix()
                          * iDynTree::toEigen(inputVector));
     }
-    else if (resolutionMode == robustCholeskyDecomposition) {
+    else if (resolutionMode
+             == InverseVelocityKinematicsResolutionMode::robustCholeskyDecomposition) {
         iDynTree::toEigen(outputVector) =
             (iDynTree::toEigen(matrix).transpose() * weightInverse.toDenseMatrix()
                  * iDynTree::toEigen(matrix)
@@ -447,7 +450,8 @@ bool InverseVelocityKinematics::impl::solveIntegrationBasedIK(
                 .solve(iDynTree::toEigen(matrix).transpose() * weightInverse.toDenseMatrix()
                        * iDynTree::toEigen(inputVector));
     }
-    else if (resolutionMode == sparseRobustCholeskyDecomposition) {
+    else if (resolutionMode
+             == InverseVelocityKinematicsResolutionMode::sparseRobustCholeskyDecomposition) {
         Eigen::SimplicialLDLT<Eigen::SparseMatrix<double>> solver;
         solver.compute((iDynTree::toEigen(matrix).transpose() * weightInverse.toDenseMatrix()
                             * iDynTree::toEigen(matrix)
@@ -611,7 +615,7 @@ void InverseVelocityKinematics::impl::prepareOptimizer()
     // For more information look at this issue #123,132:
     // https://github.com/robotology/human-dynamics-estimation/issues/123
     // https://github.com/robotology/human-dynamics-estimation/issues/132
-    if (resolutionMode == QP) {
+    if (resolutionMode == InverseVelocityKinematicsResolutionMode::QP) {
         baseDofs = 6; // because it is a 6 dof floating base
         configSpaceSize = dofs + baseDofs;
         //********************************************//
@@ -927,8 +931,9 @@ void InverseVelocityKinematics::impl::prepareOptimizer()
     }
 }
 
-InverseVelocityKinematics::impl::VelocityConstraint::VelocityConstraint(std::string frameName,
-                                                                        VelocityConstraintType type)
+InverseVelocityKinematics::impl::VelocityConstraint::VelocityConstraint(
+    const std::string& frameName,
+    const VelocityConstraintType& type)
     : type(type)
     , frameName(frameName)
     , linearVelocityWeight(1.0)
@@ -937,9 +942,9 @@ InverseVelocityKinematics::impl::VelocityConstraint::VelocityConstraint(std::str
 
 InverseVelocityKinematics::impl::VelocityConstraint
 InverseVelocityKinematics::impl::VelocityConstraint::linearVelocityConstraint(
-    std::string frameName,
-    iDynTree::Vector3 linearVelocity,
-    double linearVelocityWeight)
+    const std::string& frameName,
+    const iDynTree::Vector3& linearVelocity,
+    const double linearVelocityWeight)
 {
     VelocityConstraint velocityConstraint(frameName, VelocityConstraintTypeLinearVelocity);
     velocityConstraint.setLinearVelocity(linearVelocity);
@@ -949,9 +954,9 @@ InverseVelocityKinematics::impl::VelocityConstraint::linearVelocityConstraint(
 
 InverseVelocityKinematics::impl::VelocityConstraint
 InverseVelocityKinematics::impl::VelocityConstraint::angularVelocityConstraint(
-    std::string frameName,
-    iDynTree::Vector3 angularVelocity,
-    double angularVelocityWeight)
+    const std::string& frameName,
+    const iDynTree::Vector3& angularVelocity,
+    const double angularVelocityWeight)
 {
     VelocityConstraint velocityConstraint(frameName, VelocityConstraintTypeAngularVelocity);
     velocityConstraint.setLinearVelocity(angularVelocity);
@@ -961,21 +966,22 @@ InverseVelocityKinematics::impl::VelocityConstraint::angularVelocityConstraint(
 
 InverseVelocityKinematics::impl::VelocityConstraint
 InverseVelocityKinematics::impl::VelocityConstraint::TwistConstraint(
-    std::string frameName,
-    iDynTree::Vector3 linearVelocity,
-    iDynTree::Vector3 angularVelocity,
-    double linearVelocityWeight,
-    double angularVelocityWeight)
+    const std::string& frameName,
+    const iDynTree::Vector3& linearVelocity,
+    const iDynTree::Vector3& angularVelocity,
+    const double linearVelocityWeight,
+    const double angularVelocityWeight)
 {
     iDynTree::Twist twist(linearVelocity, angularVelocity);
     return TwistConstraint(frameName, twist, linearVelocityWeight, angularVelocityWeight);
 }
 
 InverseVelocityKinematics::impl::VelocityConstraint
-InverseVelocityKinematics::impl::VelocityConstraint::TwistConstraint(std::string frameName,
-                                                                     iDynTree::Twist twist,
-                                                                     double linearVelocityWeight,
-                                                                     double angularVelocityWeight)
+InverseVelocityKinematics::impl::VelocityConstraint::TwistConstraint(
+    const std::string& frameName,
+    const iDynTree::Twist& twist,
+    const double linearVelocityWeight,
+    const double angularVelocityWeight)
 {
     VelocityConstraint velocityConstraint(frameName, VelocityConstraintTypeTwist);
     velocityConstraint.setTwist(twist);
@@ -985,76 +991,76 @@ InverseVelocityKinematics::impl::VelocityConstraint::TwistConstraint(std::string
 }
 
 InverseVelocityKinematics::impl::VelocityConstraint::VelocityConstraintType
-InverseVelocityKinematics::impl::VelocityConstraint::getType()
+InverseVelocityKinematics::impl::VelocityConstraint::getType() const
 {
     return type;
 }
 
-std::string InverseVelocityKinematics::impl::VelocityConstraint::getFrameName()
+std::string InverseVelocityKinematics::impl::VelocityConstraint::getFrameName() const
 {
     return frameName;
 }
 
-bool InverseVelocityKinematics::impl::VelocityConstraint::hasLinearVelocityConstraint()
+bool InverseVelocityKinematics::impl::VelocityConstraint::hasLinearVelocityConstraint() const
 {
     return (type == VelocityConstraintTypeLinearVelocity) || (type == VelocityConstraintTypeTwist);
 }
 
-bool InverseVelocityKinematics::impl::VelocityConstraint::hasAngularVelocityConstraint()
+bool InverseVelocityKinematics::impl::VelocityConstraint::hasAngularVelocityConstraint() const
 {
     return (type == VelocityConstraintTypeAngularVelocity) || (type == VelocityConstraintTypeTwist);
 }
 
-iDynTree::Vector3 InverseVelocityKinematics::impl::VelocityConstraint::getLinearVelocity()
+iDynTree::Vector3 InverseVelocityKinematics::impl::VelocityConstraint::getLinearVelocity() const
 {
     return twist.getLinearVec3();
 }
 
 void InverseVelocityKinematics::impl::VelocityConstraint::setLinearVelocity(
-    iDynTree::Vector3 newLinearVelocity)
+    const iDynTree::Vector3& newLinearVelocity)
 {
     twist.setLinearVec3(newLinearVelocity);
 }
 
-iDynTree::Vector3 InverseVelocityKinematics::impl::VelocityConstraint::getAngularVelocity()
+iDynTree::Vector3 InverseVelocityKinematics::impl::VelocityConstraint::getAngularVelocity() const
 {
     return twist.getAngularVec3();
 }
 
 void InverseVelocityKinematics::impl::VelocityConstraint::setAngularVelocity(
-    iDynTree::Vector3 newAngularVelocity)
+    const iDynTree::Vector3& newAngularVelocity)
 {
     twist.setAngularVec3(newAngularVelocity);
 }
 
-iDynTree::Twist InverseVelocityKinematics::impl::VelocityConstraint::getTwist()
+iDynTree::Twist InverseVelocityKinematics::impl::VelocityConstraint::getTwist() const
 {
     return twist;
 }
 
-void InverseVelocityKinematics::impl::VelocityConstraint::setTwist(iDynTree::Twist newTwist)
+void InverseVelocityKinematics::impl::VelocityConstraint::setTwist(const iDynTree::Twist& newTwist)
 {
     twist = newTwist;
 }
 
-double InverseVelocityKinematics::impl::VelocityConstraint::getLinearVelocityWeight()
+double InverseVelocityKinematics::impl::VelocityConstraint::getLinearVelocityWeight() const
 {
     return linearVelocityWeight;
 }
 
 void InverseVelocityKinematics::impl::VelocityConstraint::setLinearVelocityWeight(
-    double newLinearVelocityWeight)
+    const double newLinearVelocityWeight)
 {
     linearVelocityWeight = newLinearVelocityWeight;
 }
 
-double InverseVelocityKinematics::impl::VelocityConstraint::getAngularVelocityWeight()
+double InverseVelocityKinematics::impl::VelocityConstraint::getAngularVelocityWeight() const
 {
     return angularVelocityWeight;
 }
 
 void InverseVelocityKinematics::impl::VelocityConstraint::setAngularVelocityWeight(
-    double newAngularVelocityWeight)
+    const double newAngularVelocityWeight)
 {
     angularVelocityWeight = newAngularVelocityWeight;
 }
@@ -1069,7 +1075,7 @@ InverseVelocityKinematics::InverseVelocityKinematics()
 
 InverseVelocityKinematics::~InverseVelocityKinematics() {}
 
-bool InverseVelocityKinematics::setModel(iDynTree::Model model)
+bool InverseVelocityKinematics::setModel(const iDynTree::Model& model)
 {
     pImpl->dofs = model.getNrOfDOFs();
     pImpl->model = model;
@@ -1087,19 +1093,20 @@ bool InverseVelocityKinematics::setModel(iDynTree::Model model)
     return true;
 }
 
-bool InverseVelocityKinematics::setFloatingBaseOnFrameNamed(std::string floatingBaseFrameName)
+bool InverseVelocityKinematics::setFloatingBaseOnFrameNamed(
+    const std::string& floatingBaseFrameName)
 {
     return pImpl->dynamics.setFloatingBase(floatingBaseFrameName);
 }
 
 bool InverseVelocityKinematics::setResolutionMode(
-    InverseVelocityKinematicsResolutionMode resolutionMode)
+    const InverseVelocityKinematicsResolutionMode& resolutionMode)
 {
     pImpl->resolutionMode = resolutionMode;
     return true;
 }
 
-bool InverseVelocityKinematics::setResolutionMode(const std::string resolutionModeName)
+bool InverseVelocityKinematics::setResolutionMode(const std::string& resolutionModeName)
 {
     if (resolutionModeName == "QP") {
         pImpl->resolutionMode = InverseVelocityKinematicsResolutionMode::QP;
@@ -1137,68 +1144,68 @@ bool InverseVelocityKinematics::setResolutionMode(const std::string resolutionMo
     return true;
 }
 
-void InverseVelocityKinematics::setRegularization(double regularizationWeight)
+void InverseVelocityKinematics::setRegularization(const double regularizationWeight)
 {
     pImpl->regularizationWeight = regularizationWeight;
 }
 
-bool InverseVelocityKinematics::addTarget(std::string linkName,
-                                          iDynTree::Vector3 linearVelocity,
-                                          iDynTree::Vector3 angularVelocity,
-                                          double linearWeight,
-                                          double angularWeight)
+bool InverseVelocityKinematics::addTarget(const std::string& linkName,
+                                          const iDynTree::Vector3& linearVelocity,
+                                          const iDynTree::Vector3& angularVelocity,
+                                          const double linearWeight,
+                                          const double angularWeight)
 {
     return pImpl->addTarget(InverseVelocityKinematics::impl::VelocityConstraint::TwistConstraint(
         linkName, linearVelocity, angularVelocity, linearWeight, angularWeight));
 }
 
-bool InverseVelocityKinematics::addTarget(std::string linkName,
-                                          iDynTree::Twist twist,
-                                          double linearWeight,
-                                          double angularWeight)
+bool InverseVelocityKinematics::addTarget(const std::string& linkName,
+                                          const iDynTree::Twist& twist,
+                                          const double linearWeight,
+                                          const double angularWeight)
 {
     return pImpl->addTarget(InverseVelocityKinematics::impl::VelocityConstraint::TwistConstraint(
         linkName, twist, linearWeight, angularWeight));
 }
 
-bool InverseVelocityKinematics::addLinearVelocityTarget(std::string linkName,
-                                                        iDynTree::Vector3 linearVelocity,
-                                                        double linearWeight)
+bool InverseVelocityKinematics::addLinearVelocityTarget(const std::string& linkName,
+                                                        const iDynTree::Vector3& linearVelocity,
+                                                        const double linearWeight)
 {
     return pImpl->addTarget(
         InverseVelocityKinematics::impl::VelocityConstraint::linearVelocityConstraint(
             linkName, linearVelocity, linearWeight));
 }
 
-bool InverseVelocityKinematics::addLinearVelocityTarget(std::string linkName,
-                                                        iDynTree::Twist twist,
-                                                        double linearWeight)
+bool InverseVelocityKinematics::addLinearVelocityTarget(const std::string& linkName,
+                                                        const iDynTree::Twist& twist,
+                                                        const double linearWeight)
 {
     return pImpl->addTarget(
         InverseVelocityKinematics::impl::VelocityConstraint::linearVelocityConstraint(
             linkName, twist.getLinearVec3(), linearWeight));
 }
 
-bool InverseVelocityKinematics::addAngularVelocityTarget(std::string linkName,
-                                                         iDynTree::Vector3 angularVelocity,
-                                                         double angularWeight)
+bool InverseVelocityKinematics::addAngularVelocityTarget(const std::string& linkName,
+                                                         const iDynTree::Vector3& angularVelocity,
+                                                         const double angularWeight)
 {
     return pImpl->addTarget(
         InverseVelocityKinematics::impl::VelocityConstraint::angularVelocityConstraint(
             linkName, angularVelocity, angularWeight));
 }
 
-bool InverseVelocityKinematics::addAngularVelocityTarget(std::string linkName,
-                                                         iDynTree::Twist twist,
-                                                         double angularWeight)
+bool InverseVelocityKinematics::addAngularVelocityTarget(const std::string& linkName,
+                                                         const iDynTree::Twist& twist,
+                                                         const double angularWeight)
 {
     return pImpl->addTarget(
         InverseVelocityKinematics::impl::VelocityConstraint::angularVelocityConstraint(
             linkName, twist.getAngularVec3(), angularWeight));
 }
 
-bool InverseVelocityKinematics::setJointConfiguration(std::string jointName,
-                                                      double jointConfiguration)
+bool InverseVelocityKinematics::setJointConfiguration(const std::string& jointName,
+                                                      const double jointConfiguration)
 {
     iDynTree::JointIndex jointIndex = pImpl->dynamics.model().getJointIndex(jointName);
     if (jointIndex == iDynTree::JOINT_INVALID_INDEX)
@@ -1208,7 +1215,8 @@ bool InverseVelocityKinematics::setJointConfiguration(std::string jointName,
     return true;
 }
 
-bool InverseVelocityKinematics::setJointsConfiguration(iDynTree::VectorDynSize jointsConfiguration)
+bool InverseVelocityKinematics::setJointsConfiguration(
+    const iDynTree::VectorDynSize& jointsConfiguration)
 {
     if (pImpl->state.jointsConfiguration.size() == jointsConfiguration.size()) {
         pImpl->state.jointsConfiguration = jointsConfiguration;
@@ -1220,15 +1228,15 @@ bool InverseVelocityKinematics::setJointsConfiguration(iDynTree::VectorDynSize j
     }
 }
 
-bool InverseVelocityKinematics::setBasePose(iDynTree::Transform baseTransform)
+bool InverseVelocityKinematics::setBasePose(const iDynTree::Transform& baseTransform)
 {
     pImpl->state.basePose = baseTransform;
     pImpl->updateConfiguration();
     return true;
 }
 
-bool InverseVelocityKinematics::setBasePose(iDynTree::Vector3 basePosition,
-                                            iDynTree::Rotation baseRotation)
+bool InverseVelocityKinematics::setBasePose(const iDynTree::Vector3& basePosition,
+                                            const iDynTree::Rotation& baseRotation)
 {
     iDynTree::Position _basePosition;
     iDynTree::toEigen(_basePosition) = iDynTree::toEigen(basePosition);
@@ -1238,8 +1246,8 @@ bool InverseVelocityKinematics::setBasePose(iDynTree::Vector3 basePosition,
     return true;
 }
 
-bool InverseVelocityKinematics::setConfiguration(iDynTree::Transform baseTransform,
-                                                 iDynTree::VectorDynSize jointsConfiguration)
+bool InverseVelocityKinematics::setConfiguration(const iDynTree::Transform& baseTransform,
+                                                 const iDynTree::VectorDynSize& jointsConfiguration)
 {
     if (setJointsConfiguration(jointsConfiguration) && setBasePose(baseTransform)) {
         pImpl->updateConfiguration();
@@ -1250,9 +1258,9 @@ bool InverseVelocityKinematics::setConfiguration(iDynTree::Transform baseTransfo
     }
 }
 
-bool InverseVelocityKinematics::setConfiguration(iDynTree::Vector3 basePosition,
-                                                 iDynTree::Rotation baseRotation,
-                                                 iDynTree::VectorDynSize jointsConfiguration)
+bool InverseVelocityKinematics::setConfiguration(const iDynTree::Vector3& basePosition,
+                                                 const iDynTree::Rotation& baseRotation,
+                                                 const iDynTree::VectorDynSize& jointsConfiguration)
 {
     if (setJointsConfiguration(jointsConfiguration) && setBasePose(basePosition, baseRotation)) {
         pImpl->updateConfiguration();
@@ -1263,11 +1271,11 @@ bool InverseVelocityKinematics::setConfiguration(iDynTree::Vector3 basePosition,
     }
 }
 
-bool InverseVelocityKinematics::updateTarget(std::string linkName,
-                                             iDynTree::Vector3 linearVelocity,
-                                             iDynTree::Vector3 angularVelocity,
-                                             double linearWeight,
-                                             double angularWeight)
+bool InverseVelocityKinematics::updateTarget(const std::string& linkName,
+                                             const iDynTree::Vector3& linearVelocity,
+                                             const iDynTree::Vector3& angularVelocity,
+                                             const double linearWeight,
+                                             const double angularWeight)
 {
     InverseVelocityKinematics::impl::VelocityMap::iterator targetConstr =
         pImpl->getTargetRefIfItExists(linkName);
@@ -1284,18 +1292,18 @@ bool InverseVelocityKinematics::updateTarget(std::string linkName,
     return true;
 }
 
-bool InverseVelocityKinematics::updateTarget(std::string linkName,
-                                             iDynTree::Twist twist,
-                                             double linearWeight,
-                                             double angularWeight)
+bool InverseVelocityKinematics::updateTarget(const std::string& linkName,
+                                             const iDynTree::Twist& twist,
+                                             const double linearWeight,
+                                             const double angularWeight)
 {
     return updateTarget(
         linkName, twist.getLinearVec3(), twist.getAngularVec3(), linearWeight, angularWeight);
 }
 
-bool InverseVelocityKinematics::updateLinearVelocityTarget(std::string linkName,
-                                                           iDynTree::Vector3 linearVelocity,
-                                                           double linearWeight)
+bool InverseVelocityKinematics::updateLinearVelocityTarget(const std::string& linkName,
+                                                           const iDynTree::Vector3& linearVelocity,
+                                                           const double linearWeight)
 {
     InverseVelocityKinematics::impl::VelocityMap::iterator targetConstr =
         pImpl->getTargetRefIfItExists(linkName);
@@ -1311,9 +1319,10 @@ bool InverseVelocityKinematics::updateLinearVelocityTarget(std::string linkName,
     return true;
 }
 
-bool InverseVelocityKinematics::updateAngularVelocityTarget(std::string linkName,
-                                                            iDynTree::Vector3 angularVelocity,
-                                                            double angularWeight)
+bool InverseVelocityKinematics::updateAngularVelocityTarget(
+    const std::string& linkName,
+    const iDynTree::Vector3& angularVelocity,
+    const double angularWeight)
 {
     InverseVelocityKinematics::impl::VelocityMap::iterator targetConstr =
         pImpl->getTargetRefIfItExists(linkName);
@@ -1329,12 +1338,13 @@ bool InverseVelocityKinematics::updateAngularVelocityTarget(std::string linkName
 }
 
 bool InverseVelocityKinematics::getVelocitySolution(iDynTree::Twist& baseVelocity,
-                                                    iDynTree::VectorDynSize& jointsVelocity)
+                                                    iDynTree::VectorDynSize& jointsVelocity) const
 {
     return getJointsVelocitySolution(jointsVelocity) && getBaseVelocitySolution(baseVelocity);
 }
 
-bool InverseVelocityKinematics::getJointsVelocitySolution(iDynTree::VectorDynSize& jointsVelocity)
+bool InverseVelocityKinematics::getJointsVelocitySolution(
+    iDynTree::VectorDynSize& jointsVelocity) const
 {
     if (jointsVelocity.size() == pImpl->jointVelocityResult.size()) {
         jointsVelocity = pImpl->jointVelocityResult;
@@ -1345,30 +1355,32 @@ bool InverseVelocityKinematics::getJointsVelocitySolution(iDynTree::VectorDynSiz
     }
 }
 
-bool InverseVelocityKinematics::getBaseVelocitySolution(iDynTree::Twist& baseVelocity)
+bool InverseVelocityKinematics::getBaseVelocitySolution(iDynTree::Twist& baseVelocity) const
 {
     baseVelocity = pImpl->baseVelocityResult;
     return true;
 }
 
 bool InverseVelocityKinematics::getBaseVelocitySolution(iDynTree::Vector3& linearVelocity,
-                                                        iDynTree::Vector3& angularVelocity)
+                                                        iDynTree::Vector3& angularVelocity) const
 {
     linearVelocity = pImpl->baseVelocityResult.getLinearVec3();
     angularVelocity = pImpl->baseVelocityResult.getAngularVec3();
     return true;
 }
 
-bool InverseVelocityKinematics::setCustomBaseVelocityLimit(iDynTree::VectorDynSize lowerBound,
-                                                           iDynTree::VectorDynSize upperBound)
+bool InverseVelocityKinematics::setCustomBaseVelocityLimit(
+    const iDynTree::VectorDynSize& lowerBound,
+    const iDynTree::VectorDynSize& upperBound)
 {
     pImpl->m_custom_baseVelocityLowerLimit = lowerBound;
     pImpl->m_custom_baseVelocityUpperLimit = upperBound;
     return true;
 }
+
 bool InverseVelocityKinematics::setCustomJointsVelocityLimit(
-    const std::vector<iDynTree::JointIndex> jointsIndexList,
-    iDynTree::VectorDynSize jointsLimitList)
+    const std::vector<iDynTree::JointIndex>& jointsIndexList,
+    const iDynTree::VectorDynSize& jointsLimitList)
 {
     pImpl->m_customJointsVelocityLimitsIndexes = jointsIndexList;
     pImpl->m_custom_jointsVelocityLimitsUpperBound = jointsLimitList;
@@ -1380,12 +1392,12 @@ bool InverseVelocityKinematics::setCustomJointsVelocityLimit(
 }
 
 bool InverseVelocityKinematics::setCustomConstraintsJointsValues(
-    const std::vector<iDynTree::JointIndex> jointsIndexList,
-    iDynTree::VectorDynSize upperBoundary,
-    iDynTree::VectorDynSize lowerBoundary,
-    iDynTree::MatrixDynSize customConstraintMatrix,
-    double k_u,
-    double k_l)
+    const std::vector<iDynTree::JointIndex>& jointsIndexList,
+    const iDynTree::VectorDynSize& upperBoundary,
+    const iDynTree::VectorDynSize& lowerBoundary,
+    const iDynTree::MatrixDynSize& customConstraintMatrix,
+    const double k_u,
+    const double k_l)
 {
     pImpl->m_custom_ConstraintVariablesIndex = jointsIndexList;
     pImpl->m_custom_ConstraintMatrix = customConstraintMatrix;
@@ -1396,15 +1408,15 @@ bool InverseVelocityKinematics::setCustomConstraintsJointsValues(
     return true;
 }
 
-bool InverseVelocityKinematics::setGeneralJointVelocityConstraints(double jointVelocityLimit)
+bool InverseVelocityKinematics::setGeneralJointVelocityConstraints(const double jointVelocityLimit)
 {
     pImpl->m_generalJointVelocityLimit = jointVelocityLimit;
     return true;
 }
 
 bool InverseVelocityKinematics::setGeneralJointsUpperLowerConstraints(
-    iDynTree::VectorDynSize jointUpperLimits,
-    iDynTree::VectorDynSize jointLowerLimits)
+    const iDynTree::VectorDynSize& jointUpperLimits,
+    const iDynTree::VectorDynSize& jointLowerLimits)
 {
 
     pImpl->m_jointsUpperLimits = jointUpperLimits;

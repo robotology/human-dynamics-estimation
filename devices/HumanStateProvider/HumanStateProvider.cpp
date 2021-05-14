@@ -180,7 +180,7 @@ public:
     iDynTree::Vector3 integralOrientationError;
     iDynTree::Vector3 integralLinearVelocityError;
 
-    std::unordered_map<std::string, hde::utils::idyntree::rotation::rotationDistance>
+    std::unordered_map<std::string, hde::utils::idyntree::rotation::RotationDistance>
         linkErrorOrientations;
     std::unordered_map<std::string, iDynTree::Vector3> linkErrorAngularVelocities;
 
@@ -240,7 +240,7 @@ public:
 
     iDynTree::InverseKinematics globalIK;
     hde::InverseVelocityKinematics inverseVelocityKinematics;
-    hde::utils::idyntree::state::integrator stateIntegrator;
+    hde::utils::idyntree::state::Integrator stateIntegrator;
 
     // clock
     double lastTime{-1.0};
@@ -277,7 +277,7 @@ public:
         std::unordered_map<std::string, iDynTree::Transform> linkDesiredOrientations,
         iDynTree::VectorDynSize jointConfigurations,
         iDynTree::Transform floatingBasePose,
-        std::unordered_map<std::string, hde::utils::idyntree::rotation::rotationDistance>&
+        std::unordered_map<std::string, hde::utils::idyntree::rotation::RotationDistance>&
             linkErrorOrientations);
     bool computeLinksAngularVelocityErrors(
         std::unordered_map<std::string, iDynTree::Twist> linkDesiredVelocities,
@@ -1900,7 +1900,7 @@ bool HumanStateProvider::impl::initializeGlobalInverseKinematicsSolver()
 bool HumanStateProvider::impl::initializeIntegrationBasedInverseKinematicsSolver()
 {
     // Initialize state integrator
-    stateIntegrator.setInterpolatorType(hde::utils::idyntree::state::integrator::trapezoidal);
+    stateIntegrator.setInterpolatorType(hde::utils::idyntree::state::Integrator::trapezoidal);
     stateIntegrator.setNJoints(humanModel.getNrOfDOFs());
 
     iDynTree::VectorDynSize jointLowerLimits;
@@ -2378,7 +2378,7 @@ bool HumanStateProvider::impl::computeLinksOrientationErrors(
     std::unordered_map<std::string, iDynTree::Transform> linkDesiredTransforms,
     iDynTree::VectorDynSize jointConfigurations,
     iDynTree::Transform floatingBasePose,
-    std::unordered_map<std::string, hde::utils::idyntree::rotation::rotationDistance>&
+    std::unordered_map<std::string, hde::utils::idyntree::rotation::RotationDistance>&
         linkErrorOrientations)
 {
     iDynTree::VectorDynSize zeroJointVelocities = jointConfigurations;
@@ -2393,7 +2393,7 @@ bool HumanStateProvider::impl::computeLinksOrientationErrors(
 
     for (const auto& linkMapEntry : linkDesiredTransforms) {
         const ModelLinkName& linkName = linkMapEntry.first;
-        linkErrorOrientations[linkName] = hde::utils::idyntree::rotation::rotationDistance(
+        linkErrorOrientations[linkName] = hde::utils::idyntree::rotation::RotationDistance(
             computations->getWorldTransform(linkName).getRotation(),
             linkDesiredTransforms[linkName].getRotation());
     }
