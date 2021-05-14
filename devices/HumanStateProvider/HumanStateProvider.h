@@ -13,7 +13,7 @@
 #include <yarp/dev/Wrapper.h>
 #include <yarp/os/PeriodicThread.h>
 
-#include "IHumanState.h"
+#include <IHumanState.h>
 
 #include <memory>
 

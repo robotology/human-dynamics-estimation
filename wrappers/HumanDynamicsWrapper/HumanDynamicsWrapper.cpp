@@ -7,7 +7,7 @@
  */
 
 #include "HumanDynamicsWrapper.h"
-#include "IHumanDynamics.h"
+#include <IHumanDynamics.h>
 #include <HumanDynamicsEstimation/HumanDynamics.h>
 
 #include <yarp/os/BufferedPort.h>

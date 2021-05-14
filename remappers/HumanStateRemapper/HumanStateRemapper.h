@@ -9,7 +9,7 @@
 #ifndef HDE_DEVICES_HUMANSTATEREMAPPER
 #define HDE_DEVICES_HUMANSTATEREMAPPER
 
-#include "IHumanState.h"
+#include <IHumanState.h>
 
 #include <yarp/dev/DeviceDriver.h>
 #include <yarp/dev/PreciselyTimed.h>

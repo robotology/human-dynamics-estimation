@@ -7,7 +7,7 @@
  */
 
 #include "HumanStateWrapper.h"
-#include "IHumanState.h"
+#include <IHumanState.h>
 #include <HumanDynamicsEstimation/HumanState.h>
 
 #include <yarp/os/BufferedPort.h>
