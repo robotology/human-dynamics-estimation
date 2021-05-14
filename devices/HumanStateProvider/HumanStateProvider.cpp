@@ -10,7 +10,7 @@
 #include "IKWorkerPool.h"
 
 #include <hde/algorithms/InverseVelocityKinematics.hpp>
-#include <hde/Utils.hpp>
+#include <hde/utils/iDynTreeUtils.hpp>
 
 #include <Wearable/IWear/IWear.h>
 #include <iDynTree/InverseKinematics.h>

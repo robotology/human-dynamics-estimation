@@ -34,7 +34,8 @@ target_link_libraries(HumanStateProvider PUBLIC
     iDynTree::idyntree-high-level
     OsqpEigen::OsqpEigen
     IHumanState
-    HumanDynamicsEstimation::hde
+    HumanDynamicsEstimation::utils
+    HumanDynamicsEstimation::algorithms
     )
 
 if(MSVC)

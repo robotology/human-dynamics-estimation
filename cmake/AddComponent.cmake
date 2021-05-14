@@ -55,8 +55,8 @@ function(add_component)
       EXPORT               ${PROJECT_NAME}
       COMPONENT            runtime)
 
-    install(FILES ${public_headers} DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/${prefix}/${installation_folder}")
-    install(FILES ${private_headers} DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/${prefix}/${installation_folder}/impl")
+    install(FILES ${public_headers} DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/hde/${installation_folder}")
+    install(FILES ${private_headers} DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/hde/${installation_folder}/impl")
 
   else()
 
@@ -67,6 +67,7 @@ function(add_component)
     target_link_libraries(${name} PRIVATE ${private_link_libraries})
 
     set_target_properties(${name} PROPERTIES
+      OUTPUT_NAME "${prefix}_${name}"
       VERSION ${${prefix}_VERSION}
       PUBLIC_HEADER "${public_headers}"
       PRIVATE_HEADER "${private_headers}")
@@ -85,8 +86,8 @@ function(add_component)
       LIBRARY          DESTINATION "${CMAKE_INSTALL_LIBDIR}"                                                               COMPONENT shlib
       ARCHIVE          DESTINATION "${CMAKE_INSTALL_LIBDIR}"                                                               COMPONENT lib
       RUNTIME          DESTINATION "${CMAKE_INSTALL_BINDIR}"                                                               COMPONENT bin
-      PUBLIC_HEADER    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/${prefix}/${installation_folder}"                        COMPONENT dev
-      PRIVATE_HEADER   DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/${prefix}/${installation_folder}/impl"                   COMPONENT dev)
+      PUBLIC_HEADER    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/hde/${installation_folder}"                                COMPONENT dev
+      PRIVATE_HEADER   DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/hde/${installation_folder}/impl"                           COMPONENT dev)
 
   endif()
 

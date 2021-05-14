@@ -6,7 +6,7 @@
  * GNU Lesser General Public License v2.1 or any later version.
  */
 
-#include "hde/Utils.hpp"
+#include "hde/utils/iDynTreeUtils.hpp"
 
 // std
 #ifndef _USE_MATH_DEFINES
