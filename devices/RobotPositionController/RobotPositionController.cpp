@@ -7,7 +7,7 @@
  */
 
 #include "RobotPositionController.h"
-#include "IHumanState.h"
+#include <hde/interfaces/IHumanState.h>
 
 #include <array>
 #include <numeric>

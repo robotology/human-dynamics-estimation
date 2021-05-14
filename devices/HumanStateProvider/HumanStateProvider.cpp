@@ -9,8 +9,8 @@
 #include "HumanStateProvider.h"
 #include "IKWorkerPool.h"
 
-#include <InverseVelocityKinematics.hpp>
-#include <Utils.hpp>
+#include <hde/algorithms/InverseVelocityKinematics.hpp>
+#include <hde/Utils.hpp>
 
 #include <Wearable/IWear/IWear.h>
 #include <iDynTree/InverseKinematics.h>

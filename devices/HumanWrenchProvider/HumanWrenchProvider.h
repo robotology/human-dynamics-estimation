@@ -14,7 +14,7 @@
 #include <yarp/dev/Wrapper.h>
 #include <yarp/os/PeriodicThread.h>
 
-#include <IHumanWrench.h>
+#include <hde/interfaces/IHumanWrench.h>
 
 #include <memory>
 

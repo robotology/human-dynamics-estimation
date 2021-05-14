@@ -6,7 +6,7 @@
  * GNU Lesser General Public License v2.1 or any later version.
  */
 
-#include "InverseVelocityKinematics.hpp"
+#include "hde/algorithms/InverseVelocityKinematics.hpp"
 
 // osqp-eigen
 #include "OsqpEigen/OsqpEigen.h"

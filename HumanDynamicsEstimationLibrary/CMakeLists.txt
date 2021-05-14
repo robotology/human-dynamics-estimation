@@ -13,8 +13,8 @@ include(AddComponent)
 add_component(NAME hde
               SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/InverseVelocityKinematics.cpp
                       ${CMAKE_CURRENT_SOURCE_DIR}/src/Utils.cpp
-              PUBLIC_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/include/InverseVelocityKinematics.hpp
-                             ${CMAKE_CURRENT_SOURCE_DIR}/include/Utils.hpp
+              PUBLIC_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/include/hde/algorithms/InverseVelocityKinematics.hpp
+                             ${CMAKE_CURRENT_SOURCE_DIR}/include/hde/Utils.hpp
               PUBLIC_LINK_LIBRARIES YARP::YARP_OS
                                     YARP::YARP_dev
                                     YARP::YARP_init

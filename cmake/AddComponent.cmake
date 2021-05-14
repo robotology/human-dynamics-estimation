@@ -41,9 +41,6 @@ function(add_component)
 
     add_library(${name} INTERFACE)
 
-    # Add C++17 features
-    target_compile_features(${name} INTERFACE cxx_std_17)
-
     target_link_libraries(${name} INTERFACE ${public_link_libraries})
 
     # Specify include directories for both compilation and installation process.
@@ -51,7 +48,7 @@ function(add_component)
     # relocatable configuration files, see https://cmake.org/cmake/help/latest/manual/cmake-packages.7.html
     # creating-relocatable-packages
     target_include_directories(${name} INTERFACE "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
-                                                 "$<INSTALL_INTERFACE:<INSTALL_PREFIX>/${CMAKE_INSTALL_INCLUDEDIR}>")
+                                                 "$<INSTALL_INTERFACE:$<INSTALL_PREFIX>/${CMAKE_INSTALL_INCLUDEDIR}>")
 
     # Specify installation targets, typology and destination folders.
     install(TARGETS        ${name}
@@ -66,9 +63,6 @@ function(add_component)
     # add an executable to the project using the specified source files.
     add_library(${name} ${sources} ${public_headers} ${private_headers})
 
-    # Add C++17 features
-    target_compile_features(${name} PUBLIC cxx_std_17)
-
     target_link_libraries(${name} PUBLIC ${public_link_libraries})
     target_link_libraries(${name} PRIVATE ${private_link_libraries})
 
@@ -82,7 +76,7 @@ function(add_component)
     # relocatable configuration files, see https://cmake.org/cmake/help/latest/manual/cmake-packages.7.html
     #creating-relocatable-packages
     target_include_directories(${name} PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
-                                              "$<INSTALL_INTERFACE:<INSTALL_PREFIX>/${CMAKE_INSTALL_INCLUDEDIR}>")
+                                              "$<INSTALL_INTERFACE:$<INSTALL_PREFIX>/${CMAKE_INSTALL_INCLUDEDIR}>")
 
     # Specify installation targets, typology and destination folders.
     install(TARGETS    ${name}

@@ -9,8 +9,7 @@
 #include "HumanWrenchProvider.h"
 #include "WrenchFrameTransformers.h"
 
-#include "IHumanState.h"
-#include "IHumanWrench.h"
+#include <hde/interfaces/IHumanState.h>
 
 #include <Wearable/IWear/IWear.h>
 

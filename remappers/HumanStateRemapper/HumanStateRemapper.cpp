@@ -19,7 +19,6 @@ const std::string RemapperName = "HumanStateRemapper";
 const std::string logPrefix = RemapperName + " :";
 
 using namespace hde::devices;
-using namespace human;
 
 // ==============
 // IMPL AND UTILS
@@ -29,7 +28,7 @@ class HumanStateRemapper::impl
 {
 public:
     yarp::os::Network network;
-    yarp::os::BufferedPort<human::HumanState> inputPort;
+    yarp::os::BufferedPort<hde::msgs::HumanState> inputPort;
     bool terminationCall = false;
 
     // Buffer HumanState variables
@@ -134,7 +133,7 @@ void HumanStateRemapper::run()
     return;
 }
 
-void HumanStateRemapper::onRead(human::HumanState& humanStateData)
+void HumanStateRemapper::onRead(hde::msgs::HumanState& humanStateData)
 {
     if(!pImpl->terminationCall) {
         pImpl->jointNames = humanStateData.jointNames;
