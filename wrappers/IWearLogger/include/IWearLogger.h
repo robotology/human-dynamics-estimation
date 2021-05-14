@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Istituto Italiano di Tecnologia (IIT)
+* Copyright (C) 2018-2021 Istituto Italiano di Tecnologia (IIT)
  * All rights reserved.
  *
  * This software may be modified and distributed under the terms of the
@@ -14,10 +14,12 @@
 #include <yarp/dev/Wrapper.h>
 #include <yarp/os/PeriodicThread.h>
 
-namespace wearable {
-    namespace wrappers {
-        class IWearLogger;
-    }
+namespace wearable
+{
+namespace wrappers
+{
+class IWearLogger;
+}
 } // namespace wearable
 
 class wearable::wrappers::IWearLogger

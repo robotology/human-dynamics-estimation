@@ -9,13 +9,12 @@
 #include "IWearLogger.h"
 #include "Wearable/IWear/IWear.h"
 
-#include <yarp/dev/PreciselyTimed.h>
-#include <yarp/os/LogStream.h>
-#include <mutex>
-#include <vector>
 #include <algorithm>
 #include <functional>
-
+#include <mutex>
+#include <vector>
+#include <yarp/dev/PreciselyTimed.h>
+#include <yarp/os/LogStream.h>
 
 #include <yarp/telemetry/experimental/BufferManager.h>
 
@@ -27,7 +26,7 @@ namespace wearable {
     namespace wrappers {
         struct IWearLoggerSettings;
     }
-}
+} // namespace wearable
 struct wearable::wrappers::IWearLoggerSettings
 {
     bool saveBufferManagerConfiguration{false};
@@ -51,7 +50,6 @@ struct wearable::wrappers::IWearLoggerSettings
     // skin sensors are not currently supported
 };
 
-
 using namespace wearable;
 using namespace wearable::wrappers;
 
@@ -64,19 +62,19 @@ public:
                                    bool& option);
     bool configureBufferManager();
 
-    inline std::vector<std::string> split (const std::string& s, const std::string& delimiter)
+    inline std::vector<std::string> split(const std::string& s, const std::string& delimiter)
     {
         std::size_t pos_start = 0, pos_end, delim_len = delimiter.length();
         std::string token;
         std::vector<std::string> res;
 
-        while ((pos_end = s.find (delimiter, pos_start)) != std::string::npos) {
-            token = s.substr (pos_start, pos_end - pos_start);
+        while ((pos_end = s.find(delimiter, pos_start)) != std::string::npos) {
+            token = s.substr(pos_start, pos_end - pos_start);
             pos_start = pos_end + delim_len;
-            res.push_back (token);
+            res.push_back(token);
         }
 
-        res.push_back (s.substr (pos_start));
+        res.push_back(s.substr(pos_start));
         return res;
     }
 
@@ -92,22 +90,20 @@ public:
 
         auto vecStr = split(matlabName, wearable::Separator);
         std::string validMatlabName;
-        for (auto& str : vecStr)
-        {
-            if (validMatlabName.empty())
-            {
+        for (auto& str : vecStr) {
+            if (validMatlabName.empty()) {
                 validMatlabName = str;
             }
-            else
-            {
-                validMatlabName  = validMatlabName+ "_"+str;
+            else {
+                validMatlabName = validMatlabName + "_" + str;
             }
         }
         return validMatlabName;
     }
 
-    inline void prefixVecWithSensorStatus(const std::shared_ptr<const wearable::sensor::ISensor>& sensor,
-                                          std::vector<double>& saveVar)
+    inline void
+    prefixVecWithSensorStatus(const std::shared_ptr<const wearable::sensor::ISensor>& sensor,
+                              std::vector<double>& saveVar)
     {
         // prefix sensor status
         auto it = saveVar.begin();
@@ -186,7 +182,7 @@ void IWearLogger::run()
     }
 
     if (pImpl->iWear->getStatus() == WearStatus::Error
-            || pImpl->iWear->getStatus() == WearStatus::Unknown) {
+        || pImpl->iWear->getStatus() == WearStatus::Unknown) {
         yError() << logPrefix << "The status of the IWear interface is not Ok ("
                  << static_cast<int>(pImpl->iWear->getStatus()) << ")";
         askToStop();
@@ -196,7 +192,7 @@ void IWearLogger::run()
     // case status is TIMEOUT or DATA_OVERFLOW
     if (pImpl->iWear->getStatus() != WearStatus::Ok) {
         yWarning() << logPrefix << "The status of the IWear interface is not Ok ("
-                 << static_cast<int>(pImpl->iWear->getStatus()) << ")";
+                   << static_cast<int>(pImpl->iWear->getStatus()) << ")";
     }
 
     if (pImpl->firstRun) {
@@ -220,242 +216,230 @@ void IWearLogger::run()
 
     yarp::os::Stamp timestamp = pImpl->iPreciselyTimed->getLastInputStamp();
 
-    if (pImpl->settings.logAllQuantities || pImpl->settings.logAccelerometers)
-    {
+    if (pImpl->settings.logAllQuantities || pImpl->settings.logAccelerometers) {
         for (const auto& sensor : pImpl->accelerometers) {
             wearable::Vector3 vector3;
             if (!sensor->getLinearAcceleration(vector3)) {
                 yWarning() << logPrefix << "[Accelerometers] "
-                         << "Failed to read data, "
-                         << "sensor status is "
-                         << static_cast<int>(sensor->getSensorStatus());
+                           << "Failed to read data, "
+                           << "sensor status is " << static_cast<int>(sensor->getSensorStatus());
             }
             else {
                 std::vector<double> saveVar{vector3.begin(), vector3.end()};
                 pImpl->prefixVecWithSensorStatus(sensor, saveVar);
-                const auto& channelName = pImpl->wearable2MatlabNameLookup.at(sensor->getSensorName());
+                const auto& channelName =
+                    pImpl->wearable2MatlabNameLookup.at(sensor->getSensorName());
                 pImpl->bufferManager.push_back(saveVar, timestamp.getTime(), channelName);
             }
         }
     }
 
-    if (pImpl->settings.logAllQuantities || pImpl->settings.logEMGSensors)
-    {
+    if (pImpl->settings.logAllQuantities || pImpl->settings.logEMGSensors) {
         for (const auto& sensor : pImpl->emgSensors) {
             double value, normalization;
             // double normalizationValue;
             if (!sensor->getEmgSignal(value) || !sensor->getEmgSignal(normalization)) {
                 yWarning() << logPrefix << "[EmgSensors] "
-                         << "Failed to read data, "
-                         << "sensor status is "
-                         << static_cast<int>(sensor->getSensorStatus());
+                           << "Failed to read data, "
+                           << "sensor status is " << static_cast<int>(sensor->getSensorStatus());
             }
             else {
                 std::vector<double> saveVar;
                 saveVar.emplace_back(value);
                 saveVar.emplace_back(normalization);
                 pImpl->prefixVecWithSensorStatus(sensor, saveVar);
-                const auto& channelName = pImpl->wearable2MatlabNameLookup.at(sensor->getSensorName());
+                const auto& channelName =
+                    pImpl->wearable2MatlabNameLookup.at(sensor->getSensorName());
                 pImpl->bufferManager.push_back(saveVar, timestamp.getTime(), channelName);
             }
         }
     }
 
-    if (pImpl->settings.logAllQuantities || pImpl->settings.logForce3DSensors)
-    {
+    if (pImpl->settings.logAllQuantities || pImpl->settings.logForce3DSensors) {
         for (const auto& sensor : pImpl->force3DSensors) {
             wearable::Vector3 vector3;
             if (!sensor->getForce3D(vector3)) {
                 yWarning() << logPrefix << "[Force3DSensors] "
-                         << "Failed to read data, "
-                         << "sensor status is ";
+                           << "Failed to read data, "
+                           << "sensor status is ";
             }
             else {
                 std::vector<double> saveVar{vector3.begin(), vector3.end()};
                 pImpl->prefixVecWithSensorStatus(sensor, saveVar);
-                const auto& channelName = pImpl->wearable2MatlabNameLookup.at(sensor->getSensorName());
+                const auto& channelName =
+                    pImpl->wearable2MatlabNameLookup.at(sensor->getSensorName());
                 pImpl->bufferManager.push_back(saveVar, timestamp.getTime(), channelName);
             }
         }
     }
 
-    if (pImpl->settings.logAllQuantities || pImpl->settings.logForceTorque6DSensors)
-    {
+    if (pImpl->settings.logAllQuantities || pImpl->settings.logForceTorque6DSensors) {
         for (const auto& sensor : pImpl->forceTorque6DSensors) {
             wearable::Vector6 vector6;
             if (!sensor->getForceTorque6D(vector6)) {
                 yWarning() << logPrefix << "[ForceTorque6DSensors] "
-                         << "Failed to read data, "
-                         << "sensor status is "
-                         << static_cast<int>(sensor->getSensorStatus());
+                           << "Failed to read data, "
+                           << "sensor status is " << static_cast<int>(sensor->getSensorStatus());
             }
             else {
                 std::vector<double> saveVar{vector6.begin(), vector6.end()};
                 pImpl->prefixVecWithSensorStatus(sensor, saveVar);
-                const auto& channelName = pImpl->wearable2MatlabNameLookup.at(sensor->getSensorName());
+                const auto& channelName =
+                    pImpl->wearable2MatlabNameLookup.at(sensor->getSensorName());
                 pImpl->bufferManager.push_back(saveVar, timestamp.getTime(), channelName);
             }
         }
     }
 
-    if (pImpl->settings.logAllQuantities || pImpl->settings.logFreeBodyAccelerationSensors)
-    {
+    if (pImpl->settings.logAllQuantities || pImpl->settings.logFreeBodyAccelerationSensors) {
         for (const auto& sensor : pImpl->freeBodyAccelerationSensors) {
             wearable::Vector3 vector3;
             if (!sensor->getFreeBodyAcceleration(vector3)) {
                 yWarning() << logPrefix << "[FreeBodyAccelerationSensors] "
-                         << "Failed to read data, "
-                         << "sensor status is "
-                         << static_cast<int>(sensor->getSensorStatus());
+                           << "Failed to read data, "
+                           << "sensor status is " << static_cast<int>(sensor->getSensorStatus());
             }
             else {
                 std::vector<double> saveVar{vector3.begin(), vector3.end()};
                 pImpl->prefixVecWithSensorStatus(sensor, saveVar);
-                const auto& channelName = pImpl->wearable2MatlabNameLookup.at(sensor->getSensorName());
+                const auto& channelName =
+                    pImpl->wearable2MatlabNameLookup.at(sensor->getSensorName());
                 pImpl->bufferManager.push_back(saveVar, timestamp.getTime(), channelName);
             }
         }
     }
 
-    if (pImpl->settings.logAllQuantities || pImpl->settings.logGyroscopes)
-    {
+    if (pImpl->settings.logAllQuantities || pImpl->settings.logGyroscopes) {
         for (const auto& sensor : pImpl->gyroscopes) {
             wearable::Vector3 vector3;
             if (!sensor->getAngularRate(vector3)) {
                 yWarning() << logPrefix << "[Gyroscopes] "
-                         << "Failed to read data, "
-                         << "sensor status is "
-                         << static_cast<int>(sensor->getSensorStatus());
+                           << "Failed to read data, "
+                           << "sensor status is " << static_cast<int>(sensor->getSensorStatus());
             }
             else {
                 std::vector<double> saveVar{vector3.begin(), vector3.end()};
                 pImpl->prefixVecWithSensorStatus(sensor, saveVar);
-                const auto& channelName = pImpl->wearable2MatlabNameLookup.at(sensor->getSensorName());
+                const auto& channelName =
+                    pImpl->wearable2MatlabNameLookup.at(sensor->getSensorName());
                 pImpl->bufferManager.push_back(saveVar, timestamp.getTime(), channelName);
             }
         }
     }
 
-    if (pImpl->settings.logAllQuantities || pImpl->settings.logMagnetometers)
-    {
+    if (pImpl->settings.logAllQuantities || pImpl->settings.logMagnetometers) {
         for (const auto& sensor : pImpl->magnetometers) {
             wearable::Vector3 vector3;
             if (!sensor->getMagneticField(vector3)) {
                 yWarning() << logPrefix << "[Magnetometers] "
-                         << "Failed to read data, "
-                         << "sensor status is "
-                         << static_cast<int>(sensor->getSensorStatus());
+                           << "Failed to read data, "
+                           << "sensor status is " << static_cast<int>(sensor->getSensorStatus());
             }
             else {
                 std::vector<double> saveVar{vector3.begin(), vector3.end()};
                 pImpl->prefixVecWithSensorStatus(sensor, saveVar);
-                const auto& channelName = pImpl->wearable2MatlabNameLookup.at(sensor->getSensorName());
+                const auto& channelName =
+                    pImpl->wearable2MatlabNameLookup.at(sensor->getSensorName());
                 pImpl->bufferManager.push_back(saveVar, timestamp.getTime(), channelName);
             }
         }
     }
 
-    if (pImpl->settings.logAllQuantities || pImpl->settings.logOrientationSensors)
-    {
+    if (pImpl->settings.logAllQuantities || pImpl->settings.logOrientationSensors) {
         for (const auto& sensor : pImpl->orientationSensors) {
             wearable::Quaternion quaternion;
             if (!sensor->getOrientationAsQuaternion(quaternion)) {
                 yWarning() << logPrefix << "[OrientationSensors] "
-                         << "Failed to read data, "
-                         << "sensor status is "
-                         << static_cast<int>(sensor->getSensorStatus());
+                           << "Failed to read data, "
+                           << "sensor status is " << static_cast<int>(sensor->getSensorStatus());
             }
             else {
                 std::vector<double> saveVar{quaternion.begin(), quaternion.end()};
                 pImpl->prefixVecWithSensorStatus(sensor, saveVar);
-                const auto& channelName = pImpl->wearable2MatlabNameLookup.at(sensor->getSensorName());
+                const auto& channelName =
+                    pImpl->wearable2MatlabNameLookup.at(sensor->getSensorName());
                 pImpl->bufferManager.push_back(saveVar, timestamp.getTime(), channelName);
             }
         }
     }
 
-    if (pImpl->settings.logAllQuantities || pImpl->settings.logPoseSensors)
-    {
+    if (pImpl->settings.logAllQuantities || pImpl->settings.logPoseSensors) {
         for (const auto& sensor : pImpl->poseSensors) {
             wearable::Vector3 vector3;
             wearable::Quaternion quaternion;
             if (!sensor->getPose(quaternion, vector3)) {
                 yWarning() << logPrefix << "[PoseSensors] "
-                         << "Failed to read data, "
-                         << "sensor status is "
-                         << static_cast<int>(sensor->getSensorStatus());
+                           << "Failed to read data, "
+                           << "sensor status is " << static_cast<int>(sensor->getSensorStatus());
             }
             else {
                 std::vector<double> saveVar;
                 std::copy(vector3.begin(), vector3.end(), std::back_inserter(saveVar));
                 std::copy(quaternion.begin(), quaternion.end(), std::back_inserter(saveVar));
                 pImpl->prefixVecWithSensorStatus(sensor, saveVar);
-                const auto& channelName = pImpl->wearable2MatlabNameLookup.at(sensor->getSensorName());
+                const auto& channelName =
+                    pImpl->wearable2MatlabNameLookup.at(sensor->getSensorName());
                 pImpl->bufferManager.push_back(saveVar, timestamp.getTime(), channelName);
             }
         }
     }
 
-    if (pImpl->settings.logAllQuantities || pImpl->settings.logPositionSensors)
-    {
+    if (pImpl->settings.logAllQuantities || pImpl->settings.logPositionSensors) {
         for (const auto& sensor : pImpl->positionSensors) {
             wearable::Vector3 vector3;
             if (!sensor->getPosition(vector3)) {
                 yWarning() << logPrefix << "[PositionSensors] "
-                         << "Failed to read data, "
-                         << "sensor status is "
-                         << static_cast<int>(sensor->getSensorStatus());
+                           << "Failed to read data, "
+                           << "sensor status is " << static_cast<int>(sensor->getSensorStatus());
             }
             else {
                 std::vector<double> saveVar{vector3.begin(), vector3.end()};
                 pImpl->prefixVecWithSensorStatus(sensor, saveVar);
-                const auto& channelName = pImpl->wearable2MatlabNameLookup.at(sensor->getSensorName());
+                const auto& channelName =
+                    pImpl->wearable2MatlabNameLookup.at(sensor->getSensorName());
                 pImpl->bufferManager.push_back(saveVar, timestamp.getTime(), channelName);
             }
         }
     }
 
-    if (pImpl->settings.logAllQuantities || pImpl->settings.logTemperatureSensors)
-    {
+    if (pImpl->settings.logAllQuantities || pImpl->settings.logTemperatureSensors) {
         for (const auto& sensor : pImpl->temperatureSensors) {
             double value;
             if (!sensor->getTemperature(value)) {
                 yWarning() << logPrefix << "[TemperatureSensors] "
-                         << "Failed to read data, "
-                         << "sensor status is "
-                         << static_cast<int>(sensor->getSensorStatus());
+                           << "Failed to read data, "
+                           << "sensor status is " << static_cast<int>(sensor->getSensorStatus());
             }
             else {
                 std::vector<double> saveVar;
                 saveVar.emplace_back(value);
                 pImpl->prefixVecWithSensorStatus(sensor, saveVar);
-                const auto& channelName = pImpl->wearable2MatlabNameLookup.at(sensor->getSensorName());
+                const auto& channelName =
+                    pImpl->wearable2MatlabNameLookup.at(sensor->getSensorName());
                 pImpl->bufferManager.push_back(saveVar, timestamp.getTime(), channelName);
             }
         }
     }
 
-    if (pImpl->settings.logAllQuantities || pImpl->settings.logTorque3DSensors)
-    {
+    if (pImpl->settings.logAllQuantities || pImpl->settings.logTorque3DSensors) {
         for (const auto& sensor : pImpl->torque3DSensors) {
             wearable::Vector3 vector3;
             if (!sensor->getTorque3D(vector3)) {
                 yWarning() << logPrefix << "[Torque3DSensors] "
-                         << "Failed to read data, "
-                         << "sensor status is "
-                         << static_cast<int>(sensor->getSensorStatus());
+                           << "Failed to read data, "
+                           << "sensor status is " << static_cast<int>(sensor->getSensorStatus());
             }
             else {
                 std::vector<double> saveVar{vector3.begin(), vector3.end()};
                 pImpl->prefixVecWithSensorStatus(sensor, saveVar);
-                const auto& channelName = pImpl->wearable2MatlabNameLookup.at(sensor->getSensorName());
+                const auto& channelName =
+                    pImpl->wearable2MatlabNameLookup.at(sensor->getSensorName());
                 pImpl->bufferManager.push_back(saveVar, timestamp.getTime(), channelName);
             }
         }
     }
 
-    if (pImpl->settings.logAllQuantities || pImpl->settings.logVirtualLinkKinSensors)
-    {
+    if (pImpl->settings.logAllQuantities || pImpl->settings.logVirtualLinkKinSensors) {
         for (const auto& sensor : pImpl->virtualLinkKinSensors) {
             wearable::Vector3 linearAcc;
             wearable::Vector3 angularAcc;
@@ -467,9 +451,8 @@ void IWearLogger::run()
                 || !sensor->getLinkPose(position, orientation)
                 || !sensor->getLinkVelocity(linearVel, angularVel)) {
                 yWarning() << logPrefix << "[VirtualLinkKinSensors] "
-                         << "Failed to read data, "
-                         << "sensor status is "
-                         << static_cast<int>(sensor->getSensorStatus());
+                           << "Failed to read data, "
+                           << "sensor status is " << static_cast<int>(sensor->getSensorStatus());
             }
             else {
                 std::vector<double> saveVar;
@@ -480,14 +463,14 @@ void IWearLogger::run()
                 std::copy(linearAcc.begin(), linearAcc.end(), std::back_inserter(saveVar));
                 std::copy(angularAcc.begin(), angularAcc.end(), std::back_inserter(saveVar));
                 pImpl->prefixVecWithSensorStatus(sensor, saveVar);
-                const auto& channelName = pImpl->wearable2MatlabNameLookup.at(sensor->getSensorName());
+                const auto& channelName =
+                    pImpl->wearable2MatlabNameLookup.at(sensor->getSensorName());
                 pImpl->bufferManager.push_back(saveVar, timestamp.getTime(), channelName);
             }
         }
     }
 
-    if (pImpl->settings.logAllQuantities || pImpl->settings.logVirtualJointKinSensors)
-    {
+    if (pImpl->settings.logAllQuantities || pImpl->settings.logVirtualJointKinSensors) {
         for (const auto& sensor : pImpl->virtualJointKinSensors) {
             double jointPos;
             double jointVel;
@@ -505,14 +488,14 @@ void IWearLogger::run()
                 saveVar.emplace_back(jointVel);
                 saveVar.emplace_back(jointAcc);
                 pImpl->prefixVecWithSensorStatus(sensor, saveVar);
-                const auto& channelName = pImpl->wearable2MatlabNameLookup.at(sensor->getSensorName());
+                const auto& channelName =
+                    pImpl->wearable2MatlabNameLookup.at(sensor->getSensorName());
                 pImpl->bufferManager.push_back(saveVar, timestamp.getTime(), channelName);
             }
         }
     }
 
-    if (pImpl->settings.logAllQuantities || pImpl->settings.logVirtualSphericalJointKinSensors)
-    {
+    if (pImpl->settings.logAllQuantities || pImpl->settings.logVirtualSphericalJointKinSensors) {
         for (const auto& sensor : pImpl->virtualSphericalJointKinSensors) {
             wearable::Vector3 jointAngles;
             wearable::Vector3 jointVel;
@@ -520,9 +503,8 @@ void IWearLogger::run()
             if (!sensor->getJointAnglesAsRPY(jointAngles) || !sensor->getJointVelocities(jointVel)
                 || !sensor->getJointAccelerations(jointAcc)) {
                 yWarning() << logPrefix << "[VirtualSphericalJointKinSensors] "
-                         << "Failed to read data, "
-                         << "sensor status is "
-                         << static_cast<int>(sensor->getSensorStatus());
+                           << "Failed to read data, "
+                           << "sensor status is " << static_cast<int>(sensor->getSensorStatus());
             }
             else {
                 std::vector<double> saveVar;
@@ -530,7 +512,8 @@ void IWearLogger::run()
                 std::copy(jointVel.begin(), jointVel.end(), std::back_inserter(saveVar));
                 std::copy(jointAcc.begin(), jointAcc.end(), std::back_inserter(saveVar));
                 pImpl->prefixVecWithSensorStatus(sensor, saveVar);
-                const auto& channelName = pImpl->wearable2MatlabNameLookup.at(sensor->getSensorName());
+                const auto& channelName =
+                    pImpl->wearable2MatlabNameLookup.at(sensor->getSensorName());
                 pImpl->bufferManager.push_back(saveVar, timestamp.getTime(), channelName);
             }
         }
@@ -553,8 +536,7 @@ bool IWearLogger::open(yarp::os::Searchable& config)
 
     // Load settings in the class
     bool ok = pImpl->loadSettingsFromConfig(config);
-    if (!ok)
-    {
+    if (!ok) {
         yError() << logPrefix << "Problem in loading settings from config.";
         return false;
     }
@@ -573,7 +555,8 @@ bool IWearLogger::impl::loadSettingsFromConfig(yarp::os::Searchable& config)
     checkAndLoadBooleanOption(prop, "logEMGSensors", settings.logEMGSensors);
     checkAndLoadBooleanOption(prop, "logForce3DSensors", settings.logForce3DSensors);
     checkAndLoadBooleanOption(prop, "logForceTorque6DSensors", settings.logForceTorque6DSensors);
-    checkAndLoadBooleanOption(prop, "logFreeBodyAccelerationSensors", settings.logFreeBodyAccelerationSensors);
+    checkAndLoadBooleanOption(
+        prop, "logFreeBodyAccelerationSensors", settings.logFreeBodyAccelerationSensors);
     checkAndLoadBooleanOption(prop, "logGyroscopes", settings.logGyroscopes);
     checkAndLoadBooleanOption(prop, "logMagnetometers", settings.logMagnetometers);
     checkAndLoadBooleanOption(prop, "logOrientationSensors", settings.logOrientationSensors);
@@ -582,11 +565,14 @@ bool IWearLogger::impl::loadSettingsFromConfig(yarp::os::Searchable& config)
     checkAndLoadBooleanOption(prop, "logTemperatureSensors", settings.logTemperatureSensors);
     checkAndLoadBooleanOption(prop, "logTorque3DSensors", settings.logTorque3DSensors);
     checkAndLoadBooleanOption(prop, "logVirtualLinkKinSensors", settings.logVirtualLinkKinSensors);
-    checkAndLoadBooleanOption(prop, "logVirtualJointKinSensors", settings.logVirtualJointKinSensors);
-    checkAndLoadBooleanOption(prop, "logVirtualSphericalJointKinSensors", settings.logVirtualSphericalJointKinSensors);
+    checkAndLoadBooleanOption(
+        prop, "logVirtualJointKinSensors", settings.logVirtualJointKinSensors);
+    checkAndLoadBooleanOption(
+        prop, "logVirtualSphericalJointKinSensors", settings.logVirtualSphericalJointKinSensors);
 
     // load buffer manager configuration settings
-    checkAndLoadBooleanOption(prop, "saveBufferManagerConfiguration", settings.saveBufferManagerConfiguration);
+    checkAndLoadBooleanOption(
+        prop, "saveBufferManagerConfiguration", settings.saveBufferManagerConfiguration);
 
     std::string experimentName = "experimentName";
     if (prop.check(experimentName.c_str()) && prop.find(experimentName.c_str()).isString()) {
@@ -630,7 +616,6 @@ bool IWearLogger::impl::loadSettingsFromConfig(yarp::os::Searchable& config)
         if (prop.check(data_threshold.c_str()) && prop.find(data_threshold.c_str()).isInt32()) {
             bufferConfig.data_threshold = prop.find(data_threshold.c_str()).asInt32();
         }
-
     }
 
     std::string auto_save = "auto_save";
@@ -639,7 +624,9 @@ bool IWearLogger::impl::loadSettingsFromConfig(yarp::os::Searchable& config)
     }
 
     if (!(bufferConfig.auto_save || bufferConfig.save_periodically)) {
-        yError() << logPrefix << " both auto_save and save_periodically are set to false, nothing will be saved.";
+        yError()
+            << logPrefix
+            << " both auto_save and save_periodically are set to false, nothing will be saved.";
         return false;
     }
 
@@ -647,8 +634,8 @@ bool IWearLogger::impl::loadSettingsFromConfig(yarp::os::Searchable& config)
 }
 
 void IWearLogger::impl::checkAndLoadBooleanOption(yarp::os::Property& prop,
-                                            const std::string& optionName,
-                                            bool& option)
+                                                  const std::string& optionName,
+                                                  bool& option)
 {
     if (prop.check(optionName.c_str())) {
         option = prop.find(optionName.c_str()).asBool();
@@ -657,14 +644,15 @@ void IWearLogger::impl::checkAndLoadBooleanOption(yarp::os::Property& prop,
 
 bool IWearLogger::close()
 {
-    if (!pImpl->bufferConfig.auto_save)
-    {
+    if (!pImpl->bufferConfig.auto_save) {
         pImpl->bufferManager.saveToFile();
     }
     bool ok{true};
     if (pImpl->settings.saveBufferManagerConfiguration) {
         auto buffConfToSave = pImpl->bufferManager.getBufferConfig();
-        ok = bufferConfigToJson(buffConfToSave, buffConfToSave.path + "bufferConfig" + buffConfToSave.filename + ".json");
+        ok = bufferConfigToJson(buffConfToSave,
+                                buffConfToSave.path + "bufferConfig" + buffConfToSave.filename
+                                    + ".json");
     }
     return ok;
 }
@@ -709,40 +697,40 @@ bool IWearLogger::impl::configureBufferManager()
 {
     bool ok{true};
     // Prepare the buffer manager for the logger
-    if (ok && (settings.logAllQuantities || settings.logAccelerometers) ) {
+    if (ok && (settings.logAllQuantities || settings.logAccelerometers)) {
         for (const auto& s : iWear->getAccelerometers()) {
             auto sensorName = s->getSensorName();
-            yInfo() << logPrefix << "Adding (4, 1) accelerometer channels for "
-                    << sensorName << " prefixed with sensor status.";
+            yInfo() << logPrefix << "Adding (4, 1) accelerometer channels for " << sensorName
+                    << " prefixed with sensor status.";
             auto channelName = convertSensorNameToValidMatlabVarName(sensorName);
             wearable2MatlabNameLookup[sensorName] = channelName;
             ok = ok && bufferManager.addChannel({channelName, {4, 1}});
         }
     }
 
-    if (ok && (settings.logAllQuantities || settings.logEMGSensors) ) {
+    if (ok && (settings.logAllQuantities || settings.logEMGSensors)) {
         for (const auto& s : iWear->getEmgSensors()) {
             auto sensorName = s->getSensorName();
             yInfo() << logPrefix << "Adding (3, 1) EMG sensor channels value+normalization for "
-            << sensorName << " prefixed with sensor status.";
+                    << sensorName << " prefixed with sensor status.";
             auto channelName = convertSensorNameToValidMatlabVarName(sensorName);
             wearable2MatlabNameLookup[sensorName] = channelName;
             ok = ok && bufferManager.addChannel({channelName, {3, 1}});
         }
     }
 
-    if (ok && (settings.logAllQuantities || settings.logForce3DSensors) ) {
+    if (ok && (settings.logAllQuantities || settings.logForce3DSensors)) {
         for (const auto& s : iWear->getForce3DSensors()) {
             auto sensorName = s->getSensorName();
-            yInfo() << logPrefix << "Adding (4, 1) 3d force sensor channels for "
-                    << sensorName << " prefixed with sensor status.";
+            yInfo() << logPrefix << "Adding (4, 1) 3d force sensor channels for " << sensorName
+                    << " prefixed with sensor status.";
             auto channelName = convertSensorNameToValidMatlabVarName(sensorName);
             wearable2MatlabNameLookup[sensorName] = channelName;
             ok = ok && bufferManager.addChannel({channelName, {4, 1}});
         }
     }
 
-    if (ok && (settings.logAllQuantities || settings.logForceTorque6DSensors) ) {
+    if (ok && (settings.logAllQuantities || settings.logForceTorque6DSensors)) {
         for (const auto& s : iWear->getForceTorque6DSensors()) {
             auto sensorName = s->getSensorName();
             yInfo() << logPrefix << "Adding (7, 1) 6D force torque sensor channels for "
@@ -753,7 +741,7 @@ bool IWearLogger::impl::configureBufferManager()
         }
     }
 
-    if (ok && (settings.logAllQuantities || settings.logFreeBodyAccelerationSensors) ) {
+    if (ok && (settings.logAllQuantities || settings.logFreeBodyAccelerationSensors)) {
         for (const auto& s : iWear->getFreeBodyAccelerationSensors()) {
             auto sensorName = s->getSensorName();
             yInfo() << logPrefix << "Adding (4, 1) free body acceleration sensor channels for "
@@ -764,40 +752,40 @@ bool IWearLogger::impl::configureBufferManager()
         }
     }
 
-    if (ok && (settings.logAllQuantities || settings.logGyroscopes) ) {
+    if (ok && (settings.logAllQuantities || settings.logGyroscopes)) {
         for (const auto& s : iWear->getGyroscopes()) {
             auto sensorName = s->getSensorName();
-            yInfo() << logPrefix << "Adding (4, 1) gyroscope channels for "
-                    << sensorName << " prefixed with sensor status.";
+            yInfo() << logPrefix << "Adding (4, 1) gyroscope channels for " << sensorName
+                    << " prefixed with sensor status.";
             auto channelName = convertSensorNameToValidMatlabVarName(sensorName);
             wearable2MatlabNameLookup[sensorName] = channelName;
             ok = ok && bufferManager.addChannel({channelName, {4, 1}});
         }
     }
 
-    if (ok && (settings.logAllQuantities || settings.logMagnetometers) ) {
+    if (ok && (settings.logAllQuantities || settings.logMagnetometers)) {
         for (const auto& s : iWear->getMagnetometers()) {
             auto sensorName = s->getSensorName();
-            yInfo() << logPrefix << "Adding (4, 1) magnetometer channels for "
-                    << sensorName << " prefixed with sensor status.";
+            yInfo() << logPrefix << "Adding (4, 1) magnetometer channels for " << sensorName
+                    << " prefixed with sensor status.";
             auto channelName = convertSensorNameToValidMatlabVarName(sensorName);
             wearable2MatlabNameLookup[sensorName] = channelName;
             ok = ok && bufferManager.addChannel({channelName, {4, 1}});
         }
     }
 
-    if (ok && (settings.logAllQuantities || settings.logOrientationSensors) ) {
+    if (ok && (settings.logAllQuantities || settings.logOrientationSensors)) {
         for (const auto& s : iWear->getOrientationSensors()) {
             std::string sensorName = s->getSensorName();
-            yInfo() << logPrefix << "Adding (5, 1) quaternion wxyz channels for "
-                    << sensorName << " prefixed with sensor status.";
+            yInfo() << logPrefix << "Adding (5, 1) quaternion wxyz channels for " << sensorName
+                    << " prefixed with sensor status.";
             auto channelName = convertSensorNameToValidMatlabVarName(sensorName);
             wearable2MatlabNameLookup[sensorName] = channelName;
             ok = ok && bufferManager.addChannel({channelName, {5, 1}});
         }
     }
 
-    if (ok && (settings.logAllQuantities || settings.logPoseSensors) ) {
+    if (ok && (settings.logAllQuantities || settings.logPoseSensors)) {
         for (const auto& s : iWear->getPoseSensors()) {
             auto sensorName = s->getSensorName();
             yInfo() << logPrefix << "Adding (8, 1) pose sensor (pos+quat) channels for "
@@ -808,40 +796,40 @@ bool IWearLogger::impl::configureBufferManager()
         }
     }
 
-    if (ok && (settings.logAllQuantities || settings.logPositionSensors) ) {
+    if (ok && (settings.logAllQuantities || settings.logPositionSensors)) {
         for (const auto& s : iWear->getPositionSensors()) {
             auto sensorName = s->getSensorName();
-            yInfo() << logPrefix << "Adding (4, 1) pose sensor channels for "
-                    << sensorName << " prefixed with sensor status.";
+            yInfo() << logPrefix << "Adding (4, 1) pose sensor channels for " << sensorName
+                    << " prefixed with sensor status.";
             auto channelName = convertSensorNameToValidMatlabVarName(sensorName);
             wearable2MatlabNameLookup[sensorName] = channelName;
             ok = ok && bufferManager.addChannel({channelName, {4, 1}});
         }
     }
 
-    if (ok && (settings.logAllQuantities || settings.logTemperatureSensors) ) {
+    if (ok && (settings.logAllQuantities || settings.logTemperatureSensors)) {
         for (const auto& s : iWear->getTemperatureSensors()) {
             auto sensorName = s->getSensorName();
-            yInfo() << logPrefix << "Adding (2, 1) temperature sensor channels for "
-                    << sensorName << " prefixed with sensor status.";
+            yInfo() << logPrefix << "Adding (2, 1) temperature sensor channels for " << sensorName
+                    << " prefixed with sensor status.";
             auto channelName = convertSensorNameToValidMatlabVarName(sensorName);
             wearable2MatlabNameLookup[sensorName] = channelName;
             ok = ok && bufferManager.addChannel({channelName, {2, 1}});
         }
     }
 
-    if (ok && (settings.logAllQuantities || settings.logTorque3DSensors) ) {
+    if (ok && (settings.logAllQuantities || settings.logTorque3DSensors)) {
         for (const auto& s : iWear->getTorque3DSensors()) {
             auto sensorName = s->getSensorName();
-            yInfo() << logPrefix << "Adding (4, 1) 3D torque sensor channels for "
-                    << sensorName << " prefixed with sensor status.";
+            yInfo() << logPrefix << "Adding (4, 1) 3D torque sensor channels for " << sensorName
+                    << " prefixed with sensor status.";
             auto channelName = convertSensorNameToValidMatlabVarName(sensorName);
             wearable2MatlabNameLookup[sensorName] = channelName;
             ok = ok && bufferManager.addChannel({channelName, {4, 1}});
         }
     }
 
-    if (ok && (settings.logAllQuantities || settings.logVirtualLinkKinSensors) ) {
+    if (ok && (settings.logAllQuantities || settings.logVirtualLinkKinSensors)) {
         for (const auto& s : iWear->getVirtualLinkKinSensors()) {
             auto sensorName = s->getSensorName();
             yInfo() << logPrefix << "Adding (20, 1) pos+quat+v+omega+a+alpha channels for "
@@ -852,7 +840,7 @@ bool IWearLogger::impl::configureBufferManager()
         }
     }
 
-    if (ok && (settings.logAllQuantities || settings.logVirtualJointKinSensors) ) {
+    if (ok && (settings.logAllQuantities || settings.logVirtualJointKinSensors)) {
         for (const auto& s : iWear->getVirtualJointKinSensors()) {
             auto sensorName = s->getSensorName();
             yInfo() << logPrefix << "Adding (4, 1) virtual joint kinematics channels for "
@@ -863,10 +851,11 @@ bool IWearLogger::impl::configureBufferManager()
         }
     }
 
-    if (ok && (settings.logAllQuantities || settings.logVirtualSphericalJointKinSensors) ) {
+    if (ok && (settings.logAllQuantities || settings.logVirtualSphericalJointKinSensors)) {
         for (const auto& s : iWear->getVirtualSphericalJointKinSensors()) {
             auto sensorName = s->getSensorName();
-            yInfo() << logPrefix << "Adding (10, 1) rpy+vel+acc virtual spherical joint kinematics channels for "
+            yInfo() << logPrefix
+                    << "Adding (10, 1) rpy+vel+acc virtual spherical joint kinematics channels for "
                     << sensorName << " prefixed with sensor status.";
             auto channelName = convertSensorNameToValidMatlabVarName(sensorName);
             wearable2MatlabNameLookup[sensorName] = channelName;
@@ -874,7 +863,7 @@ bool IWearLogger::impl::configureBufferManager()
         }
     }
 
-    ok  = ok && bufferManager.configure(bufferConfig);
+    ok = ok && bufferManager.configure(bufferConfig);
     if (ok) {
         yDebug() << logPrefix << " buffer manager configured successfully.";
     }
@@ -882,10 +871,7 @@ bool IWearLogger::impl::configureBufferManager()
     return ok;
 }
 
-void IWearLogger::threadRelease()
-{
-
-}
+void IWearLogger::threadRelease() {}
 
 bool IWearLogger::detach()
 {
