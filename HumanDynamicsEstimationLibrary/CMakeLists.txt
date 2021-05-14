@@ -10,7 +10,7 @@ find_package(iDynTree REQUIRED)
 include(AddComponent)
 
 
-add_component(NAME ${PROJECT_NAME}
+add_component(NAME hde
               SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/InverseVelocityKinematics.cpp
                       ${CMAKE_CURRENT_SOURCE_DIR}/src/Utils.cpp
               PUBLIC_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/include/InverseVelocityKinematics.hpp

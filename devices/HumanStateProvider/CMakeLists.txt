@@ -25,7 +25,6 @@ target_include_directories(HumanStateProvider PUBLIC
     SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIR})
 
 target_link_libraries(HumanStateProvider PUBLIC
-    IHumanState
     YARP::YARP_OS
     YARP::YARP_dev
     YARP::YARP_init
@@ -34,7 +33,8 @@ target_link_libraries(HumanStateProvider PUBLIC
     iDynTree::idyntree-inverse-kinematics
     iDynTree::idyntree-high-level
     OsqpEigen::OsqpEigen
-    HumanDynamicsEstimation::HumanDynamicsEstimation
+    IHumanState
+    HumanDynamicsEstimation::hde
     )
 
 if(MSVC)
