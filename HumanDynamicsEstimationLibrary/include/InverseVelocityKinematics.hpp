@@ -21,11 +21,11 @@
 #include <memory>
 #include <yarp/os/LogStream.h>
 
-namespace hde {
+namespace hde::algorithms {
     class InverseVelocityKinematics;
 } // namespace hde
 
-class hde::InverseVelocityKinematics
+class hde::algorithms::InverseVelocityKinematics
 {
 protected:
     class impl;

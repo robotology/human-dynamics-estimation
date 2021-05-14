@@ -11,7 +11,7 @@
 // osqp-eigen
 #include "OsqpEigen/OsqpEigen.h"
 
-using namespace hde;
+using namespace hde::algorithms;
 
 // ====
 // IMPL

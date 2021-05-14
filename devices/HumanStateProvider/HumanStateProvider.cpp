@@ -239,7 +239,7 @@ public:
     bool useFixedBase;
 
     iDynTree::InverseKinematics globalIK;
-    hde::InverseVelocityKinematics inverseVelocityKinematics;
+    hde::algorithms::InverseVelocityKinematics inverseVelocityKinematics;
     hde::utils::idyntree::state::Integrator stateIntegrator;
 
     // clock
