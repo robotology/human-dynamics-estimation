@@ -36,6 +36,7 @@ jobs:
         - uses: actions/checkout@master  
 
         - uses: conda-incubator/setup-miniconda@v2
+          if: contains(matrix.os, 'windows')
           with:
             mamba-version: "*"
             channels: conda-forge,defaults
@@ -182,4 +183,3 @@ jobs:
             # See https://github.com/robotology/idyntree/issues/569
             export PATH=$PATH:${GITHUB_WORKSPACE}/install/bin:${VCPKG_INSTALLATION_ROOT}/install/x64-windows/bin:${VCPKG_INSTALLATION_ROOT}/installed/x64-windows/debug/bin
             cmake --build . --config ${{matrix.build_type}}
-
