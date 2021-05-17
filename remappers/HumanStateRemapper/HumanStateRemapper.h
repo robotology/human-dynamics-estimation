@@ -9,7 +9,7 @@
 #ifndef HDE_DEVICES_HUMANSTATEREMAPPER
 #define HDE_DEVICES_HUMANSTATEREMAPPER
 
-#include "IHumanState.h"
+#include <hde/interfaces/IHumanState.h>
 
 #include <yarp/dev/DeviceDriver.h>
 #include <yarp/dev/PreciselyTimed.h>
@@ -18,19 +18,17 @@
 
 #include <memory>
 
-namespace human {
+namespace hde::msgs {
     class HumanState;
-}
-namespace hde {
-    namespace devices {
-        class HumanStateRemapper;
-    } // namespace devices
-} // namespace hde
+} // namespace hde::msgs
+namespace hde::devices {
+    class HumanStateRemapper;
+} // namespace hde::devices
 
 class hde::devices::HumanStateRemapper final
     : public yarp::dev::DeviceDriver
     , public hde::interfaces::IHumanState
-    , public yarp::os::TypedReaderCallback<human::HumanState>
+    , public yarp::os::TypedReaderCallback<hde::msgs::HumanState>
     , public yarp::os::PeriodicThread
 {
 private:
@@ -41,7 +39,7 @@ public:
     HumanStateRemapper();
     ~HumanStateRemapper() override;
 
-	// DeviceDriver interface
+    // DeviceDriver interface
     bool open(yarp::os::Searchable& config) override;
     bool close() override;
 
@@ -50,7 +48,7 @@ public:
     void threadRelease() override;
 
     // TypedReaderCallback
-    void onRead(human::HumanState& humanState) override;
+    void onRead(hde::msgs::HumanState& humanState) override;
 
     // IHumanState interface
     std::vector<std::string> getJointNames() const override;

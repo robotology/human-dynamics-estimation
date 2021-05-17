@@ -18,16 +18,13 @@ yarp_add_plugin(HumanStateProvider
     HumanStateProvider.cpp
     HumanStateProvider.h
     IKWorkerPool.cpp
-    IKWorkerPool.h
-    InverseVelocityKinematics/InverseVelocityKinematics.cpp
-    InverseVelocityKinematics/InverseVelocityKinematics.hpp)
+    IKWorkerPool.h)
 
 target_include_directories(HumanStateProvider PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIR})
 
 target_link_libraries(HumanStateProvider PUBLIC
-    IHumanState
     YARP::YARP_OS
     YARP::YARP_dev
     YARP::YARP_init
@@ -35,9 +32,10 @@ target_link_libraries(HumanStateProvider PUBLIC
     iDynTree::idyntree-model
     iDynTree::idyntree-inverse-kinematics
     iDynTree::idyntree-high-level
-    UtilityLibrary
     OsqpEigen::OsqpEigen
-    osqp::osqp
+    IHumanState
+    HumanDynamicsEstimation::utils
+    HumanDynamicsEstimation::algorithms
     )
 
 if(MSVC)

@@ -5,14 +5,14 @@
 add_library(IHumanState INTERFACE)
 
 target_sources(IHumanState INTERFACE
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/IHumanState.h>
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/hde/IHumanState.h>)
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/hde/interfaces/IHumanState.h>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/hde/interfaces/IHumanState.h>)
 
 target_include_directories(IHumanState INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/hde>)
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/hde/interfaces>)
 
 install(
-    FILES IHumanState.h
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/hde)
+    FILES hde/interfaces/IHumanState.h
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/hde/interfaces)
 

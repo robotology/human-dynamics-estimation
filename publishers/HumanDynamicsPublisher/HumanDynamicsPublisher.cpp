@@ -7,7 +7,8 @@
  */
 
 #include "HumanDynamicsPublisher.h"
-#include "IHumanDynamics.h"
+
+#include <hde/interfaces/IHumanDynamics.h>
 
 #include <yarp/os/LogStream.h>
 #include <yarp/os/Node.h>
