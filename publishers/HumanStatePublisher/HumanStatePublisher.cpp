@@ -7,7 +7,8 @@
  */
 
 #include "HumanStatePublisher.h"
-#include "IHumanState.h"
+
+#include <hde/interfaces/IHumanState.h>
 
 #include <yarp/os/LogStream.h>
 #include <yarp/os/Node.h>

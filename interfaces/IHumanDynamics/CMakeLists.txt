@@ -5,14 +5,14 @@
 add_library(IHumanDynamics INTERFACE)
 
 target_sources(IHumanDynamics INTERFACE
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/IHumanDynamics.h>
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/hde/IHumanDynamics.h>)
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/hde/interfaces/IHumanDynamics.h>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/hde/interfaces/IHumanDynamics.h>)
 
 target_include_directories(IHumanDynamics INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/hde>)
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/hde/interfaces>)
 
 install(
-    FILES IHumanDynamics.h
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/hde)
+    FILES hde/interfaces/IHumanDynamics.h
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/hde/interfaces)
 

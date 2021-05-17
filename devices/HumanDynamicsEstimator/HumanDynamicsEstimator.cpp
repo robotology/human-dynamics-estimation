@@ -8,8 +8,8 @@
 
 #include "HumanDynamicsEstimator.h"
 
-#include "IHumanState.h"
-#include "IHumanWrench.h"
+#include <hde/interfaces/IHumanState.h>
+#include <hde/interfaces/IHumanWrench.h>
 
 #include <Eigen/SparseCholesky>
 #include <Eigen/SparseCore>

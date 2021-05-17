@@ -5,14 +5,14 @@
 add_library(IHumanWrench INTERFACE)
 
 target_sources(IHumanWrench INTERFACE
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/IHumanWrench.h>
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/hde/IHumanWrench.h>)
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/hde/interfaces/IHumanWrench.h>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/hde/interfaces/IHumanWrench.h>)
 
 target_include_directories(IHumanWrench INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/hde>)
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/hde/interfaces>)
 
 install(
-    FILES IHumanWrench.h
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/hde)
+    FILES hde/interfaces/IHumanWrench.h
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/hde/interfaces)
 

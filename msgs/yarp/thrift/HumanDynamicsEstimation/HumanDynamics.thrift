@@ -1,4 +1,4 @@
-namespace yarp human
+namespace yarp hde.msgs
 
 /**
  * Representation of the IHumanDynamics interface

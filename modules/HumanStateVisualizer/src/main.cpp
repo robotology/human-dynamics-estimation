@@ -8,7 +8,7 @@
      * at your option.
      */
 
-#include "IHumanState.h"
+#include <hde/interfaces/IHumanState.h>
 
 #include <yarp/os/Network.h>
 #include <yarp/os/LogStream.h>

@@ -11,7 +11,7 @@ project(HumanDynamicsEstimation
 # PROJECT CONFIGURATION
 # =====================
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if(BUILD_DOCS)
@@ -84,6 +84,7 @@ add_subdirectory(modules)
 add_subdirectory(wrappers)
 add_subdirectory(remappers)
 add_subdirectory(publishers)
+add_subdirectory(HumanDynamicsEstimationLibrary)
 
 include(InstallBasicPackageFiles)
 install_basic_package_files(${PROJECT_NAME}

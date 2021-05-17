@@ -7,8 +7,8 @@
  */
 
 #include "HumanControlBoard.h"
-#include "IHumanState.h"
-#include "IHumanDynamics.h"
+#include <hde/interfaces/IHumanState.h>
+#include <hde/interfaces/IHumanDynamics.h>
 
 #include <mutex>
 #include <cmath>
