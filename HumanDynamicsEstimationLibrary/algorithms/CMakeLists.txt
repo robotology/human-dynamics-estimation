@@ -6,18 +6,12 @@ find_package(OsqpEigen 0.4.0 REQUIRED)
 find_package(YARP 3.2 REQUIRED)
 find_package(iDynTree REQUIRED)
 
-# Include AddComponent cmake module
-include(AddComponent)
-
 add_component(NAME algorithms
               SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/InverseVelocityKinematics.cpp
               PUBLIC_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/include/hde/algorithms/InverseVelocityKinematics.hpp
-              PUBLIC_LINK_LIBRARIES YARP::YARP_OS
-                                    YARP::YARP_dev
-                                    YARP::YARP_init
-                                    iDynTree::idyntree-model
-                                    iDynTree::idyntree-inverse-kinematics
-                                    iDynTree::idyntree-high-level
-              PRIVATE_LINK_LIBRARIES OsqpEigen::OsqpEigen
+              PUBLIC_LINK_LIBRARIES iDynTree::idyntree-model                           
+              PRIVATE_LINK_LIBRARIES YARP::YARP_OS
+                                     iDynTree::idyntree-high-level
+                                     OsqpEigen::OsqpEigen
                                      osqp::osqp
              )

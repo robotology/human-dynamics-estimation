@@ -11,6 +11,12 @@
 // osqp-eigen
 #include "OsqpEigen/OsqpEigen.h"
 
+// idyntree
+#include <iDynTree/Core/EigenHelpers.h>
+#include <iDynTree/KinDynComputations.h>
+
+#include <yarp/os/LogStream.h>
+
 using namespace hde::algorithms;
 
 // ====
@@ -69,7 +75,7 @@ public:
         iDynTree::Vector3 worldGravity;
     } state;
 
-    InverseVelocityKinematicsResolutionMode resolutionMode;
+    ResolutionMode resolutionMode;
 
     class VelocityConstraint;
     typedef std::map<int, VelocityConstraint> VelocityMap;
@@ -189,7 +195,7 @@ public:
 
 InverseVelocityKinematics::impl::impl()
     : dofs(0)
-    , resolutionMode(InverseVelocityKinematicsResolutionMode::moorePenrose)
+    , resolutionMode(ResolutionMode::moorePenrose)
     , numberOfTargetVariables(0)
     , regularizationWeight(1E-8)
     , problemInitialized(false)
@@ -295,7 +301,7 @@ bool InverseVelocityKinematics::impl::solveIntegrationBasedIK(
     weightInverse =
         Eigen::DiagonalMatrix<double, Eigen::Dynamic>(iDynTree::toEigen(weightVector)).inverse();
 
-    if (resolutionMode == InverseVelocityKinematicsResolutionMode::QP) {
+    if (resolutionMode == ResolutionMode::QP) {
 
         if (!m_optimizerSolver->isInitialized()) {
 
@@ -385,7 +391,7 @@ bool InverseVelocityKinematics::impl::solveIntegrationBasedIK(
         iDynTree::toEigen(outputVector) = m_optimizerSolver->getSolution().topRows(configSpaceSize);
         //        exit(0);
     }
-    else if (resolutionMode == InverseVelocityKinematicsResolutionMode::moorePenrose) {
+    else if (resolutionMode == ResolutionMode::moorePenrose) {
         iDynTree::toEigen(outputVector) =
             (iDynTree::toEigen(matrix).transpose() * weightInverse.toDenseMatrix()
                  * iDynTree::toEigen(matrix)
@@ -395,7 +401,7 @@ bool InverseVelocityKinematics::impl::solveIntegrationBasedIK(
             * iDynTree::toEigen(inputVector);
     }
     else if (resolutionMode
-             == InverseVelocityKinematicsResolutionMode::completeOrthogonalDecomposition) {
+             == ResolutionMode::completeOrthogonalDecomposition) {
         Eigen::CompleteOrthogonalDecomposition<
             Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
             WeightedJacobian = (iDynTree::toEigen(matrix).transpose()
@@ -410,7 +416,7 @@ bool InverseVelocityKinematics::impl::solveIntegrationBasedIK(
         std::cout << "rank: " << WeightedJacobian.rank()
                   << " threshhold: " << WeightedJacobian.threshold() << std::endl;
     }
-    else if (resolutionMode == InverseVelocityKinematicsResolutionMode::leastSquare) {
+    else if (resolutionMode == ResolutionMode::leastSquare) {
         iDynTree::toEigen(outputVector) =
             (iDynTree::toEigen(matrix).transpose() * weightInverse.toDenseMatrix()
                  * iDynTree::toEigen(matrix)
@@ -419,7 +425,7 @@ bool InverseVelocityKinematics::impl::solveIntegrationBasedIK(
                 .solve(iDynTree::toEigen(matrix).transpose() * weightInverse.toDenseMatrix()
                        * iDynTree::toEigen(inputVector));
     }
-    else if (resolutionMode == InverseVelocityKinematicsResolutionMode::choleskyDecomposition) {
+    else if (resolutionMode == ResolutionMode::choleskyDecomposition) {
         iDynTree::toEigen(outputVector) =
             (iDynTree::toEigen(matrix).transpose() * weightInverse.toDenseMatrix()
                  * iDynTree::toEigen(matrix)
@@ -429,7 +435,7 @@ bool InverseVelocityKinematics::impl::solveIntegrationBasedIK(
                        * iDynTree::toEigen(inputVector));
     }
     else if (resolutionMode
-             == InverseVelocityKinematicsResolutionMode::sparseCholeskyDecomposition) {
+             == ResolutionMode::sparseCholeskyDecomposition) {
         Eigen::SimplicialLLT<Eigen::SparseMatrix<double>> solver;
         solver.compute((iDynTree::toEigen(matrix).transpose() * weightInverse.toDenseMatrix()
                             * iDynTree::toEigen(matrix)
@@ -441,7 +447,7 @@ bool InverseVelocityKinematics::impl::solveIntegrationBasedIK(
                          * iDynTree::toEigen(inputVector));
     }
     else if (resolutionMode
-             == InverseVelocityKinematicsResolutionMode::robustCholeskyDecomposition) {
+             == ResolutionMode::robustCholeskyDecomposition) {
         iDynTree::toEigen(outputVector) =
             (iDynTree::toEigen(matrix).transpose() * weightInverse.toDenseMatrix()
                  * iDynTree::toEigen(matrix)
@@ -451,7 +457,7 @@ bool InverseVelocityKinematics::impl::solveIntegrationBasedIK(
                        * iDynTree::toEigen(inputVector));
     }
     else if (resolutionMode
-             == InverseVelocityKinematicsResolutionMode::sparseRobustCholeskyDecomposition) {
+             == ResolutionMode::sparseRobustCholeskyDecomposition) {
         Eigen::SimplicialLDLT<Eigen::SparseMatrix<double>> solver;
         solver.compute((iDynTree::toEigen(matrix).transpose() * weightInverse.toDenseMatrix()
                             * iDynTree::toEigen(matrix)
@@ -615,7 +621,7 @@ void InverseVelocityKinematics::impl::prepareOptimizer()
     // For more information look at this issue #123,132:
     // https://github.com/robotology/human-dynamics-estimation/issues/123
     // https://github.com/robotology/human-dynamics-estimation/issues/132
-    if (resolutionMode == InverseVelocityKinematicsResolutionMode::QP) {
+    if (resolutionMode == ResolutionMode::QP) {
         baseDofs = 6; // because it is a 6 dof floating base
         configSpaceSize = dofs + baseDofs;
         //********************************************//
@@ -1100,7 +1106,7 @@ bool InverseVelocityKinematics::setFloatingBaseOnFrameNamed(
 }
 
 bool InverseVelocityKinematics::setResolutionMode(
-    const InverseVelocityKinematicsResolutionMode& resolutionMode)
+    const ResolutionMode& resolutionMode)
 {
     pImpl->resolutionMode = resolutionMode;
     return true;
@@ -1109,32 +1115,32 @@ bool InverseVelocityKinematics::setResolutionMode(
 bool InverseVelocityKinematics::setResolutionMode(const std::string& resolutionModeName)
 {
     if (resolutionModeName == "QP") {
-        pImpl->resolutionMode = InverseVelocityKinematicsResolutionMode::QP;
+        pImpl->resolutionMode = ResolutionMode::QP;
     }
     else if (resolutionModeName == "moorePenrose") {
-        pImpl->resolutionMode = InverseVelocityKinematicsResolutionMode::moorePenrose;
+        pImpl->resolutionMode = ResolutionMode::moorePenrose;
     }
     else if (resolutionModeName == "completeOrthogonalDecomposition") {
         pImpl->resolutionMode =
-            InverseVelocityKinematicsResolutionMode::completeOrthogonalDecomposition;
+            ResolutionMode::completeOrthogonalDecomposition;
     }
     else if (resolutionModeName == "leastSquare") {
-        pImpl->resolutionMode = InverseVelocityKinematicsResolutionMode::leastSquare;
+        pImpl->resolutionMode = ResolutionMode::leastSquare;
     }
     else if (resolutionModeName == "choleskyDecomposition") {
-        pImpl->resolutionMode = InverseVelocityKinematicsResolutionMode::choleskyDecomposition;
+        pImpl->resolutionMode = ResolutionMode::choleskyDecomposition;
     }
     else if (resolutionModeName == "sparseCholeskyDecomposition") {
         pImpl->resolutionMode =
-            InverseVelocityKinematicsResolutionMode::sparseCholeskyDecomposition;
+            ResolutionMode::sparseCholeskyDecomposition;
     }
     else if (resolutionModeName == "robustCholeskyDecomposition") {
         pImpl->resolutionMode =
-            InverseVelocityKinematicsResolutionMode::robustCholeskyDecomposition;
+            ResolutionMode::robustCholeskyDecomposition;
     }
     else if (resolutionModeName == "sparseRobustCholeskyDecomposition") {
         pImpl->resolutionMode =
-            InverseVelocityKinematicsResolutionMode::sparseRobustCholeskyDecomposition;
+            ResolutionMode::sparseRobustCholeskyDecomposition;
     }
     else {
         std::cerr << "[ERROR] Invalid resolution mode: " << resolutionModeName << std::endl;

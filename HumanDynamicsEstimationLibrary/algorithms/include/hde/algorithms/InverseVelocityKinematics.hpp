@@ -9,17 +9,12 @@
 #ifndef INVERSEVELOCITYKINEMATICS_HPP
 #define INVERSEVELOCITYKINEMATICS_HPP
 
-#include <Eigen/Dense>
-#include <Eigen/QR>
-#include <Eigen/SparseCholesky>
-#include <iDynTree/Core/EigenHelpers.h>
 #include <iDynTree/Core/VectorDynSize.h>
-#include <iDynTree/KinDynComputations.h>
+#include <iDynTree/Core/MatrixDynSize.h>
 #include <iDynTree/Model/Model.h>
 
 #include <map>
 #include <memory>
-#include <yarp/os/LogStream.h>
 
 namespace hde::algorithms {
     class InverseVelocityKinematics;
@@ -27,12 +22,12 @@ namespace hde::algorithms {
 
 class hde::algorithms::InverseVelocityKinematics
 {
-protected:
+private:
     class impl;
     std::unique_ptr<impl> pImpl;
 
 public:
-    enum class InverseVelocityKinematicsResolutionMode
+    enum class ResolutionMode
     {
         QP,
         moorePenrose,
@@ -49,7 +44,7 @@ public:
 
     bool setModel(const iDynTree::Model& model);
     bool setFloatingBaseOnFrameNamed(const std::string& floatingBaseFrameName);
-    bool setResolutionMode(const InverseVelocityKinematicsResolutionMode& resolutionMode);
+    bool setResolutionMode(const ResolutionMode& resolutionMode);
     bool setResolutionMode(const std::string& resolutionModeName);
     void setRegularization(const double regularizationWeight);
 
