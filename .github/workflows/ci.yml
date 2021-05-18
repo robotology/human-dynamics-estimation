@@ -156,7 +156,7 @@ jobs:
         # Configure step
         - name: Configure [Windows]
           if: matrix.os == 'windows-latest'
-          shell: bash
+          shell: bash -l {0}
           run: |
             mkdir -p build
             cd build
