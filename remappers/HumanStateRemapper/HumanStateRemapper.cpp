@@ -8,7 +8,7 @@
 
 #include "HumanStateRemapper.h"
 
-#include <HumanDynamicsEstimation/HumanState.h>
+#include <hde/msgs/HumanState.h>
 
 #include <yarp/os/Network.h>
 #include <yarp/os/LogStream.h>

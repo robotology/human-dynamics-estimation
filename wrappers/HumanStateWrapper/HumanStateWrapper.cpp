@@ -8,7 +8,7 @@
 
 #include "HumanStateWrapper.h"
 #include <hde/interfaces/IHumanState.h>
-#include <HumanDynamicsEstimation/HumanState.h>
+#include <hde/msgs/HumanState.h>
 
 #include <yarp/os/BufferedPort.h>
 #include <yarp/os/LogStream.h>
