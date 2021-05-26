@@ -45,8 +45,6 @@ public:
     // Buffered ports
     yarp::os::BufferedPort<yarp::os::Bottle> dynamicsPort;
 
-    // Joint torques port
-
     // Data variables
     int nJoints;
     std::vector<std::string> jointNameList;
@@ -132,7 +130,6 @@ bool HumanControlBoard::open(yarp::os::Searchable& config)
 
 bool HumanControlBoard::close()
 {
-    pImpl->dynamicsPort.close();
     return true;
 }
 
