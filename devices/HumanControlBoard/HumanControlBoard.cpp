@@ -45,7 +45,9 @@ public:
     // Buffered ports
     yarp::os::BufferedPort<yarp::os::Bottle> dynamicsPort;
 
-    // Joint torques port
+    // Flags
+    bool isHumanStateAttached = false;
+    bool isHumanDynamicsAttached = false;
 
     // Data variables
     int nJoints;
@@ -132,36 +134,60 @@ bool HumanControlBoard::open(yarp::os::Searchable& config)
 
 bool HumanControlBoard::close()
 {
-    pImpl->dynamicsPort.close();
     return true;
 }
 
 void HumanControlBoard::run()
 {
+    // Get number of joints and joint names
+    if (pImpl->isHumanStateAttached)
+    {
+        pImpl->nJoints = pImpl->iHumanState->getNumberOfJoints();
+        pImpl->jointNameList = pImpl->iHumanState->getJointNames();
+    }
+    else if (pImpl->isHumanDynamicsAttached)
+    {
+        pImpl->nJoints = pImpl->iHumanDynamics->getNumberOfJoints();
+        pImpl->jointNameList = pImpl->iHumanDynamics->getJointNames();
+    }
+    else
+    {
+        yError() << LogPrefix << "No interface attached to the device.";
+        askToStop();
+        return;
+    }
+
+    // Initialize buffers for measurements
+    std::vector<double> jointPositionsData(pImpl->nJoints, 0.0);
+    std::vector<double> jointVelocitiesData(pImpl->nJoints, 0.0);
+    std::vector<double> jointTorquesData(pImpl->nJoints, 0.0);
+    std::vector<double> jointAccelerationsData(pImpl->nJoints, 0.0);
+
     // Get data from IHumanState interface
-    pImpl->nJoints = pImpl->iHumanState->getNumberOfJoints();
-    pImpl->jointNameList = pImpl->iHumanState->getJointNames();
-
-    std::vector<double> jointPositionsInterface = pImpl->iHumanState->getJointPositions();
-    std::vector<double> jointVelocitiesInterface = pImpl->iHumanState->getJointVelocities();
-
+    if (pImpl->isHumanStateAttached)
+    {
+        jointPositionsData = pImpl->iHumanState->getJointPositions();
+        jointVelocitiesData = pImpl->iHumanState->getJointVelocities();
+    }
+    
     // Get data from IHumanDynamics interface
-    // TODO: Acceleration is currently not given from IHumanDynamics interface
-    std::vector<double> jointTorquesInterface = pImpl->iHumanDynamics->getJointTorques();
+    // TODO: Acceleration is currently not given from IHumanDynamics interface and it is left to zero
+    if (pImpl->isHumanDynamicsAttached)
+    {
+        jointTorquesData = pImpl->iHumanDynamics->getJointTorques();
+    }
 
-    for (size_t j = 0; j < jointPositionsInterface.size(); j++) {
+    for (size_t j = 0; j < pImpl->nJoints; j++) {
 
         std::unique_lock<std::mutex> lock(pImpl->mtx);
-        pImpl->jointPositions[j] = jointPositionsInterface.at(j)*(180/M_PI);
-        pImpl->jointVelocities[j] = jointVelocitiesInterface.at(j)*(180/M_PI);
-
-        //TODO: setting to zero
-        pImpl->jointAccelerations[j] = 0;
+        pImpl->jointPositions[j] = jointPositionsData.at(j)*(180/M_PI);
+        pImpl->jointVelocities[j] = jointVelocitiesData.at(j)*(180/M_PI);
 
         // The joint order from the two interfaces
         // IHumanState and IHumanDynamics are the same
         // Set the joint torques
-        pImpl->jointTorques[j] = jointTorquesInterface.at(j);
+        pImpl->jointTorques[j] = jointTorquesData.at(j);
+        pImpl->jointAccelerations[j] = jointAccelerationsData.at(j)*(180/M_PI);
     }
 
 }
@@ -191,6 +217,7 @@ bool HumanControlBoard::attach(yarp::dev::PolyDriver* poly)
             return false;
         }
 
+        pImpl->isHumanStateAttached = true;
         yInfo() << LogPrefix << deviceName << "attach() successful";
     }
 
@@ -209,6 +236,7 @@ bool HumanControlBoard::attach(yarp::dev::PolyDriver* poly)
             return false;
         }
 
+        pImpl->isHumanDynamicsAttached = true;
         yInfo() << LogPrefix << deviceName << "attach() successful";
     }
 
