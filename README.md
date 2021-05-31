@@ -10,7 +10,7 @@ Here following there is a list of the required dependencies you need for using t
 * [CMake](https://cmake.org/download/) open-source, cross-platform family of tools designed to build, test and package software.
 * [YARP](http://www.yarp.it/) software package to handle the data comunication.
 
-It must be noted that `YARP`, together with a subset of the optional dependencies, can be installed together in one place using the [robotology-superbuild](https://github.com/robotology/robotology-superbuild) enabling its [`Human-Dynamics` profile](https://github.com/robotology/robotology-superbuild#human-dynamics). 
+It must be noted that `YARP`, together with a subset of the optional dependencies, can be installed together in one place using the [robotology-superbuild](https://github.com/robotology/robotology-superbuild) enabling its [`Human-Dynamics` profile](https://github.com/robotology/robotology-superbuild#human-dynamics).
 
 ## Build the suite
 ### Linux/macOS
@@ -40,5 +40,4 @@ Wearable devices contained in [`/devices/`](/devices) are [YARP devices](http://
 | FTShoes | Exposes YARP [`ftShoe`](https://github.com/robotology/forcetorque-yarp-devices/tree/master/ftShoe) data. |  Linux/MacOS/Windows   | [forcetorque-yarp-devices](https://github.com/robotology/forcetorque-yarp-devices) | [:books:](/doc/How-to-run-FTshoes.md) |
 | XsensSuit | Exposes [XsensSuit](https://www.xsens.com/motion-capture) data. |  Windows   | xsens MVN SDK 2018.0.3 | [:books:](/doc/How-to-run-XsensSuit.md) |
 | iCub | Exposes [iCub](https://icub.iit.it/) robot data. |  Linux/MacOS/Windows   | [idyntree](https://github.com/robotology/idyntree) | [:books:](/doc/How-to-run-iCub-as-wearable-source.md) |
-| Paexo | Exposes [Paexo](https://paexo.com/?lang=en) data. |  -   | - | - |
-
+| Paexo | Exposes [Paexo](https://paexo.com/?lang=en) data. |  Linux  | Optional flag `ENABLE_PAEXO_USE_iFEELDriver` to use `iFeelDriver` (Contact the maintainer for more details) | - |

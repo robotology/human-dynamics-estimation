@@ -19,6 +19,11 @@
 #include <vector>
 #include <assert.h>
 
+#ifdef ENABLE_PAEXO_USE_iFEELDriver
+#include <iFeelDriver/iFeelDriver/iFeelDriver.h>
+#endif
+
+
 const std::string DeviceName = "Paexo";
 const std::string LogPrefix = DeviceName + wearable::Separator;
 double period = 0.01;
@@ -79,6 +84,13 @@ public:
     class PaexoTorque3DSensor;
     SensorPtr<PaexoTorque3DSensor> paexoTorqueSensor;
 
+    // 6D Force-Torque Sensors
+    std::string ftSensorPrefix;
+    const std::string ftSensorName = "ArmForceTorque";
+    class PaexoForceTorque6DSensor;
+    SensorPtr<PaexoForceTorque6DSensor> paexoLeftArmFTSensor;
+    SensorPtr<PaexoForceTorque6DSensor> paexoRightArmFTSensor;
+
     // Motor Actuator
     std::string motorActuatorPrefix;
     const std::string motorActuatorName = "Actuator";
@@ -96,6 +108,16 @@ public:
 
     // constructor
     PaexoImpl();
+
+#ifdef ENABLE_PAEXO_USE_iFEELDriver
+    // iFeelDriver
+    bool useiFeelDriver;
+    iFeel::SerialConfig serial; //serial port configuraton
+    iFeel::iFeelSystemConfig ifeelConfig; // iFeelDriver configuration
+    iFeel::iFeelSystemData ifeelData; // iFeel sensors data
+    std::unique_ptr<iFeel::iFeelDriver> ifeelDriver{nullptr};
+#endif
+
 };
 
 class Paexo::PaexoImpl::CmdParser : public yarp::os::PortReader
@@ -198,6 +220,96 @@ bool Paexo::open(yarp::os::Searchable& config)
         yInfo() << LogPrefix << "Using the wearable name " << pImpl->wearableName;
     }
 
+    // ==========================================
+    // Check iFeelDriver configuration parameters
+    // ==========================================
+
+    yarp::os::Bottle& ifeelDriverGroup = config.findGroup("iFeelDriver");
+
+#ifdef ENABLE_PAEXO_USE_iFEELDriver
+    pImpl->useiFeelDriver = false;
+    if (!ifeelDriverGroup.isNull())
+    {
+        yarp::os::Bottle& ifeelDriverSerialGroup = ifeelDriverGroup.findGroup("serial-config");
+
+        if(ifeelDriverSerialGroup.isNull())
+        {
+            yError() << LogPrefix << "iFeelDriver serial-config is not provided, cannot configure iFeelDriver to be used with Paexo";
+            return false;
+        }
+
+        // Configure iFeelDriver serial device
+        if (!ifeelDriverSerialGroup.check("serial-port-name")) {
+            yError() << LogPrefix << "REQUIRED parameter <serial-port-name> NOT found.";
+            return false;
+        }
+        pImpl->serial.name = ifeelDriverSerialGroup.find("serial-port-name").asString();
+        yInfo() << LogPrefix << "iFeelDriver configuring through the serial port " << pImpl->serial.name;
+
+        // Serial timeout
+        uint32_t timeoutms;
+        if (!ifeelDriverSerialGroup.check("serial-timeout-ms")) {
+            timeoutms = 100;
+            yWarning() << LogPrefix << "Optional parameter <serial-timeout-ms> NOT found. Setting default value:"<< timeoutms << " ms.";
+        }
+        else {
+            timeoutms = static_cast<uint32_t>(ifeelDriverSerialGroup.find("serial-timeout-ms").asInt());
+        }
+        pImpl->serial.tout = serial::Timeout::simpleTimeout(timeoutms);
+
+        // TODO: Some of the serial ports can be passed through configuration file
+        pImpl->serial.size = 256;
+        pImpl->serial.sleep_us = 100;
+        pImpl->serial.baudrate = 9600;
+        pImpl->serial.eol = END_OF_LINE_STR;
+
+        // iFeelDriver configuration parameters
+        if (!ifeelDriverGroup.check("ifeeldriver-config-timeout-s"))
+        {
+            pImpl->ifeelConfig.ConfigurationDuration = std::chrono::seconds(1);
+            yWarning() << LogPrefix << "Optional parameter <ifeeldriver-config-timeout-s> NOT found. Using default value of 1 second";
+        }
+        else
+        {
+            pImpl->ifeelConfig.ConfigurationDuration = static_cast<std::chrono::seconds>(ifeelDriverGroup.find("ifeeldriver-config-timeout-s").asInt());
+        }
+
+        // iFeelDriver nodes configuration list
+        if (!(ifeelDriverGroup.check("ifeeldriver-config-nodes") && ifeelDriverGroup.find("ifeeldriver-config-nodes").isList()))
+        {
+            yError() << LogPrefix << "Required parameter <ifeeldriver-config-nodes> NOT Found or is not a valid list of NodeIDs";
+            return false;
+        }
+
+        yarp::os::Bottle* nodeList = ifeelDriverGroup.find("ifeeldriver-config-nodes").asList();
+
+        // NOTE: Assuming only one FTShoeNode is configured through iFeelDriver
+        assert(nodeList->size() == 1 && nodeList->get(i).asInt() == 2);
+
+        for (size_t i = 0; i < nodeList->size(); i++)
+        {
+            pImpl->ifeelConfig.ConfigurationNodes.push_back(nodeList->get(i).asInt());
+        }
+
+
+        pImpl->ifeelDriver = std::make_unique<iFeel::iFeelDriver>(pImpl->serial, pImpl->ifeelConfig);
+
+        // initialize iFeel driver
+        if (!pImpl->ifeelDriver->init())
+        {
+            yError() << LogPrefix << "Failed to initialize iFeelDriver.";
+            return false;
+        }
+
+        yInfo() << LogPrefix << "iFeelDriver is configured to be used with Paexo ";
+    }
+    else
+    {
+        yWarning() << LogPrefix << "iFeelDriver is not configured to be used with Paexo ";
+    }
+
+#endif
+
     // ===================
     // Ports configuration
     // ===================
@@ -225,6 +337,14 @@ bool Paexo::open(yarp::os::Searchable& config)
 
     pImpl->torqueSensorPrefix = getWearableName() + sensor::ITorque3DSensor::getPrefix();
     pImpl->paexoTorqueSensor = SensorPtr<PaexoImpl::PaexoTorque3DSensor>{std::make_shared<PaexoImpl::PaexoTorque3DSensor>(pImpl.get(), pImpl->torqueSensorPrefix + pImpl->torqueSensorName)};
+
+#ifdef ENABLE_PAEXO_USE_iFEELDriver
+    pImpl->ftSensorPrefix = getWearableName() + sensor::IForceTorque6DSensor::getPrefix();
+    pImpl->paexoLeftArmFTSensor = SensorPtr<PaexoImpl::PaexoForceTorque6DSensor>{std::make_shared<PaexoImpl::PaexoForceTorque6DSensor>(pImpl.get(),
+                                                                                                                                       pImpl->ftSensorPrefix + "Left" + pImpl->ftSensorName)};
+    pImpl->paexoRightArmFTSensor = SensorPtr<PaexoImpl::PaexoForceTorque6DSensor>{std::make_shared<PaexoImpl::PaexoForceTorque6DSensor>(pImpl.get(),
+                                                                                                                                        pImpl->ftSensorPrefix + "Right" + pImpl->ftSensorName)};
+#endif
 
     // Initialize wearable actuators
     pImpl->motorActuatorPrefix = getWearableName() + actuator::IMotor::getPrefix();
@@ -358,6 +478,76 @@ public:
         return true;
     }
 };
+
+// ===========================================
+// Paexo implementation of ForceTorque6DSensor
+// ===========================================
+#ifdef ENABLE_PAEXO_USE_iFEELDriver
+class Paexo::PaexoImpl::PaexoForceTorque6DSensor : public wearable::sensor::IForceTorque6DSensor
+{
+public:
+    Paexo::PaexoImpl* paexoImpl = nullptr;
+
+    PaexoForceTorque6DSensor(Paexo::PaexoImpl* impl,
+                             const wearable::sensor::SensorName name = {},
+                             const wearable::sensor::SensorStatus status = wearable::sensor::SensorStatus::Ok) // Default sensor status is Ok, to be updated using node status from iFeelDriver
+        : IForceTorque6DSensor(name, status)
+        , paexoImpl(impl)
+    {
+        // TODO: Initialization
+    }
+
+    ~PaexoForceTorque6DSensor() override = default;
+
+    void setStatus(const wearable::sensor::SensorStatus status) { m_status = status; }
+
+    bool getForceTorque6D(Vector3& force3D, Vector3& torque3D) const override
+    {
+        assert(paexoImpl != nullptr);
+
+        std::lock_guard<std::mutex> lock(paexoImpl->mutex);
+
+        // Get FT Data from front or back FT using iFeelDriver data
+        // TODO: Cleanup ftData buffer handling
+        paexoImpl->ifeelData = paexoImpl->ifeelDriver->getData();
+
+        auto it = paexoImpl->ifeelData.FTShoeNodes.begin();
+        iFeel::Utils::DataTypes::NodeID nodeID = it->first;
+
+        if (this->getSensorName().find("Left") != std::string::npos)
+        {
+           iFeel::ForceTorque ftData = paexoImpl->ifeelData.FTShoeNodes[nodeID]->getFrontFT();
+
+           force3D[0] = ftData.x;
+           force3D[1] = ftData.y;
+           force3D[2] = ftData.z;
+
+           torque3D[0] = ftData.tx;
+           torque3D[1] = ftData.ty;
+           torque3D[2] = ftData.tz;
+
+        }
+
+        if (this->getSensorName().find("Right") != std::string::npos)
+        {
+            iFeel::ForceTorque ftData = paexoImpl->ifeelData.FTShoeNodes[nodeID]->getBackFT();
+
+            force3D[0] = ftData.x;
+            force3D[1] = ftData.y;
+            force3D[2] = ftData.z;
+
+            torque3D[0] = ftData.tx;
+            torque3D[1] = ftData.ty;
+            torque3D[2] = ftData.tz;
+
+        }
+
+        return true;
+    }
+
+};
+
+#endif
 
 // =======================================
 // Paexo implementation of Motor actutator
@@ -593,6 +783,13 @@ Paexo::getSensors(const wearable::sensor::SensorType aType) const
             outVec.push_back(static_cast<SensorPtr<sensor::ISensor>>(pImpl->paexoTorqueSensor));
             break;
         }
+    case sensor::SensorType::ForceTorque6DSensor: {
+        #ifdef ENABLE_PAEXO_USE_iFEELDriver
+            outVec.push_back(static_cast<SensorPtr<sensor::ISensor>>(pImpl->paexoLeftArmFTSensor));
+            outVec.push_back(static_cast<SensorPtr<sensor::ISensor>>(pImpl->paexoRightArmFTSensor));
+        #endif
+            break;
+        }
         default: {
             return {};
         }
@@ -689,6 +886,34 @@ Paexo::getTorque3DSensor(const wearable::sensor::SensorName name) const
     return dynamic_cast<wearable::SensorPtr<const wearable::sensor::ITorque3DSensor>&>(
         *pImpl->paexoTorqueSensor);
 }
+
+// -------------------
+// FORCE TORQUE Sensor
+// -------------------
+#ifdef ENABLE_PAEXO_USE_iFEELDriver
+wearable::SensorPtr<const wearable::sensor::IForceTorque6DSensor>
+wearable::devices::Paexo::getForceTorque6DSensor(const sensor::SensorName name) const
+{
+    // Check if user-provided name corresponds to an available sensor
+    if (name == pImpl->ftSensorPrefix + "Left" + pImpl->ftSensorName || name == pImpl->ftSensorPrefix + "Right" + pImpl->ftSensorName) {
+        yError() << LogPrefix << "Invalid sensor name " << name;
+        return nullptr;
+    }
+
+    // Return a shared point to the required sensor
+    // TODO: Return corresponding left and right sensors
+    wearable::SensorPtr<const wearable::sensor::IForceTorque6DSensor> ftSensor;
+    if (name.find("Left"))
+    {
+        ftSensor = dynamic_cast<wearable::SensorPtr<const wearable::sensor::IForceTorque6DSensor>&>(*pImpl->paexoLeftArmFTSensor);
+    }
+    else if (name.find("Right"))
+    {
+        ftSensor = dynamic_cast<wearable::SensorPtr<const wearable::sensor::IForceTorque6DSensor>&>(*pImpl->paexoRightArmFTSensor);
+    }
+    return ftSensor;
+}
+#endif
 
 // ---------------
 // MOTORO Actuator
