@@ -256,7 +256,7 @@ public:
     bool getJointAnglesFromInputData(iDynTree::VectorDynSize& jointAngles);
     bool getLinkTransformFromInputData(std::unordered_map<std::string, iDynTree::Transform>& t);
     bool computeRelativeTransformForInputData(std::unordered_map<std::string, iDynTree::Transform>& t);
-    bool applyFixedTransformForInputData(std::unordered_map<std::string, iDynTree::Transform>& t);
+    bool applyFixedRightRotationForInputTransformData(std::unordered_map<std::string, iDynTree::Transform>& t);
     bool getLinkVelocityFromInputData(std::unordered_map<std::string, iDynTree::Twist>& t);
 
     // calibrate data
@@ -517,9 +517,10 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
                 return false;
             }
             yarp::os::Bottle* list = fixedRotationGroup.get(i).asList();
-            std::string key = list->get(0).asString();
+            std::string linkName = list->get(0).asString();
             yarp::os::Bottle* listContent = list->get(1).asList();
 
+            // check if FIXED_SENSOR_ROTATION matrix is passed (9 elements)
             if (!(    (listContent->size() == 9)
                    && (listContent->get(0).isDouble())
                    && (listContent->get(1).isDouble())
@@ -530,9 +531,11 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
                    && (listContent->get(6).isDouble())
                    && (listContent->get(7).isDouble())
                    && (listContent->get(8).isDouble()) )) {
-                yError() << LogPrefix << "FIXED_SENSOR_ROTATION " << key << " must have 9 double values";
+                yError() << LogPrefix << "FIXED_SENSOR_ROTATION " << linkName << " must have 9 double values describing the rotation matrix";
                 return false;
             }
+
+            yInfo() << LogPrefix << "FIXED_SENSOR_ROTATION added for link " << linkName;
         }
     }
 
@@ -1221,7 +1224,7 @@ void HumanStateProvider::run()
     }
 
     // Apply the secondary calibration to input data
-    if (!pImpl->applyFixedTransformForInputData(pImpl->linkTransformMatricesRaw)) {
+    if (!pImpl->applyFixedRightRotationForInputTransformData(pImpl->linkTransformMatricesRaw)) {
         yError() << LogPrefix << "Failed to apply fixed calibration to input data";
         askToStop();
         return;
@@ -1636,11 +1639,11 @@ bool HumanStateProvider::impl::computeRelativeTransformForInputData(
     // use the relative transform for the other sensors measurement
     if (transforms.find(floatingBaseFrame) != transforms.end())
     {
-        iDynTree::Rotation baseFrameRotationInvese = transforms[floatingBaseFrame].getRotation().inverse();
+        iDynTree::Rotation baseFrameRotationInverse = transforms[floatingBaseFrame].getRotation().inverse();
         for (const auto& linkMapEntry : wearableStorage.modelToWearable_LinkName) {
             const ModelLinkName& modelLinkName = linkMapEntry.first;
 
-            iDynTree::Rotation rotation = baseFrameRotationInvese * transforms[modelLinkName].getRotation();
+            iDynTree::Rotation rotation = baseFrameRotationInverse * transforms[modelLinkName].getRotation();
             transforms[modelLinkName].setRotation(rotation);
         }
     }
@@ -1673,7 +1676,7 @@ bool HumanStateProvider::impl::applySecondaryCalibration(
     return true;
 }
 
-bool HumanStateProvider::impl::applyFixedTransformForInputData(std::unordered_map<std::string, iDynTree::Transform> &transforms_in)
+bool HumanStateProvider::impl::applyFixedRightRotationForInputTransformData(std::unordered_map<std::string, iDynTree::Transform> &transforms_in)
 {
     for (const auto& linkMapEntry : wearableStorage.modelToWearable_LinkName) {
         const ModelLinkName& modelLinkName = linkMapEntry.first;
