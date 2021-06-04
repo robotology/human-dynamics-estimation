@@ -1632,6 +1632,10 @@ bool HumanStateProvider::impl::getLinkTransformFromInputData(
     return true;
 }
 
+// In case it occurs that:
+// - Fixed-base is used for human-state-provider
+// - a sensor is associated with the fixed base frame
+// then we use the relative transform between the sensors and the base frame sensors
 bool HumanStateProvider::impl::computeRelativeTransformForInputData(
     std::unordered_map<std::string, iDynTree::Transform>& transforms)
 {
