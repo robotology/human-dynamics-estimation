@@ -660,7 +660,7 @@ bool XSensMVNDriverImpl::calibrate(const std::string calibrationType)
         m_driverStatus = DriverStatus::CalibratedAndReadyToRecord;
 
         // Save calibration and .mvn record
-        if(m_driverConfiguration.saveMVNRecording || m_driverConfiguration.saveConfiguration)
+        if(m_driverConfiguration.saveMVNRecording || m_driverConfiguration.saveCurrentCalibration)
         {
             //Start recording .mvn file
             time_t rawtime;
@@ -688,13 +688,13 @@ bool XSensMVNDriverImpl::calibrate(const std::string calibrationType)
                 m_connection->startRecording();
             }
 
-            if (m_driverConfiguration.saveConfiguration)
+            if (m_driverConfiguration.saveCurrentCalibration)
             {
-                const XsString mvnxFileName("recording_" + time_string + ".mvnx");
+                const XsString mvnFileName("recording_" + time_string + "_calibration.mvn");
 
-                xsInfo << "Configuration saved to " << mvnxFileName.toStdString() << " file";
+                xsInfo << "Calibration saved to " << mvnFileName.toStdString() << " file";
 
-                m_connection->saveCurrentCalibration(mvnxFileName);
+                m_connection->saveCurrentCalibration(mvnFileName);
             }
         }
 

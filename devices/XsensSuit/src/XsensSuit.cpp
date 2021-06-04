@@ -773,15 +773,15 @@ bool XsensSuit::open(yarp::os::Searchable& config)
         yInfo() << logPrefix << "<saveMVNRecording> parameter set to " << saveMVNRecording;
     }
 
-    // Check for saving configuration flag
-    bool saveConfiguration;
-    if (!config.check("saveConfiguration")) {
-        yWarning() << logPrefix << "OPTIONAL parameter <saveConfiguration> NOT found, setting it to false.";
-        saveConfiguration = false;
+    // Check for saving current calibration flag
+    bool saveCurrentCalibration;
+    if (!config.check("saveCurrentCalibration")) {
+        yWarning() << logPrefix << "OPTIONAL parameter <saveCurrentCalibration> NOT found, setting it to false.";
+        saveCurrentCalibration = false;
     }
     else {
-        saveConfiguration = config.find("saveConfiguration").asBool();
-        yInfo() << logPrefix << "<saveConfiguration> parameter set to " << saveConfiguration;
+        saveCurrentCalibration = config.find("saveCurrentCalibration").asBool();
+        yInfo() << logPrefix << "<saveCurrentCalibration> parameter set to " << saveCurrentCalibration;
     }
 
     xsensmvn::DriverConfiguration driverConfig{rundepsFolder,
@@ -794,7 +794,7 @@ bool XsensSuit::open(yarp::os::Searchable& config)
                                                subjectBodyDimensions,
                                                outputStreamConfig,
                                                saveMVNRecording,
-                                               saveConfiguration};
+                                               saveCurrentCalibration};
 
     pImpl->driver.reset(new xsensmvn::XSensMVNDriver(driverConfig));
 
