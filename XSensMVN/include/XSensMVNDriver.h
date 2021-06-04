@@ -144,6 +144,7 @@ namespace xsensmvn {
         const bodyDimensions bodyDimensions;
         const DriverDataStreamConfig dataStreamConfiguration;
         const bool saveMVNRecording;
+        const bool saveConfiguration;
     };
 
     enum class DriverStatus

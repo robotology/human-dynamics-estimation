@@ -18,8 +18,8 @@
         <!-- NposeWalk - TposeWalk - Npose - Tpose-->
         <param name="default-calibration-type">Npose</param>
         <!-- Minimum calibration quality to be considered good enought to be applied and allow the acquisition to start. Available values are: -->
-        <!-- Poor - Acceptable -- Good -->
-        <param name="minimum-calibration-quality-required">Acceptable</param>
+        <!-- Poor - Acceptable - Good -->
+        <param name="minimum-calibration-quality-required">Poor</param>
         <!-- Maximum Time [s] to scan for the suit. Set to -1 enables endless scan-->
         <param name="scan-timeout">60</param>
         <!-- Sampling rate [Hz]. Available values are:-->
@@ -27,7 +27,9 @@
         <param name="sampling-rate">120</param>
         <!-- Flag to save mvn recording -->
         <param name="saveMVNRecording">false</param>
-        <!-- Quantities to be extracted from the driver for each time sample -->
+		<!-- Flag to save .mvnx calibration -->
+		<param name="saveConfiguration">true</param>
+		<!-- Quantities to be extracted from the driver for each time sample -->
         <group name="output-stream-configuration">
             <param name="enable-joint-data">true</param>
             <param name="enable-link-data">true</param>

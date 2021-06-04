@@ -765,12 +765,23 @@ bool XsensSuit::open(yarp::os::Searchable& config)
     // Check for mvn recording flag
     bool saveMVNRecording;
     if (!config.check("saveMVNRecording")) {
-        yWarning() << logPrefix << "OPTIONAL parameter <saveMVNRecording> NOT found, setting it to False.";
+        yWarning() << logPrefix << "OPTIONAL parameter <saveMVNRecording> NOT found, setting it to false.";
         saveMVNRecording = false;
     }
     else {
+        saveMVNRecording = config.find("saveMVNRecording").asBool();
         yInfo() << logPrefix << "<saveMVNRecording> parameter set to " << saveMVNRecording;
-        saveMVNRecording = config.find("saveMVNRecording").asBool();        
+    }
+
+    // Check for saving configuration flag
+    bool saveConfiguration;
+    if (!config.check("saveConfiguration")) {
+        yWarning() << logPrefix << "OPTIONAL parameter <saveConfiguration> NOT found, setting it to false.";
+        saveConfiguration = false;
+    }
+    else {
+        saveConfiguration = config.find("saveConfiguration").asBool();
+        yInfo() << logPrefix << "<saveConfiguration> parameter set to " << saveConfiguration;
     }
 
     xsensmvn::DriverConfiguration driverConfig{rundepsFolder,
@@ -782,7 +793,8 @@ bool XsensSuit::open(yarp::os::Searchable& config)
                                                samplingRate,
                                                subjectBodyDimensions,
                                                outputStreamConfig,
-                                               saveMVNRecording};
+                                               saveMVNRecording,
+                                               saveConfiguration};
 
     pImpl->driver.reset(new xsensmvn::XSensMVNDriver(driverConfig));
 

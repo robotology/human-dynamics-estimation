@@ -659,7 +659,8 @@ bool XSensMVNDriverImpl::calibrate(const std::string calibrationType)
         // Record the success of the calibration
         m_driverStatus = DriverStatus::CalibratedAndReadyToRecord;
 
-        if(m_driverConfiguration.saveMVNRecording)
+        // Save calibration and .mvn record
+        if(m_driverConfiguration.saveMVNRecording || m_driverConfiguration.saveConfiguration)
         {
             //Start recording .mvn file
             time_t rawtime;
@@ -676,13 +677,25 @@ bool XSensMVNDriverImpl::calibrate(const std::string calibrationType)
             std::replace(time_string.begin(), time_string.end(), ' ', '_'); //Replace space with underscore
             std::replace(time_string.begin(), time_string.end(), '-', '_'); //Replace - with underscore
             std::replace(time_string.begin(), time_string.end(), ':', '_'); //Replace : with underscore
-        
-            const XsString mvnFileName("recording_" + time_string);
 
-            xsInfo << "Recording to " << mvnFileName.toStdString() << ".mvn file";
+            if(m_driverConfiguration.saveMVNRecording)
+            {
+                const XsString mvnFileName("recording_" + time_string);
 
-            m_connection->createMvnFile(mvnFileName);
-            m_connection->startRecording();
+                xsInfo << "Recording to " << mvnFileName.toStdString() << ".mvn file";
+
+                m_connection->createMvnFile(mvnFileName);
+                m_connection->startRecording();
+            }
+
+            if (m_driverConfiguration.saveConfiguration)
+            {
+                const XsString mvnxFileName("recording_" + time_string + ".mvnx");
+
+                xsInfo << "Configuration saved to " << mvnxFileName.toStdString() << " file";
+
+                m_connection->saveCurrentCalibration(mvnxFileName);
+            }
         }
 
         m_calibrator->getLastCalibrationInfo(m_calibrationInfo.type, m_calibrationInfo.quality);
