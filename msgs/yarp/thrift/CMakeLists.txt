@@ -15,7 +15,7 @@ foreach(_script ${${LIBRARY_TARGET_NAME}_CMAKE_SCRIPTS})
   include("${_script}")
 endforeach()
 
-add_library(${LIBRARY_TARGET_NAME} SHARED ${${LIBRARY_TARGET_NAME}_GEN_SRC} ${${LIBRARY_TARGET_NAME}_GEN_HDR})
+add_library(${LIBRARY_TARGET_NAME} ${${LIBRARY_TARGET_NAME}_GEN_SRC} ${${LIBRARY_TARGET_NAME}_GEN_HDR})
 target_link_libraries(${LIBRARY_TARGET_NAME} YARP::YARP_OS YARP::YARP_init)
 
 set_target_properties(${LIBRARY_TARGET_NAME} PROPERTIES
@@ -53,7 +53,7 @@ foreach(_script ${YARP_dev_idl_CMAKE_SCRIPTS})
   include("${_script}")
 endforeach()
 
-add_library(${LIBRARY_TARGET_NAME} SHARED ${${LIBRARY_TARGET_NAME}_GEN_SRC} ${${LIBRARY_TARGET_NAME}_GEN_HDR})
+add_library(${LIBRARY_TARGET_NAME} ${${LIBRARY_TARGET_NAME}_GEN_SRC} ${${LIBRARY_TARGET_NAME}_GEN_HDR})
 target_link_libraries(${LIBRARY_TARGET_NAME} YARP::YARP_OS)
 
 set_target_properties(${LIBRARY_TARGET_NAME} PROPERTIES
