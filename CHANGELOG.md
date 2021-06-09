@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Added `iwear_logger` wrapper device to log wearable sensors data using `yarp-telemetry`. (https://github.com/robotology/wearables/pull/113)
 - Added `AddInstallRPATHSupport` cmake module for linking shared objects of private dependencies. (https://github.com/robotology/wearables/pull/113)
-- Updated `Paexo` wearable device with 6D force torque sensors implementation using `iFeelDriver`. (https://github.com/robotology/wearables/pull/117) 
+- Updated `Paexo` wearable device with 6D force torque sensors implementation using `iFeelDriver`. (https://github.com/robotology/wearables/pull/117)
+- Updated `Xsens` wearable device with `saveCurrentCalibration` option. (https://github.com/robotology/wearables/pull/120)
 
 ## [1.2.1] - 2021-04-12
 

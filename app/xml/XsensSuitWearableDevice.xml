@@ -27,9 +27,9 @@
         <param name="sampling-rate">120</param>
         <!-- Flag to save mvn recording -->
         <param name="saveMVNRecording">false</param>
-		<!-- Flag to save .mvn calibration -->
-		<param name="saveCurrentCalibration">true</param>
-		<!-- Quantities to be extracted from the driver for each time sample -->
+		    <!-- Flag to save .mvn calibration -->
+		    <param name="saveCurrentCalibration">true</param>
+		    <!-- Quantities to be extracted from the driver for each time sample -->
         <group name="output-stream-configuration">
             <param name="enable-joint-data">true</param>
             <param name="enable-link-data">true</param>
@@ -48,7 +48,7 @@
             <param name="shoeSoleHeight">0.02</param>
         </group>
     </device>
-    
+
     <device type="iwear_wrapper" name="XSensSuitDeviceWrapper">
         <param name="period">0.01</param>
         <param name="dataPortName">/XSensSuit/WearableData/data:o</param>
@@ -60,7 +60,7 @@
         </action>
         <action phase="shutdown" level="5" type="detach"/>
     </device>
-    
+
     <device type="ixsensmvncontrol_wrapper" name="XSensSuitControl">
         <param name="rpcPortName">/XSensSuit/Control/rpc:i</param>
         <action phase="startup" level="5" type="attach">
@@ -70,4 +70,4 @@
         </action>
         <action phase="shutdown" level="5" type="detach"/>
     </device>
-</robot> 
+</robot>
