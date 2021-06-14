@@ -19,9 +19,9 @@ yarp_prepare_plugin(hapticGlove  TYPE wearable::devices::HapticGlove
 
 yarp_add_plugin(HapticGlove
     src/HapticGlove.cpp
-#    src/SenseGloveHelper.cpp
+    src/SenseGloveHelper.cpp
     include/HapticGlove.h
-#    include/SenseGloveHelper.hpp
+    include/SenseGloveHelper.hpp
     )
 
 target_include_directories(HapticGlove PRIVATE
