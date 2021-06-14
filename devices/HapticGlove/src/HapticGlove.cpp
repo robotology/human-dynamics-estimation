@@ -8,7 +8,7 @@
 
 
 #include <HapticGlove.h>
-//#include <SenseGloveHelper.hpp>
+#include <SenseGloveHelper.hpp>
 
 #include <yarp/os/LogStream.h>
 #include <yarp/os/Bottle.h>
@@ -32,10 +32,7 @@ using namespace wearable::devices;
 
 struct SenseGloveIMUData
 {
-    double x;
-    double y;
-    double z;
-    double w;
+    std::vector<double> orientation; // [w, x, y , z]
 };
 
 class HapticGlove::SenseGloveImpl
@@ -55,6 +52,8 @@ public:
     // Numbe of actuators
     const int nActuators = 0;
 
+    std::unique_ptr<senseGlove::SenseGloveHelper> m_glove; /**< Pointer to the glove object. */
+
     // link Sensor
     std::string linkSensorPrefix;
     const std::string linkSensorName = "palmIMU";
@@ -62,24 +61,48 @@ public:
     SensorPtr<SenseGloveVirtualLinkKinSensor> sensegloveLinkSensor;
 
     SenseGloveImpl();
+
     bool run();
 
+    bool configure(yarp::os::Searchable& config);
 };
 
 HapticGlove::SenseGloveImpl::SenseGloveImpl()
 {
+    std::lock_guard<std::mutex> lock(mutex);
+
     wearableName="SenseGlove";
     portsPrefix ="/wearable/SenseGlove";
+    m_glove= std::make_unique<senseGlove::SenseGloveHelper>();
+}
+
+bool HapticGlove::SenseGloveImpl::configure(yarp::os::Searchable& config)
+{
+    bool rightHand;
+    if (!(config.check("rightHand") && config.find("rightHand").isBool())) {
+        yInfo() << LogPrefix << "Using default hand Sense Glove: Right hand";
+        rightHand= true;
+    }
+    else {
+        rightHand = config.find("rightHand").asBool();
+        yInfo() << LogPrefix << "Using the right hand: " << rightHand <<"(if false, using left hand)";
+    }
+
+    // configure the glove device
+    if (!m_glove->configure(config, rightHand))
+    {
+        yError() << LogPrefix<< "Unable to initialize the sense glove helper device.";
+        return false;
+    }
+    return true;
 }
 
 bool HapticGlove::SenseGloveImpl::run()
 {
+    yInfo()<<"SenseGloveImpl::run()";
     std::lock_guard<std::mutex> lock(mutex);
 
-    gloveData.x=0;
-    gloveData.y=0;
-    gloveData.z=0;
-    gloveData.w=yarp::os::Time::now();
+    m_glove->getGloveIMUData(gloveData.orientation);
 
     return true;
 }
@@ -126,6 +149,14 @@ bool HapticGlove::open(yarp::os::Searchable& config)
         yInfo() << LogPrefix << "Using the wearable name " << pImpl->wearableName;
     }
 
+    // Configure the implementation class
+
+    if(!pImpl->configure(config))
+    {
+        yInfo() << LogPrefix << "Cannot configure the implementation class";
+        return false;
+    }
+
     // ===================
     // Ports configuration ???
     // ===================
@@ -140,11 +171,9 @@ bool HapticGlove::open(yarp::os::Searchable& config)
 
 
     // Initialize snese glove data buffer
-    pImpl->gloveData.x    = 0.0;
-    pImpl->gloveData.y    = 0.0;
-    pImpl->gloveData.z    = 0.0;
-    pImpl->gloveData.w    = 1.0;
+    pImpl->gloveData.orientation.resize(4, 0.0);
 
+    yInfo()<<LogPrefix<<"The device is opened successfully.";
     return true;
 }
 
@@ -178,11 +207,14 @@ public:
         // we do not handle position in the current implementation
         position.fill(0.0);
 
-        std::vector<double> gloveImuData; // w, x, y, z
         assert(m_gloveImpl != nullptr);
 
         std::lock_guard<std::mutex> lock(m_gloveImpl->mutex);
-        orientation = {m_gloveImpl->gloveData.w, m_gloveImpl->gloveData.x, m_gloveImpl->gloveData.y, m_gloveImpl->gloveData.z};
+        yInfo()<<"orientation: "<<m_gloveImpl->gloveData.orientation;
+        orientation = {m_gloveImpl->gloveData.orientation[0], m_gloveImpl->gloveData.orientation[1],
+                       m_gloveImpl->gloveData.orientation[2], m_gloveImpl->gloveData.orientation[3]};
+
+
         return true;
     }
 
@@ -221,8 +253,6 @@ bool HapticGlove::close()
 
 bool HapticGlove::attach(yarp::dev::PolyDriver* poly)
 {
-    yError()<<LogPrefix<<"HapticGlove::attach(yarp::dev::PolyDriver* poly)";
-
     if (!poly) {
         yError() << LogPrefix << "Passed PolyDriver is a nullptr";
         return false;

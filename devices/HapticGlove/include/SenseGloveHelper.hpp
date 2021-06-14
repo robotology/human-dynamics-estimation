@@ -16,10 +16,8 @@
 #include <iostream>
 
 // YARP
-
 #include <yarp/sig/Vector.h>
 #include <yarp/os/LogStream.h>
-
 
 // Sense Glove
 #include <DeviceList.h>
@@ -31,43 +29,53 @@
 namespace senseGlove
 {
     class SenseGloveHelper;
-    bool yarpListToStringVector(yarp::os::Value*& input, std::vector<std::string>& output);
-
+    const std::string LogPrefix = "senseGlove::SenseGloveHelper::";
 }
 
 class senseGlove::SenseGloveHelper
 {
+    int m_forceFbDof; /**< Number of the actuated motors Dofs to produce force feedback to the human*/
 
-    int m_forceFbDof; /**< Number of the actuated motors Dofs to produce force feedback to the
-                         human*/
-    int m_buzzDof; /**< Number of the actuated vibro tactile Dofs to produce vibro tactile
-                         feedback to the human*/
-    int m_handNoLinks; /**< Number of the links of the hand model*/
+    int m_buzzDof; /**< Number of the actuated vibro-tactile Dofs to produce vibro tactile feedback to the human*/
 
-    int m_gloveNoLinks; /**< Number of the links of the hand model*/
+    int m_handNoLinks; /**< Number of the links of the human hand model*/
+
+    int m_gloveNoLinks; /**< Number of the links of the glove*/
 
     int m_NoSensors;  /**< Number of the sensors of the glove */
 
-    bool m_isReady; /**< true if the glove is ready to use, communication working*/
+    bool m_isReady; /**< true if the glove is ready to use, i.e., communication working*/
 
     bool m_isRightHand; /**< true if the glove is the right hand*/
 
+    //
+    std::vector<int> m_desiredForceValues; /**< Desired force feedback [N], resistence force between 0-40 N transformed to percentage 0-100 */
 
-    std::vector<int> m_desiredForceValues; /**< Desired joint value [deg or deg/s]. */
-    std::vector<int> m_desiredBuzzValues; /**< Joint position [deg]. */
-    std::vector<float> m_sensorData; /**< sensory data of the glove in degree */
-    Eigen::MatrixXd m_glovePose; /**< sensory data of the glove poses*/
-    Eigen::MatrixXd m_handPose; /**< sensory data of the hand link poses;  From thumb to pinky, proximal to distal;
-                                pos [x y z] Quat [x y z w]*/
+    std::vector<int> m_desiredBuzzValues; /**< Desired vibro-tactile feedbacks, percentage 0-100*/
 
-    Eigen::MatrixXd m_handJointsAngles; /**< sensory data of the hand joints angles;  From thumb to pinky,
-                                proximal to distal [rad] [Pronation/Supination (x), Flexion/Extension (y), Abduction/Adduction (z)]*/
+    std::vector<float> m_sensorData; /**< sensory data of the glove in degree [? or radians] // to check */
 
-    yarp::sig::Vector m_jointsFeedbackInRadians; /**< Joint position [rad]. */
+    Eigen::MatrixXd m_glovePose; /**< sensory data of the glove poses // to check */
 
-    std::vector<std::string> m_humanJointNameList;
+    Eigen::MatrixXd m_handPose; /**< sensory data of the hand link poses;  from thumb to pinky, proximal to distal, pos [x y z] Quat [x y z w]*/
 
-    SGCore::SG::SenseGlove m_glove;
+    Eigen::MatrixXd m_handJointsAngles; /**< sensory data of the human hand joints angles;  From thumb to pinky, proximal to distal [rad] [Pronation/Supination (x), Flexion/Extension (y), Abduction/Adduction (z)]*/
+
+    std::vector<std::string> m_humanJointNameList; /**< vector of the human joint names */
+
+    SGCore::SG::SenseGlove m_glove;  /**< the object to interface with the sense glove sdk */
+
+    /**
+     * Setup the communication with the glove
+     * @return true / false in case of success / failure
+     */
+    bool setupGlove();
+
+    /**
+     * Get the human hand joint angles from the sense glove data structure
+     * @return true / false in case of success / failure
+     */
+    bool getHandJointsAngles();
 
 public:
     /**
@@ -87,12 +95,6 @@ public:
      * @return true / false in case of success / failure
      */
     bool configure(const yarp::os::Searchable& config, const bool& rightHand);
-
-    /**
-     * Setup the communication with the glove
-     * @return true / false in case of success / failure
-     */
-    bool setupGlove();
 
     /**
      * Set the desired Force Feedback for all the fingers
@@ -116,39 +118,88 @@ public:
     bool setPalmFeedbackThumper(const int desiredValue);
 
     /**
-     * Get the measured joint values
+     * Get the measured hand link poses values
      * @param measuredValue measured joint values
      * @return true / false in case of success / failure
      */
     bool getHandPose(Eigen::MatrixXd& measuredValue);
 
-
-    bool getHandJointsAngles();
-
-
+    /**
+     * Get the human hand joint angles
+     * @param jointAngleList std vector of doubles of human hand joint angles
+     * @return true / false in case of success / failure
+     */
     bool getHandJointsAngles(std::vector<double> & jointAngleList) ;
 
-
+    /**
+     * Get the human hand joint angles
+     * @param measuredValue Eigen matrix of human hand joint angles
+     * @return true / false in case of success / failure
+     */
     bool getHandJointsAngles(Eigen::MatrixXd measuredValue);
 
-
+    /**
+     * Get the glove link poses
+     * @param measuredValue Eigen matrix of glove poses
+     * @return true / false in case of success / failure
+     */
     bool getGlovePose(Eigen::MatrixXd& measuredValue);
 
-
+    /**
+     * Get the glove sensory data
+     * @param measuredValue vector of glove sensory data
+     * @return true / false in case of success / failure
+     */
     bool getGloveSensorData(std::vector<float>& measuredValues);
+
+    /**
+     * Get the glove IMU data
+     * @param gloveImuData glove IMU data with the order x y z w
+     * @return true / false in case of success / failure
+     */
+    bool getGloveIMUData(std::vector<double>& gloveImuData);
     
     /**
-     * Set the number of vibro-tactile reference
-     * @param desiredValue desired vibro-tactile values
+     * Trun off the vibro-tactile feedback
      * @return true / false in case of success / failure
      */
     bool turnOffBuzzMotors();
 
+    /**
+     * Trun off the force feedback
+     * @return true / false in case of success / failure
+     */
     bool turnOffForceFeedback();
 
-    const int getNoOfBuzzMotors() const;
+    /**
+     * get the number of buzz motors/vibro-tactile feedback motors
+     * @return number of buzz motors
+     */
+    int getNoOfBuzzMotors() const;
 
-    int getNoOfForceFeedback();
+    /**
+     * get the number of force feedback motors
+     * @return number of force feedback motors
+     */
+    int getNoOfForceFeedback() const;
+
+    /**
+     * Get the number of hand links
+     * @return the number of hand links
+     */
+    int getNoHandLinks() const;
+
+    /**
+     * Get the number of glove links
+     * @return the number of glove links
+     */
+    int getNoGloveLinks() const;
+
+    /**
+     * Get the number of glove sensors
+     * @return the number of glove sensors
+     */
+    int getNoSensors() const;
 
     /**
      * Check if the glove is connected
@@ -157,69 +208,17 @@ public:
     bool isGloveConnected();
 
     /**
-     * Get the number of hand links
-     * @return the number of hand links
-     */
-    int getNoHandLinks();
-
-    /**
-     * Get the number of glove links
-     * @return the number of glove links
-     */
-    int getNoGloveLinks();
-
-    /**
-     * Get the number of glove sensors
-     * @return the number of glove sensors
-     */
-    int getNoSensors();
-
-    /**
      * Get the human joint list
      * @param jointList the human joint list
      */
-    void getHumanJointNameList(std::vector<std::string>& jointList)const ;
+    void getHumanJointNameList(std::vector<std::string>& jointList) const ;
 
     /**
-     * Get the glove IMU data
-     * @param gloveImuData glove IMU data with the order x y z w
-     * @return true / false in case of success / failure
+     * close the device
+     * @return true / false in case of connected / disconnected
      */
-    bool getGloveIMUData(std::vector<double>& gloveImuData);
-
+    bool close();
 };
-
-/**
- * Utility function: transform yarp list to a std string vector
- * @param input yarp list
- * @param output generated std string vector
- * @return true / false in case of success / failure
- */
-bool senseGlove::yarpListToStringVector(yarp::os::Value*& input, std::vector<std::string>& output)
-{
-    // clear the std::vector
-    output.clear();
-
-    // check if the yarp value is a list
-    if (!input->isList())
-    {
-        yError() << "[yarpListToStringVector] The input is not a list.";
-        return false;
-    }
-
-    yarp::os::Bottle* bottle = input->asList();
-    for (int i = 0; i < bottle->size(); i++)
-    {
-        // check if the elements of the bottle are strings
-        if (!bottle->get(i).isString())
-        {
-            yError() << "[yarpListToStringVector] There is a field that is not a string.";
-            return false;
-        }
-        output.push_back(bottle->get(i).asString());
-    }
-    return true;
-}
 
 
 #endif
