@@ -864,12 +864,13 @@
       </geometry>
     </collision>
   </link>
-  <joint name="r_wrist_yaw" type="continuous">
+  <joint name="r_wrist_yaw" type="revolute">
     <origin xyz="-0.016300122874272734 0.0069993900510918194 0" rpy="0 0 0"/>
     <axis xyz="-2.4949582809984105e-07 1.0000002733514362 -2.7942487004772865e-08"/>
     <parent link="r_wrist_1"/>
     <child link="r_hand"/>
-    <dynamics damping="0.1"/>
+    <limit effort="50000" lower="-0.2617993877991494" upper="0.6108652381980153" velocity="120.0"/>
+    <dynamics damping="0.06" friction="0.0"/>
   </joint>
   <link name="neck_1">
     <inertial>
