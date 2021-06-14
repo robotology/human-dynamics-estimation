@@ -2050,9 +2050,13 @@ bool HumanStateProvider::impl::initializeIntegrationBasedInverseKinematicsSolver
     jointLowerLimits.resize(humanModel.getNrOfDOFs());
     iDynTree::VectorDynSize jointUpperLimits;
     jointUpperLimits.resize(humanModel.getNrOfDOFs());
-    for (int jointIndex = 0; jointIndex < humanModel.getNrOfDOFs(); jointIndex++) {
-        jointLowerLimits.setVal(jointIndex, humanModel.getJoint(jointIndex)->getMinPosLimit(0));
-        jointUpperLimits.setVal(jointIndex, humanModel.getJoint(jointIndex)->getMaxPosLimit(0));
+    size_t DOFIndex = 0;
+    for (size_t jointIndex = 0; jointIndex < humanModel.getNrOfJoints(); ++jointIndex) {
+        if (humanModel.getJoint(jointIndex)->getNrOfDOFs() == 1) {
+            jointLowerLimits.setVal(DOFIndex, humanModel.getJoint(jointIndex)->getMinPosLimit(0));
+            jointUpperLimits.setVal(DOFIndex, humanModel.getJoint(jointIndex)->getMaxPosLimit(0));
+            DOFIndex++;
+        }
     }
     stateIntegrator.setJointLimits(jointLowerLimits, jointUpperLimits);
 
