@@ -89,15 +89,15 @@ public:
 
     SensorPtr<const sensor::IVirtualLinkKinSensor>
     getVirtualLinkKinSensor(const sensor::SensorName name) const override;
+    SensorPtr<const sensor::IVirtualJointKinSensor>
+    getVirtualJointKinSensor(const sensor::SensorName name) const override;
+
 
     // IMPLEMENTED ACTUATORS
     // ---------------------
 
     // UNIMPLEMENTED SENSORS
     // ---------------------
-
-    inline SensorPtr<const sensor::IVirtualJointKinSensor>
-    getVirtualJointKinSensor(const sensor::SensorName /*name*/) const override;
 
     inline SensorPtr<const sensor::IForce3DSensor>
     getForce3DSensor(const sensor::SensorName /*name*/) const override;
@@ -162,12 +162,6 @@ public:
 //    bool update(const std::vector<double>& imuData);
 
 };
-
-inline wearable::SensorPtr<const wearable::sensor::IVirtualJointKinSensor>
-wearable::devices::HapticGlove::getVirtualJointKinSensor(const sensor::SensorName /*name*/) const
-{
-    return nullptr;
-}
 
 inline wearable::SensorPtr<const wearable::sensor::IForce3DSensor>
 wearable::devices::HapticGlove::getForce3DSensor(const sensor::SensorName /*name*/) const

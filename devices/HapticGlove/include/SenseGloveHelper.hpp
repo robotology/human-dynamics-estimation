@@ -210,8 +210,9 @@ public:
     /**
      * Get the human joint list
      * @param jointList the human joint list
+     * @return true / false in case of success / failure
      */
-    void getHumanJointNameList(std::vector<std::string>& jointList) const ;
+    bool getHumanJointNameList(std::vector<std::string>& jointList) const ;
 
     /**
      * close the device

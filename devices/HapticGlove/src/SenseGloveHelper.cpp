@@ -194,7 +194,10 @@ bool SenseGloveHelper::getHandJointsAngles()
 bool SenseGloveHelper::getHandJointsAngles(std::vector<double> & jointAngleList)
 {
     getHandJointsAngles( );
-    jointAngleList.resize(m_humanJointNameList.size(),0.0); // 16
+    if(jointAngleList.size()!=m_humanJointNameList.size())
+    {
+        jointAngleList.resize(m_humanJointNameList.size(),0.0); // 16
+    }
 
     // thumb
     jointAngleList[0]=m_handJointsAngles(0, 2);
@@ -282,7 +285,11 @@ bool SenseGloveHelper::getGloveSensorData(std::vector<float>& measuredValues)
 bool SenseGloveHelper::getGloveIMUData(std::vector<double>& gloveImuData)
 {
      SGCore::Kinematics::Quat imu;
-    gloveImuData.resize(4, 0.0);
+
+     if(gloveImuData.size()!=4)
+     {
+         gloveImuData.resize(4, 0.0);
+     }
 
     if(!m_glove.GetIMURotation(imu))
     {
@@ -353,10 +360,19 @@ int SenseGloveHelper::getNoSensors() const
     return m_NoSensors;
 }
 
-void SenseGloveHelper::getHumanJointNameList( std::vector<std::string>& jointList)const {
+bool SenseGloveHelper::getHumanJointNameList( std::vector<std::string>& jointList)const {
+    if (m_humanJointNameList.size()==0)
+    {
+        yError()<< LogPrefix<< "m_humanJointNameList vector size is zero.";
+        return false;
+    }
+
     jointList.resize(m_humanJointNameList.size());
+
     for(size_t i=0; i<m_humanJointNameList.size(); i++)
         jointList[i] = m_humanJointNameList[i];
+
+    return true;
 }
 
 SenseGloveHelper::~SenseGloveHelper(){}
