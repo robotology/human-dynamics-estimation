@@ -36,22 +36,37 @@ bool SenseGloveHelper::configure(const yarp::os::Searchable& config,
 {
     yInfo()<<LogPrefix<<"configure:: ";
     m_isRightHand = rightHand;
-    yarp::os::Bottle* jointListYarp;
 
+    // get human hand joint names
+    yarp::os::Bottle* jointListYarp;
     if (!(config.check("human_joint_list") && config.find("human_joint_list").isList()))
     {
         yError() << LogPrefix<<"Unable to find human_joint_list in the config file.";
         return false;
     }
-    else {
-        jointListYarp = config.find("human_joint_list").asList();
 
-        for(size_t i=0; i< jointListYarp->size(); i++)
-        {
-            m_humanJointNameList.push_back(jointListYarp->get(i).asString());
-        }
-        yInfo()<<LogPrefix<<"human joint names: "<<m_humanJointNameList;
+    jointListYarp = config.find("human_joint_list").asList();
+
+    for(size_t i=0; i< jointListYarp->size(); i++)
+    {
+        m_humanJointNameList.push_back(jointListYarp->get(i).asString());
     }
+    yInfo()<<LogPrefix<<"human joint names: "<<m_humanJointNameList;
+
+    // get human hand finger names
+    yarp::os::Bottle* fingerListYarp;
+    if (!(config.check("human_finger_list") && config.find("human_finger_list").isList()))
+    {
+        yError() << LogPrefix<<"Unable to find human_finger_list in the config file.";
+        return false;
+    }
+    fingerListYarp = config.find("human_finger_list").asList();
+
+    for(size_t i=0; i< fingerListYarp->size(); i++)
+    {
+        m_humanFingerNameList.push_back(fingerListYarp->get(i).asString());
+    }
+    yInfo()<<LogPrefix<<"human finger names: "<<m_humanFingerNameList;
 
     if(!setupGlove())
     {
@@ -85,7 +100,7 @@ bool SenseGloveHelper::setupGlove()
     return true;
 }
 
-bool SenseGloveHelper::setFingersForceReference(const yarp::sig::Vector& desiredValue)
+bool SenseGloveHelper::setFingersForceReference(const std::vector<double> & desiredValue)
 {
     if (desiredValue.size() != m_forceFbDof)
     {
@@ -95,7 +110,7 @@ bool SenseGloveHelper::setFingersForceReference(const yarp::sig::Vector& desired
 
     for (size_t i = 0; i < m_forceFbDof; i++)
     {
-            m_desiredForceValues[i] = (int)std::round(std::max(0.0,std::min(desiredValue(i), 40.0))*100/40);
+            m_desiredForceValues[i] = (int)std::round(std::max(0.0,std::min(desiredValue[i], 40.0))*100/40);
     }
 
     m_glove.SendHaptics(SGCore::Haptics::SG_FFBCmd(m_desiredForceValues));
@@ -104,7 +119,7 @@ bool SenseGloveHelper::setFingersForceReference(const yarp::sig::Vector& desired
 }
 
 
-bool SenseGloveHelper::setBuzzMotorsReference(const yarp::sig::Vector& desiredValue)
+bool SenseGloveHelper::setBuzzMotorsReference(const std::vector<double> & desiredValue)
 {
     if (desiredValue.size() != m_buzzDof)
     {
@@ -113,7 +128,7 @@ bool SenseGloveHelper::setBuzzMotorsReference(const yarp::sig::Vector& desiredVa
     }
     for (size_t i = 0; i < m_buzzDof; i++)
     {
-            m_desiredBuzzValues[i] = (int)std::round(std::max(0.0,std::min(desiredValue(i), 100.0)));
+            m_desiredBuzzValues[i] = (int)std::round(std::max(0.0,std::min(desiredValue[i], 100.0)));
     }
     m_glove.SendHaptics(SGCore::Haptics::SG_BuzzCmd(m_desiredBuzzValues));
 
@@ -374,6 +389,23 @@ bool SenseGloveHelper::getHumanJointNameList( std::vector<std::string>& jointLis
 
     return true;
 }
+
+bool SenseGloveHelper::getHumanFingerNameList(std::vector<std::string>& fingerList) const{
+
+    if (m_humanFingerNameList.size()==0)
+    {
+        yError()<< LogPrefix<< "m_humanFingerNameList vector size is zero.";
+        return false;
+    }
+
+    fingerList.resize(m_humanFingerNameList.size());
+
+    for(size_t i=0; i<m_humanFingerNameList.size(); i++)
+        fingerList[i] = m_humanFingerNameList[i];
+
+    return true;
+}
+
 
 SenseGloveHelper::~SenseGloveHelper(){}
 

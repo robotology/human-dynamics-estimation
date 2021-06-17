@@ -7,12 +7,13 @@
     <device type="hapticGlove" name="HapticGloveWearableDevice">
         <param name="period">0.01</param>
         <param name="portsPrefixName">/wearable/HapticGlove/rightHand</param>
-        <param name="rightHand">true</param>
+        <param name="rightHand">false</param>
         <param name="human_joint_list">( "l_thumb_oppose", "l_thumb_proximal", "l_thumb_middle", "l_thumb_distal",
                                          "l_index_proximal", "l_index_middle", "l_index_distal",
                                          "l_middle_proximal", "l_middle_middle", "l_middle_distal",
                                          "l_ring_proximal",   "l_ring_middle",   "l_ring_distal",
                                          "l_pinky_proximal",   "l_pinky_middle",   "l_pinky_distal" ) </param>
+        <param name="human_finger_list">( "l_thumb_finger", "l_index_finger", "l_middle_finger", "l_ring_finger", "l_little_finger" ) </param>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
                 <elem name="HapticGloveWearableDeviceLabel">HapticGloveWearableDevice</elem>

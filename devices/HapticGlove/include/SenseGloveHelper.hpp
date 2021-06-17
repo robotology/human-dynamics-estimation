@@ -63,6 +63,8 @@ class senseGlove::SenseGloveHelper
 
     std::vector<std::string> m_humanJointNameList; /**< vector of the human joint names */
 
+    std::vector<std::string> m_humanFingerNameList; /**< vector of the human finger names */
+
     SGCore::SG::SenseGlove m_glove;  /**< the object to interface with the sense glove sdk */
 
     /**
@@ -101,14 +103,14 @@ public:
      * @param desiredValue desired force feedback of all the fingers
      * @return true / false in case of success / failure
      */
-    bool setFingersForceReference(const yarp::sig::Vector& desiredValue);
+    bool setFingersForceReference(const std::vector<double> & desiredValue);
 
     /**
      * Set the desired vibro-tactile feedback for all the fingers
      * @param desiredValue desired vibro-tactile values
      * @return true / false in case of success / failure
      */
-    bool setBuzzMotorsReference(const yarp::sig::Vector& desiredValue);
+    bool setBuzzMotorsReference(const std::vector<double> & desiredValue);
 
     /**
      * Set the desired vibro-tactile feedback for the palm
@@ -213,6 +215,14 @@ public:
      * @return true / false in case of success / failure
      */
     bool getHumanJointNameList(std::vector<std::string>& jointList) const ;
+
+    /**
+     * Get the human finger list
+     * @param fingerList the human joint list
+     * @return true / false in case of success / failure
+     */
+    bool getHumanFingerNameList(std::vector<std::string>& fingerList) const ;
+
 
     /**
      * close the device

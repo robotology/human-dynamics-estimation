@@ -96,6 +96,9 @@ public:
     // IMPLEMENTED ACTUATORS
     // ---------------------
 
+    ElementPtr<const actuator::IHaptic>
+    getHapticActuator(const actuator::ActuatorName name) const override;
+
     // UNIMPLEMENTED SENSORS
     // ---------------------
 
@@ -143,9 +146,6 @@ public:
 
     // UNIMPLEMENTED ACTUATORS
     // -----------------------
-
-    inline ElementPtr<const actuator::IHaptic>
-    getHapticActuator(const actuator::ActuatorName) const override;
 
     inline ElementPtr<const actuator::IHeater>
     getHeaterActuator(const actuator::ActuatorName) const override;
@@ -243,12 +243,6 @@ wearable::devices::HapticGlove::getSkinSensor(const sensor::SensorName /*name*/)
 
 inline wearable::SensorPtr<const wearable::sensor::ITemperatureSensor>
 wearable::devices::HapticGlove::getTemperatureSensor(const sensor::SensorName /*name*/) const
-{
-    return nullptr;
-}
-
-inline wearable::ElementPtr<const wearable::actuator::IHaptic>
-wearable::devices::HapticGlove::getHapticActuator(const actuator::ActuatorName) const
 {
     return nullptr;
 }
