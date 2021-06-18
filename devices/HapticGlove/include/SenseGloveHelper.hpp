@@ -65,6 +65,8 @@ class senseGlove::SenseGloveHelper
 
     std::vector<std::string> m_humanFingerNameList; /**< vector of the human finger names */
 
+    std::string m_humanHandLinkName; /**< the name of the human hand link name*/
+
     SGCore::SG::SenseGlove m_glove;  /**< the object to interface with the sense glove sdk */
 
     /**
@@ -96,7 +98,7 @@ public:
      * @param rightHand if true, the right hand glove will be configured, otherwise left.
      * @return true / false in case of success / failure
      */
-    bool configure(const yarp::os::Searchable& config, const bool& rightHand);
+    bool configure(const yarp::os::Searchable& config);
 
     /**
      * Set the desired Force Feedback for all the fingers
@@ -217,12 +219,25 @@ public:
     bool getHumanJointNameList(std::vector<std::string>& jointList) const ;
 
     /**
+     * Get the human hand link name
+     * @param handLinkName the human hand link name
+     * @return true / false in case of success / failure
+     */
+    bool getHumanHandLinkName(std::string& handLinkName) const ;
+
+    /**
      * Get the human finger list
      * @param fingerList the human joint list
      * @return true / false in case of success / failure
      */
     bool getHumanFingerNameList(std::vector<std::string>& fingerList) const ;
 
+
+    /**
+     * Get the left/right hand
+     * @return true / false in case of right / left hand
+     */
+    bool isRightHand() const ;
 
     /**
      * close the device

@@ -31,11 +31,27 @@ SenseGloveHelper::SenseGloveHelper(){
     m_handJointsAngles = Eigen::MatrixXd::Zero(m_handNoLinks, 3);
 }
 
-bool SenseGloveHelper::configure(const yarp::os::Searchable& config,
-                                   const bool& rightHand)
+bool SenseGloveHelper::configure(const yarp::os::Searchable& config)
 {
     yInfo()<<LogPrefix<<"configure:: ";
-    m_isRightHand = rightHand;
+
+    if (!(config.check("rightHand") && config.find("rightHand").isBool())) {
+        yInfo() << LogPrefix << "Using default hand Sense Glove: Right hand";
+        m_isRightHand = true;
+    }
+    else {
+        m_isRightHand  = config.find("rightHand").asBool();
+        yInfo() << LogPrefix << "Using the right hand: " << m_isRightHand <<"(if false, using left hand)";
+    }
+
+    // get human hand link name
+    if (!(config.check("hand_link") && config.find("hand_link").isString()))
+    {
+        yError() << LogPrefix<<"Unable to find hand_link in the config file.";
+        return false;
+    }
+    m_humanHandLinkName = config.find("hand_link").asString();
+    yInfo() << LogPrefix << "human hand link name: " << m_humanHandLinkName;
 
     // get human hand joint names
     yarp::os::Bottle* jointListYarp;
@@ -44,7 +60,6 @@ bool SenseGloveHelper::configure(const yarp::os::Searchable& config,
         yError() << LogPrefix<<"Unable to find human_joint_list in the config file.";
         return false;
     }
-
     jointListYarp = config.find("human_joint_list").asList();
 
     for(size_t i=0; i< jointListYarp->size(); i++)
@@ -390,6 +405,13 @@ bool SenseGloveHelper::getHumanJointNameList( std::vector<std::string>& jointLis
     return true;
 }
 
+bool SenseGloveHelper::getHumanHandLinkName(std::string& handLinkName) const
+{
+    handLinkName=m_humanHandLinkName;
+    return true;
+}
+
+
 bool SenseGloveHelper::getHumanFingerNameList(std::vector<std::string>& fingerList) const{
 
     if (m_humanFingerNameList.size()==0)
@@ -408,6 +430,11 @@ bool SenseGloveHelper::getHumanFingerNameList(std::vector<std::string>& fingerLi
 
 
 SenseGloveHelper::~SenseGloveHelper(){}
+
+bool SenseGloveHelper::isRightHand() const
+{
+    return m_isRightHand;
+}
 
 bool SenseGloveHelper::close()
 {
