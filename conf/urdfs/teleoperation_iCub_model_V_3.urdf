@@ -1796,6 +1796,20 @@
 <child link="r_hand_fake"/>
 </joint>
 
+<link name="r_hand_fake_sg">
+<inertial>
+   <mass value="0.0001"/>
+   <origin xyz="0 0 0" rpy="0 0 0" />
+   <inertia ixx="0.0003" iyy="0.0003" izz="0.0003" ixy="0" ixz="0" iyz="0"/>
+</inertial>
+</link>
+<joint name="j_r_hand_fake_sg" type="fixed">
+<origin xyz="0 0 0" rpy="1.57079632679 0 -1.57079632679"/>
+<axis xyz="0 0 0"/>
+<parent link="r_hand"/>
+<child link="r_hand_fake_sg"/>
+</joint>
+
 <link name="l_upper_arm_fake">
 <inertial>
    <mass value="0.0001"/>
@@ -1837,6 +1851,21 @@
 <parent link="l_hand"/>
 <child link="l_hand_fake"/>
 </joint>
+
+<link name="l_hand_fake_sg">
+<inertial>
+   <mass value="0.0001"/>
+   <origin xyz="0 0 0" rpy="0 0 0" />
+   <inertia ixx="0.0003" iyy="0.0003" izz="0.0003" ixy="0" ixz="0" iyz="0"/>
+</inertial>
+</link>
+<joint name="j_l_hand_fake_sg" type="fixed">
+<origin xyz="0 0 0" rpy="-1.57079632679 0 1.57079632679"/>
+<axis xyz="0 0 0"/>
+<parent link="l_hand"/>
+<child link="l_hand_fake_sg"/>
+</joint>
+
 <!-- ***************************************************************** -->
 
 </robot>
