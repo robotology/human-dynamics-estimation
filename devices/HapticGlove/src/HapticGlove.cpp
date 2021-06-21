@@ -184,6 +184,7 @@ bool HapticGlove::SenseGloveImpl::run()
         gloveData.fingersForceFeedback[i]=gloveData.fingersHapticFeedback[i];
         gloveData.fingersVibroTactileFeedback[i]=gloveData.fingersHapticFeedback[ i + nFingers ];
     }
+
     pGlove->setFingersForceReference(gloveData.fingersForceFeedback);
     pGlove->setBuzzMotorsReference(gloveData.fingersVibroTactileFeedback);
 
@@ -275,7 +276,7 @@ bool HapticGlove::open(yarp::os::Searchable& config)
         m_pImpl->gloveData.humanHapticActuatorNameIdMap.emplace(std::make_pair(m_pImpl->hapticActuatorPrefix + m_pImpl->gloveData.humanFingerNames[i] + "::ForceFeedback", i));
 
     for(size_t i=0; i<m_pImpl->gloveData.humanFingerNames.size(); i++)
-        m_pImpl->gloveData.humanHapticActuatorNameIdMap.emplace(std::make_pair(m_pImpl->hapticActuatorPrefix + m_pImpl->gloveData.humanFingerNames[i] + "::VibroTactileFeedback", i));
+        m_pImpl->gloveData.humanHapticActuatorNameIdMap.emplace(std::make_pair(m_pImpl->hapticActuatorPrefix + m_pImpl->gloveData.humanFingerNames[i] + "::VibroTactileFeedback", i+m_pImpl->nFingers));
 
     yInfo()<<LogPrefix<<"The device is opened successfully.";
     

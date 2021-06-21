@@ -28,6 +28,16 @@
         </action>
         <action phase="shutdown" level="4" type="detach"/>
     </device>
+    <device type="iwearactuators_wrapper" name="LeftHapticGloveWearableDeviceActuatorsWrapper">
+        <param name="period">0.01</param>
+        <param name="actuatorCommandInputPortName">/WearableData/HapticGlove/LeftHand/Actuators/input:i</param>
+        <action phase="startup" level="5" type="attach">
+            <paramlist name="networks">
+                <elem name="HapticGloveWearableDeviceActuatorWrapperLabel"> LeftHapticGloveWearableDevice </elem>
+            </paramlist>
+        </action>
+        <action phase="shutdown" level="4" type="detach"/>
+    </device>
 
 
 
@@ -53,6 +63,16 @@
     <action phase="startup" level="5" type="attach">
         <paramlist name="networks">
             <elem name="HapticGloveWearableDeviceWrapperLabel"> RightHapticGloveWearableDevice </elem>
+        </paramlist>
+    </action>
+    <action phase="shutdown" level="4" type="detach"/>
+</device>
+<device type="iwearactuators_wrapper" name="RightHapticGloveWearableDeviceActuatorsWrapper">
+    <param name="period">0.01</param>
+    <param name="actuatorCommandInputPortName">/WearableData/HapticGlove/RightHand/Actuators/input:i</param>
+    <action phase="startup" level="5" type="attach">
+        <paramlist name="networks">
+            <elem name="HapticGloveWearableDeviceActuatorWrapperLabel"> RightHapticGloveWearableDevice </elem>
         </paramlist>
     </action>
     <action phase="shutdown" level="4" type="detach"/>
