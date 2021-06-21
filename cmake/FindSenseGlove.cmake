@@ -1,4 +1,4 @@
-# Copyright 2020 Istituto Italiano di Tecnologia (IIT)
+# Copyright 2021 Istituto Italiano di Tecnologia (IIT)
 # @author Kourosh Darvish <kourosh.darvish@iit.it>
 
 # Finds the Sense Glove SDK
@@ -29,6 +29,3 @@ set_target_properties(SenseGlove PROPERTIES IMPORTED_LOCATION $ENV{SenseGlove_DI
 target_include_directories(SenseGlove INTERFACE $ENV{SenseGlove_INCLUDE_DIRS})
 
 set(SenseGlove_FOUND TRUE)
-
-
-

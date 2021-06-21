@@ -1,7 +1,6 @@
 #/*
 # Copyright 2021 Istituto Italiano di Tecnologia (IIT)
 # @author Kourosh Darvish <kourosh.darvish@iit.it>
-#* Authors: Yeshasvi Tirupachuri
 #* CopyPolicy: Released under the terms of the LGPLv2.1 or later, see LGPL.TXT
 #*/
 

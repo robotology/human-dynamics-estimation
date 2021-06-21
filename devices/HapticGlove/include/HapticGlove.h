@@ -33,7 +33,7 @@ class wearable::devices::HapticGlove :
 {
 private:
     class SenseGloveImpl;
-    std::unique_ptr<SenseGloveImpl> pImpl;
+    std::unique_ptr<SenseGloveImpl> m_pImpl;
 public:
     HapticGlove();
     ~HapticGlove() override;
@@ -142,14 +142,6 @@ public:
 
     inline ElementPtr<const actuator::IMotor>
     getMotorActuator(const actuator::ActuatorName) const override;
-
-// TODEL
-//    inline SensorPtr<const sensor::IOrientationSensor>
-//    getOrientationSensor(const sensor::SensorName /*name*/) const override;
-
-//    bool configure (const yarp::os::Searchable& config, const std::string& name);
-
-//    bool update(const std::vector<double>& imuData);
 
 };
 
