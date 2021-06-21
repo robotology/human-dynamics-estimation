@@ -5,8 +5,7 @@
 #* CopyPolicy: Released under the terms of the LGPLv2.1 or later, see LGPL.TXT
 #*/
 
-find_package(Eigen3 REQUIRED)
-include_directories(SYSTEM ${EIGEN3_INCLUDE_DIR})
+find_package(Eigen3 REQUIRED NO_MODULE)
 find_package(SenseGlove REQUIRED)
 
 # Compile the plugin by default
@@ -32,7 +31,9 @@ target_link_libraries(HapticGlove
     YARP::YARP_dev
     YARP::YARP_init
     Wearable::IWear
+    PRIVATE
     SenseGlove
+    Eigen3::Eigen
     )
 
 yarp_install(TARGETS HapticGlove
@@ -45,4 +46,4 @@ yarp_install(TARGETS HapticGlove
 set (WEARABLES_PROJECT_NAME Wearables)
 set (WEARABLES_XML_FILES conf/HapticGlove.xml)
 install(FILES ${WEARABLES_XML_FILES}
-            DESTINATION ${CMAKE_INSTALL_DATADIR}/${WEARABLES_PROJECT_NAME})
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/${WEARABLES_PROJECT_NAME})

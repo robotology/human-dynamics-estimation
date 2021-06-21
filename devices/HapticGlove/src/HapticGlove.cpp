@@ -283,6 +283,14 @@ bool HapticGlove::open(yarp::os::Searchable& config)
         pImpl->gloveData.humanHapticActuatorNameIdMap.emplace(std::make_pair(pImpl->hapticActuatorPrefix + pImpl->gloveData.humanFingerNames[i] + "::VibroTactileFeedback", i));
 
     yInfo()<<LogPrefix<<"The device is opened successfully.";
+    
+    // Start the PeriodicThread loop
+    if (!start()) {
+        yError() << LogPrefix << "Failed to start the period thread.";
+        return false;
+    }
+
+
     return true;
 }
 
@@ -452,58 +460,7 @@ void HapticGlove::run()
 
 bool HapticGlove::close()
 {
-    detach();
     return true;
-}
-
-bool HapticGlove::attach(yarp::dev::PolyDriver* poly)
-{
-    if (!poly) {
-        yError() << LogPrefix << "Passed PolyDriver is a nullptr";
-        return false;
-    }
-
-    // Start the PeriodicThread loop
-    if (!start()) {
-        yError() << LogPrefix << "Failed to start the period thread.";
-        return false;
-    }
-
-    yInfo() << LogPrefix << "attach() successful";
-    return true;
-
-}
-
-bool HapticGlove::detach()
-{
-    while(yarp::os::PeriodicThread::isRunning()) {
-        yarp::os::PeriodicThread::stop();
-    }
-
-    return true;
-}
-
-// TO Explain TO check
-bool HapticGlove::attachAll(const yarp::dev::PolyDriverList& driverList)
-{
-    if (driverList.size() > 1) {
-        yError() << LogPrefix << "This wrapper accepts only one attached yarp Serial device";
-        return false;
-    }
-
-    const yarp::dev::PolyDriverDescriptor* driver = driverList[0];
-
-    if (!driver) {
-        yError() << LogPrefix << "Passed PolyDriverDescriptor is nullptr";
-        return false;
-    }
-
-    return attach(driver->poly);
-}
-
-bool HapticGlove::detachAll()
-{
-    return detach();
 }
 
 void HapticGlove::threadRelease(){}
