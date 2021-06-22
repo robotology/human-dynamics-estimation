@@ -1804,7 +1804,7 @@
 </inertial>
 </link>
 <joint name="j_r_hand_fake_sg" type="fixed">
-<origin xyz="0 0 0" rpy="1.57079632679 0 -1.57079632679"/>
+<origin xyz="0 0 0" rpy="1.57079632679 1.57079632679 0"/>
 <axis xyz="0 0 0"/>
 <parent link="r_hand"/>
 <child link="r_hand_fake_sg"/>
@@ -1860,7 +1860,7 @@
 </inertial>
 </link>
 <joint name="j_l_hand_fake_sg" type="fixed">
-<origin xyz="0 0 0" rpy="-1.57079632679 0 1.57079632679"/>
+<origin xyz="0 0 0" rpy="-1.57079632679 1.57079632679 0"/>
 <axis xyz="0 0 0"/>
 <parent link="l_hand"/>
 <child link="l_hand_fake_sg"/>

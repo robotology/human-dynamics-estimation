@@ -2679,7 +2679,7 @@ bool HumanStateProvider::attach(yarp::dev::PolyDriver* poly)
 
 void HumanStateProvider::threadRelease()
 {
-    if (!pImpl->ikPool->closeIKWorkerPool()) {
+    if (pImpl->ikSolver == SolverIK::pairwised && !pImpl->ikPool->closeIKWorkerPool()) {
         yError() << LogPrefix << "Failed to close the IKWorker pool";
     }
 }
