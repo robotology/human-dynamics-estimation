@@ -66,7 +66,7 @@ public:
   // Number of sensors
   const int nLinkSensors = 1; // 1 palm imu
 
-  // Numbe of actuators
+  // Number of actuators
   const int nActuators = 10; // humanFingerNames.size()*2
 
   std::unique_ptr<senseGlove::SenseGloveHelper>
@@ -171,13 +171,6 @@ bool HapticGlove::SenseGloveImpl::run() {
   Eigen::MatrixXd glovePose, handPose;
   pGlove->getGlovePose(glovePose);
   pGlove->getHandPose(handPose);
-
-  yInfo() << "joints:" << gloveData.humanJointNames;
-  yInfo() << "joints:" << gloveData.humanJointValues;
-  //  std::cout << "glovePose:\n" << glovePose << std::endl;
-  //  std::cout << "handPose:\n" << handPose << std::endl;
-
-  //  std::cout << "imu: " << gloveData.humanHandLinkOrientation << std::endl;
 
   // actuators
   for (size_t i = 0; i < nFingers; i++) {

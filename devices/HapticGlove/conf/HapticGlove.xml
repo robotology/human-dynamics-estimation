@@ -6,13 +6,12 @@
     <!--Left HapticGlove Device-->
     <device type="hapticGlove" name="LeftHapticGloveWearableDevice">
         <param name="period">0.01</param>
-        <!--param name="portsPrefixName">/wearable/HapticGlove/rightHand</param-->
         <param name="rightHand">false</param>
         <param name="human_joint_list">( "l_thumb_oppose", "l_thumb_proximal", "l_thumb_middle", "l_thumb_distal",
-                                         "l_index_proximal", "l_index_middle", "l_index_distal",
-                                         "l_middle_proximal", "l_middle_middle", "l_middle_distal",
-                                         "l_ring_proximal",   "l_ring_middle",   "l_ring_distal",
-                                         "l_pinky_proximal",   "l_pinky_middle",   "l_pinky_distal" ) </param>
+                                         "l_index_abduction", "l_index_proximal", "l_index_middle", "l_index_distal",
+                                         "l_middle_abduction", "l_middle_proximal", "l_middle_middle", "l_middle_distal",
+                                         "l_ring_abduction", "l_ring_proximal",   "l_ring_middle",   "l_ring_distal",
+                                         "l_pinky_abduction", "l_pinky_proximal",   "l_pinky_middle",   "l_pinky_distal" ) </param>
         <param name="human_finger_list">( "l_thumb_finger", "l_index_finger", "l_middle_finger", "l_ring_finger", "l_little_finger" ) </param>
         <param name="hand_link">l_hand</param>
     </device>
@@ -43,15 +42,14 @@
 
 
 <!--Right HapticGlove Device-->
-<device type="hapticGlove" name="RightHapticGloveWearableDevice">
+<!--device type="hapticGlove" name="RightHapticGloveWearableDevice">
     <param name="period">0.01</param>
-    <!--param name="portsPrefixName">/wearable/HapticGlove/rightHand</param-->
     <param name="rightHand">true</param>
     <param name="human_joint_list">( "r_thumb_oppose", "r_thumb_proximal", "r_thumb_middle", "r_thumb_distal",
-                                     "r_index_proximal", "r_index_middle", "r_index_distal",
-                                     "r_middle_proximal", "r_middle_middle", "r_middle_distal",
-                                     "r_ring_proximal",   "r_ring_middle",   "r_ring_distal",
-                                     "r_pinky_proximal",   "r_pinky_middle",   "r_pinky_distal" ) </param>
+                                     "r_index_abduction", "r_index_proximal", "r_index_middle", "r_index_distal",
+                                     "r_middle_abduction", "r_middle_proximal", "r_middle_middle", "r_middle_distal",
+                                     "r_ring_abduction", "r_ring_proximal",   "r_ring_middle",   "r_ring_distal",
+                                     "r_pinky_abduction", "r_pinky_proximal",   "r_pinky_middle",   "r_pinky_distal" ) </param>
     <param name="human_finger_list">( "r_thumb_finger", "r_index_finger", "r_middle_finger", "r_ring_finger", "r_little_finger" ) </param>
     <param name="hand_link">r_hand</param>
 </device>
@@ -76,7 +74,7 @@
         </paramlist>
     </action>
     <action phase="shutdown" level="4" type="detach"/>
-</device>
+</device-->
 
 
 

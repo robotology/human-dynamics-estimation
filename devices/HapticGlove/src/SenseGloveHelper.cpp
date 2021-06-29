@@ -22,7 +22,7 @@ SenseGloveHelper::SenseGloveHelper() {
   m_gloveNoLinks = 30;
   m_handNoLinks = 20;
   m_handNoLinksForEulerAngles = 15;
-  m_NoJointSensors = 16;
+  m_NoJointSensors = 20;
 
   m_desiredBuzzValues.resize(m_buzzDof, 0);
   m_desiredForceValues.resize(m_forceFbDof, 0);
@@ -188,7 +188,6 @@ bool SenseGloveHelper::getHandPose(Eigen::MatrixXd &measuredValue) {
       m_handPose(count, 5) = handPose.jointRotations[i][j].z;
       m_handPose(count, 6) = handPose.jointRotations[i][j].w;
       count++;
-      yInfo() << "second: " << i << j;
     }
   }
   measuredValue = m_handPose;
@@ -210,17 +209,13 @@ bool SenseGloveHelper::getHandJointsAngles() {
   int count = 0;
   // size is 5 (5 Fingers)
   for (int i = 0; i < handPose.handAngles.size(); i++) {
-    // size is 4 (4 links each finger)
-    yInfo() << "first:" << handPose.handAngles[i].size()
-            << handPose.jointPositions[i].size()
-            << handPose.jointRotations[i].size();
+    // size is 3
     for (int j = 0; j < handPose.handAngles[i].size(); j++) {
       // Euler representations of all possible hand angles
       m_handOrientationEulerAngles(count, 0) = handPose.handAngles[i][j].x;
       m_handOrientationEulerAngles(count, 1) = handPose.handAngles[i][j].y;
       m_handOrientationEulerAngles(count, 2) = handPose.handAngles[i][j].z;
       count++;
-      yInfo() << "first: " << i << j;
     }
   }
   return true;
@@ -231,41 +226,41 @@ bool SenseGloveHelper::getHandJointsAngles(
   getHandJointsAngles();
 
   //  if (jointAngleList.size() != m_humanJointNameList.size()) {
-  yInfo() << "m_humanJointNameList.size(): " << m_humanJointNameList.size();
-  jointAngleList.resize(m_humanJointNameList.size(), 0.0); // 16
+  //  yInfo() << "m_humanJointNameList.size(): " << m_humanJointNameList.size();
+  jointAngleList.resize(m_humanJointNameList.size(), 0.0); // 20
                                                            //  }
   std::cout << "m_handOrientationEulerAngles\n"
             << m_handOrientationEulerAngles << std::endl;
 
-  // thumb
+  // thumb (0:3)
   jointAngleList[0] = m_handOrientationEulerAngles(0, 2);
   jointAngleList[1] = m_handOrientationEulerAngles(0, 1);
   jointAngleList[2] = m_handOrientationEulerAngles(1, 1);
   jointAngleList[3] = m_handOrientationEulerAngles(2, 1);
 
-  // m_handJointsAngles(3, :)--> all of them are zero
-  // index (3:5)
-  jointAngleList[4] = m_handOrientationEulerAngles(3, 1);
-  jointAngleList[5] = m_handOrientationEulerAngles(4, 1);
-  jointAngleList[6] = m_handOrientationEulerAngles(5, 1);
+  // index (4:7)
+  jointAngleList[4] = m_handOrientationEulerAngles(3, 2);
+  jointAngleList[5] = m_handOrientationEulerAngles(3, 1);
+  jointAngleList[6] = m_handOrientationEulerAngles(4, 1);
+  jointAngleList[7] = m_handOrientationEulerAngles(5, 1);
 
-  // m_handJointsAngles(7, :)--> all of them are zero
-  // middle (6:8)
-  jointAngleList[7] = m_handOrientationEulerAngles(6, 1);
-  jointAngleList[8] = m_handOrientationEulerAngles(7, 1);
-  jointAngleList[9] = m_handOrientationEulerAngles(8, 1);
+  // middle (8:11)
+  jointAngleList[8] = m_handOrientationEulerAngles(6, 2);
+  jointAngleList[9] = m_handOrientationEulerAngles(6, 1);
+  jointAngleList[10] = m_handOrientationEulerAngles(7, 1);
+  jointAngleList[11] = m_handOrientationEulerAngles(8, 1);
 
-  // m_handJointsAngles(11, :)--> all of them are zero
-  // ring (9:11)
-  jointAngleList[10] = m_handOrientationEulerAngles(9, 1);
-  jointAngleList[11] = m_handOrientationEulerAngles(10, 1);
-  jointAngleList[12] = m_handOrientationEulerAngles(11, 1);
+  // ring (12:15)
+  jointAngleList[12] = m_handOrientationEulerAngles(9, 2);
+  jointAngleList[13] = m_handOrientationEulerAngles(9, 1);
+  jointAngleList[14] = m_handOrientationEulerAngles(10, 1);
+  jointAngleList[15] = m_handOrientationEulerAngles(11, 1);
 
-  // m_handJointsAngles(15, :)--> all of them are zero
-  // pinkie (12:14)
-  jointAngleList[13] = m_handOrientationEulerAngles(12, 1);
-  jointAngleList[14] = m_handOrientationEulerAngles(13, 1);
-  jointAngleList[15] = m_handOrientationEulerAngles(14, 1);
+  // pinkie (16:19)
+  jointAngleList[16] = m_handOrientationEulerAngles(12, 2);
+  jointAngleList[17] = m_handOrientationEulerAngles(12, 1);
+  jointAngleList[18] = m_handOrientationEulerAngles(13, 1);
+  jointAngleList[19] = m_handOrientationEulerAngles(14, 1);
 
   return true;
 }
