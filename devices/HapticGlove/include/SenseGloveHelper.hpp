@@ -12,6 +12,7 @@
 #include <Eigen/Dense>
 
 // std
+#include <array>
 #include <iostream>
 #include <memory>
 
@@ -29,11 +30,15 @@
 namespace senseGlove {
 class SenseGloveHelper;
 const std::string LogPrefix = "senseGlove::SenseGloveHelper::";
+using Vector7 = std::array<double, 7>;
+; //![ (pos : x, y, z), *(rotation : w, x, y, z) ]
+
 } // namespace senseGlove
 
 class senseGlove::SenseGloveHelper {
+
   int m_forceFbDof; /**< Number of the actuated motors Dofs to produce force
-                       feedback to the human*/
+                   feedback to the human*/
 
   int m_buzzDof; /**< Number of the actuated vibro-tactile Dofs to produce vibro
                     tactile feedback to the human*/
@@ -168,6 +173,14 @@ public:
    * @return true / false in case of success / failure
    */
   bool getGlovePose(Eigen::MatrixXd &measuredValue);
+
+  /**
+   * Get the fingertip poses based on glove sensory data
+   * @param fingertipPoses Eigen matrix of glove poses [(pos: x, y, z) ,
+   * (rotation: w, x, y, z )]
+   * @return true / false in case of success / failure
+   */
+  bool getGloveFingertipPose(std::vector<std::vector<double>> &fingertipPoses);
 
   /**
    * Get the glove sensory data

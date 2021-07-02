@@ -183,10 +183,10 @@ bool SenseGloveHelper::getHandPose(Eigen::MatrixXd &measuredValue) {
       m_handPose(count, 2) = handPose.jointPositions[i][j].z;
 
       // wrt to the origin frame
-      m_handPose(count, 3) = handPose.jointRotations[i][j].x;
-      m_handPose(count, 4) = handPose.jointRotations[i][j].y;
-      m_handPose(count, 5) = handPose.jointRotations[i][j].z;
-      m_handPose(count, 6) = handPose.jointRotations[i][j].w;
+      m_handPose(count, 3) = handPose.jointRotations[i][j].w;
+      m_handPose(count, 4) = handPose.jointRotations[i][j].x;
+      m_handPose(count, 5) = handPose.jointRotations[i][j].y;
+      m_handPose(count, 6) = handPose.jointRotations[i][j].z;
       count++;
     }
   }
@@ -288,14 +288,41 @@ bool SenseGloveHelper::getGlovePose(Eigen::MatrixXd &measuredValue) {
       m_glovePose(count, 2) = glovePose.jointPositions[i][j].z;
 
       // wrt to the origin frame
-      m_glovePose(count, 3) = glovePose.jointRotations[i][j].x;
-      m_glovePose(count, 4) = glovePose.jointRotations[i][j].y;
-      m_glovePose(count, 5) = glovePose.jointRotations[i][j].z;
-      m_glovePose(count, 6) = glovePose.jointRotations[i][j].w;
+      m_glovePose(count, 3) = glovePose.jointRotations[i][j].w;
+      m_glovePose(count, 4) = glovePose.jointRotations[i][j].x;
+      m_glovePose(count, 5) = glovePose.jointRotations[i][j].y;
+      m_glovePose(count, 6) = glovePose.jointRotations[i][j].z;
       count++;
     }
   }
   measuredValue = m_glovePose;
+  return true;
+}
+
+bool SenseGloveHelper::getGloveFingertipPose(
+    std::vector<std::vector<double>> &fingertipPoses) {
+
+  fingertipPoses.clear();
+  fingertipPoses.reserve(m_humanFingerNameList.size());
+
+  Eigen::MatrixXd glovePoses;
+  getGlovePose(glovePoses); // 30X7
+  if (glovePoses.rows() != m_gloveNoLinks || glovePoses.cols() != 7) {
+    yWarning() << LogPrefix
+               << "glovePoses size is not correct:: rows:" << glovePoses.rows()
+               << " , cols:" << glovePoses.cols();
+    return true; // to avoid stoping
+  }
+
+  for (size_t i = 0; i < m_humanFingerNameList.size(); i++) {
+    std::vector<double> pose(7);
+    for (size_t j = 0; j < pose.size(); j++)
+      pose[j] = glovePoses(i * 6 + 5,
+                           j); // the last value of each finger for the glove
+                               // data is associated with the fingertip
+    fingertipPoses.push_back(pose);
+  }
+
   return true;
 }
 

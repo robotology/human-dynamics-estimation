@@ -169,8 +169,11 @@ bool HapticGlove::SenseGloveImpl::run() {
   pGlove->getGloveIMUData(gloveData.humanHandLinkOrientation);
   pGlove->getHandJointsAngles(gloveData.humanJointValues);
   Eigen::MatrixXd glovePose, handPose;
+  std::vector<std::vector<double>> fingertipPoses;
+
   pGlove->getGlovePose(glovePose);
   pGlove->getHandPose(handPose);
+  pGlove->getGloveFingertipPose(fingertipPoses);
 
   // actuators
   for (size_t i = 0; i < nFingers; i++) {
