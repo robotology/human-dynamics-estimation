@@ -298,6 +298,18 @@ int main(int argc, char *argv[]) {
     frames[i]->transform = transformation;
   }
 
+  // print frames info
+  yInfo() << "Frames information:";
+  for (auto &frame : frames) {
+    yInfo() << "name: " << frame->name;
+    if (frame->parent)
+      yInfo() << "parent: " << frame->parent->name;
+
+    yInfo() << "initial transformation from the parent: \n"
+            << frame->transform.toString();
+  }
+  yInfo() << "***********";
+
   // =========================
   // Visualization loop
   // =========================
@@ -307,23 +319,28 @@ int main(int argc, char *argv[]) {
   iDynTree::Vector4 quat;
 
   while (visualizer.run() && !isClosing) {
+
     for (auto &frame : frames) {
       if (frame->parent) { // if not it is inertial frame
+
         // link
         auto sensor = linkSensorsMap[frame->name];
         if (sensor) {
           wearable::Quaternion orientation;
           wearable::Vector3 position;
+          if (sensor->getSensorStatus() != wearable::WearStatus::Ok) {
+            yWarning() << "senor status is not OK, sensor name:"
+                       << sensor->getSensorName();
+            break;
+          }
           sensor->getLinkPose(position, orientation);
           iDynTree::Position framePosition(position[0], position[1],
                                            position[2]);
-
           quat[0] = orientation[0];
           quat[1] = orientation[1];
           quat[2] = orientation[2];
           quat[3] = orientation[3];
           frameRotation.fromQuaternion(quat); //(real: w, imaginary: x y z)
-
           frameTransform.setPosition(framePosition);
           frameTransform.setRotation(frameRotation);
           frame->transform = frame->parent->transform * frameTransform;
@@ -331,7 +348,6 @@ int main(int argc, char *argv[]) {
         visualizer.frames().updateFrame(frame->vizIndex, frame->transform);
       }
     }
-
     visualizer.draw();
   }
 
