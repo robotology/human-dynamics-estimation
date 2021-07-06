@@ -30,9 +30,7 @@
 namespace senseGlove {
 class SenseGloveHelper;
 const std::string LogPrefix = "senseGlove::SenseGloveHelper::";
-using Vector7 = std::array<double, 7>;
-; //![ (pos : x, y, z), *(rotation : w, x, y, z) ]
-
+const size_t PoseSize = 7;
 } // namespace senseGlove
 
 class senseGlove::SenseGloveHelper {
@@ -151,7 +149,7 @@ public:
    * @param measuredValue measured joint values
    * @return true / false in case of success / failure
    */
-  bool getHandPose(Eigen::MatrixXd &measuredValue);
+  bool getHandLinksPose(Eigen::MatrixXd &measuredValue);
 
   /**
    * Get the human hand joint angles
@@ -172,7 +170,7 @@ public:
    * @param measuredValue Eigen matrix of glove poses
    * @return true / false in case of success / failure
    */
-  bool getGlovePose(Eigen::MatrixXd &measuredValue);
+  bool getGloveLinksPose(Eigen::MatrixXd &measuredValue);
 
   /**
    * Get the fingertip poses based on glove sensory data
@@ -180,7 +178,8 @@ public:
    * (rotation: w, x, y, z )]
    * @return true / false in case of success / failure
    */
-  bool getGloveFingertipPose(std::vector<std::vector<double>> &fingertipPoses);
+  bool
+  getGloveFingertipLinksPose(std::vector<std::vector<double>> &fingertipPoses);
 
   /**
    * Get the glove sensory data
@@ -191,10 +190,11 @@ public:
 
   /**
    * Get the glove IMU data
-   * @param gloveImuData glove IMU data with the order x y z w
+   * @param palmLinkPose human palm pose based on glove IMU data with the order
+   * pos(x y z), quat(w x y z)
    * @return true / false in case of success / failure
    */
-  bool getGloveIMUData(std::vector<double> &gloveImuData);
+  bool getPalmLinkPose(std::vector<double> &palmLinkPose);
 
   /**
    * Trun off the vibro-tactile feedback

@@ -162,7 +162,7 @@ bool SenseGloveHelper::setPalmFeedbackThumper(const int desiredValue) {
     return m_glove.SendHaptics(SGCore::Haptics::Button_Double_100);
 }
 
-bool SenseGloveHelper::getHandPose(Eigen::MatrixXd &measuredValue) {
+bool SenseGloveHelper::getHandLinksPose(Eigen::MatrixXd &measuredValue) {
   // to check [?]
   SGCore::HandProfile profile = SGCore::HandProfile::Default(m_glove.IsRight());
   SGCore::HandPose handPose;
@@ -229,8 +229,8 @@ bool SenseGloveHelper::getHandJointsAngles(
   //  yInfo() << "m_humanJointNameList.size(): " << m_humanJointNameList.size();
   jointAngleList.resize(m_humanJointNameList.size(), 0.0); // 20
                                                            //  }
-  std::cout << "m_handOrientationEulerAngles\n"
-            << m_handOrientationEulerAngles << std::endl;
+  //  std::cout << "m_handOrientationEulerAngles\n"
+  //            << m_handOrientationEulerAngles << std::endl;
 
   // thumb (0:3)
   jointAngleList[0] = m_handOrientationEulerAngles(0, 2);
@@ -270,7 +270,7 @@ bool SenseGloveHelper::getHandJointsAngles(Eigen::MatrixXd measuredValue) {
   return true;
 }
 
-bool SenseGloveHelper::getGlovePose(Eigen::MatrixXd &measuredValue) {
+bool SenseGloveHelper::getGloveLinksPose(Eigen::MatrixXd &measuredValue) {
   SGCore::SG::SG_GlovePose glovePose;
   if (!m_glove.GetGlovePose(glovePose)) {
     yWarning() << LogPrefix << "m_glove.GetGlovePose return error.";
@@ -283,9 +283,12 @@ bool SenseGloveHelper::getGlovePose(Eigen::MatrixXd &measuredValue) {
   for (int i = 0; i < glovePose.jointPositions.size(); i++) {
     // glove's finger no of links : 6
     for (int j = 0; j < glovePose.jointPositions[i].size(); j++) {
-      m_glovePose(count, 0) = glovePose.jointPositions[i][j].x;
-      m_glovePose(count, 1) = glovePose.jointPositions[i][j].y;
-      m_glovePose(count, 2) = glovePose.jointPositions[i][j].z;
+      m_glovePose(count, 0) =
+          glovePose.jointPositions[i][j].x / 1000.0; // mm to meter
+      m_glovePose(count, 1) =
+          glovePose.jointPositions[i][j].y / 1000.0; // mm to meter
+      m_glovePose(count, 2) =
+          glovePose.jointPositions[i][j].z / 1000.0; // mm to meter
 
       // wrt to the origin frame
       m_glovePose(count, 3) = glovePose.jointRotations[i][j].w;
@@ -299,15 +302,23 @@ bool SenseGloveHelper::getGlovePose(Eigen::MatrixXd &measuredValue) {
   return true;
 }
 
-bool SenseGloveHelper::getGloveFingertipPose(
+bool SenseGloveHelper::getGloveFingertipLinksPose(
     std::vector<std::vector<double>> &fingertipPoses) {
 
-  fingertipPoses.clear();
-  fingertipPoses.reserve(m_humanFingerNameList.size());
+  if (fingertipPoses.size() != m_humanFingerNameList.size()) {
+    fingertipPoses.resize(m_humanFingerNameList.size(),
+                          std::vector<double>(PoseSize));
+  }
+  // avoid iterating on all the elements
+  if (fingertipPoses[0].size() != PoseSize) {
+
+    fingertipPoses.resize(m_humanFingerNameList.size(),
+                          std::vector<double>(PoseSize));
+  }
 
   Eigen::MatrixXd glovePoses;
-  getGlovePose(glovePoses); // 30X7
-  if (glovePoses.rows() != m_gloveNoLinks || glovePoses.cols() != 7) {
+  getGloveLinksPose(glovePoses); // 30X7
+  if (glovePoses.rows() != m_gloveNoLinks || glovePoses.cols() != PoseSize) {
     yWarning() << LogPrefix
                << "glovePoses size is not correct:: rows:" << glovePoses.rows()
                << " , cols:" << glovePoses.cols();
@@ -315,12 +326,11 @@ bool SenseGloveHelper::getGloveFingertipPose(
   }
 
   for (size_t i = 0; i < m_humanFingerNameList.size(); i++) {
-    std::vector<double> pose(7);
-    for (size_t j = 0; j < pose.size(); j++)
-      pose[j] = glovePoses(i * 6 + 5,
-                           j); // the last value of each finger for the glove
-                               // data is associated with the fingertip
-    fingertipPoses.push_back(pose);
+    for (size_t j = 0; j < PoseSize; j++)
+      fingertipPoses[i][j] =
+          glovePoses(i * 6 + 5,
+                     j); // the last value of each finger for the glove
+                         // data is associated with the fingertip
   }
 
   return true;
@@ -338,31 +348,35 @@ bool SenseGloveHelper::getGloveSensorData(std::vector<float> &measuredValues) {
   return true;
 }
 
-bool SenseGloveHelper::getGloveIMUData(std::vector<double> &gloveImuData) {
+bool SenseGloveHelper::getPalmLinkPose(std::vector<double> &palmLinkPose) {
   SGCore::Kinematics::Quat imu;
 
-  if (gloveImuData.size() != 4) {
-    gloveImuData.resize(4, 0.0);
+  if (palmLinkPose.size() != 7) {
+    palmLinkPose.resize(7, 0.0);
   }
 
   if (!m_glove.GetIMURotation(imu)) {
     yWarning() << LogPrefix << "Cannot get glove IMU value";
     return true; // to avoid crashing
   }
-
-  gloveImuData[0] = imu.w;
-  gloveImuData[1] = imu.x;
-  gloveImuData[2] = imu.y;
-  gloveImuData[3] = imu.z;
+  // position
+  palmLinkPose[0] = 0.0;
+  palmLinkPose[1] = 0.0;
+  palmLinkPose[2] = 0.0;
+  // orientation: IMU
+  palmLinkPose[3] = imu.w;
+  palmLinkPose[4] = imu.x;
+  palmLinkPose[5] = imu.y;
+  palmLinkPose[6] = imu.z;
 
   double norm = 0.0;
-  for (size_t i = 0; i < gloveImuData.size(); i++) {
-    norm += gloveImuData[i] * gloveImuData[i];
+  for (size_t i = 3; i < palmLinkPose.size(); i++) {
+    norm += palmLinkPose[i] * palmLinkPose[i];
   }
   norm = std::sqrt(norm);
 
-  for (size_t i = 0; i < gloveImuData.size(); i++) {
-    gloveImuData[i] = gloveImuData[i] / norm;
+  for (size_t i = 3; i < palmLinkPose.size(); i++) {
+    palmLinkPose[i] = palmLinkPose[i] / norm;
   }
 
   return true;

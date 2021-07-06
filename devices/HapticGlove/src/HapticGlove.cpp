@@ -26,6 +26,7 @@
 const std::string DeviceName = "HapticGlove";
 const std::string LogPrefix = DeviceName + wearable::Separator;
 double period = 0.01;
+const size_t PoseSize = 7;
 
 using namespace wearable;
 using namespace wearable::devices;
@@ -33,7 +34,10 @@ using namespace wearable::devices;
 struct SenseGloveIMUData {
   // sensors
   std::string humanHandLinkName;
-  std::vector<double> humanHandLinkOrientation; // [w, x, y , z]
+  std::vector<double> humanPalmLinkPose; // [pos(x, y, z), quat(w, x, y , z)]
+  std::vector<std::string> humanLinkNames;
+  std::vector<std::vector<double>> humanLinkPoses;
+  std::map<std::string, std::size_t> humanLinkSensorNameIdMap;
 
   std::vector<std::string> humanJointNames;
   std::vector<double> humanJointValues;
@@ -64,7 +68,7 @@ public:
   const size_t nFingers = 5;
 
   // Number of sensors
-  const int nLinkSensors = 1; // 1 palm imu
+  const int nLinkSensors = 6; // 1 palm (hand) imu + 5 fingertips
 
   // Number of actuators
   const int nActuators = 10; // humanFingerNames.size()*2
@@ -76,6 +80,8 @@ public:
   std::string linkSensorPrefix;
   class SenseGloveVirtualLinkKinSensor;
   SensorPtr<SenseGloveVirtualLinkKinSensor> sensegloveLinkSensor;
+  std::vector<SensorPtr<SenseGloveVirtualLinkKinSensor>>
+      sensegloveLinkSensorVector;
 
   // joint sensor
   std::string jointSensorPrefix;
@@ -126,8 +132,8 @@ bool HapticGlove::SenseGloveImpl::configure(yarp::os::Searchable &config) {
     return false;
   }
   // Initialize snese glove imu data buffer
-  gloveData.humanHandLinkOrientation.resize(4, 0.0);
-  if (!pGlove->getGloveIMUData(gloveData.humanHandLinkOrientation)) {
+  gloveData.humanPalmLinkPose.resize(PoseSize, 0.0);
+  if (!pGlove->getPalmLinkPose(gloveData.humanPalmLinkPose)) {
     yError() << LogPrefix << "Unable to get the human palm IMU data.";
     return false;
   }
@@ -151,6 +157,8 @@ bool HapticGlove::SenseGloveImpl::configure(yarp::os::Searchable &config) {
     return false;
   }
 
+  gloveData.humanLinkPoses.resize(nLinkSensors, std::vector<double>(PoseSize));
+
   gloveData.fingersForceFeedback.resize(nFingers, 0.0); // 5 actuators
 
   gloveData.fingersVibroTactileFeedback.resize(nFingers, 0.0); // 5 actuators
@@ -166,14 +174,24 @@ bool HapticGlove::SenseGloveImpl::run() {
   std::lock_guard<std::mutex> lock(mutex);
 
   // sensors
-  pGlove->getGloveIMUData(gloveData.humanHandLinkOrientation);
+  std::vector<double> palmPose(PoseSize);
+  pGlove->getPalmLinkPose(gloveData.humanPalmLinkPose);
   pGlove->getHandJointsAngles(gloveData.humanJointValues);
   Eigen::MatrixXd glovePose, handPose;
-  std::vector<std::vector<double>> fingertipPoses;
 
-  pGlove->getGlovePose(glovePose);
-  pGlove->getHandPose(handPose);
-  pGlove->getGloveFingertipPose(fingertipPoses);
+  pGlove->getGloveLinksPose(glovePose);
+  pGlove->getHandLinksPose(handPose);
+
+  std::vector<std::vector<double>> fingertipPoses;
+  pGlove->getGloveFingertipLinksPose(fingertipPoses);
+
+  // link poses
+  gloveData.humanLinkPoses[0] = gloveData.humanPalmLinkPose;
+  for (size_t i = 0; i < nFingers; i++) {
+    gloveData.humanLinkPoses[i + 1] = fingertipPoses[i];
+  }
+  for (size_t i = 0; i < gloveData.humanLinkPoses.size(); i++)
+    yInfo() << gloveData.humanLinkPoses[i];
 
   // actuators
   for (size_t i = 0; i < nFingers; i++) {
@@ -244,6 +262,20 @@ bool HapticGlove::open(yarp::os::Searchable &config) {
           std::make_shared<SenseGloveImpl::SenseGloveVirtualLinkKinSensor>(
               m_pImpl.get(), m_pImpl->linkSensorPrefix +
                                  m_pImpl->gloveData.humanHandLinkName)};
+  m_pImpl->sensegloveLinkSensorVector.push_back(
+      SensorPtr<SenseGloveImpl::SenseGloveVirtualLinkKinSensor>{
+          std::make_shared<SenseGloveImpl::SenseGloveVirtualLinkKinSensor>(
+              m_pImpl.get(), m_pImpl->linkSensorPrefix +
+                                 m_pImpl->gloveData.humanHandLinkName)});
+
+  for (size_t i = 0; i < m_pImpl->gloveData.humanFingerNames.size(); i++) {
+    m_pImpl->sensegloveLinkSensorVector.push_back(
+        SensorPtr<SenseGloveImpl::SenseGloveVirtualLinkKinSensor>{
+            std::make_shared<SenseGloveImpl::SenseGloveVirtualLinkKinSensor>(
+                m_pImpl.get(), m_pImpl->linkSensorPrefix +
+                                   m_pImpl->gloveData.humanFingerNames[i] +
+                                   "::fingertip")});
+  }
 
   m_pImpl->jointSensorPrefix =
       getWearableName() + sensor::IVirtualJointKinSensor::getPrefix();
@@ -275,6 +307,15 @@ bool HapticGlove::open(yarp::os::Searchable &config) {
                                    m_pImpl->gloveData.humanFingerNames[i] +
                                    "::VibroTactileFeedback")});
   }
+
+  m_pImpl->gloveData.humanLinkSensorNameIdMap.emplace(std::make_pair(
+      m_pImpl->linkSensorPrefix + m_pImpl->gloveData.humanHandLinkName, 0));
+
+  for (size_t i = 0; i < m_pImpl->gloveData.humanFingerNames.size(); i++)
+    m_pImpl->gloveData.humanLinkSensorNameIdMap.emplace(std::make_pair(
+        m_pImpl->linkSensorPrefix + m_pImpl->gloveData.humanFingerNames[i] +
+            "::fingertip",
+        i + 1)); // +1 for the human hand link
 
   for (size_t i = 0; i < m_pImpl->gloveData.humanJointNames.size(); i++)
     m_pImpl->gloveData.humanJointSensorNameIdMap.emplace(std::make_pair(
@@ -314,7 +355,8 @@ public:
       HapticGlove::SenseGloveImpl *gloveImplPtr,
       const sensor::SensorName &name = {},
       const sensor::SensorStatus &status = sensor::SensorStatus::Ok)
-      : IVirtualLinkKinSensor(name, status), m_gloveImpl(gloveImplPtr) {}
+      : IVirtualLinkKinSensor(name, status), m_gloveImpl(gloveImplPtr),
+        m_sensorName(name) {}
 
   ~SenseGloveVirtualLinkKinSensor() override = default;
 
@@ -338,13 +380,26 @@ public:
     assert(m_gloveImpl != nullptr);
 
     std::lock_guard<std::mutex> lock(m_gloveImpl->mutex);
-    orientation = {m_gloveImpl->gloveData.humanHandLinkOrientation[0],
-                   m_gloveImpl->gloveData.humanHandLinkOrientation[1],
-                   m_gloveImpl->gloveData.humanHandLinkOrientation[2],
-                   m_gloveImpl->gloveData.humanHandLinkOrientation[3]};
+
+    if (!m_gloveImpl->isAvailable(
+            m_sensorName, m_gloveImpl->gloveData.humanLinkSensorNameIdMap)) {
+      yError() << LogPrefix << "The sensor name (" << m_sensorName
+               << ") is not found in the list of link sensors.";
+
+      return false;
+    }
+
+    size_t id = m_gloveImpl->gloveData.humanLinkSensorNameIdMap[m_sensorName];
 
     // we do not handle position in the current implementation
-    position.fill(0.0);
+    position = {m_gloveImpl->gloveData.humanLinkPoses[id][0],
+                m_gloveImpl->gloveData.humanLinkPoses[id][1],
+                m_gloveImpl->gloveData.humanLinkPoses[id][2]};
+
+    orientation = {m_gloveImpl->gloveData.humanLinkPoses[id][3],
+                   m_gloveImpl->gloveData.humanLinkPoses[id][4],
+                   m_gloveImpl->gloveData.humanLinkPoses[id][5],
+                   m_gloveImpl->gloveData.humanLinkPoses[id][6]};
 
     return true;
   }
@@ -369,6 +424,7 @@ public:
 
 private:
   HapticGlove::SenseGloveImpl *m_gloveImpl{nullptr};
+  std::string m_sensorName;
 };
 
 // ===========================================
@@ -391,6 +447,14 @@ public:
     assert(m_gloveImpl != nullptr);
 
     std::lock_guard<std::mutex> lock(m_gloveImpl->mutex);
+
+    if (!m_gloveImpl->isAvailable(
+            m_sensorName, m_gloveImpl->gloveData.humanJointSensorNameIdMap)) {
+      yError() << LogPrefix << "The sensor name (" << m_sensorName
+               << ") is not found in the list of joint sensors.";
+
+      return false;
+    }
 
     position =
         m_gloveImpl->gloveData.humanJointValues
@@ -542,9 +606,10 @@ HapticGlove::getSensors(const wearable::sensor::SensorType aType) const {
   wearable::VectorOfSensorPtr<const wearable::sensor::ISensor> outVec;
   switch (aType) {
   case sensor::SensorType::VirtualLinkKinSensor: {
-    outVec.reserve(m_pImpl->nLinkSensors);
-    outVec.push_back(
-        static_cast<SensorPtr<sensor::ISensor>>(m_pImpl->sensegloveLinkSensor));
+    outVec.reserve(m_pImpl->sensegloveLinkSensorVector.size());
+    for (const auto &sensegloveLinkSensor : m_pImpl->sensegloveLinkSensorVector)
+      outVec.push_back(
+          static_cast<SensorPtr<sensor::ISensor>>(sensegloveLinkSensor));
     break;
   }
   case sensor::SensorType::VirtualJointKinSensor: {
@@ -601,8 +666,8 @@ wearable::SensorPtr<const wearable::sensor::IVirtualLinkKinSensor>
 HapticGlove::getVirtualLinkKinSensor(
     const wearable::sensor::SensorName name) const {
 
-  if (name ==
-      m_pImpl->linkSensorPrefix + m_pImpl->gloveData.humanHandLinkName) {
+  if (!m_pImpl->isAvailable(name,
+                            m_pImpl->gloveData.humanLinkSensorNameIdMap)) {
     yError() << LogPrefix << "Invalid sensor name " << name;
     return nullptr;
   }
@@ -610,7 +675,8 @@ HapticGlove::getVirtualLinkKinSensor(
   // Return a shared point to the required sensor
   return dynamic_cast<
       wearable::SensorPtr<const wearable::sensor::IVirtualLinkKinSensor> &>(
-      *m_pImpl->sensegloveLinkSensor);
+      *m_pImpl->sensegloveLinkSensorVector
+           [m_pImpl->gloveData.humanLinkSensorNameIdMap[name]]);
 }
 
 wearable::SensorPtr<const wearable::sensor::IVirtualJointKinSensor>
