@@ -145,15 +145,17 @@ int main(int argc, char *argv[]) {
   }
 
   // =========================
-  // create the vector of link sensors
+  // create the map of link names and wearble sensors
   // =========================
   std::vector<std::string> linkNameList;
   yarp::os::Bottle *linkListYarp;
-  if (!(config.check("linkNames") && config.find("linkNames").isList())) {
-    yError() << logPrefix << "Unable to find linkNames in the config file.";
+  if (!(config.check("link_names_wearables") &&
+        config.find("link_names_wearables").isList())) {
+    yError() << logPrefix
+             << "Unable to find link_names_wearables in the config file.";
     return EXIT_FAILURE;
   }
-  linkListYarp = config.find("linkNames").asList();
+  linkListYarp = config.find("link_names_wearables").asList();
 
   for (size_t i = 0; i < linkListYarp->size(); i++) {
     linkNameList.push_back(linkListYarp->get(i).asString());
@@ -174,80 +176,139 @@ int main(int argc, char *argv[]) {
     yInfo() << logPrefix << "sensor name to add the sensors vector: "
             << sensor->getSensorName();
   }
-
   yInfo() << logPrefix << "linkSensorsMap.size(): " << linkSensorsMap.size();
 
   // =========================
-  // Frames
+  // Get the fixed frames
+  // =========================
+  std::vector<std::string> newFramesList;
+  yarp::os::Bottle *newFramesListYarp;
+  if (!(config.check("new_fixed_frames") &&
+        config.find("new_fixed_frames").isList())) {
+    yError() << logPrefix
+             << "Unable to find new_fixed_frames in the config file.";
+    return EXIT_FAILURE;
+  }
+  newFramesListYarp = config.find("new_fixed_frames").asList();
+
+  for (size_t i = 0; i < linkListYarp->size(); i++) {
+    newFramesList.push_back(newFramesListYarp->get(i).asString());
+  }
+
+  // =========================
+  // Get the frames map
+  // =========================
+  std::vector<std::string> FramesMapList;
+  yarp::os::Bottle *FramesMapYarp;
+  if (!(config.check("frames_map") && config.find("frames_map").isList())) {
+    yError() << logPrefix << "Unable to find frames_map in the config file.";
+    return EXIT_FAILURE;
+  }
+  FramesMapYarp = config.find("frames_map").asList();
+
+  // =========================
+  // Make Frame Viewers
   // =========================
   std::vector<std::shared_ptr<FrameViewier>> frames;
 
-  // inertial and root frame
-  iDynTree::Transform inertialFrame;
-  inertialFrame.setPosition(iDynTree::Position::Zero());
-  inertialFrame.setRotation(
-      iDynTree::Rotation::Identity()); // x is front (north), z is up.
-
-  std::shared_ptr<FrameViewier> rootFrame = std::make_shared<FrameViewier>();
-  rootFrame->name = "inertialFrame";
-  rootFrame->transform = inertialFrame;
-  rootFrame->vizIndex =
-      visualizer.frames().addFrame(iDynTree::Transform::Identity());
-  //      visualizer.frames()
-  //          .getFrameLabel(rootFrame->vizIndex)
-  //          ->setText(rootFrame->name); // to be merged
-  frames.push_back(rootFrame);
-
-  // left hand
-  iDynTree::Transform leftHandRootFrame;
-  iDynTree::Rotation rootLeftHandRotation;
-  rootLeftHandRotation.zero(); // x is toward left, z is upward
-  rootLeftHandRotation(0, 1) = 1.0;
-  rootLeftHandRotation(1, 0) = -1.0;
-  rootLeftHandRotation(2, 2) = 1.0;
-  iDynTree::Position rootLeftHandPosition(0.0, 0.2, 0.0);
-
-  leftHandRootFrame.setPosition(rootLeftHandPosition);
-  leftHandRootFrame.setRotation(rootLeftHandRotation);
-
-  std::shared_ptr<FrameViewier> leftHandRootFrameViewer =
-      std::make_shared<FrameViewier>();
-  leftHandRootFrameViewer->name = "leftHandRootFrame";
-  leftHandRootFrameViewer->transform = leftHandRootFrame;
-  leftHandRootFrameViewer->vizIndex =
-      visualizer.frames().addFrame(iDynTree::Transform::Identity());
-  //      visualizer.frames()
-  //          .getFrameLabel(rootFrame->vizIndex)
-  //          ->setText(rootFrame->name); // to be merged
-  frames.push_back(leftHandRootFrameViewer);
-
-  // other frames
-  for (auto const &[name, sensor] : linkSensorsMap) {
+  // create all the frame viwers
+  for (size_t i = 0; i < FramesMapYarp->size(); i++) {
     std::shared_ptr<FrameViewier> frame = std::make_shared<FrameViewier>();
-    frame->name = sensor->getSensorName();
-    if (name.find("l_") != std::string::npos) {
-      yInfo() << logPrefix << name << "is related to left hand.";
-      frame->parent = leftHandRootFrameViewer;
-      frame->transform = leftHandRootFrame;
+    yarp::os::Bottle *frameMapYarp = FramesMapYarp->get(i).asList();
+    if (frameMapYarp->size() != 5) {
+      yError() << logPrefix
+               << "the map does not have expected size. frameMap: ("
+               << frameMapYarp->toString() << ") , expected size: " << 5
+               << " , actual size: " << frameMapYarp->size();
+      return EXIT_FAILURE;
     }
-    frame->vizIndex =
-        visualizer.frames().addFrame(iDynTree::Transform::Identity());
+    frame->name = frameMapYarp->get(0).asString();
+    frame->vizIndex = visualizer.frames().addFrame(
+        iDynTree::Transform::Identity(), frameMapYarp->get(2).asDouble());
     //      visualizer.frames()
-    //          .getFrameLabel(rootFrame->vizIndex)
-    //          ->setText(rootFrame->name); // to be merged
+    //          .getFrameLabel(frame->vizIndex)
+    //          ->setText(frame->name); // to be merged
     frames.push_back(frame);
   }
+
+  // check for the parent frame
+  for (size_t i = 0; i < FramesMapYarp->size(); i++) {
+    yarp::os::Bottle *frameMapYarp = FramesMapYarp->get(i).asList();
+    if (frameMapYarp->size() != 5) {
+      yError() << logPrefix
+               << "the map does not have expected size. frameMap: ("
+               << frameMapYarp->toString() << ") , expected size: " << 5
+               << " , actual size: " << frameMapYarp->size();
+      return EXIT_FAILURE;
+    }
+
+    std::string parentName = frameMapYarp->get(1).asString();
+    std::string Name = frameMapYarp->get(0).asString();
+    if (frames[i]->name != Name) {
+      yError() << logPrefix
+               << "the frame viewer name is not equal to the one from the "
+                  "frame map list. Frame Viewer Name: "
+               << frames[i]->name << " , yarp map name: " << Name;
+      return EXIT_FAILURE;
+    }
+
+    for (auto &frame : frames) {
+      if (frame->name == parentName) {
+        frames[i]->parent = frame;
+        break;
+      }
+    }
+
+    // check for the fixed transformations
+
+    iDynTree::Transform transformation;
+    transformation.setPosition(iDynTree::Position::Zero());
+    transformation.setRotation(
+        iDynTree::Rotation::Identity()); // x is front (north), z is up.
+
+    yarp::os::Bottle *positionList = frameMapYarp->get(3).asList();
+    yarp::os::Bottle *quatList = frameMapYarp->get(4).asList();
+    if (positionList->size() == 3) {
+      iDynTree::Position position(positionList->get(0).asDouble(),
+                                  positionList->get(1).asDouble(),
+                                  positionList->get(2).asDouble());
+      transformation.setPosition(position);
+    }
+    if (quatList->size() == 4) {
+      iDynTree::Vector4 quat;
+      quat[0] = quatList->get(0).asDouble();
+      quat[1] = quatList->get(1).asDouble();
+      quat[2] = quatList->get(2).asDouble();
+      quat[3] = quatList->get(3).asDouble();
+
+      // normalize the quaternion
+      double norm = 0;
+      for (size_t j = 0; j < 4; j++)
+        norm += quat[j] * quat[j];
+
+      norm = std::sqrt(norm);
+
+      for (size_t j = 0; j < 4; j++)
+        quat[j] = quat[j] / norm;
+
+      iDynTree::Rotation rotation;
+      rotation.fromQuaternion(quat); //(real: w, imaginary: x y z)
+      transformation.setRotation(rotation);
+    }
+    frames[i]->transform = transformation;
+  }
+
+  // =========================
+  // Visualization loop
+  // =========================
 
   iDynTree::Transform frameTransform;
   iDynTree::Rotation frameRotation;
   iDynTree::Vector4 quat;
 
-  // =========================
-  // Visualization loop
-  // =========================
   while (visualizer.run() && !isClosing) {
     for (auto &frame : frames) {
-      if (frame->parent) {
+      if (frame->parent) { // if not it is inertial frame
         // link
         auto sensor = linkSensorsMap[frame->name];
         if (sensor) {
@@ -266,8 +327,8 @@ int main(int argc, char *argv[]) {
           frameTransform.setPosition(framePosition);
           frameTransform.setRotation(frameRotation);
           frame->transform = frame->parent->transform * frameTransform;
-          visualizer.frames().updateFrame(frame->vizIndex, frame->transform);
         }
+        visualizer.frames().updateFrame(frame->vizIndex, frame->transform);
       }
     }
 
