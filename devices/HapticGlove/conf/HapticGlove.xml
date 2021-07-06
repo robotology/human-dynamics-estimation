@@ -27,6 +27,7 @@
         </action>
         <action phase="shutdown" level="4" type="detach"/>
     </device>
+
     <device type="iwearactuators_wrapper" name="LeftHapticGloveWearableDeviceActuatorsWrapper">
         <param name="period">0.01</param>
         <param name="actuatorCommandInputPortName">/WearableData/HapticGlove/LeftHand/Actuators/input:i</param>
@@ -38,92 +39,40 @@
         <action phase="shutdown" level="4" type="detach"/>
     </device>
 
-
-
-
-<!--Right HapticGlove Device-->
-<!--device type="hapticGlove" name="RightHapticGloveWearableDevice">
-    <param name="period">0.01</param>
-    <param name="rightHand">true</param>
-    <param name="human_joint_list">( "r_thumb_oppose", "r_thumb_proximal", "r_thumb_middle", "r_thumb_distal",
+    <!--Right HapticGlove Device-->
+    <device type="hapticGlove" name="RightHapticGloveWearableDevice">
+        <param name="period">0.01</param>
+        <param name="rightHand">true</param>
+        <param name="human_joint_list">( "r_thumb_oppose", "r_thumb_proximal", "r_thumb_middle", "r_thumb_distal",
                                      "r_index_abduction", "r_index_proximal", "r_index_middle", "r_index_distal",
                                      "r_middle_abduction", "r_middle_proximal", "r_middle_middle", "r_middle_distal",
                                      "r_ring_abduction", "r_ring_proximal",   "r_ring_middle",   "r_ring_distal",
                                      "r_pinky_abduction", "r_pinky_proximal",   "r_pinky_middle",   "r_pinky_distal" ) </param>
-    <param name="human_finger_list">( "r_thumb_finger", "r_index_finger", "r_middle_finger", "r_ring_finger", "r_little_finger" ) </param>
-    <param name="hand_link">r_hand</param>
-</device>
+        <param name="human_finger_list">( "r_thumb_finger", "r_index_finger", "r_middle_finger", "r_ring_finger", "r_little_finger" ) </param>
+        <param name="hand_link">r_hand</param>
+    </device>
 
-<device type="iwear_wrapper" name="RightHapticGloveWearableDeviceWrapper">
-    <param name="period">0.01</param>
-    <param name="dataPortName">/WearableData/HapticGlove/RightHand/data:o</param>
-    <param name="rpcPortName">/WearableData/HapticGlove/RightHand/metadataRpc:o</param>
-    <action phase="startup" level="5" type="attach">
-        <paramlist name="networks">
-            <elem name="HapticGloveWearableDeviceWrapperLabel"> RightHapticGloveWearableDevice </elem>
-        </paramlist>
-    </action>
-    <action phase="shutdown" level="4" type="detach"/>
-</device>
-<device type="iwearactuators_wrapper" name="RightHapticGloveWearableDeviceActuatorsWrapper">
-    <param name="period">0.01</param>
-    <param name="actuatorCommandInputPortName">/WearableData/HapticGlove/RightHand/Actuators/input:i</param>
-    <action phase="startup" level="5" type="attach">
-        <paramlist name="networks">
-            <elem name="HapticGloveWearableDeviceActuatorWrapperLabel"> RightHapticGloveWearableDevice </elem>
-        </paramlist>
-    </action>
-    <action phase="shutdown" level="4" type="detach"/>
-</device-->
-
-
-
-    <!--device type="iwearactuators_wrapper" name="HapticGloveWearableDeviceActuatorsWrapper">
+    <device type="iwear_wrapper" name="RightHapticGloveWearableDeviceWrapper">
         <param name="period">0.01</param>
-        <param name="actuatorCommandInputPortName">/HapticGlove/WearableActuatorsCommand/input:i</param>
+        <param name="dataPortName">/WearableData/HapticGlove/RightHand/data:o</param>
+        <param name="rpcPortName">/WearableData/HapticGlove/RightHand/metadataRpc:o</param>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
-                <elem name="PaexoWearableDeviceActuatorsWrapperLabel"> HapticGloveWearableDevice </elem>
+                <elem name="HapticGloveWearableDeviceWrapperLabel"> RightHapticGloveWearableDevice </elem>
             </paramlist>
         </action>
         <action phase="shutdown" level="4" type="detach"/>
-    </device-->
+    </device>
 
-    <!-- <device type="iwear_logger" name="ProducerLoggerDevice">
+    <device type="iwearactuators_wrapper" name="RightHapticGloveWearableDeviceActuatorsWrapper">
         <param name="period">0.01</param>
-
-        <param name="logAllQuantities">true</param>
-        <param name="logAccelerometers">false</param>
-        <param name="logEMGSensors">false</param>
-        <param name="logForce3DSensors">false</param>
-        <param name="logForceTorque6DSensors">true</param>
-        <param name="logFreeBodyAccelerationSensors">true</param>
-        <param name="logGyroscopes">true</param>
-        <param name="logMagnetometers">false</param>
-        <param name="logOrientationSensors">true</param>
-        <param name="logPoseSensors">false</param>
-        <param name="logPositionSensors">false</param>
-        <param name="logTemperatureSensors">false</param>
-        <param name="logTorque3DSensors">false</param>
-        <param name="logVirtualLinkKinSensors">false</param>
-        <param name="logVirtualJointKinSensors">false</param>
-        <param name="logVirtualSphericalJointKinSensors">false</param>
-
-        <param name="saveBufferManagerConfiguration">true</param>
-        <param name="experimentName">test_iwear_logger</param>
-        <param name="path">/path/to/some/folder/</param>
-        <param name="n_samples">100000</param>
-        <param name="save_periodically">true</param>
-        <param name="save_period">120.0</param>
-        <param name="data_threshold">300</param>
-        <param name="auto_save">true</param>
-
+        <param name="actuatorCommandInputPortName">/WearableData/HapticGlove/RightHand/Actuators/input:i</param>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
-                <elem name="ProducerDeviceWrapperLabel"> PaexoWearableDevice </elem>
+                <elem name="HapticGloveWearableDeviceActuatorWrapperLabel"> RightHapticGloveWearableDevice </elem>
             </paramlist>
         </action>
-        <action phase="shutdown" level="5" type="detach"/>
-    </device> -->
+        <action phase="shutdown" level="4" type="detach"/>
+    </device>
 
 </robot>
