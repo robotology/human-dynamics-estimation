@@ -21,7 +21,7 @@ target_include_directories(IWearLogger PRIVATE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
 
 target_link_libraries(IWearLogger PUBLIC
-    IWear WearableData YARP::YARP_dev YARP::YARP_telemetry)
+    IWear WearableData YARP::YARP_dev YARP::YARP_init YARP::YARP_telemetry)
 
 yarp_install(
     TARGETS IWearLogger

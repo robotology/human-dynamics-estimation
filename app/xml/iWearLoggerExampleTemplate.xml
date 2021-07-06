@@ -9,6 +9,10 @@
     <device type="iwear_logger" name="ProducerLoggerDevice">
         <param name="period">0.01</param>
         
+        <!--Logger level parameter to control logging to matlab/yarp/both-->
+        <!--either a text parameter or a list of , separated text parameters-->
+        <param name="LoggerLevel">(matlab, yarp)</param>
+
         <param name="logAllQuantities">false</param>
         <param name="logAccelerometers">false</param>
         <param name="logEMGSensors">false</param>
