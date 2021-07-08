@@ -21,6 +21,7 @@
 #include <mutex>
 #include <stdio.h>
 #include <string>
+#include <thread>
 #include <vector>
 
 const std::string DeviceName = "HapticGlove";
@@ -107,6 +108,8 @@ public:
     }
     return true;
   }
+
+  bool close();
 };
 
 HapticGlove::SenseGloveImpl::SenseGloveImpl() {}
@@ -208,6 +211,28 @@ bool HapticGlove::SenseGloveImpl::run() {
   return true;
 }
 
+bool HapticGlove::SenseGloveImpl::close() {
+
+  if (!this->pGlove->turnOffBuzzMotors()) {
+    yError() << LogPrefix << "cannot turn off the glove buzz motors.";
+    return false;
+  }
+
+  if (!this->pGlove->turnOffForceFeedback()) {
+    yError() << LogPrefix << "cannot turn off the glove force feedback.";
+    return false;
+  }
+
+  if (!this->pGlove->turnOffPalmFeedbackThumper()) {
+    yError() << LogPrefix << "cannot turn off the glove palm thumper feedback.";
+    return false;
+  }
+
+  std::this_thread::sleep_for(
+      std::chrono::milliseconds(100)); // wait for 100ms.
+
+  return true;
+}
 HapticGlove::HapticGlove()
     : PeriodicThread(period), m_pImpl{std::make_unique<SenseGloveImpl>()} {}
 
@@ -526,7 +551,13 @@ void HapticGlove::run() {
 }
 
 bool HapticGlove::close() {
-  yInfo() << "HapticGlove::close()";
+  yInfo() << LogPrefix << "HapticGlove::close()";
+
+  if (!m_pImpl->close()) {
+    yError() << LogPrefix
+             << "Cannot close correctly the sense glove implementation.";
+    return false;
+  }
   return true;
 }
 
