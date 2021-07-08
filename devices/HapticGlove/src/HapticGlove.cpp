@@ -17,6 +17,7 @@
 #include <yarp/os/RpcServer.h>
 
 #include <assert.h>
+#include <cmath>
 #include <map>
 #include <mutex>
 #include <stdio.h>
@@ -35,7 +36,12 @@ using namespace wearable::devices;
 struct SenseGloveIMUData {
   // sensors
   std::string humanHandLinkName;
-  std::vector<double> humanPalmLinkPose; // [pos(x, y, z), quat(w, x, y , z)]
+  // [pos(x, y, z), quat(w, x, y , z)]
+  // palm/hand frame wrt to hand inertial frame
+  std::vector<double> humanPalmLinkPose;
+  // [pos(x, y, z), quat(w, x, y , z)]
+  // wrt to hand frame
+  std::vector<std::vector<double>> fingertipPoses;
   std::vector<std::string> humanLinkNames;
   std::vector<std::vector<double>> humanLinkPoses;
   std::map<std::string, std::size_t> humanLinkSensorNameIdMap;
@@ -47,8 +53,10 @@ struct SenseGloveIMUData {
   // actuators
   std::vector<double> fingersForceFeedback;
   std::vector<double> fingersVibroTactileFeedback;
+  senseGlove::ThumperCmd palmThumperFeedback;
   std::vector<double> fingersHapticFeedback; // [fingersForceFeedback,
-                                             // fingersVibroTactileFeedback]
+                                             // fingersVibroTactileFeedback,
+                                             // palmThumperFeedback]
 
   std::vector<std::string> humanFingerNames;
   std::map<std::string, std::size_t>
@@ -71,7 +79,7 @@ public:
   const int nLinkSensors = 6; // 1 palm (hand) imu + 5 fingertips
 
   // Number of actuators
-  const int nActuators = 10; // humanFingerNames.size()*2
+  const int nActuators = 11; // humanFingerNames.size()*2 + hand/palm thumper
 
   std::unique_ptr<senseGlove::SenseGloveHelper>
       pGlove; /**< Pointer to the glove object. */
@@ -137,6 +145,14 @@ bool HapticGlove::SenseGloveImpl::configure(yarp::os::Searchable &config) {
     return false;
   }
 
+  this->gloveData.fingertipPoses.resize(this->nFingers,
+                                        std::vector<double>(PoseSize));
+  if (!this->pGlove->getGloveFingertipLinksPose(
+          this->gloveData.fingertipPoses)) {
+    yError() << LogPrefix << "Unable to get the human fingertip poses.";
+    return false;
+  }
+
   // get joint names
   if (!this->pGlove->getHumanJointNameList(this->gloveData.humanJointNames)) {
     yError() << LogPrefix << "Unable to get the human joint names.";
@@ -166,6 +182,8 @@ bool HapticGlove::SenseGloveImpl::configure(yarp::os::Searchable &config) {
   this->gloveData.fingersVibroTactileFeedback.resize(this->nFingers,
                                                      0.0); // 5 actuators
 
+  this->gloveData.palmThumperFeedback = senseGlove::ThumperCmd::TurnOff;
+
   // [force feedback, vibrotactile feedback] = nActuators
   this->gloveData.fingersHapticFeedback.resize(this->nActuators, 0.0);
 
@@ -177,24 +195,17 @@ bool HapticGlove::SenseGloveImpl::run() {
   std::lock_guard<std::mutex> lock(this->mutex);
 
   // sensors
-  std::vector<double> palmPose(PoseSize);
   this->pGlove->getPalmLinkPose(this->gloveData.humanPalmLinkPose);
+
   this->pGlove->getHandJointsAngles(this->gloveData.humanJointValues);
-  Eigen::MatrixXd glovePose, handPose;
 
-  this->pGlove->getGloveLinksPose(glovePose);
-  this->pGlove->getHandLinksPose(handPose);
-
-  std::vector<std::vector<double>> fingertipPoses;
-  this->pGlove->getGloveFingertipLinksPose(fingertipPoses);
+  this->pGlove->getGloveFingertipLinksPose(this->gloveData.fingertipPoses);
 
   // link poses
   this->gloveData.humanLinkPoses[0] = this->gloveData.humanPalmLinkPose;
   for (size_t i = 0; i < this->nFingers; i++) {
-    this->gloveData.humanLinkPoses[i + 1] = fingertipPoses[i];
+    this->gloveData.humanLinkPoses[i + 1] = this->gloveData.fingertipPoses[i];
   }
-  for (size_t i = 0; i < this->gloveData.humanLinkPoses.size(); i++)
-    yInfo() << this->gloveData.humanLinkPoses[i];
 
   // actuators
   for (size_t i = 0; i < this->nFingers; i++) {
@@ -203,10 +214,13 @@ bool HapticGlove::SenseGloveImpl::run() {
     this->gloveData.fingersVibroTactileFeedback[i] =
         this->gloveData.fingersHapticFeedback[i + this->nFingers];
   }
+  this->gloveData.palmThumperFeedback = static_cast<senseGlove::ThumperCmd>(
+      round(this->gloveData.fingersHapticFeedback[2 * this->nFingers]));
 
   this->pGlove->setFingersForceReference(this->gloveData.fingersForceFeedback);
   this->pGlove->setBuzzMotorsReference(
       this->gloveData.fingersVibroTactileFeedback);
+  this->pGlove->setPalmFeedbackThumper(this->gloveData.palmThumperFeedback);
 
   return true;
 }
@@ -316,6 +330,12 @@ bool HapticGlove::open(yarp::os::Searchable &config) {
                                "::VibroTactileFeedback"));
   }
 
+  m_pImpl->sensegloveHapticActuatorVector.push_back(
+      std::make_shared<SenseGloveImpl::SenseGloveHapticActuator>(
+          m_pImpl.get(), m_pImpl->hapticActuatorPrefix +
+                             m_pImpl->gloveData.humanHandLinkName +
+                             "::palmThumper"));
+
   m_pImpl->gloveData.humanLinkSensorNameIdMap.emplace(std::make_pair(
       m_pImpl->linkSensorPrefix + m_pImpl->gloveData.humanHandLinkName, 0));
 
@@ -340,6 +360,11 @@ bool HapticGlove::open(yarp::os::Searchable &config) {
         m_pImpl->hapticActuatorPrefix + m_pImpl->gloveData.humanFingerNames[i] +
             "::VibroTactileFeedback",
         i + m_pImpl->nFingers));
+
+  m_pImpl->gloveData.humanHapticActuatorNameIdMap.emplace(
+      std::make_pair(m_pImpl->hapticActuatorPrefix +
+                         m_pImpl->gloveData.humanHandLinkName + "::palmThumper",
+                     2 * m_pImpl->nFingers));
 
   yInfo() << LogPrefix << "The device is opened successfully.";
 

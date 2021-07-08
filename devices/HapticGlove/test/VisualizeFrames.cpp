@@ -64,8 +64,8 @@ void handleSigInt() {
 #endif
 }
 
-struct FrameViewier {
-  std::shared_ptr<FrameViewier> parent{nullptr};
+struct FrameViewer {
+  std::shared_ptr<FrameViewer> parent{nullptr};
   std::string name;
   size_t vizIndex;
   iDynTree::Transform transform;
@@ -209,11 +209,11 @@ int main(int argc, char *argv[]) {
   // =========================
   // Make Frame Viewers
   // =========================
-  std::vector<std::shared_ptr<FrameViewier>> frames;
+  std::vector<std::shared_ptr<FrameViewer>> frames;
 
   // create all the frame viwers
   for (size_t i = 0; i < FramesMapYarp->size(); i++) {
-    std::shared_ptr<FrameViewier> frame = std::make_shared<FrameViewier>();
+    std::shared_ptr<FrameViewer> frame = std::make_shared<FrameViewer>();
     yarp::os::Bottle *frameMapYarp = FramesMapYarp->get(i).asList();
     if (frameMapYarp->size() != 5) {
       yError() << logPrefix

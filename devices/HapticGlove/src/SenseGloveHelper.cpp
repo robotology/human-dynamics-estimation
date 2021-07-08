@@ -152,18 +152,87 @@ bool SenseGloveHelper::setBuzzMotorsReference(
   return true;
 }
 
-bool SenseGloveHelper::setPalmFeedbackThumper(const int desiredValue) {
-  // to check: better develop and invetigate different options
-  if (desiredValue == 0)
-    return m_glove.SendHaptics(SGCore::Haptics::Impact_Thump_100);
-  else if (desiredValue == 1)
-    return m_glove.SendHaptics(SGCore::Haptics::Object_Grasp_100);
-  else
-    return m_glove.SendHaptics(SGCore::Haptics::Button_Double_100);
+bool SenseGloveHelper::setPalmFeedbackThumper(ThumperCmd desiredValue) {
+
+  bool result;
+  switch (desiredValue) {
+  case ThumperCmd::None:
+    result = m_glove.SendHaptics(SGCore::Haptics::SG_ThumperCmd::None);
+    break;
+
+  case ThumperCmd::TurnOff:
+    result = m_glove.SendHaptics(SGCore::Haptics::SG_ThumperCmd::TurnOff);
+    break;
+
+  case ThumperCmd::Cue_Game_Over:
+    result = m_glove.SendHaptics(SGCore::Haptics::SG_ThumperCmd::Cue_Game_Over);
+    break;
+
+  case ThumperCmd::Button_Double_100:
+    //    result =
+    //        m_glove.SendHaptics(SGCore::Haptics::SG_ThumperCmd::Button_Double_100);
+    yWarning() << LogPrefix
+               << "The glove may stop working due to overloal, so "
+                  "Button_Double_60 is passed instead of Button_Double_100";
+    result =
+        m_glove.SendHaptics(SGCore::Haptics::SG_ThumperCmd::Button_Double_60);
+    break;
+
+  case ThumperCmd::Button_Double_60:
+    result =
+        m_glove.SendHaptics(SGCore::Haptics::SG_ThumperCmd::Button_Double_60);
+    break;
+
+  case ThumperCmd::Impact_Thump_100:
+    //    result =
+    //        m_glove.SendHaptics(SGCore::Haptics::SG_ThumperCmd::Impact_Thump_100);
+    yWarning() << LogPrefix
+               << "The glove may stop working due to overloal, so "
+                  "Impact_Thump_30 is passed instead of Impact_Thump_100";
+    result =
+        m_glove.SendHaptics(SGCore::Haptics::SG_ThumperCmd::Impact_Thump_30);
+    break;
+
+  case ThumperCmd::Impact_Thump_30:
+    result =
+        m_glove.SendHaptics(SGCore::Haptics::SG_ThumperCmd::Impact_Thump_30);
+    break;
+
+  case ThumperCmd::Impact_Thump_10:
+    result =
+        m_glove.SendHaptics(SGCore::Haptics::SG_ThumperCmd::Impact_Thump_10);
+    break;
+
+  case ThumperCmd::Object_Grasp_100:
+    //    result =
+    //        m_glove.SendHaptics(SGCore::Haptics::SG_ThumperCmd::Object_Grasp_100);
+    yWarning() << LogPrefix
+               << "The glove may stop working due to overloal, so "
+                  "Object_Grasp_60 is passed instead of Object_Grasp_100";
+    result =
+        m_glove.SendHaptics(SGCore::Haptics::SG_ThumperCmd::Object_Grasp_60);
+    break;
+
+  case ThumperCmd::Object_Grasp_60:
+    result =
+        m_glove.SendHaptics(SGCore::Haptics::SG_ThumperCmd::Object_Grasp_60);
+    break;
+
+  case ThumperCmd::Object_Grasp_30:
+    result =
+        m_glove.SendHaptics(SGCore::Haptics::SG_ThumperCmd::Object_Grasp_30);
+    break;
+
+  default:
+    result = m_glove.SendHaptics(SGCore::Haptics::SG_ThumperCmd::TurnOff);
+    break;
+  }
+
+  return result;
 }
 
 bool SenseGloveHelper::getHandLinksPose(Eigen::MatrixXd &measuredValue) {
-  // to check [?]
+
   SGCore::HandProfile profile = SGCore::HandProfile::Default(m_glove.IsRight());
   SGCore::HandPose handPose;
   if (!m_glove.GetHandPose(profile, handPose)) {
@@ -196,7 +265,7 @@ bool SenseGloveHelper::getHandLinksPose(Eigen::MatrixXd &measuredValue) {
 }
 
 bool SenseGloveHelper::getHandJointsAngles() {
-  // to check [?]
+
   SGCore::HandProfile profile = SGCore::HandProfile::Default(m_glove.IsRight());
   SGCore::HandPose handPose;
 
@@ -394,15 +463,20 @@ bool SenseGloveHelper::turnOffForceFeedback() {
   return true;
 }
 
-int SenseGloveHelper::getNoOfBuzzMotors() const { return m_buzzDof; }
+bool SenseGloveHelper::turnOffPalmFeedbackThumper() {
+  m_glove.SendHaptics(SGCore::Haptics::SG_ThumperCmd::TurnOff);
+  return true;
+}
 
-int SenseGloveHelper::getNoOfForceFeedback() const { return m_forceFbDof; }
+int SenseGloveHelper::getNumOfBuzzMotors() const { return m_buzzDof; }
 
-int SenseGloveHelper::getNoGloveLinks() const { return m_gloveNoLinks; }
+int SenseGloveHelper::getNumOfForceFeedback() const { return m_forceFbDof; }
 
-int SenseGloveHelper::getNoHandLinks() const { return m_handNoLinks; }
+int SenseGloveHelper::getNumGloveLinks() const { return m_gloveNoLinks; }
 
-int SenseGloveHelper::getNoSensors() const { return m_NoJointSensors; }
+int SenseGloveHelper::getNumHandLinks() const { return m_handNoLinks; }
+
+int SenseGloveHelper::getNumSensors() const { return m_NoJointSensors; }
 
 bool SenseGloveHelper::getHumanJointNameList(
     std::vector<std::string> &jointList) const {

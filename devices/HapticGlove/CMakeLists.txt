@@ -28,9 +28,9 @@ target_include_directories(HapticGlove PRIVATE
 target_link_libraries(HapticGlove
     PUBLIC
     YARP::YARP_dev
-    YARP::YARP_init
     Wearable::IWear
     PRIVATE
+    YARP::YARP_init
     SenseGlove
     Eigen3::Eigen
     )

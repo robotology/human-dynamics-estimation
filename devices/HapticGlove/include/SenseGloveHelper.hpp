@@ -15,6 +15,7 @@
 #include <array>
 #include <iostream>
 #include <memory>
+#include <stdint.h>
 
 // YARP
 #include <yarp/os/LogStream.h>
@@ -29,67 +30,106 @@
  */
 namespace senseGlove {
 class SenseGloveHelper;
+enum class ThumperCmd : uint;
 const std::string LogPrefix = "senseGlove::SenseGloveHelper::";
-const size_t PoseSize = 7;
+const size_t PoseSize = 7; // [ position <x, y, z>, quaternion <w, x, y, z> ]
 } // namespace senseGlove
+
+enum class senseGlove::ThumperCmd : uint {
+  None = 126,
+
+  /// <summary> Turn off the thumper effects. </summary>
+  TurnOff = 124,
+
+  /// <summary> A 5-second long, constant vibration. </summary>
+  Cue_Game_Over = 118,
+
+  /// <summary> A double-click at 100% intensity. </summary>
+  Button_Double_100 = 10,
+  /// <summary> A double click at 60% intensity. </summary>
+  Button_Double_60 = 11,
+
+  /// <summary> Simulates an impact of the hand at 100% intensity. </summary>
+  Impact_Thump_100 = 1,
+  /// <summary> Simulates an impact of the hand at 30% intensity. </summary>
+  Impact_Thump_30 = 3,
+  /// <summary> Simulates an sharp impact of the hand at 40% intensity.
+  /// </summary>
+  Impact_Thump_10 = 6,
+
+  /// <summary> A light vibration to cue the user that an object it picked up.
+  /// 100% intensity. </summary>
+  Object_Grasp_100 = 7,
+  /// <summary> A light vibration to cue the user that an object it picked up.
+  /// 60% intensity. </summary>
+  Object_Grasp_60 = 8,
+  /// <summary> A light vibration to cue the user that an object it picked up.
+  /// 30% intensity. </summary>
+  Object_Grasp_30 = 9
+};
 
 class senseGlove::SenseGloveHelper {
 
-  int m_forceFbDof; /**< Number of the actuated motors Dofs to produce force
-                   feedback to the human*/
+  /**< Number of the actuated motors Dofs to produce force feedback to the
+   * human*/
+  int m_forceFbDof;
 
-  int m_buzzDof; /**< Number of the actuated vibro-tactile Dofs to produce vibro
-                    tactile feedback to the human*/
+  /**< Number of the actuated vibro-tactile Dofs to produce vibro tactile
+   * feedback to the human*/
+  int m_buzzDof;
 
-  int m_handNoLinks; /**< Number of the links of the human hand model*/
+  /**< Number of the links of the human hand model*/
+  int m_handNoLinks;
 
-  int m_handNoLinksForEulerAngles; /**< Number of the links of the human hand
-                                      model used for retrieving the euler
-                                      angles*/
+  /**< Number of the links of the human hand model used for retrieving the euler
+   * angles*/
+  int m_handNoLinksForEulerAngles;
 
-  int m_gloveNoLinks; /**< Number of the links of the glove*/
+  /**< Number of the links of the glove*/
+  int m_gloveNoLinks;
 
-  int m_NoJointSensors; /**< Number of the sensors of the glove */
+  /**< Number of the sensors of the glove */
+  int m_NoJointSensors;
 
-  bool m_isReady; /**< true if the glove is ready to use, i.e., communication
-                     working*/
+  /**< true if the glove is ready to use, i.e., communication working*/
+  bool m_isReady;
 
-  bool m_isRightHand; /**< true if the glove is the right hand*/
+  /**< true if the glove is the right hand*/
+  bool m_isRightHand;
 
-  //
-  std::vector<int>
-      m_desiredForceValues; /**< Desired force feedback [N], resistence force
-                               between 0-40 N transformed to percentage 0-100 */
+  /**< Desired force feedback [N], resistence force between 0-40 N transformed
+   * to percentage 0-100 */
+  std::vector<int> m_desiredForceValues;
 
-  std::vector<int> m_desiredBuzzValues; /**< Desired vibro-tactile feedbacks,
-                                           percentage 0-100*/
+  /**< Desired vibro-tactile feedbacks, percentage 0-100*/
+  std::vector<int> m_desiredBuzzValues;
 
-  std::vector<float> m_sensorData; /**< sensory data of the glove in degree [?
-                                      or radians] // to check */
+  /**< sensory data of the glove in radians */
+  std::vector<float> m_sensorData;
 
-  Eigen::MatrixXd
-      m_glovePose; /**< sensory data of the glove poses // to check */
+  /**< sensory data of the glove poses */
+  Eigen::MatrixXd m_glovePose;
 
-  Eigen::MatrixXd
-      m_handPose; /**< sensory data of the hand link poses;  from thumb to
+  /**< sensory data of the hand link poses;  from thumb to
                      pinky, proximal to distal, pos [x y z] Quat [x y z w]*/
+  Eigen::MatrixXd m_handPose;
 
-  Eigen::MatrixXd
-      m_handOrientationEulerAngles; /**< sensory data of the human hand joints
-                             angles; From thumb to pinky, proximal to distal
-                             [rad] [Pronation/Supination (x), Flexion/Extension
-                             (y), Abduction/Adduction (z)]*/
+  /**< sensory data of the human hand joints angles; From thumb to pinky,
+   * proximal to distal [rad] [Pronation/Supination (x), Flexion/Extension (y),
+   * Abduction/Adduction (z)]*/
+  Eigen::MatrixXd m_handOrientationEulerAngles;
 
-  std::vector<std::string>
-      m_humanJointNameList; /**< vector of the human joint names */
+  /**< vector of the human joint names */
+  std::vector<std::string> m_humanJointNameList;
 
-  std::vector<std::string>
-      m_humanFingerNameList; /**< vector of the human finger names */
+  /**< vector of the human finger names */
+  std::vector<std::string> m_humanFingerNameList;
 
-  std::string m_humanHandLinkName; /**< the name of the human hand link name*/
+  /**< the name of the human hand link name*/
+  std::string m_humanHandLinkName;
 
-  SGCore::SG::SenseGlove
-      m_glove; /**< the object to interface with the sense glove sdk */
+  /**< the object to interface with the sense glove sdk */
+  SGCore::SG::SenseGlove m_glove;
 
   /**
    * Setup the communication with the glove
@@ -116,7 +156,7 @@ public:
 
   /**
    * Configure the class
-   * @param config confifuration options
+   * @param config configuration options
    * @param rightHand if true, the right hand glove will be configured,
    * otherwise left.
    * @return true / false in case of success / failure
@@ -142,7 +182,7 @@ public:
    * @param desiredValue desired vibro-tactile value of the palm
    * @return true / false in case of success / failure
    */
-  bool setPalmFeedbackThumper(const int desiredValue);
+  bool setPalmFeedbackThumper(ThumperCmd desiredValue);
 
   /**
    * Get the measured hand link poses values
@@ -209,34 +249,40 @@ public:
   bool turnOffForceFeedback();
 
   /**
+   * Trun off the palm thumper feedback
+   * @return true / false in case of success / failure
+   */
+  bool turnOffPalmFeedbackThumper();
+
+  /**
    * get the number of buzz motors/vibro-tactile feedback motors
    * @return number of buzz motors
    */
-  int getNoOfBuzzMotors() const;
+  int getNumOfBuzzMotors() const;
 
   /**
    * get the number of force feedback motors
    * @return number of force feedback motors
    */
-  int getNoOfForceFeedback() const;
+  int getNumOfForceFeedback() const;
 
   /**
    * Get the number of hand links
    * @return the number of hand links
    */
-  int getNoHandLinks() const;
+  int getNumHandLinks() const;
 
   /**
    * Get the number of glove links
    * @return the number of glove links
    */
-  int getNoGloveLinks() const;
+  int getNumGloveLinks() const;
 
   /**
    * Get the number of glove sensors
    * @return the number of glove sensors
    */
-  int getNoSensors() const;
+  int getNumSensors() const;
 
   /**
    * Check if the glove is connected
