@@ -81,7 +81,7 @@ int main(int argc, char *argv[]) {
   yarp::os::ResourceFinder &config =
       yarp::os::ResourceFinder::getResourceFinderSingleton();
 
-  config.setDefaultConfigFile("config.ini");
+  config.setDefaultConfigFile("HapticGloveFramesVisualizationConfig.ini");
 
   config.configure(argc, argv);
 
