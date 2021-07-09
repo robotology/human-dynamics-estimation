@@ -30,12 +30,12 @@
  */
 namespace senseGlove {
 class SenseGloveHelper;
-enum class ThumperCmd : uint;
-const std::string LogPrefix = "senseGlove::SenseGloveHelper::";
+    enum class ThumperCmd : unsigned int;
+    const std::string LogPrefix = "senseGlove::SenseGloveHelper::";
 const size_t PoseSize = 7; // [ position <x, y, z>, quaternion <w, x, y, z> ]
 } // namespace senseGlove
 
-enum class senseGlove::ThumperCmd : uint {
+enum class senseGlove::ThumperCmd : unsigned int {
   None = 126,
 
   /// <summary> Turn off the thumper effects. </summary>
