@@ -41,3 +41,4 @@ Wearable devices contained in [`/devices/`](/devices) are [YARP devices](http://
 | XsensSuit | Exposes [XsensSuit](https://www.xsens.com/motion-capture) data. |  Windows   | xsens MVN SDK 2018.0.3 | [:books:](/doc/How-to-run-XsensSuit.md) |
 | iCub | Exposes [iCub](https://icub.iit.it/) robot data. |  Linux/MacOS/Windows   | [idyntree](https://github.com/robotology/idyntree) | [:books:](/doc/How-to-run-iCub-as-wearable-source.md) |
 | Paexo | Exposes [Paexo](https://paexo.com/?lang=en) data. |  Linux  | Optional flag `ENABLE_PAEXO_USE_iFEELDriver` to use `iFeelDriver` (Contact the maintainer for more details) | - |
+| HapticGlove | Exposes [SenseGlove](https://www.senseglove.com/product/developers-kit/) data. |  Linux/Windows  | [SenseGloveSDK](https://github.com/Adjuvo/SenseGlove-API) | [HapticGloveDocumentation](./devices/HapticGlove/README.md) |
