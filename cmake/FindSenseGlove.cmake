@@ -12,15 +12,15 @@
 
 # Check Directory of the SenseGlove_DIR
 if(NOT DEFINED ENV{SenseGlove_DIR})
-  message( FATAL_ERROR "Environment variable {SenseGlove_DIR} is not defined: $ENV{SenseGlove_DIR}" )
+  message( FATAL_ERROR "Environment variable {SenseGlove_DIR} is not defined." )
 else()
-  message("Environment variable {SenseGlove_DIR}: $ENV{SenseGlove_DIR}" )
+  message(STATUS "Environment variable {SenseGlove_DIR}: $ENV{SenseGlove_DIR}" )
 endif()
 
 if(NOT DEFINED ENV{SenseGlove_INCLUDE_DIRS})
-  message( FATAL_ERROR "Environment variable {SenseGlove_INCLUDE_DIRS} is not defined: $ENV{SenseGlove_INCLUDE_DIRS}" )
+  message( FATAL_ERROR "Environment variable {SenseGlove_INCLUDE_DIRS} is not defined." )
 else()
-  message("Environment variable {SenseGlove_INCLUDE_DIRS}: $ENV{SenseGlove_INCLUDE_DIRS}" )
+  message(STATUS "Environment variable {SenseGlove_INCLUDE_DIRS}: $ENV{SenseGlove_INCLUDE_DIRS}" )
 endif()
 ##### Find SenseGlove #####
 

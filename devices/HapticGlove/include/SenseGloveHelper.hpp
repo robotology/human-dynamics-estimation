@@ -70,65 +70,64 @@ enum class senseGlove::ThumperCmd : uint {
 
 class senseGlove::SenseGloveHelper {
 
-  /**< Number of the actuated motors Dofs to produce force feedback to the
-   * human*/
+  /// Number of the actuated motors Dofs to produce force feedback to the human
   int m_forceFbDof;
 
-  /**< Number of the actuated vibro-tactile Dofs to produce vibro tactile
-   * feedback to the human*/
+  /// Number of the actuated vibro-tactile Dofs to produce vibro tactile
+  /// feedback to the human
   int m_buzzDof;
 
-  /**< Number of the links of the human hand model*/
+  /// Number of the links of the human hand model
   int m_handNoLinks;
 
-  /**< Number of the links of the human hand model used for retrieving the euler
-   * angles*/
+  /// Number of the links of the human hand model used for retrieving the euler
+  /// angles
   int m_handNoLinksForEulerAngles;
 
-  /**< Number of the links of the glove*/
+  /// Number of the links of the glove
   int m_gloveNoLinks;
 
-  /**< Number of the sensors of the glove */
+  /// Number of the sensors of the glove
   int m_NoJointSensors;
 
-  /**< true if the glove is ready to use, i.e., communication working*/
+  /// true if the glove is ready to use, i.e., communication working
   bool m_isReady;
 
-  /**< true if the glove is the right hand*/
+  /// true if the glove is the right hand
   bool m_isRightHand;
 
-  /**< Desired force feedback [N], resistence force between 0-40 N transformed
-   * to percentage 0-100 */
+  /// Desired force feedback [N], resistence force between 0-40 N transformed to
+  /// percentage 0-100
   std::vector<int> m_desiredForceValues;
 
-  /**< Desired vibro-tactile feedbacks, percentage 0-100*/
+  /// Desired vibro-tactile feedbacks, percentage 0-100
   std::vector<int> m_desiredBuzzValues;
 
-  /**< sensory data of the glove in radians */
+  /// sensory data of the glove in radians
   std::vector<float> m_sensorData;
 
-  /**< sensory data of the glove poses */
+  /// sensory data of the glove poses
   Eigen::MatrixXd m_glovePose;
 
-  /**< sensory data of the hand link poses;  from thumb to
-                     pinky, proximal to distal, pos [x y z] Quat [x y z w]*/
+  /// sensory data of the hand link poses;  from thumb to pinky, proximal to
+  /// distal, pos [x y z] Quat [x y z w]
   Eigen::MatrixXd m_handPose;
 
-  /**< sensory data of the human hand joints angles; From thumb to pinky,
-   * proximal to distal [rad] [Pronation/Supination (x), Flexion/Extension (y),
-   * Abduction/Adduction (z)]*/
+  /// sensory data of the human hand joints angles; From thumb to pinky,
+  /// proximal to distal [rad] [Pronation/Supination (x), Flexion/Extension (y),
+  /// Abduction/Adduction (z)]
   Eigen::MatrixXd m_handOrientationEulerAngles;
 
-  /**< vector of the human joint names */
+  /// vector of the human joint names
   std::vector<std::string> m_humanJointNameList;
 
-  /**< vector of the human finger names */
+  /// vector of the human finger names
   std::vector<std::string> m_humanFingerNameList;
 
-  /**< the name of the human hand link name*/
+  /// the name of the human hand link name
   std::string m_humanHandLinkName;
 
-  /**< the object to interface with the sense glove sdk */
+  /// the object to interface with the sense glove sdk
   SGCore::SG::SenseGlove m_glove;
 
   /**

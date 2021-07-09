@@ -6,7 +6,9 @@ cmake_minimum_required(VERSION 3.5)
 
 set(PROJECT_VERSION "1.2.1")
 
-project(Wearables VERSION ${PROJECT_VERSION}
+set (WEARABLES_PROJECT_NAME Wearables)
+
+project(${WEARABLES_PROJECT_NAME} VERSION ${PROJECT_VERSION}
                   LANGUAGES CXX C)
 
 set(CMAKE_CXX_STANDARD 14)
@@ -83,9 +85,13 @@ add_subdirectory(msgs)
 add_subdirectory(devices)
 add_subdirectory(wrappers)
 add_subdirectory(app)
+add_subdirectory(modules)
 
 # Flag to enable Paexo wearable device
 option(ENABLE_Paexo "Flag that enables building Paexo wearable device" OFF)
 
 # Flag to enable SenseGlove wearable device
 option(ENABLE_HapticGlove "Flag that enables building Haptic Sense Glove wearable device" OFF)
+
+# Flag to enable IWearFrameVisualizer module
+option(ENABLE_FrameVisualizer "Flag that enables building IWearFrameVisualizer module" OFF)
