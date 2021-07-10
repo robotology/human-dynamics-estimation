@@ -20,13 +20,13 @@ git clone https://github.com/Adjuvo/SenseGlove-API
 cd SenseGlove-API
 git checkout baad587d4e165d7bfafd7f0c8ee6a1ce8ad651d6
 ```
-In Linux machine add this:
+In Linux machine add following environment variable:
 
 ```
 export SenseGlove_DIR= <path tho the SenseGlove-API Folder>
 export PATH=${PATH}:${SenseGlove_DIR}/Core/SGCoreCpp/lib/linux/<build type(Release or Debug)> 
 ```
-In Windows  Machine:
+In Windows machine following environment variable:
 
 ```
 export SenseGlove_DIR= <path tho the SenseGlove-API Folder>
@@ -44,8 +44,10 @@ If you have installed correctly the Wearabes repository, and you have set the en
 you can run the HapticGlove wearable device by the following command:
 
 
-- run the following executable `SenseCom.x86_64` in Linux located in `<path tho the SenseGlove-API Folder>/SenseCom/Linux`
-
+- Run the following SenseGlove communication executable:
+    - Linux: run `SenseCom.x86_64` located in `<path tho the SenseGlove-API Folder>/SenseCom/Linux`
+    - Windows: run `SenseCom` located in `<path tho the SenseGlove-API Folder>/SenseCom/Win`
+    
 - Then run:
 ```
 yarprobotinterface --config HapticGlove.xml
@@ -65,3 +67,4 @@ IWearFrameVisualizerModule --from HapticGloveFramesVisualizationConfig.ini
 sudo adduser $USER dialout
 ```
 
+**N.B. In order to add `SenseCom.x86_64` executable to the list of application, follow the instructions in `config/SenseGlove.desktop`**
