@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Added `IWearFrameVisualizer` module to visualize any wearable device frames associated with the link sensors. (https://github.com/robotology/wearables/pull/121) 
+- Added `HapticGlove` device to stream sense glove data and provide haptic feedback to the user. (https://github.com/robotology/wearables/pull/121) 
 - Updated `Paexo` wearable device with yarp ports for motor control. (https://github.com/robotology/wearables/pull/124)
 - Updated 'iwear_logger' wrapper device with options to stream data through yarp ports. (https://github.com/robotology/wearables/pull/123)
 - Added `iwear_logger` wrapper device to log wearable sensors data using `yarp-telemetry`. (https://github.com/robotology/wearables/pull/113)
