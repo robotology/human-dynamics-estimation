@@ -7,7 +7,7 @@
     <device type="serialport" name="SerialportDevice">
         <param name="verbose"> 0 </param>
         <!--param name="comport"> COM2 </param-->        <!--  //windows     -->
-        <param name="comport">  /dev/ttyACM2 </param>   <!--    //linux     -->
+        <param name="comport">  /dev/ttyACM0 </param>   <!--    //linux     -->
         <param name="baudrate"> 115200 </param>
         <param name="xonlim"> 0 </param>
         <param name="xofflim"> 0 </param>
@@ -72,9 +72,9 @@
         <action phase="shutdown" level="4" type="detach"/>
     </device>
 
-    <!-- <device type="iwear_logger" name="ProducerLoggerDevice">
+    <device type="iwear_logger" name="ProducerLoggerDevice">
         <param name="period">0.01</param>
-
+        <param name="LoggerType">(yarp)</param>
         <param name="logAllQuantities">true</param>
         <param name="logAccelerometers">false</param>
         <param name="logEMGSensors">false</param>
@@ -107,6 +107,6 @@
             </paramlist>
         </action>
         <action phase="shutdown" level="5" type="detach"/>
-    </device> -->
+    </device>
 
 </robot>

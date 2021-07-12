@@ -7,14 +7,20 @@
  */
 
 #include <stdio.h>
+#include <memory>
 #include <yarp/os/Network.h>
 #include <yarp/os/BufferedPort.h>
 #include <yarp/os/LogStream.h>
+#include <yarp/sig/Vector.h>
 
 #include <thrift/WearableActuatorCommand.h>
 
+#define MIN_MOTOR_POSITION 30
+#define MAX_MOTOR_POSITION 50
+#define MOTOR_STEP_SIZE 2 //Could go as low as 0.2
 using namespace yarp::os;
 using namespace wearable;
+using YarpBufferedPort = yarp::os::BufferedPort<yarp::os::Bottle>;
 
 int main() {
 
@@ -23,44 +29,54 @@ int main() {
     std::string inPort = "/Paexo/WearableActuatorsCommand/input:i";
     std::string outPort = "/Paexo/WearableActuatorsCommand/output:o";
 
-    if (!yarp::os::Network::exists(inPort))
+    std::vector<std::string> PaexoActuators = {"Paexo::motor::LeftMotor", "Paexo::motor::RightMotor"};
+
+    std::vector<std::string> PaexoActuatorPortNames = {"/Paexo/motor/LeftMotor"};
+    std::vector<std::unique_ptr<YarpBufferedPort>> PaexoActuatorPorts;
+
+    // Yarp buffered ports for motor control
+    for (const auto& portName : PaexoActuatorPortNames)
     {
-        yError() << "Port " << inPort << " does not exists";
-        return -1;
+        std::unique_ptr<YarpBufferedPort> port = std::make_unique<YarpBufferedPort>();
+
+        if (!port->open(portName + ":o"))
+        {
+            yError() << "Failed to open port " << (portName + ":o");
+            return -1;
+        }
+
+        if (!yarp::os::Network::connect(portName + ":o", portName + ":i"))
+        {
+            yError() << "Failed to connect ports " << (portName + ":o") << " and " << (portName + ":i");
+            return -1;
+        }
+
+        PaexoActuatorPorts.push_back(std::move(port));
     }
 
-    BufferedPort<wearable::msg::WearableActuatorCommand> port;
-    if(!port.open(outPort))
-    {
-        yError() << "Failed to open port " << outPort;
-        return -1;
-    }
-
-    if (!yarp::os::Network::connect(outPort,inPort))
-    {
-        yError() << "Failed to connect " << outPort << " to " << inPort;
-        return -1;
-    }
 
     while (true) {
 
-        wearable::msg::WearableActuatorCommand& wearableActuatorCommand = port.prepare();
+        for (const auto& port : PaexoActuatorPorts)
+        {
+            double current_motor_position = MIN_MOTOR_POSITION;
 
-        // Add wearable actuator command
-        wearableActuatorCommand.info.name = "Paexo::motor::Actuator";
-        wearableActuatorCommand.info.type = wearable::msg::ActuatorType::MOTOR;
-        wearableActuatorCommand.info.status = wearable::msg::ActuatorStatus::OK;
+            while (current_motor_position < MAX_MOTOR_POSITION)
+            {
+                yarp::os::Bottle& cmd = port->prepare();
 
-        wearableActuatorCommand.duration = 10;
-        wearableActuatorCommand.value = 40;
+                cmd.clear();
 
-        yInfo() << "Command " << wearableActuatorCommand.info.name << " to position "
-                <<  wearableActuatorCommand.value << " deg";
+                yInfo() << "Sending motor position " << current_motor_position;
+                cmd.addDouble(current_motor_position);
 
-        // Send the actuator command to the output port
-        port.write();
+                port->write(true);
 
-        Time::delay(2);
+                Time::delay(0.5);
+
+                current_motor_position += MOTOR_STEP_SIZE;
+            }
+        }
     }
 
     return 0;

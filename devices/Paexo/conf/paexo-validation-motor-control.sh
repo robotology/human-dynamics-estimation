@@ -1,7 +1,7 @@
 #!/bin/bash
 # set n to 1
-min_motor_pos=27
-max_motor_pos=55
+min_motor_pos=30
+max_motor_pos=50
 step_size=2
 
 ## Paexo initialization

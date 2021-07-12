@@ -11,7 +11,7 @@
         
         <!--Logger level parameter to control logging to matlab/yarp/both-->
         <!--either a text parameter or a list of , separated text parameters-->
-        <param name="LoggerLevel">(matlab, yarp)</param>
+        <param name="LoggerType">(matlab, yarp)</param>
 
         <param name="logAllQuantities">false</param>
         <param name="logAccelerometers">false</param>
