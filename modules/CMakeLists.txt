@@ -5,4 +5,3 @@
 if(ENABLE_FrameVisualizer)
     add_subdirectory(IWearFrameVisualizer)
 endif()
-

@@ -9,15 +9,13 @@
 #ifndef HAPTIC_GLOVE_H
 #define HAPTIC_GLOVE_H
 
-
 #include <Wearable/IWear/IWear.h>
 
 #include <yarp/dev/DeviceDriver.h>
 #include <yarp/dev/PolyDriver.h>
-#include <yarp/dev/SerialInterfaces.h>
 #include <yarp/dev/PreciselyTimed.h>
+#include <yarp/dev/SerialInterfaces.h>
 #include <yarp/os/PeriodicThread.h>
-
 
 namespace wearable {
     namespace devices {
@@ -25,15 +23,16 @@ namespace wearable {
     } // namespace devices
 } // namespace wearable
 
-class wearable::devices::HapticGlove :
-        public yarp::dev::DeviceDriver,
-        public yarp::os::PeriodicThread,
-        public yarp::dev::IPreciselyTimed,
-        public wearable::IWear
+class wearable::devices::HapticGlove
+    : public yarp::dev::DeviceDriver
+    , public yarp::os::PeriodicThread
+    , public yarp::dev::IPreciselyTimed
+    , public wearable::IWear
 {
 private:
     class SenseGloveImpl;
     std::unique_ptr<SenseGloveImpl> m_pImpl;
+
 public:
     HapticGlove();
     ~HapticGlove() override;
@@ -45,7 +44,6 @@ public:
     // PeriodicThread
     void run() override;
     void threadRelease() override;
-
 
     // ================
     // IPRECISELY TIMED
@@ -70,9 +68,11 @@ public:
 
     VectorOfSensorPtr<const sensor::ISensor> getSensors(const sensor::SensorType) const override;
 
-    ElementPtr<const actuator::IActuator> getActuator(const actuator::ActuatorName name) const override;
+    ElementPtr<const actuator::IActuator>
+    getActuator(const actuator::ActuatorName name) const override;
 
-    VectorOfElementPtr<const actuator::IActuator> getActuators(const actuator::ActuatorType type) const override;
+    VectorOfElementPtr<const actuator::IActuator>
+    getActuators(const actuator::ActuatorType type) const override;
 
     // IMPLEMENTED SENSORS
     // -------------------
@@ -81,7 +81,6 @@ public:
     getVirtualLinkKinSensor(const sensor::SensorName name) const override;
     SensorPtr<const sensor::IVirtualJointKinSensor>
     getVirtualJointKinSensor(const sensor::SensorName name) const override;
-
 
     // IMPLEMENTED ACTUATORS
     // ---------------------
@@ -142,7 +141,6 @@ public:
 
     inline ElementPtr<const actuator::IMotor>
     getMotorActuator(const actuator::ActuatorName) const override;
-
 };
 
 inline wearable::SensorPtr<const wearable::sensor::IForce3DSensor>
@@ -164,7 +162,8 @@ wearable::devices::HapticGlove::getForceTorque6DSensor(const sensor::SensorName 
 }
 
 inline wearable::SensorPtr<const wearable::sensor::IFreeBodyAccelerationSensor>
-wearable::devices::HapticGlove::getFreeBodyAccelerationSensor(const sensor::SensorName /*name*/) const
+wearable::devices::HapticGlove::getFreeBodyAccelerationSensor(
+    const sensor::SensorName /*name*/) const
 {
     return nullptr;
 }
@@ -194,7 +193,8 @@ wearable::devices::HapticGlove::getPositionSensor(const sensor::SensorName /*nam
 }
 
 inline wearable::SensorPtr<const wearable::sensor::IVirtualSphericalJointKinSensor>
-wearable::devices::HapticGlove::getVirtualSphericalJointKinSensor(const sensor::SensorName /*name*/) const
+wearable::devices::HapticGlove::getVirtualSphericalJointKinSensor(
+    const sensor::SensorName /*name*/) const
 {
     return nullptr;
 }
