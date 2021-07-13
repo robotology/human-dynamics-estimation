@@ -42,3 +42,4 @@ Wearable devices contained in [`/devices/`](/devices) are [YARP devices](http://
 | iCub | Exposes [iCub](https://icub.iit.it/) robot data. |  Linux/MacOS/Windows   | [idyntree](https://github.com/robotology/idyntree) | [:books:](/doc/How-to-run-iCub-as-wearable-source.md) |
 | Paexo | Exposes [Paexo](https://paexo.com/?lang=en) data. |  Linux  | Optional flag `ENABLE_PAEXO_USE_iFEELDriver` to use `iFeelDriver` (Contact the maintainer for more details) | - |
 | HapticGlove | Exposes [SenseGlove](https://www.senseglove.com/product/developers-kit/) data. |  Linux/Windows  | [SenseGloveSDK](https://github.com/Adjuvo/SenseGlove-API) | [:books:](./doc/How-to-compile-and-run-HapticGlove.md) |
+| IFrameTransform | Exposes YARP [`IFrameTransform` Interface](http://www.yarp.it/git-master/classyarp_1_1dev_1_1IFrameTransform.html). |  Linux/MacOS/Windows  | - |  - |

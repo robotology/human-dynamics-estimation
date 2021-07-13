@@ -6,6 +6,7 @@ find_package(iDynTree)
 
 add_subdirectory(IWearRemapper)
 add_subdirectory(IAnalogSensorToIWear)
+add_subdirectory(IFrameTransformToIWear)
 
 if(ENABLE_Paexo)
     add_subdirectory(Paexo)

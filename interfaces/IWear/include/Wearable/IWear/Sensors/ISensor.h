@@ -54,7 +54,47 @@ namespace wearable {
             VirtualLinkKinSensor,
             VirtualJointKinSensor,
             VirtualSphericalJointKinSensor,
+            Invalid
         };
+
+        inline SensorType sensorTypeFromString(std::string sensorTypeString)
+        {
+            if (sensorTypeString == "Accelerometer")
+                return SensorType::Accelerometer;
+            else if (sensorTypeString == "EmgSensor")
+                return SensorType::EmgSensor;
+            else if (sensorTypeString == "Force3DSensor")
+                return SensorType::Force3DSensor;
+            else if (sensorTypeString == "ForceTorque6DSensor")
+                return SensorType::ForceTorque6DSensor;
+            else if (sensorTypeString == "FreeBodyAccelerationSensor")
+                return SensorType::FreeBodyAccelerationSensor;
+            else if (sensorTypeString == "Gyroscope")
+                return SensorType::Gyroscope;
+            else if (sensorTypeString == "Magnetometer")
+                return SensorType::Magnetometer;
+            else if (sensorTypeString == "OrientationSensor")
+                return SensorType::OrientationSensor;
+            else if (sensorTypeString == "PoseSensor")
+                return SensorType::PoseSensor;
+            else if (sensorTypeString == "PositionSensor")
+                return SensorType::PositionSensor;
+            else if (sensorTypeString == "SkinSensor")
+                return SensorType::SkinSensor;
+            else if (sensorTypeString == "TemperatureSensor")
+                return SensorType::TemperatureSensor;
+            else if (sensorTypeString == "Torque3DSensor")
+                return SensorType::Torque3DSensor;
+            else if (sensorTypeString == "VirtualLinkKinSensor")
+                return SensorType::VirtualLinkKinSensor;
+            else if (sensorTypeString == "VirtualJointKinSensor")
+                return SensorType::VirtualJointKinSensor;
+            else if (sensorTypeString == "VirtualSphericalJointKinSensor")
+                return SensorType::VirtualSphericalJointKinSensor;
+            else {
+                return SensorType::Invalid;
+            }
+        }
 
         class ISensor;
     } // namespace sensor

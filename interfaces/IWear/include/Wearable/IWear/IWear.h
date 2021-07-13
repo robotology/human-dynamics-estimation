@@ -66,7 +66,11 @@ namespace wearable {
 
     using VectorOfActuatorNames = ElementVector<actuator::ActuatorName>;
 
+<<<<<<< HEAD
     using TimeStamp = struct
+=======
+    struct TimeStamp
+>>>>>>> 914a410 (Minor changes)
     {
         double time = 0;
         size_t sequenceNumber = 0;
@@ -264,14 +268,14 @@ public:
 
     inline VectorOfElementPtr<const actuator::IHeater> getHeaterActuators() const;
 
-//    // ========================
-//    // GENERIC DEVICE UTILITIES
-//    // ========================
+    // ========================
+    // GENERIC DEVICE UTILITIES
+    // ========================
 
-//    // TODO: The following methods can replace sensor generic utilities
-//    // TODO: Two template names are redundant, check how to use one
-//    template<typename E>
-//    inline VectorOfElementPtr<const E> getAllElements() const;
+    // TODO: The following methods can replace sensor generic utilities
+    // TODO: Two template names are redundant, check how to use one
+    // template<typename E>
+    // inline VectorOfElementPtr<const E> getAllElements() const;
 };
 
 // ============================================

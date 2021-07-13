@@ -297,46 +297,6 @@ public:
 // IANALOGSENSORTOIWEAR
 // ====================
 
-wearable::sensor::SensorType sensorTypeFromString(std::string sensorTypeString)
-{
-    if (sensorTypeString == "Accelerometer")
-        return wearable::sensor::SensorType::Accelerometer;
-    else if (sensorTypeString == "EmgSensor")
-        return wearable::sensor::SensorType::EmgSensor;
-    else if (sensorTypeString == "Force3DSensor")
-        return wearable::sensor::SensorType::Force3DSensor;
-    else if (sensorTypeString == "ForceTorque6DSensor")
-        return wearable::sensor::SensorType::ForceTorque6DSensor;
-    else if (sensorTypeString == "FreeBodyAccelerationSensor")
-        return wearable::sensor::SensorType::FreeBodyAccelerationSensor;
-    else if (sensorTypeString == "Gyroscope")
-        return wearable::sensor::SensorType::Gyroscope;
-    else if (sensorTypeString == "Magnetometer")
-        return wearable::sensor::SensorType::Magnetometer;
-    else if (sensorTypeString == "OrientationSensor")
-        return wearable::sensor::SensorType::OrientationSensor;
-    else if (sensorTypeString == "PoseSensor")
-        return wearable::sensor::SensorType::PoseSensor;
-    else if (sensorTypeString == "PositionSensor")
-        return wearable::sensor::SensorType::PositionSensor;
-    else if (sensorTypeString == "SkinSensor")
-        return wearable::sensor::SensorType::SkinSensor;
-    else if (sensorTypeString == "TemperatureSensor")
-        return wearable::sensor::SensorType::TemperatureSensor;
-    else if (sensorTypeString == "Torque3DSensor")
-        return wearable::sensor::SensorType::Torque3DSensor;
-    else if (sensorTypeString == "VirtualLinkKinSensor")
-        return wearable::sensor::SensorType::VirtualLinkKinSensor;
-    else if (sensorTypeString == "VirtualJointKinSensor")
-        return wearable::sensor::SensorType::VirtualJointKinSensor;
-    else if (sensorTypeString == "VirtualSphericalJointKinSensor")
-        return wearable::sensor::SensorType::VirtualSphericalJointKinSensor;
-    else {
-        yError() << LogPrefix << "Sensor type" << sensorTypeString << "not supported";
-        return {};
-    }
-}
-
 IAnalogSensorToIWear::IAnalogSensorToIWear()
     : pImpl{new Impl()}
 {}
@@ -391,7 +351,7 @@ bool IAnalogSensorToIWear::open(yarp::os::Searchable& config)
     pImpl->options.channelOffset = config.find("channelOffset").asInt();
     std::string sensorType = config.find("wearableSensorType").asString();
     pImpl->options.getGroundReactionFT = config.find("getGroundReactionFT").asBool();
-    pImpl->options.wearableSensorType = sensorTypeFromString(sensorType);
+    pImpl->options.wearableSensorType = wearable::sensor::sensorTypeFromString(sensorType);
 
     yInfo() << LogPrefix << "*** ====================";
     yInfo() << LogPrefix << "*** Sensor name        :" << pImpl->options.sensorName;
