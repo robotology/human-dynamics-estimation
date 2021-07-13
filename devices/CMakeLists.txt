@@ -19,3 +19,6 @@ if(iDynTree_FOUND)
   add_subdirectory(ICub)
 endif()
 
+if(ENABLE_HapticGlove)
+    add_subdirectory(HapticGlove)
+endif()

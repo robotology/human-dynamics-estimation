@@ -1,5 +1,5 @@
 # HDE xml files installation
-set (WEARABLES_PROJECT_NAME Wearables)
+
 set (WEARABLES_XML_FILES xml/FTShoeLeftWearableDevice.xml
                    xml/FTShoeRightWearableDevice.xml
                    xml/FTShoesWearableDevice.xml
