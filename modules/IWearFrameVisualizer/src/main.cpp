@@ -302,7 +302,9 @@ int main(int argc, char* argv[])
 
         yInfo() << "initial transformation from the parent: \n" << frame->transform.toString();
     }
-    yInfo() << "***********";
+    yInfo() << "=================";
+    yInfo() << "===  Running  ===";
+    yInfo() << "=================";
 
     // =========================
     // Visualization loop
