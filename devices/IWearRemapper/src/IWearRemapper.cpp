@@ -321,9 +321,9 @@ bool IWearRemapper::open(yarp::os::Searchable& config)
 
     for (unsigned i = 0; i < config.find("wearableDataPorts").asList()->size(); ++i) {
         if (!yarp::os::Network::connect(inputDataPortsNamesVector[i],
-                                        pImpl->inputPortsWearData.back()->getName())) {
+                                        pImpl->inputPortsWearData[i]->getName())) {
             yError() << logPrefix << "Failed to connect " << inputDataPortsNamesVector[i]
-                     << " with " << pImpl->inputPortsWearData.back()->getName();
+                     << " with " << pImpl->inputPortsWearData[i]->getName();
             return false;
         }
     }
@@ -367,6 +367,7 @@ const std::map<msg::SensorStatus, sensor::SensorStatus> MapSensorStatus = {
 
 void IWearRemapper::onRead(msg::WearableData& receivedWearData)
 {
+
     if (!pImpl->terminationCall) {
 
         for (auto& accelerometersMap : receivedWearData.accelerometers) {
@@ -780,13 +781,17 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
             sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
         }
 
-        // Update the timestamp
-        pImpl->timestamp.sequenceNumber++;
-        pImpl->timestamp.time = yarp::os::Time::now();
+        {
+            std::lock_guard<std::recursive_mutex> lock(pImpl->mutex);
 
-        // This is used to handle the overall status of IWear
-        if (pImpl->firstRun) {
-            pImpl->firstRun = false;
+            // Update the timestamp
+            pImpl->timestamp.sequenceNumber++;
+            pImpl->timestamp.time = yarp::os::Time::now();
+
+            // This is used to handle the overall status of IWear
+            if (pImpl->firstRun) {
+                pImpl->firstRun = false;
+            }
         }
     }
 }
