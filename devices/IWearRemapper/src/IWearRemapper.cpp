@@ -149,11 +149,10 @@ bool IWearRemapper::open(yarp::os::Searchable& config)
     }
 
     yarp::os::Bottle* inputRPCPortsNamesList = nullptr;
-    if (pImpl->useRPC)
-    {
-        if (!(config.check("wearableRPCPorts") && config.find("wearableRPCPorts").isList()))
-        {
-            yError() << logPrefix << "wearableRPCPorts parameter does not exist or it is not a list";
+    if (pImpl->useRPC) {
+        if (!(config.check("wearableRPCPorts") && config.find("wearableRPCPorts").isList())) {
+            yError() << logPrefix
+                     << "wearableRPCPorts parameter does not exist or it is not a list";
             return false;
         }
         inputRPCPortsNamesList = config.find("wearableRPCPorts").asList();
@@ -177,8 +176,7 @@ bool IWearRemapper::open(yarp::os::Searchable& config)
 
     // Convert list to vector
     std::vector<std::string> inputRPCPortsNamesVector;
-    if (pImpl->useRPC)
-    {
+    if (pImpl->useRPC) {
         for (unsigned i = 0; i < inputRPCPortsNamesList->size(); ++i) {
             inputRPCPortsNamesVector.emplace_back(inputRPCPortsNamesList->get(i).asString());
         }
@@ -189,15 +187,13 @@ bool IWearRemapper::open(yarp::os::Searchable& config)
         yInfo() << logPrefix << "*** Wearable Data Port" << i + 1 << "  :"
                 << inputDataPortsNamesVector[i];
     }
-    if (pImpl->useRPC)
-    {
+    if (pImpl->useRPC) {
         for (unsigned i = 0; i < inputDataPortsNamesVector.size(); ++i) {
             yInfo() << logPrefix << "*** Wearable RPC Port" << i + 1 << "   :"
                     << inputRPCPortsNamesVector[i];
         }
     }
-    else
-    {
+    else {
         yInfo() << logPrefix << "*** Wearable RPC Port not configured";
     }
     yInfo() << logPrefix << "*** ========================";
@@ -228,8 +224,7 @@ bool IWearRemapper::open(yarp::os::Searchable& config)
     // ====================
     // OPEN INPUT RPC PORTS
     // ====================
-    if(pImpl->useRPC)
-    {
+    if (pImpl->useRPC) {
         yDebug() << logPrefix << "Opening input RPC ports";
 
         if (inputDataPortsNamesVector.size() != inputRPCPortsNamesVector.size()) {
@@ -340,14 +335,13 @@ bool IWearRemapper::open(yarp::os::Searchable& config)
     return true;
 }
 
-void IWearRemapper::threadRelease()
-{}
+void IWearRemapper::threadRelease() {}
 
 bool IWearRemapper::close()
 {
     pImpl->terminationCall = true;
 
-    while(isRunning()) {
+    while (isRunning()) {
         stop();
     }
 
@@ -388,11 +382,13 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
                 askToStop();
                 return;
             }
-            const auto* constSensor = static_cast<const sensor::impl::Accelerometer*>(isensor.get());
+            const auto* constSensor =
+                static_cast<const sensor::impl::Accelerometer*>(isensor.get());
             auto* sensor = const_cast<sensor::impl::Accelerometer*>(constSensor);
             // Copy its data to the buffer used for exposing the IWear interface
-            sensor->setBuffer(
-                {wearDataInputSensor.data.x, wearDataInputSensor.data.y, wearDataInputSensor.data.z});
+            sensor->setBuffer({wearDataInputSensor.data.x,
+                               wearDataInputSensor.data.y,
+                               wearDataInputSensor.data.z});
             // Set the status
             sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
         }
@@ -413,7 +409,8 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
             const auto* constSensor = static_cast<const sensor::impl::EmgSensor*>(isensor.get());
             auto* sensor = const_cast<sensor::impl::EmgSensor*>(constSensor);
             // Copy its data to the buffer used for exposing the IWear interface
-            sensor->setBuffer(wearDataInputSensor.data.value, wearDataInputSensor.data.normalization);
+            sensor->setBuffer(wearDataInputSensor.data.value,
+                              wearDataInputSensor.data.normalization);
             // Set the status
             sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
         }
@@ -431,11 +428,13 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
                 askToStop();
                 return;
             }
-            const auto* constSensor = static_cast<const sensor::impl::Force3DSensor*>(isensor.get());
+            const auto* constSensor =
+                static_cast<const sensor::impl::Force3DSensor*>(isensor.get());
             auto* sensor = const_cast<sensor::impl::Force3DSensor*>(constSensor);
             // Copy its data to the buffer used for exposing the IWear interface
-            sensor->setBuffer(
-                {wearDataInputSensor.data.x, wearDataInputSensor.data.y, wearDataInputSensor.data.z});
+            sensor->setBuffer({wearDataInputSensor.data.x,
+                               wearDataInputSensor.data.y,
+                               wearDataInputSensor.data.z});
             // Set the status
             sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
         }
@@ -476,7 +475,8 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
             // ====================
             auto isensor = getFreeBodyAccelerationSensor(inputSensorName);
             if (!isensor) {
-                yError() << logPrefix << "Failed to get FreeBodyAccelerationSensor" << inputSensorName;
+                yError() << logPrefix << "Failed to get FreeBodyAccelerationSensor"
+                         << inputSensorName;
                 askToStop();
                 return;
             }
@@ -484,8 +484,9 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
                 static_cast<const sensor::impl::FreeBodyAccelerationSensor*>(isensor.get());
             auto* sensor = const_cast<sensor::impl::FreeBodyAccelerationSensor*>(constSensor);
             // Copy its data to the buffer used for exposing the IWear interface
-            sensor->setBuffer(
-                {wearDataInputSensor.data.x, wearDataInputSensor.data.y, wearDataInputSensor.data.z});
+            sensor->setBuffer({wearDataInputSensor.data.x,
+                               wearDataInputSensor.data.y,
+                               wearDataInputSensor.data.z});
             // Set the status
             sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
         }
@@ -506,8 +507,9 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
             const auto* constSensor = static_cast<const sensor::impl::Gyroscope*>(isensor.get());
             auto* sensor = const_cast<sensor::impl::Gyroscope*>(constSensor);
             // Copy its data to the buffer used for exposing the IWear interface
-            sensor->setBuffer(
-                {wearDataInputSensor.data.x, wearDataInputSensor.data.y, wearDataInputSensor.data.z});
+            sensor->setBuffer({wearDataInputSensor.data.x,
+                               wearDataInputSensor.data.y,
+                               wearDataInputSensor.data.z});
             // Set the status
             sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
         }
@@ -528,8 +530,9 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
             const auto* constSensor = static_cast<const sensor::impl::Magnetometer*>(isensor.get());
             auto* sensor = const_cast<sensor::impl::Magnetometer*>(constSensor);
             // Copy its data to the buffer used for exposing the IWear interface
-            sensor->setBuffer(
-                {wearDataInputSensor.data.x, wearDataInputSensor.data.y, wearDataInputSensor.data.z});
+            sensor->setBuffer({wearDataInputSensor.data.x,
+                               wearDataInputSensor.data.y,
+                               wearDataInputSensor.data.z});
             // Set the status
             sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
         }
@@ -599,11 +602,13 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
                 askToStop();
                 return;
             }
-            const auto* constSensor = static_cast<const sensor::impl::PositionSensor*>(isensor.get());
+            const auto* constSensor =
+                static_cast<const sensor::impl::PositionSensor*>(isensor.get());
             auto* sensor = const_cast<sensor::impl::PositionSensor*>(constSensor);
             // Copy its data to the buffer used for exposing the IWear interface
-            sensor->setBuffer(
-                {wearDataInputSensor.data.x, wearDataInputSensor.data.y, wearDataInputSensor.data.z});
+            sensor->setBuffer({wearDataInputSensor.data.x,
+                               wearDataInputSensor.data.y,
+                               wearDataInputSensor.data.z});
             // Set the status
             sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
         }
@@ -668,11 +673,13 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
                 yError() << logPrefix << "Failed to get Torque3DSensor" << inputSensorName;
                 return;
             }
-            const auto* constSensor = static_cast<const sensor::impl::Torque3DSensor*>(isensor.get());
+            const auto* constSensor =
+                static_cast<const sensor::impl::Torque3DSensor*>(isensor.get());
             auto* sensor = const_cast<sensor::impl::Torque3DSensor*>(constSensor);
             // Copy its data to the buffer used for exposing the IWear interface
-            sensor->setBuffer(
-                {wearDataInputSensor.data.x, wearDataInputSensor.data.y, wearDataInputSensor.data.z});
+            sensor->setBuffer({wearDataInputSensor.data.x,
+                               wearDataInputSensor.data.y,
+                               wearDataInputSensor.data.z});
             // Set the status
             sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
         }
@@ -727,8 +734,7 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
             // ====================
             auto isensor = getVirtualJointKinSensor(inputSensorName);
             if (!isensor) {
-                yError() << logPrefix << "Failed to get VirtualJointKinSensor"
-                         << inputSensorName;
+                yError() << logPrefix << "Failed to get VirtualJointKinSensor" << inputSensorName;
                 askToStop();
                 return;
             }
@@ -778,7 +784,6 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
         pImpl->timestamp.sequenceNumber++;
         pImpl->timestamp.time = yarp::os::Time::now();
 
-
         // This is used to handle the overall status of IWear
         if (pImpl->firstRun) {
             pImpl->firstRun = false;
@@ -814,15 +819,15 @@ WearStatus IWearRemapper::getStatus() const
     for (const auto& s : getAllSensors()) {
         switch (s->getSensorStatus()) {
             case sensor::SensorStatus::Overflow:
-                yWarning() << logPrefix << "type (" << static_cast<int>(s->getSensorType()) <<
-                              ") sensor [" << s->getSensorName() << "] status is (" <<
-                              static_cast<int>(s->getSensorStatus()) << ")";
+                yWarning() << logPrefix << "type (" << static_cast<int>(s->getSensorType())
+                           << ") sensor [" << s->getSensorName() << "] status is ("
+                           << static_cast<int>(s->getSensorStatus()) << ")";
                 status = WearStatus::Overflow;
                 break;
             case sensor::SensorStatus::Timeout:
-                yWarning() << logPrefix << "type (" << static_cast<int>(s->getSensorType()) <<
-                              ") sensor [" << s->getSensorName() << "] status is (" <<
-                              static_cast<int>(s->getSensorStatus()) << ")";
+                yWarning() << logPrefix << "type (" << static_cast<int>(s->getSensorType())
+                           << ") sensor [" << s->getSensorName() << "] status is ("
+                           << static_cast<int>(s->getSensorStatus()) << ")";
                 if (status == WearStatus::Overflow) {
                     break;
                 }
@@ -834,9 +839,9 @@ WearStatus IWearRemapper::getStatus() const
             default:
                 // If even just one sensor is Error, Unknown, or
                 // any other state return error
-                yError() << logPrefix << "type (" << static_cast<int>(s->getSensorType()) <<
-                              ") sensor [" << s->getSensorName() << "] status is (" <<
-                              static_cast<int>(s->getSensorStatus()) << ")";
+                yError() << logPrefix << "type (" << static_cast<int>(s->getSensorType())
+                         << ") sensor [" << s->getSensorName() << "] status is ("
+                         << static_cast<int>(s->getSensorStatus()) << ")";
                 return WearStatus::Error;
         }
     }
@@ -942,7 +947,7 @@ IWearRemapper::getSensors(const sensor::SensorType type) const
             for (const auto& s : pImpl->virtualJointKinSensors) {
                 sensors.push_back(s.second);
             }
-        break;
+            break;
         case sensor::SensorType::VirtualSphericalJointKinSensor:
             for (const auto& s : pImpl->virtualSphericalJointKinSensors) {
                 sensors.push_back(s.second);
@@ -968,7 +973,8 @@ IWearRemapper::impl::getSensor(const sensor::SensorName name,
                                const sensor::SensorType type,
                                std::map<std::string, SensorPtr<SensorImpl>>& storage)
 {
-    // TODO check if this check on the sensor name is required, and how it is done in case rpc is not available
+    // TODO check if this check on the sensor name is required, and how it is done in case rpc is
+    // not available
     if (useRPC && !validSensorName(name, type)) {
         yError() << logPrefix << "Sensor" << name << "not found in the list read from the wrapper";
         return nullptr;
@@ -1101,11 +1107,9 @@ wearable::SensorPtr<const sensor::IVirtualJointKinSensor>
 IWearRemapper::getVirtualJointKinSensor(const sensor::SensorName name) const
 {
     std::lock_guard<std::recursive_mutex> lock(pImpl->mutex);
-    return pImpl->getSensor<const sensor::IVirtualJointKinSensor,
-                            sensor::impl::VirtualJointKinSensor>(
-        name,
-        sensor::SensorType::VirtualJointKinSensor,
-        pImpl->virtualJointKinSensors);
+    return pImpl
+        ->getSensor<const sensor::IVirtualJointKinSensor, sensor::impl::VirtualJointKinSensor>(
+            name, sensor::SensorType::VirtualJointKinSensor, pImpl->virtualJointKinSensors);
 }
 
 wearable::SensorPtr<const sensor::IVirtualSphericalJointKinSensor>
