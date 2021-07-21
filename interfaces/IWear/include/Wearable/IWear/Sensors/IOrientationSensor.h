@@ -10,7 +10,7 @@
 #define WEARABLE_IORIENTATION_SENSOR_H
 
 #include "Wearable/IWear/Sensors/ISensor.h"
-#include "Wearable/IWear/Sensors/Utils.h"
+#include "Wearable/IWear/Utils.h"
 
 namespace wearable {
     namespace sensor {

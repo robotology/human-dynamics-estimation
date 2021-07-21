@@ -9,8 +9,9 @@
 #ifndef WEARABLE_UTILS_H
 #define WEARABLE_UTILS_H
 
-#include "Wearable/IWear/Sensors/ISensor.h"
 #include <cmath>
+
+#include "Wearable/IWear/Sensors/ISensor.h"
 
 namespace wearable {
     namespace utils {
