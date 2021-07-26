@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE robot PUBLIC "-//YARP//DTD yarprobotinterface 3.0//EN" "http://www.yarp.it/DTD/yarprobotinterfaceV3.0.dtd">
+<robot name="iCub-Retargeting" build=0 portprefix="">
+
+    <device type="iwear_remapper" name="XSenseIWearRemapper">
+        <param name="wearableDataPorts">(/iFeelSuit/WearableData/data:o /WearableData/HapticGlove/LeftHand/data:o /WearableData/HapticGlove/RightHand/data:o)</param>
+        <param name="useRPC">false</param>
+    </device>
+
+    <device type="human_state_provider" name="RobotStateProvider">
+        <param name="period">0.02</param>
+        <param name="urdf">teleoperation_iCub_model_V_3.urdf</param>
+        <param name="fixedBaseFrame">chest</param>
+        <!-- ikSolver options: pairwised, global, integrationbased -->
+        <param name="ikSolver">integrationbased</param>
+        <param name="useXsensJointsAngles">false</param>
+        <param name="allowIKFailures">true</param>
+        <param name="useDirectBaseMeasurement">false</param>
+        <!-- optimization parameters -->
+        <param name="maxIterationsIK">300</param>
+        <param name="ikLinearSolver">ma27</param>
+        <param name="ikPoolSizeOption">2</param>
+        <param name="posTargetWeight">0.0</param>
+        <param name="rotTargetWeight">1.0</param>
+        <param name="costRegularization">1.0</param>
+        <param name="costTolerance">0.001</param>
+        <param name="rpcPortPrefix">iCub</param>
+        <!-- inverse velocity kinematics parameters -->
+        <!-- inverseVelocityKinematicsSolver values:
+        QP
+        moorePenrose,
+        completeOrthogonalDecomposition,
+        leastSquare,
+        choleskyDecomposition,
+        sparseCholeskyDecomposition,
+        robustCholeskyDecomposition,
+        sparseRobustCholeskyDecomposition -->
+        <param name='inverseVelocityKinematicsSolver'>sparseRobustCholeskyDecomposition</param>
+        <param name="linVelTargetWeight">0.0</param>
+        <param name="angVelTargetWeight">1.0</param>
+        <!-- integration based IK parameters -->
+        <param name='integrationBasedJointVelocityLimit'>10.0</param> <!-- comment or -1.0 for no limits -->
+        <param name="integrationBasedIKMeasuredVelocityGainLinRot">(1.0 1.0)</param>
+        <param name="integrationBasedIKCorrectionGainsLinRot">(2.0 30.0)</param>
+        <param name="integrationBasedIKIntegralCorrectionGainsLinRot">(0.0 0.0)</param>
+        <group name="MODEL_TO_DATA_LINK_NAMES">
+            <param name="map_chest">(chest, iFeelSuit::vLink::Node#6)</param>
+            <param name="map_l_upper_arm_fake">(l_upper_arm_fake iFeelSuit::vLink::Node#5)</param>
+            <param name="map_l_forearm_fake">(l_forearm_fake, iFeelSuit::vLink::Node#4)</param>
+            <param name="map_l_hand_fake">(l_hand_fake_sg, HapticGlove::vLink::l_hand)</param>
+            <param name="map_r_upper_arm_fake">(r_upper_arm_fake iFeelSuit::vLink::Node#7)</param>
+            <param name="map_r_forearm_fake">(r_forearm_fake, iFeelSuit::vLink::Node#8)</param>
+            <param name="map_r_hand_fake">(r_hand_fake_sg, HapticGlove::vLink::r_hand)</param>
+            <!-- Uncomment the desired links, and select the associated node id -->
+            <!---
+            <param name="map_Head">(head, iFeelSuit::vLink::Node#XX)</param>
+            <param name="map_r_upper_leg">(r_upper_leg, iFeelSuit::vLink::Node#XX)</param>
+            <param name="map_r_lower_leg">(r_lower_leg, iFeelSuit::vLink::Node#XX)</param>
+            <param name="map_r_foot_rear">(r_foot_rear, iFeelSuit::vLink::Node#XX)</param>
+            <param name="map_l_upper_leg">(l_upper_leg, iFeelSuit::vLink::Node#XX)</param>
+            <param name="map_l_lower_leg">(l_lower_leg, iFeelSuit::vLink::Node#XX)</param>
+            <param name="map_l_foot_rear">(l_foot_rear, iFeelSuit::vLink::Node#XX)</param>
+            -->
+        </group>
+        <param name="jointList">("l_shoulder_pitch",
+                                 "l_shoulder_roll",
+                                 "l_shoulder_yaw",
+                                 "l_elbow",
+                                 "l_wrist_prosup",
+                                 "l_wrist_pitch",
+                                 "l_wrist_yaw",
+                                 "r_shoulder_pitch",
+                                 "r_shoulder_roll",
+                                 "r_shoulder_yaw",
+                                 "r_elbow",
+                                 "r_wrist_prosup",
+                                 "r_wrist_pitch",
+                                 "r_wrist_yaw",
+                                 "j_l_upper_arm_fake",
+                                 "j_r_upper_arm_fake",
+                                 "j_l_forearm_fake",
+                                 "j_r_forearm_fake",
+                                 "j_l_hand_fake",
+                                 "j_r_hand_fake",
+                                  "torso_pitch",
+                                 "torso_roll",
+                                 "torso_yaw")
+        </param>
+        <group name="CUSTOM_CONSTRAINTS">
+        <!-- check issue https://github.com/robotology/human-dynamics-estimation/issues/132 for more info-->
+        <!-- note that a group can not be empty, otherwise it returns error-->
+        <!-- custom joint limits velocities-->
+            <!--param name="custom_joints_velocity_limits_names">(neck_roll, neck_pitch)</param-->
+            <param name="custom_joints_velocity_limits_names">( )</param>
+            <!-- the upper bound is "+", while the lower bounds are "-" -->
+            <!--param name="custom_joints_velocity_limits_values">()</param-->
+            <param name="custom_joints_velocity_limits_values">( )</param>
+        <!-- **** base velocity limit: roll, pitch, yaw, x, y, z ****-->
+            <!--param name="base_velocity_limit_upper_buond">()</param>
+            <param name="base_velocity_limit_lower_buond">()</param-->
+        <!-- Custom joint Configuration constraints-->
+        <!-- if the boudary value is inf, I will use -1000.0 rad, or +1000.0 rad-->
+            <!--param name="custom_constraint_variables">()</param>
+            <param name="custom_constraint_matrix"> ()</param>
+            <param name="custom_constraint_lower_bound"> ()</param>
+            <param name="custom_constraint_upper_bound"> ()</param>
+            <param name="k_u">0.5</param>
+            <param name="k_l">0.5</param-->
+        </group>
+        <action phase="startup" level="5" type="attach">
+            <paramlist name="networks">
+                <elem name="HumanStateProviderLabel">XSenseIWearRemapper</elem>
+            </paramlist>
+        </action>
+        <action phase="shutdown" level="5" type="detach"/>
+    </device>
+
+    <!-- Uncomment to stream the output of HumanStateProvider on a YARP port -->
+    <device type="human_state_wrapper" name="RobotStateWrapper">
+        <param name="period">0.01</param>
+        <param name="outputPort">/iCub/RobotStateWrapper/state:o</param>
+        <action phase="startup" level="5" type="attach">
+            <paramlist name="networks">
+                <elem name="HumanStateWrapperLabel">RobotStateProvider</elem>
+            </paramlist>
+        </action>
+        <action phase="shutdown" level="5" type="detach"/>
+    </device>
+
+</robot>
