@@ -24,15 +24,15 @@
 #include "Wearable/IWear/Sensors/ISkinSensor.h"
 #include "Wearable/IWear/Sensors/ITemperatureSensor.h"
 #include "Wearable/IWear/Sensors/ITorque3DSensor.h"
-#include "Wearable/IWear/Sensors/IVirtualLinkKinSensor.h"
 #include "Wearable/IWear/Sensors/IVirtualJointKinSensor.h"
+#include "Wearable/IWear/Sensors/IVirtualLinkKinSensor.h"
 #include "Wearable/IWear/Sensors/IVirtualSphericalJointKinSensor.h"
 
 #include "Wearable/IWear/Actuators/IActuator.h"
 
 #include "Wearable/IWear/Actuators/IHaptic.h"
-#include "Wearable/IWear/Actuators/IMotor.h"
 #include "Wearable/IWear/Actuators/IHeater.h"
+#include "Wearable/IWear/Actuators/IMotor.h"
 
 #include <memory>
 #include <string>
@@ -66,16 +66,14 @@ namespace wearable {
 
     using VectorOfActuatorNames = ElementVector<actuator::ActuatorName>;
 
-<<<<<<< HEAD
-    using TimeStamp = struct
-=======
     struct TimeStamp
->>>>>>> 914a410 (Minor changes)
     {
         double time = 0;
         size_t sequenceNumber = 0;
     };
 
+    // Vector with all the valid sensor types
+    // (actuator::SensorType::Invalid is not included in the list)
     const std::vector<sensor::SensorType> AllSensorTypes = {
         sensor::SensorType::Accelerometer,
         sensor::SensorType::EmgSensor,
@@ -95,6 +93,8 @@ namespace wearable {
         sensor::SensorType::VirtualSphericalJointKinSensor,
     };
 
+    // Vector with all the valid actuator types
+    // (actuator::ActuatorType::Invalid is not included in the list)
     const std::vector<actuator::ActuatorType> AllActuatorTypes = {
         actuator::ActuatorType::Haptic,
         actuator::ActuatorType::Motor,
@@ -131,7 +131,8 @@ public:
     getSensors(const sensor::SensorType type) const = 0;
 
     // NOTE: Templatized virtual functions are not allowed
-    virtual ElementPtr<const actuator::IActuator> getActuator(const actuator::ActuatorName name) const = 0;
+    virtual ElementPtr<const actuator::IActuator>
+    getActuator(const actuator::ActuatorName name) const = 0;
     virtual VectorOfElementPtr<const actuator::IActuator>
     getActuators(const actuator::ActuatorType type) const = 0;
 
@@ -230,7 +231,8 @@ public:
 
     inline VectorOfSensorPtr<const sensor::IVirtualLinkKinSensor> getVirtualLinkKinSensors() const;
 
-    inline VectorOfSensorPtr<const sensor::IVirtualJointKinSensor> getVirtualJointKinSensors() const;
+    inline VectorOfSensorPtr<const sensor::IVirtualJointKinSensor>
+    getVirtualJointKinSensors() const;
 
     inline VectorOfSensorPtr<const sensor::IVirtualSphericalJointKinSensor>
     getVirtualSphericalJointKinSensors() const;
@@ -310,19 +312,16 @@ wearable::IWear::castVectorOfElementPtr(const VectorOfElementPtr<const T>& iElem
     VectorOfElementPtr<const E> elements;
     elements.reserve(iElements.size());
 
-    for (const auto& iElement : iElements)
-    {
+    for (const auto& iElement : iElements) {
         wearable::ElementPtr<const E> castElement = std::dynamic_pointer_cast<const E>(iElement);
 
-        if (!castElement)
-        {
+        if (!castElement) {
 
-            if (castElement->getWearableElementType() == wearable::ElementType::WearableSensor)
-            {
+            if (castElement->getWearableElementType() == wearable::ElementType::WearableSensor) {
                 wError << "Failed to cast wearable sensor element";
             }
-            else if (castElement->getWearableElementType() == wearable::ElementType::WearableActuator)
-            {
+            else if (castElement->getWearableElementType()
+                     == wearable::ElementType::WearableActuator) {
                 wError << "Failed to case wearable actuator element";
             }
         }
@@ -361,8 +360,8 @@ wearable::IWear::getAllActuators() const
     return allActuators;
 }
 
-//template<typename E>
-//inline wearable::VectorOfElementPtr<const E> wearable::IWear::getAllElements() const
+// template<typename E>
+// inline wearable::VectorOfElementPtr<const E> wearable::IWear::getAllElements() const
 //{
 //    wearable::VectorOfElementPtr<const E> allElements;
 
@@ -406,7 +405,8 @@ wearable::IWear::getSensorNames(const sensor::SensorType type) const
     return sensorNames;
 }
 
-inline wearable::VectorOfActuatorNames wearable::IWear::getActuatorNames(const actuator::ActuatorType type) const
+inline wearable::VectorOfActuatorNames
+wearable::IWear::getActuatorNames(const actuator::ActuatorType type) const
 {
     const wearable::VectorOfElementPtr<const actuator::IActuator> actuators = getActuators(type);
 
@@ -560,21 +560,21 @@ inline wearable::VectorOfElementPtr<const wearable::actuator::IHaptic>
 wearable::IWear::getHapticActuators() const
 {
     return castVectorOfElementPtr<actuator::IHaptic, actuator::IActuator>(
-                getActuators(actuator::ActuatorType::Haptic));
+        getActuators(actuator::ActuatorType::Haptic));
 }
 
 inline wearable::VectorOfElementPtr<const wearable::actuator::IMotor>
 wearable::IWear::getMotorActuators() const
 {
     return castVectorOfElementPtr<actuator::IMotor, actuator::IActuator>(
-                getActuators(actuator::ActuatorType::Motor));
+        getActuators(actuator::ActuatorType::Motor));
 }
 
 inline wearable::VectorOfElementPtr<const wearable::actuator::IHeater>
 wearable::IWear::getHeaterActuators() const
 {
     return castVectorOfElementPtr<actuator::IHeater, actuator::IActuator>(
-                getActuators(actuator::ActuatorType::Heater));
+        getActuators(actuator::ActuatorType::Heater));
 }
 
 #endif // WEARABLE_IWEAR_H
