@@ -24,6 +24,7 @@ namespace wearable {
             Haptic = 0,
             Motor,
             Heater,
+            Invalid
         };
 
         enum class ActuatorStatus
@@ -45,11 +46,12 @@ protected:
     std::atomic<ActuatorStatus> m_status;
 
 public:
-    IActuator(ActuatorName aName = {},
-              ActuatorStatus aStatus = ActuatorStatus::Unknown)
+    IActuator(ActuatorName aName = {}, ActuatorStatus aStatus = ActuatorStatus::Unknown)
         : m_name{aName}
         , m_status{aStatus}
-    { m_wearable_element_type = ElementType::WearableActuator; }
+    {
+        m_wearable_element_type = ElementType::WearableActuator;
+    }
 
     virtual ~IActuator() = default;
 
