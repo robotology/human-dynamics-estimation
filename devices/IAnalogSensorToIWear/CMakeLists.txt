@@ -17,7 +17,7 @@ target_include_directories(IAnalogSensorToIWear PRIVATE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
 
 target_link_libraries(IAnalogSensorToIWear PUBLIC
-    Wearable::IWear YARP::YARP_dev)
+    Wearable::IWear YARP::YARP_dev YARP::YARP_init)
 
 yarp_install(
     TARGETS IAnalogSensorToIWear

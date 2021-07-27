@@ -199,7 +199,6 @@ bool IWearRemapper::open(yarp::os::Searchable& config)
     yInfo() << logPrefix << "*** ========================";
 
     // Initialize the network
-    // TODO: is this required in every DeviceDriver?
     pImpl->network = yarp::os::Network();
     if (!yarp::os::Network::initialized() || !yarp::os::Network::checkNetwork(5.0)) {
         yError() << logPrefix << "YARP server wasn't found active.";

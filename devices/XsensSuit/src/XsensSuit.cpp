@@ -10,6 +10,7 @@
 #include "XSensMVNDriver.h"
 
 #include <yarp/os/LogStream.h>
+#include <yarp/os/Network.h>
 
 #include <map>
 #include <mutex>
@@ -69,6 +70,8 @@ public:
         virtualLinkKinSensorsMap;
     std::map<std::string, driverToDeviceSensors<XsensVirtualSphericalJointKinSensor>>
         virtualSphericalJointKinSensorsMap;
+
+    std::unique_ptr<yarp::os::Network> network = nullptr;
 
     // ------------------------
     // Custom utility functions
@@ -765,7 +768,8 @@ bool XsensSuit::open(yarp::os::Searchable& config)
     // Check for mvn recording flag
     bool saveMVNRecording;
     if (!config.check("saveMVNRecording")) {
-        yWarning() << logPrefix << "OPTIONAL parameter <saveMVNRecording> NOT found, setting it to false.";
+        yWarning() << logPrefix
+                   << "OPTIONAL parameter <saveMVNRecording> NOT found, setting it to false.";
         saveMVNRecording = false;
     }
     else {
@@ -776,12 +780,14 @@ bool XsensSuit::open(yarp::os::Searchable& config)
     // Check for saving current calibration flag
     bool saveCurrentCalibration;
     if (!config.check("saveCurrentCalibration")) {
-        yWarning() << logPrefix << "OPTIONAL parameter <saveCurrentCalibration> NOT found, setting it to false.";
+        yWarning() << logPrefix
+                   << "OPTIONAL parameter <saveCurrentCalibration> NOT found, setting it to false.";
         saveCurrentCalibration = false;
     }
     else {
         saveCurrentCalibration = config.find("saveCurrentCalibration").asBool();
-        yInfo() << logPrefix << "<saveCurrentCalibration> parameter set to " << saveCurrentCalibration;
+        yInfo() << logPrefix << "<saveCurrentCalibration> parameter set to "
+                << saveCurrentCalibration;
     }
 
     xsensmvn::DriverConfiguration driverConfig{rundepsFolder,
@@ -883,6 +889,16 @@ bool XsensSuit::open(yarp::os::Searchable& config)
                 XsensSuitImpl::driverToDeviceSensors<
                     XsensSuitImpl::XsensVirtualSphericalJointKinSensor>{sensor, s});
         }
+    }
+
+    // =================================
+    // CHECK YARP NETWORK INITIALIZATION
+    // =================================
+
+    pImpl->network = std::make_unique<yarp::os::Network>();
+    if (!yarp::os::Network::initialized() || !yarp::os::Network::checkNetwork(5.0)) {
+        yError() << LogPrefix << "YARP server wasn't found active.";
+        return false;
     }
 
     return true;
