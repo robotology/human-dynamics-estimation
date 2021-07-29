@@ -944,6 +944,9 @@ IWearRemapper::getSensors(const sensor::SensorType type) const
                 sensors.push_back(s.second);
             }
             break;
+        case sensor::SensorType::Invalid:
+            yWarning() << logPrefix << "Requested Invalid sensor type";
+            break;
     }
 
     return sensors;
