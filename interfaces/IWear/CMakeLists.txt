@@ -50,6 +50,9 @@ install(
     FILES include/Wearable/IWear/IWear.h
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/Wearable/IWear)
 install(
+    FILES include/Wearable/IWear/Utils.h
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/Wearable/IWear)
+install(
     DIRECTORY include/Wearable/IWear/Sensors
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/Wearable/IWear)
 install(
