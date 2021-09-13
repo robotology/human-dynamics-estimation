@@ -77,53 +77,41 @@ The main applications are the following
 |:----------:|:----------:|:----------:| 
 | Inverse Kinematics | kinematic sensors | XsensSuit |
 | Dynamics Estimation | kinematic sensors <br> FTshoes | XsensSuit <br> FTshoes |
-| Human-Robot Interaction | kinematic sensors <br> FTsensors <br> FTshoes | XsensSuit <br> FTshoes <br> robot |
-| Whole-Body Retargeting | kinematic sensors <br> robot | XsensSuit |
+| Whole-Body Retargeting | kinematic sensors | XsensSuit |
 
 ## How to run
 ### Applications
 Documentation for running each specific application can be found at the following links:
-- Inverse Kinematics
-- Dynamics Estimation
-- Human-Robot Interaction
-- Whole-Body Retargeting
-
-Accordingly to what presented in [previous section](https://github.com/robotology/human-dynamics-estimation#applications), each application will require a proper set of wearable device sources running.
-
-### Wearable device sources
-Documentation for running the wearable data source can be found in [`wearables`](https://github.com/robotology/wearables) at the following links:
-- [FTShoes](https://github.com/robotology/wearables/blob/master/doc/How-to-run-FTshoes.md)
-- [XsensSuit](https://github.com/robotology/wearables/blob/master/doc/How-to-run-XsensSuit.md)
-- [iCub robot](https://github.com/robotology/wearables/blob/master/doc/How-to-run-iCub-as-wearable-source.md)
+- [Inverse Kinematics](/doc/how-to-run-inverse-kinematics.md)
+- [Dynamics Estimation](/doc/how-to-run-dynamics-estimation.md)
+- [Whole-Body Retargeting](/doc/how-to-run-whole-body-retargeting.md)
 
 ## Citing this work
 
 Please cite the following publications if you are using the code contained in this repository for your own research and/or experiments:
 
-#### AUtonomous RObots
+#### MDPI Sensors
 
 ~~~
-Towards Real-time Whole-Body Human Dynamics Estimation through Probabilistic Sensor Fusion Algorithms.
-A Physical Human–Robot Interaction Case Study.
-Latella, C.; Lorenzini, M.; Lazzaroni, M.; Romano, F.; Traversaro, S.; Akhras, M.A.; Pucci, D.; Nori, F.
-Autonomous Robots, Springer US, October 2018, doi:
-10.1007/s10514-018-9808-4
-https://doi.org/10.1007/s10514-018-9808-4
+Simultaneous Floating-Base Estimation of Human Kinematics and Joint Torques.
+Latella, C., Traversaro, S., Ferigo, D., Tirupachuri, Y., Rapetti, L., Andrade Chavez, F. J., Nori F., Pucci, D.
+Sensors, 19(12), 2794., 2019, doi:
+10.3390/s19122794
+https://www.mdpi.com/1424-8220/19/12/2794
 ~~~
 
 The bibtex code for including this citation is provided:
 
 ~~~
-@Article{Latella2018,
-author="Latella, Claudia and Lorenzini, Marta and Lazzaroni, Maria and Romano, Francesco and Traversaro, Silvio and Akhras, M. Ali and Pucci, Daniele and Nori, Francesco",
-title="Towards real-time whole-body human dynamics estimation through probabilistic sensor fusion algorithms",
-journal="Autonomous Robots",
-year="2018",
-month="Oct",
-day="31",
-issn="1573-7527",
-doi="10.1007/s10514-018-9808-4",
-url="https://doi.org/10.1007/s10514-018-9808-4"
+@article{latella2019simultaneous,
+  title={Simultaneous floating-base estimation of human kinematics and joint torques},
+  author={Latella, Claudia and Traversaro, Silvio and Ferigo, Diego and Tirupachuri, Yeshasvi and Rapetti, Lorenzo and Andrade Chavez, Francisco Javier and Nori, Francesco and Pucci, Daniele},
+  journal={Sensors},
+  volume={19},
+  number={12},
+  pages={2794},
+  year={2019},
+  publisher={Multidisciplinary Digital Publishing Institute}
 }
 ~~~
 
