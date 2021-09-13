@@ -295,7 +295,7 @@
         <action phase="shutdown" level="5" type="detach"/>
     </device>
 
-    <!--device type="human_dynamics_wrapper" name="HumanDynamicsWrapper">
+    <device type="human_dynamics_wrapper" name="HumanDynamicsWrapper">
         <param name="period">0.1</param>
         <param name="outputPort">/HDE/HumanDynamicsWrapper/torques:o</param>
         <action phase="startup" level="5" type="attach">
@@ -304,7 +304,7 @@
             </paramlist>
         </action>
         <action phase="shutdown" level="5" type="detach"/>
-    </device-->
+    </device>
 
     <device type="human_dynamics_publisher" name="HumanDynamicsPublisher">
         <param name="period">0.020</param>
