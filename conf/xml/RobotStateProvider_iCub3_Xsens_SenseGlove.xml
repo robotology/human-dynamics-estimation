@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE robot PUBLIC "-//YARP//DTD yarprobotinterface 3.0//EN" "http://www.yarp.it/DTD/yarprobotinterfaceV3.0.dtd">
+<robot name="iCub3-Retargeting-Xsens-SenseGlove" build=0 portprefix="">
+
+    <device type="iwear_remapper" name="XSenseIWearRemapper">
+        <param name="wearableDataPorts">( /XSensSuit/WearableData/data:o /WearableData/HapticGlove/LeftHand/data:o /WearableData/HapticGlove/RightHand/data:o)</param>
+        <param name="useRPC">false</param>
+        <param name="wearableRPCPorts">(/XSensSuit/WearableData/metadataRpc:o)</param>
+    </device>
+
+    <device type="human_state_provider" name="RobotStateProvider">
+        <param name="period">0.02</param>
+        <param name="urdf">teleoperation_iCub_model_V_3.urdf</param>
+        <param name="floatingBaseFrame">(root_link, XsensSuit::vLink::Pelvis)</param>
+        <!-- ikSolver options: pairwised, global, integrationbased -->
+        <param name="ikSolver">integrationbased</param>
+        <param name="useXsensJointsAngles">false</param>
+        <param name="allowIKFailures">true</param>
+        <param name="useDirectBaseMeasurement">false</param>
+        <!-- optimization parameters -->
+        <param name="maxIterationsIK">300</param>
+        <param name="ikLinearSolver">ma27</param>
+        <param name="ikPoolSizeOption">2</param>
+        <param name="posTargetWeight">0.0</param>
+        <param name="rotTargetWeight">1.0</param>
+        <param name="costRegularization">1.0</param>
+        <param name="costTolerance">0.001</param>
+        <param name="rpcPortPrefix">iCub</param>
+        <!-- inverse velocity kinematics parameters -->
+        <!-- inverseVelocityKinematicsSolver values:
+        QP
+        moorePenrose,
+        completeOrthogonalDecomposition,
+        leastSquare,
+        choleskyDecomposition,
+        sparseCholeskyDecomposition,
+        robustCholeskyDecomposition,
+        sparseRobustCholeskyDecomposition -->
+        <param name='inverseVelocityKinematicsSolver'>sparseCholeskyDecomposition</param>
+        <param name="linVelTargetWeight">0.0</param>
+        <param name="angVelTargetWeight">1.0</param>
+        <!-- integration based IK parameters -->
+        <param name='integrationBasedJointVelocityLimit'>10.0</param> <!-- comment or -1.0 for no limits -->
+        <param name="integrationBasedIKMeasuredVelocityGainLinRot">(1.0 1.0)</param>
+        <param name="integrationBasedIKCorrectionGainsLinRot">(2.0 10.0)</param>
+        <param name="integrationBasedIKIntegralCorrectionGainsLinRot">(0.0 0.0)</param>
+        <group name="MODEL_TO_DATA_LINK_NAMES">
+            <param name="map_Pelvis">(root_link, XsensSuit::vLink::Pelvis)</param>
+            <param name="map_T8">(chest, XsensSuit::vLink::T8)</param>
+            <param name="map_Head">(head, XsensSuit::vLink::Head)</param>
+            <param name="map_RightUpperArm">(r_upper_arm_fake, XsensSuit::vLink::RightUpperArm)</param>
+            <param name="map_RightForeArm">(r_forearm_fake, XsensSuit::vLink::RightForeArm)</param>
+            <param name="map_RightHand">(r_hand_fake_sg, HapticGlove::vLink::r_hand)</param>
+            <param name="map_LeftUpperArm">(l_upper_arm_fake, XsensSuit::vLink::LeftUpperArm)</param>
+            <param name="map_LeftForeArm">(l_forearm_fake, XsensSuit::vLink::LeftForeArm)</param>
+            <param name="map_LeftHand">(l_hand_fake_sg, HapticGlove::vLink::l_hand)</param>
+            <param name="map_RightUpperLeg">(r_upper_leg, XsensSuit::vLink::RightUpperLeg)</param>
+            <param name="map_RightLowerLeg">(r_lower_leg, XsensSuit::vLink::RightLowerLeg)</param>
+            <param name="map_RightFoot">(r_foot_rear, XsensSuit::vLink::RightFoot)</param>
+            <param name="map_LeftUpperLeg">(l_upper_leg, XsensSuit::vLink::LeftUpperLeg)</param>
+            <param name="map_LeftLowerLeg">(l_lower_leg, XsensSuit::vLink::LeftLowerLeg)</param>
+            <param name="map_LeftFoot">(l_foot_rear, XsensSuit::vLink::LeftFoot)</param>
+        </group>
+        <group name="CUSTOM_CONSTRAINTS">
+        <!-- check issue https://github.com/robotology/human-dynamics-estimation/issues/132 for more info-->
+        <!-- note that a group can not be empty, otherwise it returns error-->
+        <!-- custom joint limits velocities-->
+            <!--param name="custom_joints_velocity_limits_names">(neck_roll, neck_pitch)</param-->
+            <param name="custom_joints_velocity_limits_names">()</param>
+            <!-- the upper bound is "+", while the lower bounds are "-" -->
+            <!--param name="custom_joints_velocity_limits_values">(10.0, 15.0)</param-->
+            <param name="custom_joints_velocity_limits_values">()</param>
+        <!-- **** base velocity limit: roll, pitch, yaw, x, y, z ****-->
+            <!--param name="base_velocity_limit_upper_buond">(1.0, 1.0, 1.0, 1.0, 1.0, 1.0 )</param>
+            <param name="base_velocity_limit_lower_buond">(-1.0, -1.0, -1.0, -1.0, -1.0, -1.0 )</param-->
+        <!-- Custom joint Configuration constraints-->
+        <!-- if the boudary value is inf, I will use -1000.0 rad, or +1000.0 rad-->
+            <!-- param name="custom_constraint_variables">(
+            l_shoulder_pitch, l_shoulder_roll, l_shoulder_yaw, l_elbow, l_wrist_prosup,
+            r_shoulder_pitch, r_shoulder_roll, r_shoulder_yaw, r_elbow, r_wrist_prosup)</param>
+            <param name="custom_constraint_matrix"> (
+            (1.7105, -1.7105,  0.0,     0.0,    0.0,    0.0,     0.0,      0.0,       0.0,    0.0),
+            (1.7105, -1.7105,  -1.7105, 0.0,    0.0,    0.0,     0.0,      0.0,       0.0,    0.0),
+            (0.0,    1.0,      1.0,     0.0,    0.0,    0.0,     0.0,      0.0,       0.0,    0.0),
+            (0.0,    1.0,      0.0427,  0.0,    0.0,    0.0,     0.0,      0.0,       0.0,    0.0),
+            (0.0,    1.0,      0.0,     0.0,    0.0,    0.0,     0.0,      0.0,       0.0,    0.0),
+            (0.0,    0.0,      0.0,     2.5,    1.0,    0.0,     0.0,      0.0,       0.0,    0.0),
+            (0.0,    0.0,      0.0,     -2.5,   1.0,    0.0,     0.0,      0.0,       0.0,    0.0),
+            (0.0,    0.0,      0.0,     0.0,    0.0,    1.7105,  -1.7105,  0.0,       0.0,    0.0),
+            (0.0,    0.0,      0.0,     0.0,    0.0,    1.7105,  -1.7105,  -1.7105,   0.0,    0.0,),
+            (0.0,    0.0,      0.0,     0.0,    0.0,    0.0,     1.0,       1.0,      0.0,    0.0,),
+            (0.0,    0.0,      0.0,     0.0,    0.0,    0.0,     1.0,       0.0427,   0.0,    0.0,),
+            (0.0,    0.0,      0.0,     0.0,    0.0,    0.0,     1.0,       0.0,      0.0,    0.0,),
+            (0.0,    0.0,      0.0,     0.0,    0.0,    0.0,     0.0,       0.0,      2.5,    1.0,),
+            (0.0,    0.0,      0.0,     0.0,    0.0,    0.0,     0.0,       0.0,      -2.5,   1.0,),
+            )</param>
+            <param name="custom_constraint_lower_bound"> (
+            -6.0563,  -6.3979,  -1.1623,  0.4611,  -1000.0,  -1000.0,  -5.2796,
+            -6.0563,  -6.3979,  -1.1623,  0.4611,  -1000.0,  -1000.0,  -5.2796)</param>
+            <param name="custom_constraint_upper_bound"> (
+            1000.0,  1.9622,  3.7228,  1000.0,  1.7453,  5.2796,  1000.0,
+            1000.0,  1.9622,  3.7228,  1000.0,  1.7453,  5.2796,  1000.0)</param>
+            <param name="k_u">0.5</param>
+            <param name="k_l">0.5</param-->
+        </group>
+        <action phase="startup" level="5" type="attach">
+            <paramlist name="networks">
+                <elem name="HumanStateProviderLabel">XSenseIWearRemapper</elem>
+            </paramlist>
+        </action>
+        <action phase="shutdown" level="5" type="detach"/>
+    </device>
+
+    <!-- Uncomment to stream the output of HumanStateProvider on a YARP port -->
+    <device type="human_state_wrapper" name="RobotStateWrapper">
+        <param name="period">0.01</param>
+        <param name="outputPort">/iCub/RobotStateWrapper/state:o</param>
+        <action phase="startup" level="5" type="attach">
+            <paramlist name="networks">
+                <elem name="HumanStateWrapperLabel">RobotStateProvider</elem>
+            </paramlist>
+        </action>
+        <action phase="shutdown" level="5" type="detach"/>
+    </device>
+
+    <device type="human_state_publisher" name="RobotStatePublisher">
+        <param name="period">0.02</param>
+        <param name="baseTFName">/iCub/root_link</param>
+        <param name="humanJointsTopic">/iCub/joint_states</param>
+	      <param name="portprefix">icub</param>
+	      <param name="basePositionOffset">(0.0 3.0 0.0)</param>
+       	<!--param name="baseOrientationOffset">(0.7071068 0.0 0.0 0.7071068)</param-->
+        <action phase="startup" level="5" type="attach">
+            <paramlist name="networks">
+                <elem name="HumanStatePublisherLabel">RobotStateProvider</elem>
+            </paramlist>
+        </action>
+        <action phase="shutdown" level="5" type="detach"/>
+    </device>
+
+    <!-- uncomment if you want to use the RobotStateProvider data to control the robot position -->
+    <!--device type="robot_position_controller" name="RobotPositionController">
+        <param name="period">0.100</param>
+        <param name="controlMode">positionDirect</param>
+        <param name="refSpeed">15.0</param>
+        <param name="samplingTime">0.01</param>
+        <param name="smoothingTime">0.25</param>
+        <param name="initialSmoothingTime">2.5</param>
+        <param name="maxSmoothingCount">5000</param>
+        <param name="controlBoardsList">(head torso left_arm right_arm left_leg right_leg)</param>
+        <param name="remotePrefix">/icub</param>
+        <param name="localPrefix">/robotPositionController</param>
+        <param name="head">(neck_pitch neck_roll neck_yaw)</param>
+        <param name="torso">(torso_yaw torso_roll torso_pitch)</param>
+        <param name="left_arm">(l_shoulder_pitch l_shoulder_roll l_shoulder_yaw l_elbow l_wrist_prosup l_wrist_pitch l_wrist_yaw)</param>
+        <param name="right_arm">(r_shoulder_pitch r_shoulder_roll r_shoulder_yaw r_elbow r_wrist_prosup r_wrist_pitch r_wrist_yaw)</param>
+        <param name="left_leg">(l_hip_pitch l_hip_roll l_hip_yaw l_knee l_ankle_pitch l_ankle_roll)</param>
+        <param name="right_leg">(r_hip_pitch r_hip_roll r_hip_yaw r_knee r_ankle_pitch r_ankle_roll)</param>
+        <action phase="startup" level="5" type="attach">
+            <paramlist name="networks">
+                <elem name="RobotPositionController">RobotStateProvider</elem>
+            </paramlist>
+        </action>
+        <action phase="shutdown" level="4" type="detach"/>
+    </device-->
+
+</robot>
