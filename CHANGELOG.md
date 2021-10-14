@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+- Remove `rpc` port from `IWearWrapper` and `IWearRemapper`. (https://github.com/robotology/wearables/pull/131)
+
 ### Added
 - Added `IWearFrameVisualizer` module to visualize any wearable device frames associated with the link sensors. (https://github.com/robotology/wearables/pull/121) 
 - Added `HapticGlove` device to stream sense glove data and provide haptic feedback to the user. (https://github.com/robotology/wearables/pull/121) 
