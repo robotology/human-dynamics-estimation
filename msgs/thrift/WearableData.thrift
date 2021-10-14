@@ -189,34 +189,3 @@ struct WearableData {
 16: optional map<string,VirtualJointKinSensor> virtualJointKinSensors;
 17: optional map<string,VirtualSphericalJointKinSensor> virtualSphericalJointKinSensors;
 }
-
-// ============
-// RPC metadata
-// ============
-
-struct WearableSensorMetadata {
-    1: string name;
-}
-
-enum SensorType{
-  ACCELEROMETER,
-  EMG_SENSOR,
-  FORCE_3D_SENSOR,
-  FORCE_TORQUE_6D_SENSOR,
-  FREE_BODY_ACCELERATION_SENSOR,
-  GYROSCOPE,
-  MAGNETOMETER,
-  ORIENTATION_SENSOR,
-  POSE_SENSOR,
-  POSITION_SENSOR,
-  SKIN_SENSOR,
-  TEMPERATURE_SENSOR,
-  TORQUE_3D_SENSOR,
-  VIRTUAL_LINK_KIN_SENSOR,
-  VIRTUAL_JOINT_KIN_SENSOR,
-  VIRTUAL_SPHERICAL_JOINT_KIN_SENSOR,
-}
-
-service WearableMetadataService {
-  map<SensorType,list<WearableSensorMetadata>> getMetadata();
-}

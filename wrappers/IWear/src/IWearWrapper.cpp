@@ -9,12 +9,10 @@
 #include "IWearWrapper.h"
 #include "Wearable/IWear/IWear.h"
 #include "thrift/WearableData.h"
-#include "thrift/WearableMetadataService.h"
 
 #include <yarp/dev/PreciselyTimed.h>
 #include <yarp/os/BufferedPort.h>
 #include <yarp/os/LogStream.h>
-#include <yarp/os/RpcServer.h>
 
 const std::string WrapperName = "IWearWrapper";
 const std::string logPrefix = WrapperName + " :";
@@ -23,15 +21,11 @@ constexpr double DefaultPeriod = 0.01;
 using namespace wearable;
 using namespace wearable::wrappers;
 
-class IWearWrapper::impl : public wearable::msg::WearableMetadataService
+class IWearWrapper::impl
 {
 public:
-    yarp::os::RpcServer rpcPort;
     yarp::os::BufferedPort<msg::WearableData> dataPort;
 
-    std::map<msg::SensorType, std::vector<msg::WearableSensorMetadata>> wearableMetadata;
-
-    std::string rpcPortName;
     std::string dataPortName;
 
     bool firstRun = true;
@@ -61,10 +55,6 @@ public:
     wearable::VectorOfSensorPtr<const wearable::sensor::IVirtualSphericalJointKinSensor>
         virtualSphericalJointKinSensors;
 
-    std::map<msg::SensorType, std::vector<msg::WearableSensorMetadata>> getMetadata() override
-    {
-        return wearableMetadata;
-    }
     //    std::vector<std::string> help(const std::string& functionName = "--all") override; // TODO
 };
 
@@ -438,16 +428,10 @@ bool IWearWrapper::open(yarp::os::Searchable& config)
         return false;
     }
 
-    if (!config.check("rpcPortName") || !config.find("rpcPortName").isString()) {
-        yError() << logPrefix << "rpcPortName parameter not found";
-        return false;
-    }
-
     if (!config.check("period")) {
         yInfo() << logPrefix << "Using default period: " << DefaultPeriod << "s";
     }
 
-    pImpl->rpcPortName = config.find("rpcPortName").asString();
     pImpl->dataPortName = config.find("dataPortName").asString();
 
     const double period = config.check("period", yarp::os::Value(DefaultPeriod)).asFloat64();
@@ -458,7 +442,6 @@ bool IWearWrapper::open(yarp::os::Searchable& config)
 
 bool IWearWrapper::close()
 {
-    pImpl->rpcPort.close();
     pImpl->dataPort.close();
     return true;
 }
@@ -488,90 +471,6 @@ bool IWearWrapper::attach(yarp::dev::PolyDriver* poly)
     // Open the port for streaming data
     pImpl->dataPort.open(pImpl->dataPortName);
 
-    // Prepare the metadata for the RPC port
-    for (const auto& s : pImpl->iWear->getAccelerometers()) {
-        yInfo() << logPrefix << "Adding sensor" << s->getSensorName();
-        pImpl->wearableMetadata[msg::SensorType::ACCELEROMETER].push_back(s->getSensorName());
-    }
-    for (const auto& s : pImpl->iWear->getEmgSensors()) {
-        yInfo() << logPrefix << "Adding sensor" << s->getSensorName();
-        pImpl->wearableMetadata[msg::SensorType::EMG_SENSOR].push_back(s->getSensorName());
-    }
-    for (const auto& s : pImpl->iWear->getForce3DSensors()) {
-        yInfo() << logPrefix << "Adding sensor" << s->getSensorName();
-        pImpl->wearableMetadata[msg::SensorType::FORCE_3D_SENSOR].push_back(s->getSensorName());
-    }
-    for (const auto& s : pImpl->iWear->getForceTorque6DSensors()) {
-        yInfo() << logPrefix << "Adding sensor" << s->getSensorName();
-        pImpl->wearableMetadata[msg::SensorType::FORCE_TORQUE_6D_SENSOR].push_back(
-            s->getSensorName());
-    }
-    for (const auto& s : pImpl->iWear->getFreeBodyAccelerationSensors()) {
-        yInfo() << logPrefix << "Adding sensor" << s->getSensorName();
-        pImpl->wearableMetadata[msg::SensorType::FREE_BODY_ACCELERATION_SENSOR].push_back(
-            s->getSensorName());
-    }
-    for (const auto& s : pImpl->iWear->getGyroscopes()) {
-        yInfo() << logPrefix << "Adding sensor" << s->getSensorName();
-        pImpl->wearableMetadata[msg::SensorType::GYROSCOPE].push_back(s->getSensorName());
-    }
-    for (const auto& s : pImpl->iWear->getMagnetometers()) {
-        yInfo() << logPrefix << "Adding sensor" << s->getSensorName();
-        pImpl->wearableMetadata[msg::SensorType::MAGNETOMETER].push_back(s->getSensorName());
-    }
-    for (const auto& s : pImpl->iWear->getOrientationSensors()) {
-        yInfo() << logPrefix << "Adding sensor" << s->getSensorName();
-        pImpl->wearableMetadata[msg::SensorType::ORIENTATION_SENSOR].push_back(s->getSensorName());
-    }
-    for (const auto& s : pImpl->iWear->getPoseSensors()) {
-        yInfo() << logPrefix << "Adding sensor" << s->getSensorName();
-        pImpl->wearableMetadata[msg::SensorType::POSE_SENSOR].push_back(s->getSensorName());
-    }
-    for (const auto& s : pImpl->iWear->getPositionSensors()) {
-        yInfo() << logPrefix << "Adding sensor" << s->getSensorName();
-        pImpl->wearableMetadata[msg::SensorType::POSITION_SENSOR].push_back(s->getSensorName());
-    }
-    for (const auto& s : pImpl->iWear->getSkinSensors()) {
-        yInfo() << logPrefix << "Adding sensor" << s->getSensorName();
-        pImpl->wearableMetadata[msg::SensorType::SKIN_SENSOR].push_back(s->getSensorName());
-    }
-    for (const auto& s : pImpl->iWear->getTemperatureSensors()) {
-        yInfo() << logPrefix << "Adding sensor" << s->getSensorName();
-        pImpl->wearableMetadata[msg::SensorType::TEMPERATURE_SENSOR].push_back(s->getSensorName());
-    }
-    for (const auto& s : pImpl->iWear->getTorque3DSensors()) {
-        yInfo() << logPrefix << "Adding sensor" << s->getSensorName();
-        pImpl->wearableMetadata[msg::SensorType::TORQUE_3D_SENSOR].push_back(s->getSensorName());
-    }
-    for (const auto& s : pImpl->iWear->getVirtualLinkKinSensors()) {
-        yInfo() << logPrefix << "Adding sensor" << s->getSensorName();
-        pImpl->wearableMetadata[msg::SensorType::VIRTUAL_LINK_KIN_SENSOR].push_back(
-            s->getSensorName());
-    }
-    for (const auto& s : pImpl->iWear->getVirtualJointKinSensors()) {
-        yInfo() << logPrefix << "Adding sensor" << s->getSensorName();
-        pImpl->wearableMetadata[msg::SensorType::VIRTUAL_JOINT_KIN_SENSOR].push_back(
-            s->getSensorName());
-    }
-    for (const auto& s : pImpl->iWear->getVirtualSphericalJointKinSensors()) {
-        yInfo() << logPrefix << "Adding sensor" << s->getSensorName();
-        pImpl->wearableMetadata[msg::SensorType::VIRTUAL_SPHERICAL_JOINT_KIN_SENSOR].push_back(
-            s->getSensorName());
-    }
-
-    yDebug() << logPrefix << "Parsed sensor metadata";
-
-    // Open the RPC port for providing metadata
-    if (!pImpl->rpcPort.open(pImpl->rpcPortName)) {
-        yError() << logPrefix << "Failed to open " << pImpl->rpcPortName;
-        return false;
-    }
-
-    if (!pImpl->yarp().attachAsServer(pImpl->rpcPort)) {
-        yError() << logPrefix << "Failed to attach local port to rpc service";
-        return false;
-    }
-
     // Start the PeriodicThread loop
     if (!start()) {
         yError() << logPrefix << "Failed to start the loop.";
@@ -595,7 +494,6 @@ bool IWearWrapper::detach()
 
     pImpl->iWear = nullptr;
     pImpl->iPreciselyTimed = nullptr;
-    pImpl->wearableMetadata = {};
 
     return true;
 }

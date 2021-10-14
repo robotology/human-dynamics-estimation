@@ -16,7 +16,6 @@
 #include <yarp/os/BufferedPort.h>
 #include <yarp/os/LogStream.h>
 #include <yarp/os/Network.h>
-#include <yarp/os/RpcClient.h>
 #include <yarp/os/Time.h>
 #include <yarp/os/TypedReaderCallback.h>
 
@@ -40,7 +39,6 @@ public:
     yarp::os::Network network;
     TimeStamp timestamp;
     bool firstRun = true;
-    bool useRPC = false;
     bool terminationCall = false;
 
     mutable std::recursive_mutex mutex;
@@ -71,11 +69,6 @@ public:
         virtualJointKinSensors;
     std::map<std::string, std::shared_ptr<sensor::impl::VirtualSphericalJointKinSensor>>
         virtualSphericalJointKinSensors;
-
-    // Maps storing sensor names read from RPC
-    std::map<wearable::sensor::SensorType, std::vector<std::string>> rpcSensorNames;
-
-    bool validSensorName(const sensor::SensorName& name, const wearable::sensor::SensorType type);
 
     template <typename SensorInterface, typename SensorImpl>
     SensorPtr<const SensorInterface>
@@ -139,31 +132,6 @@ bool IWearRemapper::open(yarp::os::Searchable& config)
         }
     }
 
-    // RPC ports
-    if (config.check("useRPC")) {
-        if (!config.find("useRPC").isBool()) {
-            yError() << logPrefix << "useRPC option is not a bool";
-            return false;
-        }
-        pImpl->useRPC = config.find("useRPC").asBool();
-    }
-
-    yarp::os::Bottle* inputRPCPortsNamesList = nullptr;
-    if (pImpl->useRPC) {
-        if (!(config.check("wearableRPCPorts") && config.find("wearableRPCPorts").isList())) {
-            yError() << logPrefix
-                     << "wearableRPCPorts parameter does not exist or it is not a list";
-            return false;
-        }
-        inputRPCPortsNamesList = config.find("wearableRPCPorts").asList();
-        for (unsigned i = 0; i < inputRPCPortsNamesList->size(); ++i) {
-            if (!inputRPCPortsNamesList->get(i).isString()) {
-                yError() << logPrefix << "ith entry of wearableRPCPorts list is not a string";
-                return false;
-            }
-        }
-    }
-
     // ===============================
     // PARSE THE CONFIGURATION OPTIONS
     // ===============================
@@ -174,28 +142,12 @@ bool IWearRemapper::open(yarp::os::Searchable& config)
         inputDataPortsNamesVector.emplace_back(inputDataPortsNamesList->get(i).asString());
     }
 
-    // Convert list to vector
-    std::vector<std::string> inputRPCPortsNamesVector;
-    if (pImpl->useRPC) {
-        for (unsigned i = 0; i < inputRPCPortsNamesList->size(); ++i) {
-            inputRPCPortsNamesVector.emplace_back(inputRPCPortsNamesList->get(i).asString());
-        }
-    }
-
     yInfo() << logPrefix << "*** ========================";
     for (unsigned i = 0; i < inputDataPortsNamesVector.size(); ++i) {
         yInfo() << logPrefix << "*** Wearable Data Port" << i + 1 << "  :"
                 << inputDataPortsNamesVector[i];
     }
-    if (pImpl->useRPC) {
-        for (unsigned i = 0; i < inputDataPortsNamesVector.size(); ++i) {
-            yInfo() << logPrefix << "*** Wearable RPC Port" << i + 1 << "   :"
-                    << inputRPCPortsNamesVector[i];
-        }
-    }
-    else {
-        yInfo() << logPrefix << "*** Wearable RPC Port not configured";
-    }
+
     yInfo() << logPrefix << "*** ========================";
 
     // Initialize the network
@@ -217,99 +169,6 @@ bool IWearRemapper::open(yarp::os::Searchable& config)
         if (!pImpl->inputPortsWearData.back()->open("...")) {
             yError() << logPrefix << "Failed to open local input port";
             return false;
-        }
-    }
-
-    // ====================
-    // OPEN INPUT RPC PORTS
-    // ====================
-    if (pImpl->useRPC) {
-        yDebug() << logPrefix << "Opening input RPC ports";
-
-        if (inputDataPortsNamesVector.size() != inputRPCPortsNamesVector.size()) {
-            yError() << logPrefix << "wearableDataPorts and wearableRPCPorts lists should contain "
-                     << "the same number of elements.";
-            return false;
-        }
-
-        using SensorTypeMetadata = std::vector<wearable::msg::WearableSensorMetadata>;
-        using WearableMetadata = std::map<wearable::msg::SensorType, SensorTypeMetadata>;
-
-        std::vector<WearableMetadata> metadata;
-
-        // Get metadata from remote rpc ports
-        for (const auto& inputRpcPortName : inputRPCPortsNamesVector) {
-            // Open a local port for the rpc data
-            yarp::os::RpcClient localRpcPort;
-            if (!localRpcPort.open("...")) {
-                yInfo() << logPrefix << "Failed to open local port";
-                return false;
-            }
-
-            // Wait the connection with the remote port
-            while (true) {
-                yarp::os::Network::connect(localRpcPort.getName(), inputRpcPortName);
-                if (yarp::os::Network::isConnected(localRpcPort.getName(), inputRpcPortName)) {
-                    yInfo() << logPrefix << "Connected with" << inputRpcPortName;
-                    break;
-                }
-                yInfo() << logPrefix << "Waiting connection with" << inputRpcPortName;
-                yarp::os::Time::delay(10);
-            }
-
-            // Attach the rpc client
-            wearable::msg::WearableMetadataService service;
-            if (!service.yarp().attachAsClient(localRpcPort)) {
-                yError() << logPrefix << "Failed to attach to" << localRpcPort.getName();
-                return false;
-            }
-
-            // Ask metadata and store them
-            metadata.push_back(service.getMetadata());
-
-            // Close the temporary port
-            localRpcPort.close();
-        }
-
-        // ====================================
-        // PROCESS METADATA READ FROM RPC PORTS
-        // ====================================
-        yDebug() << logPrefix << "Processing RPC metadata";
-
-        auto findStoredSensorName =
-            [](const std::string& name,
-               std::map<wearable::sensor::SensorType, std::vector<std::string>>& map) -> bool {
-            for (const auto& entryPair : map) {
-                for (const std::string& sensorName : entryPair.second) {
-                    if (sensorName == name) {
-                        return true;
-                    }
-                }
-            }
-            return false;
-        };
-
-        // Store the sensor names checking that there are no name duplicates in the
-        // connected implementation of IWear
-        for (const WearableMetadata& wearableMetadataFromSingleSource : metadata) {
-
-            for (const auto& mapEntry : wearableMetadataFromSingleSource) {
-
-                const wearable::msg::SensorType& sensorType = mapEntry.first;
-                const SensorTypeMetadata& sensorTypeMetadata = mapEntry.second;
-
-                for (const wearable::msg::WearableSensorMetadata& sensorMD : sensorTypeMetadata) {
-                    // Check there isn't any sensor name collision
-                    if (findStoredSensorName(sensorMD.name, pImpl->rpcSensorNames)) {
-                        yError() << logPrefix << "Sensor with name " << sensorMD.name
-                                 << " alredy exists.";
-                        return false;
-                    }
-                    // Add the sensor name
-                    yInfo() << logPrefix << "Found sensor" << sensorMD.name;
-                    pImpl->rpcSensorNames[MapSensorType.at(sensorType)].push_back(sensorMD.name);
-                }
-            }
         }
     }
 
@@ -952,27 +811,12 @@ IWearRemapper::getSensors(const sensor::SensorType type) const
     return sensors;
 }
 
-bool IWearRemapper::impl::validSensorName(const sensor::SensorName& name,
-                                          const wearable::sensor::SensorType type)
-{
-    const std::vector<std::string> sensorNames = rpcSensorNames[type];
-
-    const auto it = std::find(sensorNames.begin(), sensorNames.end(), name);
-    return (it != sensorNames.end()) ? true : false;
-}
-
 template <typename SensorInterface, typename SensorImpl>
 SensorPtr<const SensorInterface>
 IWearRemapper::impl::getSensor(const sensor::SensorName name,
                                const sensor::SensorType type,
                                std::map<std::string, SensorPtr<SensorImpl>>& storage)
 {
-    // TODO check if this check on the sensor name is required, and how it is done in case rpc is
-    // not available
-    if (useRPC && !validSensorName(name, type)) {
-        yError() << logPrefix << "Sensor" << name << "not found in the list read from the wrapper";
-        return nullptr;
-    }
 
     if (storage.find(name) == storage.end()) {
         const auto newSensor =
