@@ -23,6 +23,15 @@ Before running the device make sure that:
 - The following wearable data sources are available:
   - `XsensSuit` ([How to run Xsens suit](https://github.com/robotology/wearables/blob/master/doc/How-to-run-XsensSuit.md))
 
+### Calibration
+There exist different calibration procedure that can be used. In order to send a calibration command you need to open the `huamn-state-provider` `rpc` port
+```
+yarp rpc /HumanStateProvider/rpc:i 
+```
+the available calibraiton procedure can be browsed sending `help` command to the port
+```
+>> help
+```
 
 ### Output
 If the device is running correctly, the terminal will show the frequency at which the dynamical inverse kinematics step is running.

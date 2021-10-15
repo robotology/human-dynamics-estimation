@@ -20,6 +20,8 @@ Before running the device make sure that:
   - `XsensSuit` ([How to run Xsens suit](https://github.com/robotology/wearables/blob/master/doc/How-to-run-XsensSuit.md))
   - `FTShoes` [How to run FTShoes](https://github.com/robotology/wearables/blob/master/doc/How-to-run-FTshoes.md)
 
+### Calibration
+For kinematic calibration, please refere to [Inverse Kinematics Calibration](/doc/how-to-run-inverse-kinematics.md#calibration).
 
 ### Output
 If the device is running correctly, the terminal will show the frequency at which the dynamical inverse kinematics step is running.
