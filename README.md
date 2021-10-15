@@ -61,11 +61,11 @@ You can configure the following optional cmake options:
 - `HUMANSTATEPROVIDER_ENABLE_VISUALIZER`: enables the `irricht`-based iDynTree Visualizer
 
 Then, for compiling
-```
+```bash
 cmake --build . --config Release
 ```
 and installing
-```
+```bash
 cmake --build . --config Release --target install
 ```
 
