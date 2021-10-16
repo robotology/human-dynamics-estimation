@@ -10,7 +10,6 @@
 #include "Wearable/IWear/IWear.h"
 #include "Wearable/IWear/Sensors/impl/SensorsImpl.h"
 #include "thrift/WearableData.h"
-#include "thrift/WearableMetadataService.h"
 
 #include <yarp/dev/PreciselyTimed.h>
 #include <yarp/os/BufferedPort.h>
@@ -76,31 +75,6 @@ public:
               const sensor::SensorType type,
               std::map<std::string, SensorPtr<SensorImpl>>& storage);
 };
-
-const std::map<wearable::msg::SensorType, wearable::sensor::SensorType> MapSensorType = {
-    {wearable::msg::SensorType::ACCELEROMETER, wearable::sensor::SensorType::Accelerometer},
-    {wearable::msg::SensorType::EMG_SENSOR, wearable::sensor::SensorType::EmgSensor},
-    {wearable::msg::SensorType::FORCE_3D_SENSOR, wearable::sensor::SensorType::Force3DSensor},
-    {wearable::msg::SensorType::FORCE_TORQUE_6D_SENSOR,
-     wearable::sensor::SensorType::ForceTorque6DSensor},
-    {wearable::msg::SensorType::FREE_BODY_ACCELERATION_SENSOR,
-     wearable::sensor::SensorType::FreeBodyAccelerationSensor},
-    {wearable::msg::SensorType::GYROSCOPE, wearable::sensor::SensorType::Gyroscope},
-    {wearable::msg::SensorType::MAGNETOMETER, wearable::sensor::SensorType::Magnetometer},
-    {wearable::msg::SensorType::ORIENTATION_SENSOR,
-     wearable::sensor::SensorType::OrientationSensor},
-    {wearable::msg::SensorType::POSE_SENSOR, wearable::sensor::SensorType::PoseSensor},
-    {wearable::msg::SensorType::POSITION_SENSOR, wearable::sensor::SensorType::PositionSensor},
-    {wearable::msg::SensorType::SKIN_SENSOR, wearable::sensor::SensorType::SkinSensor},
-    {wearable::msg::SensorType::TEMPERATURE_SENSOR,
-     wearable::sensor::SensorType::TemperatureSensor},
-    {wearable::msg::SensorType::TORQUE_3D_SENSOR, wearable::sensor::SensorType::Torque3DSensor},
-    {wearable::msg::SensorType::VIRTUAL_LINK_KIN_SENSOR,
-     wearable::sensor::SensorType::VirtualLinkKinSensor},
-    {wearable::msg::SensorType::VIRTUAL_JOINT_KIN_SENSOR,
-     wearable::sensor::SensorType::VirtualJointKinSensor},
-    {wearable::msg::SensorType::VIRTUAL_SPHERICAL_JOINT_KIN_SENSOR,
-     wearable::sensor::SensorType::VirtualSphericalJointKinSensor}};
 
 // ==============
 // IWEAR REMAPPER
