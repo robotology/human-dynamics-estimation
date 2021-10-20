@@ -114,10 +114,10 @@ public:
                       const iDynTree::Twist& twist,
                       const double linearWeight = 1.0,
                       const double angularWeight = 1.0);
-    bool updateLinearVelocityTarget(const std::string& linkName,
+    bool updateTargetLinearVelocity(const std::string& linkName,
                                     const iDynTree::Vector3& linearVelocity,
                                     const double linearWeight = 1.0);
-    bool updateAngularVelocityTarget(const std::string& linkName,
+    bool updateTargetAngularVelocity(const std::string& linkName,
                                      const iDynTree::Vector3& angularVelocity,
                                      const double angularWeight = 1.0);
 
