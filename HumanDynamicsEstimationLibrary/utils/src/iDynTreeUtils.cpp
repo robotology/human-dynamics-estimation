@@ -123,6 +123,44 @@ double rotation::RotationDistance::asTrace() const
 // STATE HELPERS
 // =============
 
+state::State::State()
+{
+    initializeState(0);
+}
+
+state::State::State(const int ndof)
+{
+    if (ndof < 0)
+        initializeState(0);
+    else
+        initializeState(ndof);
+}
+
+bool state::State::initializeState(const int ndof)
+{
+    if (ndof < 0)
+        return false;
+    s.resize(ndof);
+    dot_s.resize(ndof);
+    dot_dot_s.resize(ndof);
+
+    zero();
+    return true;
+}
+
+void state::State::zero()
+{
+    s.zero();
+    dot_s.zero();
+    dot_dot_s.zero();
+    W_p_B.zero();
+    dot_W_p_B.zero();
+    dot_dot_W_p_B.zero();
+    W_R_B = iDynTree::Rotation::Identity();
+    omega_B.zero();
+    dot_omega_B.zero();
+}
+
 state::Integrator::Integrator()
     : Integrator(0.0)
 {}
