@@ -79,6 +79,35 @@ public:
                               const iDynTree::Rotation& orientation,
                               const double orientationTargetWeight = 1.0);
 
+    bool updateTarget(const std::string& linkName,
+                      const iDynTree::Vector3& newPosition,
+                      const iDynTree::Rotation& newOrientation,
+                      const iDynTree::Vector3& newLinearVelocity,
+                      const iDynTree::Vector3& newAngularVelocity,
+                      const double newPositionTargetWeight = 1.0,
+                      const double newOrientationTargetWeight = 1.0,
+                      const double newLinearVelocityWeight = 1.0,
+                      const double newAngularVelocityWeight = 1.0);
+    bool updateTarget(const std::string& linkName,
+                      const iDynTree::Transform& newTransform,
+                      const iDynTree::Twist& newTwist,
+                      const double newPositionTargetWeight = 1.0,
+                      const double newOrientationTargetWeight = 1.0,
+                      const double newLinearVelocityWeight = 1.0,
+                      const double newAngularVelocityWeight = 1.0);
+    bool updateTargetPosition(const std::string& linkName,
+                              const iDynTree::Vector3& newPosition,
+                              const double newPositionTargetWeight = 1.0);
+    bool updateTargetOrientation(const std::string& linkName,
+                                 const iDynTree::Rotation& newOrientation,
+                                 const double newOrientationTargetWeight = 1.0);
+    bool updateTargetLinearVelocity(const std::string& linkName,
+                                    const iDynTree::Vector3& newLinearVelocity,
+                                    const double newLinearVelocityWeight = 1.0);
+    bool updateTargetAngularVelocity(const std::string& linkName,
+                                     const iDynTree::Vector3& newAngularVelocity,
+                                     const double newAngularVelocityWeight = 1.0);
+
     bool setJointConfiguration(const std::string& jointName, const double jointConfiguration);
     bool setJointsConfiguration(const iDynTree::VectorDynSize& jointsConfiguration);
     bool setBasePose(const iDynTree::Transform& baseTransform);
@@ -105,54 +134,6 @@ public:
                                  iDynTree::Vector3& angularVelocity) const;
 
     void clearProblem();
-
-
-
-    // // TODO
-    // // addFrameVelocityConstraint
-    // // addFrameLinearVelocityConstraint
-    // // addFrameAngularVelocityConstraint
-
-
-    // // TODO
-    // bool setCustomBaseVelocityLimit(const iDynTree::VectorDynSize& lowerBound,
-    //                                 const iDynTree::VectorDynSize& upperBound);
-    // // bool setBaseLinearVelocityLimit();
-    // // bool setBaseAngularVelocityLimit();
-    // // bool setJointVelocityLimit(std::string jointName, double jointLimit);
-    // bool setCustomJointsVelocityLimit(const std::vector<iDynTree::JointIndex>& jointsIndexList,
-    //                                   const iDynTree::VectorDynSize& jointsLimitList);
-    // bool setCustomConstraintsJointsValues(const std::vector<iDynTree::JointIndex>& jointsIndexList,
-    //                                       const iDynTree::VectorDynSize& upperBoundary,
-    //                                       const iDynTree::VectorDynSize& lowerBoundary,
-    //                                       const iDynTree::MatrixDynSize& customConstraintMatrix,
-    //                                       const double k_u,
-    //                                       const double k_l);
-
-    // bool setGeneralJointVelocityConstraints(const double jointVelocityLimit);
-
-    // bool setGeneralJointsUpperLowerConstraints(const iDynTree::VectorDynSize& jointUpperLimits,
-    //                                            const iDynTree::VectorDynSize& jointLowerLimits);
-
-    // bool updateTarget(const std::string& linkName,
-    //                   const iDynTree::Vector3& linearVelocity,
-    //                   const iDynTree::Vector3& angularVelocity,
-    //                   const double linearWeight = 1.0,
-    //                   const double angularWeight = 1.0);
-    // bool updateTarget(const std::string& linkName,
-    //                   const iDynTree::Twist& twist,
-    //                   const double linearWeight = 1.0,
-    //                   const double angularWeight = 1.0);
-    // bool updateLinearVelocityTarget(const std::string& linkName,
-    //                                 const iDynTree::Vector3& linearVelocity,
-    //                                 const double linearWeight = 1.0);
-    // bool updateAngularVelocityTarget(const std::string& linkName,
-    //                                  const iDynTree::Vector3& angularVelocity,
-    //                                  const double angularWeight = 1.0);
-
-
-
-    // bool solve();
 
 };
 
