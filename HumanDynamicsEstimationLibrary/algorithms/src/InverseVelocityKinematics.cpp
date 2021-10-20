@@ -8,6 +8,8 @@
 
 #include "hde/algorithms/InverseVelocityKinematics.hpp"
 
+#include <hde/utils/iDynTreeUtils.hpp>
+
 // osqp-eigen
 #include "OsqpEigen/OsqpEigen.h"
 
@@ -66,16 +68,11 @@ public:
     iDynTree::VectorDynSize m_JointConfigSpaceConstraintsMax;
     iDynTree::VectorDynSize m_JointConfigSpaceConstraintsMin;
 
-    struct
-    {
-        iDynTree::VectorDynSize jointsConfiguration;
-        iDynTree::Transform basePose;
-        iDynTree::VectorDynSize jointsVelocity;
-        iDynTree::Twist baseTwist;
-        iDynTree::Vector3 worldGravity;
-    } state;
+    hde::utils::idyntree::state::State state;
 
     ResolutionMode resolutionMode;
+
+    iDynTree::Vector3 worldGravity;
 
     class VelocityConstraint;
     typedef std::map<int, VelocityConstraint> VelocityMap;
@@ -201,17 +198,17 @@ InverseVelocityKinematics::impl::impl()
     , problemInitialized(false)
 {
     // These variables are touched only once.
-    state.worldGravity.zero();
+    worldGravity.zero();
 }
 
 bool InverseVelocityKinematics::impl::updateConfiguration()
 {
 
-    return dynamics.setRobotState(state.basePose,
-                                  state.jointsConfiguration,
-                                  state.baseTwist,
-                                  state.jointsVelocity,
-                                  state.worldGravity);
+    return dynamics.setRobotState(iDynTree::Transform(state.W_R_B, iDynTree::Position(state.W_p_B)),
+                                  state.s,
+                                  iDynTree::Twist(state.dot_W_p_B, state.omega_B),
+                                  state.dot_s,
+                                  worldGravity);
 }
 
 bool InverseVelocityKinematics::impl::addTarget(const VelocityConstraint& frameConstraint)
@@ -341,7 +338,7 @@ bool InverseVelocityKinematics::impl::solveIntegrationBasedIK(
                     Eigen::Map<Eigen::VectorXd>(tmp_mat.data(), tmp_mat.cols() * tmp_mat.rows()));
 
                 double tmp_bXq =
-                    iDynTree::toEigen(state.jointsConfiguration).dot(tmp_configConstraint_vector);
+                    iDynTree::toEigen(state.s).dot(tmp_configConstraint_vector);
 
                 double tmp_upperBound =
                     m_JointConfigSpaceConstraintsMax(i)
@@ -1216,7 +1213,7 @@ bool InverseVelocityKinematics::setJointConfiguration(const std::string& jointNa
     iDynTree::JointIndex jointIndex = pImpl->dynamics.model().getJointIndex(jointName);
     if (jointIndex == iDynTree::JOINT_INVALID_INDEX)
         return false;
-    pImpl->state.jointsConfiguration(jointIndex) = jointConfiguration;
+    pImpl->state.s(jointIndex) = jointConfiguration;
     pImpl->updateConfiguration();
     return true;
 }
@@ -1224,8 +1221,8 @@ bool InverseVelocityKinematics::setJointConfiguration(const std::string& jointNa
 bool InverseVelocityKinematics::setJointsConfiguration(
     const iDynTree::VectorDynSize& jointsConfiguration)
 {
-    if (pImpl->state.jointsConfiguration.size() == jointsConfiguration.size()) {
-        pImpl->state.jointsConfiguration = jointsConfiguration;
+    if (pImpl->state.s.size() == jointsConfiguration.size()) {
+        pImpl->state.s = jointsConfiguration;
         pImpl->updateConfiguration();
         return true;
     }
@@ -1236,7 +1233,8 @@ bool InverseVelocityKinematics::setJointsConfiguration(
 
 bool InverseVelocityKinematics::setBasePose(const iDynTree::Transform& baseTransform)
 {
-    pImpl->state.basePose = baseTransform;
+    pImpl->state.W_p_B = baseTransform.getPosition();
+    pImpl->state.W_R_B = baseTransform.getRotation();
     pImpl->updateConfiguration();
     return true;
 }
@@ -1244,10 +1242,8 @@ bool InverseVelocityKinematics::setBasePose(const iDynTree::Transform& baseTrans
 bool InverseVelocityKinematics::setBasePose(const iDynTree::Vector3& basePosition,
                                             const iDynTree::Rotation& baseRotation)
 {
-    iDynTree::Position _basePosition;
-    iDynTree::toEigen(_basePosition) = iDynTree::toEigen(basePosition);
-    pImpl->state.basePose.setPosition(_basePosition);
-    pImpl->state.basePose.setRotation(baseRotation);
+    pImpl->state.W_p_B = basePosition;
+    pImpl->state.W_R_B = baseRotation;
     pImpl->updateConfiguration();
     return true;
 }
@@ -1349,6 +1345,13 @@ bool InverseVelocityKinematics::getVelocitySolution(iDynTree::Twist& baseVelocit
     return getJointsVelocitySolution(jointsVelocity) && getBaseVelocitySolution(baseVelocity);
 }
 
+bool InverseVelocityKinematics::getVelocitySolution(iDynTree::Vector3& linearVelocity,
+                                                    iDynTree::Vector3& angularVelocity,
+                                                    iDynTree::VectorDynSize& jointsVelocity) const
+{
+    return getJointsVelocitySolution(jointsVelocity) && getBaseVelocitySolution(linearVelocity, angularVelocity);
+}
+
 bool InverseVelocityKinematics::getJointsVelocitySolution(
     iDynTree::VectorDynSize& jointsVelocity) const
 {
@@ -1437,21 +1440,12 @@ bool InverseVelocityKinematics::solve()
 
 void InverseVelocityKinematics::clearProblem()
 {
-    pImpl->state.jointsConfiguration.resize(pImpl->dofs);
-    pImpl->state.jointsConfiguration.zero();
-
-    pImpl->state.jointsVelocity.resize(pImpl->dofs);
-    pImpl->state.jointsVelocity.zero();
-
-    pImpl->state.basePose.setPosition(iDynTree::Position(0, 0, 0));
-    pImpl->state.basePose.setRotation(iDynTree::Rotation::Identity());
+    pImpl->state.initializeState(pImpl->dofs);
 
     pImpl->baseVelocityResult.zero();
 
     pImpl->jointVelocityResult.resize(pImpl->dofs);
     pImpl->jointVelocityResult.zero();
-
-    pImpl->state.baseTwist.zero();
 
     pImpl->velocityTargets.clear();
 

@@ -36,18 +36,7 @@ namespace hde::utils::idyntree {
     } // namespace rotation
 
     namespace state {
-        struct State
-        {
-            iDynTree::VectorDynSize s;
-            iDynTree::VectorDynSize dot_s;
-            iDynTree::VectorDynSize dot_dot_s;
-            iDynTree::Vector3 W_p_B;
-            iDynTree::Vector3 dot_W_p_B;
-            iDynTree::Vector3 dot_dot_W_p_B;
-            iDynTree::Rotation W_R_B;
-            iDynTree::Vector3 omega_B;
-            iDynTree::Vector3 dot_omega_B;
-        };
+        class State;
         class Integrator;
     } // namespace state
 } // namespace hde::utils::idyntree
@@ -71,6 +60,27 @@ public:
 
     double asEuclideanDistanceOfEulerAngles() const;
     double asTrace() const;
+};
+
+class hde::utils::idyntree::state::State
+{
+    public:
+
+    State();
+    State(const int ndof);
+
+    bool initializeState(const int ndof);
+    void zero();
+
+    iDynTree::VectorDynSize s;
+    iDynTree::VectorDynSize dot_s;
+    iDynTree::VectorDynSize dot_dot_s;
+    iDynTree::Vector3 W_p_B;
+    iDynTree::Vector3 dot_W_p_B;
+    iDynTree::Vector3 dot_dot_W_p_B;
+    iDynTree::Rotation W_R_B;
+    iDynTree::Vector3 omega_B;
+    iDynTree::Vector3 dot_omega_B;
 };
 
 class hde::utils::idyntree::state::Integrator

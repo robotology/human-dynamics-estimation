@@ -123,6 +123,9 @@ public:
 
     bool getVelocitySolution(iDynTree::Twist& baseVelocity,
                              iDynTree::VectorDynSize& jointsVelocity) const;
+    bool getVelocitySolution(iDynTree::Vector3& linearVelocity,
+                             iDynTree::Vector3& angularVelocity,
+                             iDynTree::VectorDynSize& jointsVelocity) const;
     bool getJointsVelocitySolution(iDynTree::VectorDynSize& jointsVelocity) const;
     bool getBaseVelocitySolution(iDynTree::Twist& baseVelocity) const;
     bool getBaseVelocitySolution(iDynTree::Vector3& linearVelocity,
