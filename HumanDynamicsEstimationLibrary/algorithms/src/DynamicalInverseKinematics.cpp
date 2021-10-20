@@ -41,9 +41,9 @@ public:
     iDynTree::Model model;
     iDynTree::KinDynComputations dynamics;
     size_t dofs;
-
-    iDynTree::VectorDynSize jointConfigurationSolution;
-    iDynTree::Transform baseTransformSolution;
+     
+    hde::utils::idyntree::state::State state;
+    
     iDynTree::Vector3 worldGravity;
 
     bool isInverseVelocityKinematicsInitialized;
@@ -63,6 +63,8 @@ public:
     void updateTargetAngularVelocity(const TargetsMap::iterator& target,
                                      const iDynTree::Vector3& newAngularVelocity,
                                      const double newAngularVelocityWeight);
+
+    TargetsMap::iterator getTargetRefIfItExists(const std::string& targetFrameName);
 
     bool initializeInverseVelocityKinematics();
     bool updateConfiguration();
@@ -457,18 +459,27 @@ bool DynamicalInverseKinematics::impl::initializeInverseVelocityKinematics()
     return true;
 }
 
+DynamicalInverseKinematics::impl::TargetsMap::iterator
+DynamicalInverseKinematics::impl::getTargetRefIfItExists(const std::string& targetFrameName)
+{
+    int frameIndex = dynamics.getFrameIndex(targetFrameName);
+    if (frameIndex == iDynTree::FRAME_INVALID_INDEX)
+        return targets.end();
+
+    // Find the target (if this fails, it will return m_targets.end())
+    return targets.find(frameIndex);
+}
+
 bool DynamicalInverseKinematics::impl::updateConfiguration()
 {
     iDynTree::Twist baseVelocity;
-    iDynTree::VectorDynSize jointsVelocity;
-    jointsVelocity.resize(jointConfigurationSolution.size());
 
-    inverseVelocityKinematics.getVelocitySolution(baseVelocity, jointsVelocity);
+    inverseVelocityKinematics.getVelocitySolution(state.dot_W_p_B, state.omega_B, state.dot_s);
 
-    return dynamics.setRobotState(baseTransformSolution,
-                                  jointConfigurationSolution,
-                                  baseVelocity,
-                                  jointsVelocity,
+    return dynamics.setRobotState(iDynTree::Transform(state.W_R_B, iDynTree::Position(state.W_p_B)),
+                                  state.s,
+                                  iDynTree::Twist(state.dot_W_p_B, state.omega_B),
+                                  state.dot_s,
                                   worldGravity);
 }
 
@@ -653,15 +664,15 @@ bool DynamicalInverseKinematics::setJointConfiguration(const std::string& jointN
     iDynTree::JointIndex jointIndex = pImpl->dynamics.model().getJointIndex(jointName);
     if (jointIndex == iDynTree::JOINT_INVALID_INDEX)
         return false;
-    pImpl->jointConfigurationSolution(jointIndex) = jointConfiguration;
+    pImpl->state.s(jointIndex) = jointConfiguration;
     pImpl->updateConfiguration();
     return true;
 }
 
 bool DynamicalInverseKinematics::setJointsConfiguration(const iDynTree::VectorDynSize& jointsConfiguration)
 {
-    if (pImpl->jointConfigurationSolution.size() == jointsConfiguration.size()) {
-        pImpl->jointConfigurationSolution = jointsConfiguration;
+    if (pImpl->state.s.size() == jointsConfiguration.size()) {
+        pImpl->state.s = jointsConfiguration;
         pImpl->updateConfiguration();
         return true;
     }
@@ -672,7 +683,8 @@ bool DynamicalInverseKinematics::setJointsConfiguration(const iDynTree::VectorDy
 
 bool DynamicalInverseKinematics::setBasePose(const iDynTree::Transform& baseTransform)
 {
-    pImpl->baseTransformSolution = baseTransform;
+    pImpl->state.W_p_B = baseTransform.getPosition();
+    pImpl->state.W_R_B = baseTransform.getRotation();
     pImpl->updateConfiguration();
     return true;
 }
@@ -680,10 +692,8 @@ bool DynamicalInverseKinematics::setBasePose(const iDynTree::Transform& baseTran
 bool DynamicalInverseKinematics::setBasePose(const iDynTree::Vector3& basePosition,
                                             const iDynTree::Rotation& baseRotation)
 {
-    iDynTree::Position _basePosition;
-    iDynTree::toEigen(_basePosition) = iDynTree::toEigen(basePosition);
-    pImpl->baseTransformSolution.setPosition(_basePosition);
-    pImpl->baseTransformSolution.setRotation(baseRotation);
+    pImpl->state.W_p_B = basePosition;
+    pImpl->state.W_R_B = baseRotation;
     pImpl->updateConfiguration();
     return true;
 }
@@ -713,11 +723,152 @@ bool DynamicalInverseKinematics::setConfiguration(const iDynTree::Vector3& baseP
     }
 }
 
+bool updateTarget(const std::string& linkName,
+                const iDynTree::Vector3& newPosition,
+                const iDynTree::Rotation& newOrientation,
+                const iDynTree::Vector3& newLinearVelocity,
+                const iDynTree::Vector3& newAngularVelocity,
+                const double newPositionTargetWeight = 1.0,
+                const double newOrientationTargetWeight = 1.0,
+                const double newLinearVelocityWeight = 1.0,
+                const double newAngularVelocityWeight = 1.0);
+bool updateTarget(const std::string& linkName,
+                const iDynTree::Transform& newTransform,
+                const iDynTree::Twist& newTwist,
+                const double newPositionTargetWeight = 1.0,
+                const double newOrientationTargetWeight = 1.0,
+                const double newLinearVelocityWeight = 1.0,
+                const double newAngularVelocityWeight = 1.0);
+void updateTargetPosition(const std::string& linkName,
+                        const iDynTree::Vector3& newPosition,
+                        const double newPositionTargetWeight = 1.0);
+void updateTargetOrientation(const std::string& linkName,
+                            const iDynTree::Rotation& newOrientation,
+                            const double newOrientationTargetWeight = 1.0);
+void updateTargetLinearVelocity(const std::string& linkName,
+                            const iDynTree::Vector3& newLinearVelocity,
+                            const double newLinearVelocityWeight = 1.0);
+void updateTargetAngularVelocity(const std::string& linkName,
+                                const iDynTree::Vector3& newAngularVelocity,
+                                const double newAngularVelocityWeight = 1.0);
+
+bool DynamicalInverseKinematics::updateTarget(const std::string& linkName,
+                                             const iDynTree::Vector3& newPosition,
+                                             const iDynTree::Rotation& newOrientation,
+                                             const iDynTree::Vector3& newLinearVelocity,
+                                             const iDynTree::Vector3& newAngularVelocity,
+                                             const double newPositionTargetWeight,
+                                             const double newOrientationTargetWeight,
+                                             const double newLinearVelocityWeight,
+                                             const double newAngularVelocityWeight)
+{
+    DynamicalInverseKinematics::impl::TargetsMap::iterator target =
+        pImpl->getTargetRefIfItExists(linkName);
+
+    if (target == pImpl->targets.end()) {
+        std::stringstream ss;
+        std::cerr << "No target for frame " << linkName
+                  << " was added to the Inverse Velocity Kinematics problem.";
+        return false;
+    }
+    
+    pImpl->updateTargetPosition(target, newPosition, newPositionTargetWeight);
+    pImpl->updateTargetOrientation(target, newOrientation, newOrientationTargetWeight);
+    pImpl->updateTargetLinearVelocity(target, newLinearVelocity, newLinearVelocityWeight);
+    pImpl->updateTargetAngularVelocity(target, newAngularVelocity, newAngularVelocityWeight);
+    return true;
+}
+
+bool DynamicalInverseKinematics::updateTarget(const std::string& linkName,
+                                              const iDynTree::Transform& newTransform,
+                                              const iDynTree::Twist& newTwist,
+                                              const double newPositionTargetWeight,
+                                              const double newOrientationTargetWeight,
+                                              const double newLinearVelocityWeight,
+                                              const double newAngularVelocityWeight)
+{
+    return updateTarget(
+        linkName, newTransform.getPosition(), newTransform.getRotation(), newTwist.getLinearVec3(), newTwist.getAngularVec3(), newPositionTargetWeight, newOrientationTargetWeight, newLinearVelocityWeight, newAngularVelocityWeight);
+}
+
+bool DynamicalInverseKinematics::updateTargetPosition(const std::string& linkName,
+                                                      const iDynTree::Vector3& newPosition,
+                                                      const double newPositionTargetWeight)
+{
+    DynamicalInverseKinematics::impl::TargetsMap::iterator target =
+        pImpl->getTargetRefIfItExists(linkName);
+
+    if (target == pImpl->targets.end()) {
+        std::stringstream ss;
+        std::cerr << "No target for frame " << linkName
+                  << " was added to the Inverse Velocity Kinematics problem.";
+        return false;
+    }
+
+    pImpl->updateTargetPosition(target, newPosition, newPositionTargetWeight);
+    return true;
+}
+
+bool DynamicalInverseKinematics::updateTargetOrientation(const std::string& linkName,
+                                                         const iDynTree::Rotation& newOrientation,
+                                                         const double newOrientationTargetWeight)
+{
+    DynamicalInverseKinematics::impl::TargetsMap::iterator target =
+        pImpl->getTargetRefIfItExists(linkName);
+
+    if (target == pImpl->targets.end()) {
+        std::stringstream ss;
+        std::cerr << "No target for frame " << linkName
+                  << " was added to the Inverse Velocity Kinematics problem.";
+        return false;
+    }
+
+    pImpl->updateTargetOrientation(target, newOrientation, newOrientationTargetWeight);
+    return true;
+}
+
+bool DynamicalInverseKinematics::updateTargetLinearVelocity(const std::string& linkName,
+                                                            const iDynTree::Vector3& newLinearVelocity,
+                                                            const double newLinearVelocityWeight)
+{
+    DynamicalInverseKinematics::impl::TargetsMap::iterator target =
+        pImpl->getTargetRefIfItExists(linkName);
+
+    if (target == pImpl->targets.end()) {
+        std::stringstream ss;
+        std::cerr << "No target for frame " << linkName
+                  << " was added to the Inverse Velocity Kinematics problem.";
+        return false;
+    }
+
+    pImpl->updateTargetLinearVelocity(target, newLinearVelocity, newLinearVelocityWeight);
+    return true;
+}
+
+bool DynamicalInverseKinematics::updateTargetAngularVelocity(
+    const std::string& linkName,
+    const iDynTree::Vector3& newAngularVelocity,
+    const double newAngularVelocityWeight)
+{
+    DynamicalInverseKinematics::impl::TargetsMap::iterator target =
+        pImpl->getTargetRefIfItExists(linkName);
+
+    if (target == pImpl->targets.end()) {
+        std::stringstream ss;
+        std::cerr << "No target for frame " << linkName
+                  << " was added to the Inverse Velocity Kinematics problem.";
+        return false;
+    }
+
+    pImpl->updateTargetAngularVelocity(target, newAngularVelocity, newAngularVelocityWeight);
+    return true;
+}
+
 
 bool DynamicalInverseKinematics::getJointsConfigurationSolution(iDynTree::VectorDynSize& jointsConfiguration) const
 {
-    if (jointsConfiguration.size() == pImpl->jointConfigurationSolution.size()) {
-        jointsConfiguration = pImpl->jointConfigurationSolution;
+    if (jointsConfiguration.size() == pImpl->state.s.size()) {
+        jointsConfiguration = pImpl->state.s;
         return true;
     }
     else {
@@ -727,14 +878,14 @@ bool DynamicalInverseKinematics::getJointsConfigurationSolution(iDynTree::Vector
 
 bool DynamicalInverseKinematics::getBasePoseSolution(iDynTree::Transform& baseTransform) const
 {
-    baseTransform = pImpl->baseTransformSolution;
+    baseTransform = iDynTree::Transform(pImpl->state.W_R_B, iDynTree::Position(pImpl->state.W_p_B));
     return true;
 }
 
 bool DynamicalInverseKinematics::getBasePoseSolution(iDynTree::Vector3& basePosition, iDynTree::Rotation& baseRotation) const
 {
-    basePosition = pImpl->baseTransformSolution.getPosition();
-    baseRotation = pImpl->baseTransformSolution.getRotation();
+    basePosition = pImpl->state.W_p_B;
+    baseRotation = pImpl->state.W_R_B;
     return true;
 }
 
@@ -775,12 +926,9 @@ bool DynamicalInverseKinematics::getBaseVelocitySolution(iDynTree::Vector3& line
 
 void DynamicalInverseKinematics::clearProblem()
 {
-    pImpl->baseTransformSolution.setPosition(iDynTree::Position(0, 0, 0));
-    pImpl->baseTransformSolution.setRotation(iDynTree::Rotation::Identity());
 
-    pImpl->jointConfigurationSolution.resize(pImpl->dofs);
-    pImpl->jointConfigurationSolution.zero();
-
+    pImpl->state.initializeState(pImpl->dofs);
+    
     pImpl->inverseVelocityKinematics.clearProblem();
 
     pImpl->isInverseKinematicsInitializd = false;
