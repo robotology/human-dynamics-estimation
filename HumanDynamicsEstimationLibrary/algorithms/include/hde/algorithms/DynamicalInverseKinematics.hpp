@@ -37,6 +37,48 @@ public:
     void setInverseVelocityKinematicsRegularization(const double regularizationWeight);
 
 
+    bool addPoseAndVelocityTarget(const std::string& linkName,
+                                  const iDynTree::Transform& transform,
+                                  const iDynTree::Twist& twist,
+                                  const double positionTargetWeight = 1.0,
+                                  const double rotationTargetWeight = 1.0,
+                                  const double linearVelocityWeight = 1.0,
+                                  const double angularVelocityWeight = 1.0);
+    bool addPoseTarget(const std::string& linkName,
+                       const iDynTree::Transform& transform,
+                       const double positionTargetWeight = 1.0,
+                       const double rotationTargetWeight = 1.0);
+    bool addPoseAndVelocityTarget(const std::string& linkName,
+                                  const iDynTree::Vector3& position,
+                                  const iDynTree::Rotation& rotation,
+                                  const iDynTree::Vector3& linearVelocity,
+                                  const iDynTree::Vector3& angularVelocity,
+                                  const double positionTargetWeight = 1.0,
+                                  const double rotationTargetWeight = 1.0,
+                                  const double linearVelocityWeight = 1.0,
+                                  const double angularVelocityWeight = 1.0);
+    bool addPoseTarget(const std::string& linkName,
+                       const iDynTree::Vector3& position,
+                       const iDynTree::Rotation& rotation,
+                       const double positionTargetWeight = 1.0,
+                       const double rotationTargetWeight = 1.0);
+    bool addPositionAndVelocityTarget(const std::string& linkName,
+                                      const iDynTree::Vector3& position,
+                                      const iDynTree::Vector3& linearVelocity,
+                                      const double positionTargetWeight = 1.0,
+                                      const double linearVelocityWeight = 1.0);
+    bool addPositionTarget(const std::string& linkName,
+                           const iDynTree::Vector3& position,
+                           const double positionTargetWeight = 1.0);
+    bool addOrientationAndVelocityTarget(const std::string& linkName,
+                                         const iDynTree::Rotation& orientation,
+                                         const iDynTree::Vector3& angularVelocity,
+                                         const double orientationTargetWeight = 1.0,
+                                         const double angularVelocityWeight = 1.0);
+    bool addOrientationTarget(const std::string& linkName,
+                              const iDynTree::Rotation& orientation,
+                              const double orientationTargetWeight = 1.0);
+
     bool setJointConfiguration(const std::string& jointName, const double jointConfiguration);
     bool setJointsConfiguration(const iDynTree::VectorDynSize& jointsConfiguration);
     bool setBasePose(const iDynTree::Transform& baseTransform);
@@ -64,42 +106,13 @@ public:
 
     void clearProblem();
 
-    // bool addTarget(const std::string& linkName,
-    //                const iDynTree::Vector3& linearVelocity,
-    //                const iDynTree::Vector3& angularVelocity,
-    //                const double linearWeight = 1.0,
-    //                const double angularWeight = 1.0);
-    // bool addTarget(const std::string& linkName,
-    //                const iDynTree::Twist& twist,
-    //                const double linearWeight = 1.0,
-    //                const double angularWeight = 1.0);
-    // bool addLinearVelocityTarget(const std::string& linkName,
-    //                              const iDynTree::Vector3& linearVelocity,
-    //                              const double linearWeight = 1.0);
-    // bool addLinearVelocityTarget(const std::string& linkName,
-    //                              const iDynTree::Twist& twist,
-    //                              const double linearWeight = 1.0);
-    // bool addAngularVelocityTarget(const std::string& linkName,
-    //                               const iDynTree::Vector3& angularVelocity,
-    //                               const double angularWeight = 1.0);
-    // bool addAngularVelocityTarget(const std::string& linkName,
-    //                               const iDynTree::Twist& twist,
-    //                               const double angularWeight = 1.0);
+
 
     // // TODO
     // // addFrameVelocityConstraint
     // // addFrameLinearVelocityConstraint
     // // addFrameAngularVelocityConstraint
 
-    // bool setJointConfiguration(const std::string& jointName, const double jointConfiguration);
-    // bool setJointsConfiguration(const iDynTree::VectorDynSize& jointsConfiguration);
-    // bool setBasePose(const iDynTree::Transform& baseTransform);
-    // bool setBasePose(const iDynTree::Vector3& basePosition, const iDynTree::Rotation& baseRotation);
-    // bool setConfiguration(const iDynTree::Transform& baseTransform,
-    //                       const iDynTree::VectorDynSize& jointsConfiguration);
-    // bool setConfiguration(const iDynTree::Vector3& basePosition,
-    //                       const iDynTree::Rotation& baseRotation,
-    //                       const iDynTree::VectorDynSize& jointsConfiguration);
 
     // // TODO
     // bool setCustomBaseVelocityLimit(const iDynTree::VectorDynSize& lowerBound,
