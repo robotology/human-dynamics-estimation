@@ -1307,7 +1307,7 @@ bool InverseVelocityKinematics::updateTarget(const std::string& linkName,
         linkName, twist.getLinearVec3(), twist.getAngularVec3(), linearWeight, angularWeight);
 }
 
-bool InverseVelocityKinematics::updateLinearVelocityTarget(const std::string& linkName,
+bool InverseVelocityKinematics::updateTargetLinearVelocity(const std::string& linkName,
                                                            const iDynTree::Vector3& linearVelocity,
                                                            const double linearWeight)
 {
@@ -1325,7 +1325,7 @@ bool InverseVelocityKinematics::updateLinearVelocityTarget(const std::string& li
     return true;
 }
 
-bool InverseVelocityKinematics::updateAngularVelocityTarget(
+bool InverseVelocityKinematics::updateTargetAngularVelocity(
     const std::string& linkName,
     const iDynTree::Vector3& angularVelocity,
     const double angularWeight)
