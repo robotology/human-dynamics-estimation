@@ -103,11 +103,11 @@ public:
 
     bool addTarget(const VelocityConstraint& frameConstraint);
 
-    void updateLinearVelocityTarget(const VelocityMap::iterator& target,
+    void updateTargetLinearVelocity(const VelocityMap::iterator& target,
                                     const iDynTree::Vector3& newLinearVelocity,
                                     const double newLinearVelocityWeight);
-    void updateAngularVelocityTarget(const VelocityMap::iterator& target,
-                                     const iDynTree::Vector3& newLAngularVelocity,
+    void updateTargetAngularVelocity(const VelocityMap::iterator& target,
+                                     const iDynTree::Vector3& newAngularVelocity,
                                      const double newAngularVelocityWeight);
 
     VelocityMap::iterator getTargetRefIfItExists(const std::string& targetFrameName);
@@ -227,7 +227,7 @@ bool InverseVelocityKinematics::impl::addTarget(const VelocityConstraint& frameC
     return result.second;
 }
 
-void InverseVelocityKinematics::impl::updateLinearVelocityTarget(
+void InverseVelocityKinematics::impl::updateTargetLinearVelocity(
     const VelocityMap::iterator& target,
     const iDynTree::Vector3& newLinearVelocity,
     const double newLinearVelocityWeight)
@@ -236,12 +236,12 @@ void InverseVelocityKinematics::impl::updateLinearVelocityTarget(
     target->second.setLinearVelocityWeight(newLinearVelocityWeight);
 }
 
-void InverseVelocityKinematics::impl::updateAngularVelocityTarget(
+void InverseVelocityKinematics::impl::updateTargetAngularVelocity(
     const VelocityMap::iterator& target,
-    const iDynTree::Vector3& newLAngularVelocity,
+    const iDynTree::Vector3& newAngularVelocity,
     const double newAngularVelocityWeight)
 {
-    target->second.setAngularVelocity(newLAngularVelocity);
+    target->second.setAngularVelocity(newAngularVelocity);
     target->second.setAngularVelocityWeight(newAngularVelocityWeight);
 }
 
@@ -1293,8 +1293,8 @@ bool InverseVelocityKinematics::updateTarget(const std::string& linkName,
         return false;
     }
 
-    pImpl->updateLinearVelocityTarget(targetConstr, linearVelocity, linearWeight);
-    pImpl->updateAngularVelocityTarget(targetConstr, angularVelocity, angularWeight);
+    pImpl->updateTargetLinearVelocity(targetConstr, linearVelocity, linearWeight);
+    pImpl->updateTargetAngularVelocity(targetConstr, angularVelocity, angularWeight);
     return true;
 }
 
@@ -1321,7 +1321,7 @@ bool InverseVelocityKinematics::updateLinearVelocityTarget(const std::string& li
         return false;
     }
 
-    pImpl->updateLinearVelocityTarget(targetConstr, linearVelocity, linearWeight);
+    pImpl->updateTargetLinearVelocity(targetConstr, linearVelocity, linearWeight);
     return true;
 }
 
@@ -1339,7 +1339,7 @@ bool InverseVelocityKinematics::updateAngularVelocityTarget(
         return false;
     }
 
-    pImpl->updateAngularVelocityTarget(targetConstr, angularVelocity, angularWeight);
+    pImpl->updateTargetAngularVelocity(targetConstr, angularVelocity, angularWeight);
     return true;
 }
 
