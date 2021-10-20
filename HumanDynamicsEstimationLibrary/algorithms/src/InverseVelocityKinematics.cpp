@@ -111,11 +111,11 @@ public:
 
     bool solveProblem();
 
-    bool solveIntegrationBasedIK(const iDynTree::MatrixDynSize& matrix,
-                                 const iDynTree::VectorDynSize& inputVector,
-                                 iDynTree::VectorDynSize& outputVector,
-                                 const iDynTree::VectorDynSize& weightVector,
-                                 const iDynTree::MatrixDynSize& regularizationMatrix);
+    bool solveInverseDifferentialKinematics(const iDynTree::MatrixDynSize& matrix,
+                                            const iDynTree::VectorDynSize& inputVector,
+                                            iDynTree::VectorDynSize& outputVector,
+                                            const iDynTree::VectorDynSize& weightVector,
+                                            const iDynTree::MatrixDynSize& regularizationMatrix);
 
     void computeTargetSize();
     void computeProblemSizeAndResizeBuffers();
@@ -264,7 +264,7 @@ bool InverseVelocityKinematics::impl::solveProblem()
     prepareWeightVector();
 
     iDynTree::VectorDynSize nu;
-    solveIntegrationBasedIK(
+    solveInverseDifferentialKinematics(
         fullJacobianBuffer, fullVelocityBuffer, nu, weightVectorBuffer, regularizationMatrixBuffer);
 
     baseVelocityResult.setVal(0, nu.getVal(0));
@@ -281,7 +281,7 @@ bool InverseVelocityKinematics::impl::solveProblem()
     return true;
 }
 
-bool InverseVelocityKinematics::impl::solveIntegrationBasedIK(
+bool InverseVelocityKinematics::impl::solveInverseDifferentialKinematics(
     const iDynTree::MatrixDynSize& matrix,
     const iDynTree::VectorDynSize& inputVector,
     iDynTree::VectorDynSize& outputVector,
@@ -303,7 +303,7 @@ bool InverseVelocityKinematics::impl::solveIntegrationBasedIK(
         if (!m_optimizerSolver->isInitialized()) {
 
             if (!m_optimizerSolver->initSolver()) {
-                yError() << "[InverseVelocityKinematics::impl::solveIntegrationBasedIK] "
+                yError() << "[InverseVelocityKinematics::impl::solveInverseDifferentialKinematics] "
                          << "qp solver for [initSolver] returns false.";
 
                 return 1;
@@ -365,13 +365,13 @@ bool InverseVelocityKinematics::impl::solveIntegrationBasedIK(
             auto lowerBuond = iDynTree::toEigen(m_l_prime);
 
             if (!m_optimizerSolver->updateBounds(lowerBuond, upperBuond)) {
-                yError() << "[InverseVelocityKinematics::impl::solveIntegrationBasedIK] "
+                yError() << "[InverseVelocityKinematics::impl::solveInverseDifferentialKinematics] "
                          << "qp solver for [updateBounds] returns false.";
                 return 1;
             }
 
             if (!m_optimizerSolver->updateLinearConstraintsMatrix(constraintMatrix)) {
-                yError() << "[InverseVelocityKinematics::impl::solveIntegrationBasedIK] "
+                yError() << "[InverseVelocityKinematics::impl::solveInverseDifferentialKinematics] "
                          << "qp solver for [updateLinearConstraintsMatrix] returns false.";
                 return 1;
             }
@@ -379,7 +379,7 @@ bool InverseVelocityKinematics::impl::solveIntegrationBasedIK(
 
         // solve the QP problem
         if (!m_optimizerSolver->solve()) {
-            yError() << "[InverseVelocityKinematics::impl::solveIntegrationBasedIK] "
+            yError() << "[InverseVelocityKinematics::impl::solveInverseDifferentialKinematics] "
                      << "qp solver for [solve] returns false.";
 
             return 1;
