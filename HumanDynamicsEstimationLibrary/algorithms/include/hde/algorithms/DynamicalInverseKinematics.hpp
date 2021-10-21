@@ -135,6 +135,7 @@ public:
 
     void clearProblem();
 
+    bool solve(const double dt);
 };
 
 #endif // DYNAMICALINVERSEKINEMATICS_HPP
