@@ -46,7 +46,6 @@ public:
     
     iDynTree::Vector3 worldGravity;
 
-    bool isInverseVelocityKinematicsInitialized;
     bool isInverseKinematicsInitializd;
 
     bool addTarget(const InverseKinematicsTarget& target);
@@ -66,7 +65,11 @@ public:
 
     TargetsMap::iterator getTargetRefIfItExists(const std::string& targetFrameName);
 
-    bool initializeInverseVelocityKinematics();
+    bool solveProblem(const double dt);
+
+    bool computeDesiredLinkVelocities();
+
+    bool initialize();
     bool updateConfiguration();
 };
 
@@ -84,8 +87,8 @@ public:
         TargetTypePose,
     };
 
-    iDynTree::Transform transform;
-    iDynTree::Twist twist;
+    iDynTree::Transform targetTransform;
+    iDynTree::Twist targetTwist;
     TargetType type;
     std::string frameName;
 
@@ -93,6 +96,8 @@ public:
     double orientationTargetWeight;
     double linearVelocityWeight;
     double angularVelocityWeight;
+
+    int errorSize;
 
     InverseKinematicsTarget(const std::string& frameName, const TargetType& configuration);
 
@@ -139,12 +144,18 @@ public:
                                               const double orientationTargetWeight = 1.0);
     
     
-
+    void setTargetType(const TargetType targetType);
     TargetType getTargetType() const;
     std::string getFrameName() const;
 
     bool hasPositionTarget() const;
     bool hasOrientationTarget() const;
+
+    iDynTree::VectorDynSize errorBuffer;
+    int getErrorSize() const;
+    bool computeError(const iDynTree::Transform transform, iDynTree::VectorDynSize error);
+    bool computeError(const iDynTree::Vector3 position, iDynTree::VectorDynSize error);
+    bool computeError(const iDynTree::Rotation orientation, iDynTree::VectorDynSize error);
 
     iDynTree::Vector3 getPosition() const;
     void setPosition(const iDynTree::Vector3& newPosition);
@@ -173,13 +184,13 @@ public:
 DynamicalInverseKinematics::impl::InverseKinematicsTarget::InverseKinematicsTarget(
     const std::string& frameName,
     const TargetType& type)
-    : type(type)
-    , frameName(frameName)
+    : frameName(frameName)
     , positionTargetWeight(1.0)
     , orientationTargetWeight(1.0)
     , linearVelocityWeight(1.0)
     , angularVelocityWeight(1.0)
 {
+    setTargetType(type);
     setTransform(iDynTree::Transform::Identity());
     iDynTree::Twist twist;
     twist.zero();
@@ -310,6 +321,66 @@ DynamicalInverseKinematics::impl::InverseKinematicsTarget::getTargetType() const
     return type;
 }
 
+void DynamicalInverseKinematics::impl::InverseKinematicsTarget::setTargetType(const DynamicalInverseKinematics::impl::InverseKinematicsTarget::TargetType targetType)
+{
+    type = targetType;
+    switch (type)
+    {
+    case DynamicalInverseKinematics::impl::InverseKinematicsTarget::TargetType::TargetTypePosition:
+        errorSize = 3;
+        break;
+    case DynamicalInverseKinematics::impl::InverseKinematicsTarget::TargetType::TargetTypeOrientation:
+        errorSize = 3;
+        break;
+    case DynamicalInverseKinematics::impl::InverseKinematicsTarget::TargetType::TargetTypePose:
+        errorSize = 6;
+        break;
+    }
+}
+
+int DynamicalInverseKinematics::impl::InverseKinematicsTarget::getErrorSize() const
+{
+    return errorSize;
+}
+
+bool DynamicalInverseKinematics::impl::InverseKinematicsTarget::computeError(const iDynTree::Transform transform, iDynTree::VectorDynSize error)
+{
+    if ( (type != TargetTypePose) || (error.size() != errorSize))
+    {
+        return false;
+    }
+
+    iDynTree::toEigen(error).head(3) = iDynTree::toEigen(transform.getPosition()) - iDynTree::toEigen(targetTransform.getPosition());
+    iDynTree::toEigen(error).tail(3) = iDynTree::toEigen(hde::utils::idyntree::rotation::skewVee(transform.getRotation() * targetTransform.getRotation().inverse()));
+
+    return true;
+}
+
+bool DynamicalInverseKinematics::impl::InverseKinematicsTarget::computeError(const iDynTree::Vector3 position, iDynTree::VectorDynSize error)
+{
+    if ( (type != TargetTypePosition) || (error.size() != errorSize))
+    {
+        return false;
+    }
+
+    iDynTree::toEigen(error) = iDynTree::toEigen(position) - iDynTree::toEigen(targetTransform.getPosition());
+   
+    return true;
+}
+
+
+bool DynamicalInverseKinematics::impl::InverseKinematicsTarget::computeError(const iDynTree::Rotation orientation, iDynTree::VectorDynSize error)
+{
+    if ( (type != TargetTypeOrientation) || (error.size() != errorSize))
+    {
+        return false;
+    }
+
+    iDynTree::toEigen(error) = iDynTree::toEigen(hde::utils::idyntree::rotation::skewVee(orientation * targetTransform.getRotation().inverse()));
+
+    return true;
+}
+
 std::string DynamicalInverseKinematics::impl::InverseKinematicsTarget::getFrameName() const
 {
     return frameName;
@@ -328,67 +399,67 @@ bool DynamicalInverseKinematics::impl::InverseKinematicsTarget::hasOrientationTa
 
 iDynTree::Vector3 DynamicalInverseKinematics::impl::InverseKinematicsTarget::getPosition() const
 {
-    return transform.getPosition();
+    return targetTransform.getPosition();
 }
 
 void DynamicalInverseKinematics::impl::InverseKinematicsTarget::setPosition(
     const iDynTree::Vector3& newPosition)
 {
-    transform.setPosition(iDynTree::Position(newPosition));
+    targetTransform.setPosition(iDynTree::Position(newPosition));
 }
 
 iDynTree::Vector3 DynamicalInverseKinematics::impl::InverseKinematicsTarget::getLinearVelocity() const
 {
-    return twist.getLinearVec3();
+    return targetTwist.getLinearVec3();
 }
 
 void DynamicalInverseKinematics::impl::InverseKinematicsTarget::setLinearVelocity(
     const iDynTree::Vector3& newLinearVelocity)
 {
-    twist.setLinearVec3(newLinearVelocity);
+    targetTwist.setLinearVec3(newLinearVelocity);
 }
 
 iDynTree::Rotation DynamicalInverseKinematics::impl::InverseKinematicsTarget::getOrientation() const
 {
-    return transform.getRotation();
+    return targetTransform.getRotation();
 }
 
 void DynamicalInverseKinematics::impl::InverseKinematicsTarget::setOrientation(
     const iDynTree::Rotation& newOrientation)
 {
-    transform.setRotation(newOrientation);
+    targetTransform.setRotation(newOrientation);
 }
 
 iDynTree::Vector3 DynamicalInverseKinematics::impl::InverseKinematicsTarget::getAngularVelocity() const
 {
-    return twist.getAngularVec3();
+    return targetTwist.getAngularVec3();
 }
 
 iDynTree::Transform DynamicalInverseKinematics::impl::InverseKinematicsTarget::getTransform() const
 {
-    return transform;
+    return targetTransform;
 }
 
 void DynamicalInverseKinematics::impl::InverseKinematicsTarget::setTransform(
     const iDynTree::Transform& newTransform)
 {
-    transform = newTransform;
+    targetTransform = newTransform;
 }
 
 void DynamicalInverseKinematics::impl::InverseKinematicsTarget::setAngularVelocity(
     const iDynTree::Vector3& newAngularVelocity)
 {
-    twist.setAngularVec3(newAngularVelocity);
+    targetTwist.setAngularVec3(newAngularVelocity);
 }
 
 iDynTree::Twist DynamicalInverseKinematics::impl::InverseKinematicsTarget::getTwist() const
 {
-    return twist;
+    return targetTwist;
 }
 
 void DynamicalInverseKinematics::impl::InverseKinematicsTarget::setTwist(const iDynTree::Twist& newTwist)
 {
-    twist = newTwist;
+    targetTwist = newTwist;
 }
 
 
@@ -442,19 +513,67 @@ void DynamicalInverseKinematics::impl::InverseKinematicsTarget::setAngularVeloci
 
 DynamicalInverseKinematics::impl::impl()
 : dofs(0)
-, isInverseVelocityKinematicsInitialized(false)
 , isInverseKinematicsInitializd(false)
 {
     // These variables are touched only once.
     worldGravity.zero();
 }
 
-bool DynamicalInverseKinematics::impl::initializeInverseVelocityKinematics()
+bool DynamicalInverseKinematics::impl::initialize()
 {
+    // Initialize Inverse Velocity Kinematics
     inverseVelocityKinematics.setModel(dynamics.getRobotModel());
     inverseVelocityKinematics.setFloatingBaseOnFrameNamed(dynamics.getFloatingBase());
 
-    isInverseVelocityKinematicsInitialized = true;
+    inverseVelocityKinematics.clearProblem();
+
+    // Add the targets for the inverse velocity kinematics solver
+    for (auto const& it : targets)
+    {
+        auto target = it.second;
+        switch (target.getTargetType()) {
+            case InverseKinematicsTarget::TargetType::TargetTypePosition:
+                if (!inverseVelocityKinematics.addLinearVelocityTarget(target.getFrameName(), target.getLinearVelocity(), 1.0))
+                    return false;
+                break;
+            case InverseKinematicsTarget::TargetType::TargetTypeOrientation:
+                if (!inverseVelocityKinematics.addAngularVelocityTarget(target.getFrameName(), target.getAngularVelocity(), 1.0))
+                    return false;
+                break;
+            case InverseKinematicsTarget::TargetType::TargetTypePose:
+                if (!inverseVelocityKinematics.addTarget(target.getFrameName(), target.getLinearVelocity(), target.getAngularVelocity(), 1.0, 1.0))
+                    return false;
+                break;
+        }
+    }
+
+
+    // Initialize integrator
+    stateIntegrator.setInterpolatorType(hde::utils::idyntree::state::Integrator::InterpolationType::trapezoidal);
+    stateIntegrator.setNJoints(model.getNrOfDOFs());
+
+    iDynTree::VectorDynSize jointLowerLimits;
+    jointLowerLimits.resize(model.getNrOfDOFs());
+    iDynTree::VectorDynSize jointUpperLimits;
+    jointUpperLimits.resize(model.getNrOfDOFs());
+    size_t DOFIndex = 0;
+    for (size_t jointIndex = 0; jointIndex < model.getNrOfJoints(); ++jointIndex) {
+        if (model.getJoint(jointIndex)->getNrOfDOFs() == 1) {
+            jointLowerLimits.setVal(DOFIndex, model.getJoint(jointIndex)->getMinPosLimit(0));
+            jointUpperLimits.setVal(DOFIndex, model.getJoint(jointIndex)->getMaxPosLimit(0));
+            DOFIndex++;
+        }
+    }
+    stateIntegrator.setJointLimits(jointLowerLimits, jointUpperLimits);
+
+
+    inverseVelocityKinematics.setGeneralJointVelocityConstraints(10.0);
+
+    inverseVelocityKinematics.setGeneralJointsUpperLowerConstraints(jointUpperLimits,
+                                                                    jointLowerLimits);
+
+
+    isInverseKinematicsInitializd = true;
 
     return true;
 }
@@ -530,6 +649,83 @@ void DynamicalInverseKinematics::impl::updateTargetAngularVelocity(
 {
     target->second.setAngularVelocity(newAngularVelocity);
     target->second.setAngularVelocityWeight(newAngularVelocityWeight);
+}
+
+bool DynamicalInverseKinematics::impl::solveProblem(const double dt)
+{
+    if (!isInverseKinematicsInitializd) {
+        if (!initialize())
+            return false;
+    }
+
+    // update inverse velocity kinematics state
+    if (!inverseVelocityKinematics.setConfiguration(state.W_p_B, state.W_R_B, state.s))
+        return false;
+
+    // compute desired link velocities and update inverse veloicty kinematics targets
+    if (!computeDesiredLinkVelocities())
+        return false;
+
+    // solve inverse velocity kinematics
+    if (!inverseVelocityKinematics.solve())
+        return false;
+    if (!(inverseVelocityKinematics.getBaseVelocitySolution(state.dot_W_p_B, state.omega_B) && inverseVelocityKinematics.getJointsVelocitySolution(state.dot_s)))
+        return false;
+
+    // integrate
+    stateIntegrator.integrate(state.dot_s,
+                              state.dot_W_p_B,
+                              state.dot_omega_B,
+                              dt);
+    stateIntegrator.getJointConfiguration(state.s);
+    stateIntegrator.getBasePose(state.W_p_B, state.W_R_B);
+
+    return true;
+}
+
+bool DynamicalInverseKinematics::impl::computeDesiredLinkVelocities()
+{
+    for (auto const& it : targets)
+    {
+        auto target = it.second;
+
+        // initialize buffers
+        iDynTree::VectorDynSize errorBuffer;
+        iDynTree::Vector3 desiredLinearVelocityBuffer, desiredAngularVelocityBuffer;
+
+        switch (target.getTargetType()) {
+            case DynamicalInverseKinematics::impl::InverseKinematicsTarget::TargetType::TargetTypePosition:
+                errorBuffer.resize(3);
+                if (!target.computeError(dynamics.getWorldTransform(target.getFrameName()).getPosition(), errorBuffer))
+                    return false;
+                iDynTree::toEigen(desiredLinearVelocityBuffer) = target.getLinearVelocityWeight() * iDynTree::toEigen(target.getLinearVelocity()) 
+                                                                 - target.getPositionTargetWeight()  * iDynTree::toEigen(errorBuffer);
+                if (!inverseVelocityKinematics.updateTargetLinearVelocity(target.getFrameName(), desiredLinearVelocityBuffer, 1.0))
+                    return false;
+                break;
+            case DynamicalInverseKinematics::impl::InverseKinematicsTarget::TargetType::TargetTypeOrientation:
+                errorBuffer.resize(3);
+                if (!target.computeError(dynamics.getWorldTransform(target.getFrameName()).getPosition(), errorBuffer))
+                    return false;
+                iDynTree::toEigen(desiredAngularVelocityBuffer) = target.getAngularVelocityWeight() * iDynTree::toEigen(target.getAngularVelocity()) 
+                                                                 - target.getOrientationTargetWeight()  * iDynTree::toEigen(errorBuffer);
+                if (!inverseVelocityKinematics.updateTargetAngularVelocity(target.getFrameName(), desiredAngularVelocityBuffer, 1.0))
+                    return false;
+                break;
+            case DynamicalInverseKinematics::impl::InverseKinematicsTarget::TargetType::TargetTypePose:
+                errorBuffer.resize(6);
+                if (!target.computeError(dynamics.getWorldTransform(target.getFrameName()), errorBuffer))
+                    return false;
+                iDynTree::toEigen(desiredLinearVelocityBuffer) = target.getLinearVelocityWeight() * iDynTree::toEigen(target.getLinearVelocity()) 
+                                                                 - target.getPositionTargetWeight()  * iDynTree::toEigen(errorBuffer).head(3);
+                iDynTree::toEigen(desiredAngularVelocityBuffer) = target.getAngularVelocityWeight() * iDynTree::toEigen(target.getAngularVelocity()) 
+                                                                 - target.getOrientationTargetWeight()  * iDynTree::toEigen(errorBuffer).tail(3);
+                if (!inverseVelocityKinematics.updateTarget(target.getFrameName(), iDynTree::Twist(desiredLinearVelocityBuffer, desiredAngularVelocityBuffer), 1.0, 1.0))
+                    return false;
+                break;
+        }
+    }
+    return true;
 }
 
 // ============================
@@ -904,32 +1100,42 @@ bool DynamicalInverseKinematics::getConfigurationSolution(iDynTree::Vector3& bas
 bool DynamicalInverseKinematics::getVelocitySolution(iDynTree::Twist& baseVelocity,
                                                      iDynTree::VectorDynSize& jointsVelocity) const
 {
-    return pImpl->inverseVelocityKinematics.getVelocitySolution(baseVelocity, jointsVelocity);
+    getBaseVelocitySolution(baseVelocity);
+    getJointsVelocitySolution(jointsVelocity);
+
+    return true;
 }
 
 bool DynamicalInverseKinematics::getJointsVelocitySolution(
     iDynTree::VectorDynSize& jointsVelocity) const
 {
-    return pImpl->inverseVelocityKinematics.getJointsVelocitySolution(jointsVelocity);
+    jointsVelocity = pImpl->state.dot_s;
+    return true;
 }
 
 bool DynamicalInverseKinematics::getBaseVelocitySolution(iDynTree::Twist& baseVelocity) const
 {
-    return pImpl->inverseVelocityKinematics.getBaseVelocitySolution(baseVelocity);
+    baseVelocity = iDynTree::Twist(pImpl->state.dot_W_p_B, pImpl->state.omega_B);
+    return true;
 }
 
 bool DynamicalInverseKinematics::getBaseVelocitySolution(iDynTree::Vector3& linearVelocity,
                                                          iDynTree::Vector3& angularVelocity) const
 {
-    return pImpl->inverseVelocityKinematics.getBaseVelocitySolution(linearVelocity, angularVelocity);
+    linearVelocity = pImpl->state.dot_W_p_B;
+    angularVelocity = pImpl->state.omega_B;
+    return true;
+}
+
+bool DynamicalInverseKinematics::solve(const double dt)
+{
+    return pImpl->solveProblem(dt);
 }
 
 void DynamicalInverseKinematics::clearProblem()
 {
 
     pImpl->state.initializeState(pImpl->dofs);
-    
-    pImpl->inverseVelocityKinematics.clearProblem();
 
     pImpl->isInverseKinematicsInitializd = false;
 }
