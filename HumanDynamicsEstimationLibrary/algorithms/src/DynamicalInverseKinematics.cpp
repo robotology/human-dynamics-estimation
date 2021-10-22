@@ -153,9 +153,9 @@ public:
 
     iDynTree::VectorDynSize errorBuffer;
     int getErrorSize() const;
-    bool computeError(const iDynTree::Transform transform, iDynTree::VectorDynSize error);
-    bool computeError(const iDynTree::Vector3 position, iDynTree::VectorDynSize error);
-    bool computeError(const iDynTree::Rotation orientation, iDynTree::VectorDynSize error);
+    bool computeError(const iDynTree::Transform transform, iDynTree::VectorDynSize& error);
+    bool computeError(const iDynTree::Vector3 position, iDynTree::VectorDynSize& error);
+    bool computeError(const iDynTree::Rotation orientation, iDynTree::VectorDynSize& error);
 
     iDynTree::Vector3 getPosition() const;
     void setPosition(const iDynTree::Vector3& newPosition);
@@ -232,7 +232,7 @@ DynamicalInverseKinematics::impl::InverseKinematicsTarget::OrientationAndVelocit
     const double orientationTargetWeight,
     const double angularVelocityWeight)
 {
-    InverseKinematicsTarget inverseKinematicsTarget(frameName, TargetTypePosition);
+    InverseKinematicsTarget inverseKinematicsTarget(frameName, TargetTypeOrientation);
     inverseKinematicsTarget.setOrientation(rotation);
     inverseKinematicsTarget.setOrientationTargetWeight(orientationTargetWeight);
     inverseKinematicsTarget.setAngularVelocity(angularVelocity);
@@ -261,7 +261,7 @@ DynamicalInverseKinematics::impl::InverseKinematicsTarget::PoseAndVelocityTarget
     double linearVelocityWeight,
     double angularVelocityWeight)
 {
-    InverseKinematicsTarget inverseKinematicsTarget(frameName, TargetTypePosition);
+    InverseKinematicsTarget inverseKinematicsTarget(frameName, TargetTypePose);
     inverseKinematicsTarget.setTransform(transform);
     inverseKinematicsTarget.setPositionTargetWeight(positionTargetWeight);
     inverseKinematicsTarget.setOrientationTargetWeight(orientationTargetWeight);
@@ -343,7 +343,7 @@ int DynamicalInverseKinematics::impl::InverseKinematicsTarget::getErrorSize() co
     return errorSize;
 }
 
-bool DynamicalInverseKinematics::impl::InverseKinematicsTarget::computeError(const iDynTree::Transform transform, iDynTree::VectorDynSize error)
+bool DynamicalInverseKinematics::impl::InverseKinematicsTarget::computeError(const iDynTree::Transform transform, iDynTree::VectorDynSize& error)
 {
     if ( (type != TargetTypePose) || (error.size() != errorSize))
     {
@@ -356,7 +356,7 @@ bool DynamicalInverseKinematics::impl::InverseKinematicsTarget::computeError(con
     return true;
 }
 
-bool DynamicalInverseKinematics::impl::InverseKinematicsTarget::computeError(const iDynTree::Vector3 position, iDynTree::VectorDynSize error)
+bool DynamicalInverseKinematics::impl::InverseKinematicsTarget::computeError(const iDynTree::Vector3 position, iDynTree::VectorDynSize& error)
 {
     if ( (type != TargetTypePosition) || (error.size() != errorSize))
     {
@@ -369,7 +369,7 @@ bool DynamicalInverseKinematics::impl::InverseKinematicsTarget::computeError(con
 }
 
 
-bool DynamicalInverseKinematics::impl::InverseKinematicsTarget::computeError(const iDynTree::Rotation orientation, iDynTree::VectorDynSize error)
+bool DynamicalInverseKinematics::impl::InverseKinematicsTarget::computeError(const iDynTree::Rotation orientation, iDynTree::VectorDynSize& error)
 {
     if ( (type != TargetTypeOrientation) || (error.size() != errorSize))
     {
@@ -589,19 +589,6 @@ DynamicalInverseKinematics::impl::getTargetRefIfItExists(const std::string& targ
     return targets.find(frameIndex);
 }
 
-bool DynamicalInverseKinematics::impl::updateConfiguration()
-{
-    iDynTree::Twist baseVelocity;
-
-    inverseVelocityKinematics.getVelocitySolution(state.dot_W_p_B, state.omega_B, state.dot_s);
-
-    return dynamics.setRobotState(iDynTree::Transform(state.W_R_B, iDynTree::Position(state.W_p_B)),
-                                  state.s,
-                                  iDynTree::Twist(state.dot_W_p_B, state.omega_B),
-                                  state.dot_s,
-                                  worldGravity);
-}
-
 bool DynamicalInverseKinematics::impl::addTarget(const InverseKinematicsTarget& target)
 {
     int frameIndex = dynamics.getFrameIndex(target.getFrameName());
@@ -658,8 +645,8 @@ bool DynamicalInverseKinematics::impl::solveProblem(const double dt)
             return false;
     }
 
-    // update inverse velocity kinematics state
-    if (!inverseVelocityKinematics.setConfiguration(state.W_p_B, state.W_R_B, state.s))
+    // update internal configuration inverse velocity kinematics state
+    if (!updateConfiguration())
         return false;
 
     // compute desired link velocities and update inverse veloicty kinematics targets
@@ -679,6 +666,23 @@ bool DynamicalInverseKinematics::impl::solveProblem(const double dt)
                               dt);
     stateIntegrator.getJointConfiguration(state.s);
     stateIntegrator.getBasePose(state.W_p_B, state.W_R_B);
+
+
+    return true;
+}
+
+bool DynamicalInverseKinematics::impl::updateConfiguration()
+{
+    // update internal configuration inverse velocity kinematics state
+    if (!inverseVelocityKinematics.setConfiguration(state.W_p_B, state.W_R_B, state.s))
+        return false;
+
+    if (!dynamics.setRobotState(iDynTree::Transform(state.W_R_B, iDynTree::Position(state.W_p_B)),
+                                state.s,
+                                iDynTree::Twist(state.dot_W_p_B, state.omega_B),
+                                state.dot_s,
+                                worldGravity))
+        return false;
 
     return true;
 }
@@ -705,7 +709,7 @@ bool DynamicalInverseKinematics::impl::computeDesiredLinkVelocities()
                 break;
             case DynamicalInverseKinematics::impl::InverseKinematicsTarget::TargetType::TargetTypeOrientation:
                 errorBuffer.resize(3);
-                if (!target.computeError(dynamics.getWorldTransform(target.getFrameName()).getPosition(), errorBuffer))
+                if (!target.computeError(dynamics.getWorldTransform(target.getFrameName()).getRotation(), errorBuffer))
                     return false;
                 iDynTree::toEigen(desiredAngularVelocityBuffer) = target.getAngularVelocityWeight() * iDynTree::toEigen(target.getAngularVelocity()) 
                                                                  - target.getOrientationTargetWeight()  * iDynTree::toEigen(errorBuffer);
@@ -746,7 +750,6 @@ bool DynamicalInverseKinematics::setModel(const iDynTree::Model& model)
 
     bool result = pImpl->dynamics.loadRobotModel(model);
     if (!result || !pImpl->dynamics.isValid()) {
-        std::cerr << "[ERROR] Error loading robot model" << std::endl;
         return false;
     }
 
