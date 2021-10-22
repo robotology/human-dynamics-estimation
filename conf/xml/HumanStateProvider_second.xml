@@ -13,7 +13,7 @@
         <param name="period">0.05</param>
         <param name="urdf">humanSubject01_66dof.urdf</param>
         <param name="floatingBaseFrame">Pelvis</param>
-        <param name="ikSolver">integrationbased</param>
+        <param name="ikSolver">dynamical</param>
         <param name="useXsensJointsAngles">false</param>
         <param name="allowIKFailures">true</param>
         <param name="useDirectBaseMeasurement">false</param>
@@ -28,10 +28,10 @@
         <!-- inverse velocity kinematics parameters -->
         <param name="linVelTargetWeight">0.0</param>
         <param name="angVelTargetWeight">1.0</param>
-        <param name="integrationBasedIKMeasuredVelocityGainLinRot">(1.0 1.0)</param>
+        <param name="dynamicalIKMeasuredVelocityGainLinRot">(1.0 1.0)</param>
         <!-- integration based IK parameters -->
-        <param name="integrationBasedIKCorrectionGainsLinRot">(5.0 5.0)</param>
-        <param name="integrationBasedIKIntegralCorrectionGainsLinRot">(0.0 0.0)</param>
+        <param name="dynamicalIKCorrectionGainsLinRot">(5.0 5.0)</param>
+        <param name="dynamicalIKIntegralCorrectionGainsLinRot">(0.0 0.0)</param>
         <!-- TODO: How to use a reduced model in the entire HDE? (Starting from HumanStateProvider) -->
         <group name="MODEL_TO_DATA_LINK_NAMES">
             <param name="map_Pelvis">(Pelvis, XsensSuit::vLink::Pelvis)</param>

@@ -13,8 +13,8 @@
         <param name="period">0.02</param>
         <param name="urdf">nao.urdf</param>
         <param name="floatingBaseFrame">base_link</param>
-        <!-- ikSolver options: pairwised, global, integrationbased -->
-        <param name="ikSolver">integrationbased</param>
+        <!-- ikSolver options: pairwised, global, dynamical -->
+        <param name="ikSolver">dynamical</param>
         <param name="useXsensJointsAngles">false</param>
         <param name="allowIKFailures">true</param>
         <param name="useDirectBaseMeasurement">false</param>
@@ -41,10 +41,10 @@
         <param name="linVelTargetWeight">0.0</param>
         <param name="angVelTargetWeight">1.0</param>
         <!-- integration based IK parameters -->
-        <param name='integrationBasedJointVelocityLimit'>10.0</param> <!-- comment or -1.0 for no limits -->
-        <param name ="integrationBasedIKMeasuredVelocityGainLinRot">(1.0 1.0)</param>
-        <param name="integrationBasedIKCorrectionGainsLinRot">(2.0 10.0)</param>
-        <param name="integrationBasedIKIntegralCorrectionGainsLinRot">(0.0 0.0)</param>
+        <param name='dynamicalJointVelocityLimit'>10.0</param> <!-- comment or -1.0 for no limits -->
+        <param name ="dynamicalIKMeasuredVelocityGainLinRot">(1.0 1.0)</param>
+        <param name="dynamicalIKCorrectionGainsLinRot">(2.0 10.0)</param>
+        <param name="dynamicalIKIntegralCorrectionGainsLinRot">(0.0 0.0)</param>
         <group name="MODEL_TO_DATA_LINK_NAMES">
             <param name="map_Pelvis">(base_link, XsensSuit::vLink::Pelvis)</param>
             <param name="map_T8">(Neck, XsensSuit::vLink::T8)</param>
