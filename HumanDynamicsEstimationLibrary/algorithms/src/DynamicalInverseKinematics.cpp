@@ -659,10 +659,9 @@ bool DynamicalInverseKinematics::impl::solveProblem(const double dt)
     if (!(inverseVelocityKinematics.getBaseVelocitySolution(state.dot_W_p_B, state.omega_B) && inverseVelocityKinematics.getJointsVelocitySolution(state.dot_s)))
         return false;
 
-    // integrate
     stateIntegrator.integrate(state.dot_s,
                               state.dot_W_p_B,
-                              state.dot_omega_B,
+                              state.omega_B,
                               dt);
     stateIntegrator.getJointConfiguration(state.s);
     stateIntegrator.getBasePose(state.W_p_B, state.W_R_B);
