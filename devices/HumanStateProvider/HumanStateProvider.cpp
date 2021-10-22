@@ -107,7 +107,7 @@ enum SolverIK
 {
     global,
     pairwised,
-    integrationbased
+    dynamical
 };
 
 enum rpcCommand
@@ -204,13 +204,13 @@ public:
     double angVelTargetWeight;
     double costRegularization;
 
-    double integrationBasedIKMeasuredLinearVelocityGain;
-    double integrationBasedIKMeasuredAngularVelocityGain;
-    double integrationBasedIKLinearCorrectionGain;
-    double integrationBasedIKAngularCorrectionGain;
-    double integrationBasedIKIntegralLinearCorrectionGain;
-    double integrationBasedIKIntegralAngularCorrectionGain;
-    double integrationBasedJointVelocityLimit;
+    double dynamicalIKMeasuredLinearVelocityGain;
+    double dynamicalIKMeasuredAngularVelocityGain;
+    double dynamicalIKLinearCorrectionGain;
+    double dynamicalIKAngularCorrectionGain;
+    double dynamicalIKIntegralLinearCorrectionGain;
+    double dynamicalIKIntegralAngularCorrectionGain;
+    double dynamicalJointVelocityLimit;
 
     std::vector<std::string> custom_jointsVelocityLimitsNames;
     std::vector<iDynTree::JointIndex> custom_jointsVelocityLimitsIndexes;
@@ -244,7 +244,7 @@ public:
     bool useFixedBase;
 
     iDynTree::InverseKinematics globalIK;
-    hde::algorithms::InverseVelocityKinematics inverseVelocityKinematics;
+    hde::algorithms::InverseVelocityKinematics inverseVelocityKinematics; // used for computing joint velocity in global IK solution
     hde::algorithms::DynamicalInverseKinematics dynamicalInverseKinematics;
     hde::utils::idyntree::state::Integrator stateIntegrator;
 
@@ -269,10 +269,10 @@ public:
     bool createLinkPairs();
     bool initializePairwisedInverseKinematicsSolver();
     bool initializeGlobalInverseKinematicsSolver();
-    bool initializeIntegrationBasedInverseKinematicsSolver();
+    bool initializeDynamicalInverseKinematicsSolver();
     bool solvePairwisedInverseKinematicsSolver();
     bool solveGlobalInverseKinematicsSolver();
-    bool solveIntegrationBasedInverseKinematics();
+    bool solveDynamicalInverseKinematics();
 
     // optimization targets
     bool updateInverseKinematicTargets();
@@ -552,8 +552,8 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         pImpl->ikSolver = SolverIK::global;
     else if (solverName == "pairwised")
         pImpl->ikSolver = SolverIK::pairwised;
-    else if (solverName == "integrationbased")
-        pImpl->ikSolver = SolverIK::integrationbased;
+    else if (solverName == "dynamical")
+        pImpl->ikSolver = SolverIK::dynamical;
     else {
         yError() << LogPrefix << "ikSolver " << solverName << " not found";
         return false;
@@ -678,7 +678,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         pImpl->costRegularization = config.find("costRegularization").asDouble();
     }
 
-    if (pImpl->ikSolver == SolverIK::global || pImpl->ikSolver == SolverIK::integrationbased) {
+    if (pImpl->ikSolver == SolverIK::global || pImpl->ikSolver == SolverIK::dynamical) {
         if (!(config.check("useDirectBaseMeasurement")
               && config.find("useDirectBaseMeasurement").isBool())) {
             yError() << LogPrefix << "useDirectBaseMeasurement option not found or not valid";
@@ -742,64 +742,64 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         pImpl->useDirectBaseMeasurement = true;
     }
 
-    if (pImpl->ikSolver == SolverIK::integrationbased) {
+    if (pImpl->ikSolver == SolverIK::dynamical) {
 
-        if (!(config.check("integrationBasedIKMeasuredVelocityGainLinRot")
-              && config.find("integrationBasedIKMeasuredVelocityGainLinRot").isList()
-              && config.find("integrationBasedIKMeasuredVelocityGainLinRot").asList()->size()
+        if (!(config.check("dynamicalIKMeasuredVelocityGainLinRot")
+              && config.find("dynamicalIKMeasuredVelocityGainLinRot").isList()
+              && config.find("dynamicalIKMeasuredVelocityGainLinRot").asList()->size()
                      == 2)) {
             yError()
                 << LogPrefix
-                << "integrationBasedIKMeasuredVelocityGainLinRot option not found or not valid";
+                << "dynamicalIKMeasuredVelocityGainLinRot option not found or not valid";
             return false;
         }
 
-        if (!(config.check("integrationBasedIKCorrectionGainsLinRot")
-              && config.find("integrationBasedIKCorrectionGainsLinRot").isList()
-              && config.find("integrationBasedIKCorrectionGainsLinRot").asList()->size() == 2)) {
+        if (!(config.check("dynamicalIKCorrectionGainsLinRot")
+              && config.find("dynamicalIKCorrectionGainsLinRot").isList()
+              && config.find("dynamicalIKCorrectionGainsLinRot").asList()->size() == 2)) {
             yError() << LogPrefix
-                     << "integrationBasedIKCorrectionGainsLinRot option not found or not valid";
+                     << "dynamicalIKCorrectionGainsLinRot option not found or not valid";
             return false;
         }
 
-        if (!(config.check("integrationBasedIKIntegralCorrectionGainsLinRot")
-              && config.find("integrationBasedIKIntegralCorrectionGainsLinRot").isList()
-              && config.find("integrationBasedIKIntegralCorrectionGainsLinRot").asList()->size()
+        if (!(config.check("dynamicalIKIntegralCorrectionGainsLinRot")
+              && config.find("dynamicalIKIntegralCorrectionGainsLinRot").isList()
+              && config.find("dynamicalIKIntegralCorrectionGainsLinRot").asList()->size()
                      == 2)) {
             yError()
                 << LogPrefix
-                << "integrationBasedIKIntegralCorrectionGainsLinRot option not found or not valid";
+                << "dynamicalIKIntegralCorrectionGainsLinRot option not found or not valid";
             return false;
         }
 
-        if (config.check("integrationBasedJointVelocityLimit")
-            && config.find("integrationBasedJointVelocityLimit").isDouble()) {
-            pImpl->integrationBasedJointVelocityLimit =
-                config.find("integrationBasedJointVelocityLimit").asDouble();
+        if (config.check("dynamicalJointVelocityLimit")
+            && config.find("dynamicalJointVelocityLimit").isDouble()) {
+            pImpl->dynamicalJointVelocityLimit =
+                config.find("dynamicalJointVelocityLimit").asDouble();
         }
         else {
-            pImpl->integrationBasedJointVelocityLimit =
+            pImpl->dynamicalJointVelocityLimit =
                 1000.0; // if no limits given for a joint we put 1000.0 rad/sec, which is very high
         }
 
-        yarp::os::Bottle* integrationBasedIKMeasuredVelocityGainLinRot =
-            config.find("integrationBasedIKMeasuredVelocityGainLinRot").asList();
-        yarp::os::Bottle* integrationBasedIKCorrectionGainsLinRot =
-            config.find("integrationBasedIKCorrectionGainsLinRot").asList();
-        yarp::os::Bottle* integrationBasedIKIntegralCorrectionGainsLinRot =
-            config.find("integrationBasedIKIntegralCorrectionGainsLinRot").asList();
-        pImpl->integrationBasedIKMeasuredLinearVelocityGain =
-            integrationBasedIKMeasuredVelocityGainLinRot->get(0).asFloat64();
-        pImpl->integrationBasedIKMeasuredAngularVelocityGain =
-            integrationBasedIKMeasuredVelocityGainLinRot->get(0).asFloat64();
-        pImpl->integrationBasedIKLinearCorrectionGain =
-            integrationBasedIKCorrectionGainsLinRot->get(0).asFloat64();
-        pImpl->integrationBasedIKAngularCorrectionGain =
-            integrationBasedIKCorrectionGainsLinRot->get(1).asFloat64();
-        pImpl->integrationBasedIKIntegralLinearCorrectionGain =
-            integrationBasedIKIntegralCorrectionGainsLinRot->get(0).asFloat64();
-        pImpl->integrationBasedIKIntegralAngularCorrectionGain =
-            integrationBasedIKIntegralCorrectionGainsLinRot->get(1).asFloat64();
+        yarp::os::Bottle* dynamicalIKMeasuredVelocityGainLinRot =
+            config.find("dynamicalIKMeasuredVelocityGainLinRot").asList();
+        yarp::os::Bottle* dynamicalIKCorrectionGainsLinRot =
+            config.find("dynamicalIKCorrectionGainsLinRot").asList();
+        yarp::os::Bottle* dynamicalIKIntegralCorrectionGainsLinRot =
+            config.find("dynamicalIKIntegralCorrectionGainsLinRot").asList();
+        pImpl->dynamicalIKMeasuredLinearVelocityGain =
+            dynamicalIKMeasuredVelocityGainLinRot->get(0).asFloat64();
+        pImpl->dynamicalIKMeasuredAngularVelocityGain =
+            dynamicalIKMeasuredVelocityGainLinRot->get(0).asFloat64();
+        pImpl->dynamicalIKLinearCorrectionGain =
+            dynamicalIKCorrectionGainsLinRot->get(0).asFloat64();
+        pImpl->dynamicalIKAngularCorrectionGain =
+            dynamicalIKCorrectionGainsLinRot->get(1).asFloat64();
+        pImpl->dynamicalIKIntegralLinearCorrectionGain =
+            dynamicalIKIntegralCorrectionGainsLinRot->get(0).asFloat64();
+        pImpl->dynamicalIKIntegralAngularCorrectionGain =
+            dynamicalIKIntegralCorrectionGainsLinRot->get(1).asFloat64();
     }
 
     // ===================================
@@ -826,25 +826,25 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
                 << "*** Cost regularization              :" << pImpl->costRegularization;
         yInfo() << LogPrefix << "*** Size of thread pool               :" << pImpl->ikPoolSize;
     }
-    if (pImpl->ikSolver == SolverIK::integrationbased) {
+    if (pImpl->ikSolver == SolverIK::dynamical) {
         yInfo() << LogPrefix << "*** Measured Linear velocity gain     :"
-                << pImpl->integrationBasedIKMeasuredLinearVelocityGain;
+                << pImpl->dynamicalIKMeasuredLinearVelocityGain;
         yInfo() << LogPrefix << "*** Measured Angular velocity gain    :"
-                << pImpl->integrationBasedIKMeasuredAngularVelocityGain;
+                << pImpl->dynamicalIKMeasuredAngularVelocityGain;
         yInfo() << LogPrefix << "*** Linear correction gain            :"
-                << pImpl->integrationBasedIKLinearCorrectionGain;
+                << pImpl->dynamicalIKLinearCorrectionGain;
         yInfo() << LogPrefix << "*** Angular correction gain           :"
-                << pImpl->integrationBasedIKAngularCorrectionGain;
+                << pImpl->dynamicalIKAngularCorrectionGain;
         yInfo() << LogPrefix << "*** Linear integral correction gain   :"
-                << pImpl->integrationBasedIKIntegralLinearCorrectionGain;
+                << pImpl->dynamicalIKIntegralLinearCorrectionGain;
         yInfo() << LogPrefix << "*** Angular integral correction gain  :"
-                << pImpl->integrationBasedIKIntegralAngularCorrectionGain;
+                << pImpl->dynamicalIKIntegralAngularCorrectionGain;
         yInfo() << LogPrefix
                 << "*** Cost regularization              :" << pImpl->costRegularization;
         yInfo() << LogPrefix << "*** Joint velocity limit             :"
-                << pImpl->integrationBasedJointVelocityLimit;
+                << pImpl->dynamicalJointVelocityLimit;
     }
-    if (pImpl->ikSolver == SolverIK::integrationbased || pImpl->ikSolver == SolverIK::global) {
+    if (pImpl->ikSolver == SolverIK::dynamical || pImpl->ikSolver == SolverIK::global) {
         yInfo() << LogPrefix << "*** Inverse Velocity Kinematics solver:"
                 << pImpl->inverseVelocityKinematicsSolver;
     }
@@ -950,11 +950,11 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
             return false;
         }
         if (pImpl->inverseVelocityKinematicsSolver != "QP"
-            || pImpl->ikSolver != SolverIK::integrationbased) {
+            || pImpl->ikSolver != SolverIK::dynamical) {
             yWarning()
                 << LogPrefix
                 << "'CUSTOM_CONSTRAINTS' group option is available only if "
-                   "'ikSolver==integrationbased' & 'inverseVelocityKinematicsSolver==QP'. \n "
+                   "'ikSolver==dynamical' & 'inverseVelocityKinematicsSolver==QP'. \n "
                    "Currently, you are NOT using the customized constraint group.";
         }
 
@@ -1173,8 +1173,8 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
             return false;
         }
     }
-    else if (pImpl->ikSolver == SolverIK::integrationbased) {
-        if (!pImpl->initializeIntegrationBasedInverseKinematicsSolver()) {
+    else if (pImpl->ikSolver == SolverIK::dynamical) {
+        if (!pImpl->initializeDynamicalInverseKinematicsSolver()) {
             askToStop();
             return false;
         }
@@ -1267,8 +1267,8 @@ void HumanStateProvider::run()
     else if (pImpl->ikSolver == SolverIK::global) {
         inverseKinematicsFailure = !pImpl->solveGlobalInverseKinematicsSolver();
     }
-    else if (pImpl->ikSolver == SolverIK::integrationbased) {
-        inverseKinematicsFailure = !pImpl->solveIntegrationBasedInverseKinematics();
+    else if (pImpl->ikSolver == SolverIK::dynamical) {
+        inverseKinematicsFailure = !pImpl->solveDynamicalInverseKinematics();
     }
 
     // check if inverse kinematics failed
@@ -2025,7 +2025,7 @@ bool HumanStateProvider::impl::initializeGlobalInverseKinematicsSolver()
     return true;
 }
 
-bool HumanStateProvider::impl::initializeIntegrationBasedInverseKinematicsSolver()
+bool HumanStateProvider::impl::initializeDynamicalInverseKinematicsSolver()
 {
     // Initialize state integrator
     stateIntegrator.setInterpolatorType(hde::utils::idyntree::state::Integrator::InterpolationType::trapezoidal);
@@ -2047,37 +2047,21 @@ bool HumanStateProvider::impl::initializeIntegrationBasedInverseKinematicsSolver
 
     integralOrientationError.zero();
 
-    // Set global Inverse Velocity Kinematics parameters
-    inverseVelocityKinematics.setResolutionMode(inverseVelocityKinematicsSolver);
+    // Set inverse velocity kinematics parameters
     dynamicalInverseKinematics.setInverseVelocityKinematicsResolutionMode(inverseVelocityKinematicsSolver);
-    // Set Regularization Term:
-    inverseVelocityKinematics.setRegularization(costRegularization);
     dynamicalInverseKinematics.setInverseVelocityKinematicsRegularization(costRegularization);
 
-    if (!inverseVelocityKinematics.setModel(humanModel)) {
-        yError() << LogPrefix << "IBIK: failed to load the model";
-        return false;
-    }
     if (!dynamicalInverseKinematics.setModel(humanModel)) {
         yError() << LogPrefix << "DynamicalInverseKinematics: failed to load the model";
         return false;
     }
 
-    if (!inverseVelocityKinematics.setFloatingBaseOnFrameNamed(floatingBaseFrame)) {
-        yError() << LogPrefix << "Failed to set the IBIK floating base frame on link"
-                 << floatingBaseFrame;
-        return false;
-    }
     if (!dynamicalInverseKinematics.setFloatingBaseOnFrameNamed(floatingBaseFrame)) {
         yError() << LogPrefix << "DynamicalInverseKinematics: Failed to set the floating base frame on link"
                  << floatingBaseFrame;
         return false;
     }
 
-    if (!addInverseVelocityKinematicsTargets()) {
-        yError() << LogPrefix << "Failed to set the inverse velocity kinematics targets";
-        return false;
-    }
     if (!addDynamicalInverseKinematicsTargets()) {
         yError() << LogPrefix << "Failed to set the dynamical inverse velocity kinematics targets";
         return false;
@@ -2105,7 +2089,7 @@ bool HumanStateProvider::impl::initializeIntegrationBasedInverseKinematicsSolver
     }
 
     inverseVelocityKinematics.setGeneralJointVelocityConstraints(
-        integrationBasedJointVelocityLimit);
+        dynamicalJointVelocityLimit);
 
     inverseVelocityKinematics.setGeneralJointsUpperLowerConstraints(jointUpperLimits,
                                                                     jointLowerLimits);
@@ -2201,7 +2185,7 @@ bool HumanStateProvider::impl::solveGlobalInverseKinematicsSolver()
     return true;
 }
 
-bool HumanStateProvider::impl::solveIntegrationBasedInverseKinematics()
+bool HumanStateProvider::impl::solveDynamicalInverseKinematics()
 {
     // compute timestep
     double dt;
@@ -2227,151 +2211,20 @@ bool HumanStateProvider::impl::solveIntegrationBasedInverseKinematics()
             if (useDirectBaseMeasurement) {
                 continue;
             }
-            if (!dynamicalInverseKinematics.updateTarget(linkName, linkTransformMatrices[linkName], linkVelocities[linkName], 1.0, 1.0, 1.0, 1.0))
+            if (!dynamicalInverseKinematics.updateTarget(linkName, linkTransformMatrices[linkName], linkVelocities[linkName], 7.0, 20.0, 1.0, 1.0))
                 return false;
 
             continue;
         }
-        if (!dynamicalInverseKinematics.updateTarget(linkName, linkTransformMatrices[linkName], linkVelocities[linkName], 1.0, 1.0, 1.0, 1.0))
+        if (!dynamicalInverseKinematics.updateTarget(linkName, linkTransformMatrices[linkName], linkVelocities[linkName], 7.0, 1.0, 1.0, 1.0))
             return false;
      }
 
     if (!dynamicalInverseKinematics.solve(dt))
         return false;
     
-
-    // // LINK VELOCITY CORRECTION
-    // iDynTree::KinDynComputations* computations = kinDynComputations.get();
-
-    // if (useDirectBaseMeasurement) {
-    //     computations->setRobotState(
-    //         jointConfigurationSolution, jointVelocitiesSolution, worldGravity);
-    // }
-    // else {
-    //     computations->setRobotState(baseTransformSolution,
-    //                                 jointConfigurationSolution,
-    //                                 baseVelocitySolution,
-    //                                 jointVelocitiesSolution,
-    //                                 worldGravity);
-    // }
-
-    // for (size_t linkIndex = 0; linkIndex < humanModel.getNrOfLinks(); ++linkIndex) {
-    //     std::string linkName = humanModel.getLinkName(linkIndex);
-
-    //     // skip fake links
-    //     if (wearableStorage.modelToWearable_LinkName.find(linkName)
-    //         == wearableStorage.modelToWearable_LinkName.end()) {
-    //         continue;
-    //     }
-
-    //     iDynTree::Rotation rotationError =
-    //         computations->getWorldTransform(humanModel.getFrameIndex(linkName)).getRotation()
-    //         * linkTransformMatrices[linkName].getRotation().inverse();
-    //     iDynTree::Vector3 angularVelocityError;
-
-    //     angularVelocityError = hde::utils::idyntree::rotation::skewVee(rotationError);
-    //     iDynTree::toEigen(integralOrientationError) =
-    //         iDynTree::toEigen(integralOrientationError)
-    //         + iDynTree::toEigen(angularVelocityError) * dt;
-
-    //     // for floating base link use error also on position if not useDirectBaseMeasurement or useFixedBase,
-    //     // otherwise skip or fix the link.
-    //     if (linkName == floatingBaseFrame) {
-    //         if (useDirectBaseMeasurement) {
-    //             continue;
-    //         }
-
-    //         if (useFixedBase) {
-    //             linkVelocities[linkName].zero();
-    //             continue;
-    //         }
-
-    //         iDynTree::Vector3 linearVelocityError;
-    //         linearVelocityError =
-    //             computations->getWorldTransform(humanModel.getFrameIndex(linkName)).getPosition()
-    //             - linkTransformMatrices[linkName].getPosition();
-    //         iDynTree::toEigen(integralLinearVelocityError) =
-    //             iDynTree::toEigen(integralLinearVelocityError)
-    //             + iDynTree::toEigen(linearVelocityError) * dt;
-    //         for (int i = 0; i < 3; i++) {
-    //             linkVelocities[linkName].setVal(i,
-    //                                             integrationBasedIKMeasuredLinearVelocityGain
-    //                                                     * linkVelocities[linkName].getVal(i)
-    //                                                 - integrationBasedIKLinearCorrectionGain
-    //                                                       * linearVelocityError.getVal(i)
-    //                                                 - integrationBasedIKIntegralLinearCorrectionGain
-    //                                                       * integralLinearVelocityError.getVal(i));
-    //         }
-    //     }
-
-    //     // correct the links angular velocities
-    //     for (int i = 3; i < 6; i++) {
-    //         linkVelocities[linkName].setVal(
-    //             i,
-    //             integrationBasedIKMeasuredAngularVelocityGain * linkVelocities[linkName].getVal(i)
-    //                 - integrationBasedIKAngularCorrectionGain * angularVelocityError.getVal(i - 3)
-    //                 - integrationBasedIKIntegralAngularCorrectionGain
-    //                       * integralOrientationError.getVal(i - 3));
-    //     }
-    // }
-
-    // // INVERSE VELOCITY KINEMATICS
-    // // Set joint configuration
-    // if (!inverseVelocityKinematics.setConfiguration(baseTransformSolution,
-    //                                                 jointConfigurationSolution)) {
-    //     yError() << LogPrefix
-    //              << "Failed to set the joint configuration for initializing the global IK";
-    //     return false;
-    // }
-
-    // // Update ivk velocity targets based on wearable input data
-    // if (!updateInverseVelocityKinematicTargets()) {
-    //     return false;
-    // }
-
-    // if (!inverseVelocityKinematics.solve()) {
-    //     yError() << LogPrefix << "Failed to solve inverse velocity kinematics";
-    //     return false;
-    // }
-
-    // inverseVelocityKinematics.getVelocitySolution(baseVelocitySolution, jointVelocitiesSolution);
-
-    // // Threshold to limitate joint velocity
-    // for (unsigned i = 0; i < jointVelocitiesSolution.size(); i++) {
-    //     if (integrationBasedJointVelocityLimit > 0
-    //         && jointVelocitiesSolution.getVal(i) > integrationBasedJointVelocityLimit) {
-    //         yWarning() << LogPrefix << "joint velocity out of limit: " << humanModel.getJointName(i)
-    //                    << " : " << jointVelocitiesSolution.getVal(i);
-    //         jointVelocitiesSolution.setVal(i, integrationBasedJointVelocityLimit);
-    //     }
-    //     else if (integrationBasedJointVelocityLimit > 0
-    //              && jointVelocitiesSolution.getVal(i)
-    //                     < (-1.0 * integrationBasedJointVelocityLimit)) {
-    //         yWarning() << LogPrefix << "joint velocity out of limit: " << humanModel.getJointName(i)
-    //                    << " : " << jointVelocitiesSolution.getVal(i);
-    //         jointVelocitiesSolution.setVal(i, -1.0 * integrationBasedJointVelocityLimit);
-    //     }
-    // }
-
-    // // VELOCITY INTEGRATION
-    // // integrate velocities measurements
-    // if (!useDirectBaseMeasurement) {
-    //     stateIntegrator.integrate(jointVelocitiesSolution,
-    //                               baseVelocitySolution.getLinearVec3(),
-    //                               baseVelocitySolution.getAngularVec3(),
-    //                               dt);
-
-    //     stateIntegrator.getJointConfiguration(jointConfigurationSolution);
-    //     stateIntegrator.getBasePose(baseTransformSolution);
-    // }
-    // else {
-    //     stateIntegrator.integrate(jointVelocitiesSolution, dt);
-
-    //     stateIntegrator.getJointConfiguration(jointConfigurationSolution);
-    // }
-
     dynamicalInverseKinematics.getConfigurationSolution(baseTransformSolution, jointConfigurationSolution);
-    baseTransformSolution = iDynTree::Transform::Identity();
+
     return true;
 }
 
@@ -2545,12 +2398,11 @@ bool HumanStateProvider::impl::addDynamicalInverseKinematicsTargets()
             == wearableStorage.modelToWearable_LinkName.end()) {
             continue;
         }
-
         // For the base link use both position and orientation targets
         if (linkName == floatingBaseFrame) {
             if (!useDirectBaseMeasurement
                 && !dynamicalInverseKinematics.addPoseTarget(
-                    linkName, iDynTree::Transform::Identity(), 8.0, 20.0)) {
+                    linkName, iDynTree::Transform::Identity(), 1.0, 1.0)) {
                 yError() << LogPrefix << "Failed to add pose target for floating base link"
                          << linkName;
                 return false;
@@ -2560,7 +2412,7 @@ bool HumanStateProvider::impl::addDynamicalInverseKinematicsTargets()
 
         // Add orientation targets
         if (!dynamicalInverseKinematics.addOrientationTarget(
-                linkName, iDynTree::Rotation::Identity(), 20.0)) {
+                linkName, iDynTree::Rotation::Identity(), 1.0)) {
             yError() << LogPrefix << "Failed to add pose target for link" << linkName;
             return false;
         }
