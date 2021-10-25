@@ -591,7 +591,7 @@ bool DynamicalInverseKinematics::impl::initialize()
                 break;
         }
     }
-    if (!m_inverseVelocityKinematics.setGeneralJointVelocityConstraints(100.0)) // to be removed
+    if (!m_inverseVelocityKinematics.setGeneralJointVelocityConstraints(100)) // dummy value, that will be replaced by the custom joint velocity limits
         return false; 
     if (!m_inverseVelocityKinematics.setGeneralJointsUpperLowerConstraints(m_limits.jointPositionUpperLimit,
                                                                            m_limits.jointPositionLowerLimit))
@@ -609,11 +609,11 @@ bool DynamicalInverseKinematics::impl::initialize()
     if (m_linearLimits.constraintVariablesIndex.size() > 0)
     {
         if (!m_inverseVelocityKinematics.setCustomConstraintsJointsValues(m_linearLimits.constraintVariablesIndex,
-                                                                      m_linearLimits.constraintUpperBound,
-                                                                      m_linearLimits.constraintLowerBound,
-                                                                      m_linearLimits.constraintMatrix,
-                                                                      m_linearLimits.k_u,
-                                                                      m_linearLimits.k_l))
+                                                                          m_linearLimits.constraintUpperBound,
+                                                                          m_linearLimits.constraintLowerBound,
+                                                                          m_linearLimits.constraintMatrix,
+                                                                          m_linearLimits.k_u,
+                                                                          m_linearLimits.k_l))
             return false;
     }
 
