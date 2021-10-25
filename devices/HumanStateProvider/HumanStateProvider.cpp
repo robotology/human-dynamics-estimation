@@ -2066,33 +2066,41 @@ bool HumanStateProvider::impl::initializeDynamicalInverseKinematicsSolver()
         yError() << LogPrefix << "Failed to set the dynamical inverse velocity kinematics targets";
         return false;
     }
- 
-
-    // =========================
-    // SET CONSTRAINTS FOR IB-IK
-    // =========================
+    
+     if (!dynamicalInverseKinematics.setAllJointsVelocityLimit(dynamicalJointVelocityLimit)) {
+        yError() << LogPrefix << "Failed to set all joints velocity limits";
+        return false;
+    }
+    
     if (custom_jointsVelocityLimitsNames.size() != 0) {
-        inverseVelocityKinematics.setCustomJointsVelocityLimit(custom_jointsVelocityLimitsIndexes,
-                                                               custom_jointsVelocityLimitsValues);
+        for (size_t i = 0; i < custom_jointsVelocityLimitsNames.size(); i++) {
+            if (!dynamicalInverseKinematics.setJointVelocityLimit(custom_jointsVelocityLimitsIndexes[i],
+                                                                  custom_jointsVelocityLimitsValues[i]))
+            {
+                yError() << LogPrefix << "Failed to set joint velocity limit for dof " << i;
+                return false;
+            }
+        }
     }
+
     if (baseVelocityUpperLimit.size() != 0) {
-        inverseVelocityKinematics.setCustomBaseVelocityLimit(baseVelocityLowerLimit,
-                                                             baseVelocityUpperLimit);
+        if (!dynamicalInverseKinematics.setBaseVelocityLimit(baseVelocityLowerLimit,
+                                                             baseVelocityUpperLimit))
+        {
+            yError() << LogPrefix << "Failed to set base velocity limit ";
+            return false;
+        }
     }
+
     if (customConstraintVariablesIndex.size() != 0) {
-        inverseVelocityKinematics.setCustomConstraintsJointsValues(customConstraintVariablesIndex,
-                                                                   customConstraintUpperBound,
-                                                                   customConstraintLowerBound,
-                                                                   customConstraintMatrix,
-                                                                   k_u,
-                                                                   k_l);
+        if (!dynamicalInverseKinematics.setLinearJointConfigurationLimits(customConstraintVariablesIndex,
+                                                                          customConstraintUpperBound,
+                                                                          customConstraintLowerBound,
+                                                                          customConstraintMatrix,
+                                                                          k_u,
+                                                                          k_l))
+            return false;
     }
-
-    inverseVelocityKinematics.setGeneralJointVelocityConstraints(
-        dynamicalJointVelocityLimit);
-
-    inverseVelocityKinematics.setGeneralJointsUpperLowerConstraints(jointUpperLimits,
-                                                                    jointLowerLimits);
 
     return true;
 }
