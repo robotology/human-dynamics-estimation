@@ -170,18 +170,13 @@ public:
     std::vector<LinkPairInfo> linkPairs;
 
     // Buffers
-    std::unordered_map<std::string, iDynTree::Rotation> linkRotationMatrices;
     std::unordered_map<std::string, iDynTree::Transform> linkTransformMatrices;
     std::unordered_map<std::string, iDynTree::Transform> linkTransformMatricesRaw;
-    std::unordered_map<std::string, iDynTree::Rotation> linkOrientationMatrices;
     std::unordered_map<std::string, iDynTree::Twist> linkVelocities;
     iDynTree::VectorDynSize jointConfigurationSolution;
     iDynTree::VectorDynSize jointVelocitiesSolution;
     iDynTree::Transform baseTransformSolution;
     iDynTree::Twist baseVelocitySolution;
-
-    iDynTree::Vector3 integralOrientationError;
-    iDynTree::Vector3 integralLinearVelocityError;
 
     std::unordered_map<std::string, hde::utils::idyntree::rotation::RotationDistance>
         linkErrorOrientations;
@@ -208,8 +203,6 @@ public:
     double dynamicalIKMeasuredAngularVelocityGain;
     double dynamicalIKLinearCorrectionGain;
     double dynamicalIKAngularCorrectionGain;
-    double dynamicalIKIntegralLinearCorrectionGain;
-    double dynamicalIKIntegralAngularCorrectionGain;
     double dynamicalIKJointVelocityLimit;
 
     std::vector<std::string> custom_jointsVelocityLimitsNames;
@@ -762,16 +755,6 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
             return false;
         }
 
-        if (!(config.check("dynamicalIKIntegralCorrectionGainsLinRot")
-              && config.find("dynamicalIKIntegralCorrectionGainsLinRot").isList()
-              && config.find("dynamicalIKIntegralCorrectionGainsLinRot").asList()->size()
-                     == 2)) {
-            yError()
-                << LogPrefix
-                << "dynamicalIKIntegralCorrectionGainsLinRot option not found or not valid";
-            return false;
-        }
-
         if (config.check("dynamicalIKJointVelocityLimit")
             && config.find("dynamicalIKJointVelocityLimit").isDouble()) {
             pImpl->dynamicalIKJointVelocityLimit =
@@ -786,8 +769,6 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
             config.find("dynamicalIKMeasuredVelocityGainLinRot").asList();
         yarp::os::Bottle* dynamicalIKCorrectionGainsLinRot =
             config.find("dynamicalIKCorrectionGainsLinRot").asList();
-        yarp::os::Bottle* dynamicalIKIntegralCorrectionGainsLinRot =
-            config.find("dynamicalIKIntegralCorrectionGainsLinRot").asList();
         pImpl->dynamicalIKMeasuredLinearVelocityGain =
             dynamicalIKMeasuredVelocityGainLinRot->get(0).asFloat64();
         pImpl->dynamicalIKMeasuredAngularVelocityGain =
@@ -796,10 +777,6 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
             dynamicalIKCorrectionGainsLinRot->get(0).asFloat64();
         pImpl->dynamicalIKAngularCorrectionGain =
             dynamicalIKCorrectionGainsLinRot->get(1).asFloat64();
-        pImpl->dynamicalIKIntegralLinearCorrectionGain =
-            dynamicalIKIntegralCorrectionGainsLinRot->get(0).asFloat64();
-        pImpl->dynamicalIKIntegralAngularCorrectionGain =
-            dynamicalIKIntegralCorrectionGainsLinRot->get(1).asFloat64();
     }
 
     // ===================================
@@ -835,10 +812,6 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
                 << pImpl->dynamicalIKLinearCorrectionGain;
         yInfo() << LogPrefix << "*** Angular correction gain           :"
                 << pImpl->dynamicalIKAngularCorrectionGain;
-        yInfo() << LogPrefix << "*** Linear integral correction gain   :"
-                << pImpl->dynamicalIKIntegralLinearCorrectionGain;
-        yInfo() << LogPrefix << "*** Angular integral correction gain  :"
-                << pImpl->dynamicalIKIntegralAngularCorrectionGain;
         yInfo() << LogPrefix
                 << "*** Cost regularization              :" << pImpl->costRegularization;
         yInfo() << LogPrefix << "*** Joint velocity limit             :"
@@ -2044,8 +2017,6 @@ bool HumanStateProvider::impl::initializeDynamicalInverseKinematicsSolver()
         }
     }
     stateIntegrator.setJointLimits(jointLowerLimits, jointUpperLimits);
-
-    integralOrientationError.zero();
 
     // Set inverse velocity kinematics parameters
     dynamicalInverseKinematics.setInverseVelocityKinematicsResolutionMode(inverseVelocityKinematicsSolver);
