@@ -38,10 +38,10 @@
         robustCholeskyDecomposition,
         sparseRobustCholeskyDecomposition -->
         <param name='inverseVelocityKinematicsSolver'>QP</param>
-        <param name="linVelTargetWeight">0.0</param>
+        <param name="linVelTargetWeight">1.0</param>
         <param name="angVelTargetWeight">1.0</param>
         <!-- integration based IK parameters -->
-        <param name='dynamicalJointVelocityLimit'>10.0</param> <!-- comment or -1.0 for no limits -->
+        <param name='dynamicalIKJointVelocityLimit'>10.0</param> <!-- comment or -1.0 for no limits -->
         <param name ="dynamicalIKMeasuredVelocityGainLinRot">(1.0 1.0)</param>
         <param name="dynamicalIKCorrectionGainsLinRot">(2.0 10.0)</param>
         <param name="dynamicalIKIntegralCorrectionGainsLinRot">(0.0 0.0)</param>

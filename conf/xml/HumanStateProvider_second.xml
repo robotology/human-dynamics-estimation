@@ -26,7 +26,7 @@
         <param name="costRegularization">0.000001</param>
         <param name="costTolerance">0.001</param>
         <!-- inverse velocity kinematics parameters -->
-        <param name="linVelTargetWeight">0.0</param>
+        <param name="linVelTargetWeight">1.0</param>
         <param name="angVelTargetWeight">1.0</param>
         <param name="dynamicalIKMeasuredVelocityGainLinRot">(1.0 1.0)</param>
         <!-- integration based IK parameters -->
