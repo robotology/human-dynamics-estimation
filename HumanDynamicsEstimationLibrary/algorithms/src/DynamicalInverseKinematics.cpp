@@ -1150,9 +1150,9 @@ bool DynamicalInverseKinematics::updateTarget(const std::string& linkName,
     return updateTarget(linkName, iDynTree::Transform(orientation, iDynTree::Position(position)), iDynTree::Twist(linearVelocity, angularVelocity), positionFeedbackGain, orientationFeedbackGain, linearVelocityFeedforwardGain, angularVelocityFeedforwardGain, linearVelocityWeight, angularVelocityWeight);
 }
 
-bool DynamicalInverseKinematics::updateTarget(const std::string& linkName,
-                                              const iDynTree::Transform& transform,
-                                              const iDynTree::Twist& twist)
+bool DynamicalInverseKinematics::updateTargetPoseAndVelocity(const std::string& linkName,
+                                                             const iDynTree::Transform& transform,
+                                                             const iDynTree::Twist& twist)
 {
     DynamicalInverseKinematics::impl::TargetsMap::iterator target =
         pImpl->getTargetRefIfItExists(linkName);
@@ -1165,13 +1165,33 @@ bool DynamicalInverseKinematics::updateTarget(const std::string& linkName,
     return true;
 }
 
-bool DynamicalInverseKinematics::updateTarget(const std::string& linkName,
-                                              const iDynTree::Vector3& position,
-                                              const iDynTree::Rotation& orientation,
-                                              const iDynTree::Vector3& linearVelocity,
-                                              const iDynTree::Vector3& angularVelocity)
+bool DynamicalInverseKinematics::updateTargetPoseAndVelocity(const std::string& linkName,
+                                                             const iDynTree::Vector3& position,
+                                                             const iDynTree::Rotation& orientation,
+                                                             const iDynTree::Vector3& linearVelocity,
+                                                             const iDynTree::Vector3& angularVelocity)
 {
-    return updateTarget(linkName, iDynTree::Transform(orientation, iDynTree::Position(position)), iDynTree::Twist(linearVelocity, angularVelocity));
+    return updateTargetPoseAndVelocity(linkName, iDynTree::Transform(orientation, iDynTree::Position(position)), iDynTree::Twist(linearVelocity, angularVelocity));
+}
+
+bool DynamicalInverseKinematics::updateTargetPose(const std::string& linkName,
+                                                  const iDynTree::Transform& transform)
+{
+    DynamicalInverseKinematics::impl::TargetsMap::iterator target =
+        pImpl->getTargetRefIfItExists(linkName);
+    if (target == pImpl->m_targets.end()) {
+        return false;
+    }
+
+    target->second.setTransform(transform);
+    return true;
+}
+
+bool DynamicalInverseKinematics::updateTargetPose(const std::string& linkName,
+                                                  const iDynTree::Vector3& position,
+                                                  const iDynTree::Rotation& orientation)
+{
+    return updateTargetPose(linkName, iDynTree::Transform(orientation, iDynTree::Position(position)));
 }
 
 

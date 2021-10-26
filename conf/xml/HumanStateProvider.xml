@@ -43,30 +43,32 @@
         <param name="dynamicalIKMeasuredVelocityGainLinRot">(1.0 1.0)</param>
         <param name="dynamicalIKCorrectionGainsLinRot">(8.0 20.0)</param>
         <param name="dynamicalIKIntegralCorrectionGainsLinRot">(0.0 0.0)</param>
-        <group name="MODEL_TO_DATA_LINK_NAMES">
-            <param name="map_Pelvis">(Pelvis, XsensSuit::vLink::Pelvis)</param>
-            <param name="map_L5">(L5, XsensSuit::vLink::L5)</param>
-            <param name="map_L3">(L3, XsensSuit::vLink::L3)</param>
-            <param name="map_T12">(T12, XsensSuit::vLink::T12)</param>
-            <param name="map_T8">(T8, XsensSuit::vLink::T8)</param>
-            <param name="map_Neck">(Neck, XsensSuit::vLink::Neck)</param>
-            <param name="map_Head">(Head, XsensSuit::vLink::Head)</param>
-            <param name="map_RightShoulder">(RightShoulder, XsensSuit::vLink::RightShoulder)</param>
-            <param name="map_RightUpperArm">(RightUpperArm, XsensSuit::vLink::RightUpperArm)</param>
-            <param name="map_RightForeArm">(RightForeArm, XsensSuit::vLink::RightForeArm)</param>
-            <param name="map_RightHand">(RightHand, XsensSuit::vLink::RightHand)</param>
-            <param name="map_LeftShoulder">(LeftShoulder, XsensSuit::vLink::LeftShoulder)</param>
-            <param name="map_LeftUpperArm">(LeftUpperArm, XsensSuit::vLink::LeftUpperArm)</param>
-            <param name="map_LeftForeArm">(LeftForeArm, XsensSuit::vLink::LeftForeArm)</param>
-            <param name="map_LeftHand">(LeftHand, XsensSuit::vLink::LeftHand)</param>
-            <param name="map_RightUpperLeg">(RightUpperLeg, XsensSuit::vLink::RightUpperLeg)</param>
-            <param name="map_RightLowerLeg">(RightLowerLeg, XsensSuit::vLink::RightLowerLeg)</param>
-            <param name="map_RightFoot">(RightFoot, XsensSuit::vLink::RightFoot)</param>
-            <param name="map_RightToe">(RightToe, XsensSuit::vLink::RightToe)</param>
-            <param name="map_LeftUpperLeg">(LeftUpperLeg, XsensSuit::vLink::LeftUpperLeg)</param>
-            <param name="map_LeftLowerLeg">(LeftLowerLeg, XsensSuit::vLink::LeftLowerLeg)</param>
-            <param name="map_LeftFoot">(LeftFoot, XsensSuit::vLink::LeftFoot)</param>
-            <param name="map_LeftToe">(LeftToe, XsensSuit::vLink::LeftToe)</param>
+        <group name="WEARABLE_SENSOR_TARGETS">
+            <!-- LinkName, WearableSensorName, TargetType-->
+            <!-- TargetType : {pose, poseAndVelocity, position, positionAndVelocity, orientation, orientationAndVelocity}-->
+            <param name="target_Pelvis">(Pelvis, XsensSuit::vLink::Pelvis, poseAndVelocity)</param>
+            <param name="target_L5">(L5, XsensSuit::vLink::L5, orientationAndVelocity)</param>
+            <param name="target_L3">(L3, XsensSuit::vLink::L3, orientationAndVelocity)</param>
+            <param name="target_T12">(T12, XsensSuit::vLink::T12, orientationAndVelocity)</param>
+            <param name="target_T8">(T8, XsensSuit::vLink::T8, orientationAndVelocity)</param>
+            <param name="target_Neck">(Neck, XsensSuit::vLink::Neck, orientationAndVelocity)</param>
+            <param name="target_Head">(Head, XsensSuit::vLink::Head, orientationAndVelocity)</param>
+            <param name="target_RightShoulder">(RightShoulder, XsensSuit::vLink::RightShoulder, orientationAndVelocity)</param>
+            <param name="target_RightUpperArm">(RightUpperArm, XsensSuit::vLink::RightUpperArm, orientationAndVelocity)</param>
+            <param name="target_RightForeArm">(RightForeArm, XsensSuit::vLink::RightForeArm, orientationAndVelocity)</param>
+            <param name="target_RightHand">(RightHand, XsensSuit::vLink::RightHand, orientationAndVelocity)</param>
+            <param name="target_LeftShoulder">(LeftShoulder, XsensSuit::vLink::LeftShoulder, orientationAndVelocity)</param>
+            <param name="target_LeftUpperArm">(LeftUpperArm, XsensSuit::vLink::LeftUpperArm, orientationAndVelocity)</param>
+            <param name="target_LeftForeArm">(LeftForeArm, XsensSuit::vLink::LeftForeArm, orientationAndVelocity)</param>
+            <param name="target_LeftHand">(LeftHand, XsensSuit::vLink::LeftHand, orientationAndVelocity)</param>
+            <param name="target_RightUpperLeg">(RightUpperLeg, XsensSuit::vLink::RightUpperLeg, orientationAndVelocity)</param>
+            <param name="target_RightLowerLeg">(RightLowerLeg, XsensSuit::vLink::RightLowerLeg, orientationAndVelocity)</param>
+            <param name="target_RightFoot">(RightFoot, XsensSuit::vLink::RightFoot, orientationAndVelocity)</param>
+            <param name="target_RightToe">(RightToe, XsensSuit::vLink::RightToe, orientationAndVelocity)</param>
+            <param name="target_LeftUpperLeg">(LeftUpperLeg, XsensSuit::vLink::LeftUpperLeg, orientationAndVelocity)</param>
+            <param name="target_LeftLowerLeg">(LeftLowerLeg, XsensSuit::vLink::LeftLowerLeg, orientationAndVelocity)</param>
+            <param name="target_LeftFoot">(LeftFoot, XsensSuit::vLink::LeftFoot, orientationAndVelocity)</param>
+            <param name="target_LeftToe">(LeftToe, XsensSuit::vLink::LeftToe, orientationAndVelocity)</param>
         </group>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
