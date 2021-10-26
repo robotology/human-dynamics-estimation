@@ -210,7 +210,7 @@ public:
     double dynamicalIKAngularCorrectionGain;
     double dynamicalIKIntegralLinearCorrectionGain;
     double dynamicalIKIntegralAngularCorrectionGain;
-    double dynamicalJointVelocityLimit;
+    double dynamicalIKJointVelocityLimit;
 
     std::vector<std::string> custom_jointsVelocityLimitsNames;
     std::vector<iDynTree::JointIndex> custom_jointsVelocityLimitsIndexes;
@@ -772,13 +772,13 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
             return false;
         }
 
-        if (config.check("dynamicalJointVelocityLimit")
-            && config.find("dynamicalJointVelocityLimit").isDouble()) {
-            pImpl->dynamicalJointVelocityLimit =
-                config.find("dynamicalJointVelocityLimit").asDouble();
+        if (config.check("dynamicalIKJointVelocityLimit")
+            && config.find("dynamicalIKJointVelocityLimit").isDouble()) {
+            pImpl->dynamicalIKJointVelocityLimit =
+                config.find("dynamicalIKJointVelocityLimit").asDouble();
         }
         else {
-            pImpl->dynamicalJointVelocityLimit =
+            pImpl->dynamicalIKJointVelocityLimit =
                 1000.0; // if no limits given for a joint we put 1000.0 rad/sec, which is very high
         }
 
@@ -842,7 +842,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         yInfo() << LogPrefix
                 << "*** Cost regularization              :" << pImpl->costRegularization;
         yInfo() << LogPrefix << "*** Joint velocity limit             :"
-                << pImpl->dynamicalJointVelocityLimit;
+                << pImpl->dynamicalIKJointVelocityLimit;
     }
     if (pImpl->ikSolver == SolverIK::dynamical || pImpl->ikSolver == SolverIK::global) {
         yInfo() << LogPrefix << "*** Inverse Velocity Kinematics solver:"
@@ -2067,7 +2067,7 @@ bool HumanStateProvider::impl::initializeDynamicalInverseKinematicsSolver()
         return false;
     }
     
-     if (!dynamicalInverseKinematics.setAllJointsVelocityLimit(dynamicalJointVelocityLimit)) {
+     if (!dynamicalInverseKinematics.setAllJointsVelocityLimit(dynamicalIKJointVelocityLimit)) {
         yError() << LogPrefix << "Failed to set all joints velocity limits";
         return false;
     }
