@@ -69,18 +69,12 @@ using namespace wearable;
 using ModelJointName = std::string;
 using ModelLinkName = std::string;
 
-using WearableLinkName = std::string;
-using WearableJointName = std::string;
-
 using InverseVelocityKinematicsSolverName = std::string;
 
 using FloatingBaseName = std::string;
 
-struct WearableJointInfo
-{
-    WearableJointName name;
-    size_t index;
-};
+using TargetName = std::string;
+
 
 // Struct that contains all the data exposed by the HumanState interface
 struct SolutionIK
@@ -122,6 +116,52 @@ enum rpcCommand
     resetCalibration,
 };
 
+enum TargetType
+{
+    pose,
+    poseAndVelocity,
+    position,
+    positionAndVelocity,
+    orientation,
+    orientationAndVelocity
+};
+
+static std::unordered_map<std::string,TargetType> const stringToTargetType = { {"pose",TargetType::pose},
+                                                                               {"poseAndVelocity",TargetType::poseAndVelocity},
+                                                                               {"position",TargetType::position},
+                                                                               {"positionAndVelocity",TargetType::positionAndVelocity},
+                                                                               {"orientation",TargetType::orientation},
+                                                                               {"orientationAndVelocity",TargetType::orientationAndVelocity}};
+
+class WearableSensorTarget
+{
+    public:
+    WearableName wearableName;
+    ModelLinkName modelLinkName;
+    TargetType targetType;
+    sensor::SensorType sensorType;
+
+    iDynTree::Vector3 position;
+    iDynTree::Rotation rotation;
+    iDynTree::Vector3 linearVelocity;
+    iDynTree::Vector3 angularVelocity;
+
+    WearableSensorTarget(WearableName wearableName_,
+                         ModelLinkName modelLinkName_,
+                         TargetType targetType_,
+                         sensor::SensorType sensorType_)
+                         : wearableName(wearableName_)
+                         , modelLinkName(modelLinkName_)
+                         , targetType(targetType_)
+                         , sensorType(sensorType_)
+    {
+        position.zero();
+        rotation.Identity();
+        linearVelocity.zero();
+        angularVelocity.zero();
+    };
+};
+
 // Container of data coming from the wearable interface
 struct WearableStorage
 {
@@ -129,10 +169,10 @@ struct WearableStorage
     //
     // E.g. [Pelvis] ==> [XsensSuit::vLink::Pelvis]. Read from the configuration.
     //
-    std::unordered_map<ModelLinkName, WearableLinkName> modelToWearable_LinkName;
+    std::unordered_map<ModelLinkName, WearableName> modelToWearable_LinkName;
 
     // Maps [wearable virtual sensor name] ==> [virtual sensor]
-    std::unordered_map<WearableLinkName, SensorPtr<const sensor::IVirtualLinkKinSensor>>
+    std::unordered_map<WearableName, SensorPtr<const sensor::IVirtualLinkKinSensor>>
         linkSensorsMap;
 };
 
@@ -164,6 +204,9 @@ public:
 
     std::vector<SegmentInfo> segments;
     std::vector<LinkPairInfo> linkPairs;
+
+    // Target
+    std::unordered_map<TargetName, std::shared_ptr<WearableSensorTarget>> wearableTargets;
 
     // Buffers
     std::unordered_map<std::string, iDynTree::Transform> linkTransformMatrices;
@@ -245,6 +288,7 @@ public:
     iDynTree::Vector3 worldGravity;
 
     // get input data
+    bool updateWearableTargets();
     bool getLinkTransformFromInputData(std::unordered_map<std::string, iDynTree::Transform>& t);
     bool computeRelativeTransformForInputData(std::unordered_map<std::string, iDynTree::Transform>& t);
     bool applyFixedRightRotationForInputTransformData(std::unordered_map<std::string, iDynTree::Transform>& t);
@@ -472,22 +516,22 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         return false;
     }
 
-    yarp::os::Bottle& linksGroup = config.findGroup("MODEL_TO_DATA_LINK_NAMES");
+    yarp::os::Bottle& linksGroup = config.findGroup("WEARABLE_SENSOR_TARGETS");
     if (linksGroup.isNull()) {
-        yError() << LogPrefix << "Failed to find group MODEL_TO_DATA_LINK_NAMES";
+        yError() << LogPrefix << "Failed to find group WEARABLE_SENSOR_TARGETS";
         return false;
     }
     for (size_t i = 1; i < linksGroup.size(); ++i) {
         if (!(linksGroup.get(i).isList() && linksGroup.get(i).asList()->size() == 2)) {
             yError() << LogPrefix
-                     << "Childs of MODEL_TO_DATA_LINK_NAMES must be lists of two elements";
+                     << "Childs of WEARABLE_SENSOR_TARGETS must be lists of two elements";
             return false;
         }
         yarp::os::Bottle* list = linksGroup.get(i).asList();
         std::string key = list->get(0).asString();
         yarp::os::Bottle* listContent = list->get(1).asList();
 
-        if (!((listContent->size() == 2) && (listContent->get(0).isString())
+        if (!((listContent->size() == 3) && (listContent->get(0).isString())
               && (listContent->get(1).isString()))) {
             yError() << LogPrefix << "Link list must have two strings";
             return false;
@@ -551,11 +595,27 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     for (size_t i = 1; i < linksGroup.size(); ++i) {
         yarp::os::Bottle* listContent = linksGroup.get(i).asList()->get(1).asList();
 
-        std::string modelLinkName = listContent->get(0).asString();
-        std::string wearableLinkName = listContent->get(1).asString();
+        ModelLinkName modelLinkName = listContent->get(0).asString();
+        WearableName wearableName = listContent->get(1).asString();
+        std::string targetTypeString = listContent->get(2).asString();
+        auto it = stringToTargetType.find(targetTypeString);
+        if (it == stringToTargetType.end()) {
+            yError() << LogPrefix << "Target Type not valid [" << targetTypeString << "]";
+            return false;
+        }
+        TargetType targetType = it->second;
+        TargetName targetName = linksGroup.get(i).asList()->get(0).asString();
 
-        yInfo() << LogPrefix << "Read link map:" << modelLinkName << "==>" << wearableLinkName;
-        pImpl->wearableStorage.modelToWearable_LinkName[modelLinkName] = wearableLinkName;
+        yInfo() << LogPrefix << "Read link map:" << modelLinkName << "==>" << wearableName;
+        pImpl->wearableStorage.modelToWearable_LinkName[modelLinkName] = wearableName;
+
+        if (pImpl->wearableTargets.find(targetName) != pImpl->wearableTargets.end())
+        {
+            yError() << LogPrefix << "Duplicated target name found [" << targetName << "]";
+            return false;
+        }
+
+        pImpl->wearableTargets[targetName] = std::make_shared<WearableSensorTarget>(wearableName, modelLinkName, targetType, sensor::SensorType::Invalid);
     }
 
     pImpl->fixedSensorRotation.clear();
@@ -1133,6 +1193,13 @@ bool HumanStateProvider::close()
 
 void HumanStateProvider::run()
 {
+    // Update the target from wearable interface
+    if (!pImpl->updateWearableTargets()) {
+        yError() << LogPrefix << "Failed to get link transforms from input data";
+        askToStop();
+        return;
+    }
+
     // Get the link transformations from input data
     if (!pImpl->getLinkTransformFromInputData(pImpl->linkTransformMatricesRaw)) {
         yError() << LogPrefix << "Failed to get link transforms from input data";
@@ -1495,26 +1562,93 @@ bool HumanStateProvider::impl::applyRpcCommand()
     return true;
 }
 
+bool HumanStateProvider::impl::updateWearableTargets()
+{
+    for (auto wearableTargetEntry : wearableTargets)
+    {
+        WearableName wearableName = wearableTargetEntry.second->wearableName;
+        TargetName targetName = wearableTargetEntry.first;
+
+        switch (wearableTargetEntry.second->sensorType) {
+            case sensor::SensorType::VirtualLinkKinSensor : {
+                auto sensor = iWear->getVirtualLinkKinSensor(wearableName);
+                if (!sensor) {
+                    yError() << LogPrefix << "Sensor" << wearableName
+                            << "has been added but is not properly configured.";
+                    return false;
+                }
+                if (sensor->getSensorStatus() != sensor::SensorStatus::Ok) {
+                    yError() << LogPrefix << "The sensor status of" << wearableName
+                            << "is not ok (" << static_cast<double>(sensor->getSensorStatus()) << ")";
+                    return false;
+                }
+
+                wearable::Vector3 position;
+                if (!sensor->getLinkPosition(position)) {
+                    yError() << LogPrefix << "Failed to read link position from virtual link sensor " << wearableName;
+                    return false;
+                }
+                wearableTargetEntry.second->position.setVal(0, position.at(0));
+                wearableTargetEntry.second->position.setVal(1, position.at(1));
+                wearableTargetEntry.second->position.setVal(2, position.at(2));
+
+                Quaternion orientation;
+                if (!sensor->getLinkOrientation(orientation)) {
+                    yError() << LogPrefix << "Failed to read link orientation from virtual link sensor " << wearableName;
+                    return false;
+                }
+                wearableTargetEntry.second->rotation.fromQuaternion({orientation.data(), 4});
+
+                wearable::Vector3 linearVelocity;
+                if (!sensor->getLinkLinearVelocity(linearVelocity)) {
+                    yError() << LogPrefix << "Failed to read link linear velocity from virtual link sensor " << wearableName;
+                    return false;
+                }
+                wearableTargetEntry.second->linearVelocity.setVal(0, linearVelocity.at(0));
+                wearableTargetEntry.second->linearVelocity.setVal(1, linearVelocity.at(1));
+                wearableTargetEntry.second->linearVelocity.setVal(2, linearVelocity.at(2));
+
+                wearable::Vector3 angularVelocity;
+                if (!sensor->getLinkAngularVelocity(angularVelocity)) {
+                    yError() << LogPrefix
+                            << "Failed to read link angular velocity from virtual link sensor " << wearableName;
+                    return false;
+                }
+                wearableTargetEntry.second->angularVelocity.setVal(0, angularVelocity.at(0));
+                wearableTargetEntry.second->angularVelocity.setVal(1, angularVelocity.at(1));
+                wearableTargetEntry.second->angularVelocity.setVal(2, angularVelocity.at(2));
+                break;
+            }
+            default : {
+                yError() << LogPrefix << "Sensor Type for taget " << targetName << " can not be used as target.";
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
 bool HumanStateProvider::impl::getLinkTransformFromInputData(
     std::unordered_map<std::string, iDynTree::Transform>& transforms)
 {
     for (const auto& linkMapEntry : wearableStorage.modelToWearable_LinkName) {
         const ModelLinkName& modelLinkName = linkMapEntry.first;
-        const WearableLinkName& wearableLinkName = linkMapEntry.second;
+        const WearableName& wearableName = linkMapEntry.second;
 
-        if (wearableStorage.linkSensorsMap.find(wearableLinkName)
+        if (wearableStorage.linkSensorsMap.find(wearableName)
                 == wearableStorage.linkSensorsMap.end()
-            || !wearableStorage.linkSensorsMap.at(wearableLinkName)) {
-            yError() << LogPrefix << "Failed to get" << wearableLinkName
+            || !wearableStorage.linkSensorsMap.at(wearableName)) {
+            yError() << LogPrefix << "Failed to get" << wearableName
                      << "sensor from the device. Something happened after configuring it.";
             return false;
         }
 
         const wearable::SensorPtr<const sensor::IVirtualLinkKinSensor> sensor =
-            wearableStorage.linkSensorsMap.at(wearableLinkName);
+            wearableStorage.linkSensorsMap.at(wearableName);
 
         if (!sensor) {
-            yError() << LogPrefix << "Sensor" << wearableLinkName
+            yError() << LogPrefix << "Sensor" << wearableName
                      << "has been added but not properly configured";
             return false;
         }
@@ -1626,21 +1760,21 @@ bool HumanStateProvider::impl::getLinkVelocityFromInputData(
 {
     for (const auto& linkMapEntry : wearableStorage.modelToWearable_LinkName) {
         const ModelLinkName& modelLinkName = linkMapEntry.first;
-        const WearableLinkName& wearableLinkName = linkMapEntry.second;
+        const WearableName& wearableName = linkMapEntry.second;
 
-        if (wearableStorage.linkSensorsMap.find(wearableLinkName)
+        if (wearableStorage.linkSensorsMap.find(wearableName)
                 == wearableStorage.linkSensorsMap.end()
-            || !wearableStorage.linkSensorsMap.at(wearableLinkName)) {
-            yError() << LogPrefix << "Failed to get" << wearableLinkName
+            || !wearableStorage.linkSensorsMap.at(wearableName)) {
+            yError() << LogPrefix << "Failed to get" << wearableName
                      << "sensor from the device. Something happened after configuring it.";
             return false;
         }
 
         const wearable::SensorPtr<const sensor::IVirtualLinkKinSensor> sensor =
-            wearableStorage.linkSensorsMap.at(wearableLinkName);
+            wearableStorage.linkSensorsMap.at(wearableName);
 
         if (!sensor) {
-            yError() << LogPrefix << "Sensor" << wearableLinkName
+            yError() << LogPrefix << "Sensor" << wearableName
                      << "has been added but not properly configured";
             return false;
         }
@@ -2076,28 +2210,68 @@ bool HumanStateProvider::impl::solveDynamicalInverseKinematics()
     };
     lastTime = yarp::os::Time::now();
 
-    // Dynamical IK
-     for (size_t linkIndex = 0; linkIndex < humanModel.getNrOfLinks(); ++linkIndex) {
-        std::string linkName = humanModel.getLinkName(linkIndex);
 
-        // skip fake links
-        if (wearableStorage.modelToWearable_LinkName.find(linkName)
-            == wearableStorage.modelToWearable_LinkName.end()) {
-            continue;
-        }
+    for (auto wearableTargetEntry : wearableTargets)
+    {
+        TargetType targetType = wearableTargetEntry.second->targetType;
+        ModelLinkName linkName = wearableTargetEntry.second->modelLinkName;
+        TargetName targetName = wearableTargetEntry.first;
 
-        if (linkName == floatingBaseFrame) {
-            if (useDirectBaseMeasurement) {
-                continue;
-            }
-            if (!dynamicalInverseKinematics.updateTarget(linkName, linkTransformMatrices[linkName], linkVelocities[linkName]))
+        switch (targetType)
+        {
+        case TargetType::pose: {
+            if (!dynamicalInverseKinematics.updateTargetPose(linkName, 
+                                                             wearableTargetEntry.second->position,
+                                                             wearableTargetEntry.second->rotation)) {
+                yError() << LogPrefix << "Failed to update pose target for " << targetName;
                 return false;
-
-            continue;
+                                                          }
+            break; }
+        case TargetType::poseAndVelocity: {
+            if (!dynamicalInverseKinematics.updateTargetPoseAndVelocity(linkName, 
+                                                                        wearableTargetEntry.second->position,
+                                                                        wearableTargetEntry.second->rotation,
+                                                                        wearableTargetEntry.second->linearVelocity,
+                                                                        wearableTargetEntry.second->angularVelocity)) {
+                yError() << LogPrefix << "Failed to update pose and velocity target for " << targetName;
+                return false;
+                                                                     }
+            break; }
+        case TargetType::position: {
+            if (!dynamicalInverseKinematics.updateTargetPosition(linkName, 
+                                                                 wearableTargetEntry.second->position)) {
+                yError() << LogPrefix << "Failed to update position target for " << targetName;
+                return false;
+                                                              }
+            break; }
+        case TargetType::positionAndVelocity: {
+            if (!dynamicalInverseKinematics.updateTargetPositionAndVelocity(linkName, 
+                                                                            wearableTargetEntry.second->position,
+                                                                            wearableTargetEntry.second->linearVelocity)) {
+                yError() << LogPrefix << "Failed to update position and velocity target for " << targetName;
+                return false;
+                                                                         }
+            break; }
+        case TargetType::orientation: {
+            if (!dynamicalInverseKinematics.updateTargetOrientation(linkName,
+                                                                    wearableTargetEntry.second->rotation)) {
+                yError() << LogPrefix << "Failed to update orientation target for " << targetName;
+                return false;
+                                                                 }
+            break; }
+        case TargetType::orientationAndVelocity: {
+            if (!dynamicalInverseKinematics.updateTargetOrientationAndVelocity(linkName,
+                                                                               wearableTargetEntry.second->rotation,
+                                                                               wearableTargetEntry.second->angularVelocity)) {
+                yError() << LogPrefix << "Failed to update orientation and velocity target for " << targetName;
+                return false;
+                                                                            }
+            break; }
+        default: {
+            yError() << LogPrefix << "Invalid target type for " << targetName;
+            return false;}
         }
-        if (!dynamicalInverseKinematics.updateTargetOrientationAndVelocity(linkName, linkTransformMatrices[linkName].getRotation(), linkVelocities[linkName].getAngularVec3()))
-            return false;
-     }
+    }
 
     if (!dynamicalInverseKinematics.solve(dt))
         return false;
@@ -2270,33 +2444,91 @@ bool HumanStateProvider::impl::addInverseVelocityKinematicsTargets()
 
 bool HumanStateProvider::impl::addDynamicalInverseKinematicsTargets()
 {
-    for (size_t linkIndex = 0; linkIndex < humanModel.getNrOfLinks(); ++linkIndex) {
-        std::string linkName = humanModel.getLinkName(linkIndex);
+    for (auto wearableTargetEntry : wearableTargets)
+    {
+        TargetType targetType = wearableTargetEntry.second->targetType;
+        ModelLinkName linkName = wearableTargetEntry.second->modelLinkName;
+        TargetName targetName = wearableTargetEntry.first;
 
-        // skip the fake links
-        if (wearableStorage.modelToWearable_LinkName.find(linkName)
-            == wearableStorage.modelToWearable_LinkName.end()) {
-            continue;
-        }
-        // For the base link use both position and orientation targets
-        if (linkName == floatingBaseFrame) {
-            if (!useDirectBaseMeasurement
-                && !dynamicalInverseKinematics.addPoseAndVelocityTarget(
-                    linkName, iDynTree::Transform::Identity(), iDynTree::Twist::Zero(), dynamicalIKLinearCorrectionGain, dynamicalIKAngularCorrectionGain, dynamicalIKMeasuredLinearVelocityGain, dynamicalIKMeasuredAngularVelocityGain, linVelTargetWeight, angVelTargetWeight)) {
-                yError() << LogPrefix << "Failed to add pose target for floating base link"
-                         << linkName;
+        switch (targetType)
+        {
+        case TargetType::pose: {
+            if (!dynamicalInverseKinematics.addPoseTarget(linkName, 
+                                                          wearableTargetEntry.second->position,
+                                                          wearableTargetEntry.second->rotation,
+                                                          dynamicalIKLinearCorrectionGain,
+                                                          dynamicalIKAngularCorrectionGain,
+                                                          linVelTargetWeight,
+                                                          angVelTargetWeight)) {
+                yError() << LogPrefix << "Failed to add pose target for " << targetName;
                 return false;
-            }
-            continue;
-        }
-
-        // Add orientation targets
-        iDynTree::Vector3 angularVelocity;
-        angularVelocity.zero();
-        if (!dynamicalInverseKinematics.addOrientationAndVelocityTarget(
-                linkName, iDynTree::Rotation::Identity(), angularVelocity, dynamicalIKAngularCorrectionGain, dynamicalIKMeasuredAngularVelocityGain, angVelTargetWeight)) {
-            yError() << LogPrefix << "Failed to add pose target for link" << linkName;
-            return false;
+                                                          }
+                yInfo() << LogPrefix << "Pose Target " << targetName << " added for link " << linkName;
+            break; }
+        case TargetType::poseAndVelocity: {
+            if (!dynamicalInverseKinematics.addPoseAndVelocityTarget(linkName, 
+                                                                     wearableTargetEntry.second->position,
+                                                                     wearableTargetEntry.second->rotation,
+                                                                     wearableTargetEntry.second->linearVelocity,
+                                                                     wearableTargetEntry.second->angularVelocity,
+                                                                     dynamicalIKLinearCorrectionGain,
+                                                                     dynamicalIKAngularCorrectionGain,
+                                                                     dynamicalIKMeasuredLinearVelocityGain,
+                                                                     dynamicalIKMeasuredAngularVelocityGain,
+                                                                     linVelTargetWeight,
+                                                                     angVelTargetWeight)) {
+                yError() << LogPrefix << "Failed to add pose and velocity target for " << targetName;
+                return false;
+                                                                     }
+                yInfo() << LogPrefix << "Pose and Velocity Target " << targetName << " added for link " << linkName;
+            break; }
+        case TargetType::position: {
+            if (!dynamicalInverseKinematics.addPositionTarget(linkName, 
+                                                              wearableTargetEntry.second->position,
+                                                              dynamicalIKLinearCorrectionGain,
+                                                              linVelTargetWeight)) {
+                yError() << LogPrefix << "Failed to add position target for " << targetName;
+                return false;
+                                                              }
+                yInfo() << LogPrefix << "Position Target " << targetName << " added for link " << linkName;
+            break; }
+        case TargetType::positionAndVelocity: {
+            if (!dynamicalInverseKinematics.addPositionAndVelocityTarget(linkName, 
+                                                                         wearableTargetEntry.second->position,
+                                                                         wearableTargetEntry.second->linearVelocity,
+                                                                         dynamicalIKLinearCorrectionGain,
+                                                                         dynamicalIKMeasuredLinearVelocityGain,
+                                                                         linVelTargetWeight)) {
+                yError() << LogPrefix << "Failed to add position and velocity target for " << targetName;
+                return false;
+                                                                         }
+                yInfo() << LogPrefix << "Position and Velocity Target " << targetName << " added for link " << linkName;
+            break; }
+        case TargetType::orientation: {
+            if (!dynamicalInverseKinematics.addOrientationTarget(linkName,
+                                                                 wearableTargetEntry.second->rotation,
+                                                                 dynamicalIKAngularCorrectionGain,
+                                                                 angVelTargetWeight)) {
+                yError() << LogPrefix << "Failed to add orientation target for " << targetName;
+                return false;
+                                                                 }
+                yInfo() << LogPrefix << "Orientation Target " << targetName << " added for link " << linkName;
+            break; }
+        case TargetType::orientationAndVelocity: {
+            if (!dynamicalInverseKinematics.addOrientationAndVelocityTarget(linkName,
+                                                                            wearableTargetEntry.second->rotation,
+                                                                            wearableTargetEntry.second->angularVelocity,
+                                                                            dynamicalIKAngularCorrectionGain,
+                                                                            dynamicalIKMeasuredAngularVelocityGain,
+                                                                            angVelTargetWeight)) {
+                yError() << LogPrefix << "Failed to add orientation and velocity target for " << targetName;
+                return false;
+                                                                            }
+                yInfo() << LogPrefix << "Orientation and Velocity Target " << targetName << " added for link " << linkName;
+            break; }
+        default: {
+            yError() << LogPrefix << "Invalid target type for " << targetName;
+            return false;}
         }
     }
 
@@ -2374,9 +2606,36 @@ bool HumanStateProvider::attach(yarp::dev::PolyDriver* poly)
         return false;
     }
 
-    // ===========
-    // CHECK LINKS
-    // ===========
+    // ======================
+    // CHECK WEARABLE TARGETS
+    // ======================
+
+    for (auto wearableTargetEntry : pImpl->wearableTargets)
+    {
+        ModelLinkName linkName = wearableTargetEntry.second->modelLinkName;
+        TargetName targetName = wearableTargetEntry.first;
+        WearableName wearableName = wearableTargetEntry.second->wearableName;
+
+        // Check if the link exist in the model
+        if (pImpl->humanModel.getLinkIndex(linkName) == iDynTree::LINK_INVALID_INDEX)
+        {
+            yError() << "Failed to find link " << linkName << " used in target " << targetName;
+            return false;
+        }
+
+        // Check if the wearable sensor exist and read the type
+        auto sensor = pImpl->iWear->getSensor(wearableName);
+        if (!sensor) 
+        {
+            yError() << "Failed to find sensor " << wearableName << " used in target " << targetName;
+            return false;
+        }
+        wearableTargetEntry.second->sensorType = sensor.get()->getSensorType();
+    }
+
+    // =======================
+    // CHECK LINKS AND SENSORS
+    // =======================
 
     // Check that the attached IWear interface contains all the model links
     for (size_t linkIndex = 0; linkIndex < pImpl->humanModel.getNrOfLinks(); ++linkIndex) {
@@ -2391,21 +2650,21 @@ bool HumanStateProvider::attach(yarp::dev::PolyDriver* poly)
         }
 
         // Get the name of the sensor associated to the link
-        std::string wearableLinkName =
+        WearableName wearableName =
             pImpl->wearableStorage.modelToWearable_LinkName.at(modelLinkName);
 
         // Try to get the sensor
-        auto sensor = pImpl->iWear->getVirtualLinkKinSensor(wearableLinkName);
+        auto sensor = pImpl->iWear->getVirtualLinkKinSensor(wearableName);
         if (!sensor) {
             // yError() << LogPrefix << "Failed to find sensor associated to link" <<
-            // wearableLinkName
+            // wearableName
             //<< "from the IWear interface";
             return false;
         }
 
         // Create a sensor map entry using the wearable sensor name as key
-        pImpl->wearableStorage.linkSensorsMap[wearableLinkName] =
-            pImpl->iWear->getVirtualLinkKinSensor(wearableLinkName);
+        pImpl->wearableStorage.linkSensorsMap[wearableName] =
+            pImpl->iWear->getVirtualLinkKinSensor(wearableName);
     }
 
     // ====
