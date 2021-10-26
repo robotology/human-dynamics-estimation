@@ -44,15 +44,15 @@
         <param name ="dynamicalIKMeasuredVelocityGainLinRot">(1.0 1.0)</param>
         <param name="dynamicalIKCorrectionGainsLinRot">(2.0 10.0)</param>
         <param name="dynamicalIKIntegralCorrectionGainsLinRot">(0.0 0.0)</param>
-        <group name="MODEL_TO_DATA_LINK_NAMES">
-            <param name="map_Pelvis">(base, XsensSuit::vLink::Pelvis)</param>
-            <param name="map_Head">(head, XsensSuit::vLink::Head)</param>
-            <param name="map_RightUpperArm">(right_upper_elbow_fake, XsensSuit::vLink::RightUpperArm)</param>
-            <param name="map_RightForeArm">(right_upper_forearm_fake, XsensSuit::vLink::RightForeArm)</param>
-            <param name="map_LeftHand">(right_wrist_fake, XsensSuit::vLink::RightHand)</param>
-            <param name="map_LeftUpperArm">(left_upper_elbow_fake, XsensSuit::vLink::LeftUpperArm)</param>
-            <param name="map_LeftForeArm">(left_upper_forearm_fake, XsensSuit::vLink::LeftForeArm)</param>
-            <param name="map_LeftHand">(left_wrist_fake, XsensSuit::vLink::LeftHand)</param>
+        <group name="WEARABLE_SENSOR_TARGETS">
+            <param name="map_Pelvis">(base, XsensSuit::vLink::Pelvis, poseAndVelocity)</param>
+            <param name="map_Head">(head, XsensSuit::vLink::Head, orientationAndVelocity)</param>
+            <param name="map_RightUpperArm">(right_upper_elbow_fake, XsensSuit::vLink::RightUpperArm, orientationAndVelocity)</param>
+            <param name="map_RightForeArm">(right_upper_forearm_fake, XsensSuit::vLink::RightForeArm, orientationAndVelocity)</param>
+            <param name="map_LeftHand">(right_wrist_fake, XsensSuit::vLink::RightHand, orientationAndVelocity)</param>
+            <param name="map_LeftUpperArm">(left_upper_elbow_fake, XsensSuit::vLink::LeftUpperArm, orientationAndVelocity)</param>
+            <param name="map_LeftForeArm">(left_upper_forearm_fake, XsensSuit::vLink::LeftForeArm, orientationAndVelocity)</param>
+            <param name="map_LeftHand">(left_wrist_fake, XsensSuit::vLink::LeftHand, orientationAndVelocity)</param>
         </group>
         <group name="CUSTOM_CONSTRAINTS">
         <!-- check issue 132 for more info-->
