@@ -14,7 +14,6 @@
         <param name="floatingBaseFrame">(root_link, XsensSuit::vLink::Pelvis)</param>
         <!-- ikSolver options: pairwised, global, dynamical -->
         <param name="ikSolver">dynamical</param>
-        <param name="useXsensJointsAngles">false</param>
         <param name="allowIKFailures">true</param>
         <param name="useDirectBaseMeasurement">false</param>
         <!-- optimization parameters -->
