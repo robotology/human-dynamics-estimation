@@ -44,20 +44,20 @@
         <param name ="dynamicalIKMeasuredVelocityGainLinRot">(1.0 1.0)</param>
         <param name="dynamicalIKCorrectionGainsLinRot">(2.0 10.0)</param>
         <param name="dynamicalIKIntegralCorrectionGainsLinRot">(0.0 0.0)</param>
-        <group name="MODEL_TO_DATA_LINK_NAMES">
-            <param name="map_Pelvis">(base_link, XsensSuit::vLink::Pelvis)</param>
-            <param name="map_T8">(Neck, XsensSuit::vLink::T8)</param>
-            <param name="map_Head">(Head, XsensSuit::vLink::Head)</param>
-            <param name="map_RightUpperArm">(RElbow_fake, XsensSuit::vLink::RightUpperArm)</param>
-            <param name="map_RightForeArm">(r_wrist_fake, XsensSuit::vLink::RightForeArm)</param>
-            <param name="map_LeftUpperArm">(LElbow_fake, XsensSuit::vLink::LeftUpperArm)</param>
-            <param name="map_LeftForeArm">(l_wrist_fake, XsensSuit::vLink::LeftForeArm)</param>
-            <param name="map_RightUpperLeg">(RThigh, XsensSuit::vLink::RightUpperLeg)</param>
-            <param name="map_RightLowerLeg">(RTibia, XsensSuit::vLink::RightLowerLeg)</param>
-            <param name="map_RightFoot">(r_ankle, XsensSuit::vLink::RightFoot)</param>
-            <param name="map_LeftUpperLeg">(LThigh, XsensSuit::vLink::LeftUpperLeg)</param>
-            <param name="map_LeftLowerLeg">(LTibia, XsensSuit::vLink::LeftLowerLeg)</param>
-            <param name="map_LeftFoot">(l_ankle, XsensSuit::vLink::LeftFoot)</param>
+        <group name="WEARABLE_SENSOR_TARGETS">
+            <param name="map_Pelvis">(base_link, XsensSuit::vLink::Pelvis, poseAndVelocity)</param>
+            <param name="map_T8">(Neck, XsensSuit::vLink::T8, orientationAndVelocity)</param>
+            <param name="map_Head">(Head, XsensSuit::vLink::Head, orientationAndVelocity)</param>
+            <param name="map_RightUpperArm">(RElbow_fake, XsensSuit::vLink::RightUpperArm, orientationAndVelocity)</param>
+            <param name="map_RightForeArm">(r_wrist_fake, XsensSuit::vLink::RightForeArm, orientationAndVelocity)</param>
+            <param name="map_LeftUpperArm">(LElbow_fake, XsensSuit::vLink::LeftUpperArm, orientationAndVelocity)</param>
+            <param name="map_LeftForeArm">(l_wrist_fake, XsensSuit::vLink::LeftForeArm, orientationAndVelocity)</param>
+            <param name="map_RightUpperLeg">(RThigh, XsensSuit::vLink::RightUpperLeg, orientationAndVelocity)</param>
+            <param name="map_RightLowerLeg">(RTibia, XsensSuit::vLink::RightLowerLeg, orientationAndVelocity)</param>
+            <param name="map_RightFoot">(r_ankle, XsensSuit::vLink::RightFoot, orientationAndVelocity)</param>
+            <param name="map_LeftUpperLeg">(LThigh, XsensSuit::vLink::LeftUpperLeg, orientationAndVelocity)</param>
+            <param name="map_LeftLowerLeg">(LTibia, XsensSuit::vLink::LeftLowerLeg, orientationAndVelocity)</param>
+            <param name="map_LeftFoot">(l_ankle, XsensSuit::vLink::LeftFoot, orientationAndVelocity)</param>
         </group>
         <group name="CUSTOM_CONSTRAINTS">
         <!-- check issue 132 for more info-->
