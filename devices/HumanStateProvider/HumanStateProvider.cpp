@@ -2219,12 +2219,12 @@ bool HumanStateProvider::impl::solveDynamicalInverseKinematics()
             if (useDirectBaseMeasurement) {
                 continue;
             }
-            if (!dynamicalInverseKinematics.updateTarget(linkName, linkTransformMatrices[linkName], linkVelocities[linkName], 7.0, 20.0, 1.0, 1.0))
+            if (!dynamicalInverseKinematics.updateTarget(linkName, linkTransformMatrices[linkName], linkVelocities[linkName]))
                 return false;
 
             continue;
         }
-        if (!dynamicalInverseKinematics.updateTarget(linkName, linkTransformMatrices[linkName], linkVelocities[linkName], 7.0, 1.0, 1.0, 1.0))
+        if (!dynamicalInverseKinematics.updateTargetOrientationAndVelocity(linkName, linkTransformMatrices[linkName].getRotation(), linkVelocities[linkName].getAngularVec3()))
             return false;
      }
 
@@ -2353,7 +2353,7 @@ bool HumanStateProvider::impl::updateInverseVelocityKinematicTargets()
         }
 
         if (!inverseVelocityKinematics.updateTarget(
-                linkName, linkTwist, linVelTargetWeight, 1.0)) {
+                linkName, linkTwist, 0.0, 1.0)) {
             yError() << LogPrefix << "Failed to update velocity target for link" << linkName;
             return false;
         }
@@ -2409,8 +2409,8 @@ bool HumanStateProvider::impl::addDynamicalInverseKinematicsTargets()
         // For the base link use both position and orientation targets
         if (linkName == floatingBaseFrame) {
             if (!useDirectBaseMeasurement
-                && !dynamicalInverseKinematics.addPoseTarget(
-                    linkName, iDynTree::Transform::Identity(), 1.0, 1.0)) {
+                && !dynamicalInverseKinematics.addPoseAndVelocityTarget(
+                    linkName, iDynTree::Transform::Identity(), iDynTree::Twist::Zero(), dynamicalIKLinearCorrectionGain, dynamicalIKAngularCorrectionGain, dynamicalIKMeasuredLinearVelocityGain, dynamicalIKMeasuredAngularVelocityGain, linVelTargetWeight, angVelTargetWeight)) {
                 yError() << LogPrefix << "Failed to add pose target for floating base link"
                          << linkName;
                 return false;
@@ -2419,8 +2419,10 @@ bool HumanStateProvider::impl::addDynamicalInverseKinematicsTargets()
         }
 
         // Add orientation targets
-        if (!dynamicalInverseKinematics.addOrientationTarget(
-                linkName, iDynTree::Rotation::Identity(), 1.0)) {
+        iDynTree::Vector3 angularVelocity;
+        angularVelocity.zero();
+        if (!dynamicalInverseKinematics.addOrientationAndVelocityTarget(
+                linkName, iDynTree::Rotation::Identity(), angularVelocity, dynamicalIKAngularCorrectionGain, dynamicalIKMeasuredAngularVelocityGain, angVelTargetWeight)) {
             yError() << LogPrefix << "Failed to add pose target for link" << linkName;
             return false;
         }
