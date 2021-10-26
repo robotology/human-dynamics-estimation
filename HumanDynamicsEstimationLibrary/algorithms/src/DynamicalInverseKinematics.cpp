@@ -88,19 +88,6 @@ public:
 
     bool addTarget(const InverseKinematicsTarget& target);
 
-    void updateTargetPosition(const TargetsMap::iterator& target,
-                              const iDynTree::Vector3& newPosition,
-                              const double newPositionTargetWeight);
-    void updateTargetOrientation(const TargetsMap::iterator& target,
-                              const iDynTree::Rotation& newOrientation,
-                              const double newOrientationTargetWeight);
-    void updateTargetLinearVelocity(const TargetsMap::iterator& target,
-                                    const iDynTree::Vector3& newLinearVelocity,
-                                    const double newLinearVelocityWeight);
-    void updateTargetAngularVelocity(const TargetsMap::iterator& target,
-                                     const iDynTree::Vector3& newAngularVelocity,
-                                     const double newAngularVelocityWeight);
-
     TargetsMap::iterator getTargetRefIfItExists(const std::string& targetFrameName);
 
     bool solveProblem(const double dt);
@@ -132,56 +119,77 @@ public:
     TargetType type;
     std::string frameName;
 
-    double positionTargetWeight;
-    double orientationTargetWeight;
+    double positionFeedbackGain;
+    double orientationFeedbackGain;
+    double linearVelocityFeedforwardGain;
+    double angularVelocityFeedforwardGain;
     double linearVelocityWeight;
     double angularVelocityWeight;
 
     int errorSize;
 
-    InverseKinematicsTarget(const std::string& frameName, const TargetType& configuration);
+    InverseKinematicsTarget(const std::string& frameName,
+                            const TargetType& configuration,
+                            const double positionFeedbackGain = 0.0,
+                            const double orientationFeedbackGain = 0.0,
+                            const double linearVelocityFeedforwardGain = 0.0,
+                            const double angularVelocityFeedforwardGain = 0.0,
+                            const double linearVelocityWeight = 0.0,
+                            const double angularVelocityWeight = 0.0);
 
     static InverseKinematicsTarget PositionAndVelocityTarget(const std::string& frameName,
                                                              const iDynTree::Vector3& position,
                                                              const iDynTree::Vector3& linearVelocity,
-                                                             const double positionTargetWeight = 1.0,
-                                                             const double linearVeloictyWeight = 1.0);
+                                                             const double positionFeedbackGain = 1.0,
+                                                             const double linearVelocityFeedforwardGain = 1.0,
+                                                             const double linearVeloicityWeight = 1.0);
     static InverseKinematicsTarget PositionTarget(const std::string& frameName,
                                                   const iDynTree::Vector3& position,
-                                                  const double positionTargetWeight = 1.0);
+                                                  const double positionFeedbackGain = 1.0,
+                                                  const double linearVeloictyWeight = 1.0);
     static InverseKinematicsTarget OrientationAndVelocityTarget(const std::string& frameName,
-                                                                const iDynTree::Rotation& rotation,
+                                                                const iDynTree::Rotation& orientation,
                                                                 const iDynTree::Vector3& angularVelocity,
-                                                                const double orientationTargetWeight = 1.0,
+                                                                const double orientationFeedbackGain = 1.0,
+                                                                const double angularVelocityFeedforwardGain = 1.0,
                                                                 const double angularVelocityWeight = 1.0);
     static InverseKinematicsTarget OrientationTarget(const std::string& frameName,
-                                                     const iDynTree::Rotation& rotation,
-                                                     const double orientationTargetWeight = 1.0);
+                                                     const iDynTree::Rotation& orientation,
+                                                     const double orientationFeedbackGain = 1.0,
+                                                     const double angularVelocityWeight = 1.0);
     static InverseKinematicsTarget PoseAndVelocityTarget(const std::string& frameName,
                                                          const iDynTree::Transform& transform,
                                                          const iDynTree::Twist& twist,
-                                                         const double positionTargetWeight = 1.0,
-                                                         const double orientationTargetWeight = 1.0,
+                                                         const double positionFeedbackGain = 1.0,
+                                                         const double orientationFeedbackGain = 1.0,
+                                                         const double linearVelocityFeedforwardGain = 1.0,
+                                                         const double angularVelocityFeedforwardGain = 1.0,
                                                          const double linearVelocityWeight = 1.0,
                                                          const double angularVelocityWeight = 1.0);
     static InverseKinematicsTarget PoseTarget(const std::string& frameName,
                                               const iDynTree::Transform& transform,
-                                              const double positionTargetWeight = 1.0,
-                                              const double orientationTargetWeight = 1.0);
+                                              const double positionFeedbackGain = 1.0,
+                                              const double orientationFeedbackGain = 1.0,
+                                              const double linearVelocityWeight = 1.0,
+                                              const double angularVelocityWeight = 1.0);
     static InverseKinematicsTarget PoseAndVelocityTarget(const std::string& frameName,
                                                          const iDynTree::Vector3& position,
                                                          const iDynTree::Rotation& orientation,
                                                          const iDynTree::Vector3& linearVelocity,
                                                          const iDynTree::Vector3& angularVelocity,
-                                                         const double positionTargetWeight = 1.0,
-                                                         const double orientationTargetWeight = 1.0,
+                                                         const double positionFeedbackGain = 1.0,
+                                                         const double orientationFeedbackGain = 1.0,
+                                                         const double linearVelocityFeedforwardGain = 1.0,
+                                                         const double angularVelocityFeedforwardGain = 1.0,
                                                          const double linearVelocityWeight = 1.0,
                                                          const double angularVelocityWeight = 1.0);
     static InverseKinematicsTarget PoseTarget(const std::string& frameName,
                                               const iDynTree::Vector3& position,
                                               const iDynTree::Rotation& orientation,
-                                              const double positionTargetWeight = 1.0,
-                                              const double orientationTargetWeight = 1.0);
+                                              const double positionFeedbackGain = 1.0,
+                                              const double orientationFeedbackGain = 1.0,
+                                              const double linearVelocityWeight = 1.0,
+                                              const double angularVelocityWeight = 1.0);
     
     
     void setTargetType(const TargetType targetType);
@@ -210,10 +218,14 @@ public:
     iDynTree::Twist getTwist() const;
     void setTwist(const iDynTree::Twist& newTwist);
 
-    double getPositionTargetWeight() const;
-    void setPositionTargetWeight(const double newPositionTargetWeight);
-    double getOrientationTargetWeight() const;
-    void setOrientationTargetWeight(const double newOrientationTargetWeight);
+    double getPositionFeedbackGain() const;
+    void setPositionFeedbackGain(const double newPositionFeedbackGain);
+    double getOrientationFeedbackGain() const;
+    void setOrientationFeedbackGain(const double newOrientationFeedbackGain);
+    double getLinearVelocityFeedforwardGain() const;
+    void setLinearVelocityFeedforwardGain(const double newLinearVelocityFeedforwardGain);
+    double getAngularVelocityFeedforwardGain() const;
+    void setAngularVelocityFeedforwardGain(const double newAngularVelocityFeedforwardGain);
     double getLinearVelocityWeight() const;
     void setLinearVelocityWeight(const double newLinearVelocityWeight);
     double getAngularVelocityWeight() const;
@@ -223,18 +235,24 @@ public:
 
 DynamicalInverseKinematics::impl::InverseKinematicsTarget::InverseKinematicsTarget(
     const std::string& frameName,
-    const TargetType& type)
+    const TargetType& type,
+    const double positionFeedbackGain_,
+    const double orientationFeedbackGain_,
+    const double linearVelocityFeedforwardGain_,
+    const double angularVelocityFeedforwardGain_,
+    const double linearVelocityWeight_,
+    const double angularVelocityWeight_)
     : frameName(frameName)
-    , positionTargetWeight(1.0)
-    , orientationTargetWeight(1.0)
-    , linearVelocityWeight(1.0)
-    , angularVelocityWeight(1.0)
+    , positionFeedbackGain(positionFeedbackGain_)
+    , orientationFeedbackGain(orientationFeedbackGain_)
+    , linearVelocityFeedforwardGain(linearVelocityFeedforwardGain_)
+    , angularVelocityFeedforwardGain(angularVelocityFeedforwardGain_)
+    , linearVelocityWeight(linearVelocityWeight_)
+    , angularVelocityWeight(angularVelocityWeight_)
 {
     setTargetType(type);
     setTransform(iDynTree::Transform::Identity());
-    iDynTree::Twist twist;
-    twist.zero();
-    setTwist(twist);
+    setTwist(iDynTree::Twist::Zero());
 }
 
 DynamicalInverseKinematics::impl::InverseKinematicsTarget
@@ -242,14 +260,16 @@ DynamicalInverseKinematics::impl::InverseKinematicsTarget::PositionAndVelocityTa
     const std::string& frameName,
     const iDynTree::Vector3& position,
     const iDynTree::Vector3& linearVelocity,
-    const double positionTargetWeight,
-    const double linearVelocityWeight)
+    const double positionFeedbackGain_,
+    const double linearVelocityFeedforwardGain_,
+    const double linearVelocityWeight_)
 {
-    InverseKinematicsTarget inverseKinematicsTarget(frameName, TargetTypePosition);
+    InverseKinematicsTarget inverseKinematicsTarget(frameName, TargetTypePosition,
+                                                    positionFeedbackGain_, 0.0,
+                                                    linearVelocityFeedforwardGain_, 0.0,
+                                                    linearVelocityWeight_, 0.0);
     inverseKinematicsTarget.setPosition(position);
-    inverseKinematicsTarget.setPositionTargetWeight(positionTargetWeight);
     inverseKinematicsTarget.setLinearVelocity(linearVelocity);
-    inverseKinematicsTarget.setLinearVelocityWeight(linearVelocityWeight);
     return inverseKinematicsTarget;
 }
 
@@ -257,38 +277,48 @@ DynamicalInverseKinematics::impl::InverseKinematicsTarget
 DynamicalInverseKinematics::impl::InverseKinematicsTarget::PositionTarget(
     const std::string& frameName,
     const iDynTree::Vector3& position,
-    const double positionTargetWeight)
+    const double positionFeedbackGain_,
+    const double linearVelocityWeight_)
 {
-    iDynTree::Vector3 linearVelocity;
-    linearVelocity.zero();
-    return PositionAndVelocityTarget(frameName, position, linearVelocity, positionTargetWeight, 1.0);
+    InverseKinematicsTarget inverseKinematicsTarget(frameName, TargetTypePosition,
+                                                    positionFeedbackGain_, 0.0,
+                                                    0.0, 0.0,
+                                                    linearVelocityWeight_, 0.0);
+    inverseKinematicsTarget.setPosition(position);
+    return inverseKinematicsTarget;
 }
 
 DynamicalInverseKinematics::impl::InverseKinematicsTarget
 DynamicalInverseKinematics::impl::InverseKinematicsTarget::OrientationAndVelocityTarget(
     const std::string& frameName,
-    const iDynTree::Rotation& rotation,
+    const iDynTree::Rotation& orientation,
     const iDynTree::Vector3& angularVelocity,
-    const double orientationTargetWeight,
-    const double angularVelocityWeight)
+    const double orientationFeedbackGain_,
+    const double angularVelocityFeedforwardGain_,
+    const double angularVelocityWeight_)
 {
-    InverseKinematicsTarget inverseKinematicsTarget(frameName, TargetTypeOrientation);
-    inverseKinematicsTarget.setOrientation(rotation);
-    inverseKinematicsTarget.setOrientationTargetWeight(orientationTargetWeight);
+    InverseKinematicsTarget inverseKinematicsTarget(frameName, TargetTypeOrientation,
+                                                    0.0, orientationFeedbackGain_,
+                                                    0.0, angularVelocityFeedforwardGain_,
+                                                    0.0, angularVelocityWeight_);
+    inverseKinematicsTarget.setOrientation(orientation);
     inverseKinematicsTarget.setAngularVelocity(angularVelocity);
-    inverseKinematicsTarget.setAngularVelocityWeight(angularVelocityWeight);
     return inverseKinematicsTarget;
 }
 
 DynamicalInverseKinematics::impl::InverseKinematicsTarget
 DynamicalInverseKinematics::impl::InverseKinematicsTarget::OrientationTarget(
     const std::string& frameName,
-    const iDynTree::Rotation& rotation,
-    const double orientationTargetWeight)
+    const iDynTree::Rotation& orientation,
+    const double orientationFeedbackGain_,
+    const double angularVelocityWeight_)
 {
-    iDynTree::Vector3 angularVelocity;
-    angularVelocity.zero();
-    return OrientationAndVelocityTarget(frameName, rotation, angularVelocity, orientationTargetWeight, 1.0);
+    InverseKinematicsTarget inverseKinematicsTarget(frameName, TargetTypeOrientation,
+                                                    0.0, orientationFeedbackGain_,
+                                                    0.0, 0.0,
+                                                    0.0, angularVelocityWeight_);
+    inverseKinematicsTarget.setOrientation(orientation);
+    return inverseKinematicsTarget;
 }
 
 DynamicalInverseKinematics::impl::InverseKinematicsTarget
@@ -296,18 +326,19 @@ DynamicalInverseKinematics::impl::InverseKinematicsTarget::PoseAndVelocityTarget
     const std::string& frameName,
     const iDynTree::Transform& transform,
     const iDynTree::Twist& twist,
-    const double positionTargetWeight,
-    double orientationTargetWeight,
-    double linearVelocityWeight,
-    double angularVelocityWeight)
+    const double positionFeedbackGain_,
+    const double orientationFeedbackGain_,
+    const double linearVelocityFeedforwardGain_,
+    const double angularVelocityFeedforwardGain_,
+    const double linearVelocityWeight_,
+    const double angularVelocityWeight_)
 {
-    InverseKinematicsTarget inverseKinematicsTarget(frameName, TargetTypePose);
+    InverseKinematicsTarget inverseKinematicsTarget(frameName, TargetTypePose,
+                                                    positionFeedbackGain_, orientationFeedbackGain_,
+                                                    linearVelocityFeedforwardGain_, angularVelocityFeedforwardGain_,
+                                                    linearVelocityWeight_, angularVelocityWeight_);
     inverseKinematicsTarget.setTransform(transform);
-    inverseKinematicsTarget.setPositionTargetWeight(positionTargetWeight);
-    inverseKinematicsTarget.setOrientationTargetWeight(orientationTargetWeight);
     inverseKinematicsTarget.setTwist(twist);
-    inverseKinematicsTarget.setLinearVelocityWeight(linearVelocityWeight);
-    inverseKinematicsTarget.setAngularVelocityWeight(angularVelocityWeight);
     return inverseKinematicsTarget;
 }
 
@@ -315,12 +346,17 @@ DynamicalInverseKinematics::impl::InverseKinematicsTarget
 DynamicalInverseKinematics::impl::InverseKinematicsTarget::PoseTarget(
     const std::string& frameName,
     const iDynTree::Transform& transform,
-    const double positionTargetWeight,
-    const double orientationTargetWeight)
+    const double positionFeedbackGain_,
+    const double orientationFeedbackGain_,
+    const double linearVelocityWeight_,
+    const double angularVelocityWeight_)
 {
-    iDynTree::Twist twist;
-    twist.zero();
-    return PoseAndVelocityTarget(frameName, transform, twist, positionTargetWeight, orientationTargetWeight, 1.0, 1.0);
+    InverseKinematicsTarget inverseKinematicsTarget(frameName, TargetTypePose,
+                                                    positionFeedbackGain_, orientationFeedbackGain_,
+                                                    0.0, 0.0,
+                                                    linearVelocityWeight_, angularVelocityWeight_);
+    inverseKinematicsTarget.setTransform(transform);
+    return inverseKinematicsTarget;
 }
 
 DynamicalInverseKinematics::impl::InverseKinematicsTarget
@@ -330,15 +366,23 @@ DynamicalInverseKinematics::impl::InverseKinematicsTarget::PoseAndVelocityTarget
     const iDynTree::Rotation& orientation,
     const iDynTree::Vector3& linearVelocity,
     const iDynTree::Vector3& angularVelocity,
-    const double positionTargetWeight,
-    double orientationTargetWeight,
-    double linearVelocityWeight,
-    double angularVelocityWeight)
+    const double positionFeedbackGain_,
+    const double orientationFeedbackGain_,
+    const double linearVelocityFeedforwardGain_,
+    const double angularVelocityFeedforwardGain_,
+    const double linearVelocityWeight_,
+    const double angularVelocityWeight_)
 {
     iDynTree::Twist twist(linearVelocity, angularVelocity);
     iDynTree::Transform transform(orientation, iDynTree::Position(position));
 
-    return PoseAndVelocityTarget(frameName, transform, twist, positionTargetWeight, orientationTargetWeight, linearVelocityWeight, angularVelocityWeight);
+    InverseKinematicsTarget inverseKinematicsTarget(frameName, TargetTypePose,
+                                                    positionFeedbackGain_, orientationFeedbackGain_,
+                                                    linearVelocityFeedforwardGain_, angularVelocityFeedforwardGain_,
+                                                    linearVelocityWeight_, angularVelocityWeight_);
+    inverseKinematicsTarget.setTransform(transform);
+    inverseKinematicsTarget.setTwist(twist);
+    return inverseKinematicsTarget;
 }
 
 DynamicalInverseKinematics::impl::InverseKinematicsTarget
@@ -346,12 +390,19 @@ DynamicalInverseKinematics::impl::InverseKinematicsTarget::PoseTarget(
     const std::string& frameName,
     const iDynTree::Vector3& position,
     const iDynTree::Rotation& orientation,
-    const double positionTargetWeight,
-    double orientationTargetWeight)
+    const double positionFeedbackGain_,
+    const double orientationFeedbackGain_,
+    const double linearVelocityWeight_,
+    const double angularVelocityWeight_)
 {
     iDynTree::Transform transform(orientation, iDynTree::Position(position));
 
-    return PoseTarget(frameName, transform, positionTargetWeight, orientationTargetWeight);
+    InverseKinematicsTarget inverseKinematicsTarget(frameName, TargetTypePose,
+                                                    positionFeedbackGain_, orientationFeedbackGain_,
+                                                    0.0, 0.0,
+                                                    linearVelocityWeight_, angularVelocityWeight_);
+    inverseKinematicsTarget.setTransform(transform);
+    return inverseKinematicsTarget;
 }
 
 
@@ -503,26 +554,48 @@ void DynamicalInverseKinematics::impl::InverseKinematicsTarget::setTwist(const i
 }
 
 
-double DynamicalInverseKinematics::impl::InverseKinematicsTarget::getPositionTargetWeight() const
+double DynamicalInverseKinematics::impl::InverseKinematicsTarget::getPositionFeedbackGain() const
 {
-    return positionTargetWeight;
+    return positionFeedbackGain;
 }
 
-void DynamicalInverseKinematics::impl::InverseKinematicsTarget::setPositionTargetWeight(
-    const double newPositionTargetWeight)
+void DynamicalInverseKinematics::impl::InverseKinematicsTarget::setPositionFeedbackGain(
+    const double newPositionFeedbackGain)
 {
-    positionTargetWeight = newPositionTargetWeight;
+    positionFeedbackGain = newPositionFeedbackGain;
 }
 
-double DynamicalInverseKinematics::impl::InverseKinematicsTarget::getOrientationTargetWeight() const
+double DynamicalInverseKinematics::impl::InverseKinematicsTarget::getOrientationFeedbackGain() const
 {
-    return orientationTargetWeight;
+    return orientationFeedbackGain;
 }
 
-void DynamicalInverseKinematics::impl::InverseKinematicsTarget::setOrientationTargetWeight(
-    const double newOrientationTargetWeight)
+void DynamicalInverseKinematics::impl::InverseKinematicsTarget::setOrientationFeedbackGain(
+    const double newOrientationFeedbackGain)
 {
-    orientationTargetWeight = newOrientationTargetWeight;
+    orientationFeedbackGain = newOrientationFeedbackGain;
+}
+
+double DynamicalInverseKinematics::impl::InverseKinematicsTarget::getLinearVelocityFeedforwardGain() const
+{
+    return linearVelocityFeedforwardGain;
+}
+
+void DynamicalInverseKinematics::impl::InverseKinematicsTarget::setLinearVelocityFeedforwardGain(
+    const double newLinearVelocityFeedforwardGain)
+{
+    linearVelocityFeedforwardGain = newLinearVelocityFeedforwardGain;
+}
+
+double DynamicalInverseKinematics::impl::InverseKinematicsTarget::getAngularVelocityFeedforwardGain() const
+{
+    return angularVelocityFeedforwardGain;
+}
+
+void DynamicalInverseKinematics::impl::InverseKinematicsTarget::setAngularVelocityFeedforwardGain(
+    const double newAngularVelocityFeedforwardGain)
+{
+    angularVelocityFeedforwardGain = newAngularVelocityFeedforwardGain;
 }
 
 double DynamicalInverseKinematics::impl::InverseKinematicsTarget::getLinearVelocityWeight() const
@@ -578,15 +651,15 @@ bool DynamicalInverseKinematics::impl::initialize()
         auto target = it.second;
         switch (target.getTargetType()) {
             case InverseKinematicsTarget::TargetType::TargetTypePosition:
-                if (!m_inverseVelocityKinematics.addLinearVelocityTarget(target.getFrameName(), target.getLinearVelocity(), 1.0))
+                if (!m_inverseVelocityKinematics.addLinearVelocityTarget(target.getFrameName(), target.getLinearVelocity(), target.getLinearVelocityWeight()))
                     return false;
                 break;
             case InverseKinematicsTarget::TargetType::TargetTypeOrientation:
-                if (!m_inverseVelocityKinematics.addAngularVelocityTarget(target.getFrameName(), target.getAngularVelocity(), 1.0))
+                if (!m_inverseVelocityKinematics.addAngularVelocityTarget(target.getFrameName(), target.getAngularVelocity(), target.getAngularVelocityWeight()))
                     return false;
                 break;
             case InverseKinematicsTarget::TargetType::TargetTypePose:
-                if (!m_inverseVelocityKinematics.addTarget(target.getFrameName(), target.getLinearVelocity(), target.getAngularVelocity(), 1.0, 1.0))
+                if (!m_inverseVelocityKinematics.addTarget(target.getFrameName(), target.getLinearVelocity(), target.getAngularVelocity(), target.getLinearVelocityWeight(), target.getAngularVelocityWeight()))
                     return false;
                 break;
         }
@@ -644,42 +717,6 @@ bool DynamicalInverseKinematics::impl::addTarget(const InverseKinematicsTarget& 
 
     m_isInverseKinematicsInitializd = false;
     return result.second;
-}
-
-void DynamicalInverseKinematics::impl::updateTargetPosition(
-    const TargetsMap::iterator& target,
-    const iDynTree::Vector3& newPosition,
-    const double newPositionTargetWeight)
-{
-    target->second.setPosition(newPosition);
-    target->second.setPositionTargetWeight(newPositionTargetWeight);
-}
-
-void DynamicalInverseKinematics::impl::updateTargetOrientation(
-    const TargetsMap::iterator& target,
-    const iDynTree::Rotation& newOrientation,
-    const double newOrientationTargetWeight)
-{
-    target->second.setOrientation(newOrientation);
-    target->second.setOrientationTargetWeight(newOrientationTargetWeight);
-}
-
-void DynamicalInverseKinematics::impl::updateTargetLinearVelocity(
-    const TargetsMap::iterator& target,
-    const iDynTree::Vector3& newLinearVelocity,
-    const double newLinearVelocityWeight)
-{
-    target->second.setLinearVelocity(newLinearVelocity);
-    target->second.setLinearVelocityWeight(newLinearVelocityWeight);
-}
-
-void DynamicalInverseKinematics::impl::updateTargetAngularVelocity(
-    const TargetsMap::iterator& target,
-    const iDynTree::Vector3& newAngularVelocity,
-    const double newAngularVelocityWeight)
-{
-    target->second.setAngularVelocity(newAngularVelocity);
-    target->second.setAngularVelocityWeight(newAngularVelocityWeight);
 }
 
 bool DynamicalInverseKinematics::impl::solveProblem(const double dt)
@@ -745,29 +782,29 @@ bool DynamicalInverseKinematics::impl::computeDesiredLinkVelocities()
                 errorBuffer.resize(3);
                 if (!target.computeError(m_dynamics.getWorldTransform(target.getFrameName()).getPosition(), errorBuffer))
                     return false;
-                iDynTree::toEigen(desiredLinearVelocityBuffer) = target.getLinearVelocityWeight() * iDynTree::toEigen(target.getLinearVelocity()) 
-                                                                 - target.getPositionTargetWeight()  * iDynTree::toEigen(errorBuffer);
-                if (!m_inverseVelocityKinematics.updateTargetLinearVelocity(target.getFrameName(), desiredLinearVelocityBuffer, 1.0))
+                iDynTree::toEigen(desiredLinearVelocityBuffer) = target.getLinearVelocityFeedforwardGain() * iDynTree::toEigen(target.getLinearVelocity()) 
+                                                                 - target.getPositionFeedbackGain()  * iDynTree::toEigen(errorBuffer);
+                if (!m_inverseVelocityKinematics.updateTargetLinearVelocity(target.getFrameName(), desiredLinearVelocityBuffer, target.getLinearVelocityWeight()))
                     return false;
                 break;
             case DynamicalInverseKinematics::impl::InverseKinematicsTarget::TargetType::TargetTypeOrientation:
                 errorBuffer.resize(3);
                 if (!target.computeError(m_dynamics.getWorldTransform(target.getFrameName()).getRotation(), errorBuffer))
                     return false;
-                iDynTree::toEigen(desiredAngularVelocityBuffer) = target.getAngularVelocityWeight() * iDynTree::toEigen(target.getAngularVelocity()) 
-                                                                 - target.getOrientationTargetWeight()  * iDynTree::toEigen(errorBuffer);
-                if (!m_inverseVelocityKinematics.updateTargetAngularVelocity(target.getFrameName(), desiredAngularVelocityBuffer, 1.0))
+                iDynTree::toEigen(desiredAngularVelocityBuffer) = target.getAngularVelocityFeedforwardGain() * iDynTree::toEigen(target.getAngularVelocity()) 
+                                                                 - target.getOrientationFeedbackGain()  * iDynTree::toEigen(errorBuffer);
+                if (!m_inverseVelocityKinematics.updateTargetAngularVelocity(target.getFrameName(), desiredAngularVelocityBuffer, target.getAngularVelocityWeight()))
                     return false;
                 break;
             case DynamicalInverseKinematics::impl::InverseKinematicsTarget::TargetType::TargetTypePose:
                 errorBuffer.resize(6);
                 if (!target.computeError(m_dynamics.getWorldTransform(target.getFrameName()), errorBuffer))
                     return false;
-                iDynTree::toEigen(desiredLinearVelocityBuffer) = target.getLinearVelocityWeight() * iDynTree::toEigen(target.getLinearVelocity()) 
-                                                                 - target.getPositionTargetWeight()  * iDynTree::toEigen(errorBuffer).head(3);
-                iDynTree::toEigen(desiredAngularVelocityBuffer) = target.getAngularVelocityWeight() * iDynTree::toEigen(target.getAngularVelocity()) 
-                                                                 - target.getOrientationTargetWeight()  * iDynTree::toEigen(errorBuffer).tail(3);
-                if (!m_inverseVelocityKinematics.updateTarget(target.getFrameName(), iDynTree::Twist(desiredLinearVelocityBuffer, desiredAngularVelocityBuffer), 1.0, 1.0))
+                iDynTree::toEigen(desiredLinearVelocityBuffer) = target.getLinearVelocityFeedforwardGain() * iDynTree::toEigen(target.getLinearVelocity()) 
+                                                                 - target.getPositionFeedbackGain()  * iDynTree::toEigen(errorBuffer).head(3);
+                iDynTree::toEigen(desiredAngularVelocityBuffer) = target.getAngularVelocityFeedforwardGain() * iDynTree::toEigen(target.getAngularVelocity()) 
+                                                                 - target.getOrientationFeedbackGain()  * iDynTree::toEigen(errorBuffer).tail(3);
+                if (!m_inverseVelocityKinematics.updateTarget(target.getFrameName(), iDynTree::Twist(desiredLinearVelocityBuffer, desiredAngularVelocityBuffer), target.getLinearVelocityWeight(), target.getAngularVelocityWeight()))
                     return false;
                 break;
         }
@@ -895,84 +932,96 @@ bool DynamicalInverseKinematics::setJointVelocityLimit(const iDynTree::JointInde
 }
 
 bool DynamicalInverseKinematics::addPoseAndVelocityTarget(const std::string& linkName,
-                            const iDynTree::Transform& transform,
-                            const iDynTree::Twist& twist,
-                            const double positionTargetWeight,
-                            const double rotationTargetWeight,
-                            const double linearVelocityWeight,
-                            const double angularVelocityWeight)
+                                                          const iDynTree::Transform& transform,
+                                                          const iDynTree::Twist& twist,
+                                                          const double positionFeedbackGain,
+                                                          const double orientationFeedbackGain,
+                                                          const double linearVelocityFeedforwardGain,
+                                                          const double angularVelocityFeedforwardGain,
+                                                          const double linearVelocityWeight,
+                                                          const double angularVelocityWeight)
 {
     return pImpl->addTarget(DynamicalInverseKinematics::impl::InverseKinematicsTarget::PoseAndVelocityTarget(
-        linkName, transform, twist, positionTargetWeight, rotationTargetWeight, linearVelocityWeight, angularVelocityWeight));
+        linkName, transform, twist, positionFeedbackGain, orientationFeedbackGain, linearVelocityFeedforwardGain, angularVelocityFeedforwardGain, linearVelocityWeight, angularVelocityWeight));
 }
 
 bool DynamicalInverseKinematics::addPoseTarget(const std::string& linkName,
                 const iDynTree::Transform& transform,
-                const double positionTargetWeight,
-                const double rotationTargetWeight)
+                const double positionFeedbackGain,
+                const double orientationFeedbackGain,
+                const double linearVelocityWeight,
+                const double angularVelocityWeight)
 {
     return pImpl->addTarget(DynamicalInverseKinematics::impl::InverseKinematicsTarget::PoseTarget(
-        linkName, transform, positionTargetWeight, rotationTargetWeight));
+        linkName, transform, positionFeedbackGain, orientationFeedbackGain, linearVelocityWeight, angularVelocityWeight));
 }
 
 bool DynamicalInverseKinematics::addPoseAndVelocityTarget(const std::string& linkName,
                             const iDynTree::Vector3& position,
-                            const iDynTree::Rotation& rotation,
+                            const iDynTree::Rotation& orientation,
                             const iDynTree::Vector3& linearVelocity,
                             const iDynTree::Vector3& angularVelocity,
-                            const double positionTargetWeight,
-                            const double rotationTargetWeight,
+                            const double positionFeedbackGain,
+                            const double orientationFeedbackGain,
+                            const double linearVelocityFeedforwardGain,
+                            const double angularVelocityFeedforwardGain,
                             const double linearVelocityWeight,
                             const double angularVelocityWeight)
 {
     return pImpl->addTarget(DynamicalInverseKinematics::impl::InverseKinematicsTarget::PoseAndVelocityTarget(
-        linkName, position, rotation, linearVelocity, angularVelocity, positionTargetWeight, rotationTargetWeight, linearVelocityWeight, angularVelocityWeight));
+        linkName, position, orientation, linearVelocity, angularVelocity, positionFeedbackGain, orientationFeedbackGain, linearVelocityFeedforwardGain, angularVelocityFeedforwardGain, linearVelocityWeight, angularVelocityWeight));
 }
 
 bool DynamicalInverseKinematics::addPoseTarget(const std::string& linkName,
                 const iDynTree::Vector3& position,
-                const iDynTree::Rotation& rotation,
-                const double positionTargetWeight,
-                const double rotationTargetWeight)
+                const iDynTree::Rotation& orientation,
+                const double positionFeedbackGain,
+                const double orientationFeedbackGain,
+                const double linearVelocityWeight,
+                const double angularVelocityWeight)
 {
     return pImpl->addTarget(DynamicalInverseKinematics::impl::InverseKinematicsTarget::PoseTarget(
-        linkName, position, rotation, positionTargetWeight, rotationTargetWeight));
+        linkName, position, orientation, positionFeedbackGain, orientationFeedbackGain, linearVelocityWeight, angularVelocityWeight));
 }
 
 bool DynamicalInverseKinematics::addPositionAndVelocityTarget(const std::string& linkName,
                                 const iDynTree::Vector3& position,
                                 const iDynTree::Vector3& linearVelocity,
-                                const double positionTargetWeight,
+                                const double positionFeedbackGain,
+                                const double linearVelocityFeedforwardGain,
                                 const double linearVelocityWeight)
 {
     return pImpl->addTarget(DynamicalInverseKinematics::impl::InverseKinematicsTarget::PositionAndVelocityTarget(
-        linkName, position, linearVelocity, positionTargetWeight, linearVelocityWeight));
+        linkName, position, linearVelocity, positionFeedbackGain, linearVelocityFeedforwardGain, linearVelocityWeight));
 }
 
 bool DynamicalInverseKinematics::addPositionTarget(const std::string& linkName,
                     const iDynTree::Vector3& position,
-                    const double positionTargetWeight)
+                    const double positionFeedbackGain,
+                    const double linearVelocityWeight)
 {
     return pImpl->addTarget(DynamicalInverseKinematics::impl::InverseKinematicsTarget::PositionTarget(
-        linkName, position, positionTargetWeight));
+        linkName, position, positionFeedbackGain, linearVelocityWeight));
 }
 
 bool DynamicalInverseKinematics::addOrientationAndVelocityTarget(const std::string& linkName,
                                     const iDynTree::Rotation& orientation,
                                     const iDynTree::Vector3& angularVelocity,
-                                    const double orientationTargetWeight,
+                                    const double orientationFeedbackGain,
+                                    const double angularVelocityFeedforwardGain,
                                     const double angularVelocityWeight)
 {
     return pImpl->addTarget(DynamicalInverseKinematics::impl::InverseKinematicsTarget::OrientationAndVelocityTarget(
-        linkName, orientation, angularVelocity, orientationTargetWeight, angularVelocityWeight));
+        linkName, orientation, angularVelocity, orientationFeedbackGain, angularVelocityFeedforwardGain, angularVelocityWeight));
 }
 
 bool DynamicalInverseKinematics::addOrientationTarget(const std::string& linkName,
                         const iDynTree::Rotation& orientation,
-                        const double orientationTargetWeight)
+                        const double orientationFeedbackGain,
+                        const double angularVelocityWeight)
 {
     return pImpl->addTarget(DynamicalInverseKinematics::impl::InverseKinematicsTarget::OrientationTarget(
-        linkName, orientation, orientationTargetWeight));
+        linkName, orientation, orientationFeedbackGain, angularVelocityWeight));
 }
 
 
@@ -1059,146 +1108,190 @@ bool DynamicalInverseKinematics::setConfiguration(const iDynTree::Vector3& baseP
     }
 }
 
-bool updateTarget(const std::string& linkName,
-                const iDynTree::Vector3& newPosition,
-                const iDynTree::Rotation& newOrientation,
-                const iDynTree::Vector3& newLinearVelocity,
-                const iDynTree::Vector3& newAngularVelocity,
-                const double newPositionTargetWeight = 1.0,
-                const double newOrientationTargetWeight = 1.0,
-                const double newLinearVelocityWeight = 1.0,
-                const double newAngularVelocityWeight = 1.0);
-bool updateTarget(const std::string& linkName,
-                const iDynTree::Transform& newTransform,
-                const iDynTree::Twist& newTwist,
-                const double newPositionTargetWeight = 1.0,
-                const double newOrientationTargetWeight = 1.0,
-                const double newLinearVelocityWeight = 1.0,
-                const double newAngularVelocityWeight = 1.0);
-void updateTargetPosition(const std::string& linkName,
-                        const iDynTree::Vector3& newPosition,
-                        const double newPositionTargetWeight = 1.0);
-void updateTargetOrientation(const std::string& linkName,
-                            const iDynTree::Rotation& newOrientation,
-                            const double newOrientationTargetWeight = 1.0);
-void updateTargetLinearVelocity(const std::string& linkName,
-                            const iDynTree::Vector3& newLinearVelocity,
-                            const double newLinearVelocityWeight = 1.0);
-void updateTargetAngularVelocity(const std::string& linkName,
-                                const iDynTree::Vector3& newAngularVelocity,
-                                const double newAngularVelocityWeight = 1.0);
-
 bool DynamicalInverseKinematics::updateTarget(const std::string& linkName,
-                                             const iDynTree::Vector3& newPosition,
-                                             const iDynTree::Rotation& newOrientation,
-                                             const iDynTree::Vector3& newLinearVelocity,
-                                             const iDynTree::Vector3& newAngularVelocity,
-                                             const double newPositionTargetWeight,
-                                             const double newOrientationTargetWeight,
-                                             const double newLinearVelocityWeight,
-                                             const double newAngularVelocityWeight)
+                                              const iDynTree::Transform& transform,
+                                              const iDynTree::Twist& twist,
+                                              const double positionFeedbackGain,
+                                              const double orientationFeedbackGain,
+                                              const double linearVelocityFeedforwardGain,
+                                              const double angularVelocityFeedforwardGain,
+                                              const double linearVelocityWeight,
+                                              const double angularVelocityWeight)
 {
     DynamicalInverseKinematics::impl::TargetsMap::iterator target =
         pImpl->getTargetRefIfItExists(linkName);
-
     if (target == pImpl->m_targets.end()) {
-        std::stringstream ss;
-        std::cerr << "No target for frame " << linkName
-                  << " was added to the Inverse Velocity Kinematics problem.";
         return false;
     }
-    
-    pImpl->updateTargetPosition(target, newPosition, newPositionTargetWeight);
-    pImpl->updateTargetOrientation(target, newOrientation, newOrientationTargetWeight);
-    pImpl->updateTargetLinearVelocity(target, newLinearVelocity, newLinearVelocityWeight);
-    pImpl->updateTargetAngularVelocity(target, newAngularVelocity, newAngularVelocityWeight);
+
+    target->second.setTransform(transform);
+    target->second.setTwist(twist);
+    target->second.setPositionFeedbackGain(positionFeedbackGain);
+    target->second.setOrientationFeedbackGain(orientationFeedbackGain);
+    target->second.setLinearVelocityFeedforwardGain(linearVelocityFeedforwardGain);
+    target->second.setAngularVelocityFeedforwardGain(angularVelocityFeedforwardGain);
+    target->second.setLinearVelocityWeight(linearVelocityWeight);
+    target->second.setAngularVelocityWeight(angularVelocityWeight);
     return true;
 }
 
 bool DynamicalInverseKinematics::updateTarget(const std::string& linkName,
-                                              const iDynTree::Transform& newTransform,
-                                              const iDynTree::Twist& newTwist,
-                                              const double newPositionTargetWeight,
-                                              const double newOrientationTargetWeight,
-                                              const double newLinearVelocityWeight,
-                                              const double newAngularVelocityWeight)
+                                              const iDynTree::Vector3& position,
+                                              const iDynTree::Rotation& orientation,
+                                              const iDynTree::Vector3& linearVelocity,
+                                              const iDynTree::Vector3& angularVelocity,
+                                              const double positionFeedbackGain,
+                                              const double orientationFeedbackGain,
+                                              const double linearVelocityFeedforwardGain,
+                                              const double angularVelocityFeedforwardGain,
+                                              const double linearVelocityWeight,
+                                              const double angularVelocityWeight)
 {
-    return updateTarget(
-        linkName, newTransform.getPosition(), newTransform.getRotation(), newTwist.getLinearVec3(), newTwist.getAngularVec3(), newPositionTargetWeight, newOrientationTargetWeight, newLinearVelocityWeight, newAngularVelocityWeight);
+    return updateTarget(linkName, iDynTree::Transform(orientation, iDynTree::Position(position)), iDynTree::Twist(linearVelocity, angularVelocity), positionFeedbackGain, orientationFeedbackGain, linearVelocityFeedforwardGain, angularVelocityFeedforwardGain, linearVelocityWeight, angularVelocityWeight);
 }
+
+bool DynamicalInverseKinematics::updateTarget(const std::string& linkName,
+                                              const iDynTree::Transform& transform,
+                                              const iDynTree::Twist& twist)
+{
+    DynamicalInverseKinematics::impl::TargetsMap::iterator target =
+        pImpl->getTargetRefIfItExists(linkName);
+    if (target == pImpl->m_targets.end()) {
+        return false;
+    }
+
+    target->second.setTransform(transform);
+    target->second.setTwist(twist);
+    return true;
+}
+
+bool DynamicalInverseKinematics::updateTarget(const std::string& linkName,
+                                              const iDynTree::Vector3& position,
+                                              const iDynTree::Rotation& orientation,
+                                              const iDynTree::Vector3& linearVelocity,
+                                              const iDynTree::Vector3& angularVelocity)
+{
+    return updateTarget(linkName, iDynTree::Transform(orientation, iDynTree::Position(position)), iDynTree::Twist(linearVelocity, angularVelocity));
+}
+
 
 bool DynamicalInverseKinematics::updateTargetPosition(const std::string& linkName,
-                                                      const iDynTree::Vector3& newPosition,
-                                                      const double newPositionTargetWeight)
+                                                      const iDynTree::Vector3& position)
 {
     DynamicalInverseKinematics::impl::TargetsMap::iterator target =
         pImpl->getTargetRefIfItExists(linkName);
-
     if (target == pImpl->m_targets.end()) {
-        std::stringstream ss;
-        std::cerr << "No target for frame " << linkName
-                  << " was added to the Inverse Velocity Kinematics problem.";
         return false;
     }
 
-    pImpl->updateTargetPosition(target, newPosition, newPositionTargetWeight);
+    target->second.setPosition(position);
     return true;
 }
 
-bool DynamicalInverseKinematics::updateTargetOrientation(const std::string& linkName,
-                                                         const iDynTree::Rotation& newOrientation,
-                                                         const double newOrientationTargetWeight)
+bool DynamicalInverseKinematics::updateTargetPositionAndVelocity(const std::string& linkName,
+                                                                 const iDynTree::Vector3& position,
+                                                                 const iDynTree::Vector3& linearVelocity)
 {
     DynamicalInverseKinematics::impl::TargetsMap::iterator target =
         pImpl->getTargetRefIfItExists(linkName);
-
     if (target == pImpl->m_targets.end()) {
-        std::stringstream ss;
-        std::cerr << "No target for frame " << linkName
-                  << " was added to the Inverse Velocity Kinematics problem.";
         return false;
     }
 
-    pImpl->updateTargetOrientation(target, newOrientation, newOrientationTargetWeight);
+    target->second.setPosition(position);
+    target->second.setLinearVelocity(linearVelocity);
+    return true;
+}
+
+
+bool DynamicalInverseKinematics::updateTargetOrientation(const std::string& linkName,
+                                                         const iDynTree::Rotation& orientation)
+{
+    DynamicalInverseKinematics::impl::TargetsMap::iterator target =
+        pImpl->getTargetRefIfItExists(linkName);
+    if (target == pImpl->m_targets.end()) {
+        return false;
+    }
+
+    target->second.setOrientation(orientation);
+    return true;
+}
+
+bool DynamicalInverseKinematics::updateTargetOrientationAndVelocity(const std::string& linkName,
+                                                                    const iDynTree::Rotation& orientation,
+                                                                    const iDynTree::Vector3& angularVelocity)
+{
+    DynamicalInverseKinematics::impl::TargetsMap::iterator target =
+        pImpl->getTargetRefIfItExists(linkName);
+    if (target == pImpl->m_targets.end()) {
+        return false;
+    }
+
+    target->second.setOrientation(orientation);
+    target->second.setAngularVelocity(angularVelocity);
     return true;
 }
 
 bool DynamicalInverseKinematics::updateTargetLinearVelocity(const std::string& linkName,
-                                                            const iDynTree::Vector3& newLinearVelocity,
-                                                            const double newLinearVelocityWeight)
+                                                            const iDynTree::Vector3& linearVelocity)
 {
     DynamicalInverseKinematics::impl::TargetsMap::iterator target =
         pImpl->getTargetRefIfItExists(linkName);
-
     if (target == pImpl->m_targets.end()) {
-        std::stringstream ss;
-        std::cerr << "No target for frame " << linkName
-                  << " was added to the Inverse Velocity Kinematics problem.";
         return false;
     }
 
-    pImpl->updateTargetLinearVelocity(target, newLinearVelocity, newLinearVelocityWeight);
+    target->second.setLinearVelocity(linearVelocity);
     return true;
 }
 
-bool DynamicalInverseKinematics::updateTargetAngularVelocity(
-    const std::string& linkName,
-    const iDynTree::Vector3& newAngularVelocity,
-    const double newAngularVelocityWeight)
+bool DynamicalInverseKinematics::updateTargetAngularVelocity(const std::string& linkName,
+                                                             const iDynTree::Vector3& angularVelocity)
 {
     DynamicalInverseKinematics::impl::TargetsMap::iterator target =
         pImpl->getTargetRefIfItExists(linkName);
-
     if (target == pImpl->m_targets.end()) {
-        std::stringstream ss;
-        std::cerr << "No target for frame " << linkName
-                  << " was added to the Inverse Velocity Kinematics problem.";
         return false;
     }
 
-    pImpl->updateTargetAngularVelocity(target, newAngularVelocity, newAngularVelocityWeight);
+    target->second.setAngularVelocity(angularVelocity);
     return true;
 }
+
+bool DynamicalInverseKinematics::updateTargetGains(const std::string& linkName,
+                                                   const double positionFeedbackGain,
+                                                   const double orientationFeedbackGain,
+                                                   const double linearVelocityFeedforwardGain,
+                                                   const double angularVelocityFeedforwardGain)
+{
+    DynamicalInverseKinematics::impl::TargetsMap::iterator target =
+        pImpl->getTargetRefIfItExists(linkName);
+    if (target == pImpl->m_targets.end()) {
+        return false;
+    }
+
+    target->second.setPositionFeedbackGain(positionFeedbackGain);
+    target->second.setOrientationFeedbackGain(orientationFeedbackGain);
+    target->second.setLinearVelocityFeedforwardGain(linearVelocityFeedforwardGain);
+    target->second.setAngularVelocityFeedforwardGain(angularVelocityFeedforwardGain);
+    return true;
+}
+
+bool DynamicalInverseKinematics::updateTargetWeights(const std::string& linkName,
+                                                   const double linearVelocityWeight,
+                                                   const double angularVelocityWeight)
+{
+    DynamicalInverseKinematics::impl::TargetsMap::iterator target =
+        pImpl->getTargetRefIfItExists(linkName);
+    if (target == pImpl->m_targets.end()) {
+        return false;
+    }
+
+    target->second.setLinearVelocityWeight(linearVelocityWeight);
+    target->second.setAngularVelocityWeight(angularVelocityWeight);
+    return true;
+}
+
 
 
 bool DynamicalInverseKinematics::getJointsConfigurationSolution(iDynTree::VectorDynSize& jointsConfiguration) const
