@@ -23,7 +23,6 @@
         <param name="floatingBaseFrame">Pelvis</param>
         <!-- ikSolver options: pairwised, global, dynamical -->
         <param name="ikSolver">dynamical</param>
-        <param name="useXsensJointsAngles">false</param>
         <param name="allowIKFailures">true</param>
         <param name="useDirectBaseMeasurement">false</param>
         <!-- optimization parameters -->
@@ -76,80 +75,6 @@
             <param name="map_LeftLowerLeg">(LeftLowerLeg, XsensSuit::vLink::LeftLowerLeg)</param>
             <param name="map_LeftFoot">(LeftFoot, XsensSuit::vLink::LeftFoot)</param>
             <param name="map_LeftToe">(LeftToe, XsensSuit::vLink::LeftToe)</param>
-        </group>
-        <group name="MODEL_TO_DATA_JOINT_NAMES">
-           <!-- TODO: this groups is here for configuring the data that might initialize the IK. -->
-           <!--       However, the zeros and frames from Xsens might be different and we have to -->
-           <!--       figure this out. -->
-           <!-- Example: (model joint name, wearable sensor name, wearable sensor component) -->
-           <param name="map_jL5S1_rotx">(jL5S1_rotx, XsensSuit::vSJoint::jL5S1, 0)</param>
-           <param name="map_jL5S1_roty">(jL5S1_roty, XsensSuit::vSJoint::jL5S1, 1)</param>
-           <param name="map_jL5S1_rotz">(jL5S1_rotz, XsensSuit::vSJoint::jL5S1, 2)</param>
-           <param name="map_jL4L3_rotx">(jL4L3_rotx, XsensSuit::vSJoint::jL4L3, 0)</param>
-           <param name="map_jL4L3_roty">(jL4L3_roty, XsensSuit::vSJoint::jL4L3, 1)</param>
-           <param name="map_jL4L3_rotz">(jL4L3_rotz, XsensSuit::vSJoint::jL4L3, 2)</param>
-           <param name="map_jL1T12_rotx">(jL1T12_rotx, XsensSuit::vSJoint::jL1T12, 0)</param>
-           <param name="map_jL1T12_roty">(jL1T12_roty, XsensSuit::vSJoint::jL1T12, 1)</param>
-           <param name="map_jL1T12_rotz">(jL1T12_rotz, XsensSuit::vSJoint::jL1T12, 2)</param>
-           <param name="map_jT9T8_rotx">(jT9T8_rotx, XsensSuit::vSJoint::jT9T8, 0)</param>
-           <param name="map_jT9T8_roty">(jT9T8_roty, XsensSuit::vSJoint::jT9T8, 1)</param>
-           <param name="map_jT9T8_rotz">(jT9T8_rotz, XsensSuit::vSJoint::jT9T8, 2)</param>
-           <param name="map_jT1C7_rotx">(jT1C7_rotx, XsensSuit::vSJoint::jT1C7, 0)</param>
-           <param name="map_jT1C7_roty">(jT1C7_roty, XsensSuit::vSJoint::jT1C7, 1)</param>
-           <param name="map_jT1C7_rotz">(jT1C7_rotz, XsensSuit::vSJoint::jT1C7, 2)</param>
-           <param name="map_jC1Head_rotx">(jC1Head_rotx, XsensSuit::vSJoint::jC1Head, 0)</param>
-           <param name="map_jC1Head_roty">(jC1Head_roty, XsensSuit::vSJoint::jC1Head, 1)</param>
-           <param name="map_jC1Head_rotz">(jC1Head_rotz, XsensSuit::vSJoint::jC1Head, 2)</param>
-           <!-- Be aware that here the names differ: C7 ==> T4 -->
-           <param name="map_jRightC7Shoulder_rotx">(jRightC7Shoulder_rotx, XsensSuit::vSJoint::jRightT4Shoulder, 0)</param>
-           <param name="map_jRightC7Shoulder_roty">(jRightC7Shoulder_roty, XsensSuit::vSJoint::jRightT4Shoulder, 1)</param>
-           <param name="map_jRightC7Shoulder_rotz">(jRightC7Shoulder_rotz, XsensSuit::vSJoint::jRightT4Shoulder, 2)</param>
-           <param name="map_jRightShoulder_rotx">(jRightShoulder_rotx, XsensSuit::vSJoint::jRightShoulder, 0)</param>
-           <param name="map_jRightShoulder_roty">(jRightShoulder_roty, XsensSuit::vSJoint::jRightShoulder, 1)</param>
-           <param name="map_jRightShoulder_rotz">(jRightShoulder_rotz, XsensSuit::vSJoint::jRightShoulder, 2)</param>
-           <param name="map_jRightElbow_rotx">(jRightElbow_rotx, XsensSuit::vSJoint::jRightElbow, 0)</param>
-           <param name="map_jRightElbow_roty">(jRightElbow_roty, XsensSuit::vSJoint::jRightElbow, 1)</param>
-           <param name="map_jRightElbow_rotz">(jRightElbow_rotz, XsensSuit::vSJoint::jRightElbow, 2)</param>
-           <param name="map_jRightWrist_rotx">(jRightWrist_rotx, XsensSuit::vSJoint::jRightWrist, 0)</param>
-           <param name="map_jRightWrist_roty">(jRightWrist_roty, XsensSuit::vSJoint::jRightWrist, 1)</param>
-           <param name="map_jRightWrist_rotz">(jRightWrist_rotz, XsensSuit::vSJoint::jRightWrist, 2)</param>
-           <!-- Be aware that here the names differ: C7 ==> T4 -->
-           <param name="map_jLeftC7Shoulder_rotx">(jLeftC7Shoulder_rotx, XsensSuit::vSJoint::jLeftT4Shoulder, 0)</param>
-           <param name="map_jLeftC7Shoulder_roty">(jLeftC7Shoulder_roty, XsensSuit::vSJoint::jLeftT4Shoulder, 1)</param>
-           <param name="map_jLeftC7Shoulder_rotz">(jLeftC7Shoulder_rotz, XsensSuit::vSJoint::jLeftT4Shoulder, 2)</param>
-           <param name="map_jLeftShoulder_rotx">(jLeftShoulder_rotx, XsensSuit::vSJoint::jLeftShoulder, 0)</param>
-           <param name="map_jLeftShoulder_roty">(jLeftShoulder_roty, XsensSuit::vSJoint::jLeftShoulder, 1)</param>
-           <param name="map_jLeftShoulder_rotz">(jLeftShoulder_rotz, XsensSuit::vSJoint::jLeftShoulder, 2)</param>
-           <param name="map_jLeftElbow_rotx">(jLeftElbow_rotx, XsensSuit::vSJoint::jLeftElbow, 0)</param>
-           <param name="map_jLeftElbow_roty">(jLeftElbow_roty, XsensSuit::vSJoint::jLeftElbow, 1)</param>
-           <param name="map_jLeftElbow_rotz">(jLeftElbow_rotz, XsensSuit::vSJoint::jLeftElbow, 2)</param>
-           <param name="map_jLeftWrist_rotx">(jLeftWrist_rotx, XsensSuit::vSJoint::jLeftWrist, 0)</param>
-           <param name="map_jLeftWrist_roty">(jLeftWrist_roty, XsensSuit::vSJoint::jLeftWrist, 1)</param>
-           <param name="map_jLeftWrist_rotz">(jLeftWrist_rotz, XsensSuit::vSJoint::jLeftWrist, 2)</param>
-           <param name="map_jRightHip_rotx">(jRightHip_rotx, XsensSuit::vSJoint::jRightHip, 0)</param>
-           <param name="map_jRightHip_roty">(jRightHip_roty, XsensSuit::vSJoint::jRightHip, 1)</param>
-           <param name="map_jRightHip_rotz">(jRightHip_rotz, XsensSuit::vSJoint::jRightHip, 2)</param>
-           <param name="map_jRightKnee_rotx">(jRightKnee_rotx, XsensSuit::vSJoint::jRightKnee, 0)</param>
-           <param name="map_jRightKnee_roty">(jRightKnee_roty, XsensSuit::vSJoint::jRightKnee, 1)</param>
-           <param name="map_jRightKnee_rotz">(jRightKnee_rotz, XsensSuit::vSJoint::jRightKnee, 2)</param>
-           <param name="map_jRightAnkle_rotx">(jRightAnkle_rotx, XsensSuit::vSJoint::jRightAnkle, 0)</param>
-           <param name="map_jRightAnkle_roty">(jRightAnkle_roty, XsensSuit::vSJoint::jRightAnkle, 1)</param>
-           <param name="map_jRightAnkle_rotz">(jRightAnkle_rotz, XsensSuit::vSJoint::jRightAnkle, 2)</param>
-           <param name="map_jRightBallFoot_rotx">(jRightBallFoot_rotx, XsensSuit::vSJoint::jRightBallFoot, 0)</param>
-           <param name="map_jRightBallFoot_roty">(jRightBallFoot_roty, XsensSuit::vSJoint::jRightBallFoot, 1)</param>
-           <param name="map_jRightBallFoot_rotz">(jRightBallFoot_rotz, XsensSuit::vSJoint::jRightBallFoot, 2)</param>
-           <param name="map_jLeftHip_rotx">(jLeftHip_rotx, XsensSuit::vSJoint::jLeftHip, 0)</param>
-           <param name="map_jLeftHip_roty">(jLeftHip_roty, XsensSuit::vSJoint::jLeftHip, 1)</param>
-           <param name="map_jLeftHip_rotz">(jLeftHip_rotz, XsensSuit::vSJoint::jLeftHip, 2)</param>
-           <param name="map_jLeftKnee_rotx">(jLeftKnee_rotx, XsensSuit::vSJoint::jLeftKnee, 0)</param>
-           <param name="map_jLeftKnee_roty">(jLeftKnee_roty, XsensSuit::vSJoint::jLeftKnee, 1)</param>
-           <param name="map_jLeftKnee_rotz">(jLeftKnee_rotz, XsensSuit::vSJoint::jLeftKnee, 2)</param>
-           <param name="map_jLeftAnkle_rotx">(jLeftAnkle_rotx, XsensSuit::vSJoint::jLeftAnkle, 0)</param>
-           <param name="map_jLeftAnkle_roty">(jLeftAnkle_roty, XsensSuit::vSJoint::jLeftAnkle, 1)</param>
-           <param name="map_jLeftAnkle_rotz">(jLeftAnkle_rotz, XsensSuit::vSJoint::jLeftAnkle, 2)</param>
-           <param name="map_jLeftBallFoot_rotx">(jLeftBallFoot_rotx, XsensSuit::vSJoint::jLeftBallFoot, 0)</param>
-           <param name="map_jLeftBallFoot_roty">(jLeftBallFoot_roty, XsensSuit::vSJoint::jLeftBallFoot, 1)</param>
-           <param name="map_jLeftBallFoot_rotz">(jLeftBallFoot_rotz, XsensSuit::vSJoint::jLeftBallFoot, 2)</param>
         </group>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
