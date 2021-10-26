@@ -120,15 +120,19 @@ public:
                       const double angularVelocityFeedforwardGain,
                       const double linearVelocityWeight,
                       const double angularVelocityWeight);
-    bool updateTarget(const std::string& linkName,
-                      const iDynTree::Transform& transform,
-                      const iDynTree::Twist& twist);
-    bool updateTarget(const std::string& linkName,
-                      const iDynTree::Vector3& position,
-                      const iDynTree::Rotation& orientation,
-                      const iDynTree::Vector3& linearVelocity,
-                      const iDynTree::Vector3& angularVelocity);
-    
+    bool updateTargetPoseAndVelocity(const std::string& linkName,
+                                     const iDynTree::Transform& transform,
+                                     const iDynTree::Twist& twist);
+    bool updateTargetPoseAndVelocity(const std::string& linkName,
+                                     const iDynTree::Vector3& position,
+                                     const iDynTree::Rotation& orientation,
+                                     const iDynTree::Vector3& linearVelocity,
+                                     const iDynTree::Vector3& angularVelocity);
+    bool updateTargetPose(const std::string& linkName,
+                          const iDynTree::Transform& transform);
+    bool updateTargetPose(const std::string& linkName,
+                          const iDynTree::Vector3& position,
+                          const iDynTree::Rotation& orientation);
     bool updateTargetPosition(const std::string& linkName,
                               const iDynTree::Vector3& position);
     bool updateTargetPositionAndVelocity(const std::string& linkName,
