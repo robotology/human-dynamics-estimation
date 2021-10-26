@@ -50,73 +50,114 @@ public:
     bool addPoseAndVelocityTarget(const std::string& linkName,
                                   const iDynTree::Transform& transform,
                                   const iDynTree::Twist& twist,
-                                  const double positionTargetWeight = 1.0,
-                                  const double rotationTargetWeight = 1.0,
+                                  const double positionFeedbackGain = 1.0,
+                                  const double orientationFeedbackGain = 1.0,
+                                  const double linearVelocityFeedforwardGain = 1.0,
+                                  const double angularVelocityFeedforwardGain = 1.0,
                                   const double linearVelocityWeight = 1.0,
                                   const double angularVelocityWeight = 1.0);
     bool addPoseTarget(const std::string& linkName,
                        const iDynTree::Transform& transform,
-                       const double positionTargetWeight = 1.0,
-                       const double rotationTargetWeight = 1.0);
+                       const double positionFeedbackGain = 1.0,
+                       const double orientationFeedbackGain = 1.0,
+                       const double linearVelocityWeight = 1.0,
+                       const double angularVelocityWeight = 1.0);
     bool addPoseAndVelocityTarget(const std::string& linkName,
                                   const iDynTree::Vector3& position,
-                                  const iDynTree::Rotation& rotation,
+                                  const iDynTree::Rotation& orientation,
                                   const iDynTree::Vector3& linearVelocity,
                                   const iDynTree::Vector3& angularVelocity,
-                                  const double positionTargetWeight = 1.0,
-                                  const double rotationTargetWeight = 1.0,
+                                  const double positionFeedbackGain = 1.0,
+                                  const double orientationFeedbackGain = 1.0,
+                                  const double linearVelocityFeedforwardGain = 1.0,
+                                  const double angularVelocityFeedforwardGain = 1.0,
                                   const double linearVelocityWeight = 1.0,
                                   const double angularVelocityWeight = 1.0);
     bool addPoseTarget(const std::string& linkName,
                        const iDynTree::Vector3& position,
-                       const iDynTree::Rotation& rotation,
-                       const double positionTargetWeight = 1.0,
-                       const double rotationTargetWeight = 1.0);
+                       const iDynTree::Rotation& orientation,
+                       const double positionFeedbackGain = 1.0,
+                       const double orientationFeedbackGain = 1.0,
+                       const double linearVelocityWeight = 1.0,
+                       const double angularVelocityWeight = 1.0);
     bool addPositionAndVelocityTarget(const std::string& linkName,
                                       const iDynTree::Vector3& position,
                                       const iDynTree::Vector3& linearVelocity,
-                                      const double positionTargetWeight = 1.0,
+                                      const double positionFeedbackGain = 1.0,
+                                      const double linearVelocityFeedforwardGain = 1.0,
                                       const double linearVelocityWeight = 1.0);
     bool addPositionTarget(const std::string& linkName,
                            const iDynTree::Vector3& position,
-                           const double positionTargetWeight = 1.0);
+                           const double positionFeedbackGain = 1.0,
+                           const double linearVelocityWeight = 1.0);
     bool addOrientationAndVelocityTarget(const std::string& linkName,
                                          const iDynTree::Rotation& orientation,
                                          const iDynTree::Vector3& angularVelocity,
-                                         const double orientationTargetWeight = 1.0,
+                                         const double orientationFeedbackGain = 1.0,
+                                         const double angularVelocityFeedforwardGain = 1.0,
                                          const double angularVelocityWeight = 1.0);
     bool addOrientationTarget(const std::string& linkName,
                               const iDynTree::Rotation& orientation,
-                              const double orientationTargetWeight = 1.0);
+                              const double orientationFeedbackGain = 1.0,
+                              const double angularVelocityWeight = 1.0);
 
     bool updateTarget(const std::string& linkName,
-                      const iDynTree::Vector3& newPosition,
-                      const iDynTree::Rotation& newOrientation,
-                      const iDynTree::Vector3& newLinearVelocity,
-                      const iDynTree::Vector3& newAngularVelocity,
-                      const double newPositionTargetWeight = 1.0,
-                      const double newOrientationTargetWeight = 1.0,
-                      const double newLinearVelocityWeight = 1.0,
-                      const double newAngularVelocityWeight = 1.0);
+                      const iDynTree::Transform& transform,
+                      const iDynTree::Twist& twist,
+                      const double positionFeedbackGain,
+                      const double orientationFeedbackGain,
+                      const double linearVelocityFeedforwardGain,
+                      const double angularVelocityFeedforwardGain,
+                      const double linearVelocityWeight,
+                      const double angularVelocityWeight);
     bool updateTarget(const std::string& linkName,
-                      const iDynTree::Transform& newTransform,
-                      const iDynTree::Twist& newTwist,
-                      const double newPositionTargetWeight = 1.0,
-                      const double newOrientationTargetWeight = 1.0,
-                      const double newLinearVelocityWeight = 1.0,
-                      const double newAngularVelocityWeight = 1.0);
+                      const iDynTree::Vector3& position,
+                      const iDynTree::Rotation& orientation,
+                      const iDynTree::Vector3& linearVelocity,
+                      const iDynTree::Vector3& angularVelocity,
+                      const double positionFeedbackGain,
+                      const double orientationFeedbackGain,
+                      const double linearVelocityFeedforwardGain,
+                      const double angularVelocityFeedforwardGain,
+                      const double linearVelocityWeight,
+                      const double angularVelocityWeight);
+    bool updateTarget(const std::string& linkName,
+                      const iDynTree::Transform& transform,
+                      const iDynTree::Twist& twist);
+    bool updateTarget(const std::string& linkName,
+                      const iDynTree::Vector3& position,
+                      const iDynTree::Rotation& orientation,
+                      const iDynTree::Vector3& linearVelocity,
+                      const iDynTree::Vector3& angularVelocity);
+    
     bool updateTargetPosition(const std::string& linkName,
-                              const iDynTree::Vector3& newPosition,
-                              const double newPositionTargetWeight = 1.0);
+                              const iDynTree::Vector3& position);
+    bool updateTargetPositionAndVelocity(const std::string& linkName,
+                                         const iDynTree::Vector3& position,
+                                         const iDynTree::Vector3& linearVelocity);
     bool updateTargetOrientation(const std::string& linkName,
-                                 const iDynTree::Rotation& newOrientation,
-                                 const double newOrientationTargetWeight = 1.0);
+                                 const iDynTree::Rotation& orientation);
+    bool updateTargetOrientationAndVelocity(const std::string& linkName,
+                                            const iDynTree::Rotation& orientation,
+                                            const iDynTree::Vector3& angularVelocity);
     bool updateTargetLinearVelocity(const std::string& linkName,
-                                    const iDynTree::Vector3& newLinearVelocity,
-                                    const double newLinearVelocityWeight = 1.0);
+                                    const iDynTree::Vector3& linearVelocity);
     bool updateTargetAngularVelocity(const std::string& linkName,
-                                     const iDynTree::Vector3& newAngularVelocity,
-                                     const double newAngularVelocityWeight = 1.0);
+                                     const iDynTree::Vector3& angularVelocity);
+    bool updateTargetGains(const std::string& linkName,
+                           const double positionFeedbackGain,
+                           const double orientationFeedbackGain,
+                           const double linearVelocityFeedforwardGain,
+                           const double angularVelocityFeedforwardGain);
+    bool updateTargetWeights(const std::string& linkName,
+                            const double linearVelocityWeight,
+                            const double angularVelocityWeight);
+    bool updatePositionFeedbackGain(const std::string& linkName, const double positionFeedbackGain);
+    bool updateOrientationFeedbackGain(const std::string& linkName, const double orientationFeedbackGain);
+    bool updateLinearVelocityFeedforwardGain(const std::string& linkName, const double linearVelocityFeedforwardGain);
+    bool updateAngularVelocityFeedforwardGain(const std::string& linkName, const double angularVelocityFeedforwardGain);
+    bool updateLinearVelocityWeight(const std::string& linkName, const double linearVelocityWeight);
+    bool updateAngularVelocityWeight(const std::string& linkName, const double angularVelocityWeight);
 
     bool setJointConfiguration(const std::string& jointName, const double jointConfiguration);
     bool setJointsConfiguration(const iDynTree::VectorDynSize& jointsConfiguration);
