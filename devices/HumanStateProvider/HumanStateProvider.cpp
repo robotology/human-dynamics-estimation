@@ -34,6 +34,7 @@
 #include <thread>
 #include <unordered_map>
 #include <numeric>
+#include <algorithm>
 
 /*!
  * @brief analyze model and list of segments to create all possible segment pairs
@@ -146,6 +147,9 @@ class WearableSensorTarget
     iDynTree::Vector3 linearVelocity;
     iDynTree::Vector3 angularVelocity;
 
+    iDynTree::Rotation calibrationWorldToMeasurementWorld;
+    iDynTree::Rotation calibrationMeasurementToLink;
+
     WearableSensorTarget(WearableName wearableName_,
                          ModelLinkName modelLinkName_,
                          TargetType targetType_,
@@ -159,6 +163,33 @@ class WearableSensorTarget
         rotation.Identity();
         linearVelocity.zero();
         angularVelocity.zero();
+        clearCalibrationMatrices();
+    };
+
+    void clearCalibrationMatrices()
+    {
+        calibrationWorldToMeasurementWorld = iDynTree::Rotation::Identity();
+        calibrationMeasurementToLink = iDynTree::Rotation::Identity();
+    };
+
+    iDynTree::Vector3 getCalibratedPosition()
+    {
+        return iDynTree::Position(position).changeCoordinateFrame(calibrationWorldToMeasurementWorld);
+    };
+
+    iDynTree::Rotation getCalibratedRotation()
+    {
+        return calibrationWorldToMeasurementWorld * rotation * calibrationMeasurementToLink;
+    };
+
+    iDynTree::Vector3 getCalibratedLinearVelocity()
+    {
+        return iDynTree::LinearMotionVector3(linearVelocity).changeCoordFrame(calibrationWorldToMeasurementWorld);
+    };
+
+    iDynTree::Vector3 getCalibratedAngularVelocity()
+    {
+        return iDynTree::AngularMotionVector3(angularVelocity).changeCoordFrame(calibrationWorldToMeasurementWorld);
     };
 };
 
@@ -606,8 +637,8 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         TargetType targetType = it->second;
         TargetName targetName = linksGroup.get(i).asList()->get(0).asString();
 
-        yInfo() << LogPrefix << "Read link map:" << modelLinkName << "==>" << wearableName;
-        pImpl->wearableStorage.modelToWearable_LinkName[modelLinkName] = wearableName;
+        // yInfo() << LogPrefix << "Read link map:" << modelLinkName << "==>" << wearableName;
+        // pImpl->wearableStorage.modelToWearable_LinkName[modelLinkName] = wearableName;
 
         if (pImpl->wearableTargets.find(targetName) != pImpl->wearableTargets.end())
         {
@@ -1200,44 +1231,44 @@ void HumanStateProvider::run()
         return;
     }
 
-    // Get the link transformations from input data
-    if (!pImpl->getLinkTransformFromInputData(pImpl->linkTransformMatricesRaw)) {
-        yError() << LogPrefix << "Failed to get link transforms from input data";
-        askToStop();
-        return;
-    }
+    // // Get the link transformations from input data
+    // if (!pImpl->getLinkTransformFromInputData(pImpl->linkTransformMatricesRaw)) {
+    //     yError() << LogPrefix << "Failed to get link transforms from input data";
+    //     askToStop();
+    //     return;
+    // }
 
-    // Get the link transformations from input data
-    if (pImpl->useFixedBase)
-    {
-        if (!pImpl->computeRelativeTransformForInputData(pImpl->linkTransformMatricesRaw)) {
-            yError() << LogPrefix << "Failed to compute relative link transforms";
-            askToStop();
-            return;
-        }
-    }
+    // // Get the link transformations from input data
+    // if (pImpl->useFixedBase)
+    // {
+    //     if (!pImpl->computeRelativeTransformForInputData(pImpl->linkTransformMatricesRaw)) {
+    //         yError() << LogPrefix << "Failed to compute relative link transforms";
+    //         askToStop();
+    //         return;
+    //     }
+    // }
 
-    // Apply the secondary calibration to input data
-    if (!pImpl->applyFixedRightRotationForInputTransformData(pImpl->linkTransformMatricesRaw)) {
-        yError() << LogPrefix << "Failed to apply fixed calibration to input data";
-        askToStop();
-        return;
-    }
+    // // Apply the secondary calibration to input data
+    // if (!pImpl->applyFixedRightRotationForInputTransformData(pImpl->linkTransformMatricesRaw)) {
+    //     yError() << LogPrefix << "Failed to apply fixed calibration to input data";
+    //     askToStop();
+    //     return;
+    // }
 
 
-    // Apply the secondary calibration to input data
-    if (!pImpl->applySecondaryCalibration(pImpl->linkTransformMatricesRaw, pImpl->linkTransformMatrices)) {
-        yError() << LogPrefix << "Failed to apply secondary calibration to input data";
-        askToStop();
-        return;
-    }
+    // // Apply the secondary calibration to input data
+    // if (!pImpl->applySecondaryCalibration(pImpl->linkTransformMatricesRaw, pImpl->linkTransformMatrices)) {
+    //     yError() << LogPrefix << "Failed to apply secondary calibration to input data";
+    //     askToStop();
+    //     return;
+    // }
 
-    // Get the link velocity from input data
-    if (!pImpl->getLinkVelocityFromInputData(pImpl->linkVelocities)) {
-        yError() << LogPrefix << "Failed to get link velocity from input data";
-        askToStop();
-        return;
-    }
+    // // Get the link velocity from input data
+    // if (!pImpl->getLinkVelocityFromInputData(pImpl->linkVelocities)) {
+    //     yError() << LogPrefix << "Failed to get link velocity from input data";
+    //     askToStop();
+    //     return;
+    // }
 
     // Solve Inverse Kinematics and Inverse Velocity Problems
     auto tick = std::chrono::high_resolution_clock::now();
@@ -1424,36 +1455,56 @@ void HumanStateProvider::impl::computeSecondaryCalibrationRotationsForChain(cons
     for (auto const& jointZeroIdx: jointZeroIndices) {
         jointPos.setVal(jointZeroIdx, 0);
     }
+    // TODO check which value to give to the base (before we were using the base target measurement)
+    kinDynComputations->setRobotState(baseTransformSolution, jointPos, baseVel, jointVel, worldGravity);
+    
+    for (auto wearableTargetEntry : wearableTargets)
+    {
+        TargetName targetName = wearableTargetEntry.first;
+        ModelLinkName linkName = wearableTargetEntry.second->modelLinkName;
+        iDynTree::LinkIndex linkIndex = kinDynComputations->model().getLinkIndex(linkName);
 
-    kinDynComputations->setRobotState(linkTransformMatricesRaw.at(kinDynComputations->getFloatingBase()), jointPos, baseVel, jointVel, worldGravity);
+        std::cerr << "target: " << targetName << std::endl;
+        std::cerr << "link index" << linkIndex << std::endl;
 
-    // computing the secondary calibration matrices
-    for (auto const& linkToCalibrateIdx: linkToCalibrateIndices) {
+        if (std::find(linkToCalibrateIndices.begin(), linkToCalibrateIndices.end(), linkIndex) != linkToCalibrateIndices.end())
+        {
+            std::cerr << "link found" << std::endl;
+            wearableTargetEntry.second->clearCalibrationMatrices();
+            wearableTargetEntry.second->calibrationMeasurementToLink = wearableTargetEntry.second->rotation.inverse() * kinDynComputations->getWorldTransform(linkName).getRotation();
 
-        std::string linkToCalibrateName = kinDynComputations->model().getLinkName(linkToCalibrateIdx);
-        if (!(wearableStorage.modelToWearable_LinkName.find(linkToCalibrateName) == wearableStorage.modelToWearable_LinkName.end())) {
-            // discarding previous calibration
-            eraseSecondaryCalibration(linkToCalibrateName);
-
-            iDynTree::Transform linkTransformZero = kinDynComputations->getWorldTransform(linkToCalibrateName);
-
-            // computing new calibration for orientation
-            iDynTree::Rotation secondaryCalibrationRotation = linkTransformMatricesRaw.at(linkToCalibrateName).getRotation().inverse() * linkTransformZero.getRotation();
-
-            // add new calibration
-            secondaryCalibrationRotations.emplace(linkToCalibrateName,secondaryCalibrationRotation);
-            yInfo() << LogPrefix << "secondary calibration for " << linkToCalibrateName << " is set";
+            yInfo() << LogPrefix << "Sensor to Link calibration rotation for " << targetName << " is set";
         }
     }
 
-    // computing the world calibration
-    secondaryCalibrationWorld = iDynTree::Transform::Identity();
-    if (refLinkForCalibrationName!="")
-    {
-        iDynTree::Transform linkForCalibrationTransform = kinDynComputations->getWorldTransform(refLinkForCalibrationName);
-        secondaryCalibrationWorld = refLinkForCalibrationTransform * linkForCalibrationTransform.inverse();
-        yInfo() << LogPrefix << "secondary calibration for the World is set to " << secondaryCalibrationWorld.toString();
-    }
+
+    // // computing the secondary calibration matrices
+    // for (auto const& linkToCalibrateIdx: linkToCalibrateIndices) {
+
+    //     std::string linkToCalibrateName = kinDynComputations->model().getLinkName(linkToCalibrateIdx);
+    //     if (!(wearableStorage.modelToWearable_LinkName.find(linkToCalibrateName) == wearableStorage.modelToWearable_LinkName.end())) {
+    //         // discarding previous calibration
+    //         eraseSecondaryCalibration(linkToCalibrateName);
+
+    //         iDynTree::Transform linkTransformZero = kinDynComputations->getWorldTransform(linkToCalibrateName);
+
+    //         // computing new calibration for orientation
+    //         iDynTree::Rotation secondaryCalibrationRotation = linkTransformMatricesRaw.at(linkToCalibrateName).getRotation().inverse() * linkTransformZero.getRotation();
+
+    //         // add new calibration
+    //         secondaryCalibrationRotations.emplace(linkToCalibrateName,secondaryCalibrationRotation);
+    //         yInfo() << LogPrefix << "secondary calibration for " << linkToCalibrateName << " is set";
+    //     }
+    // }
+
+    // // computing the world calibration
+    // secondaryCalibrationWorld = iDynTree::Transform::Identity();
+    // if (refLinkForCalibrationName!="")
+    // {
+    //     iDynTree::Transform linkForCalibrationTransform = kinDynComputations->getWorldTransform(refLinkForCalibrationName);
+    //     secondaryCalibrationWorld = refLinkForCalibrationTransform * linkForCalibrationTransform.inverse();
+    //     yInfo() << LogPrefix << "secondary calibration for the World is set to " << secondaryCalibrationWorld.toString();
+    // }
 }
 
 bool HumanStateProvider::impl::applyRpcCommand()
@@ -1489,6 +1540,8 @@ bool HumanStateProvider::impl::applyRpcCommand()
         // add all the joints of the model to [jointZeroIndices]
         jointZeroIndices.resize(kinDynComputations->getNrOfDegreesOfFreedom());
         std::iota(jointZeroIndices.begin(), jointZeroIndices.end(), 0);
+
+        std::cerr << "Applying calibrate ALL!" << std::endl;
 
         // Compute secondary calibration for the selected links setting to zero the given joints
         computeSecondaryCalibrationRotationsForChain(jointZeroIndices, iDynTree::Transform::Identity(), linkToCalibrateIndices, "");
@@ -2247,48 +2300,48 @@ bool HumanStateProvider::impl::solveDynamicalInverseKinematics()
         {
         case TargetType::pose: {
             if (!dynamicalInverseKinematics.updateTargetPose(linkName, 
-                                                             wearableTargetEntry.second->position,
-                                                             wearableTargetEntry.second->rotation)) {
+                                                             wearableTargetEntry.second->getCalibratedPosition(),
+                                                             wearableTargetEntry.second->getCalibratedRotation())) {
                 yError() << LogPrefix << "Failed to update pose target for " << targetName;
                 return false;
                                                           }
             break; }
         case TargetType::poseAndVelocity: {
             if (!dynamicalInverseKinematics.updateTargetPoseAndVelocity(linkName, 
-                                                                        wearableTargetEntry.second->position,
-                                                                        wearableTargetEntry.second->rotation,
-                                                                        wearableTargetEntry.second->linearVelocity,
-                                                                        wearableTargetEntry.second->angularVelocity)) {
+                                                                        wearableTargetEntry.second->getCalibratedPosition(),
+                                                                        wearableTargetEntry.second->getCalibratedRotation(),
+                                                                        wearableTargetEntry.second->getCalibratedLinearVelocity(),
+                                                                        wearableTargetEntry.second->getCalibratedAngularVelocity())) {
                 yError() << LogPrefix << "Failed to update pose and velocity target for " << targetName;
                 return false;
                                                                      }
             break; }
         case TargetType::position: {
             if (!dynamicalInverseKinematics.updateTargetPosition(linkName, 
-                                                                 wearableTargetEntry.second->position)) {
+                                                                 wearableTargetEntry.second->getCalibratedPosition())) {
                 yError() << LogPrefix << "Failed to update position target for " << targetName;
                 return false;
                                                               }
             break; }
         case TargetType::positionAndVelocity: {
             if (!dynamicalInverseKinematics.updateTargetPositionAndVelocity(linkName, 
-                                                                            wearableTargetEntry.second->position,
-                                                                            wearableTargetEntry.second->linearVelocity)) {
+                                                                            wearableTargetEntry.second->getCalibratedPosition(),
+                                                                            wearableTargetEntry.second->getCalibratedLinearVelocity())) {
                 yError() << LogPrefix << "Failed to update position and velocity target for " << targetName;
                 return false;
                                                                          }
             break; }
         case TargetType::orientation: {
             if (!dynamicalInverseKinematics.updateTargetOrientation(linkName,
-                                                                    wearableTargetEntry.second->rotation)) {
+                                                                    wearableTargetEntry.second->getCalibratedRotation())) {
                 yError() << LogPrefix << "Failed to update orientation target for " << targetName;
                 return false;
                                                                  }
             break; }
         case TargetType::orientationAndVelocity: {
             if (!dynamicalInverseKinematics.updateTargetOrientationAndVelocity(linkName,
-                                                                               wearableTargetEntry.second->rotation,
-                                                                               wearableTargetEntry.second->angularVelocity)) {
+                                                                               wearableTargetEntry.second->getCalibratedRotation(),
+                                                                               wearableTargetEntry.second->getCalibratedAngularVelocity())) {
                 yError() << LogPrefix << "Failed to update orientation and velocity target for " << targetName;
                 return false;
                                                                             }
