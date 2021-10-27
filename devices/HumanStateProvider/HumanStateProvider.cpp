@@ -1566,6 +1566,7 @@ bool HumanStateProvider::impl::updateWearableTargets()
     {
         WearableName wearableName = wearableTargetEntry.second->wearableName;
         TargetName targetName = wearableTargetEntry.first;
+        TargetType targetType = wearableTargetEntry.second->targetType;
 
         switch (wearableTargetEntry.second->sensorType) {
             case sensor::SensorType::VirtualLinkKinSensor : {
@@ -1615,6 +1616,36 @@ bool HumanStateProvider::impl::updateWearableTargets()
                 wearableTargetEntry.second->angularVelocity.setVal(0, angularVelocity.at(0));
                 wearableTargetEntry.second->angularVelocity.setVal(1, angularVelocity.at(1));
                 wearableTargetEntry.second->angularVelocity.setVal(2, angularVelocity.at(2));
+                break;
+            }
+            case::sensor::SensorType::PoseSensor : {
+            auto sensor = iWear->getPoseSensor(wearableName);
+                if (!sensor) {
+                    yError() << LogPrefix << "Sensor" << wearableName
+                            << "has been added but is not properly configured.";
+                    return false;
+                }
+                if (sensor->getSensorStatus() != sensor::SensorStatus::Ok) {
+                    yError() << LogPrefix << "The sensor status of" << wearableName
+                            << "is not ok (" << static_cast<double>(sensor->getSensorStatus()) << ")";
+                    return false;
+                }
+
+                wearable::Vector3 position;
+                if (!sensor->getPosePosition(position)) {
+                    yError() << LogPrefix << "Failed to read link position from virtual link sensor " << wearableName;
+                    return false;
+                }
+                wearableTargetEntry.second->position.setVal(0, position.at(0));
+                wearableTargetEntry.second->position.setVal(1, position.at(1));
+                wearableTargetEntry.second->position.setVal(2, position.at(2));
+
+                Quaternion orientation;
+                if (!sensor->getPoseOrientationAsQuaternion(orientation)) {
+                    yError() << LogPrefix << "Failed to read link orientation from virtual link sensor " << wearableName;
+                    return false;
+                }
+                wearableTargetEntry.second->rotation.fromQuaternion({orientation.data(), 4});
                 break;
             }
             default : {
