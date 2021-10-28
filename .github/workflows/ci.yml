@@ -17,7 +17,7 @@ env:
     YCM_TAG: v0.13.0
     YARP_TAG: v3.5.0
     iDynTree_TAG: v4.2.0 
-    wearables_TAG: v1.2.1 
+    wearables_TAG: v1.2.2 
     icub_main_TAG: v1.21.0    
     osqp_TAG: v0.6.0
     OsqpEigen_TAG: v0.6.2
