@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.2] - 2021-10-28
+
 ### Removed
 - Remove `rpc` port from `IWearWrapper` and `IWearRemapper`. (https://github.com/robotology/wearables/pull/131)
 
