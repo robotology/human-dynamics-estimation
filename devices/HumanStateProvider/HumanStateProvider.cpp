@@ -1140,6 +1140,13 @@ void HumanStateProvider::run()
         return;
     }
 
+    // Apply the secondary calibration to input data
+    if (!pImpl->applyFixedRightRotationForInputTransformData(pImpl->linkTransformMatricesRaw)) {
+        yError() << LogPrefix << "Failed to apply fixed calibration to input data";
+        askToStop();
+        return;
+    }
+
     // Get the link transformations from input data
     if (pImpl->useFixedBase)
     {
@@ -1150,12 +1157,7 @@ void HumanStateProvider::run()
         }
     }
 
-    // Apply the secondary calibration to input data
-    if (!pImpl->applyFixedRightRotationForInputTransformData(pImpl->linkTransformMatricesRaw)) {
-        yError() << LogPrefix << "Failed to apply fixed calibration to input data";
-        askToStop();
-        return;
-    }
+    
 
 
     // Apply the secondary calibration to input data
