@@ -282,14 +282,14 @@ void HumanStateWrapper::run()
 
     // joint position
     if (publishJointPositionVector) {
-        int size_joint = jointPositionsInterface.size();
+        int size_joint = pImpl->jointPositionsInterface.size();
         yarp::sig::Vector& jointPositionsOut = pImpl->jointPositionPort.prepare();
         jointPositionsOut.resize(size_joint);
         std::vector<int> jointsOrderIndex;
 
         if (changeJointsOrder) {
             //TODO this should be replaced by an unordered map, to decrease the complexity
-            if (computeJointsOrderIndex(jointNames, jointsNameDesiredOrder, jointsOrderIndex)) {
+            if (computeJointsOrderIndex(pImpl->jointNames, jointsNameDesiredOrder, jointsOrderIndex)) {
             }
             else {
                 yError() << LogPrefix << "Given Wrong Joints order";
@@ -300,10 +300,10 @@ void HumanStateWrapper::run()
         for (int j = 0; j < size_joint; j++) {
             if (changeJointsOrder) {
             //TODO this should be replaced by an unordered map, to decrease the complexity
-                jointPositionsOut[j] = jointPositionsInterface[jointsOrderIndex.at(j)];
+                jointPositionsOut[j] = pImpl->jointPositionsInterface[jointsOrderIndex.at(j)];
             }
             else {
-                jointPositionsOut[j] = jointPositionsInterface[j];
+                jointPositionsOut[j] = pImpl->jointPositionsInterface[j];
             }
         }
 
@@ -313,14 +313,14 @@ void HumanStateWrapper::run()
     // joint velocities
     if (publishJointVelocityVector) {
 
-        int size_joint = jointPositionsInterface.size();
+        int size_joint = pImpl->jointPositionsInterface.size();
         yarp::sig::Vector& jointVelocityOut = pImpl->jointVelocityPort.prepare();
 
         jointVelocityOut.resize(size_joint);
         std::vector<int> jointsOrderIndex;
 
         if (changeJointsOrder) {
-            if (computeJointsOrderIndex(jointNames, jointsNameDesiredOrder, jointsOrderIndex)) {
+            if (computeJointsOrderIndex(pImpl->jointNames, jointsNameDesiredOrder, jointsOrderIndex)) {
             }
             else {
                 yError() << LogPrefix << "Given Wrong Joints order";
@@ -331,10 +331,10 @@ void HumanStateWrapper::run()
         for (int j = 0; j < size_joint; j++) {
             if (changeJointsOrder) {
 
-                jointVelocityOut[j] = jointVelocitiesInterface[jointsOrderIndex.at(j)];
+                jointVelocityOut[j] = pImpl->jointVelocitiesInterface[jointsOrderIndex.at(j)];
             }
             else {
-                jointVelocityOut[j] = jointVelocitiesInterface[j];
+                jointVelocityOut[j] = pImpl->jointVelocitiesInterface[j];
             }
         }
 
@@ -348,11 +348,11 @@ void HumanStateWrapper::run()
         basePositionOut.resize(7);
 
         for (int j = 0; j < 3; j++) {
-            basePositionOut[j] = basePositionInterface[j];
+            basePositionOut[j] = pImpl->basePositionInterface[j];
         }
 
         for (int j = 0; j < 4; j++) {
-            basePositionOut[3 + j] = baseOrientationInterface[j];
+            basePositionOut[3 + j] = pImpl->baseOrientationInterface[j];
         }
 
         pImpl->basePositionPort.write(/*forceStrict=*/true);
@@ -364,7 +364,7 @@ void HumanStateWrapper::run()
         baseVelocityOut.resize(6);
 
         for (int j = 0; j < 6; j++) {
-            baseVelocityOut[j] = baseVelocity[j];
+            baseVelocityOut[j] = pImpl->baseVelocity[j];
         }
 
         pImpl->baseVelocityPort.write(/*forceStrict=*/true);
@@ -377,7 +377,7 @@ void HumanStateWrapper::run()
         CoMPositionOut.resize(3);
 
         for (int j = 0; j < 3; j++) {
-            CoMPositionOut[j] = CoMPositionInterface[j];
+            CoMPositionOut[j] = pImpl->CoMPositionInterface[j];
         }
 
         pImpl->CoMPositionPort.write(/*forceStrict=*/true);
@@ -390,7 +390,7 @@ void HumanStateWrapper::run()
         CoMVelocityOut.resize(3);
 
         for (int j = 0; j < 3; j++) {
-            CoMVelocityOut[j] = CoMVelocityInterface[j];
+            CoMVelocityOut[j] = pImpl->CoMVelocityInterface[j];
         }
 
         pImpl->CoMVelocityPort.write(/*forceStrict=*/true);
