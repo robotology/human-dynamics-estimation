@@ -1404,14 +1404,19 @@ bool InverseVelocityKinematics::setCustomConstraintsJointsValues(
     const std::vector<iDynTree::JointIndex>& jointsIndexList,
     const iDynTree::VectorDynSize& upperBoundary,
     const iDynTree::VectorDynSize& lowerBoundary,
-    const iDynTree::MatrixDynSize& customConstraintMatrix,
-    const double k_u,
-    const double k_l)
+    const iDynTree::MatrixDynSize& customConstraintMatrix)
 {
     pImpl->m_custom_ConstraintVariablesIndex = jointsIndexList;
     pImpl->m_custom_ConstraintMatrix = customConstraintMatrix;
     pImpl->m_custom_ConstraintUpperBound = upperBoundary;
     pImpl->m_custom_ConstraintLowerBound = lowerBoundary;
+
+    return true;
+}
+
+bool InverseVelocityKinematics::setConstraintParametersJointValues(const double& k_u,
+                                                                   const double& k_l)
+{
     pImpl->m_k_u = k_u;
     pImpl->m_k_l = k_l;
     return true;
