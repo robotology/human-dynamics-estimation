@@ -666,12 +666,16 @@ bool DynamicalInverseKinematics::impl::initialize()
     }
     if (!m_inverseVelocityKinematics.setGeneralJointVelocityConstraints(100)) // dummy value, that will be replaced by the custom joint velocity limits
         return false; 
-    if (!m_inverseVelocityKinematics.setGeneralJointsUpperLowerConstraints(m_limits.jointPositionUpperLimit,
-                                                                           m_limits.jointPositionLowerLimit))
+
+    if (!m_inverseVelocityKinematics.setConstraintParametersJointValues(m_linearLimits.k_u,
+                                                                        m_linearLimits.k_l))
         return false;
-    
-    if (m_limits.jointVelocityUpperLimit.size() > 0)
-    {
+
+    if (!m_inverseVelocityKinematics.setGeneralJointsUpperLowerConstraints(
+            m_limits.jointPositionUpperLimit, m_limits.jointPositionLowerLimit))
+        return false;
+
+    if (m_limits.jointVelocityUpperLimit.size() > 0) {
         std::vector<iDynTree::JointIndex> jointsList;
         jointsList.clear();
         for (size_t i = 0; i < m_dofs; i++)
@@ -679,14 +683,12 @@ bool DynamicalInverseKinematics::impl::initialize()
         if (!m_inverseVelocityKinematics.setCustomJointsVelocityLimit(jointsList, m_limits.jointVelocityUpperLimit))
             return false;
     }
-    if (m_linearLimits.constraintVariablesIndex.size() > 0)
-    {
-        if (!m_inverseVelocityKinematics.setCustomConstraintsJointsValues(m_linearLimits.constraintVariablesIndex,
-                                                                          m_linearLimits.constraintUpperBound,
-                                                                          m_linearLimits.constraintLowerBound,
-                                                                          m_linearLimits.constraintMatrix,
-                                                                          m_linearLimits.k_u,
-                                                                          m_linearLimits.k_l))
+    if (m_linearLimits.constraintVariablesIndex.size() > 0) {
+        if (!m_inverseVelocityKinematics.setCustomConstraintsJointsValues(
+                m_linearLimits.constraintVariablesIndex,
+                m_linearLimits.constraintUpperBound,
+                m_linearLimits.constraintLowerBound,
+                m_linearLimits.constraintMatrix))
             return false;
     }
 
@@ -875,12 +877,12 @@ void DynamicalInverseKinematics::setInverseVelocityKinematicsRegularization(cons
     pImpl->m_inverseVelocityKinematics.setRegularization(regularizationWeight);
 }
 
-bool DynamicalInverseKinematics::setLinearJointConfigurationLimits(const std::vector<iDynTree::JointIndex>& jointsIndexList,
-                                                                   const iDynTree::VectorDynSize& upperBoundary,
-                                                                   const iDynTree::VectorDynSize& lowerBoundary,
-                                                                   const iDynTree::MatrixDynSize& customConstraintMatrix,
-                                                                   const double k_u,
-                                                                   const double k_l)
+
+bool DynamicalInverseKinematics::setLinearJointConfigurationLimits(
+    const std::vector<iDynTree::JointIndex>& jointsIndexList,
+    const iDynTree::VectorDynSize& upperBoundary,
+    const iDynTree::VectorDynSize& lowerBoundary,
+    const iDynTree::MatrixDynSize& customConstraintMatrix)
 {
     if (!pImpl->m_isModelLoaded)
         return false;
@@ -890,9 +892,15 @@ bool DynamicalInverseKinematics::setLinearJointConfigurationLimits(const std::ve
     pImpl->m_linearLimits.constraintMatrix = customConstraintMatrix;
     pImpl->m_linearLimits.constraintUpperBound = upperBoundary;
     pImpl->m_linearLimits.constraintLowerBound = lowerBoundary;
+
+    return true;
+}
+
+bool DynamicalInverseKinematics::setConstraintParametersJointValues(const double& k_u,
+                                                                    const double& k_l)
+{
     pImpl->m_linearLimits.k_u = k_u;
     pImpl->m_linearLimits.k_l = k_l;
-
     return true;
 }
 

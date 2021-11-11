@@ -35,7 +35,7 @@
         sparseCholeskyDecomposition,
         robustCholeskyDecomposition,
         sparseRobustCholeskyDecomposition -->
-        <param name='inverseVelocityKinematicsSolver'>sparseRobustCholeskyDecomposition</param>
+        <param name='inverseVelocityKinematicsSolver'>QP</param>
         <param name="linVelTargetWeight">1.0</param>
         <param name="angVelTargetWeight">1.0</param>
         <!-- integration based IK parameters -->
@@ -67,6 +67,49 @@
             <param name="map_LeftLowerLeg">(LeftLowerLeg, XsensSuit::vLink::LeftLowerLeg)</param>
             <param name="map_LeftFoot">(LeftFoot, XsensSuit::vLink::LeftFoot)</param>
             <param name="map_LeftToe">(LeftToe, XsensSuit::vLink::LeftToe)</param>
+        </group>
+        <group name="CUSTOM_CONSTRAINTS">
+        <!-- check issue https://github.com/robotology/human-dynamics-estimation/issues/132 for more info-->
+        <!-- note that a group can not be empty, otherwise it returns error-->
+        <!-- custom joint limits velocities-->
+            <!--param name="custom_joints_velocity_limits_names">(neck_roll, neck_pitch)</param-->
+            <param name="custom_joints_velocity_limits_names">()</param>
+            <!-- the upper bound is "+", while the lower bounds are "-" -->
+            <!--param name="custom_joints_velocity_limits_values">(10.0, 15.0)</param-->
+            <param name="custom_joints_velocity_limits_values">()</param>
+        <!-- **** base velocity limit: roll, pitch, yaw, x, y, z ****-->
+            <!--param name="base_velocity_limit_upper_buond">(1.0, 1.0, 1.0, 1.0, 1.0, 1.0 )</param>
+            <param name="base_velocity_limit_lower_buond">(-1.0, -1.0, -1.0, -1.0, -1.0, -1.0 )</param-->
+        <!-- Custom joint Configuration constraints-->
+        <!-- if the boudary value is inf, I will use -1000.0 rad, or +1000.0 rad-->
+        <!--param name="custom_constraint_variables">(
+        l_shoulder_pitch, l_shoulder_roll, l_shoulder_yaw, l_elbow, l_wrist_prosup,
+        r_shoulder_pitch, r_shoulder_roll, r_shoulder_yaw, r_elbow, r_wrist_prosup)</param>
+        <param name="custom_constraint_matrix"> (
+        (1.7105, -1.7105,  0.0,     0.0,    0.0,    0.0,     0.0,      0.0,       0.0,    0.0),
+        (1.7105, -1.7105,  -1.7105, 0.0,    0.0,    0.0,     0.0,      0.0,       0.0,    0.0),
+        (0.0,    1.0,      1.0,     0.0,    0.0,    0.0,     0.0,      0.0,       0.0,    0.0),
+        (0.0,    1.0,      0.0427,  0.0,    0.0,    0.0,     0.0,      0.0,       0.0,    0.0),
+        (0.0,    1.0,      0.0,     0.0,    0.0,    0.0,     0.0,      0.0,       0.0,    0.0),
+        (0.0,    0.0,      0.0,     2.5,    1.0,    0.0,     0.0,      0.0,       0.0,    0.0),
+        (0.0,    0.0,      0.0,     -2.5,   1.0,    0.0,     0.0,      0.0,       0.0,    0.0),
+        (0.0,    0.0,      0.0,     0.0,    0.0,    1.7105,  -1.7105,  0.0,       0.0,    0.0),
+        (0.0,    0.0,      0.0,     0.0,    0.0,    1.7105,  -1.7105,  -1.7105,   0.0,    0.0,),
+        (0.0,    0.0,      0.0,     0.0,    0.0,    0.0,     1.0,       1.0,      0.0,    0.0,),
+        (0.0,    0.0,      0.0,     0.0,    0.0,    0.0,     1.0,       0.0427,   0.0,    0.0,),
+        (0.0,    0.0,      0.0,     0.0,    0.0,    0.0,     1.0,       0.0,      0.0,    0.0,),
+        (0.0,    0.0,      0.0,     0.0,    0.0,    0.0,     0.0,       0.0,      2.5,    1.0,),
+        (0.0,    0.0,      0.0,     0.0,    0.0,    0.0,     0.0,       0.0,      -2.5,   1.0,),
+        )</param>
+        <param name="custom_constraint_lower_bound"> (
+        -6.0563,  -6.3979,  -1.1623,  0.4611,  -1000.0,  -1000.0,  -5.2796,
+        -6.0563,  -6.3979,  -1.1623,  0.4611,  -1000.0,  -1000.0,  -5.2796)</param>
+        <param name="custom_constraint_upper_bound"> (
+        1000.0,  1.9622,  3.7228,  1000.0,  1.7453,  5.2796,  1000.0,
+        1000.0,  1.9622,  3.7228,  1000.0,  1.7453,  5.2796,  1000.0)</param-->
+            <!-- The following two parameters should be set always , if not set they are by default 0.5 -->
+            <param name="k_u">0.5</param>
+            <param name="k_l">0.5</param>
         </group>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
