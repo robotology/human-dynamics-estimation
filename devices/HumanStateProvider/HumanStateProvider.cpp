@@ -1937,7 +1937,11 @@ bool HumanStateProvider::impl::initializeDynamicalInverseKinematicsSolver()
         yError() << LogPrefix << "Failed to set all joints velocity limits";
         return false;
     }
-    
+
+    if (!dynamicalInverseKinematics.setConstraintParametersJointValues(k_u, k_l))
+        return false;
+
+
     if (custom_jointsVelocityLimitsNames.size() != 0) {
         for (size_t i = 0; i < custom_jointsVelocityLimitsNames.size(); i++) {
             if (!dynamicalInverseKinematics.setJointVelocityLimit(custom_jointsVelocityLimitsIndexes[i],
@@ -1959,12 +1963,11 @@ bool HumanStateProvider::impl::initializeDynamicalInverseKinematicsSolver()
     }
 
     if (customConstraintVariablesIndex.size() != 0) {
-        if (!dynamicalInverseKinematics.setLinearJointConfigurationLimits(customConstraintVariablesIndex,
-                                                                          customConstraintUpperBound,
-                                                                          customConstraintLowerBound,
-                                                                          customConstraintMatrix,
-                                                                          k_u,
-                                                                          k_l))
+        if (!dynamicalInverseKinematics.setLinearJointConfigurationLimits(
+                customConstraintVariablesIndex,
+                customConstraintUpperBound,
+                customConstraintLowerBound,
+                customConstraintMatrix))
             return false;
     }
 
