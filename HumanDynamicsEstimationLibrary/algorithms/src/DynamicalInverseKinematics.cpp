@@ -44,6 +44,10 @@ public:
      
     hde::utils::idyntree::state::State m_state;
 
+    // Buffers
+    iDynTree::VectorDynSize m_errorBuffer;
+    iDynTree::Vector3 m_desiredLinearVelocityBuffer, m_desiredAngularVelocityBuffer;
+
     struct Limits
     {
         iDynTree::VectorDynSize jointPositionUpperLimit;
@@ -192,7 +196,7 @@ public:
                                               const double angularVelocityWeight = 1.0);
     
     
-    void setTargetType(const TargetType targetType);
+    void setTargetType(const TargetType& targetType);
     TargetType getTargetType() const;
     std::string getFrameName() const;
 
@@ -201,9 +205,9 @@ public:
 
     iDynTree::VectorDynSize errorBuffer;
     int getErrorSize() const;
-    bool computeError(const iDynTree::Transform transform, iDynTree::VectorDynSize& error);
-    bool computeError(const iDynTree::Vector3 position, iDynTree::VectorDynSize& error);
-    bool computeError(const iDynTree::Rotation orientation, iDynTree::VectorDynSize& error);
+    bool computeError(const iDynTree::Transform& transform, iDynTree::VectorDynSize& error);
+    bool computeError(const iDynTree::Vector3& position, iDynTree::VectorDynSize& error);
+    bool computeError(const iDynTree::Rotation& orientation, iDynTree::VectorDynSize& error);
 
     iDynTree::Vector3 getPosition() const;
     void setPosition(const iDynTree::Vector3& newPosition);
@@ -219,17 +223,17 @@ public:
     void setTwist(const iDynTree::Twist& newTwist);
 
     double getPositionFeedbackGain() const;
-    void setPositionFeedbackGain(const double newPositionFeedbackGain);
+    void setPositionFeedbackGain(const double& newPositionFeedbackGain);
     double getOrientationFeedbackGain() const;
-    void setOrientationFeedbackGain(const double newOrientationFeedbackGain);
+    void setOrientationFeedbackGain(const double& newOrientationFeedbackGain);
     double getLinearVelocityFeedforwardGain() const;
-    void setLinearVelocityFeedforwardGain(const double newLinearVelocityFeedforwardGain);
+    void setLinearVelocityFeedforwardGain(const double& newLinearVelocityFeedforwardGain);
     double getAngularVelocityFeedforwardGain() const;
-    void setAngularVelocityFeedforwardGain(const double newAngularVelocityFeedforwardGain);
+    void setAngularVelocityFeedforwardGain(const double& newAngularVelocityFeedforwardGain);
     double getLinearVelocityWeight() const;
-    void setLinearVelocityWeight(const double newLinearVelocityWeight);
+    void setLinearVelocityWeight(const double& newLinearVelocityWeight);
     double getAngularVelocityWeight() const;
-    void setAngularVelocityWeight(const double newAngularVelocityWeight);
+    void setAngularVelocityWeight(const double& newAngularVelocityWeight);
 };
 
 
@@ -412,7 +416,7 @@ DynamicalInverseKinematics::impl::InverseKinematicsTarget::getTargetType() const
     return type;
 }
 
-void DynamicalInverseKinematics::impl::InverseKinematicsTarget::setTargetType(const DynamicalInverseKinematics::impl::InverseKinematicsTarget::TargetType targetType)
+void DynamicalInverseKinematics::impl::InverseKinematicsTarget::setTargetType(const DynamicalInverseKinematics::impl::InverseKinematicsTarget::TargetType& targetType)
 {
     type = targetType;
     switch (type)
@@ -434,7 +438,7 @@ int DynamicalInverseKinematics::impl::InverseKinematicsTarget::getErrorSize() co
     return errorSize;
 }
 
-bool DynamicalInverseKinematics::impl::InverseKinematicsTarget::computeError(const iDynTree::Transform transform, iDynTree::VectorDynSize& error)
+bool DynamicalInverseKinematics::impl::InverseKinematicsTarget::computeError(const iDynTree::Transform& transform, iDynTree::VectorDynSize& error)
 {
     if ( (type != TargetTypePose) || (error.size() != errorSize))
     {
@@ -447,7 +451,7 @@ bool DynamicalInverseKinematics::impl::InverseKinematicsTarget::computeError(con
     return true;
 }
 
-bool DynamicalInverseKinematics::impl::InverseKinematicsTarget::computeError(const iDynTree::Vector3 position, iDynTree::VectorDynSize& error)
+bool DynamicalInverseKinematics::impl::InverseKinematicsTarget::computeError(const iDynTree::Vector3& position, iDynTree::VectorDynSize& error)
 {
     if ( (type != TargetTypePosition) || (error.size() != errorSize))
     {
@@ -460,7 +464,7 @@ bool DynamicalInverseKinematics::impl::InverseKinematicsTarget::computeError(con
 }
 
 
-bool DynamicalInverseKinematics::impl::InverseKinematicsTarget::computeError(const iDynTree::Rotation orientation, iDynTree::VectorDynSize& error)
+bool DynamicalInverseKinematics::impl::InverseKinematicsTarget::computeError(const iDynTree::Rotation& orientation, iDynTree::VectorDynSize& error)
 {
     if ( (type != TargetTypeOrientation) || (error.size() != errorSize))
     {
@@ -560,7 +564,7 @@ double DynamicalInverseKinematics::impl::InverseKinematicsTarget::getPositionFee
 }
 
 void DynamicalInverseKinematics::impl::InverseKinematicsTarget::setPositionFeedbackGain(
-    const double newPositionFeedbackGain)
+    const double& newPositionFeedbackGain)
 {
     positionFeedbackGain = newPositionFeedbackGain;
 }
@@ -571,7 +575,7 @@ double DynamicalInverseKinematics::impl::InverseKinematicsTarget::getOrientation
 }
 
 void DynamicalInverseKinematics::impl::InverseKinematicsTarget::setOrientationFeedbackGain(
-    const double newOrientationFeedbackGain)
+    const double& newOrientationFeedbackGain)
 {
     orientationFeedbackGain = newOrientationFeedbackGain;
 }
@@ -582,7 +586,7 @@ double DynamicalInverseKinematics::impl::InverseKinematicsTarget::getLinearVeloc
 }
 
 void DynamicalInverseKinematics::impl::InverseKinematicsTarget::setLinearVelocityFeedforwardGain(
-    const double newLinearVelocityFeedforwardGain)
+    const double& newLinearVelocityFeedforwardGain)
 {
     linearVelocityFeedforwardGain = newLinearVelocityFeedforwardGain;
 }
@@ -593,7 +597,7 @@ double DynamicalInverseKinematics::impl::InverseKinematicsTarget::getAngularVelo
 }
 
 void DynamicalInverseKinematics::impl::InverseKinematicsTarget::setAngularVelocityFeedforwardGain(
-    const double newAngularVelocityFeedforwardGain)
+    const double& newAngularVelocityFeedforwardGain)
 {
     angularVelocityFeedforwardGain = newAngularVelocityFeedforwardGain;
 }
@@ -604,7 +608,7 @@ double DynamicalInverseKinematics::impl::InverseKinematicsTarget::getLinearVeloc
 }
 
 void DynamicalInverseKinematics::impl::InverseKinematicsTarget::setLinearVelocityWeight(
-    const double newLinearVelocityWeight)
+    const double& newLinearVelocityWeight)
 {
     linearVelocityWeight = newLinearVelocityWeight;
 }
@@ -615,7 +619,7 @@ double DynamicalInverseKinematics::impl::InverseKinematicsTarget::getAngularVelo
 }
 
 void DynamicalInverseKinematics::impl::InverseKinematicsTarget::setAngularVelocityWeight(
-    const double newAngularVelocityWeight)
+    const double& newAngularVelocityWeight)
 {
     angularVelocityWeight = newAngularVelocityWeight;
 }
@@ -664,7 +668,7 @@ bool DynamicalInverseKinematics::impl::initialize()
                 break;
         }
     }
-    if (!m_inverseVelocityKinematics.setGeneralJointVelocityConstraints(100)) // dummy value, that will be replaced by the custom joint velocity limits
+    if (!m_inverseVelocityKinematics.setGeneralJointVelocityConstraints(1E12)) // dummy value, that will be replaced by the custom joint velocity limits
         return false; 
 
     if (!m_inverseVelocityKinematics.setConstraintParametersJointValues(m_linearLimits.k_u,
@@ -775,38 +779,34 @@ bool DynamicalInverseKinematics::impl::computeDesiredLinkVelocities()
     {
         auto target = it.second;
 
-        // initialize buffers
-        iDynTree::VectorDynSize errorBuffer;
-        iDynTree::Vector3 desiredLinearVelocityBuffer, desiredAngularVelocityBuffer;
-
         switch (target.getTargetType()) {
             case DynamicalInverseKinematics::impl::InverseKinematicsTarget::TargetType::TargetTypePosition:
-                errorBuffer.resize(3);
-                if (!target.computeError(m_dynamics.getWorldTransform(target.getFrameName()).getPosition(), errorBuffer))
+                m_errorBuffer.resize(3);
+                if (!target.computeError(m_dynamics.getWorldTransform(target.getFrameName()).getPosition(), m_errorBuffer))
                     return false;
-                iDynTree::toEigen(desiredLinearVelocityBuffer) = target.getLinearVelocityFeedforwardGain() * iDynTree::toEigen(target.getLinearVelocity()) 
-                                                                 - target.getPositionFeedbackGain()  * iDynTree::toEigen(errorBuffer);
-                if (!m_inverseVelocityKinematics.updateTargetLinearVelocity(target.getFrameName(), desiredLinearVelocityBuffer, target.getLinearVelocityWeight()))
+                iDynTree::toEigen(m_desiredLinearVelocityBuffer) = target.getLinearVelocityFeedforwardGain() * iDynTree::toEigen(target.getLinearVelocity()) 
+                                                                 - target.getPositionFeedbackGain()  * iDynTree::toEigen(m_errorBuffer);
+                if (!m_inverseVelocityKinematics.updateTargetLinearVelocity(target.getFrameName(), m_desiredLinearVelocityBuffer, target.getLinearVelocityWeight()))
                     return false;
                 break;
             case DynamicalInverseKinematics::impl::InverseKinematicsTarget::TargetType::TargetTypeOrientation:
-                errorBuffer.resize(3);
-                if (!target.computeError(m_dynamics.getWorldTransform(target.getFrameName()).getRotation(), errorBuffer))
+                m_errorBuffer.resize(3);
+                if (!target.computeError(m_dynamics.getWorldTransform(target.getFrameName()).getRotation(), m_errorBuffer))
                     return false;
-                iDynTree::toEigen(desiredAngularVelocityBuffer) = target.getAngularVelocityFeedforwardGain() * iDynTree::toEigen(target.getAngularVelocity()) 
-                                                                 - target.getOrientationFeedbackGain()  * iDynTree::toEigen(errorBuffer);
-                if (!m_inverseVelocityKinematics.updateTargetAngularVelocity(target.getFrameName(), desiredAngularVelocityBuffer, target.getAngularVelocityWeight()))
+                iDynTree::toEigen(m_desiredAngularVelocityBuffer) = target.getAngularVelocityFeedforwardGain() * iDynTree::toEigen(target.getAngularVelocity()) 
+                                                                 - target.getOrientationFeedbackGain()  * iDynTree::toEigen(m_errorBuffer);
+                if (!m_inverseVelocityKinematics.updateTargetAngularVelocity(target.getFrameName(), m_desiredAngularVelocityBuffer, target.getAngularVelocityWeight()))
                     return false;
                 break;
             case DynamicalInverseKinematics::impl::InverseKinematicsTarget::TargetType::TargetTypePose:
-                errorBuffer.resize(6);
-                if (!target.computeError(m_dynamics.getWorldTransform(target.getFrameName()), errorBuffer))
+                m_errorBuffer.resize(6);
+                if (!target.computeError(m_dynamics.getWorldTransform(target.getFrameName()), m_errorBuffer))
                     return false;
-                iDynTree::toEigen(desiredLinearVelocityBuffer) = target.getLinearVelocityFeedforwardGain() * iDynTree::toEigen(target.getLinearVelocity()) 
-                                                                 - target.getPositionFeedbackGain()  * iDynTree::toEigen(errorBuffer).head(3);
-                iDynTree::toEigen(desiredAngularVelocityBuffer) = target.getAngularVelocityFeedforwardGain() * iDynTree::toEigen(target.getAngularVelocity()) 
-                                                                 - target.getOrientationFeedbackGain()  * iDynTree::toEigen(errorBuffer).tail(3);
-                if (!m_inverseVelocityKinematics.updateTarget(target.getFrameName(), iDynTree::Twist(desiredLinearVelocityBuffer, desiredAngularVelocityBuffer), target.getLinearVelocityWeight(), target.getAngularVelocityWeight()))
+                iDynTree::toEigen(m_desiredLinearVelocityBuffer) = target.getLinearVelocityFeedforwardGain() * iDynTree::toEigen(target.getLinearVelocity()) 
+                                                                 - target.getPositionFeedbackGain()  * iDynTree::toEigen(m_errorBuffer).head(3);
+                iDynTree::toEigen(m_desiredAngularVelocityBuffer) = target.getAngularVelocityFeedforwardGain() * iDynTree::toEigen(target.getAngularVelocity()) 
+                                                                 - target.getOrientationFeedbackGain()  * iDynTree::toEigen(m_errorBuffer).tail(3);
+                if (!m_inverseVelocityKinematics.updateTarget(target.getFrameName(), iDynTree::Twist(m_desiredLinearVelocityBuffer, m_desiredAngularVelocityBuffer), target.getLinearVelocityWeight(), target.getAngularVelocityWeight()))
                     return false;
                 break;
         }
@@ -1091,13 +1091,11 @@ bool DynamicalInverseKinematics::setConfiguration(const iDynTree::Transform& bas
     if (!pImpl->m_isModelLoaded)
         return false;
     
-    if (setJointsConfiguration(jointsConfiguration) && setBasePose(baseTransform)) {
-        pImpl->updateConfiguration();
-        return true;
-    }
-    else {
+    if (!(setJointsConfiguration(jointsConfiguration) && setBasePose(baseTransform))) {
         return false;
     }
+
+    return true;
 }
 
 bool DynamicalInverseKinematics::setConfiguration(const iDynTree::Vector3& basePosition,
@@ -1107,13 +1105,11 @@ bool DynamicalInverseKinematics::setConfiguration(const iDynTree::Vector3& baseP
     if (!pImpl->m_isModelLoaded)
         return false;
     
-    if (setJointsConfiguration(jointsConfiguration) && setBasePose(basePosition, baseRotation)) {
-        pImpl->updateConfiguration();
-        return true;
-    }
-    else {
+    if (!(setJointsConfiguration(jointsConfiguration) && setBasePose(basePosition, baseRotation))) {
         return false;
     }
+    
+    return true;
 }
 
 bool DynamicalInverseKinematics::updateTarget(const std::string& linkName,
@@ -1304,13 +1300,13 @@ bool DynamicalInverseKinematics::updateTargetWeights(const std::string& linkName
 
 bool DynamicalInverseKinematics::getJointsConfigurationSolution(iDynTree::VectorDynSize& jointsConfiguration) const
 {
-    if (jointsConfiguration.size() == pImpl->m_state.s.size()) {
-        jointsConfiguration = pImpl->m_state.s;
-        return true;
-    }
-    else {
+    if (!(jointsConfiguration.size() == pImpl->m_state.s.size()))
+    {
         return false;
     }
+    
+    jointsConfiguration = pImpl->m_state.s;
+    return true;
 }
 
 bool DynamicalInverseKinematics::getBasePoseSolution(iDynTree::Transform& baseTransform) const
@@ -1341,10 +1337,7 @@ bool DynamicalInverseKinematics::getConfigurationSolution(iDynTree::Vector3& bas
 bool DynamicalInverseKinematics::getVelocitySolution(iDynTree::Twist& baseVelocity,
                                                      iDynTree::VectorDynSize& jointsVelocity) const
 {
-    getBaseVelocitySolution(baseVelocity);
-    getJointsVelocitySolution(jointsVelocity);
-
-    return true;
+    return getBaseVelocitySolution(baseVelocity) && getJointsVelocitySolution(jointsVelocity);
 }
 
 bool DynamicalInverseKinematics::getJointsVelocitySolution(
