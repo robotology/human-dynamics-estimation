@@ -1739,17 +1739,21 @@ bool HumanStateProvider::impl::updateWearableTargets()
                         iDynTree::Direction zFeet =  wearableTargetEntry.second->rotation * zWorld;
                         
                         double angle = acos(zFeet[0]*zWorld[0]+zFeet[1]*zWorld[1]+zFeet[2]*zWorld[2]);
-                        iDynTree::Direction rotVect(zWorld[1]*zFeet[2]-zWorld[2]*zFeet[1],
-                                                    zWorld[2]*zFeet[0]-zWorld[0]*zFeet[2],
-                                                    zWorld[0]*zFeet[1]-zWorld[1]*zFeet[0]);
+                        if (angle > 1e-4)
+                        {
+                            iDynTree::Direction rotVect(zWorld[1]*zFeet[2]-zWorld[2]*zFeet[1],
+                                                        zWorld[2]*zFeet[0]-zWorld[0]*zFeet[2],
+                                                        zWorld[0]*zFeet[1]-zWorld[1]*zFeet[0]);
                         
-                        rotVect.Normalize();
+                            rotVect.Normalize();
                         
-                        iDynTree::Rotation rot;
-                        rot = rot.RotAxis(rotVect, -angle);
-                        wearableTargetEntry.second->rotation = rot*wearableTargetEntry.second->rotation;
-                        zFeet =  wearableTargetEntry.second->rotation * zWorld;
+                            iDynTree::Rotation rot;
+                            rot = rot.RotAxis(rotVect, -angle);
+                            wearableTargetEntry.second->rotation = rot*wearableTargetEntry.second->rotation;
+                            zFeet =  wearableTargetEntry.second->rotation * zWorld;
+                        }
                     }
+                    
 
                     break;
                 }
