@@ -541,7 +541,7 @@
     <axis xyz="-8.811824154381087e-08 -1.0000002733514628 4.4047361189014644e-08"/>
     <parent link="l_upper_arm"/>
     <child link="l_elbow_1"/>
-    <limit effort="50000" lower="-0.05235987755982989" upper="1.3089969389957472" velocity="120.0"/>
+    <limit effort="50000" lower="0.0" upper="1.832595714594046" velocity="120.0"/>
     <dynamics damping="0.06" friction="0.0"/>
   </joint>
   <link name="l_forearm">
@@ -779,7 +779,7 @@
     <axis xyz="2.4949582809984105e-07 -1.0000002733514362 2.7942487004772865e-08"/>
     <parent link="r_upper_arm"/>
     <child link="r_elbow_1"/>
-    <limit effort="50000" lower="-0.05235987755982989" upper="1.3089969389957472" velocity="120.0"/>
+    <limit effort="50000" lower="0.0" upper="1.832595714594046" velocity="120.0"/>
     <dynamics damping="0.06" friction="0.0"/>
   </joint>
   <link name="r_forearm">
