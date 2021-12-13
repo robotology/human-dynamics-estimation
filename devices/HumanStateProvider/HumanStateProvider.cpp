@@ -113,6 +113,7 @@ enum rpcCommand
     calibrateRelativeLink,
     setRotationOffset,
     resetCalibration,
+    resetAll
 };
 
 enum TargetType
@@ -290,7 +291,8 @@ public:
     double k_u, k_l;
 
     // Secondary calibration
-    void eraseSecondaryCalibration(const TargetName& linkName);
+    void ereaseTargetCalibration(const TargetName& targetName);
+    void ereaseTargetsCalibration();
     void selectChainJointsAndLinksForSecondaryCalibration(const std::string& linkName, const std::string& childLinkName,
                                                   std::vector<iDynTree::JointIndex>& jointZeroIndices, std::vector<iDynTree::LinkIndex>& linkToCalibrateIndices);
     void computeSecondaryCalibrationRotationsForChain(const std::vector<iDynTree::JointIndex>& jointZeroIndices, const iDynTree::Transform &refLinkForCalibrationTransform, const std::vector<iDynTree::LinkIndex>& linkToCalibrateIndices, const TargetName& refLinkForCalibrationName);
@@ -383,9 +385,7 @@ public:
                 response.addString("The following commands can be used to apply a secondary calibration assuming the subject is in the zero configuration of the model for the calibrated links. \n");
                 response.addString("Enter <calibrateAll> to apply a secondary calibration for all the links using the measured base pose \n");
                 response.addString("Enter <calibrateAllWithWorld <refLink>> to apply a secondary calibration for all the links assuming the <refLink> to be in the world origin \n");
-                response.addString("Enter <calibrate <linkName>> to apply a secondary calibration for the given link \n");
                 response.addString("Enter <setRotationOffset <linkName> <r p y [deg]>> to apply a secondary calibration for the given link using the given rotation offset (defined using rpy)\n");
-                response.addString("Enter <calibrateSubTree <parentLinkName> <childLinkName>> to apply a secondary calibration for the given chain \n");
                 response.addString("Enter <calibrateRelativeLink <parentLinkName> <childLinkName>> to apply a secondary calibration for the child link using the parent link as reference \n");
                 response.addString("Enter <reset <linkName>> to remove secondary calibration for the given link \n");
                 response.addString("Enter <resetAll> to remove all the secondary calibrations");
@@ -417,7 +417,7 @@ public:
             }
             else if (command.get(0).asString() == "resetAll") {
                 response.addString("Entered command <resetAll> is correct, removing all the secondary calibrations ");
-                this->cmdStatus = rpcCommand::resetCalibration;
+                this->cmdStatus = rpcCommand::resetAll;
             }
             else if (command.get(0).asString() == "reset" && !command.get(1).isNull()) {
                 this->parentLinkName = command.get(1).asString();
@@ -1374,9 +1374,17 @@ void HumanStateProvider::run()
     //                                          pImpl->linkErrorAngularVelocities);
 }
 
-void HumanStateProvider::impl::eraseSecondaryCalibration(const TargetName& targetName)
+void HumanStateProvider::impl::ereaseTargetCalibration(const TargetName& targetName)
 {
     wearableTargets[targetName].get()->clearCalibrationMatrices();
+}
+
+void HumanStateProvider::impl::ereaseTargetsCalibration()
+{
+    for (auto wearableTargetEntry : wearableTargets)
+    {
+        wearableTargetEntry.second.get()->clearCalibrationMatrices();
+    }
 }
 
 void HumanStateProvider::impl::selectChainJointsAndLinksForSecondaryCalibration(const std::string& linkName, const std::string& childLinkName,
@@ -1492,8 +1500,12 @@ bool HumanStateProvider::impl::applyRpcCommand()
     iDynTree::Rotation secondaryCalibrationRotation;
 
     switch(commandPro->cmdStatus) {
+    case rpcCommand::resetAll: {
+        ereaseTargetsCalibration();
+        break;
+    }
     case rpcCommand::resetCalibration: {
-        eraseSecondaryCalibration(targetName);
+        ereaseTargetCalibration(targetName);
         break;
     }
     case rpcCommand::calibrateAll: {
@@ -1533,7 +1545,7 @@ bool HumanStateProvider::impl::applyRpcCommand()
         break;
     }
     case rpcCommand::calibrateRelativeLink: {
-        eraseSecondaryCalibration(childTargetName);
+        ereaseTargetCalibration(childTargetName);
         // Compute the relative transform at zero configuration
         // setting to zero all the joints
         iDynTree::VectorDynSize jointPos;
@@ -1551,7 +1563,7 @@ bool HumanStateProvider::impl::applyRpcCommand()
         break;
     }
     case rpcCommand::setRotationOffset: {
-        eraseSecondaryCalibration(targetName);
+        ereaseTargetCalibration(targetName);
         iDynTree::Rotation calibrationRotationMeasurementToLink = iDynTree::Rotation::RPY( 3.14 * commandPro->roll / 180 , 3.14 * commandPro->pitch / 180 , 3.14 * commandPro->yaw / 180 );
         // add new calibration
         wearableTargets[childTargetName].get()->calibrationMeasurementToLink.setRotation(calibrationRotationMeasurementToLink);
