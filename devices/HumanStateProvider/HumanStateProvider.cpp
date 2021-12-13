@@ -1566,7 +1566,7 @@ bool HumanStateProvider::impl::applyRpcCommand()
         ereaseTargetCalibration(targetName);
         iDynTree::Rotation calibrationRotationMeasurementToLink = iDynTree::Rotation::RPY( 3.14 * commandPro->roll / 180 , 3.14 * commandPro->pitch / 180 , 3.14 * commandPro->yaw / 180 );
         // add new calibration
-        wearableTargets[childTargetName].get()->calibrationMeasurementToLink.setRotation(calibrationRotationMeasurementToLink);
+        wearableTargets[targetName].get()->calibrationMeasurementToLink.setRotation(calibrationRotationMeasurementToLink);
         yInfo() << LogPrefix << "secondary calibration for " << targetName << " is set";
         break;
     }
