@@ -1430,15 +1430,6 @@ void HumanStateProvider::impl::computeSecondaryCalibrationRotationsForChain(cons
             yInfo() << LogPrefix << "Sensor to Link calibration rotation for " << targetName << " is set";
         }
     }
-
-    // // computing the world calibration
-    // secondaryCalibrationWorld = iDynTree::Transform::Identity();
-    // if (refLinkForCalibrationName!="")
-    // {
-    //     iDynTree::Transform linkForCalibrationTransform = kinDynComputations->getWorldTransform(refLinkForCalibrationName);
-    //     secondaryCalibrationWorld = refLinkForCalibrationTransform * linkForCalibrationTransform.inverse();
-    //     yInfo() << LogPrefix << "secondary calibration for the World is set to " << secondaryCalibrationWorld.toString();
-    // }
 }
 
 bool HumanStateProvider::impl::applyRpcCommand()
@@ -1501,41 +1492,32 @@ bool HumanStateProvider::impl::applyRpcCommand()
         computeSecondaryCalibrationRotationsForChain(jointZeroIndices, iDynTree::Transform::Identity(), linkToCalibrateIndices, refTargetForCalibrationName);
         break;
     }
-    // case rpcCommand::calibrate: {
-    //     // Select the joints to be set to zero and the link to be add the secondary calibration
-    //     selectChainJointsAndLinksForSecondaryCalibration(linkName, childLinkName, jointZeroIndices, linkToCalibrateIndices);
-    //     // Compute secondary calibration for the selected links setting to zero the given joints
-    //     computeSecondaryCalibrationRotationsForChain(jointZeroIndices, iDynTree::Transform::Identity(), linkToCalibrateIndices, "");
-    //     break;
-    // }
-    // case rpcCommand::calibrateSubTree: {
-    //     // Select the joints to be set to zero and the link to be add the secondary calibration
-    //     selectChainJointsAndLinksForSecondaryCalibration(linkName, childLinkName, jointZeroIndices, linkToCalibrateIndices);
-    //     // Compute secondary calibration for the selected links setting to zero the given joints
-    //     computeSecondaryCalibrationRotationsForChain(jointZeroIndices, iDynTree::Transform::Identity(), linkToCalibrateIndices, "");
-    // }
-    // case rpcCommand::calibrateRelativeLink: {
-    //     eraseSecondaryCalibration(childLinkName);
-    //     // Compute the relative transform at zero configuration
-    //     // setting to zero all the joints
-    //     iDynTree::VectorDynSize jointPos;
-    //     jointPos.resize(jointConfigurationSolution.size());
-    //     jointPos.zero();
-    //     kinDynComputations->setJointPos(jointPos);
-    //     iDynTree::Rotation relativeRotationZero = kinDynComputations->getWorldTransform(linkName).getRotation().inverse() * kinDynComputations->getWorldTransform(childLinkName).getRotation();
-    //     secondaryCalibrationRotation = linkTransformMatricesRaw.at(childLinkName).getRotation().inverse() * linkTransformMatrices.at(linkName).getRotation() * relativeRotationZero;
-    //     secondaryCalibrationRotations.emplace(childLinkName,secondaryCalibrationRotation);
-    //     yInfo() << LogPrefix << "secondary calibration for " << childLinkName << " is set";
-    //     break;
-    //  }
-    // case rpcCommand::setRotationOffset: {
-    //     eraseSecondaryCalibration(linkName);
-    //     secondaryCalibrationRotation = iDynTree::Rotation::RPY( 3.14 * commandPro->roll / 180 , 3.14 * commandPro->pitch / 180 , 3.14 * commandPro->yaw / 180 );
-    //     // add new calibration
-    //     secondaryCalibrationRotations.emplace(linkName,secondaryCalibrationRotation);
-    //     yInfo() << LogPrefix << "secondary calibration for " << linkName << " is set";
-    //     break;
-    // }
+    case rpcCommand::calibrateRelativeLink: {
+        eraseSecondaryCalibration(childTargetName);
+        // Compute the relative transform at zero configuration
+        // setting to zero all the joints
+        iDynTree::VectorDynSize jointPos;
+        jointPos.resize(jointConfigurationSolution.size());
+        jointPos.zero();
+        kinDynComputations->setJointPos(jointPos);
+        std::string childLinkName = wearableTargets[childTargetName].get()->modelLinkName;
+        std::string parentLinkName = wearableTargets[targetName].get()->modelLinkName;
+
+        iDynTree::Rotation relativeRotationZero = kinDynComputations->getWorldTransform(parentLinkName).getRotation().inverse() * kinDynComputations->getWorldTransform(childLinkName).getRotation();
+    
+        iDynTree::Rotation calibrationRotationMeasurementToLink = wearableTargets[childTargetName].get()->rotation * wearableTargets[childTargetName].get()->rotation * relativeRotationZero;
+        wearableTargets[childTargetName].get()->calibrationMeasurementToLink.setRotation(calibrationRotationMeasurementToLink);
+        yInfo() << LogPrefix << "secondary calibration for " << childTargetName << " is set";
+        break;
+    }
+    case rpcCommand::setRotationOffset: {
+        eraseSecondaryCalibration(targetName);
+        iDynTree::Rotation calibrationRotationMeasurementToLink = iDynTree::Rotation::RPY( 3.14 * commandPro->roll / 180 , 3.14 * commandPro->pitch / 180 , 3.14 * commandPro->yaw / 180 );
+        // add new calibration
+        wearableTargets[childTargetName].get()->calibrationMeasurementToLink.setRotation(calibrationRotationMeasurementToLink);
+        yInfo() << LogPrefix << "secondary calibration for " << targetName << " is set";
+        break;
+    }
     default: {
         yWarning() << LogPrefix << "Command not valid";
         return false;
