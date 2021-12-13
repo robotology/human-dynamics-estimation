@@ -293,7 +293,6 @@ public:
 
     // Secondary calibration
     std::unordered_map<std::string, iDynTree::Rotation> secondaryCalibrationRotations;
-    std::unordered_map<std::string, iDynTree::Rotation> fixedSensorRotation;
     iDynTree::Transform secondaryCalibrationWorld;
     void eraseSecondaryCalibration(const std::string& linkName);
     void selectChainJointsAndLinksForSecondaryCalibration(const std::string& linkName, const std::string& childLinkName,
@@ -320,10 +319,7 @@ public:
 
     // get input data
     bool updateWearableTargets();
-    bool getLinkTransformFromInputData(std::unordered_map<std::string, iDynTree::Transform>& t);
     bool computeRelativeTransformForInputData(std::unordered_map<std::string, iDynTree::Transform>& t);
-    bool applyFixedRightRotationForInputTransformData(std::unordered_map<std::string, iDynTree::Transform>& t);
-    bool getLinkVelocityFromInputData(std::unordered_map<std::string, iDynTree::Twist>& t);
 
     // calibrate data
     bool applySecondaryCalibration(const std::unordered_map<std::string, iDynTree::Transform>& t_in, std::unordered_map<std::string, iDynTree::Transform>& t_out);
@@ -649,9 +645,8 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         pImpl->wearableTargets[targetName] = std::make_shared<WearableSensorTarget>(wearableName, modelLinkName, targetType, sensor::SensorType::Invalid);
     }
 
-    pImpl->fixedSensorRotation.clear();
     for (size_t i = 1; i < fixedRotationGroup.size(); ++i) {
-        std::string modelLinkName = fixedRotationGroup.get(i).asList()->get(0).asString();
+        TargetName targetName = fixedRotationGroup.get(i).asList()->get(0).asString();
         yarp::os::Bottle* fixedRotationMatrixValues = fixedRotationGroup.get(i).asList()->get(1).asList();
 
         iDynTree::Rotation fixedRotation = iDynTree::Rotation( fixedRotationMatrixValues->get(0).asFloat64(),
@@ -663,10 +658,14 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
                                                                fixedRotationMatrixValues->get(6).asFloat64(),
                                                                fixedRotationMatrixValues->get(7).asFloat64(),
                                                                fixedRotationMatrixValues->get(8).asFloat64());
+        if (pImpl->wearableTargets.find(targetName) == pImpl->wearableTargets.end())
+        {
+            yError() << LogPrefix << "Fixed transform for not existing target [" << targetName << "]";
+            return false;
+        }
 
-        pImpl->fixedSensorRotation.emplace(modelLinkName, fixedRotation);
-        yInfo() << LogPrefix << "Adding Fixed Rotation for " << modelLinkName << "==>" << fixedRotation.toString();
-
+        pImpl->wearableTargets[targetName].get()->calibrationMeasurementToLink = fixedRotation;
+        yInfo() << LogPrefix << "Adding Fixed Rotation for " << targetName << "==>" << fixedRotation.toString();
     }
 
     // ==========================================
@@ -1231,12 +1230,6 @@ void HumanStateProvider::run()
         return;
     }
 
-    // // Get the link transformations from input data
-    // if (!pImpl->getLinkTransformFromInputData(pImpl->linkTransformMatricesRaw)) {
-    //     yError() << LogPrefix << "Failed to get link transforms from input data";
-    //     askToStop();
-    //     return;
-    // }
 
     // // Get the link transformations from input data
     // if (pImpl->useFixedBase)
@@ -1248,27 +1241,6 @@ void HumanStateProvider::run()
     //     }
     // }
 
-    // // Apply the secondary calibration to input data
-    // if (!pImpl->applyFixedRightRotationForInputTransformData(pImpl->linkTransformMatricesRaw)) {
-    //     yError() << LogPrefix << "Failed to apply fixed calibration to input data";
-    //     askToStop();
-    //     return;
-    // }
-
-
-    // // Apply the secondary calibration to input data
-    // if (!pImpl->applySecondaryCalibration(pImpl->linkTransformMatricesRaw, pImpl->linkTransformMatrices)) {
-    //     yError() << LogPrefix << "Failed to apply secondary calibration to input data";
-    //     askToStop();
-    //     return;
-    // }
-
-    // // Get the link velocity from input data
-    // if (!pImpl->getLinkVelocityFromInputData(pImpl->linkVelocities)) {
-    //     yError() << LogPrefix << "Failed to get link velocity from input data";
-    //     askToStop();
-    //     return;
-    // }
 
     // Solve Inverse Kinematics and Inverse Velocity Problems
     auto tick = std::chrono::high_resolution_clock::now();
@@ -1711,63 +1683,6 @@ bool HumanStateProvider::impl::updateWearableTargets()
     return true;
 }
 
-bool HumanStateProvider::impl::getLinkTransformFromInputData(
-    std::unordered_map<std::string, iDynTree::Transform>& transforms)
-{
-    for (const auto& linkMapEntry : wearableStorage.modelToWearable_LinkName) {
-        const ModelLinkName& modelLinkName = linkMapEntry.first;
-        const WearableName& wearableName = linkMapEntry.second;
-
-        if (wearableStorage.linkSensorsMap.find(wearableName)
-                == wearableStorage.linkSensorsMap.end()
-            || !wearableStorage.linkSensorsMap.at(wearableName)) {
-            yError() << LogPrefix << "Failed to get" << wearableName
-                     << "sensor from the device. Something happened after configuring it.";
-            return false;
-        }
-
-        const wearable::SensorPtr<const sensor::IVirtualLinkKinSensor> sensor =
-            wearableStorage.linkSensorsMap.at(wearableName);
-
-        if (!sensor) {
-            yError() << LogPrefix << "Sensor" << wearableName
-                     << "has been added but not properly configured";
-            return false;
-        }
-
-        if (sensor->getSensorStatus() != sensor::SensorStatus::Ok) {
-            yError() << LogPrefix << "The sensor status of" << sensor->getSensorName()
-                     << "is not ok (" << static_cast<double>(sensor->getSensorStatus()) << ")";
-            return false;
-        }
-
-        wearable::Vector3 position;
-        if (!sensor->getLinkPosition(position)) {
-            yError() << LogPrefix << "Failed to read link position from virtual link sensor";
-            return false;
-        }
-
-        iDynTree::Position pos(position.at(0), position.at(1), position.at(2));
-
-        Quaternion orientation;
-        if (!sensor->getLinkOrientation(orientation)) {
-            yError() << LogPrefix << "Failed to read link orientation from virtual link sensor";
-            return false;
-        }
-
-        iDynTree::Rotation rotation;
-        rotation.fromQuaternion({orientation.data(), 4});
-
-        iDynTree::Transform transform(rotation, pos);
-
-        // Note that this map is used during the IK step for setting a target transform to a
-        // link of the model. For this reason the map keys are model names.
-        transforms[modelLinkName] = std::move(transform);
-    }
-
-    return true;
-}
-
 // In case it occurs that:
 // - Fixed-base is used for human-state-provider
 // - a sensor is associated with the fixed base frame
@@ -1811,81 +1726,6 @@ bool HumanStateProvider::impl::applySecondaryCalibration(
         }
 
         transforms_out[modelLinkName] = secondaryCalibrationWorld * transforms_out[modelLinkName];
-    }
-
-    return true;
-}
-
-bool HumanStateProvider::impl::applyFixedRightRotationForInputTransformData(std::unordered_map<std::string, iDynTree::Transform> &transforms_in)
-{
-    for (const auto& linkMapEntry : wearableStorage.modelToWearable_LinkName) {
-        const ModelLinkName& modelLinkName = linkMapEntry.first;
-
-        // Apply secondary calibration for rotation
-        auto secondaryCalibrationRotationsIt = fixedSensorRotation.find(modelLinkName);
-        if (!(secondaryCalibrationRotationsIt
-              == secondaryCalibrationRotations.end())) {
-
-            iDynTree::Transform calibrationTransform;
-            calibrationTransform.setPosition(iDynTree::Position(0,0,0));
-            calibrationTransform.setRotation(secondaryCalibrationRotationsIt->second);
-
-            transforms_in[modelLinkName] = transforms_in[modelLinkName] * calibrationTransform;
-        }
-    }
-
-    return true;
-}
-
-bool HumanStateProvider::impl::getLinkVelocityFromInputData(
-    std::unordered_map<std::string, iDynTree::Twist>& velocities)
-{
-    for (const auto& linkMapEntry : wearableStorage.modelToWearable_LinkName) {
-        const ModelLinkName& modelLinkName = linkMapEntry.first;
-        const WearableName& wearableName = linkMapEntry.second;
-
-        if (wearableStorage.linkSensorsMap.find(wearableName)
-                == wearableStorage.linkSensorsMap.end()
-            || !wearableStorage.linkSensorsMap.at(wearableName)) {
-            yError() << LogPrefix << "Failed to get" << wearableName
-                     << "sensor from the device. Something happened after configuring it.";
-            return false;
-        }
-
-        const wearable::SensorPtr<const sensor::IVirtualLinkKinSensor> sensor =
-            wearableStorage.linkSensorsMap.at(wearableName);
-
-        if (!sensor) {
-            yError() << LogPrefix << "Sensor" << wearableName
-                     << "has been added but not properly configured";
-            return false;
-        }
-
-        if (sensor->getSensorStatus() != sensor::SensorStatus::Ok) {
-            yError() << LogPrefix << "The sensor status of" << sensor->getSensorName()
-                     << "is not ok (" << static_cast<double>(sensor->getSensorStatus()) << ")";
-            return false;
-        }
-
-        wearable::Vector3 linearVelocity;
-        if (!sensor->getLinkLinearVelocity(linearVelocity)) {
-            yError() << LogPrefix << "Failed to read link linear velocity from virtual link sensor";
-            return false;
-        }
-
-        wearable::Vector3 angularVelocity;
-        if (!sensor->getLinkAngularVelocity(angularVelocity)) {
-            yError() << LogPrefix
-                     << "Failed to read link angular velocity from virtual link sensor";
-            return false;
-        }
-
-        velocities[modelLinkName].setVal(0, linearVelocity.at(0));
-        velocities[modelLinkName].setVal(1, linearVelocity.at(1));
-        velocities[modelLinkName].setVal(2, linearVelocity.at(2));
-        velocities[modelLinkName].setVal(3, angularVelocity.at(0));
-        velocities[modelLinkName].setVal(4, angularVelocity.at(1));
-        velocities[modelLinkName].setVal(5, angularVelocity.at(2));
     }
 
     return true;
