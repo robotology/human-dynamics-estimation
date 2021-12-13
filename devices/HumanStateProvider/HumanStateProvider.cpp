@@ -319,7 +319,6 @@ public:
 
     // get input data
     bool updateWearableTargets();
-    bool computeRelativeTransformForInputData(std::unordered_map<std::string, iDynTree::Transform>& t);
 
     // calibrate data
     bool applySecondaryCalibration(const std::unordered_map<std::string, iDynTree::Transform>& t_in, std::unordered_map<std::string, iDynTree::Transform>& t_out);
@@ -1231,17 +1230,6 @@ void HumanStateProvider::run()
     }
 
 
-    // // Get the link transformations from input data
-    // if (pImpl->useFixedBase)
-    // {
-    //     if (!pImpl->computeRelativeTransformForInputData(pImpl->linkTransformMatricesRaw)) {
-    //         yError() << LogPrefix << "Failed to compute relative link transforms";
-    //         askToStop();
-    //         return;
-    //     }
-    // }
-
-
     // Solve Inverse Kinematics and Inverse Velocity Problems
     auto tick = std::chrono::high_resolution_clock::now();
     bool inverseKinematicsFailure;
@@ -1683,28 +1671,6 @@ bool HumanStateProvider::impl::updateWearableTargets()
     return true;
 }
 
-// In case it occurs that:
-// - Fixed-base is used for human-state-provider
-// - a sensor is associated with the fixed base frame
-// then we use the relative transform between the sensors and the base frame sensors
-bool HumanStateProvider::impl::computeRelativeTransformForInputData(
-    std::unordered_map<std::string, iDynTree::Transform>& transforms)
-{
-    // if the there is a measurement for the floating base,
-    // use the relative transform for the other sensors measurement
-    if (transforms.find(floatingBaseFrame) != transforms.end())
-    {
-        iDynTree::Rotation baseFrameRotationInverse = transforms[floatingBaseFrame].getRotation().inverse();
-        for (const auto& linkMapEntry : wearableStorage.modelToWearable_LinkName) {
-            const ModelLinkName& modelLinkName = linkMapEntry.first;
-
-            iDynTree::Rotation rotation = baseFrameRotationInverse * transforms[modelLinkName].getRotation();
-            transforms[modelLinkName].setRotation(rotation);
-        }
-    }
-
-    return true;
-}
 
 bool HumanStateProvider::impl::applySecondaryCalibration(
         const std::unordered_map<std::string, iDynTree::Transform> &transforms_in, std::unordered_map<std::string, iDynTree::Transform> &transforms_out)
