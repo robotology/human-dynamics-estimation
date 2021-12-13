@@ -108,10 +108,8 @@ enum SolverIK
 enum rpcCommand
 {
     empty,
-    calibrate,
     calibrateAll,
     calibrateAllWithWorld,
-    calibrateSubTree,
     calibrateRelativeLink,
     setRotationOffset,
     resetCalibration,
