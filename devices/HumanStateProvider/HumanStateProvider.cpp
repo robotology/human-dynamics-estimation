@@ -329,8 +329,7 @@ public:
     bool updateInverseKinematicTargets();
     bool addInverseKinematicTargets();
 
-    bool updateInverseVelocityKinematicTargets();
-    bool addInverseVelocityKinematicsTargets();
+    // dynamical inverse kinematic targets
     bool addDynamicalInverseKinematicsTargets();
 
     bool computeLinksOrientationErrors(
@@ -2046,12 +2045,6 @@ bool HumanStateProvider::impl::solveGlobalInverseKinematicsSolver()
     // Get the global inverse kinematics solution
     globalIK.getFullJointsSolution(baseTransformSolution, jointConfigurationSolution);
 
-    // Update ivk velocity targets based on wearable input data
-    if (!updateInverseVelocityKinematicTargets()) {
-        yError() << LogPrefix << "Failed to update the targets for the inverse velocity kinematics";
-        return false;
-    }
-
     return true;
 }
 
@@ -2215,86 +2208,6 @@ bool HumanStateProvider::impl::addInverseKinematicTargets()
             return false;
         }
     }
-    return true;
-}
-
-bool HumanStateProvider::impl::updateInverseVelocityKinematicTargets()
-{
-    iDynTree::Twist linkTwist;
-
-    for (size_t linkIndex = 0; linkIndex < humanModel.getNrOfLinks(); ++linkIndex) {
-        std::string linkName = humanModel.getLinkName(linkIndex);
-
-        // Skip links with no associated measures (use only links from the configuration)
-        if (wearableStorage.modelToWearable_LinkName.find(linkName)
-            == wearableStorage.modelToWearable_LinkName.end()) {
-            continue;
-        }
-
-        // For the link used as base insert both the rotation and position cost if not using direcly
-        // measurement from xsens
-        if (linkName == floatingBaseFrame) {
-            if (!useDirectBaseMeasurement
-                && !inverseVelocityKinematics.updateTarget(
-                    linkName, linkVelocities.at(linkName), 1.0, 1.0)) {
-                yError() << LogPrefix << "Failed to update velocity target for floating base"
-                         << linkName;
-                return false;
-            }
-            continue;
-        }
-
-        if (linkVelocities.find(linkName) == linkVelocities.end()) {
-            yError() << LogPrefix << "Failed to find twist for link" << linkName;
-            return false;
-        }
-
-        linkTwist = linkVelocities.at(linkName);
-        if (useDirectBaseMeasurement) {
-            linkTwist = linkTwist - linkVelocities.at(floatingBaseFrame);
-        }
-
-        if (!inverseVelocityKinematics.updateTarget(
-                linkName, linkTwist, 0.0, 1.0)) {
-            yError() << LogPrefix << "Failed to update velocity target for link" << linkName;
-            return false;
-        }
-    }
-
-    return true;
-}
-
-bool HumanStateProvider::impl::addInverseVelocityKinematicsTargets()
-{
-    for (size_t linkIndex = 0; linkIndex < humanModel.getNrOfLinks(); ++linkIndex) {
-        std::string linkName = humanModel.getLinkName(linkIndex);
-
-        // skip the fake links
-        if (wearableStorage.modelToWearable_LinkName.find(linkName)
-            == wearableStorage.modelToWearable_LinkName.end()) {
-            continue;
-        }
-
-        // Insert in the cost the twist of the link used as base
-        if (linkName == floatingBaseFrame) {
-            if (!useDirectBaseMeasurement
-                && !inverseVelocityKinematics.addTarget(
-                    linkName, iDynTree::Twist::Zero(), 1.0, 1.0)) {
-                yError() << LogPrefix << "Failed to add velocity target for floating base link"
-                         << linkName;
-                return false;
-            }
-            continue;
-        }
-
-        // Add ivk targets and set to zero
-        if (!inverseVelocityKinematics.addAngularVelocityTarget(
-                linkName, iDynTree::Twist::Zero(), angVelTargetWeight)) {
-            yError() << LogPrefix << "Failed to add velocity target for link" << linkName;
-            return false;
-        }
-    }
-
     return true;
 }
 
