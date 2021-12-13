@@ -397,12 +397,6 @@ public:
                 response.addString("Entered command <calibrateRelativeLink> is correct, trying to set offset of " + this->childLinkName + " using " + this->parentLinkName + " as reference");
                 this->cmdStatus = rpcCommand::calibrateRelativeLink;
             }
-            else if (command.get(0).asString() == "calibrateSubTree" && !command.get(1).isNull() && !command.get(2).isNull()) {
-                this->parentLinkName = command.get(1).asString();
-                this->childLinkName = command.get(2).asString();
-                response.addString("Entered command <calibrateSubTree> is correct, trying to set offset for the chain from " + this->parentLinkName + " to " + this->childLinkName);
-                this->cmdStatus = rpcCommand::calibrateSubTree;
-            }
             else if (command.get(0).asString() == "calibrateAll") {
                 this->parentLinkName = "";
                 response.addString("Entered command <calibrateAll> is correct, trying to set offset calibration for all the links");
@@ -413,11 +407,6 @@ public:
                 this->refLinkName = command.get(1).asString();
                 response.addString("Entered command <calibrateAllWithWorld> is correct, trying to set offset calibration for all the links, and setting base link " + this->refLinkName + " to the origin");
                 this->cmdStatus = rpcCommand::calibrateAllWithWorld;
-            }
-            else if (command.get(0).asString() == "calibrate" && !(command.get(1).isNull())) {
-                this->parentLinkName = command.get(1).asString();
-                response.addString("Entered command <calibrate> is correct, trying to set offset calibration for the link " + this->parentLinkName);
-                this->cmdStatus = rpcCommand::calibrate;
             }
             else if (command.get(0).asString() == "setRotationOffset" && !command.get(1).isNull() && command.get(2).isFloat64() && command.get(3).isFloat64() && command.get(4).isFloat64()) {
                 this->parentLinkName = command.get(1).asString();
@@ -558,15 +547,15 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     }
 
 
-    yarp::os::Bottle& fixedRotationGroup = config.findGroup("FIXED_SENSOR_ROTATION");
-    if (!fixedRotationGroup.isNull()) {
-        for (size_t i = 1; i < fixedRotationGroup.size(); ++i) {
-            if (!(fixedRotationGroup.get(i).isList() && fixedRotationGroup.get(i).asList()->size() == 2)) {
+    yarp::os::Bottle& fixedRightRotationGroup = config.findGroup("MEASUREMENT_TO_LINK_ROTATIONS");
+    if (!fixedRightRotationGroup.isNull()) {
+        for (size_t i = 1; i < fixedRightRotationGroup.size(); ++i) {
+            if (!(fixedRightRotationGroup.get(i).isList() && fixedRightRotationGroup.get(i).asList()->size() == 2)) {
                 yError() << LogPrefix
-                        << "Childs of FIXED_SENSOR_ROTATION must be lists of 2 elements";
+                        << "Childs of MEASUREMENT_TO_LINK_ROTATIONS must be lists of 2 elements";
                 return false;
             }
-            yarp::os::Bottle* list = fixedRotationGroup.get(i).asList();
+            yarp::os::Bottle* list = fixedRightRotationGroup.get(i).asList();
             std::string linkName = list->get(0).asString();
             yarp::os::Bottle* listContent = list->get(1).asList();
 
@@ -581,11 +570,42 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
                    && (listContent->get(6).isFloat64())
                    && (listContent->get(7).isFloat64())
                    && (listContent->get(8).isFloat64()) )) {
-                yError() << LogPrefix << "FIXED_SENSOR_ROTATION " << linkName << " must have 9 double values describing the rotation matrix";
+                yError() << LogPrefix << "MEASUREMENT_TO_LINK_ROTATIONS " << linkName << " must have 9 double values describing the rotation matrix";
                 return false;
             }
 
-            yInfo() << LogPrefix << "FIXED_SENSOR_ROTATION added for link " << linkName;
+            yInfo() << LogPrefix << "MEASUREMENT_TO_LINK_ROTATIONS added for link " << linkName;
+        }
+    }
+
+    yarp::os::Bottle& fixedLeftRotationGroup = config.findGroup("WORLD_TO_MEASUREMENT_ROTATIONS");
+    if (!fixedLeftRotationGroup.isNull()) {
+        for (size_t i = 1; i < fixedLeftRotationGroup.size(); ++i) {
+            if (!(fixedLeftRotationGroup.get(i).isList() && fixedLeftRotationGroup.get(i).asList()->size() == 2)) {
+                yError() << LogPrefix
+                        << "Childs of WORLD_TO_MEASUREMENT_ROTATIONS must be lists of 2 elements";
+                return false;
+            }
+            yarp::os::Bottle* list = fixedLeftRotationGroup.get(i).asList();
+            std::string linkName = list->get(0).asString();
+            yarp::os::Bottle* listContent = list->get(1).asList();
+
+            // check if FIXED_SENSOR_ROTATION matrix is passed (9 elements)
+            if (!(    (listContent->size() == 9)
+                   && (listContent->get(0).isDouble())
+                   && (listContent->get(1).isDouble())
+                   && (listContent->get(2).isDouble())
+                   && (listContent->get(3).isDouble())
+                   && (listContent->get(4).isDouble())
+                   && (listContent->get(5).isDouble())
+                   && (listContent->get(6).isDouble())
+                   && (listContent->get(7).isDouble())
+                   && (listContent->get(8).isDouble()) )) {
+                yError() << LogPrefix << "WORLD_TO_MEASUREMENT_ROTATIONS " << linkName << " must have 9 double values describing the rotation matrix";
+                return false;
+            }
+
+            yInfo() << LogPrefix << "WORLD_TO_MEASUREMENT_ROTATIONS added for link " << linkName;
         }
     }
 
@@ -637,27 +657,50 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         pImpl->wearableTargets[targetName] = std::make_shared<WearableSensorTarget>(wearableName, modelLinkName, targetType, sensor::SensorType::Invalid);
     }
 
-    for (size_t i = 1; i < fixedRotationGroup.size(); ++i) {
-        TargetName targetName = fixedRotationGroup.get(i).asList()->get(0).asString();
-        yarp::os::Bottle* fixedRotationMatrixValues = fixedRotationGroup.get(i).asList()->get(1).asList();
+    for (size_t i = 1; i < fixedLeftRotationGroup.size(); ++i) {
+        TargetName targetName = fixedLeftRotationGroup.get(i).asList()->get(0).asString();
+        yarp::os::Bottle* fixedLeftRotationMatrixValues = fixedLeftRotationGroup.get(i).asList()->get(1).asList();
 
-        iDynTree::Rotation fixedRotation = iDynTree::Rotation( fixedRotationMatrixValues->get(0).asFloat64(),
-                                                               fixedRotationMatrixValues->get(1).asFloat64(),
-                                                               fixedRotationMatrixValues->get(2).asFloat64(),
-                                                               fixedRotationMatrixValues->get(3).asFloat64(),
-                                                               fixedRotationMatrixValues->get(4).asFloat64(),
-                                                               fixedRotationMatrixValues->get(5).asFloat64(),
-                                                               fixedRotationMatrixValues->get(6).asFloat64(),
-                                                               fixedRotationMatrixValues->get(7).asFloat64(),
-                                                               fixedRotationMatrixValues->get(8).asFloat64());
+        iDynTree::Rotation fixedLeftRotation = iDynTree::Rotation( fixedLeftRotationMatrixValues->get(0).asDouble(),
+                                                                   fixedLeftRotationMatrixValues->get(1).asDouble(),
+                                                                   fixedLeftRotationMatrixValues->get(2).asDouble(),
+                                                                   fixedLeftRotationMatrixValues->get(3).asDouble(),
+                                                                   fixedLeftRotationMatrixValues->get(4).asDouble(),
+                                                                   fixedLeftRotationMatrixValues->get(5).asDouble(),
+                                                                   fixedLeftRotationMatrixValues->get(6).asDouble(),
+                                                                   fixedLeftRotationMatrixValues->get(7).asDouble(),
+                                                                   fixedLeftRotationMatrixValues->get(8).asDouble());
         if (pImpl->wearableTargets.find(targetName) == pImpl->wearableTargets.end())
         {
             yError() << LogPrefix << "Fixed transform for not existing target [" << targetName << "]";
             return false;
         }
 
-        pImpl->wearableTargets[targetName].get()->calibrationMeasurementToLink.setRotation(fixedRotation);
-        yInfo() << LogPrefix << "Adding Fixed Rotation for " << targetName << "==>" << fixedRotation.toString();
+        pImpl->wearableTargets[targetName].get()->calibrationWorldToMeasurementWorld.setRotation(fixedLeftRotation);
+        yInfo() << LogPrefix << "Adding Fixed Rotation for " << targetName << "==>" << fixedLeftRotation.toString();
+    }
+
+    for (size_t i = 1; i < fixedRightRotationGroup.size(); ++i) {
+        TargetName targetName = fixedRightRotationGroup.get(i).asList()->get(0).asString();
+        yarp::os::Bottle* fixedRightRotationMatrixValues = fixedRightRotationGroup.get(i).asList()->get(1).asList();
+
+        iDynTree::Rotation fixedRightRotation = iDynTree::Rotation( fixedRightRotationMatrixValues->get(0).asFloat64(),
+                                                                    fixedRightRotationMatrixValues->get(1).asFloat64(),
+                                                                    fixedRightRotationMatrixValues->get(2).asFloat64(),
+                                                                    fixedRightRotationMatrixValues->get(3).asFloat64(),
+                                                                    fixedRightRotationMatrixValues->get(4).asFloat64(),
+                                                                    fixedRightRotationMatrixValues->get(5).asFloat64(),
+                                                                    fixedRightRotationMatrixValues->get(6).asFloat64(),
+                                                                    fixedRightRotationMatrixValues->get(7).asFloat64(),
+                                                                    fixedRightRotationMatrixValues->get(8).asFloat64());
+        if (pImpl->wearableTargets.find(targetName) == pImpl->wearableTargets.end())
+        {
+            yError() << LogPrefix << "Fixed transform for not existing target [" << targetName << "]";
+            return false;
+        }
+
+        pImpl->wearableTargets[targetName].get()->calibrationMeasurementToLink.setRotation(fixedRightRotation);
+        yInfo() << LogPrefix << "Adding Fixed Rotation for " << targetName << "==>" << fixedRightRotation.toString();
     }
 
     // ==========================================
