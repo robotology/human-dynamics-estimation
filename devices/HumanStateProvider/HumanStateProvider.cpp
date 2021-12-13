@@ -383,11 +383,11 @@ public:
             if (command.get(0).asString() == "help") {
                 response.addVocab32(yarp::os::Vocab32::encode("many"));
                 response.addString("The following commands can be used to apply a secondary calibration assuming the subject is in the zero configuration of the model for the calibrated links. \n");
-                response.addString("Enter <calibrateAll> to apply a secondary calibration for all the links using the measured base pose \n");
-                response.addString("Enter <calibrateAllWithWorld <refLink>> to apply a secondary calibration for all the links assuming the <refLink> to be in the world origin \n");
-                response.addString("Enter <setRotationOffset <linkName> <r p y [deg]>> to apply a secondary calibration for the given link using the given rotation offset (defined using rpy)\n");
-                response.addString("Enter <calibrateRelativeLink <parentLinkName> <childLinkName>> to apply a secondary calibration for the child link using the parent link as reference \n");
-                response.addString("Enter <reset <linkName>> to remove secondary calibration for the given link \n");
+                response.addString("Enter <calibrateAll> to apply a secondary calibration for all the targets using the measured base pose \n");
+                response.addString("Enter <calibrateAllWithWorld <refTarget>> to apply a secondary calibration for all the targets assuming the <refTarget> to be in the world origin \n");
+                response.addString("Enter <setRotationOffset <targetName> <r p y [deg]>> to apply a secondary calibration for the given target using the given rotation offset (defined using rpy)\n");
+                response.addString("Enter <calibrateRelativeLink <parentTargetName> <childTargetName>> to apply a secondary calibration for the child target using the parent target measurement as reference \n");
+                response.addString("Enter <reset <targetName>> to remove secondary calibration for the given target \n");
                 response.addString("Enter <resetAll> to remove all the secondary calibrations");
             }
             else if (command.get(0).asString() == "calibrateRelativeLink" && !command.get(1).isNull() && !command.get(2).isNull()) {
@@ -398,13 +398,13 @@ public:
             }
             else if (command.get(0).asString() == "calibrateAll") {
                 this->parentLinkName = "";
-                response.addString("Entered command <calibrateAll> is correct, trying to set offset calibration for all the links");
+                response.addString("Entered command <calibrateAll> is correct, trying to set offset calibration for all the targets");
                 this->cmdStatus = rpcCommand::calibrateAll;
             }
             else if (command.get(0).asString() == "calibrateAllWithWorld") {
                 this->parentLinkName = "";
                 this->refLinkName = command.get(1).asString();
-                response.addString("Entered command <calibrateAllWithWorld> is correct, trying to set offset calibration for all the links, and setting base link " + this->refLinkName + " to the origin");
+                response.addString("Entered command <calibrateAllWithWorld> is correct, trying to set offset calibration for all the targets, and setting target " + this->refLinkName + " to the origin");
                 this->cmdStatus = rpcCommand::calibrateAllWithWorld;
             }
             else if (command.get(0).asString() == "setRotationOffset" && !command.get(1).isNull() && command.get(2).isFloat64() && command.get(3).isFloat64() && command.get(4).isFloat64()) {
@@ -412,16 +412,16 @@ public:
                 this->roll = command.get(2).asFloat64();
                 this->pitch = command.get(3).asFloat64();
                 this->yaw = command.get(4).asFloat64();
-                response.addString("Entered command <calibrate> is correct, trying to set rotation offset for the link " + this->parentLinkName);
+                response.addString("Entered command <calibrate> is correct, trying to set rotation offset for the target " + this->parentLinkName);
                 this->cmdStatus = rpcCommand::setRotationOffset;
             }
             else if (command.get(0).asString() == "resetAll") {
-                response.addString("Entered command <resetAll> is correct, removing all the secondary calibrations ");
+                response.addString("Entered command <resetAll> is correct,  trying to remove calibration transforms (right and left) for all the targets");
                 this->cmdStatus = rpcCommand::resetAll;
             }
             else if (command.get(0).asString() == "reset" && !command.get(1).isNull()) {
                 this->parentLinkName = command.get(1).asString();
-                response.addString("Entered command <reset> is correct, trying to remove secondaty calibration for the link " + this->parentLinkName);
+                response.addString("Entered command <reset> is correct, trying to remove calibration transforms (right and left) for the target " + this->parentLinkName);
                 this->cmdStatus = rpcCommand::resetCalibration;
             }
             else {
