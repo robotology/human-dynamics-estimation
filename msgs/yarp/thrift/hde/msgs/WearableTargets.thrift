@@ -17,7 +17,8 @@ struct Quaternion {
     2: Vector3 imaginary;
 }
 
-enum TargetType {
+enum KinematicTargetType {
+    NONE,
     POSE,
     POSEANDVELOCITY,
     POSITION,
@@ -28,7 +29,7 @@ enum TargetType {
 
 struct WearableTarget {
     1: string linkName;
-    2: TargetType type;
+    2: KinematicTargetType type;
     3: Vector3 position;
     4: Quaternion orientation;
     5: Vector3 linearVelocity;
