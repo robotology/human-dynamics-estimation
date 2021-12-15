@@ -93,19 +93,35 @@ int main(int argc, char* argv[])
     }
     std::string urdfFile = rf.find("modelURDFName").asString();
 
+    bool ignoreMissingLinks;
     if( !(rf.check("ignoreMissingLinks") && rf.find("ignoreMissingLinks").isBool()) ) 
     {
-        yError() << LogPrefix << "'ignoreMissingLinks' option not found or not valid.";
-        return EXIT_FAILURE;
+        yWarning() << LogPrefix << "'ignoreMissingLinks' option not found or not valid. It is set to False.";
+        ignoreMissingLinks = false;
     }
-    bool ignoreMissingLinks = rf.find("ignoreMissingLinks").asBool();
+    else
+    {
+        ignoreMissingLinks = rf.find("ignoreMissingLinks").asBool();
+    }
 
+    bool visualizeWrenches;
     if( !(rf.check("visualizeWrenches") && rf.find("visualizeWrenches").isBool()) ) 
     {
-        yError() << LogPrefix << "'visualizeWrenches' option not found or not valid.";
-        return EXIT_FAILURE;
+        yWarning() << LogPrefix << "'visualizeWrenches' option not found or not valid. It is set to False.";
+        visualizeWrenches = false;
     }
-    bool visualizeWrenches = rf.find("visualizeWrenches").asBool();
+    else
+    {
+        visualizeWrenches = rf.find("visualizeWrenches").asBool();
+    }
+
+    bool visualizeFrames;
+    if( !(rf.check("visualizeFrames") && rf.find("visualizeFrames").isBool()) ) 
+    {
+        yWarning() << LogPrefix << "'visualizeFrames' option not found or not valid. It is set to False.";
+        visualizeFrames = false;
+    }
+    visualizeFrames = rf.find("visualizeFrames").asBool();
 
     iDynTree::Position cameraDeltaPosition;
     if( !(rf.check("cameraDeltaPosition") && rf.find("cameraDeltaPosition").isList() && rf.find("cameraDeltaPosition").asList()->size() == 3) ) 
@@ -163,6 +179,7 @@ int main(int argc, char* argv[])
     }
     std::string humanStateDataPortName = rf.find("humanStateDataPortName").asString();
 
+    // Visualize Wrenches Options
     std::string humanWrenchWrapperPortName;
     std::vector<std::string> wrenchSourceLinks;
     if (visualizeWrenches)
@@ -212,6 +229,43 @@ int main(int argc, char* argv[])
         forceScalingFactor = rf.find("forceScalingFactor").asDouble();
     }
 
+    // Visualize Frames Options
+    std::vector<std::string> visualizedLinksFrame;
+    if (visualizeFrames)
+    {
+        if( !(rf.check("visualizedLinksFrame") && rf.find("visualizedLinksFrame").isList()) )
+        {
+            yError() << LogPrefix << "'visualizedLinksFrame' option not found or not valid. Frames Visualization will be disabled";
+            visualizeFrames = false;
+        }
+        else
+        {
+            auto visualizedLinksFrameList = rf.find("visualizedLinksFrame").asList();
+            for (size_t it = 0; it < visualizedLinksFrameList->size(); it++)
+            {
+                if(!visualizedLinksFrameList->get(it).isString())
+                {
+                    yError() << LogPrefix << "in 'visualizedLinksFrame' there is a field that is not a string.";
+                    return EXIT_FAILURE;
+                }
+                visualizedLinksFrame.push_back(visualizedLinksFrameList->get(it).asString());
+            }
+        }
+    }
+
+    double frameScalingFactor = 1.0;
+    if (visualizeFrames)
+    {
+        if ( !(rf.check("frameScalingFactor") && rf.find("frameScalingFactor").isDouble()) )
+        {
+            yWarning() << LogPrefix << "'frameScalingFactor' option not found or not valid. Using default scale factor = 1.0";
+        }
+        else
+        {
+            frameScalingFactor = rf.find("frameScalingFactor").asDouble();
+        }
+    }
+
     // load model
     std::string urdfFilePath = rf.findFile(urdfFile);
     if (urdfFilePath.empty()) {
@@ -240,6 +294,22 @@ int main(int argc, char* argv[])
                 return EXIT_FAILURE;
             }
             wrenchSourceLinkIndices.push_back(frameIndex);
+        }
+    }
+
+    // check if links are found in the model and save the link index
+    std::vector<iDynTree::LinkIndex> visualizedLinkIndices;
+    if (visualizeFrames)
+    {
+        for (auto visualizedLink : visualizedLinksFrame)
+        {
+            auto frameIndex = model.getLinkIndex(visualizedLink);
+            if (frameIndex == iDynTree::FRAME_INVALID_INDEX)
+            {
+                yError() << LogPrefix << "visualized link [ " << visualizedLink << " ] not found in the visualized model";
+                return EXIT_FAILURE;
+            }
+            visualizedLinkIndices.push_back(frameIndex);
         }
     }
 
@@ -374,6 +444,15 @@ int main(int argc, char* argv[])
         }
     }
 
+    if (visualizeFrames)
+    {
+        for (size_t vectorIndex = 0; vectorIndex < visualizedLinksFrame.size(); vectorIndex++)
+        {
+            linkTransform = viz.modelViz("human").getWorldLinkTransform(visualizedLinksFrame.at(vectorIndex));
+            viz.frames().addFrame(linkTransform, frameScalingFactor);
+        }
+    }
+
     // start Visualization
     std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
     std::chrono::steady_clock::time_point lastViz = std::chrono::steady_clock::now();
@@ -433,6 +512,15 @@ int main(int argc, char* argv[])
                 }
                 force = linkTransform.getRotation() * force;
                 viz.vectors().updateVector(vectorIndex, linkTransform.getPosition(), force);
+            }
+        }
+
+        if (visualizeFrames)
+        {
+            for (size_t vectorIndex = 0; vectorIndex < visualizedLinksFrame.size(); vectorIndex++)
+            {
+                linkTransform = viz.modelViz("human").getWorldLinkTransform(visualizedLinksFrame.at(vectorIndex));
+                viz.frames().updateFrame(vectorIndex, linkTransform);
             }
         }
 
