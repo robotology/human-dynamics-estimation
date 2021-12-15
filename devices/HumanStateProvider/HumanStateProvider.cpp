@@ -642,11 +642,11 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
             yarp::os::Bottle* listContent = list->get(1).asList();
 
             // check if FIXED_SENSOR_ROTATION matrix is passed (9 elements)
-            if (!(    (listContent->size() == 4)
+            if (!(    (listContent->size() == 3)
                    && (listContent->get(0).isDouble())
                    && (listContent->get(1).isDouble())
                    && (listContent->get(2).isDouble()) )) {
-                yError() << LogPrefix << "MEASUREMENT_POSITION_SCALE_FACTOR " << linkName << " must have 3 double values describing the rotation matrix";
+                yError() << LogPrefix << "MEASUREMENT_POSITION_SCALE_FACTOR " << linkName << " must have 3 double values describing the scaling factor for x, y, and z axis";
                 return false;
             }
 
