@@ -1,1 +1,2 @@
 add_subdirectory(HumanStateRemapper)
+add_subdirectory(WearableTargetsRemapper)
