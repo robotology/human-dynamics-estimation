@@ -148,6 +148,13 @@ class WearableSensorTarget
 
     iDynTree::Transform calibrationWorldToMeasurementWorld;
     iDynTree::Transform calibrationMeasurementToLink;
+    iDynTree::Vector3 positionScaleFactor;
+
+    // buffer variables
+    iDynTree::Vector3 positionInWorld;
+    iDynTree::Vector3 positionScaled;
+    iDynTree::Vector3 linearVelocityInWorld;
+    iDynTree::Vector3 linearVelocityScaled;
 
     WearableSensorTarget(WearableName wearableName_,
                          ModelLinkName modelLinkName_,
@@ -162,6 +169,9 @@ class WearableSensorTarget
         rotation.Identity();
         linearVelocity.zero();
         angularVelocity.zero();
+        positionScaleFactor(0) = 1;
+        positionScaleFactor(1) = 1;
+        positionScaleFactor(2) = 1;
         clearCalibrationMatrices();
     };
 
@@ -173,7 +183,13 @@ class WearableSensorTarget
 
     iDynTree::Vector3 getCalibratedPosition()
     {
-        return iDynTree::Position(position).changeCoordinateFrame(calibrationWorldToMeasurementWorld.getRotation()) + calibrationWorldToMeasurementWorld.getPosition();
+        positionInWorld = iDynTree::Position(position).changeCoordinateFrame(calibrationWorldToMeasurementWorld.getRotation()) + calibrationWorldToMeasurementWorld.getPosition();
+        // scale position
+        positionScaled.setVal(0, positionInWorld.getVal(0) * positionScaleFactor(0));
+        positionScaled.setVal(1, positionInWorld.getVal(1) * positionScaleFactor(1));
+        positionScaled.setVal(2, positionInWorld.getVal(2) * positionScaleFactor(2));
+
+        return positionScaled;
     };
 
     iDynTree::Rotation getCalibratedRotation()
@@ -183,7 +199,12 @@ class WearableSensorTarget
 
     iDynTree::Vector3 getCalibratedLinearVelocity()
     {
-        return iDynTree::LinearMotionVector3(linearVelocity).changeCoordFrame(calibrationWorldToMeasurementWorld.getRotation());
+        linearVelocityInWorld = iDynTree::LinearMotionVector3(linearVelocity).changeCoordFrame(calibrationWorldToMeasurementWorld.getRotation());
+        // scale linear velocity
+        linearVelocityScaled.setVal(0, linearVelocityInWorld.getVal(0) * positionScaleFactor(0));
+        linearVelocityScaled.setVal(1, linearVelocityInWorld.getVal(1) * positionScaleFactor(1));
+        linearVelocityScaled.setVal(2, linearVelocityInWorld.getVal(2) * positionScaleFactor(2));
+        return linearVelocityScaled;
     };
 
     iDynTree::Vector3 getCalibratedAngularVelocity()
@@ -573,7 +594,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
                 return false;
             }
 
-            yInfo() << LogPrefix << "MEASUREMENT_TO_LINK_ROTATIONS added for link " << linkName;
+            yInfo() << LogPrefix << "MEASUREMENT_TO_LINK_ROTATIONS added for target " << linkName;
         }
     }
 
@@ -604,9 +625,35 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
                 return false;
             }
 
-            yInfo() << LogPrefix << "WORLD_TO_MEASUREMENT_ROTATIONS added for link " << linkName;
+            yInfo() << LogPrefix << "WORLD_TO_MEASUREMENT_ROTATIONS added for target " << linkName;
         }
     }
+
+    yarp::os::Bottle& positionScaleFactorGroup = config.findGroup("MEASUREMENT_POSITION_SCALE_FACTOR");
+    if (!positionScaleFactorGroup.isNull()) {
+        for (size_t i = 1; i < positionScaleFactorGroup.size(); ++i) {
+            if (!(positionScaleFactorGroup.get(i).isList() && positionScaleFactorGroup.get(i).asList()->size() == 2)) {
+                yError() << LogPrefix
+                        << "Childs of MEASUREMENT_POSITION_SCALE_FACTOR must be lists of 2 elements";
+                return false;
+            }
+            yarp::os::Bottle* list = positionScaleFactorGroup.get(i).asList();
+            std::string linkName = list->get(0).asString();
+            yarp::os::Bottle* listContent = list->get(1).asList();
+
+            // check if FIXED_SENSOR_ROTATION matrix is passed (9 elements)
+            if (!(    (listContent->size() == 4)
+                   && (listContent->get(0).isDouble())
+                   && (listContent->get(1).isDouble())
+                   && (listContent->get(2).isDouble()) )) {
+                yError() << LogPrefix << "MEASUREMENT_POSITION_SCALE_FACTOR " << linkName << " must have 3 double values describing the rotation matrix";
+                return false;
+            }
+
+            yInfo() << LogPrefix << "MEASUREMENT_POSITION_SCALE_FACTOR added for target " << linkName;
+        }
+    }
+
 
     // =======================================
     // PARSE THE GENERAL CONFIGURATION OPTIONS
@@ -671,7 +718,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
                                                                    fixedLeftRotationMatrixValues->get(8).asDouble());
         if (pImpl->wearableTargets.find(targetName) == pImpl->wearableTargets.end())
         {
-            yError() << LogPrefix << "Fixed transform for not existing target [" << targetName << "]";
+            yError() << LogPrefix << "Left calibration rotation for not existing target [" << targetName << "]";
             return false;
         }
 
@@ -694,12 +741,31 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
                                                                     fixedRightRotationMatrixValues->get(8).asFloat64());
         if (pImpl->wearableTargets.find(targetName) == pImpl->wearableTargets.end())
         {
-            yError() << LogPrefix << "Fixed transform for not existing target [" << targetName << "]";
+            yError() << LogPrefix << "Right calibration rotation for not existing target [" << targetName << "]";
             return false;
         }
 
         pImpl->wearableTargets[targetName].get()->calibrationMeasurementToLink.setRotation(fixedRightRotation);
         yInfo() << LogPrefix << "Adding Fixed Rotation for " << targetName << "==>" << fixedRightRotation.toString();
+    }
+
+    for (size_t i = 1; i < positionScaleFactorGroup.size(); ++i) {
+        TargetName targetName = positionScaleFactorGroup.get(i).asList()->get(0).asString();
+        yarp::os::Bottle* positionScaleFactorValues = positionScaleFactorGroup.get(i).asList()->get(1).asList();
+
+        iDynTree::Vector3 positionScaleFactor;
+        positionScaleFactor.setVal(0, positionScaleFactorValues->get(0).asDouble());
+        positionScaleFactor.setVal(1, positionScaleFactorValues->get(1).asDouble());
+        positionScaleFactor.setVal(2, positionScaleFactorValues->get(2).asDouble());
+
+        if (pImpl->wearableTargets.find(targetName) == pImpl->wearableTargets.end())
+        {
+            yError() << LogPrefix << "Position Scale Factor for not existing target [" << targetName << "]";
+            return false;
+        }
+
+        pImpl->wearableTargets[targetName].get()->positionScaleFactor = positionScaleFactor;
+        yInfo() << LogPrefix << "Adding Scale factor for " << targetName << "==>" << positionScaleFactor.toString();
     }
 
     // ==========================================
