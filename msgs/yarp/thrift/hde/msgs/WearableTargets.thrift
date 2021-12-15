@@ -17,6 +17,11 @@ struct Quaternion {
     2: Vector3 imaginary;
 }
 
+struct Transform {
+    1: Vector3 position
+    2: Quaternion orientation
+}
+
 enum KinematicTargetType {
     NONE,
     POSE,
@@ -35,6 +40,9 @@ struct WearableTarget {
     5: Quaternion orientation;
     6: Vector3 linearVelocity;
     7: Vector3 angularVelocity;
+    8: Transform calibrationWorldToMeasurementWorld;
+    9: Transform calibrationMeasurementToLink;
+    10: Vector3 positionScaleFactor;
 }
 
 struct WearableTargets {

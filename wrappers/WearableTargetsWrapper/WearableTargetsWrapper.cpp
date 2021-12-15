@@ -53,6 +53,11 @@ hde::msgs::Quaternion generateMsgQuaternion(const iDynTree::Rotation& input)
     return {quaternion[0], {quaternion[1], quaternion[2], quaternion[3]}};
 }
 
+hde::msgs::Transform generateMsgTransform(const iDynTree::Transform& input)
+{
+    return {generateMsgVector3(input.getPosition()), generateMsgQuaternion(input.getRotation())};
+}
+
 class WearableTargetsWrapper::impl
 {
 public:
@@ -141,7 +146,10 @@ void WearableTargetsWrapper::run()
                                                    generateMsgVector3(wearableTargetEntry.second.get()->getCalibratedPosition()),
                                                    generateMsgQuaternion(wearableTargetEntry.second.get()->getCalibratedRotation()),
                                                    generateMsgVector3(wearableTargetEntry.second.get()->getCalibratedLinearVelocity()),
-                                                   generateMsgVector3(wearableTargetEntry.second.get()->getCalibratedAngularVelocity())};
+                                                   generateMsgVector3(wearableTargetEntry.second.get()->getCalibratedAngularVelocity()),
+                                                   generateMsgTransform(wearableTargetEntry.second.get()->calibrationWorldToMeasurementWorld),
+                                                   generateMsgTransform(wearableTargetEntry.second.get()->calibrationMeasurementToLink),
+                                                   generateMsgVector3(wearableTargetEntry.second.get()->positionScaleFactor)};
     }
 
     // Stream the data though the port
