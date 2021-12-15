@@ -34,6 +34,7 @@ target_link_libraries(HumanStateProvider PUBLIC
     iDynTree::idyntree-high-level
     OsqpEigen::OsqpEigen
     IHumanState
+    IWearableTargets
     HumanDynamicsEstimation::utils
     HumanDynamicsEstimation::algorithms
     )
