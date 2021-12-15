@@ -135,7 +135,8 @@ void WearableTargetsWrapper::run()
     hde::msgs::WearableTargets& data = pImpl->outputPort.prepare();
 
     for (const auto& wearableTargetEntry : pImpl->wearableTargets) {
-        data.targets[wearableTargetEntry.first] = {wearableTargetEntry.second.get()->modelLinkName, 
+        data.targets[wearableTargetEntry.first] = {wearableTargetEntry.second.get()->wearableName, 
+                                                   wearableTargetEntry.second.get()->modelLinkName, 
                                                    generateMsgKinematicTargetType(wearableTargetEntry.second.get()->targetType),
                                                    generateMsgVector3(wearableTargetEntry.second.get()->getCalibratedPosition()),
                                                    generateMsgQuaternion(wearableTargetEntry.second.get()->getCalibratedRotation()),
