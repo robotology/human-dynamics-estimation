@@ -28,12 +28,13 @@ enum KinematicTargetType {
 }
 
 struct WearableTarget {
-    1: string linkName;
-    2: KinematicTargetType type;
-    3: Vector3 position;
-    4: Quaternion orientation;
-    5: Vector3 linearVelocity;
-    6: Vector3 angularVelocity;
+    1: string wearableSensorName;
+    2: string linkName;
+    3: KinematicTargetType type;
+    4: Vector3 position;
+    5: Quaternion orientation;
+    6: Vector3 linearVelocity;
+    7: Vector3 angularVelocity;
 }
 
 struct WearableTargets {
