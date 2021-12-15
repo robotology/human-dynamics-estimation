@@ -2190,36 +2190,68 @@ bool HumanStateProvider::impl::updateInverseKinematicTargets()
 
 bool HumanStateProvider::impl::addInverseKinematicTargets()
 {
-    for (size_t linkIndex = 0; linkIndex < humanModel.getNrOfLinks(); ++linkIndex) {
-        std::string linkName = humanModel.getLinkName(linkIndex);
+    for (auto wearableTargetEntry : wearableTargets)
+    {
+        TargetType targetType = wearableTargetEntry.second->targetType;
+        ModelLinkName linkName = wearableTargetEntry.second->modelLinkName;
+        TargetName targetName = wearableTargetEntry.first;
 
-        // Skip the fake links
-        if (wearableStorage.modelToWearable_LinkName.find(linkName)
-            == wearableStorage.modelToWearable_LinkName.end()) {
-            continue;
-        }
-
-        // Insert in the cost the rotation and position of the link used as base, or add it as a target
-        if (linkName == floatingBaseFrame) {
-            if ((useDirectBaseMeasurement || useFixedBase )
-                     && !globalIK.addFrameConstraint(linkName, iDynTree::Transform::Identity())) {
-                yError() << LogPrefix << "Failed to add constraint for base link" << linkName;
+        switch (targetType)
+        {
+        case TargetType::pose: {
+            if (!globalIK.addTarget(linkName, iDynTree::Transform::Identity(), 1.0, 1.0)) {
+                yError() << LogPrefix << "Failed to taget for " << targetName;
                 return false;
-            }
-            else if (!globalIK.addTarget(linkName, iDynTree::Transform::Identity(), 1.0, 1.0)) {
-                yError() << LogPrefix << "Failed to add target for floating base link" << linkName;
+                                                          }
+                yInfo() << LogPrefix << "Target " << targetName << " added for link " << linkName;
+            break; }
+        case TargetType::poseAndVelocity: {
+            if (!globalIK.addTarget(linkName, iDynTree::Transform::Identity(), 1.0, 1.0)) {
+                yError() << LogPrefix << "Failed to taget for " << targetName;
                 return false;
-            }
-            continue;
-        }
-
-        // Add ik targets and set to identity
-        if (!globalIK.addTarget(
-                linkName, iDynTree::Transform::Identity(), posTargetWeight, rotTargetWeight)) {
-            yError() << LogPrefix << "Failed to add target for link" << linkName;
-            return false;
+                                                          }
+                yInfo() << LogPrefix << "Target " << targetName << " added for link " << linkName;
+            break; }
+        case TargetType::position: {
+            if (!globalIK.addPositionTarget(linkName, iDynTree::Transform::Identity(), 1.0)) {
+                yError() << LogPrefix << "Failed to taget for " << targetName;
+                return false;
+                                                          }
+                yInfo() << LogPrefix << "Target " << targetName << " added for link " << linkName;
+            break; }
+        case TargetType::positionAndVelocity: {
+            if (!globalIK.addPositionTarget(linkName, iDynTree::Transform::Identity(), 1.0)) {
+                yError() << LogPrefix << "Failed to taget for " << targetName;
+                return false;
+                                                          }
+                yInfo() << LogPrefix << "Target " << targetName << " added for link " << linkName;
+            break; }
+        case TargetType::orientation: {
+            if (!globalIK.addRotationTarget(linkName, iDynTree::Transform::Identity(), 1.0)) {
+                yError() << LogPrefix << "Failed to taget for " << targetName;
+                return false;
+                                                          }
+                yInfo() << LogPrefix << "Target " << targetName << " added for link " << linkName;
+            break; }
+        case TargetType::orientationAndVelocity: {
+            if (!globalIK.addRotationTarget(linkName, iDynTree::Transform::Identity(), 1.0)) {
+                yError() << LogPrefix << "Failed to taget for " << targetName;
+                return false;
+                                                          }
+                yInfo() << LogPrefix << "Target " << targetName << " added for link " << linkName;
+            break; }
+        default: {
+            yError() << LogPrefix << "Invalid target type for " << targetName;
+            return false;}
         }
     }
+
+    if ((useDirectBaseMeasurement || useFixedBase)
+     && !globalIK.addFrameConstraint(floatingBaseFrame, iDynTree::Transform::Identity())) {
+         yError() << LogPrefix << "Failed to add constraint for base link" << floatingBaseFrame;
+         return false;
+     }
+
     return true;
 }
 
