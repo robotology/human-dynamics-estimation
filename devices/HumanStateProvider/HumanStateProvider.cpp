@@ -607,7 +607,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
             return false;
         }
 
-        pImpl->wearableTargets[targetName] = std::make_shared<hde::WearableSensorTarget>(wearableName, modelLinkName, targetType, sensor::SensorType::Invalid);
+        pImpl->wearableTargets[targetName] = std::make_shared<hde::WearableSensorTarget>(wearableName, modelLinkName, targetType);
     }
 
     for (size_t i = 1; i < fixedLeftRotationGroup.size(); ++i) {
@@ -1560,7 +1560,7 @@ bool HumanStateProvider::impl::updateWearableTargets()
         hde::TargetName targetName = wearableTargetEntry.first;
         hde::KinematicTargetType targetType = wearableTargetEntry.second->targetType;
 
-        switch (wearableTargetEntry.second->sensorType) {
+        switch (iWear->getSensor(wearableName)->getSensorType()) {
             case sensor::SensorType::VirtualLinkKinSensor : {
                 auto sensor = iWear->getVirtualLinkKinSensor(wearableName);
                 if (!sensor) {
@@ -2416,7 +2416,6 @@ bool HumanStateProvider::attach(yarp::dev::PolyDriver* poly)
             yError() << "Failed to find sensor " << wearableName << " used in target " << targetName;
             return false;
         }
-        wearableTargetEntry.second->sensorType = sensor.get()->getSensorType();
     }
 
     // =======================
