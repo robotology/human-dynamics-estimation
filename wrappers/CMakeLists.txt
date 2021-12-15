@@ -4,3 +4,4 @@
 
 add_subdirectory(HumanStateWrapper)
 add_subdirectory(HumanDynamicsWrapper)
+add_subdirectory(WearableTargetsWrapper)
