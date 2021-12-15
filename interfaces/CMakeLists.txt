@@ -5,3 +5,4 @@
 add_subdirectory(IHumanState)
 add_subdirectory(IHumanWrench)
 add_subdirectory(IHumanDynamics)
+add_subdirectory(IWearableTargets)

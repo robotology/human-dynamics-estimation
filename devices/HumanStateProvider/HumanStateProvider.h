@@ -14,6 +14,7 @@
 #include <yarp/os/PeriodicThread.h>
 
 #include <hde/interfaces/IHumanState.h>
+#include <hde/interfaces/IWearableTargets.h>
 
 #include <memory>
 
@@ -29,6 +30,7 @@ class hde::devices::HumanStateProvider final
     , public yarp::dev::IMultipleWrapper
     , public yarp::os::PeriodicThread
     , public hde::interfaces::IHumanState
+    , public hde::interfaces::IWearableTargets
 {
 private:
     class impl;
@@ -65,6 +67,10 @@ public:
     std::array<double, 6> getBaseVelocity() const override;
     std::array<double, 3> getCoMPosition() const override;
     std::array<double, 3> getCoMVelocity() const override;
+
+    // IWearableTargets
+    std::vector<hde::TargetName> getAllTargetsName() const override;
+    std::shared_ptr<hde::WearableSensorTarget> getTarget(const hde::TargetName name) const override;
 };
 
 #endif // HDE_DEVICES_HUMANSTATEPROVIDER
