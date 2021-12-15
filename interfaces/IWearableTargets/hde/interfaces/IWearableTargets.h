@@ -39,7 +39,6 @@ namespace hde {
         wearable::WearableName wearableName;
         ModelLinkName modelLinkName;
         hde::KinematicTargetType targetType;
-        wearable::sensor::SensorType sensorType;
 
         iDynTree::Vector3 position;
         iDynTree::Rotation rotation;
@@ -58,12 +57,10 @@ namespace hde {
 
         WearableSensorTarget(wearable::WearableName wearableName_,
                             ModelLinkName modelLinkName_,
-                            hde::KinematicTargetType targetType_,
-                            wearable::sensor::SensorType sensorType_)
+                            hde::KinematicTargetType targetType_)
                             : wearableName(wearableName_)
                             , modelLinkName(modelLinkName_)
                             , targetType(targetType_)
-                            , sensorType(sensorType_)
         {
             position.zero();
             rotation.Identity();
