@@ -37,6 +37,7 @@ target_link_libraries(${EXE_TARGET_NAME} LINK_PUBLIC
   iDynTree::idyntree-core
   iDynTree::idyntree-modelio
   iDynTree::idyntree-visualization
-  IHumanState)
+  IHumanState
+  IWearableTargets)
 
 install(TARGETS ${EXE_TARGET_NAME} DESTINATION bin)
