@@ -12,6 +12,7 @@
 #include <array>
 #include <string>
 #include <vector>
+#include <mutex>
 
 #include <iDynTree/Core/SpatialVector.h>
 #include <iDynTree/Core/Transform.h>
