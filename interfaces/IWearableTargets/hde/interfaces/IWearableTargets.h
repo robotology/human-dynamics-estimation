@@ -55,6 +55,8 @@ namespace hde {
         iDynTree::Vector3 linearVelocityInWorld;
         iDynTree::Vector3 linearVelocityScaled;
 
+        mutable std::mutex mutex;
+
         WearableSensorTarget(wearable::WearableName wearableName_,
                             ModelLinkName modelLinkName_,
                             hde::KinematicTargetType targetType_)
@@ -74,12 +76,14 @@ namespace hde {
 
         void clearCalibrationMatrices()
         {
+            std::lock_guard<std::mutex> lock(mutex);
             calibrationWorldToMeasurementWorld = iDynTree::Transform::Identity();
             calibrationMeasurementToLink = iDynTree::Transform::Identity();
         };
 
         iDynTree::Vector3 getCalibratedPosition()
         {
+            std::lock_guard<std::mutex> lock(mutex);
             positionInWorld = iDynTree::Position(position).changeCoordinateFrame(calibrationWorldToMeasurementWorld.getRotation()) + calibrationWorldToMeasurementWorld.getPosition();
             // scale position
             positionScaled.setVal(0, positionInWorld.getVal(0) * positionScaleFactor(0));
@@ -91,11 +95,13 @@ namespace hde {
 
         iDynTree::Rotation getCalibratedRotation()
         {
+            std::lock_guard<std::mutex> lock(mutex);
             return calibrationWorldToMeasurementWorld.getRotation() * rotation * calibrationMeasurementToLink.getRotation();
         };
 
         iDynTree::Vector3 getCalibratedLinearVelocity()
         {
+            std::lock_guard<std::mutex> lock(mutex);
             linearVelocityInWorld = iDynTree::LinearMotionVector3(linearVelocity).changeCoordFrame(calibrationWorldToMeasurementWorld.getRotation());
             // scale linear velocity
             linearVelocityScaled.setVal(0, linearVelocityInWorld.getVal(0) * positionScaleFactor(0));
@@ -106,6 +112,7 @@ namespace hde {
 
         iDynTree::Vector3 getCalibratedAngularVelocity()
         {
+            std::lock_guard<std::mutex> lock(mutex);
             return iDynTree::AngularMotionVector3(angularVelocity).changeCoordFrame(calibrationWorldToMeasurementWorld.getRotation());
         };
     };
