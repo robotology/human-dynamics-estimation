@@ -695,6 +695,10 @@ bool DynamicalInverseKinematics::impl::initialize()
                 m_linearLimits.constraintMatrix))
             return false;
     }
+    
+    if (!m_inverseVelocityKinematics.setCustomBaseVelocityLimit(
+        m_limits.baseVelocityLowerLimit, m_limits.baseVelocityUpperLimit))
+        return false;
 
     m_isInverseKinematicsInitializd = true;
 
