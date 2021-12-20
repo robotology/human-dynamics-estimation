@@ -2263,6 +2263,8 @@ bool HumanStateProvider::impl::addDynamicalInverseKinematicsTargets()
             if (!dynamicalInverseKinematics.addPoseTarget(linkName, 
                                                           wearableTargetEntry.second->position,
                                                           wearableTargetEntry.second->rotation,
+                                                          {true, true, true},
+                                                          {true, true, true},
                                                           dynamicalIKLinearCorrectionGain,
                                                           dynamicalIKAngularCorrectionGain,
                                                           linVelTargetWeight,
@@ -2278,6 +2280,8 @@ bool HumanStateProvider::impl::addDynamicalInverseKinematicsTargets()
                                                                      wearableTargetEntry.second->rotation,
                                                                      wearableTargetEntry.second->linearVelocity,
                                                                      wearableTargetEntry.second->angularVelocity,
+                                                                     {true, true, true},
+                                                                     {true, true, true},
                                                                      dynamicalIKLinearCorrectionGain,
                                                                      dynamicalIKAngularCorrectionGain,
                                                                      dynamicalIKMeasuredLinearVelocityGain,
@@ -2292,6 +2296,7 @@ bool HumanStateProvider::impl::addDynamicalInverseKinematicsTargets()
         case hde::KinematicTargetType::position: {
             if (!dynamicalInverseKinematics.addPositionTarget(linkName, 
                                                               wearableTargetEntry.second->position,
+                                                              {true, true, true},
                                                               dynamicalIKLinearCorrectionGain,
                                                               linVelTargetWeight)) {
                 yError() << LogPrefix << "Failed to add position target for " << targetName;
@@ -2303,6 +2308,7 @@ bool HumanStateProvider::impl::addDynamicalInverseKinematicsTargets()
             if (!dynamicalInverseKinematics.addPositionAndVelocityTarget(linkName, 
                                                                          wearableTargetEntry.second->position,
                                                                          wearableTargetEntry.second->linearVelocity,
+                                                                         {true, true, true},
                                                                          dynamicalIKLinearCorrectionGain,
                                                                          dynamicalIKMeasuredLinearVelocityGain,
                                                                          linVelTargetWeight)) {
@@ -2314,6 +2320,7 @@ bool HumanStateProvider::impl::addDynamicalInverseKinematicsTargets()
         case hde::KinematicTargetType::orientation: {
             if (!dynamicalInverseKinematics.addOrientationTarget(linkName,
                                                                  wearableTargetEntry.second->rotation,
+                                                                 {true, true, true},
                                                                  dynamicalIKAngularCorrectionGain,
                                                                  angVelTargetWeight)) {
                 yError() << LogPrefix << "Failed to add orientation target for " << targetName;
@@ -2325,6 +2332,7 @@ bool HumanStateProvider::impl::addDynamicalInverseKinematicsTargets()
             if (!dynamicalInverseKinematics.addOrientationAndVelocityTarget(linkName,
                                                                             wearableTargetEntry.second->rotation,
                                                                             wearableTargetEntry.second->angularVelocity,
+                                                                            {true, true, true},
                                                                             dynamicalIKAngularCorrectionGain,
                                                                             dynamicalIKMeasuredAngularVelocityGain,
                                                                             angVelTargetWeight)) {
