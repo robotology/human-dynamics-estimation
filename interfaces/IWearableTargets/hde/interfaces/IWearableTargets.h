@@ -85,7 +85,7 @@ namespace hde {
         iDynTree::Vector3 getCalibratedPosition()
         {
             std::lock_guard<std::mutex> lock(mutex);
-            positionInWorld = iDynTree::Position(position).changeCoordinateFrame(calibrationWorldToMeasurementWorld.getRotation()) + calibrationWorldToMeasurementWorld.getPosition();
+            positionInWorld = iDynTree::Position(calibrationMeasurementToLink.getPosition()).changeCoordinateFrame(rotation) + iDynTree::Position(position).changeCoordinateFrame(calibrationWorldToMeasurementWorld.getRotation()) + calibrationWorldToMeasurementWorld.getPosition();
             // scale position
             positionScaled.setVal(0, positionInWorld.getVal(0) * positionScaleFactor(0));
             positionScaled.setVal(1, positionInWorld.getVal(1) * positionScaleFactor(1));
