@@ -503,8 +503,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
                    && (listContent->get(12).isDouble())
                    && (listContent->get(13).isDouble())
                    && (listContent->get(14).isDouble())
-                   && (listContent->get(15).isDouble())
-                   && (listContent->get(16).isDouble()) )) {
+                   && (listContent->get(15).isDouble()))) {
                 yError() << LogPrefix << "MEASUREMENT_TO_LINK_ROTATIONS " << linkName << " must have 16 double values describing the rotation matrix";
                 return false;
             }
@@ -666,7 +665,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
 
         pImpl->wearableTargets[targetName].get()->calibrationMeasurementToLink.setRotation(fixedRightRotation);
         pImpl->wearableTargets[targetName].get()->calibrationMeasurementToLink.setPosition(fixedRightPositionOffset);
-        yInfo() << LogPrefix << "Adding Fixed Rotation for " << targetName << "==>" << fixedRightRotation.toString();
+        yInfo() << LogPrefix << "Adding Fixed Rotation for " << targetName << "==>" << pImpl->wearableTargets[targetName].get()->calibrationMeasurementToLink.toString();
     }
 
     for (size_t i = 1; i < positionScaleFactorGroup.size(); ++i) {
