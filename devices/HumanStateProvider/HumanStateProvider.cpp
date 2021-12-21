@@ -487,7 +487,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
             yarp::os::Bottle* listContent = list->get(1).asList();
 
             // check if FIXED_SENSOR_ROTATION matrix is passed (9 elements)
-            if (!(    (listContent->size() == 9)
+            if (!(    (listContent->size() == 16)
                    && (listContent->get(0).isFloat64())
                    && (listContent->get(1).isFloat64())
                    && (listContent->get(2).isFloat64())
@@ -496,8 +496,16 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
                    && (listContent->get(5).isFloat64())
                    && (listContent->get(6).isFloat64())
                    && (listContent->get(7).isFloat64())
-                   && (listContent->get(8).isFloat64()) )) {
-                yError() << LogPrefix << "MEASUREMENT_TO_LINK_ROTATIONS " << linkName << " must have 9 double values describing the rotation matrix";
+                   && (listContent->get(8).isFloat64())
+                   && (listContent->get(9).isFloat64())
+                   && (listContent->get(10).isFloat64())
+                   && (listContent->get(11).isFloat64())
+                   && (listContent->get(12).isFloat64())
+                   && (listContent->get(13).isFloat64())
+                   && (listContent->get(14).isFloat64())
+                   && (listContent->get(15).isFloat64())
+                   && (listContent->get(16).isFloat64()) )) {
+                yError() << LogPrefix << "MEASUREMENT_TO_LINK_ROTATIONS " << linkName << " must have 16 double values describing the rotation matrix";
                 return false;
             }
 
@@ -640,12 +648,16 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         iDynTree::Rotation fixedRightRotation = iDynTree::Rotation( fixedRightRotationMatrixValues->get(0).asFloat64(),
                                                                     fixedRightRotationMatrixValues->get(1).asFloat64(),
                                                                     fixedRightRotationMatrixValues->get(2).asFloat64(),
-                                                                    fixedRightRotationMatrixValues->get(3).asFloat64(),
                                                                     fixedRightRotationMatrixValues->get(4).asFloat64(),
                                                                     fixedRightRotationMatrixValues->get(5).asFloat64(),
                                                                     fixedRightRotationMatrixValues->get(6).asFloat64(),
-                                                                    fixedRightRotationMatrixValues->get(7).asFloat64(),
-                                                                    fixedRightRotationMatrixValues->get(8).asFloat64());
+                                                                    fixedRightRotationMatrixValues->get(8).asFloat64(),
+                                                                    fixedRightRotationMatrixValues->get(9).asFloat64(),
+                                                                    fixedRightRotationMatrixValues->get(10).asFloat64());
+
+        iDynTree::Position fixedRightPositionOffset = iDynTree::Position(fixedRightRotationMatrixValues->get(3).asFloat64(),
+                                                                         fixedRightRotationMatrixValues->get(7).asFloat64(),
+                                                                         fixedRightRotationMatrixValues->get(11).asFloat64());
         if (pImpl->wearableTargets.find(targetName) == pImpl->wearableTargets.end())
         {
             yError() << LogPrefix << "Right calibration rotation for not existing target [" << targetName << "]";
@@ -653,6 +665,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         }
 
         pImpl->wearableTargets[targetName].get()->calibrationMeasurementToLink.setRotation(fixedRightRotation);
+        pImpl->wearableTargets[targetName].get()->calibrationMeasurementToLink.setPosition(fixedRightPositionOffset);
         yInfo() << LogPrefix << "Adding Fixed Rotation for " << targetName << "==>" << fixedRightRotation.toString();
     }
 
