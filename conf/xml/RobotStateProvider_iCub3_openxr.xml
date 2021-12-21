@@ -41,18 +41,13 @@
         <!-- integration based IK parameters -->
         <param name='dynamicalIKJointVelocityLimit'>10.0</param> <!-- comment or -1.0 for no limits -->
         <param name="dynamicalIKMeasuredVelocityGainLinRot">(1.0 1.0)</param>
-        <param name="dynamicalIKCorrectionGainsLinRot">(50.0 10.0)</param>
+        <param name="dynamicalIKCorrectionGainsLinRot">(80.0 5.0)</param>
         <param name="dynamicalIKIntegralCorrectionGainsLinRot">(0.0 0.0)</param>
         <group name="WEARABLE_SENSOR_TARGETS">
             <param name="target_Pelvis">(chest, TransformServer::pose::virtualizer_frame, pose)</param>
-            <!--param name="target_RightHand">(r_hand_fake, TransformServer::pose::openxr_right_hand, pose)</param>
-            <param name="target_LeftHand">(l_hand_fake, TransformServer::pose::openxr_left_hand, pose)</param-->
             <param name="target_RightHand">(r_hand_fake, TransformServer::pose::/trackers/LHR-3C2E1582, pose)</param>
             <param name="target_LeftHand">(l_hand_fake, TransformServer::pose::/trackers/LHR-8F3A4D72, pose)</param>
-            <!--param name="target_upper_arm_fake">(l_upper_arm_fake iFeelSuit::vLink::Node#5, orientation)</param>
-            <param name="target_forearm_fake">(l_forearm_fake, iFeelSuit::vLink::Node#4, orientation)</param>
-            <param name="target_upper_arm_fake">(r_upper_arm_fake iFeelSuit::vLink::Node#7, orientation)</param>
-            <param name="target_forearm_fake">(r_forearm_fake, iFeelSuit::vLink::Node#8, orientation)</param-->
+            <param name="target_head">(head, TransformServer::pose::/hmd/LHR-752422B9, pose)</param>
         </group>
         <param name="jointList">("l_shoulder_pitch",
                                  "l_shoulder_roll",
@@ -76,7 +71,10 @@
                                  "j_r_hand_fake",
                                  "torso_pitch",
                                  "torso_roll",
-                                 "torso_yaw")
+                                 "torso_yaw",
+                                 "neck_pitch",
+                                 "neck_roll",
+                                 "neck_yaw")
         </param>
         <group name="MEASUREMENT_TO_LINK_ROTATIONS">
             <!--param name="target_LeftHand">( 0.0  0.0 -1.0
@@ -91,10 +89,13 @@
             <param name="target_RightHand">(-1.0  0.0  0.0
                                              0.0  1.0  0.0
                                              0.0  0.0 -1.0)</param>
+            <param name="target_head">( 0.0 -1.0  0.0
+                                        0.0  0.0  1.0
+                                       -1.0  0.0  0.0)</param>
         </group>
         <group name="MEASUREMENT_POSITION_SCALE_FACTOR">
-            <param name="target_LeftHand">( 0.6 0.6 0.8 )</param>
-            <param name="target_RightHand">( 0.6 0.6 0.8 )</param>
+            <param name="target_LeftHand">( 0.7 0.7 0.6 )</param>
+            <param name="target_RightHand">( 0.7 0.7 0.6 )</param>
         </group>
         <group name="CUSTOM_CONSTRAINTS">
         <!-- check issue https://github.com/robotology/human-dynamics-estimation/issues/132 for more info-->
@@ -120,7 +121,7 @@
             (0.0, 0.0, 0.0, 0.0, 1.0, 0.0),
             (0.0, 0.0, 0.0, 0.0, 0.0, 1.0))</param>
             <param name="custom_constraint_lower_bound"> (
-            -1000.0, -1000.0, -1000.0, -1000.0, -0.5, -0.5)</param>
+            -1000.0, -1000.0, -1000.0, -1000.0, -100.0, -100.5)</param>
             <param name="custom_constraint_upper_bound"> (
             4.7772, 4.9630, 4.7772, 4.9630, 1000.0, 1000.0)</param>
             <param name="k_u">0.5</param>
@@ -137,7 +138,7 @@
     <!-- Uncomment to stream the output of HumanStateProvider on a YARP port -->
     <device type="human_state_wrapper" name="RobotStateWrapper">
         <param name="period">0.01</param>
-        <param name="outputPort">/iCub/RobotStateWrapper2/state:o</param>
+        <param name="outputPort">/iCub/RobotStateWrapper/state:o</param>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
                 <elem name="HumanStateWrapperLabel">RobotStateProvider</elem>
