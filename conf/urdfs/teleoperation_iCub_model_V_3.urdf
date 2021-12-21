@@ -927,7 +927,7 @@
     <axis xyz="0.0 -1.0 0.0"/>
     <parent link="neck_1"/>
     <child link="neck_2"/>
-    <limit effort="50000" lower="-0.5235987755982988" upper="0.3839724354387525" velocity="120.0"/>
+    <limit effort="50000" lower="-0.698132" upper="0.3839724354387525" velocity="120.0"/>
     <dynamics damping="0.06" friction="0.0"/>
   </joint>
   <link name="neck_3">
