@@ -83,20 +83,23 @@
             <param name="target_RightHand">( 0.0  0.0  1.0
                                              1.0  0.0  0.0
                                              0.0  1.0  0.0)</param-->
-            <param name="target_LeftHand">( 1.0   0.0  0.0
-                                            0.0  -1.0  0.0
-                                            0.0   0.0 -1.0)</param>
-            <param name="target_RightHand">(-1.0  0.0  0.0
-                                             0.0  1.0  0.0
-                                             0.0  0.0 -1.0)</param>
-            <param name="target_head">( 0.0 -1.0  0.0
-                                        0.0  0.0  1.0
-                                       -1.0  0.0  0.0)</param>
+            <param name="target_LeftHand">( 1.0   0.0  0.0  0.0
+                                            0.0  -1.0  0.0  0.025
+                                            0.0   0.0 -1.0  0.07
+                                            0.0   0.0  0.0  1.0)</param>
+            <param name="target_RightHand">(-1.0  0.0  0.0  0.0
+                                             0.0  1.0  0.0  0.025
+                                             0.0  0.0 -1.0  0.07
+                                             0.0  0.0  0.0  1.0)</param>
+            <param name="target_head">( 0.0 -1.0  0.0  0.0
+                                        0.0  0.0  1.0  0.0
+                                       -1.0  0.0  0.0  0.1
+                                        0.0  0.0  0.0  1.0)</param>
         </group>
-        <group name="MEASUREMENT_POSITION_SCALE_FACTOR">
+        <!--group name="MEASUREMENT_POSITION_SCALE_FACTOR">
             <param name="target_LeftHand">( 0.7 0.7 0.6 )</param>
             <param name="target_RightHand">( 0.7 0.7 0.6 )</param>
-        </group>
+        </group-->
         <group name="CUSTOM_CONSTRAINTS">
         <!-- check issue https://github.com/robotology/human-dynamics-estimation/issues/132 for more info-->
         <!-- note that a group can not be empty, otherwise it returns error-->
