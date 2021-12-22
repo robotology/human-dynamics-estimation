@@ -544,6 +544,8 @@ int main(int argc, char* argv[])
 
     viz.camera().setPosition(cameraDeltaPosition);
     viz.camera().setTarget(fixedCameraTarget);
+    
+    viz.setColorPalette("meshcat");
 
     viz.camera().animator()->enableMouseControl(true);
     
