@@ -44,10 +44,11 @@
         <param name="dynamicalIKCorrectionGainsLinRot">(80.0 5.0)</param>
         <param name="dynamicalIKIntegralCorrectionGainsLinRot">(0.0 0.0)</param>
         <group name="WEARABLE_SENSOR_TARGETS">
-            <param name="target_Pelvis">(chest, TransformServer::pose::virtualizer_frame, pose)</param>
+            <param name="target_Pelvis">(root_link, TransformServer::pose::virtualizer_frame, orientation)</param>
+            <param name="target_Chest">(chest, TransformServer::pose::virtualizer_frame, pose)</param>
             <param name="target_RightHand">(r_hand_fake, TransformServer::pose::/trackers/LHR-3C2E1582, pose)</param>
             <param name="target_LeftHand">(l_hand_fake, TransformServer::pose::/trackers/LHR-8F3A4D72, pose)</param>
-            <param name="target_head">(head, TransformServer::pose::/hmd/LHR-752422B9, pose)</param>
+            <param name="target_Head">(head, TransformServer::pose::/hmd/LHR-752422B9, pose)</param>
         </group>
         <param name="jointList">("l_shoulder_pitch",
                                  "l_shoulder_roll",
@@ -77,12 +78,6 @@
                                  "neck_yaw")
         </param>
         <group name="MEASUREMENT_TO_LINK_ROTATIONS">
-            <!--param name="target_LeftHand">( 0.0  0.0 -1.0
-                                            1.0  0.0  0.0
-                                            0.0 -1.0  0.0)</param>
-            <param name="target_RightHand">( 0.0  0.0  1.0
-                                             1.0  0.0  0.0
-                                             0.0  1.0  0.0)</param-->
             <param name="target_LeftHand">( 1.0   0.0  0.0  0.0
                                             0.0  -1.0  0.0  0.025
                                             0.0   0.0 -1.0  0.07
@@ -91,15 +86,16 @@
                                              0.0  1.0  0.0  0.025
                                              0.0  0.0 -1.0  0.07
                                              0.0  0.0  0.0  1.0)</param>
-            <param name="target_head">( 0.0 -1.0  0.0  0.0
+            <param name="target_Head">( 0.0 -1.0  0.0  0.0
                                         0.0  0.0  1.0  0.0
                                        -1.0  0.0  0.0  0.1
                                         0.0  0.0  0.0  1.0)</param>
         </group>
-        <!--group name="MEASUREMENT_POSITION_SCALE_FACTOR">
+        <group name="MEASUREMENT_POSITION_SCALE_FACTOR">
+            <param name="target_Head">( 0.7 0.7 0.6 )</param>
             <param name="target_LeftHand">( 0.7 0.7 0.6 )</param>
             <param name="target_RightHand">( 0.7 0.7 0.6 )</param>
-        </group-->
+        </group>
         <group name="CUSTOM_CONSTRAINTS">
         <!-- check issue https://github.com/robotology/human-dynamics-estimation/issues/132 for more info-->
         <!-- note that a group can not be empty, otherwise it returns error-->
@@ -110,8 +106,8 @@
             <!--param name="custom_joints_velocity_limits_values">(10.0, 15.0)</param-->
             <param name="custom_joints_velocity_limits_values">( )</param>
         <!-- **** base velocity limit: x, y, z, roll, pitch, yaw ****-->
-            <param name="base_velocity_limit_upper_buond">(0.0, 0.0, 0.0, 0.0, 0.0, 1.0 )</param>
-            <param name="base_velocity_limit_lower_buond">(0.0, 0.0, 0.0, 0.0, 0.0, -1.0 )</param>
+            <param name="base_velocity_limit_upper_buond">(0.0, 0.0,  0.0,  1.0,  1.0,  1.0 )</param>
+            <param name="base_velocity_limit_lower_buond">(0.0, 0.0,  0.0, -1.0, -1.0, -1.0 )</param>
         <!-- Custom joint Configuration constraints-->
         <!-- if the boudary value is inf, I will use -1000.0 rad, or +1000.0 rad-->
             <param name="custom_constraint_variables">(
