@@ -28,7 +28,8 @@ namespace hde {
         position,
         positionAndVelocity,
         orientation,
-        orientationAndVelocity
+        orientationAndVelocity,
+        gravity
     };
 
     using TargetName = std::string;

@@ -18,6 +18,7 @@
 #include <yarp/sig/Vector.h>
 #include <iDynTree/ModelIO/ModelLoader.h>
 #include <iDynTree/Visualizer.h>
+#include <iDynTree/Core/EigenHelpers.h>
 
 #include <iostream>
 #include <chrono>
@@ -530,6 +531,7 @@ int main(int argc, char* argv[])
     iDynTree::Position basePosition;
     iDynTree::Position basePositionOld = fixedCameraTarget;
     iDynTree::Transform linkTransform;
+    iDynTree::Vector3 gravityVector;
     iDynTree::Direction force;
 
     iDynTree::Transform wHb = iDynTree::Transform::Identity();
@@ -578,8 +580,23 @@ int main(int argc, char* argv[])
     {
         for (auto targetEntity : targets)
         {
-            linkTransform = iDynTree::Transform(targetEntity.second.get()->getCalibratedRotation(), iDynTree::Position(targetEntity.second.get()->getCalibratedPosition()));
-            viz.frames().addFrame(linkTransform, targetsFrameScalingFactor);
+            if ( targetEntity.second.get()->targetType == hde::KinematicTargetType::pose ||
+                 targetEntity.second.get()->targetType == hde::KinematicTargetType::poseAndVelocity ||
+                 targetEntity.second.get()->targetType == hde::KinematicTargetType::position ||
+                 targetEntity.second.get()->targetType == hde::KinematicTargetType::positionAndVelocity ||
+                 targetEntity.second.get()->targetType == hde::KinematicTargetType::orientation ||
+                 targetEntity.second.get()->targetType == hde::KinematicTargetType::orientationAndVelocity)
+            {
+                linkTransform = iDynTree::Transform(targetEntity.second.get()->getCalibratedRotation(), iDynTree::Position(targetEntity.second.get()->getCalibratedPosition()));
+                viz.frames().addFrame(linkTransform, targetsFrameScalingFactor);
+            }
+            if ( targetEntity.second.get()->targetType == hde::KinematicTargetType::gravity )
+            {
+                linkTransform = iDynTree::Transform(targetEntity.second.get()->getCalibratedRotation(), iDynTree::Position(targetEntity.second.get()->getCalibratedPosition()));
+                iDynTree::toEigen(gravityVector) = targetsFrameScalingFactor * iDynTree::toEigen(linkTransform.getRotation()).row(2);
+                viz.vectors().addVector(linkTransform.getPosition(), gravityVector );
+            }
+            
         }
     }
 
@@ -632,6 +649,7 @@ int main(int argc, char* argv[])
 
         viz.modelViz("human").setPositions(wHb, joints);
 
+        size_t vectorsIterator = 0;
         if (visualizeWrenches)
         {
             wrenchMeasuresVector = wrenchPort.read(true);
@@ -644,6 +662,7 @@ int main(int argc, char* argv[])
                 }
                 force = linkTransform.getRotation() * force;
                 viz.vectors().updateVector(vectorIndex, linkTransform.getPosition(), force);
+                vectorsIterator++;
             }
         }
 
@@ -666,21 +685,32 @@ int main(int argc, char* argv[])
                 {
                 case hde::KinematicTargetType::pose: case hde::KinematicTargetType::poseAndVelocity: 
                     linkTransform = iDynTree::Transform(targetEntity.second.get()->getCalibratedRotation(), iDynTree::Position(targetEntity.second.get()->getCalibratedPosition()));
+                    viz.frames().updateFrame(framesIterator, linkTransform);
+                    framesIterator++;
                     break;
                 case hde::KinematicTargetType::position: case hde::KinematicTargetType::positionAndVelocity:
                     linkTransform = viz.modelViz("human").getWorldLinkTransform(targetEntity.second.get()->modelLinkName);
                     linkTransform.setPosition(iDynTree::Position(targetEntity.second.get()->getCalibratedPosition()));
+                    viz.frames().updateFrame(framesIterator, linkTransform);
+                    framesIterator++;
                     break;
                 case hde::KinematicTargetType::orientation: case hde::KinematicTargetType::orientationAndVelocity:
                     linkTransform = viz.modelViz("human").getWorldLinkTransform(targetEntity.second.get()->modelLinkName);
                     linkTransform.setRotation(targetEntity.second.get()->getCalibratedRotation());
+                    viz.frames().updateFrame(framesIterator, linkTransform);
+                    framesIterator++;
                     break;
+                case hde::KinematicTargetType::gravity:
+                    linkTransform = viz.modelViz("human").getWorldLinkTransform(targetEntity.second.get()->modelLinkName);
+                    linkTransform.setRotation(targetEntity.second.get()->getCalibratedRotation());
+                    iDynTree::toEigen(gravityVector) = targetsFrameScalingFactor * iDynTree::toEigen(linkTransform.getRotation()).row(2);
+                    viz.vectors().updateVector(vectorsIterator, linkTransform.getPosition(), gravityVector);
+                    vectorsIterator++;
                 default:
                     linkTransform = viz.modelViz("human").getWorldLinkTransform(targetEntity.second.get()->modelLinkName);
+                    viz.frames().updateFrame(framesIterator, linkTransform);
+                    framesIterator++;
                 }
-
-                viz.frames().updateFrame(framesIterator, linkTransform);
-                framesIterator++;
             }
         }
 

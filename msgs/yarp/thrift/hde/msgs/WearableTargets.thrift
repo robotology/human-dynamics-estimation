@@ -30,6 +30,7 @@ enum KinematicTargetType {
     POSITIONANDVELOCITY,
     ORIENTATION,
     ORIENTATIONANDVELOCITY,
+    GRAVITY,
 }
 
 struct WearableTarget {
