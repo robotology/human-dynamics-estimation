@@ -17,6 +17,7 @@ add_install_rpath_support(BIN_DIRS "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BIND
 # Find required package
 find_package(YARP REQUIRED)
 find_package(iDynTree REQUIRED)
+find_package(OsqpEigen 0.4.0 REQUIRED)
 
 # set cpp files
 set(${EXE_TARGET_NAME}_SRC
@@ -34,6 +35,7 @@ target_link_libraries(${EXE_TARGET_NAME} LINK_PUBLIC
   YARP::YARP_OS
   YARP::YARP_dev
   YARP::YARP_init
+  OsqpEigen::OsqpEigen
   iDynTree::idyntree-core
   iDynTree::idyntree-modelio-urdf
   iDynTree::idyntree-visualization
