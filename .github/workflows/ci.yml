@@ -15,7 +15,7 @@ on:
 env:
     vcpkg_robotology_TAG: v0.6.0
     YCM_TAG: v0.13.0
-    YARP_TAG: v3.5.0
+    YARP_TAG: v3.6.0
     iDynTree_TAG: v4.2.0 
     wearables_TAG: v1.2.2 
     icub_main_TAG: v1.21.0    
