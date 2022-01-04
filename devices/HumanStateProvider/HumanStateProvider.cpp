@@ -118,7 +118,8 @@ static std::unordered_map<std::string,hde::KinematicTargetType> const stringToKi
                                                                                                     {"position",hde::KinematicTargetType::position},
                                                                                                     {"positionAndVelocity",hde::KinematicTargetType::positionAndVelocity},
                                                                                                     {"orientation",hde::KinematicTargetType::orientation},
-                                                                                                    {"orientationAndVelocity",hde::KinematicTargetType::orientationAndVelocity}};
+                                                                                                    {"orientationAndVelocity",hde::KinematicTargetType::orientationAndVelocity},
+                                                                                                    {"gravity",hde::KinematicTargetType::gravity}};
 
 // Container of data coming from the wearable interface
 struct WearableStorage
@@ -2123,6 +2124,13 @@ bool HumanStateProvider::impl::solveDynamicalInverseKinematics()
                 return false;
                                                                             }
             break; }
+        case hde::KinematicTargetType::gravity: {
+            if (!dynamicalInverseKinematics.updateTargetOrientation(linkName,
+                                                                    wearableTargetEntry.second->getCalibratedRotation())) {
+                yError() << LogPrefix << "Failed to update gravity target for " << targetName;
+                return false;
+                                                                 }
+            break; }
         default: {
             yError() << LogPrefix << "Invalid target type for " << targetName;
             return false;}
@@ -2235,6 +2243,10 @@ bool HumanStateProvider::impl::addInverseKinematicTargets()
                                                           }
                 yInfo() << LogPrefix << "Target " << targetName << " added for link " << linkName;
             break; }
+        case hde::KinematicTargetType::gravity: {
+            yError() << LogPrefix << "Failed to taget for " << targetName << " (gravity taget is not implemented in globalIK)";
+                return false;
+            break; }
         default: {
             yError() << LogPrefix << "Invalid target type for " << targetName;
             return false;}
@@ -2341,6 +2353,17 @@ bool HumanStateProvider::impl::addDynamicalInverseKinematicsTargets()
                 return false;
                                                                             }
                 yInfo() << LogPrefix << "Orientation and Velocity Target " << targetName << " added for link " << linkName;
+            break; }
+        case hde::KinematicTargetType::gravity: {
+            if (!dynamicalInverseKinematics.addOrientationTarget(linkName,
+                                                                 wearableTargetEntry.second->rotation,
+                                                                 {false, false, true},
+                                                                 dynamicalIKAngularCorrectionGain,
+                                                                 angVelTargetWeight)) {
+                yError() << LogPrefix << "Failed to add gravity target for " << targetName;
+                return false;
+                                                                 }
+                yInfo() << LogPrefix << "Gravity Target " << targetName << " added for link " << linkName;
             break; }
         default: {
             yError() << LogPrefix << "Invalid target type for " << targetName;
