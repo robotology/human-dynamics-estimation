@@ -474,19 +474,19 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     }
 
 
-    yarp::os::Bottle& fixedRightRotationGroup = config.findGroup("MEASUREMENT_TO_LINK_ROTATIONS");
-    if (!fixedRightRotationGroup.isNull()) {
-        for (size_t i = 1; i < fixedRightRotationGroup.size(); ++i) {
-            if (!(fixedRightRotationGroup.get(i).isList() && fixedRightRotationGroup.get(i).asList()->size() == 2)) {
+    yarp::os::Bottle& fixedRightTransformGroup = config.findGroup("MEASUREMENT_TO_LINK_TRANSFORMS");
+    if (!fixedRightTransformGroup.isNull()) {
+        for (size_t i = 1; i < fixedRightTransformGroup.size(); ++i) {
+            if (!(fixedRightTransformGroup.get(i).isList() && fixedRightTransformGroup.get(i).asList()->size() == 2)) {
                 yError() << LogPrefix
-                        << "Childs of MEASUREMENT_TO_LINK_ROTATIONS must be lists of 2 elements";
+                        << "Childs of MEASUREMENT_TO_LINK_TRANSFORMS must be lists of 2 elements";
                 return false;
             }
-            yarp::os::Bottle* list = fixedRightRotationGroup.get(i).asList();
+            yarp::os::Bottle* list = fixedRightTransformGroup.get(i).asList();
             std::string linkName = list->get(0).asString();
             yarp::os::Bottle* listContent = list->get(1).asList();
 
-            // check if FIXED_SENSOR_ROTATION matrix is passed (9 elements)
+            // check if MEASUREMENT_TO_LINK_TRANSFORMS matrix is passed (16 elements)
             if (!(    (listContent->size() == 16)
                    && (listContent->get(0).isDouble())
                    && (listContent->get(1).isDouble())
@@ -504,28 +504,28 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
                    && (listContent->get(13).isDouble())
                    && (listContent->get(14).isDouble())
                    && (listContent->get(15).isDouble()))) {
-                yError() << LogPrefix << "MEASUREMENT_TO_LINK_ROTATIONS " << linkName << " must have 16 double values describing the rotation matrix";
+                yError() << LogPrefix << "MEASUREMENT_TO_LINK_TRANSFORMS " << linkName << " must have 16 double values describing the rotation matrix";
                 return false;
             }
 
-            yInfo() << LogPrefix << "MEASUREMENT_TO_LINK_ROTATIONS added for target " << linkName;
+            yInfo() << LogPrefix << "MEASUREMENT_TO_LINK_TRANSFORMS added for target " << linkName;
         }
     }
 
-    yarp::os::Bottle& fixedLeftRotationGroup = config.findGroup("WORLD_TO_MEASUREMENT_ROTATIONS");
-    if (!fixedLeftRotationGroup.isNull()) {
-        for (size_t i = 1; i < fixedLeftRotationGroup.size(); ++i) {
-            if (!(fixedLeftRotationGroup.get(i).isList() && fixedLeftRotationGroup.get(i).asList()->size() == 2)) {
+    yarp::os::Bottle& fixedLeftTransformGroup = config.findGroup("WORLD_TO_MEASUREMENT_TRANSFORMS");
+    if (!fixedLeftTransformGroup.isNull()) {
+        for (size_t i = 1; i < fixedLeftTransformGroup.size(); ++i) {
+            if (!(fixedLeftTransformGroup.get(i).isList() && fixedLeftTransformGroup.get(i).asList()->size() == 2)) {
                 yError() << LogPrefix
-                        << "Childs of WORLD_TO_MEASUREMENT_ROTATIONS must be lists of 2 elements";
+                        << "Childs of WORLD_TO_MEASUREMENT_TRANSFORMS must be lists of 2 elements";
                 return false;
             }
-            yarp::os::Bottle* list = fixedLeftRotationGroup.get(i).asList();
+            yarp::os::Bottle* list = fixedLeftTransformGroup.get(i).asList();
             std::string linkName = list->get(0).asString();
             yarp::os::Bottle* listContent = list->get(1).asList();
 
-            // check if FIXED_SENSOR_ROTATION matrix is passed (9 elements)
-            if (!(    (listContent->size() == 9)
+            // check if WORLD_TO_MEASUREMENT_TRANSFORMS matrix is passed (9 elements)
+            if (!(    (listContent->size() == 16)
                    && (listContent->get(0).isDouble())
                    && (listContent->get(1).isDouble())
                    && (listContent->get(2).isDouble())
@@ -534,12 +534,19 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
                    && (listContent->get(5).isDouble())
                    && (listContent->get(6).isDouble())
                    && (listContent->get(7).isDouble())
-                   && (listContent->get(8).isDouble()) )) {
-                yError() << LogPrefix << "WORLD_TO_MEASUREMENT_ROTATIONS " << linkName << " must have 9 double values describing the rotation matrix";
+                   && (listContent->get(8).isDouble())
+                   && (listContent->get(9).isDouble())
+                   && (listContent->get(10).isDouble())
+                   && (listContent->get(11).isDouble())
+                   && (listContent->get(12).isDouble())
+                   && (listContent->get(13).isDouble())
+                   && (listContent->get(14).isDouble())
+                   && (listContent->get(15).isDouble()) )) {
+                yError() << LogPrefix << "WORLD_TO_MEASUREMENT_TRANSFORMS " << linkName << " must have 16 double values describing the rotation matrix";
                 return false;
             }
 
-            yInfo() << LogPrefix << "WORLD_TO_MEASUREMENT_ROTATIONS added for target " << linkName;
+            yInfo() << LogPrefix << "WORLD_TO_MEASUREMENT_TRANSFORMS added for target " << linkName;
         }
     }
 
@@ -605,9 +612,6 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         hde::KinematicTargetType targetType = it->second;
         hde::TargetName targetName = linksGroup.get(i).asList()->get(0).asString();
 
-        // yInfo() << LogPrefix << "Read link map:" << modelLinkName << "==>" << wearableName;
-        // pImpl->wearableStorage.modelToWearable_LinkName[modelLinkName] = wearableName;
-
         if (pImpl->wearableTargets.find(targetName) != pImpl->wearableTargets.end())
         {
             yError() << LogPrefix << "Duplicated target name found [" << targetName << "]";
@@ -617,19 +621,23 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         pImpl->wearableTargets[targetName] = std::make_shared<hde::WearableSensorTarget>(wearableName, modelLinkName, targetType);
     }
 
-    for (size_t i = 1; i < fixedLeftRotationGroup.size(); ++i) {
-        hde::TargetName targetName = fixedLeftRotationGroup.get(i).asList()->get(0).asString();
-        yarp::os::Bottle* fixedLeftRotationMatrixValues = fixedLeftRotationGroup.get(i).asList()->get(1).asList();
+    for (size_t i = 1; i < fixedLeftTransformGroup.size(); ++i) {
+        hde::TargetName targetName = fixedLeftTransformGroup.get(i).asList()->get(0).asString();
+        yarp::os::Bottle* fixedLeftRotationMatrixValues = fixedLeftTransformGroup.get(i).asList()->get(1).asList();
 
         iDynTree::Rotation fixedLeftRotation = iDynTree::Rotation( fixedLeftRotationMatrixValues->get(0).asDouble(),
                                                                    fixedLeftRotationMatrixValues->get(1).asDouble(),
                                                                    fixedLeftRotationMatrixValues->get(2).asDouble(),
-                                                                   fixedLeftRotationMatrixValues->get(3).asDouble(),
                                                                    fixedLeftRotationMatrixValues->get(4).asDouble(),
                                                                    fixedLeftRotationMatrixValues->get(5).asDouble(),
                                                                    fixedLeftRotationMatrixValues->get(6).asDouble(),
-                                                                   fixedLeftRotationMatrixValues->get(7).asDouble(),
-                                                                   fixedLeftRotationMatrixValues->get(8).asDouble());
+                                                                   fixedLeftRotationMatrixValues->get(8).asDouble(),
+                                                                   fixedLeftRotationMatrixValues->get(9).asDouble(),
+                                                                   fixedLeftRotationMatrixValues->get(10).asDouble());
+        iDynTree::Position fixedLeftPositionOffset = iDynTree::Position(fixedLeftRotationMatrixValues->get(3).asDouble(),
+                                                                        fixedLeftRotationMatrixValues->get(7).asDouble(),
+                                                                        fixedLeftRotationMatrixValues->get(11).asDouble());
+
         if (pImpl->wearableTargets.find(targetName) == pImpl->wearableTargets.end())
         {
             yError() << LogPrefix << "Left calibration rotation for not existing target [" << targetName << "]";
@@ -637,12 +645,13 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         }
 
         pImpl->wearableTargets[targetName].get()->calibrationWorldToMeasurementWorld.setRotation(fixedLeftRotation);
-        yInfo() << LogPrefix << "Adding Fixed Rotation for " << targetName << "==>" << fixedLeftRotation.toString();
+        pImpl->wearableTargets[targetName].get()->calibrationWorldToMeasurementWorld.setPosition(fixedLeftPositionOffset);
+        yInfo() << LogPrefix << "Adding Fixed Transform for " << targetName << "==>" << pImpl->wearableTargets[targetName].get()->calibrationWorldToMeasurementWorld.toString();
     }
 
-    for (size_t i = 1; i < fixedRightRotationGroup.size(); ++i) {
-        hde::TargetName targetName = fixedRightRotationGroup.get(i).asList()->get(0).asString();
-        yarp::os::Bottle* fixedRightRotationMatrixValues = fixedRightRotationGroup.get(i).asList()->get(1).asList();
+    for (size_t i = 1; i < fixedRightTransformGroup.size(); ++i) {
+        hde::TargetName targetName = fixedRightTransformGroup.get(i).asList()->get(0).asString();
+        yarp::os::Bottle* fixedRightRotationMatrixValues = fixedRightTransformGroup.get(i).asList()->get(1).asList();
 
         iDynTree::Rotation fixedRightRotation = iDynTree::Rotation( fixedRightRotationMatrixValues->get(0).asDouble(),
                                                                     fixedRightRotationMatrixValues->get(1).asDouble(),
