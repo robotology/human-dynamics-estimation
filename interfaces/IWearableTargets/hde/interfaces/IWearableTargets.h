@@ -114,6 +114,7 @@ namespace hde {
         iDynTree::Vector3 getCalibratedAngularVelocity()
         {
             std::lock_guard<std::mutex> lock(mutex);
+            // TODO: it needs to be updated considering calibrationMeasurementToLink position offset
             return iDynTree::AngularMotionVector3(angularVelocity).changeCoordFrame(calibrationWorldToMeasurementWorld.getRotation());
         };
     };
