@@ -706,6 +706,7 @@ int main(int argc, char* argv[])
                     iDynTree::toEigen(gravityVector) = targetsFrameScalingFactor * iDynTree::toEigen(linkTransform.getRotation()).row(2);
                     viz.vectors().updateVector(vectorsIterator, linkTransform.getPosition(), gravityVector);
                     vectorsIterator++;
+                    break;
                 default:
                     linkTransform = viz.modelViz("human").getWorldLinkTransform(targetEntity.second.get()->modelLinkName);
                     viz.frames().updateFrame(framesIterator, linkTransform);
