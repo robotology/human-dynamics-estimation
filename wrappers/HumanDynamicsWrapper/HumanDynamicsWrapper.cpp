@@ -105,7 +105,7 @@ void HumanDynamicsWrapper::run()
     }
 
     // Send the data
-    pImpl->outputPort.write(/*forceStrict=*/true);
+    pImpl->outputPort.write();
 }
 
 bool HumanDynamicsWrapper::attach(yarp::dev::PolyDriver* poly)
