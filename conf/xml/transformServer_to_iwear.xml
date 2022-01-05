@@ -15,6 +15,7 @@
     <param name="wearableSensorType">PoseSensor</param>
     <param name="frameIDs">(virtualizer_root
                             virtualizer_frame
+                            root_link_desired
                             /hmd/LHR-752422B9
                             /trackers/LHR-3C2E1582
                             /trackers/LHR-8F3A4D72)</param>
