@@ -8,7 +8,7 @@
     </device>
 
     <device type="human_state_provider" name="RobotStateProvider">
-        <param name="period">0.02</param>
+        <param name="period">0.01</param>
         <param name="urdf">teleoperation_iCub_model_V_3.urdf</param>
         <param name="floatingBaseFrame">chest</param>
         <!-- ikSolver options: pairwised, global, dynamical -->
@@ -40,10 +40,10 @@
         <!-- integration based IK parameters -->
         <param name='dynamicalIKJointVelocityLimit'>10.0</param> <!-- comment or -1.0 for no limits -->
         <param name="dynamicalIKMeasuredVelocityGainLinRot">(1.0 1.0)</param>
-        <param name="dynamicalIKCorrectionGainsLinRot">(500.0 5.0)</param>
+        <param name="dynamicalIKCorrectionGainsLinRot">(700.0 20.0)</param>
         <param name="dynamicalIKIntegralCorrectionGainsLinRot">(0.0 0.0)</param>
         <group name="WEARABLE_SENSOR_TARGETS">
-            <param name="target_Pelvis">(root_link, TransformServer::pose::virtualizer_frame, orientation)</param>
+            <param name="target_Pelvis">(root_link, TransformServer::pose::root_link_desired, orientation)</param>
             <param name="target_Chest">(chest, TransformServer::pose::virtualizer_frame, pose)</param>
             <param name="target_RightHand">(r_hand_fake, TransformServer::pose::/trackers/LHR-3C2E1582, pose)</param>
             <param name="target_LeftHand">(l_hand_fake, TransformServer::pose::/trackers/LHR-8F3A4D72, pose)</param>
@@ -150,7 +150,7 @@
     </device>
 
     <device type="wearable_targets_wrapper" name="WearableTargetsWrapper">
-        <param name="period">0.02</param>
+        <param name="period">0.01</param>
         <param name="outputPort">/HDE/WearableTargetsWrapper/state:o</param>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
