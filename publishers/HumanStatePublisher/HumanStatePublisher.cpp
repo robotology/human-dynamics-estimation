@@ -413,8 +413,8 @@ void HumanStatePublisher::run()
     // WRITE THE MESSAGES
     // ==================
 
-    pImpl->humanBasePoseROS.publisher.write(/*forceStrict=*/true);
-    pImpl->humanJointStateROS.publisher.write(/*forceStrict=*/true);
+    pImpl->humanBasePoseROS.publisher.write();
+    pImpl->humanJointStateROS.publisher.write();
 
     // Publish base tf to transform server
     iDynTree::Position basePosition(pImpl->humanStateBuffers.basePosition[0],

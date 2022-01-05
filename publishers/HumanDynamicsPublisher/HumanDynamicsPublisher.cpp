@@ -234,7 +234,7 @@ void HumanDynamicsPublisher::run()
         effortMsg = jointEffortData.message;
 
         // Publish the effort for this joint
-        jointEffortData.publisher->write(/*forceStrict=*/true);
+        jointEffortData.publisher->write();
     }
 }
 
