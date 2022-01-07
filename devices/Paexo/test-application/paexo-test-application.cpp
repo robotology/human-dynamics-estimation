@@ -70,7 +70,7 @@ int main() {
                 yInfo() << "Sending motor position " << current_motor_position;
                 cmd.addDouble(current_motor_position);
 
-                port->write(true);
+                port->write();
 
                 Time::delay(0.5);
 
