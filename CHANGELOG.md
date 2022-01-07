@@ -5,8 +5,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
 ### Added
 - Added management of `ISkinSensor`. (https://github.com/robotology/wearables/pull/139)
+
+### Changed
+- Changed forceStrict to false when writing on ports. (https://github.com/robotology/wearables/pull/137)
+
 ## [1.2.2] - 2021-10-28
 
 ### Removed
