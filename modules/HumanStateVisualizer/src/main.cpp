@@ -157,7 +157,7 @@ int main(int argc, char* argv[])
     }
     bool useFixedCamera = rf.find("useFixedCamera").asBool();
 
-    iDynTree::Position fixedCameraTarget;
+    iDynTree::Position fixedCameraTarget = iDynTree::Position(0, 0, 0);
     if (useFixedCamera) 
     {
         if( !(rf.check("fixedCameraTarget") && rf.find("fixedCameraTarget").isList() && rf.find("fixedCameraTarget").asList()->size() == 3) ) 
