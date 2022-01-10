@@ -897,7 +897,7 @@ bool XsensSuit::open(yarp::os::Searchable& config)
 
     pImpl->network = std::make_unique<yarp::os::Network>();
     if (!yarp::os::Network::initialized() || !yarp::os::Network::checkNetwork(5.0)) {
-        yError() << LogPrefix << "YARP server wasn't found active.";
+        yError() << logPrefix << "YARP server wasn't found active.";
         return false;
     }
 
