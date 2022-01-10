@@ -702,8 +702,7 @@ int main(int argc, char* argv[])
                     break;
                 case hde::KinematicTargetType::gravity:
                     linkTransform = viz.modelViz("human").getWorldLinkTransform(targetEntity.second.get()->modelLinkName);
-                    linkTransform.setRotation(targetEntity.second.get()->getCalibratedRotation());
-                    iDynTree::toEigen(gravityVector) = targetsFrameScalingFactor * iDynTree::toEigen(linkTransform.getRotation()).row(2);
+                    iDynTree::toEigen(gravityVector) = targetsFrameScalingFactor * (iDynTree::toEigen(linkTransform.getRotation()) * iDynTree::toEigen(targetEntity.second.get()->getCalibratedRotation()).row(2).transpose());
                     viz.vectors().updateVector(vectorsIterator, linkTransform.getPosition(), gravityVector);
                     vectorsIterator++;
                     break;
