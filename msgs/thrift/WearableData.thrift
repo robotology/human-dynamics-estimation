@@ -138,7 +138,7 @@ struct PositionSensor {
 
 struct SkinSensor {
   1: SensorInfo info;
-  2: VectorXYZ data;
+  2: list<double> data;
 }
 
 struct TemperatureSensor {
