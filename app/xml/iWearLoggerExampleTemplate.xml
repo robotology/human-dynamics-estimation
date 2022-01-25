@@ -29,6 +29,7 @@
         <param name="logVirtualLinkKinSensors">false</param>
         <param name="logVirtualJointKinSensors">false</param>
         <param name="logVirtualSphericalJointKinSensors">false</param>                
+        <param name="logSkinSensors">false</param>
         
         <param name="saveBufferManagerConfiguration">true</param>
         <param name="experimentName">test_iwear_logger</param>

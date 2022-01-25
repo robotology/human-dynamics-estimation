@@ -452,13 +452,11 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
         }
         const auto* constSensor = static_cast<const sensor::impl::SkinSensor*>(isensor.get());
         auto* sensor = const_cast<sensor::impl::SkinSensor*>(constSensor);
-        yWarning() << logPrefix << "SkinSensor is not yet implemented";
-        // Copy its data to the buffer used for exposing the IWear interface
-        //        pImpl->skinSensors[inputSensorName]->setBuffer(
-        //            {wearDataInputSensor.data.x, wearDataInputSensor.data.y,
-        //            wearDataInputSensor.data.z});
-        //        // Set the status
-        //        sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
+
+        //Copy its data to the buffer used for exposing the IWear interface
+        sensor->setBuffer(wearDataInputSensor.data);
+        // Set the status
+        sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
     }
 
     for (auto& s : receivedWearData.temperatureSensors) {

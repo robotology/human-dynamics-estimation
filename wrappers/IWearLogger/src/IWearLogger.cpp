@@ -58,8 +58,7 @@ struct wearable::wrappers::IWearLoggerSettings
     bool logVirtualLinkKinSensors{false};
     bool logVirtualJointKinSensors{false};
     bool logVirtualSphericalJointKinSensors{false};
-
-    // skin sensors are not currently supported
+    bool logSkinSensors{false};
 };
 
 using namespace wearable;
@@ -183,6 +182,8 @@ public:
         virtualJointKinSensors;
     wearable::VectorOfSensorPtr<const wearable::sensor::IVirtualSphericalJointKinSensor>
         virtualSphericalJointKinSensors;
+    wearable::VectorOfSensorPtr<const wearable::sensor::ISkinSensor>
+        skinSensors;
 
     std::unordered_map<WerableSensorName, MatlabChannelName> wearable2MatlabNameLookup;
     std::unordered_map<WerableSensorName, std::unique_ptr<YarpBufferedPort>>
@@ -258,6 +259,7 @@ void IWearLogger::run()
         pImpl->virtualLinkKinSensors = pImpl->iWear->getVirtualLinkKinSensors();
         pImpl->virtualJointKinSensors = pImpl->iWear->getVirtualJointKinSensors();
         pImpl->virtualSphericalJointKinSensors = pImpl->iWear->getVirtualSphericalJointKinSensors();
+        pImpl->skinSensors = pImpl->iWear->getSkinSensors();
     }
 
     yarp::os::Stamp timestamp = pImpl->iPreciselyTimed->getLastInputStamp();
@@ -759,6 +761,39 @@ void IWearLogger::run()
             }
         }
     }
+
+    if (pImpl->settings.logAllQuantities || pImpl->settings.logSkinSensors) 
+    {
+        for (const auto& sensor : pImpl->skinSensors) {
+            std::vector<double> pressureVector;
+            if (!sensor->getPressure(pressureVector)) {
+                yWarning() << logPrefix << "[SkinSensors] "
+                           << "Failed to read data, "
+                           << "sensor status is " << static_cast<int>(sensor->getSensorStatus());
+            }
+            else
+            {
+                std::vector<double> saveVar;
+                std::copy(pressureVector.begin(), pressureVector.end(), std::back_inserter(saveVar));
+
+                if (pImpl->loggerType == LoggerType::MATLAB
+                    || pImpl->loggerType == LoggerType::MATLAB_YARP) {
+                    const auto& channelName =
+                        pImpl->wearable2MatlabNameLookup.at(sensor->getSensorName());
+                    pImpl->bufferManager.push_back(saveVar, timestamp.getTime(), channelName);
+                }
+
+                if (pImpl->loggerType == LoggerType::YARP
+                    || pImpl->loggerType == LoggerType::MATLAB_YARP) {
+                    auto& port = pImpl->wearable2YarpPortLookup.at(sensor->getSensorName());
+                    yarp::sig::Vector& data = port->prepare();
+                    pImpl->prepareYarpBottle(saveVar, data);
+                    port->setEnvelope(timestamp);
+                    port->write(true);
+                }
+            }
+        }
+    }
 }
 
 // ======================
@@ -865,6 +900,7 @@ bool IWearLogger::impl::loadSettingsFromConfig(yarp::os::Searchable& config)
         prop, "logVirtualJointKinSensors", settings.logVirtualJointKinSensors);
     checkAndLoadBooleanOption(
         prop, "logVirtualSphericalJointKinSensors", settings.logVirtualSphericalJointKinSensors);
+    checkAndLoadBooleanOption(prop, "logSkinSensors", settings.logSkinSensors);
 
     // load buffer manager configuration settings
     checkAndLoadBooleanOption(
@@ -1265,6 +1301,29 @@ bool IWearLogger::impl::configureBufferManager()
 
             if (loggerType == LoggerType::MATLAB || loggerType == LoggerType::MATLAB_YARP) {
                 ok = ok && configureMatlabBufferManager(sensorName, 10);
+            }
+
+            if (loggerType == LoggerType::YARP || loggerType == LoggerType::MATLAB_YARP) {
+                ok = ok && configureYarpBufferManager(sensorName);
+            }
+        }
+    }
+
+    if (ok && (settings.logAllQuantities || settings.logSkinSensors)) {
+        for (const auto& s : iWear->getSkinSensors()) {
+            auto sensorName = s->getSensorName();
+
+            // retrieve data size
+            std::vector<double> pressureVector;
+            s->getPressure(pressureVector);
+            size_t dataSize = pressureVector.size()+1;
+
+            yInfo() << logPrefix
+                    << "Adding ("<< dataSize<<", 1) pressure vector channels for "
+                    << sensorName << " prefixed with sensor status.";
+
+            if (loggerType == LoggerType::MATLAB || loggerType == LoggerType::MATLAB_YARP) {
+                ok = ok && configureMatlabBufferManager(sensorName, dataSize);
             }
 
             if (loggerType == LoggerType::YARP || loggerType == LoggerType::MATLAB_YARP) {

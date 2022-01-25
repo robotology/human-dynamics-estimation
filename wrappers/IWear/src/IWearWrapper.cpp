@@ -315,8 +315,17 @@ void IWearWrapper::run()
         }
     }
     {
-        if (pImpl->skinSensors.size() > 0) {
-            yWarning() << logPrefix << "SkinSensor not yet implemented.";
+        for (const auto& sensor : pImpl->skinSensors) {
+            std::vector<double> pressureVector;
+            if (!sensor->getPressure(pressureVector)) {
+                yWarning() << logPrefix << "[SkinSensors] "
+                         << "Failed to read data, "
+                         << "sensor status is "
+                         << static_cast<int>(sensor->getSensorStatus());
+            }
+
+            data.skinSensors[sensor->getSensorName()] = {generateSensorStatus(sensor.get()),
+                                                         pressureVector};
         }
     }
     {
