@@ -13,6 +13,8 @@
 #include <numeric>
 #include <cmath>
 
+#include <thread>
+
 #include <yarp/os/LogStream.h>
 #include <yarp/os/ResourceFinder.h>
 #include <yarp/dev/PolyDriver.h>
@@ -284,7 +286,22 @@ bool RobotPositionController::open(yarp::os::Searchable& config)
             // Get initial joint positions from encoders
             std::vector<double> initEncoderJointPositions;
             initEncoderJointPositions.resize(remoteControlBoardJoints);
-            pImpl->iEncoders->getEncoders(initEncoderJointPositions.data());
+
+            bool getEncodersOk = false;
+            int MAX_COUNT_GET_ENCODERS = 5000;
+            int countgetEncoders = 0;
+
+            while(!getEncodersOk)
+            {
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                getEncodersOk = pImpl->iEncoders->getEncoders(initEncoderJointPositions.data());
+                countgetEncoders++;
+                if(countgetEncoders>MAX_COUNT_GET_ENCODERS)
+                {
+                    yError()<< LogPrefix << "Cannot read encoder for "<< controlBoard;
+                    return false;
+                }
+            }
 
             yarp::sig::Vector initEncoderJointPositionsVector;
             initEncoderJointPositionsVector.resize(remoteControlBoardJoints);
