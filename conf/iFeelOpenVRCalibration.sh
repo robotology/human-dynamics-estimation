@@ -8,6 +8,7 @@ OPTION: <vertical distance from the subject belly to the subject eyes in meters>
 
 EXAMPLE USAGE: ./iFeelOpenVRCalibration.sh 0.5
 ************************************************************************************************************************************
+
 EOF
 }
 
@@ -15,14 +16,14 @@ EOF
 ################################################################################
 # "MAIN" FUNCTION:                                                             #
 ################################################################################
+usage
 if [ $# -lt 1 ]; then
-    echo "Error in options passed!"
+    CHEST_TO_HEAD_DISTANCE_M=0.5
+    echo "[WARNING] No option passed, using default CHEST_TO_HEAD_DISTANCE "$CHEST_TO_HEAD_DISTANCE_M
     echo ""
-    usage
-    exit 1
+else
+    CHEST_TO_HEAD_DISTANCE_M=$1
 fi
-
-CHEST_TO_HEAD_DISTANCE_M=$1
 
 echo "OpenVR: resetting seated position"
 echo "resetSeatedPosition" | yarp rpc /OpenVRTrackersModule/rpc
