@@ -6,6 +6,7 @@
   <module>
     <name>yarprobotinterface</name>
     <parameters>--config transformServer_to_iwear.xml</parameters>
+    <dependencies>
           <port timeout="15.0" request="set_static_transform_rad virtualizer_root openVR_origin 0.1 0 0.5 1.5708 0 -1.5708" reply="&quot;set_static_transform done&quot;">/transformServer/rpc</port>
           <port timeout="15.0" request="set_static_transform_rad virtualizer_frame root_link_desired 0.0 0 0 0.0 -0.2 0.0" reply="&quot;set_static_transform done&quot;">/transformServer/rpc</port>
           <port timeout="15.0">/virtualizer/playerOrientation:o</port>
