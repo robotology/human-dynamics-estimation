@@ -179,6 +179,7 @@ void IWearWrapper::run()
                          << "Failed to read data, "
                          << "sensor status is "
                          << static_cast<int>(sensor->getSensorStatus());
+                continue;
             }
 
             data.accelerometers[sensor->getSensorName()] = {generateSensorStatus(sensor.get()),
@@ -194,6 +195,7 @@ void IWearWrapper::run()
                          << "Failed to read data, "
                          << "sensor status is "
                          << static_cast<int>(sensor->getSensorStatus());
+                continue;
             }
             data.emgSensors[sensor->getSensorName()] = {generateSensorStatus(sensor.get()),
                                                         {value, normalization}};
@@ -207,6 +209,7 @@ void IWearWrapper::run()
                          << "Failed to read data, "
                          << "sensor status is "
                          << static_cast<int>(sensor->getSensorStatus());
+                continue;
             }
 
             data.force3DSensors[sensor->getSensorName()] = {generateSensorStatus(sensor.get()),
@@ -221,6 +224,7 @@ void IWearWrapper::run()
                          << "Failed to read data, "
                          << "sensor status is "
                          << static_cast<int>(sensor->getSensorStatus());
+                continue;
             }
 
             data.forceTorque6DSensors[sensor->getSensorName()] = {
@@ -236,6 +240,7 @@ void IWearWrapper::run()
                          << "Failed to read data, "
                          << "sensor status is "
                          << static_cast<int>(sensor->getSensorStatus());
+                continue;
             }
 
             data.freeBodyAccelerationSensors[sensor->getSensorName()] = {
@@ -250,6 +255,7 @@ void IWearWrapper::run()
                          << "Failed to read data, "
                          << "sensor status is "
                          << static_cast<int>(sensor->getSensorStatus());
+                continue;
             }
 
             data.gyroscopes[sensor->getSensorName()] = {generateSensorStatus(sensor.get()),
@@ -264,6 +270,7 @@ void IWearWrapper::run()
                          << "Failed to read data, "
                          << "sensor status is "
                          << static_cast<int>(sensor->getSensorStatus());
+                continue;
             }
 
             data.magnetometers[sensor->getSensorName()] = {generateSensorStatus(sensor.get()),
@@ -278,6 +285,7 @@ void IWearWrapper::run()
                          << "Failed to read data, "
                          << "sensor status is "
                          << static_cast<int>(sensor->getSensorStatus());
+                continue;
             }
 
             data.orientationSensors[sensor->getSensorName()] = {generateSensorStatus(sensor.get()),
@@ -293,6 +301,7 @@ void IWearWrapper::run()
                          << "Failed to read data, "
                          << "sensor status is "
                          << static_cast<int>(sensor->getSensorStatus());
+                continue;
             }
 
             data.poseSensors[sensor->getSensorName()] = {
@@ -308,6 +317,7 @@ void IWearWrapper::run()
                          << "Failed to read data, "
                          << "sensor status is "
                          << static_cast<int>(sensor->getSensorStatus());
+                continue;
             }
 
             data.positionSensors[sensor->getSensorName()] = {generateSensorStatus(sensor.get()),
@@ -322,6 +332,7 @@ void IWearWrapper::run()
                          << "Failed to read data, "
                          << "sensor status is "
                          << static_cast<int>(sensor->getSensorStatus());
+                continue;
             }
 
             data.skinSensors[sensor->getSensorName()] = {generateSensorStatus(sensor.get()),
@@ -350,6 +361,7 @@ void IWearWrapper::run()
                          << "Failed to read data, "
                          << "sensor status is "
                          << static_cast<int>(sensor->getSensorStatus());
+                continue;
             }
 
             data.torque3DSensors[sensor->getSensorName()] = {generateSensorStatus(sensor.get()),
@@ -371,6 +383,7 @@ void IWearWrapper::run()
                          << "Failed to read data, "
                          << "sensor status is "
                          << static_cast<int>(sensor->getSensorStatus());
+                continue;
             }
 
             data.virtualLinkKinSensors[sensor->getSensorName()] = {
@@ -390,10 +403,11 @@ void IWearWrapper::run()
             double jointAcc;
             if (!sensor->getJointPosition(jointPos) || !sensor->getJointVelocity(jointVel)
                 || !sensor->getJointAcceleration(jointAcc)) {
-                yError() << logPrefix << "[VirtualJointKinSensors] "
-                         << "Failed to read data";
-                askToStop();
-                return;
+                yWarning() << logPrefix << "[VirtualJointKinSensors] "
+                         << "Failed to read data"
+                         << "sensor status is "
+                         << static_cast<int>(sensor->getSensorStatus());
+                continue;
             }
             data.virtualJointKinSensors[sensor->getSensorName()] = {
                 generateSensorStatus(sensor.get()),
@@ -413,6 +427,7 @@ void IWearWrapper::run()
                          << "Failed to read data, "
                          << "sensor status is "
                          << static_cast<int>(sensor->getSensorStatus());
+                continue;
             }
             data.virtualSphericalJointKinSensors[sensor->getSensorName()] = {
                 generateSensorStatus(sensor.get()),
