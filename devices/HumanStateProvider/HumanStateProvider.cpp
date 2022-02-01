@@ -1591,15 +1591,15 @@ bool HumanStateProvider::impl::updateWearableTargets()
                     return false;
                 }
                 if (sensor->getSensorStatus() != sensor::SensorStatus::Ok) {
-                    yError() << LogPrefix << "The sensor status of" << wearableName
+                    yWarning() << LogPrefix << "The sensor status of" << wearableName
                             << "is not ok (" << static_cast<double>(sensor->getSensorStatus()) << ")";
-                    return false;
+                    continue;
                 }
 
                 wearable::Vector3 position;
                 if (!sensor->getLinkPosition(position)) {
-                    yError() << LogPrefix << "Failed to read link position from virtual link sensor " << wearableName;
-                    return false;
+                    yWarning() << LogPrefix << "Failed to read link position from virtual link sensor " << wearableName;
+                    continue;
                 }
                 wearableTargetEntry.second->position.setVal(0, position.at(0));
                 wearableTargetEntry.second->position.setVal(1, position.at(1));
@@ -1607,15 +1607,15 @@ bool HumanStateProvider::impl::updateWearableTargets()
 
                 Quaternion orientation;
                 if (!sensor->getLinkOrientation(orientation)) {
-                    yError() << LogPrefix << "Failed to read link orientation from virtual link sensor " << wearableName;
-                    return false;
+                    yWarning() << LogPrefix << "Failed to read link orientation from virtual link sensor " << wearableName;
+                    continue;
                 }
                 wearableTargetEntry.second->rotation.fromQuaternion({orientation.data(), 4});
 
                 wearable::Vector3 linearVelocity;
                 if (!sensor->getLinkLinearVelocity(linearVelocity)) {
-                    yError() << LogPrefix << "Failed to read link linear velocity from virtual link sensor " << wearableName;
-                    return false;
+                    yWarning() << LogPrefix << "Failed to read link linear velocity from virtual link sensor " << wearableName;
+                    continue;
                 }
                 wearableTargetEntry.second->linearVelocity.setVal(0, linearVelocity.at(0));
                 wearableTargetEntry.second->linearVelocity.setVal(1, linearVelocity.at(1));
@@ -1623,9 +1623,9 @@ bool HumanStateProvider::impl::updateWearableTargets()
 
                 wearable::Vector3 angularVelocity;
                 if (!sensor->getLinkAngularVelocity(angularVelocity)) {
-                    yError() << LogPrefix
+                    yWarning() << LogPrefix
                             << "Failed to read link angular velocity from virtual link sensor " << wearableName;
-                    return false;
+                    continue;
                 }
                 wearableTargetEntry.second->angularVelocity.setVal(0, angularVelocity.at(0));
                 wearableTargetEntry.second->angularVelocity.setVal(1, angularVelocity.at(1));
@@ -1640,15 +1640,15 @@ bool HumanStateProvider::impl::updateWearableTargets()
                     return false;
                 }
                 if (sensor->getSensorStatus() != sensor::SensorStatus::Ok) {
-                    yError() << LogPrefix << "The sensor status of" << wearableName
+                    yWarning() << LogPrefix << "The sensor status of" << wearableName
                             << "is not ok (" << static_cast<double>(sensor->getSensorStatus()) << ")";
-                    return false;
+                    continue;
                 }
 
                 wearable::Vector3 position;
                 if (!sensor->getPosePosition(position)) {
-                    yError() << LogPrefix << "Failed to read link position from virtual link sensor " << wearableName;
-                    return false;
+                    yWarning() << LogPrefix << "Failed to read link position from virtual link sensor " << wearableName;
+                    continue;
                 }
                 wearableTargetEntry.second->position.setVal(0, position.at(0));
                 wearableTargetEntry.second->position.setVal(1, position.at(1));
@@ -1656,8 +1656,8 @@ bool HumanStateProvider::impl::updateWearableTargets()
 
                 Quaternion orientation;
                 if (!sensor->getPoseOrientationAsQuaternion(orientation)) {
-                    yError() << LogPrefix << "Failed to read link orientation from virtual link sensor " << wearableName;
-                    return false;
+                    yWarning() << LogPrefix << "Failed to read link orientation from virtual link sensor " << wearableName;
+                    continue;
                 }
                 wearableTargetEntry.second->rotation.fromQuaternion({orientation.data(), 4});
                 break;
