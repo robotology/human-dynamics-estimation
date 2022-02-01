@@ -2141,6 +2141,7 @@ bool HumanStateProvider::impl::solveDynamicalInverseKinematics()
         return false;
     
     dynamicalInverseKinematics.getConfigurationSolution(baseTransformSolution, jointConfigurationSolution);
+    dynamicalInverseKinematics.getVelocitySolution(baseVelocitySolution, jointVelocitiesSolution);
 
     return true;
 }
