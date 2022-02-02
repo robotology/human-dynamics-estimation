@@ -9,7 +9,7 @@
     </device>
 
     <device type="human_state_provider" name="RobotStateProvider">
-        <param name="period">0.02</param>
+        <param name="period">0.01</param>
         <param name="urdf">teleoperation_iCub_model_V_3.urdf</param>
         <param name="floatingBaseFrame">chest</param>
         <!-- ikSolver options: pairwised, global, dynamical -->
@@ -41,10 +41,10 @@
         <!-- integration based IK parameters -->
         <param name='dynamicalIKJointVelocityLimit'>10.0</param> <!-- comment or -1.0 for no limits -->
         <param name="dynamicalIKMeasuredVelocityGainLinRot">(1.0 1.0)</param>
-        <param name="dynamicalIKCorrectionGainsLinRot">(80.0 5.0)</param>
+        <param name="dynamicalIKCorrectionGainsLinRot">(700.0 20.0)</param>
         <param name="dynamicalIKIntegralCorrectionGainsLinRot">(0.0 0.0)</param>
         <group name="WEARABLE_SENSOR_TARGETS">
-            <param name="target_Pelvis">(root_link, TransformServer::pose::virtualizer_frame, orientation)</param>
+            <param name="target_Pelvis">(root_link, TransformServer::pose::root_link_desired, orientation)</param>
             <param name="target_Chest">(chest, TransformServer::pose::virtualizer_frame, pose)</param>
             <param name="target_RightHand">(r_hand_fake, TransformServer::pose::/trackers/LHR-3C2E1582, pose)</param>
             <param name="target_LeftHand">(l_hand_fake, TransformServer::pose::/trackers/LHR-8F3A4D72, pose)</param>
@@ -80,11 +80,11 @@
         <group name="MEASUREMENT_TO_LINK_TRANSFORMS">
             <param name="target_LeftHand">( 1.0   0.0  0.0  0.0
                                             0.0  -1.0  0.0  0.025
-                                            0.0   0.0 -1.0  0.07
+                                            0.0   0.0 -1.0  0.11
                                             0.0   0.0  0.0  1.0)</param>
             <param name="target_RightHand">(-1.0  0.0  0.0  0.0
                                              0.0  1.0  0.0  0.025
-                                             0.0  0.0 -1.0  0.07
+                                             0.0  0.0 -1.0  0.11
                                              0.0  0.0  0.0  1.0)</param>
             <param name="target_Head">( 0.0 -1.0  0.0  0.0
                                         0.0  0.0  1.0  0.0
@@ -92,9 +92,9 @@
                                         0.0  0.0  0.0  1.0)</param>
         </group>
         <group name="MEASUREMENT_POSITION_SCALE_FACTOR">
-            <param name="target_Head">( 0.7 0.7 0.6 )</param>
-            <param name="target_LeftHand">( 0.7 0.7 0.6 )</param>
-            <param name="target_RightHand">( 0.7 0.7 0.6 )</param>
+            <param name="target_Head">( 0.8 0.8 0.6 )</param>
+            <param name="target_LeftHand">( 0.8 0.8 0.6 )</param>
+            <param name="target_RightHand">( 0.8 0.8 0.6 )</param>
         </group>
         <group name="CUSTOM_CONSTRAINTS">
         <!-- check issue https://github.com/robotology/human-dynamics-estimation/issues/132 for more info-->
@@ -111,18 +111,20 @@
         <!-- Custom joint Configuration constraints-->
         <!-- if the boudary value is inf, I will use -1000.0 rad, or +1000.0 rad-->
             <param name="custom_constraint_variables">(
-             l_wrist_prosup, l_elbow,  r_wrist_prosup, r_elbow, l_wrist_pitch, r_wrist_pitch)</param>
+             l_wrist_prosup, l_elbow,  r_wrist_prosup, r_elbow, l_wrist_pitch, r_wrist_pitch, l_shoulder_roll, r_shoulder_roll)</param>
             <param name="custom_constraint_matrix"> (
-            (1.0,    2.4856,       0.0,    0.0, 0.0, 0.0),
-            (-1.0,    2.593,       0.0,    0.0, 0.0, 0.0),
-            (0.0,    0.0,       1.0,    2.4856, 0.0, 0.0),
-            (0.0,    0.0,       -1.0,    2.593, 0.0, 0.0)
-            (0.0, 0.0, 0.0, 0.0, 1.0, 0.0),
-            (0.0, 0.0, 0.0, 0.0, 0.0, 1.0))</param>
+            (1.0,    2.4856, 0.0,  0.0,    0.0, 0.0, 0.0, 0.0),
+            (-1.0,   2.593,  0.0,  0.0,    0.0, 0.0, 0.0, 0.0),
+            (0.0,    0.0,    1.0,  2.4856, 0.0, 0.0, 0.0, 0.0),
+            (0.0,    0.0,    -1.0, 2.593,  0.0, 0.0, 0.0, 0.0)
+            (0.0,    0.0,    0.0,  0.0,    1.0, 0.0, 0.0, 0.0),
+            (0.0,    0.0,    0.0,  0.0,    0.0, 1.0, 0.0, 0.0), 
+            (0.0,    0.0,    0.0,  0.0,    0.0, 0.0, 1.0, 0.0),
+            (0.0,    0.0,    0.0,  0.0,    0.0, 0.0, 0.0, 1.0))</param>
             <param name="custom_constraint_lower_bound"> (
-            -1000.0, -1000.0, -1000.0, -1000.0, -100.0, -100.5)</param>
+            -1000.0, -1000.0, -1000.0, -1000.0, -100.0, -100.5, -100.0, -100.0)</param>
             <param name="custom_constraint_upper_bound"> (
-            4.7772, 4.9630, 4.7772, 4.9630, 1000.0, 1000.0)</param>
+            4.7772, 4.9630, 4.7772, 4.9630, 1000.0, 1000.0, 1.4, 1.4)</param>
             <param name="k_u">0.5</param>
             <param name="k_l">0.5</param>
         </group>
@@ -147,7 +149,7 @@
     </device>
 
     <device type="wearable_targets_wrapper" name="WearableTargetsWrapper">
-        <param name="period">0.02</param>
+        <param name="period">0.01</param>
         <param name="outputPort">/HDE/WearableTargetsWrapper/state:o</param>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
