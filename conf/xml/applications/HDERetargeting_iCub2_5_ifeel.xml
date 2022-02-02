@@ -26,20 +26,20 @@
     <environment>YARP_FORWARD_LOG_ENABLE=1</environment>
     <description>Run HDE kinemaics for iCub2_5</description>
     <node>localhost</node>
-    <tag>OpenVR-HumanStateProvider</tag>
+    <tag>OpenXR-HumanStateProvider</tag>
   </module>  
 
   <!--iDynTree iCub2_5 visualizer-->
   <module>
     <name>HumanStateVisualizer</name>
-    <parameters>--from HumanStateVisualizer_iCub2_5_openvr_ifeel.ini</parameters>
+    <parameters>--from HumanStateVisualizer_iCub2_5_openxr_ifeel.ini</parameters>
     <dependencies>
           <port timeout="15.0">/iCub/RobotStateWrapper/state:o</port>
     </dependencies>
     <environment>YARP_FORWARD_LOG_ENABLE=1</environment>
     <description>Run the iDynTree Visualizer</description>
     <node>localhost</node>
-    <tag>OpenVR-HumanStateVisualizer</tag>
+    <tag>OpenXR-HumanStateVisualizer</tag>
   </module>
 
   <!--yarprobotinterface with HDE config file for iCub2_5-->
