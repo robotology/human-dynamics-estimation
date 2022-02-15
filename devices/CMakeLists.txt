@@ -12,7 +12,7 @@ if(ENABLE_Paexo)
     add_subdirectory(Paexo)
 endif()
 
-if(XSENS_MVN_USE_SDK)
+if(ENABLE_XsensSuit)
   add_subdirectory(XsensSuit)
 endif()
 

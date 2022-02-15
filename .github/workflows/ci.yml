@@ -162,7 +162,6 @@ jobs:
             cd build
             cmake -G"Visual Studio 16 2019" -DCMAKE_PREFIX_PATH=${GITHUB_WORKSPACE}/install/deps \
                                             -DCMAKE_BUILD_TPYE=${{matrix.build_type}} \
-                                            -DXSENS_MVN_USE_SDK:BOOL=OFF \
                                             -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/install ..
 
         - name: Configure [Ubuntu/macOS]

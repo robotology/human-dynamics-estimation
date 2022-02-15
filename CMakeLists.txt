@@ -57,17 +57,17 @@ if(UNIX AND NOT APPLE)
 endif()
 
 if(WIN32)
-  option(XSENS_MVN_USE_SDK "Build the driver and the wrapper for the real MVN system using the MVN SDK" ON)
   #Add compile definition to suppress warning related to header <experimental/filesystem>
   add_compile_definitions(_SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING)
-  if(XSENS_MVN_USE_SDK)
-    find_package(XsensXME REQUIRED)
+
+  # Flag to enable XSensSuit wearable device
+  option(ENABLE_XsensSuit "Flag that enables building XsensSuit wearable device" OFF)
+  if(ENABLE_XsensSuit)
+    find_package(XsensXME)
     if(NOT ${XsensXME_FOUND})
-      message("XSENS XME not found but option to use it is enabled.")
-      return()
-    else()
-      add_subdirectory(XSensMVN)
-      endif()
+      message(FATAL_ERROR "XsensSuit device requires XSENS XME!")
+    endif()
+    add_subdirectory(XSensMVN)
   endif()
 endif()
 

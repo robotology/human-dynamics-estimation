@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Changed forceStrict to false when writing on ports. (https://github.com/robotology/wearables/pull/137)
+- Disabled build of XsensSuit device by default. (https://github.com/robotology/wearables/pull/141)
 
 ## [1.2.2] - 2021-10-28
 
