@@ -95,9 +95,9 @@
                                         0.0  0.0  0.0  1.0)</param>
         </group>
         <group name="MEASUREMENT_POSITION_SCALE_FACTOR">
-            <param name="target_Head">( 0.8 0.8 0.6 )</param>
-            <param name="target_LeftHand">( 0.8 0.8 0.6 )</param>
-            <param name="target_RightHand">( 0.8 0.8 0.6 )</param>
+            <param name="target_Head">( 0.7 0.7 0.6 )</param>
+            <param name="target_LeftHand">( 0.7 0.7 0.6 )</param>
+            <param name="target_RightHand">( 0.7 0.7 0.6 )</param>
         </group>
         <group name="CUSTOM_CONSTRAINTS">
         <!-- check issue https://github.com/robotology/human-dynamics-estimation/issues/132 for more info-->
@@ -114,20 +114,18 @@
         <!-- Custom joint Configuration constraints-->
         <!-- if the boudary value is inf, I will use -1000.0 rad, or +1000.0 rad-->
             <param name="custom_constraint_variables">(
-             l_wrist_prosup, l_elbow,  r_wrist_prosup, r_elbow, l_wrist_pitch, r_wrist_pitch, l_shoulder_roll, r_shoulder_roll)</param>
+             l_wrist_prosup, l_elbow,  r_wrist_prosup, r_elbow, l_shoulder_roll, r_shoulder_roll)</param>
             <param name="custom_constraint_matrix"> (
-            (1.0,    2.4856, 0.0,  0.0,    0.0, 0.0, 0.0, 0.0),
-            (-1.0,   2.593,  0.0,  0.0,    0.0, 0.0, 0.0, 0.0),
-            (0.0,    0.0,    1.0,  2.4856, 0.0, 0.0, 0.0, 0.0),
-            (0.0,    0.0,    -1.0, 2.593,  0.0, 0.0, 0.0, 0.0)
-            (0.0,    0.0,    0.0,  0.0,    1.0, 0.0, 0.0, 0.0),
-            (0.0,    0.0,    0.0,  0.0,    0.0, 1.0, 0.0, 0.0), 
-            (0.0,    0.0,    0.0,  0.0,    0.0, 0.0, 1.0, 0.0),
-            (0.0,    0.0,    0.0,  0.0,    0.0, 0.0, 0.0, 1.0))</param>
+            (1.0,    2.4856, 0.0,  0.0,    0.0, 0.0),
+            (-1.0,   2.593,  0.0,  0.0,    0.0, 0.0),
+            (0.0,    0.0,    1.0,  2.4856, 0.0, 0.0),
+            (0.0,    0.0,    -1.0, 2.593,  0.0, 0.0),
+            (0.0,    0.0,    0.0,  0.0,    1.0, 0.0),
+            (0.0,    0.0,    0.0,  0.0,    0.0, 1.0))</param>
             <param name="custom_constraint_lower_bound"> (
-            -1000.0, -1000.0, -1000.0, -1000.0, -100.0, -100.5, -100.0, -100.0)</param>
+            -1000.0, -1000.0, -1000.0, -1000.0, -100.0, -100.0)</param>
             <param name="custom_constraint_upper_bound"> (
-            4.7772, 4.9630, 4.7772, 4.9630, 1000.0, 1000.0, 1.4, 1.4)</param>
+            4.7772, 4.9630, 4.7772, 4.9630, 1.4, 1.4)</param>
             <param name="k_u">0.5</param>
             <param name="k_l">0.5</param>
         </group>
