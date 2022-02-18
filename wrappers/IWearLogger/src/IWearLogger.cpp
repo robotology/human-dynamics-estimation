@@ -773,8 +773,8 @@ void IWearLogger::run()
             }
             else
             {
-                std::vector<double> saveVar;
-                std::copy(pressureVector.begin(), pressureVector.end(), std::back_inserter(saveVar));
+                std::vector<double> saveVar{pressureVector.begin(), pressureVector.end()};
+                pImpl->prefixVecWithSensorStatus(sensor, saveVar);
 
                 if (pImpl->loggerType == LoggerType::MATLAB
                     || pImpl->loggerType == LoggerType::MATLAB_YARP) {
@@ -789,7 +789,7 @@ void IWearLogger::run()
                     yarp::sig::Vector& data = port->prepare();
                     pImpl->prepareYarpBottle(saveVar, data);
                     port->setEnvelope(timestamp);
-                    port->write(true);
+                    port->write();
                 }
             }
         }
