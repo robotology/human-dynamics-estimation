@@ -30,5 +30,7 @@ yarp_install(
     ARCHIVE DESTINATION ${YARP_STATIC_PLUGINS_INSTALL_DIR}
     YARP_INI DESTINATION ${YARP_PLUGIN_MANIFESTS_INSTALL_DIR})
 
+else()
+    message(WARNING "YARP-telemetry is missing. IWearLogger will not be installed.")
 endif()
 
