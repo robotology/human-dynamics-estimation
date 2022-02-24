@@ -556,21 +556,30 @@ bool DynamicalInverseKinematics::impl::InverseKinematicsTarget::computeError(con
     error.setVal(1, activePositionTargetAxis[1] * (transform.getPosition().getVal(1) - targetTransform.getPosition().getVal(1)));
     error.setVal(2, activePositionTargetAxis[2] * (transform.getPosition().getVal(2) - targetTransform.getPosition().getVal(2)));
 
-    if (activeOrientationTargetAxis[0] && !activeOrientationTargetAxis[1] && !activeOrientationTargetAxis[2])
+    if (std::count(activeOrientationTargetAxis.begin(), activeOrientationTargetAxis.end(), true) > 1)
     {
-        iDynTree::toEigen(error).tail(3) = iDynTree::toEigen(targetTransform.getRotation()).row(0).cross(iDynTree::toEigen(transform.getRotation()).row(0));
-    }
-    else if (!activeOrientationTargetAxis[0] && activeOrientationTargetAxis[1] && !activeOrientationTargetAxis[2])
-    {
-        iDynTree::toEigen(error).tail(3) = iDynTree::toEigen(targetTransform.getRotation()).row(1).cross(iDynTree::toEigen(transform.getRotation()).row(1));
-    }
-    else if (!activeOrientationTargetAxis[0] && !activeOrientationTargetAxis[1] && activeOrientationTargetAxis[2])
-    {
-        iDynTree::toEigen(error).tail(3) = iDynTree::toEigen(targetTransform.getRotation()).row(2).cross(iDynTree::toEigen(transform.getRotation()).row(2));
+        // If we want to align all the axis, we can use skew-vee rotation error
+        iDynTree::toEigen(error).tail(3) = iDynTree::toEigen(hde::utils::idyntree::rotation::skewVee(transform.getRotation() * targetTransform.getRotation().inverse()));
     }
     else
     {
-        iDynTree::toEigen(error).tail(3) = iDynTree::toEigen(hde::utils::idyntree::rotation::skewVee(transform.getRotation() * targetTransform.getRotation().inverse()));
+        if (activeOrientationTargetAxis[0])
+        {
+            iDynTree::toEigen(error).tail(3) = iDynTree::toEigen(transform.getRotation()).row(0).cross(iDynTree::toEigen(targetTransform.getRotation()).row(0));
+        }
+        else if (activeOrientationTargetAxis[1])
+        {
+            iDynTree::toEigen(error).tail(3) = iDynTree::toEigen(transform.getRotation()).row(1).cross(iDynTree::toEigen(targetTransform.getRotation()).row(1));
+        }
+        else if (activeOrientationTargetAxis[2])
+        {
+            iDynTree::toEigen(error).tail(3) = iDynTree::toEigen(transform.getRotation()).row(2).cross(iDynTree::toEigen(targetTransform.getRotation()).row(2));
+        }
+        else
+        {
+            return false;
+        }
+        iDynTree::toEigen(error).tail(3) = iDynTree::toEigen(transform.getRotation()) * iDynTree::toEigen(error).tail(3);
     }
 
     return true;
@@ -598,24 +607,31 @@ bool DynamicalInverseKinematics::impl::InverseKinematicsTarget::computeError(con
         return false;
     }
 
-    if (activeOrientationTargetAxis[0] && !activeOrientationTargetAxis[1] && !activeOrientationTargetAxis[2])
+    if (std::count(activeOrientationTargetAxis.begin(), activeOrientationTargetAxis.end(), true) > 1)
     {
-        iDynTree::toEigen(error) = iDynTree::toEigen(targetTransform.getRotation()).row(0).cross(iDynTree::toEigen(orientation).row(0));
-    }
-    else if (!activeOrientationTargetAxis[0] && activeOrientationTargetAxis[1] && !activeOrientationTargetAxis[2])
-    {
-        iDynTree::toEigen(error) = iDynTree::toEigen(targetTransform.getRotation()).row(1).cross(iDynTree::toEigen(orientation).row(1));
-    }
-    else if (!activeOrientationTargetAxis[0] && !activeOrientationTargetAxis[1] && activeOrientationTargetAxis[2])
-    {
-        iDynTree::toEigen(error) = iDynTree::toEigen(targetTransform.getRotation()).row(2).cross(iDynTree::toEigen(orientation).row(2)); 
+        // If we want to align all the axis, we can use skew-vee rotation error
+        iDynTree::toEigen(error).tail(3) = iDynTree::toEigen(hde::utils::idyntree::rotation::skewVee(orientation * targetTransform.getRotation().inverse()));
     }
     else
     {
-        iDynTree::toEigen(error) = iDynTree::toEigen(hde::utils::idyntree::rotation::skewVee(orientation * targetTransform.getRotation().inverse()));
+        if (activeOrientationTargetAxis[0])
+        {
+            iDynTree::toEigen(error).tail(3) = iDynTree::toEigen(orientation).row(0).cross(iDynTree::toEigen(targetTransform.getRotation()).row(0));
+        }
+        else if (activeOrientationTargetAxis[1])
+        {
+            iDynTree::toEigen(error).tail(3) = iDynTree::toEigen(orientation).row(1).cross(iDynTree::toEigen(targetTransform.getRotation()).row(1));
+        }
+        else if (activeOrientationTargetAxis[2])
+        {
+            iDynTree::toEigen(error).tail(3) = iDynTree::toEigen(orientation).row(2).cross(iDynTree::toEigen(targetTransform.getRotation()).row(2));
+        }
+        else
+        {
+            return false;
+        }
+        iDynTree::toEigen(error).tail(3) = iDynTree::toEigen(orientation) * iDynTree::toEigen(error).tail(3);
     }
-
-    
 
     return true;
 }
