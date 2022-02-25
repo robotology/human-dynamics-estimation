@@ -160,7 +160,7 @@ jobs:
           run: |
             mkdir -p build
             cd build
-            cmake -G"Visual Studio 16 2019" -DCMAKE_PREFIX_PATH=${GITHUB_WORKSPACE}/install/deps \
+            cmake -G"Visual Studio 17 2022" -DCMAKE_PREFIX_PATH=${GITHUB_WORKSPACE}/install/deps \
                                             -DCMAKE_BUILD_TPYE=${{matrix.build_type}} \
                                             -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/install ..
 
