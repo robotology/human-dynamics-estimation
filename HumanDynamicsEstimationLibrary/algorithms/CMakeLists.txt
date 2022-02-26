@@ -18,3 +18,7 @@ add_component(NAME algorithms
                                      osqp::osqp
                                      HumanDynamicsEstimation::utils
              )
+
+if(MSVC)
+  target_compile_options(algorithms PRIVATE /bigobj)
+endif()
