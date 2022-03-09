@@ -124,6 +124,12 @@ bool IWearRemapper::open(yarp::os::Searchable& config)
 
     yInfo() << logPrefix << "*** ========================";
 
+    // Carrier optional configuration
+    std::string carrier = "";
+    if (config.check("carrier")) {
+        carrier = config.find("carrier").asString();
+    }
+
     // Initialize the network
     pImpl->network = yarp::os::Network();
     if (!yarp::os::Network::initialized() || !yarp::os::Network::checkNetwork(5.0)) {
@@ -153,7 +159,8 @@ bool IWearRemapper::open(yarp::os::Searchable& config)
 
     for (unsigned i = 0; i < config.find("wearableDataPorts").asList()->size(); ++i) {
         if (!yarp::os::Network::connect(inputDataPortsNamesVector[i],
-                                        pImpl->inputPortsWearData[i]->getName())) {
+                                        pImpl->inputPortsWearData[i]->getName(),
+                                        carrier)) {
             yError() << logPrefix << "Failed to connect " << inputDataPortsNamesVector[i]
                      << " with " << pImpl->inputPortsWearData[i]->getName();
             return false;
