@@ -724,7 +724,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         pImpl->dynamicalIKMeasuredLinearVelocityGain =
             dynamicalIKMeasuredVelocityGainLinRot->get(0).asFloat64();
         pImpl->dynamicalIKMeasuredAngularVelocityGain =
-            dynamicalIKMeasuredVelocityGainLinRot->get(0).asFloat64();
+            dynamicalIKMeasuredVelocityGainLinRot->get(1).asFloat64();
         pImpl->dynamicalIKLinearCorrectionGain =
             dynamicalIKCorrectionGainsLinRot->get(0).asFloat64();
         pImpl->dynamicalIKAngularCorrectionGain =
