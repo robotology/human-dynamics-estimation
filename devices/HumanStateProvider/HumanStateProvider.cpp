@@ -561,21 +561,44 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
             }
             yarp::os::Bottle* list = positionScaleFactorGroup.get(i).asList();
             std::string linkName = list->get(0).asString();
-            yarp::os::Bottle* listContent = list->get(1).asList();
 
-            // check if FIXED_SENSOR_ROTATION matrix is passed (9 elements)
-            if (!(    (listContent->size() == 3)
-                   && (listContent->get(0).isDouble())
-                   && (listContent->get(1).isDouble())
-                   && (listContent->get(2).isDouble()) )) {
-                yError() << LogPrefix << "MEASUREMENT_POSITION_SCALE_FACTOR " << linkName << " must have 3 double values describing the scaling factor for x, y, and z axis";
-                return false;
+            if (list->get(1).isList())
+            {
+                yarp::os::Bottle* listContent = list->get(1).asList();
+
+                // check if FIXED_SENSOR_ROTATION matrix is passed (9 elements)
+                if (!(    (listContent->size() == 3)
+                    && (listContent->get(0).isDouble())
+                    && (listContent->get(1).isDouble())
+                    && (listContent->get(2).isDouble()) )) {
+                    yError() << LogPrefix << "MEASUREMENT_POSITION_SCALE_FACTOR " << linkName << " must have 3 double values describing the scaling factor for x, y, and z axis";
+                    return false;
+                }
+                yInfo() << LogPrefix << "MEASUREMENT_POSITION_SCALE_FACTOR added for target " << linkName;
             }
-
-            yInfo() << LogPrefix << "MEASUREMENT_POSITION_SCALE_FACTOR added for target " << linkName;
         }
     }
 
+    // Check if scale_factor_all options are found
+    bool xScaleFactorAllFlag = positionScaleFactorGroup.check("x_scale_factor_all");
+    bool yScaleFactorAllFlag = positionScaleFactorGroup.check("y_scale_factor_all");
+    bool zScaleFactorAllFlag = positionScaleFactorGroup.check("z_scale_factor_all");
+
+    if (xScaleFactorAllFlag && !positionScaleFactorGroup.find("x_scale_factor_all").isDouble())
+    {
+            yError() << LogPrefix << "x_scale_factor_all must be a double ";
+            return false;
+    }
+    if (yScaleFactorAllFlag && !positionScaleFactorGroup.find("y_scale_factor_all").isDouble())
+    {
+            yError() << LogPrefix << "y_scale_factor_all must be a double ";
+            return false;
+    }
+    if (zScaleFactorAllFlag && !positionScaleFactorGroup.find("z_scale_factor_all").isDouble())
+    {
+            yError() << LogPrefix << "z_scale_factor_all must be a double ";
+            return false;
+    }
 
     // =======================================
     // PARSE THE GENERAL CONFIGURATION OPTIONS
@@ -680,12 +703,26 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
 
     for (size_t i = 1; i < positionScaleFactorGroup.size(); ++i) {
         hde::TargetName targetName = positionScaleFactorGroup.get(i).asList()->get(0).asString();
+        if (targetName == "x_scale_factor_all" || targetName == "y_scale_factor_all" || targetName == "z_scale_factor_all")
+            continue;
         yarp::os::Bottle* positionScaleFactorValues = positionScaleFactorGroup.get(i).asList()->get(1).asList();
 
         iDynTree::Vector3 positionScaleFactor;
-        positionScaleFactor.setVal(0, positionScaleFactorValues->get(0).asDouble());
-        positionScaleFactor.setVal(1, positionScaleFactorValues->get(1).asDouble());
-        positionScaleFactor.setVal(2, positionScaleFactorValues->get(2).asDouble());
+        if (xScaleFactorAllFlag)
+            positionScaleFactor.setVal(0, positionScaleFactorGroup.find("x_scale_factor_all").asDouble());
+        else
+            positionScaleFactor.setVal(0, positionScaleFactorValues->get(0).asDouble());
+        
+        if (yScaleFactorAllFlag)
+            positionScaleFactor.setVal(1, positionScaleFactorGroup.find("y_scale_factor_all").asDouble());
+        else
+            positionScaleFactor.setVal(1, positionScaleFactorValues->get(1).asDouble());
+        
+        if (zScaleFactorAllFlag)
+            positionScaleFactor.setVal(2, positionScaleFactorGroup.find("z_scale_factor_all").asDouble());
+        else
+            positionScaleFactor.setVal(2, positionScaleFactorValues->get(2).asDouble());
+
 
         if (pImpl->wearableTargets.find(targetName) == pImpl->wearableTargets.end())
         {
