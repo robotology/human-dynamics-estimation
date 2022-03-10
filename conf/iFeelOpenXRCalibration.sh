@@ -34,9 +34,6 @@ echo "resetPlayerOrientation" | yarp rpc /virtualizer/rpc
 echo "Virtualizer: resetting player height"
 echo "resetPlayerHeight" | yarp rpc /virtualizer/rpc 
 
-echo "iFeel: removing IMUs orientation offset"
-echo "removeIMUsAbsoluteRotationOffset" | yarp rpc  /iFeelSuit/calibrator/rpc:i
-
 echo "Creating static transform: virtualizer_root -> openVR_origin"
 echo "set_static_transform_rad virtualizer_root openVR_origin 0.1 0 $CHEST_TO_HEAD_DISTANCE_M 1.5708 0 -1.5708" | yarp rpc /transformServer/rpc
 echo "set_static_transform_rad virtualizer_frame root_link_desired 0.0 0 0 0.0 -0.2 0.0" | yarp rpc /transformServer/rpc
