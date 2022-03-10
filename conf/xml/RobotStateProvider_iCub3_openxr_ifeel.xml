@@ -98,6 +98,9 @@
             <param name="target_Head">( 0.7 0.7 0.6 )</param>
             <param name="target_LeftHand">( 0.7 0.7 0.6 )</param>
             <param name="target_RightHand">( 0.7 0.7 0.6 )</param>
+            <param name="x_scale_factor_all" extern-name="xy_scale">0.7</param>
+            <param name="y_scale_factor_all" extern-name="xy_scale">0.7</param>
+            <param name="z_scale_factor_all" extern-name="z_scale">0.6</param>
         </group>
         <group name="CUSTOM_CONSTRAINTS">
         <!-- check issue https://github.com/robotology/human-dynamics-estimation/issues/132 for more info-->
