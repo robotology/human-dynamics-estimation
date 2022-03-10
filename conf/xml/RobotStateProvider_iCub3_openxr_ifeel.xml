@@ -83,11 +83,11 @@
         <group name="MEASUREMENT_TO_LINK_TRANSFORMS">
             <param name="target_LeftHand">( 1.0   0.0  0.0  0.0
                                             0.0  -1.0  0.0  0.025
-                                            0.0   0.0 -1.0  0.11
+                                            0.0   0.0 -1.0  0.15
                                             0.0   0.0  0.0  1.0)</param>
             <param name="target_RightHand">(-1.0  0.0  0.0  0.0
                                              0.0  1.0  0.0  0.025
-                                             0.0  0.0 -1.0  0.11
+                                             0.0  0.0 -1.0  0.15
                                              0.0  0.0  0.0  1.0)</param>
             <param name="target_Head">( 0.0 -1.0  0.0  0.0
                                         0.0  0.0  1.0  0.0
