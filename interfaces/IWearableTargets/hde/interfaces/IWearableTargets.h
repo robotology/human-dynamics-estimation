@@ -16,6 +16,7 @@
 
 #include <iDynTree/Core/SpatialVector.h>
 #include <iDynTree/Core/Transform.h>
+#include <iDynTree/Core/Twist.h>
 #include <Wearable/IWear/IWear.h>
 
 namespace hde {
@@ -53,9 +54,13 @@ namespace hde {
 
         // buffer variables
         iDynTree::Vector3 positionInWorld;
+        iDynTree::Vector3 positionInMeasurementWorld;
         iDynTree::Vector3 positionScaled;
         iDynTree::Vector3 linearVelocityInWorld;
+        iDynTree::Vector3 linearVelocityInMeasurementWorld;
         iDynTree::Vector3 linearVelocityScaled;
+        iDynTree::Twist twistMeasured;
+        iDynTree::Transform mixedTransform;
 
         mutable std::mutex mutex;
 
@@ -73,6 +78,7 @@ namespace hde {
             positionScaleFactor(0) = 1;
             positionScaleFactor(1) = 1;
             positionScaleFactor(2) = 1;
+            mixedTransform = iDynTree::Transform::Identity();
             clearCalibrationMatrices();
         };
 
@@ -86,7 +92,8 @@ namespace hde {
         iDynTree::Vector3 getCalibratedPosition()
         {
             std::lock_guard<std::mutex> lock(mutex);
-            positionInWorld = iDynTree::Position(calibrationMeasurementToLink.getPosition()).changeCoordinateFrame(rotation) + iDynTree::Position(position).changeCoordinateFrame(calibrationWorldToMeasurementWorld.getRotation()) + calibrationWorldToMeasurementWorld.getPosition();
+            positionInMeasurementWorld = iDynTree::Position(calibrationMeasurementToLink.getPosition()).changeCoordinateFrame(rotation);
+            positionInWorld = (iDynTree::Position(positionInMeasurementWorld) + iDynTree::Position(position)).changeCoordinateFrame(calibrationWorldToMeasurementWorld.getRotation()) + calibrationWorldToMeasurementWorld.getPosition();
             // scale position
             positionScaled.setVal(0, positionInWorld.getVal(0) * positionScaleFactor(0));
             positionScaled.setVal(1, positionInWorld.getVal(1) * positionScaleFactor(1));
@@ -104,7 +111,11 @@ namespace hde {
         iDynTree::Vector3 getCalibratedLinearVelocity()
         {
             std::lock_guard<std::mutex> lock(mutex);
-            linearVelocityInWorld = iDynTree::LinearMotionVector3(linearVelocity).changeCoordFrame(calibrationWorldToMeasurementWorld.getRotation());
+            mixedTransform.setPosition(calibrationMeasurementToLink.inverse().getPosition());
+            twistMeasured.setLinearVec3(linearVelocity);
+            twistMeasured.setAngularVec3(angularVelocity);
+            linearVelocityInMeasurementWorld = (mixedTransform*twistMeasured).getLinearVec3();
+            linearVelocityInWorld = iDynTree::LinearMotionVector3(linearVelocityInMeasurementWorld).changeCoordFrame(calibrationWorldToMeasurementWorld.getRotation());
             // scale linear velocity
             linearVelocityScaled.setVal(0, linearVelocityInWorld.getVal(0) * positionScaleFactor(0));
             linearVelocityScaled.setVal(1, linearVelocityInWorld.getVal(1) * positionScaleFactor(1));
@@ -115,7 +126,6 @@ namespace hde {
         iDynTree::Vector3 getCalibratedAngularVelocity()
         {
             std::lock_guard<std::mutex> lock(mutex);
-            // TODO: it needs to be updated considering calibrationMeasurementToLink position offset
             return iDynTree::AngularMotionVector3(angularVelocity).changeCoordFrame(calibrationWorldToMeasurementWorld.getRotation());
         };
     };
