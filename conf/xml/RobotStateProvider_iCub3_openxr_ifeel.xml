@@ -48,10 +48,10 @@
             <param name="target_RightHand">(r_hand_fake, TransformServer::pose::/trackers/LHR-3C2E1582, pose)</param>
             <param name="target_LeftHand">(l_hand_fake, TransformServer::pose::/trackers/LHR-8F3A4D72, pose)</param>
             <param name="target_Head">(head, TransformServer::pose::/hmd/LHR-752422B9, pose)</param>
-            <param name="target_l_upper_arm_fake">(l_upper_arm_fake iFeelSuit::vLink::Node#5, orientationAndVelocity)</param>
-            <param name="target_l_forearm_fake">(l_forearm_fake, iFeelSuit::vLink::Node#4, orientationAndVelocity)</param>
-            <param name="target_r_upper_arm_fake">(r_upper_arm_fake iFeelSuit::vLink::Node#7, orientationAndVelocity)</param>
-            <param name="target_r_forearm_fake">(r_forearm_fake, iFeelSuit::vLink::Node#8, orientationAndVelocity)</param>
+            <param name="target_l_upper_arm_fake">(l_upper_arm_fake iFeelSuit::vLink::Node#5, gravity)</param>
+            <param name="target_l_forearm_fake">(l_forearm_fake, iFeelSuit::vLink::Node#4, gravity)</param>
+            <param name="target_r_upper_arm_fake">(r_upper_arm_fake iFeelSuit::vLink::Node#7, gravity)</param>
+            <param name="target_r_forearm_fake">(r_forearm_fake, iFeelSuit::vLink::Node#8, gravity)</param>
         </group>
         <param name="jointList">("l_shoulder_pitch",
                                  "l_shoulder_roll",
