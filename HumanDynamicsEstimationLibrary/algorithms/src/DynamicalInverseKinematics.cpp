@@ -41,12 +41,14 @@ public:
     iDynTree::Model m_model;
     iDynTree::KinDynComputations m_dynamics;
     size_t m_dofs;
-     
+
     hde::utils::idyntree::state::State m_state;
 
     // Buffers
     iDynTree::VectorDynSize m_errorBuffer;
     iDynTree::Vector3 m_desiredLinearVelocityBuffer, m_desiredAngularVelocityBuffer;
+    iDynTree::Vector3 m_netRotErr, m_netPosErr;
+    double m_rotMeanErrNorm{-1.0}, m_posMeanErrNorm{-1.0};
 
     struct Limits
     {
@@ -77,14 +79,14 @@ public:
 
     struct LinearJointConfigurationLimits
     {
-        iDynTree::MatrixDynSize constraintMatrix; 
-        std::vector<iDynTree::JointIndex> constraintVariablesIndex; 
-        iDynTree::VectorDynSize constraintUpperBound; 
-        iDynTree::VectorDynSize constraintLowerBound; 
+        iDynTree::MatrixDynSize constraintMatrix;
+        std::vector<iDynTree::JointIndex> constraintVariablesIndex;
+        iDynTree::VectorDynSize constraintUpperBound;
+        iDynTree::VectorDynSize constraintLowerBound;
         double k_u, k_l;
     };
     LinearJointConfigurationLimits m_linearLimits;
-    
+
     iDynTree::Vector3 m_worldGravity;
 
     bool m_isInverseKinematicsInitializd;
@@ -239,8 +241,8 @@ public:
                                               const bool XRotationTargetAxisActive = true,
                                               const bool YRotationTargetAxisActive = true,
                                               const bool ZRotationTargetAxisActive = true);
-    
-    
+
+
     void setTargetType(const TargetType& targetType);
     TargetType getTargetType() const;
     std::string getFrameName() const;
@@ -595,7 +597,7 @@ bool DynamicalInverseKinematics::impl::InverseKinematicsTarget::computeError(con
     error.setVal(0, activePositionTargetAxis[0] * (position.getVal(0) - targetTransform.getPosition().getVal(0)));
     error.setVal(1, activePositionTargetAxis[1] * (position.getVal(1) - targetTransform.getPosition().getVal(1)));
     error.setVal(2, activePositionTargetAxis[2] * (position.getVal(2) - targetTransform.getPosition().getVal(2)));
-   
+
     return true;
 }
 
@@ -810,7 +812,7 @@ bool DynamicalInverseKinematics::impl::initialize()
     m_stateIntegrator.setInterpolatorType(hde::utils::idyntree::state::Integrator::InterpolationType::trapezoidal);
     m_stateIntegrator.setNJoints(m_model.getNrOfDOFs());
     m_stateIntegrator.setJointLimits(m_limits.jointPositionLowerLimit, m_limits.jointPositionUpperLimit);
-    
+
 
     // Initialize Inverse Velocity Kinematics
     m_inverseVelocityKinematics.setModel(m_dynamics.getRobotModel());
@@ -836,7 +838,7 @@ bool DynamicalInverseKinematics::impl::initialize()
         }
     }
     if (!m_inverseVelocityKinematics.setGeneralJointVelocityConstraints(1E12)) // dummy value, that will be replaced by the custom joint velocity limits
-        return false; 
+        return false;
 
     if (!m_inverseVelocityKinematics.setConstraintParametersJointValues(m_linearLimits.k_u,
                                                                         m_linearLimits.k_l))
@@ -862,7 +864,7 @@ bool DynamicalInverseKinematics::impl::initialize()
                 m_linearLimits.constraintMatrix))
             return false;
     }
-    
+
     if (!m_inverseVelocityKinematics.setCustomBaseVelocityLimit(
         m_limits.baseVelocityLowerLimit, m_limits.baseVelocityUpperLimit))
         return false;
@@ -946,6 +948,10 @@ bool DynamicalInverseKinematics::impl::updateConfiguration()
 
 bool DynamicalInverseKinematics::impl::computeDesiredLinkVelocities()
 {
+    m_netPosErr.zero();
+    m_netRotErr.zero();
+    std::size_t nrRotTargets{0};
+    std::size_t nrPosTargets{0};
     for (auto const& it : m_targets)
     {
         auto target = it.second;
@@ -955,7 +961,9 @@ bool DynamicalInverseKinematics::impl::computeDesiredLinkVelocities()
                 m_errorBuffer.resize(3);
                 if (!target.computeError(m_dynamics.getWorldTransform(target.getFrameName()).getPosition(), m_errorBuffer))
                     return false;
-                iDynTree::toEigen(m_desiredLinearVelocityBuffer) = target.getLinearVelocityFeedforwardGain() * iDynTree::toEigen(target.getLinearVelocity()) 
+                iDynTree::toEigen(m_netPosErr) += iDynTree::toEigen(m_errorBuffer);
+                nrPosTargets += 1;
+                iDynTree::toEigen(m_desiredLinearVelocityBuffer) = target.getLinearVelocityFeedforwardGain() * iDynTree::toEigen(target.getLinearVelocity())
                                                                  - target.getPositionFeedbackGain()  * iDynTree::toEigen(m_errorBuffer);
                 if (!m_inverseVelocityKinematics.updateTargetLinearVelocity(target.getFrameName(), m_desiredLinearVelocityBuffer, target.getLinearVelocityWeight()))
                     return false;
@@ -964,7 +972,9 @@ bool DynamicalInverseKinematics::impl::computeDesiredLinkVelocities()
                 m_errorBuffer.resize(3);
                 if (!target.computeError(m_dynamics.getWorldTransform(target.getFrameName()).getRotation(), m_errorBuffer))
                     return false;
-                iDynTree::toEigen(m_desiredAngularVelocityBuffer) = target.getAngularVelocityFeedforwardGain() * iDynTree::toEigen(target.getAngularVelocity()) 
+                iDynTree::toEigen(m_netRotErr) += iDynTree::toEigen(m_errorBuffer);
+                nrRotTargets += 1;
+                iDynTree::toEigen(m_desiredAngularVelocityBuffer) = target.getAngularVelocityFeedforwardGain() * iDynTree::toEigen(target.getAngularVelocity())
                                                                  - target.getOrientationFeedbackGain()  * iDynTree::toEigen(m_errorBuffer);
                 if (!m_inverseVelocityKinematics.updateTargetAngularVelocity(target.getFrameName(), m_desiredAngularVelocityBuffer, target.getAngularVelocityWeight()))
                     return false;
@@ -973,15 +983,30 @@ bool DynamicalInverseKinematics::impl::computeDesiredLinkVelocities()
                 m_errorBuffer.resize(6);
                 if (!target.computeError(m_dynamics.getWorldTransform(target.getFrameName()), m_errorBuffer))
                     return false;
-                iDynTree::toEigen(m_desiredLinearVelocityBuffer) = target.getLinearVelocityFeedforwardGain() * iDynTree::toEigen(target.getLinearVelocity()) 
+                iDynTree::toEigen(m_netPosErr) += iDynTree::toEigen(m_errorBuffer).head<3>();
+                iDynTree::toEigen(m_netRotErr) += iDynTree::toEigen(m_errorBuffer).tail<3>();
+                nrPosTargets += 1;
+                nrRotTargets += 1;
+                iDynTree::toEigen(m_desiredLinearVelocityBuffer) = target.getLinearVelocityFeedforwardGain() * iDynTree::toEigen(target.getLinearVelocity())
                                                                  - target.getPositionFeedbackGain()  * iDynTree::toEigen(m_errorBuffer).head(3);
-                iDynTree::toEigen(m_desiredAngularVelocityBuffer) = target.getAngularVelocityFeedforwardGain() * iDynTree::toEigen(target.getAngularVelocity()) 
+                iDynTree::toEigen(m_desiredAngularVelocityBuffer) = target.getAngularVelocityFeedforwardGain() * iDynTree::toEigen(target.getAngularVelocity())
                                                                  - target.getOrientationFeedbackGain()  * iDynTree::toEigen(m_errorBuffer).tail(3);
                 if (!m_inverseVelocityKinematics.updateTarget(target.getFrameName(), iDynTree::Twist(m_desiredLinearVelocityBuffer, m_desiredAngularVelocityBuffer), target.getLinearVelocityWeight(), target.getAngularVelocityWeight()))
                     return false;
                 break;
         }
     }
+
+    if (nrRotTargets > 0)
+    {
+        m_rotMeanErrNorm = iDynTree::toEigen(m_netRotErr).norm()/nrRotTargets;
+    }
+
+    if (nrPosTargets > 0)
+    {
+        m_posMeanErrNorm = iDynTree::toEigen(m_netPosErr).norm()/nrPosTargets;
+    }
+
     return true;
 }
 
@@ -1058,7 +1083,7 @@ bool DynamicalInverseKinematics::setLinearJointConfigurationLimits(
     if (!pImpl->m_isModelLoaded)
         return false;
 
-    
+
     pImpl->m_linearLimits.constraintVariablesIndex = jointsIndexList;
     pImpl->m_linearLimits.constraintMatrix = customConstraintMatrix;
     pImpl->m_linearLimits.constraintUpperBound = upperBoundary;
@@ -1079,7 +1104,7 @@ bool DynamicalInverseKinematics::setAllJointsVelocityLimit(const double limit)
 {
     if (!pImpl->m_isModelLoaded || limit < 0.0)
         return false;
-    
+
     for (size_t i = 0; i < pImpl->m_dofs; i++)
     {
         pImpl->m_limits.jointVelocityUpperLimit.setVal(i, limit);
@@ -1103,7 +1128,7 @@ bool DynamicalInverseKinematics::setJointVelocityLimit(const iDynTree::JointInde
 {
     if (!pImpl->m_isModelLoaded || limit < 0.0)
         return false;
-    
+
     pImpl->m_limits.jointVelocityUpperLimit.setVal(jointIndex, limit);
     pImpl->m_limits.jointVelocityLowerLimit.setVal(jointIndex, -limit);
 
@@ -1221,7 +1246,7 @@ bool DynamicalInverseKinematics::setJointConfiguration(const std::string& jointN
 {
     if (!pImpl->m_isModelLoaded)
         return false;
-    
+
     iDynTree::JointIndex jointIndex = pImpl->m_dynamics.model().getJointIndex(jointName);
     if (jointIndex == iDynTree::JOINT_INVALID_INDEX)
         return false;
@@ -1234,7 +1259,7 @@ bool DynamicalInverseKinematics::setJointsConfiguration(const iDynTree::VectorDy
 {
     if (!pImpl->m_isModelLoaded)
         return false;
-    
+
     if (pImpl->m_state.s.size() == jointsConfiguration.size()) {
         pImpl->m_state.s = jointsConfiguration;
         pImpl->updateConfiguration();
@@ -1249,7 +1274,7 @@ bool DynamicalInverseKinematics::setBasePose(const iDynTree::Transform& baseTran
 {
     if (!pImpl->m_isModelLoaded)
         return false;
-    
+
     pImpl->m_state.W_p_B = baseTransform.getPosition();
     pImpl->m_state.W_R_B = baseTransform.getRotation();
     pImpl->updateConfiguration();
@@ -1261,7 +1286,7 @@ bool DynamicalInverseKinematics::setBasePose(const iDynTree::Vector3& basePositi
 {
     if (!pImpl->m_isModelLoaded)
         return false;
-    
+
     pImpl->m_state.W_p_B = basePosition;
     pImpl->m_state.W_R_B = baseRotation;
     pImpl->updateConfiguration();
@@ -1273,7 +1298,7 @@ bool DynamicalInverseKinematics::setConfiguration(const iDynTree::Transform& bas
 {
     if (!pImpl->m_isModelLoaded)
         return false;
-    
+
     if (!(setJointsConfiguration(jointsConfiguration) && setBasePose(baseTransform))) {
         return false;
     }
@@ -1287,11 +1312,11 @@ bool DynamicalInverseKinematics::setConfiguration(const iDynTree::Vector3& baseP
 {
     if (!pImpl->m_isModelLoaded)
         return false;
-    
+
     if (!(setJointsConfiguration(jointsConfiguration) && setBasePose(basePosition, baseRotation))) {
         return false;
     }
-    
+
     return true;
 }
 
@@ -1507,7 +1532,7 @@ bool DynamicalInverseKinematics::getJointsConfigurationSolution(iDynTree::Vector
     {
         return false;
     }
-    
+
     jointsConfiguration = pImpl->m_state.s;
     return true;
 }
@@ -1579,4 +1604,14 @@ void DynamicalInverseKinematics::clearProblem()
     pImpl->getJointPositionLimitsFromModel();
 
     pImpl->m_isInverseKinematicsInitializd = false;
+}
+
+double DynamicalInverseKinematics::getTargetsMeanPositionErrorNorm() const
+{
+    return pImpl->m_posMeanErrNorm;
+}
+
+double DynamicalInverseKinematics::getTargetsMeanOrientationErrorNorm() const
+{
+    return pImpl->m_rotMeanErrNorm;
 }

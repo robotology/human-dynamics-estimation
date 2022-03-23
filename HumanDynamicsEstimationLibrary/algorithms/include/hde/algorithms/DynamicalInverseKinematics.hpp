@@ -202,6 +202,9 @@ public:
     void clearProblem();
 
     bool solve(const double dt);
+
+    double getTargetsMeanOrientationErrorNorm() const;
+    double getTargetsMeanPositionErrorNorm() const;
 };
 
 #endif // DYNAMICALINVERSEKINEMATICS_HPP
