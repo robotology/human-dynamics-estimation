@@ -47,7 +47,7 @@ public:
     // Buffers
     iDynTree::VectorDynSize m_errorBuffer;
     iDynTree::Vector3 m_desiredLinearVelocityBuffer, m_desiredAngularVelocityBuffer;
-    iDynTree::Vector3 m_netRotErr, m_netPosErr;
+    iDynTree::Vector3 m_netMeanRotErr, m_netMeanPosErr;
     double m_rotMeanErrNorm{-1.0}, m_posMeanErrNorm{-1.0};
 
     struct Limits
@@ -270,6 +270,8 @@ public:
     void setTwist(const iDynTree::Twist& newTwist);
 
     bool setActiveOrientationTargetAxis(const bool isXActive, const bool isYActive, const bool isZActive);
+    std::array<bool, 3> getActivePositionTargetAxes() const;
+    std::array<bool, 3> getActiveOrientationTargetAxes() const;
 
     double getPositionFeedbackGain() const;
     void setPositionFeedbackGain(const double& newPositionFeedbackGain);
@@ -727,6 +729,16 @@ bool DynamicalInverseKinematics::impl::InverseKinematicsTarget::setActiveOrienta
     return true;
 }
 
+std::array<bool, 3> DynamicalInverseKinematics::impl::InverseKinematicsTarget::getActiveOrientationTargetAxes() const
+{
+    return activeOrientationTargetAxis;
+}
+
+std::array<bool, 3> DynamicalInverseKinematics::impl::InverseKinematicsTarget::getActivePositionTargetAxes() const
+{
+    return activePositionTargetAxis;
+}
+
 double DynamicalInverseKinematics::impl::InverseKinematicsTarget::getPositionFeedbackGain() const
 {
     return positionFeedbackGain;
@@ -948,10 +960,11 @@ bool DynamicalInverseKinematics::impl::updateConfiguration()
 
 bool DynamicalInverseKinematics::impl::computeDesiredLinkVelocities()
 {
-    m_netPosErr.zero();
-    m_netRotErr.zero();
-    std::size_t nrRotTargets{0};
-    std::size_t nrPosTargets{0};
+    m_netMeanPosErr.zero();
+    m_netMeanRotErr.zero();
+    std::array<std::size_t, 3> nrRotTargets{0, 0, 0};
+    std::array<std::size_t, 3> nrPosTargets{0, 0, 0};
+    std::array<bool, 3> posActivation, rotActivation;
     for (auto const& it : m_targets)
     {
         auto target = it.second;
@@ -961,8 +974,15 @@ bool DynamicalInverseKinematics::impl::computeDesiredLinkVelocities()
                 m_errorBuffer.resize(3);
                 if (!target.computeError(m_dynamics.getWorldTransform(target.getFrameName()).getPosition(), m_errorBuffer))
                     return false;
-                iDynTree::toEigen(m_netPosErr) += iDynTree::toEigen(m_errorBuffer);
-                nrPosTargets += 1;
+                iDynTree::toEigen(m_netMeanPosErr) += iDynTree::toEigen(m_errorBuffer);
+                posActivation = target.getActivePositionTargetAxes();
+                for (std::size_t idx = 0; idx < 3; idx++)
+                {
+                    if (posActivation[idx])
+                    {
+                        nrPosTargets[idx] +=1;
+                    }
+                }
                 iDynTree::toEigen(m_desiredLinearVelocityBuffer) = target.getLinearVelocityFeedforwardGain() * iDynTree::toEigen(target.getLinearVelocity())
                                                                  - target.getPositionFeedbackGain()  * iDynTree::toEigen(m_errorBuffer);
                 if (!m_inverseVelocityKinematics.updateTargetLinearVelocity(target.getFrameName(), m_desiredLinearVelocityBuffer, target.getLinearVelocityWeight()))
@@ -972,8 +992,15 @@ bool DynamicalInverseKinematics::impl::computeDesiredLinkVelocities()
                 m_errorBuffer.resize(3);
                 if (!target.computeError(m_dynamics.getWorldTransform(target.getFrameName()).getRotation(), m_errorBuffer))
                     return false;
-                iDynTree::toEigen(m_netRotErr) += iDynTree::toEigen(m_errorBuffer);
-                nrRotTargets += 1;
+                iDynTree::toEigen(m_netMeanRotErr) += iDynTree::toEigen(m_errorBuffer);
+                rotActivation = target.getActiveOrientationTargetAxes();
+                for (std::size_t idx = 0; idx < 3; idx++)
+                {
+                    if (rotActivation[idx])
+                    {
+                        nrRotTargets[idx] +=1;
+                    }
+                }
                 iDynTree::toEigen(m_desiredAngularVelocityBuffer) = target.getAngularVelocityFeedforwardGain() * iDynTree::toEigen(target.getAngularVelocity())
                                                                  - target.getOrientationFeedbackGain()  * iDynTree::toEigen(m_errorBuffer);
                 if (!m_inverseVelocityKinematics.updateTargetAngularVelocity(target.getFrameName(), m_desiredAngularVelocityBuffer, target.getAngularVelocityWeight()))
@@ -983,10 +1010,22 @@ bool DynamicalInverseKinematics::impl::computeDesiredLinkVelocities()
                 m_errorBuffer.resize(6);
                 if (!target.computeError(m_dynamics.getWorldTransform(target.getFrameName()), m_errorBuffer))
                     return false;
-                iDynTree::toEigen(m_netPosErr) += iDynTree::toEigen(m_errorBuffer).head<3>();
-                iDynTree::toEigen(m_netRotErr) += iDynTree::toEigen(m_errorBuffer).tail<3>();
-                nrPosTargets += 1;
-                nrRotTargets += 1;
+                iDynTree::toEigen(m_netMeanPosErr) += iDynTree::toEigen(m_errorBuffer).head<3>();
+                iDynTree::toEigen(m_netMeanRotErr) += iDynTree::toEigen(m_errorBuffer).tail<3>();
+                posActivation = target.getActivePositionTargetAxes();
+                rotActivation = target.getActiveOrientationTargetAxes();
+                for (std::size_t idx = 0; idx < 3; idx++)
+                {
+                    if (posActivation[idx])
+                    {
+                        nrPosTargets[idx] +=1;
+                    }
+
+                    if (rotActivation[idx])
+                    {
+                        nrPosTargets[idx] +=1;
+                    }
+                }
                 iDynTree::toEigen(m_desiredLinearVelocityBuffer) = target.getLinearVelocityFeedforwardGain() * iDynTree::toEigen(target.getLinearVelocity())
                                                                  - target.getPositionFeedbackGain()  * iDynTree::toEigen(m_errorBuffer).head(3);
                 iDynTree::toEigen(m_desiredAngularVelocityBuffer) = target.getAngularVelocityFeedforwardGain() * iDynTree::toEigen(target.getAngularVelocity())
@@ -997,15 +1036,17 @@ bool DynamicalInverseKinematics::impl::computeDesiredLinkVelocities()
         }
     }
 
-    if (nrRotTargets > 0)
+    // compute mean error and its norm
+    for (std::size_t idx = 0; idx < 3; idx++)
     {
-        m_rotMeanErrNorm = iDynTree::toEigen(m_netRotErr).norm()/nrRotTargets;
+        if (nrRotTargets[idx] > 0)
+            m_netMeanRotErr.setVal(idx, m_netMeanRotErr(idx)/nrRotTargets[idx]);
+        if (nrPosTargets[idx] > 0)
+            m_netMeanPosErr.setVal(idx, m_netMeanPosErr(idx)/nrPosTargets[idx]);
     }
 
-    if (nrPosTargets > 0)
-    {
-        m_posMeanErrNorm = iDynTree::toEigen(m_netPosErr).norm()/nrPosTargets;
-    }
+    m_rotMeanErrNorm = iDynTree::toEigen(m_netMeanRotErr).norm();
+    m_posMeanErrNorm = iDynTree::toEigen(m_netMeanPosErr).norm();
 
     return true;
 }
