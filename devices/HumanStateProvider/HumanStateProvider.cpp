@@ -107,6 +107,7 @@ enum rpcCommand
     empty,
     calibrateAll,
     calibrateAllWithWorld,
+    calibrateAllWorldYaw,
     calibrateRelativeLink,
     setRotationOffset,
     resetCalibration,
@@ -314,6 +315,7 @@ public:
                 response.addString("The following commands can be used to apply a secondary calibration assuming the subject is in the zero configuration of the model for the calibrated links. \n");
                 response.addString("Enter <calibrateAll> to apply a secondary calibration for all the targets using the measured base pose \n");
                 response.addString("Enter <calibrateAllWithWorld <refTarget>> to apply a secondary calibration for all the targets assuming the <refTarget> to be in the world origin \n");
+                response.addString("Enter <calibrateAllWorldYaw> to remove the yaw offset for all the data \n");
                 response.addString("Enter <setRotationOffset <targetName> <r p y [deg]>> to apply a secondary calibration for the given target using the given rotation offset (defined using rpy)\n");
                 response.addString("Enter <calibrateRelativeLink <parentTargetName> <childTargetName>> to apply a secondary calibration for the child target using the parent target measurement as reference \n");
                 response.addString("Enter <reset <targetName>> to remove secondary calibration for the given target \n");
@@ -324,6 +326,11 @@ public:
                 this->childLinkName = command.get(2).asString();
                 response.addString("Entered command <calibrateRelativeLink> is correct, trying to set offset of " + this->childLinkName + " using " + this->parentLinkName + " as reference");
                 this->cmdStatus = rpcCommand::calibrateRelativeLink;
+            }
+            else if (command.get(0).asString() == "calibrateAllWorldYaw") {
+                this->parentLinkName = "";
+                response.addString("Entered command <calibrateAllWorldYaw> is correct, trying to set yaw calibration for all the targets");
+                this->cmdStatus = rpcCommand::calibrateAllWorldYaw;
             }
             else if (command.get(0).asString() == "calibrateAll") {
                 this->parentLinkName = "";
@@ -1553,6 +1560,46 @@ bool HumanStateProvider::impl::applyRpcCommand()
         // Compute secondary calibration for the selected links setting to zero the given joints
         computeSecondaryCalibrationRotationsForChain(jointZeroIndices, iDynTree::Transform::Identity(), linkToCalibrateIndices, "");
         break;
+    }
+    case rpcCommand::calibrateAllWorldYaw: {
+        // Select all the links and the joints
+        linkToCalibrateIndices.resize(kinDynComputations->getNrOfLinks());
+        std::iota(linkToCalibrateIndices.begin(), linkToCalibrateIndices.end(), 0);
+
+        // add all the joints of the model to [jointZeroIndices]
+        jointZeroIndices.resize(kinDynComputations->getNrOfDegreesOfFreedom());
+        std::iota(jointZeroIndices.begin(), jointZeroIndices.end(), 0);
+
+        // initialize vectors
+        iDynTree::VectorDynSize jointPos(jointConfigurationSolution);
+        iDynTree::VectorDynSize jointVel(jointVelocitiesSolution);
+        jointVel.zero();
+        iDynTree::Twist baseVel;
+        baseVel.zero();
+
+
+        // setting to zero all the selected joints
+        for (auto const& jointZeroIdx: jointZeroIndices) {
+            jointPos.setVal(jointZeroIdx, 0);
+        }
+
+        kinDynComputations->setRobotState(iDynTree::Transform::Identity(), jointPos, baseVel, jointVel, worldGravity);
+
+        for (auto wearableTargetEntry : wearableTargets)
+        {
+            hde::TargetName targetName = wearableTargetEntry.first;
+            ModelLinkName linkName = wearableTargetEntry.second->modelLinkName;
+            iDynTree::LinkIndex linkIndex = kinDynComputations->model().getLinkIndex(linkName);
+
+            if (std::find(linkToCalibrateIndices.begin(), linkToCalibrateIndices.end(), linkIndex) != linkToCalibrateIndices.end())
+            {
+                wearableTargetEntry.second->clearWorldCalibrationMatrix();
+
+                iDynTree::Vector3 rpyOffsetTransform = iDynTree::Rotation(wearableTargetEntry.second->getCalibratedRotation().inverse() * kinDynComputations->getWorldTransform(linkName).getRotation()).asRPY();
+                wearableTargetEntry.second->calibrationWorldToMeasurementWorld.setRotation(iDynTree::Rotation::RotZ(rpyOffsetTransform.getVal(2)));
+            }
+        }
+
     }
     case rpcCommand::calibrateAllWithWorld: {
         // Check if the chose baseLink exist in the model
