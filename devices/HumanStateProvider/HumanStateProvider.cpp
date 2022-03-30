@@ -283,6 +283,8 @@ public:
     double dynamicalIKAngularCorrectionGain;
     double dynamicalIKJointVelocityLimit;
 
+    iDynTree::Direction floorOrientation;
+
     std::vector<std::string> custom_jointsVelocityLimitsNames;
     std::vector<iDynTree::JointIndex> custom_jointsVelocityLimitsIndexes;
     iDynTree::VectorDynSize custom_jointsVelocityLimitsValues;
@@ -815,6 +817,24 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         else {
             pImpl->dynamicalIKJointVelocityLimit =
                 1000.0; // if no limits given for a joint we put 1000.0 rad/sec, which is very high
+        }
+
+        if (config.check("floorOrientationVector")
+            && config.find("floorOrientationVector").isList()
+            && config.find("floorOrientationVector").asList()->size() == 3){
+
+            yarp::os::Bottle* floorOrientationVector =
+                config.find("floorOrientationVector").asList();
+            for (int i = 0; i < 3; i++)
+                pImpl->floorOrientation.setVal(i,floorOrientationVector->get(i).asFloat64());
+            
+            pImpl->floorOrientation.Normalize();
+        }
+        else{
+            yDebug() << "No floor orientation or wrong parameter provided. Assuming floor plane perpendicular to the z-axis";
+            pImpl->floorOrientation.setVal(0,0);
+            pImpl->floorOrientation.setVal(1,0);
+            pImpl->floorOrientation.setVal(2,1);
         }
 
         yarp::os::Bottle* dynamicalIKMeasuredVelocityGainLinRot =
@@ -1734,8 +1754,8 @@ bool HumanStateProvider::impl::updateWearableTargets()
                     // I consider the feet in contact if z-component of the shoe force vector is greater than 50
                     if (forceTorque[2]>20)
                     {
-                        // Here, I force the link rotation such that the link z axis is perpedincular to the world z axis.
-                        iDynTree::Direction zWorld(0, 0, 1);
+                        // Here, I force the link rotation such that the rotation is parallel to the floor perpendicular vector.
+                        iDynTree::Direction zWorld(this->floorOrientation);
                         iDynTree::Direction zFeet =  wearableTargetEntry.second->rotation * zWorld;
                         
                         double angle = acos(zFeet[0]*zWorld[0]+zFeet[1]*zWorld[1]+zFeet[2]*zWorld[2]);
