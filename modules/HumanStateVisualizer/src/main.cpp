@@ -585,7 +585,8 @@ int main(int argc, char* argv[])
                  targetEntity.second.get()->targetType == hde::KinematicTargetType::position ||
                  targetEntity.second.get()->targetType == hde::KinematicTargetType::positionAndVelocity ||
                  targetEntity.second.get()->targetType == hde::KinematicTargetType::orientation ||
-                 targetEntity.second.get()->targetType == hde::KinematicTargetType::orientationAndVelocity)
+                 targetEntity.second.get()->targetType == hde::KinematicTargetType::orientationAndVelocity ||
+                 targetEntity.second.get()->targetType == hde::KinematicTargetType::floorContact)
             {
                 linkTransform = iDynTree::Transform(targetEntity.second.get()->getCalibratedRotation(), iDynTree::Position(targetEntity.second.get()->getCalibratedPosition()));
                 viz.frames().addFrame(linkTransform, targetsFrameScalingFactor);
@@ -705,6 +706,13 @@ int main(int argc, char* argv[])
                     iDynTree::toEigen(gravityVector) = targetsFrameScalingFactor * (iDynTree::toEigen(linkTransform.getRotation()) * iDynTree::toEigen(targetEntity.second.get()->getCalibratedRotation()).row(2).transpose());
                     viz.vectors().updateVector(vectorsIterator, linkTransform.getPosition(), gravityVector);
                     vectorsIterator++;
+                    break;
+                case hde::KinematicTargetType::floorContact:
+                    linkTransform = iDynTree::Transform(targetEntity.second.get()->getCalibratedRotation(), iDynTree::Position(targetEntity.second.get()->getCalibratedPosition()));
+                    linkTransform.setPosition(iDynTree::Position(linkTransform.getPosition().getVal(0), linkTransform.getPosition().getVal(1), linkTransform.getPosition().getVal(1)));
+        
+                    viz.frames().updateFrame(framesIterator, linkTransform);
+                    framesIterator++;
                     break;
                 default:
                     linkTransform = viz.modelViz("human").getWorldLinkTransform(targetEntity.second.get()->modelLinkName);

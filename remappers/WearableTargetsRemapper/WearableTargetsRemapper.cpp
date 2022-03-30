@@ -34,6 +34,7 @@ const std::map<hde::msgs::KinematicTargetType, hde::KinematicTargetType> mapKine
     {hde::msgs::KinematicTargetType::ORIENTATION, hde::KinematicTargetType::orientation},
     {hde::msgs::KinematicTargetType::ORIENTATIONANDVELOCITY, hde::KinematicTargetType::orientationAndVelocity},
     {hde::msgs::KinematicTargetType::GRAVITY, hde::KinematicTargetType::gravity},
+    {hde::msgs::KinematicTargetType::FLOORCONTACT, hde::KinematicTargetType::floorContact},
 };
 
 iDynTree::Vector3 generateVector3FromMsg(const hde::msgs::Vector3& input)

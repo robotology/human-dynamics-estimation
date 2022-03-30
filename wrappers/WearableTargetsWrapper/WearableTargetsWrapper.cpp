@@ -35,6 +35,7 @@ const std::map<hde::KinematicTargetType, hde::msgs::KinematicTargetType> mapKine
     {hde::KinematicTargetType::orientation, hde::msgs::KinematicTargetType::ORIENTATION},
     {hde::KinematicTargetType::orientationAndVelocity, hde::msgs::KinematicTargetType::ORIENTATIONANDVELOCITY},
     {hde::KinematicTargetType::gravity, hde::msgs::KinematicTargetType::GRAVITY},
+    {hde::KinematicTargetType::floorContact, hde::msgs::KinematicTargetType::FLOORCONTACT},
 };
 
 hde::msgs::KinematicTargetType generateMsgKinematicTargetType(const hde::KinematicTargetType kinematicTargetType)
