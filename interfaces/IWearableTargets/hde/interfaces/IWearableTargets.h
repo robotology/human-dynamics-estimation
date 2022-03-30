@@ -95,6 +95,12 @@ namespace hde {
             calibrationWorldToMeasurementWorld = iDynTree::Transform::Identity();
         }
 
+        void clearSecondaryCalibrationMatrix()
+        {
+            std::lock_guard<std::mutex> lock(mutex);
+            calibrationMeasurementToLink = iDynTree::Transform::Identity();
+        }
+
         iDynTree::Vector3 getCalibratedPosition()
         {
             std::lock_guard<std::mutex> lock(mutex);

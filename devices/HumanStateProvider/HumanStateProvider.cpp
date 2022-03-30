@@ -1472,9 +1472,9 @@ void HumanStateProvider::impl::computeSecondaryCalibrationRotationsForChain(cons
         if (std::find(linkToCalibrateIndices.begin(), linkToCalibrateIndices.end(), linkIndex) != linkToCalibrateIndices.end())
         {
             std::cerr << "link found" << std::endl;
-            wearableTargetEntry.second->clearCalibrationMatrices();
-            wearableTargetEntry.second->calibrationMeasurementToLink.setRotation(wearableTargetEntry.second->rotation.inverse() * kinDynComputations->getWorldTransform(linkName).getRotation());
-            wearableTargetEntry.second->calibrationWorldToMeasurementWorld = secondaryCalibrationWorld;
+            wearableTargetEntry.second->clearSecondaryCalibrationMatrix();
+            wearableTargetEntry.second->calibrationMeasurementToLink.setRotation(wearableTargetEntry.second->getCalibratedRotation().inverse() * kinDynComputations->getWorldTransform(linkName).getRotation());
+            // wearableTargetEntry.second->calibrationWorldToMeasurementWorld = secondaryCalibrationWorld;
             
 
             yInfo() << LogPrefix << "Sensor to Link calibration rotation for " << targetName << " is set";
