@@ -30,7 +30,8 @@ namespace hde {
         positionAndVelocity,
         orientation,
         orientationAndVelocity,
-        gravity
+        gravity,
+        floorContact
     };
 
     using TargetName = std::string;
