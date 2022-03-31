@@ -1595,7 +1595,7 @@ bool HumanStateProvider::impl::applyRpcCommand()
             {
                 wearableTargetEntry.second->clearWorldCalibrationMatrix();
 
-                iDynTree::Vector3 rpyOffsetTransform = iDynTree::Rotation(wearableTargetEntry.second->getCalibratedRotation().inverse() * kinDynComputations->getWorldTransform(linkName).getRotation()).asRPY();
+                iDynTree::Vector3 rpyOffsetTransform = iDynTree::Rotation(kinDynComputations->getWorldTransform(linkName).getRotation() * wearableTargetEntry.second->getCalibratedRotation().inverse()).asRPY();
                 wearableTargetEntry.second->calibrationWorldToMeasurementWorld.setRotation(iDynTree::Rotation::RotZ(rpyOffsetTransform.getVal(2)));
             }
         }
