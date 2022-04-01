@@ -1484,7 +1484,7 @@ void HumanStateProvider::impl::computeSecondaryCalibrationRotationsForChain(cons
         jointPos.setVal(jointZeroIdx, 0);
     }
     // TODO check which value to give to the base (before we were using the base target measurement)
-    kinDynComputations->setRobotState(baseTransformSolution, jointPos, baseVel, jointVel, worldGravity);
+    kinDynComputations->setRobotState(iDynTree::Transform::Identity(), jointPos, baseVel, jointVel, worldGravity);
 
 
     // If needed compute world calibration matrix
