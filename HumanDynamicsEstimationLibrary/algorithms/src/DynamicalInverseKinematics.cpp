@@ -334,7 +334,7 @@ DynamicalInverseKinematics::impl::InverseKinematicsTarget::PositionAndVelocityTa
                                                     positionFeedbackGain_, 0.0,
                                                     linearVelocityFeedforwardGain_, 0.0,
                                                     linearVelocityWeight_, 0.0,
-                                                    XPositionTargetAxisActive_, XPositionTargetAxisActive_, XPositionTargetAxisActive_,
+                                                    XPositionTargetAxisActive_, YPositionTargetAxisActive_, ZPositionTargetAxisActive_,
                                                     false, false, false);
     inverseKinematicsTarget.setPosition(position);
     inverseKinematicsTarget.setLinearVelocity(linearVelocity);
