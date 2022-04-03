@@ -1361,6 +1361,38 @@ bool DynamicalInverseKinematics::setConfiguration(const iDynTree::Vector3& baseP
     return true;
 }
 
+bool DynamicalInverseKinematics::updatePositionTargetAxis(const std::string& linkname,
+                                                          const std::array<bool, 3> positionTargetActive)
+{
+    DynamicalInverseKinematics::impl::TargetsMap::iterator target =
+        pImpl->getTargetRefIfItExists(linkname);
+    if (target == pImpl->m_targets.end()) {
+        return false;
+    }
+
+    target->second.activePositionTargetAxis[0] = positionTargetActive[0];
+    target->second.activePositionTargetAxis[1] = positionTargetActive[1];
+    target->second.activePositionTargetAxis[2] = positionTargetActive[2];
+
+    return true;
+}
+
+bool DynamicalInverseKinematics::updateOrientationTargetAxis(const std::string& linkname,
+                                                             const std::array<bool, 3> orientationTargetActive)
+{
+    DynamicalInverseKinematics::impl::TargetsMap::iterator target =
+        pImpl->getTargetRefIfItExists(linkname);
+    if (target == pImpl->m_targets.end()) {
+        return false;
+    }
+
+    target->second.activeOrientationTargetAxis[0] = orientationTargetActive[0];
+    target->second.activeOrientationTargetAxis[1] = orientationTargetActive[1];
+    target->second.activeOrientationTargetAxis[2] = orientationTargetActive[2];
+
+    return true;
+}
+
 bool DynamicalInverseKinematics::updateTarget(const std::string& linkName,
                                               const iDynTree::Transform& transform,
                                               const iDynTree::Twist& twist,
