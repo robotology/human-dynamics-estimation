@@ -174,6 +174,11 @@ public:
     bool updateLinearVelocityWeight(const std::string& linkName, const double linearVelocityWeight);
     bool updateAngularVelocityWeight(const std::string& linkName, const double angularVelocityWeight);
 
+    bool updatePositionTargetAxis(const std::string& linkName,
+                                  const std::array<bool, 3> positionTargetActive);
+    bool updateOrientationTargetAxis(const std::string& linkName,
+                                     const std::array<bool, 3> orientationTargetActive);
+
     bool setJointConfiguration(const std::string& jointName, const double jointConfiguration);
     bool setJointsConfiguration(const iDynTree::VectorDynSize& jointsConfiguration);
     bool setBasePose(const iDynTree::Transform& baseTransform);
