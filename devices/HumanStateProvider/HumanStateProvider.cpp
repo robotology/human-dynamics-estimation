@@ -1512,7 +1512,7 @@ void HumanStateProvider::impl::computeSecondaryCalibrationRotationsForChain(cons
             std::cerr << "link found" << std::endl;
             wearableTargetEntry.second->clearSecondaryCalibrationMatrix();
             wearableTargetEntry.second->calibrationMeasurementToLink.setRotation(wearableTargetEntry.second->getCalibratedRotation().inverse() * kinDynComputations->getWorldTransform(linkName).getRotation());
-            // wearableTargetEntry.second->calibrationMeasurementToLink.setPosition( wearableTargetEntry.second->getCalibratedRotation().inverse() * (kinDynComputations->getWorldTransform(linkName).getPosition() - iDynTree::Position(wearableTargetEntry.second->getCalibratedPosition())) );
+            wearableTargetEntry.second->calibrationMeasurementToLink.setPosition( ((kinDynComputations->getWorldTransform(linkName).getPosition() - wearableTargetEntry.second->calibrationWorldToMeasurementWorld.getPosition()).changeCoordinateFrame(wearableTargetEntry.second->calibrationWorldToMeasurementWorld.getRotation().inverse()) - iDynTree::Position(wearableTargetEntry.second->position)).changeCoordinateFrame(wearableTargetEntry.second->rotation.inverse()) );
 
             wearableTargetEntry.second->calibrationWorldToMeasurementWorld = secondaryCalibrationWorld * wearableTargetEntry.second->calibrationWorldToMeasurementWorld;
             
@@ -1750,6 +1750,37 @@ bool HumanStateProvider::impl::updateWearableTargets()
                 break;
             }
             case::sensor::SensorType::ForceTorque6DSensor : {
+                auto sensor = iWear->getForceTorque6DSensor(wearableName);
+                if (!sensor) {
+                    yError() << LogPrefix << "Sensor" << wearableName
+                            << "has been added but is not properly configured.";
+                    return false;
+                }
+                if (sensor->getSensorStatus() != sensor::SensorStatus::Ok) {
+                    yWarning() << LogPrefix << "The sensor status of" << wearableName
+                            << "is not ok (" << static_cast<double>(sensor->getSensorStatus()) << ")";
+                    continue;
+                }
+
+                wearable::Vector3 force;
+                if (!sensor->getForceTorque3DForce(force)) {
+                    yWarning() << LogPrefix << "Failed to read force from forcetorque 6D sensor " << wearableName;
+                    continue;
+                }
+
+                // If z force is greater then treshold add the contact constraint
+                bool contactActive = force.at(2) > 100;
+                // if swtiching to contact, use new position for contact
+                if (!wearableTargetEntry.second->contactActive && contactActive)
+                {
+                    kinDynComputations->setRobotState(baseTransformSolution, jointConfigurationSolution, baseVelocitySolution, jointVelocitiesSolution, worldGravity);
+                    auto contactPosition = kinDynComputations->getWorldTransform(wearableTargetEntry.second->modelLinkName).getPosition();
+                    contactPosition.setVal(2, 0);
+                    wearableTargetEntry.second->calibrationMeasurementToLink.setPosition( ((contactPosition - wearableTargetEntry.second->calibrationWorldToMeasurementWorld.getPosition()).changeCoordinateFrame(wearableTargetEntry.second->calibrationWorldToMeasurementWorld.getRotation().inverse()) - iDynTree::Position(wearableTargetEntry.second->position)).changeCoordinateFrame(wearableTargetEntry.second->rotation.inverse()) );
+                }
+
+                wearableTargetEntry.second->contactActive = contactActive;
+
                 break;
             }
             default : {
@@ -2222,6 +2253,14 @@ bool HumanStateProvider::impl::solveDynamicalInverseKinematics()
                                                                  }
             break; }
         case hde::KinematicTargetType::floorContact: {
+            if (!dynamicalInverseKinematics.updateTargetPositionAndVelocity(linkName, 
+                                                                            wearableTargetEntry.second->getCalibratedPosition(),
+                                                                            wearableTargetEntry.second->getCalibratedLinearVelocity())
+                || !dynamicalInverseKinematics.updatePositionTargetAxis(linkName, {wearableTargetEntry.second->contactActive, wearableTargetEntry.second->contactActive,  wearableTargetEntry.second->contactActive})) {
+
+                yError() << LogPrefix << "Failed to update position and velocity target for " << targetName;
+                return false;
+                                                       }
             break;
         }
         default: {
@@ -2463,11 +2502,13 @@ bool HumanStateProvider::impl::addDynamicalInverseKinematicsTargets()
                 yInfo() << LogPrefix << "Gravity Target " << targetName << " added for link " << linkName;
             break; }
         case hde::KinematicTargetType::floorContact: {
-            if (!dynamicalInverseKinematics.addPositionTarget(linkName, 
-                                                              wearableTargetEntry.second->position,
-                                                              {true, true, true},
-                                                              dynamicalIKLinearCorrectionGain,
-                                                              linVelTargetWeight)) {
+            if (!dynamicalInverseKinematics.addPositionAndVelocityTarget(linkName, 
+                                                                         wearableTargetEntry.second->position,
+                                                                         wearableTargetEntry.second->linearVelocity,
+                                                                         {true, true, true},
+                                                                         dynamicalIKLinearCorrectionGain,
+                                                                         dynamicalIKMeasuredLinearVelocityGain,
+                                                                         linVelTargetWeight)) {
                 yError() << LogPrefix << "Failed to add floorContact target for " << targetName;
                 return false;
                                                                  }
