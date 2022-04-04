@@ -63,6 +63,9 @@ namespace hde {
         iDynTree::Twist twistMeasured;
         iDynTree::Transform mixedTransform;
 
+        // flags for specifc target types
+        bool contactActive;
+
         mutable std::mutex mutex;
 
         WearableSensorTarget(wearable::WearableName wearableName_,
@@ -71,15 +74,17 @@ namespace hde {
                             : wearableName(wearableName_)
                             , modelLinkName(modelLinkName_)
                             , targetType(targetType_)
+                            , rotation(iDynTree::Rotation::Identity())
+                            , mixedTransform(iDynTree::Transform::Identity())
+                            , contactActive(true)
         {
             position.zero();
-            rotation.Identity();
             linearVelocity.zero();
             angularVelocity.zero();
             positionScaleFactor(0) = 1;
             positionScaleFactor(1) = 1;
             positionScaleFactor(2) = 1;
-            mixedTransform = iDynTree::Transform::Identity();
+
             clearCalibrationMatrices();
         };
 
