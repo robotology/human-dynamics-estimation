@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE robot PUBLIC "-//YARP//DTD yarprobotinterface 3.0//EN" "http://www.yarp.it/DTD/yarprobotinterfaceV3.0.dtd">
+<robot name="IFrameTransformToIWear" build=0 portprefix="">
+
+<device type="transformClient" name="TransformClient">
+    <param name="period">0.01</param>
+    <param name="local">/tf</param>
+    <param name="remote">/transformServer</param>
+</device>
+
+<device type="iframetransform_to_iwear" name="IFrameTransformToIWear">
+
+    <param name="wearableName">TransformServer</param>
+    <param name="rootFrameID">virtualizer_root</param>
+    <param name="wearableSensorType">PoseSensor</param>
+    <param name="frameIDs">(virtualizer_root
+                            virtualizer_frame
+                            root_link_desired
+                            /hmd/LHR-B9DFC96C
+                            /trackers/LHR-1D8B66D9
+                            /trackers/LHR-87B324E3)</param>
+    <action phase="startup" level="5" type="attach">
+        <paramlist name="networks">
+            <elem name="IFrameTransformToIWearLabel">TransformClient</elem>
+        </paramlist>
+    </action>
+    <action phase="shutdown" level="5" type="detach"/>
+
+</device>
+
+<device type="iwear_wrapper" name="IWearWrapper">
+
+    <param name="period">0.01</param>
+    <param name="dataPortName">/Wearable/OpenXRTransform/data:o</param>
+    <param name="rpcPortName">/Wearable/OpenXRTransform/metadata:o</param>
+
+    <action phase="startup" level="5" type="attach">
+        <paramlist name="networks">
+            <elem name="IWearWrapperLabel">IFrameTransformToIWear</elem>
+        </paramlist>
+    </action>
+    <action phase="shutdown" level="5" type="detach"/>
+
+</device>
+
+</robot>
