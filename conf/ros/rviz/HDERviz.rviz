@@ -6,7 +6,7 @@ Panels:
       Expanded:
         - /iCubModel1/Links1
       Splitter Ratio: 0.5099999904632568
-    Tree Height: 991
+    Tree Height: 691
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -126,6 +126,11 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
         LeftHand:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        LeftHandCOM:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -253,6 +258,11 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
+        RightHandCOM:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
         RightHand_f1:
           Alpha: 1
           Show Axes: false
@@ -373,6 +383,36 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: true
       Max Color: 239; 41; 41
+      Max Intensity: 20
+      Min Color: 138; 226; 52
+      Min Intensity: 0
+      Name: jL5S1Effort
+      Position Transformer: XYZ
+      Queue Size: 10
+      Selectable: true
+      Size (Pixels): 3
+      Size (m): 0.15000000596046448
+      Style: Spheres
+      Topic: /HumanEffortBridge/jL5S1
+      Unreliable: false
+      Use Fixed Frame: true
+      Use rainbow: false
+      Value: true
+    - Alpha: 1
+      Autocompute Intensity Bounds: false
+      Autocompute Value Bounds:
+        Max Value: 10
+        Min Value: -10
+        Value: true
+      Axis: Z
+      Channel Name: temperature
+      Class: rviz/Temperature
+      Color: 255; 255; 255
+      Color Transformer: Intensity
+      Decay Time: 0
+      Enabled: true
+      Invert Rainbow: true
+      Max Color: 239; 41; 41
       Max Intensity: 90
       Min Color: 138; 226; 52
       Min Intensity: 0
@@ -433,7 +473,7 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: true
       Max Color: 239; 41; 41
-      Max Intensity: 90
+      Max Intensity: 30
       Min Color: 138; 226; 52
       Min Intensity: 0
       Name: jLeftHipEffort
@@ -463,7 +503,7 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: true
       Max Color: 239; 41; 41
-      Max Intensity: 70
+      Max Intensity: 40
       Min Color: 138; 226; 52
       Min Intensity: 0
       Name: jLeftKneeEffort
@@ -613,7 +653,7 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: true
       Max Color: 239; 41; 41
-      Max Intensity: 90
+      Max Intensity: 30
       Min Color: 138; 226; 52
       Min Intensity: 0
       Name: jRightHipEffort
@@ -643,7 +683,7 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: true
       Max Color: 239; 41; 41
-      Max Intensity: 70
+      Max Intensity: 40
       Min Color: 138; 226; 52
       Min Intensity: 0
       Name: jRightKneeEffort
@@ -727,7 +767,6 @@ Visualization Manager:
       Hide Small Values: true
       History Length: 1
       Name: LeftFoot_ExtWrenches
-      Queue Size: 10
       Topic: /HDE/WrenchStamped/LeftFoot
       Torque Arrow Scale: 0
       Torque Color: 37; 95; 255
@@ -742,7 +781,6 @@ Visualization Manager:
       Hide Small Values: true
       History Length: 1
       Name: RightFoot_ExtWrenches
-      Queue Size: 10
       Topic: /HDE/WrenchStamped/RightFoot
       Torque Arrow Scale: 0
       Torque Color: 37; 95; 255
@@ -757,7 +795,6 @@ Visualization Manager:
       Hide Small Values: true
       History Length: 1
       Name: LeftHand_ExtWrenches
-      Queue Size: 10
       Topic: /HDE/WrenchStamped/LeftHand
       Torque Arrow Scale: 0
       Torque Color: 37; 95; 255
@@ -772,7 +809,6 @@ Visualization Manager:
       Hide Small Values: true
       History Length: 1
       Name: RightHand_ExtWrenches
-      Queue Size: 10
       Topic: /HDE/WrenchStamped/RightHand
       Torque Arrow Scale: 0
       Torque Color: 37; 95; 255
@@ -803,7 +839,6 @@ Visualization Manager:
       Hide Small Values: true
       History Length: 1
       Name: iCubLeftHand_ExtWrenches
-      Queue Size: 10
       Topic: /wholeBodyDynamics/left_hand/endEffectorWrench__o
       Torque Arrow Scale: 0.009999999776482582
       Torque Color: 204; 204; 51
@@ -818,7 +853,6 @@ Visualization Manager:
       Hide Small Values: true
       History Length: 1
       Name: iCubRightHand_ExtWrenches
-      Queue Size: 10
       Topic: /wholeBodyDynamics/right_hand/endEffectorWrench__o
       Torque Arrow Scale: 0.009999999776482582
       Torque Color: 204; 204; 51
@@ -852,13 +886,12 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 1.9739195108413696
+      Distance: 3.7667648792266846
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
-      Field of View: 0.7853981852531433
       Focal Point:
         X: 0.4256862998008728
         Y: 0.9663172364234924
@@ -868,17 +901,18 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.00539851188659668
+      Pitch: 0.3553984761238098
       Target Frame: Human/Head
-      Yaw: 1.31539785861969
+      Value: Orbit (rviz)
+      Yaw: 3.6004011631011963
     Saved: ~
 Window Geometry:
   Displays:
-    collapsed: false
-  Height: 1316
-  Hide Left Dock: false
+    collapsed: true
+  Height: 1016
+  Hide Left Dock: true
   Hide Right Dock: true
-  QMainWindow State: 000000ff00000000fd00000004000000000000038f00000484fc0200000008fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000003d00000484000000c900fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261000000010000010f00000484fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000003d00000484000000a400fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e1000001970000000300000a0000000040fc0100000002fb0000000800540069006d0065010000000000000a00000002eb00fffffffb0000000800540069006d006501000000000000045000000000000000000000066b0000048400000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd00000004000000000000038f00000358fc0200000008fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073000000003d00000358000000c900fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261000000010000010f00000484fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000003d00000484000000a400fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e100000197000000030000073800000039fc0100000002fb0000000800540069006d0065010000000000000738000002eb00fffffffb0000000800540069006d00650100000000000004500000000000000000000007380000035f00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Time:
@@ -887,6 +921,6 @@ Window Geometry:
     collapsed: false
   Views:
     collapsed: true
-  Width: 2560
-  X: 0
+  Width: 1848
+  X: 72
   Y: 27
