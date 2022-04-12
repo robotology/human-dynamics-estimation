@@ -53,6 +53,9 @@ public:
     int nJoints;
     std::vector<std::string> jointNameList;
 
+    // List of selected model joints
+    std::vector<std::string> jointList;
+
     yarp::sig::Vector jointPositions;
     yarp::sig::Vector jointVelocities;
     yarp::sig::Vector jointAccelerations;
@@ -98,6 +101,19 @@ bool HumanControlBoard::open(yarp::os::Searchable& config)
     // INITIALIZE THE HUMAN MODEL
     // ==========================
 
+    if (!(config.check("jointList") && config.find("jointList").isList())) {
+        yInfo() << LogPrefix << "jointList option not found or not valid, all the model joints are selected.";
+        pImpl->jointList.clear();
+    }
+    else
+    {
+        auto jointListBottle = config.find("jointList").asList();
+        for (size_t it = 0; it < jointListBottle->size(); it++)
+        {
+            pImpl->jointList.push_back(jointListBottle->get(it).asString());
+        }
+    }
+
     auto& rf = yarp::os::ResourceFinder::getResourceFinderSingleton();
     std::string urdfFilePath = rf.findFile(urdfFileName);
     if (urdfFilePath.empty()) {
@@ -105,10 +121,21 @@ bool HumanControlBoard::open(yarp::os::Searchable& config)
         return false;
     }
 
+    // Load the model
     iDynTree::ModelLoader modelLoader;
-    if (!modelLoader.loadModelFromFile(urdfFilePath) || !modelLoader.isValid()) {
+    if ( pImpl->jointList.empty())
+    {
+        if (!modelLoader.loadModelFromFile(urdfFilePath) || !modelLoader.isValid()) {
         yError() << LogPrefix << "Failed to load model" << urdfFilePath;
         return false;
+        }
+    }
+    else
+    {
+        if (!modelLoader.loadReducedModelFromFile(urdfFilePath, pImpl->jointList) || !modelLoader.isValid()) {
+        yError() << LogPrefix << "Failed to load model" << urdfFilePath;
+        return false;
+        }
     }
 
     // Get the model from the loader
