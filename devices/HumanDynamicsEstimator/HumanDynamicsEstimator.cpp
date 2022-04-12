@@ -784,6 +784,7 @@ public:
     // Berdy sensors map
     SensorMapIndex sensorMapIndex;
 
+    // List of selected model joints
     std::vector<std::string> jointList;
 
     // Berdy variable
