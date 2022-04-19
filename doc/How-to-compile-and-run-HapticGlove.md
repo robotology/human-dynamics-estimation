@@ -29,8 +29,8 @@ export PATH=${PATH}:${SenseGlove_DIR}/Core/SGCoreCpp/lib/linux/<build type(Relea
 In Windows machine following environment variable:
 
 ```
-export SenseGlove_DIR= <path tho the SenseGlove-API Folder>
-export PATH=${PATH}:${SenseGlove_DIR}/Core/SGCoreCpp/lib/win/<build type(Release or Debug)> 
+set SenseGlove_DIR= <path tho the SenseGlove-API Folder>
+set PATH=${PATH}:${SenseGlove_DIR}/Core/SGCoreCpp/lib/win/<build type(Release or Debug)> 
 ```
 
 ### BUILD
