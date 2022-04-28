@@ -41,6 +41,8 @@ private:
 public:
     HumanDynamicsRemapper();
     ~HumanDynamicsRemapper() override;
+    
+
 
     // DeviceDriver interface
     bool open(yarp::os::Searchable& config) override;

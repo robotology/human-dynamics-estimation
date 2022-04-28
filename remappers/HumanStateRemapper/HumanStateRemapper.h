@@ -39,6 +39,8 @@ public:
     HumanStateRemapper();
     ~HumanStateRemapper() override;
 
+    std::mutex mtx;
+
     // DeviceDriver interface
     bool open(yarp::os::Searchable& config) override;
     bool close() override;

@@ -14,6 +14,7 @@
 #include <yarp/os/LogStream.h>
 
 #include <iostream>
+#include <mutex>
 
 const std::string RemapperName = "HumanDynamicsRemapper";
 const std::string logPrefix = RemapperName + " :";
@@ -27,6 +28,7 @@ using namespace hde::devices;
 class HumanDynamicsRemapper::impl
 {
 public:
+    std::mutex mtx;
     yarp::os::Network network;
     yarp::os::BufferedPort<hde::msgs::HumanDynamics> inputPort;
     bool terminationCall = false;
@@ -128,6 +130,7 @@ void HumanDynamicsRemapper::run()
 // data are read from the port and saved in buffer variables
 void HumanDynamicsRemapper::onRead(hde::msgs::HumanDynamics& humanDynamicsData)
 {
+    std::lock_guard<std::mutex> lock(pImpl->mtx);
     if(!pImpl->terminationCall) {
         pImpl->jointNames = humanDynamicsData.jointNames;
 
@@ -138,15 +141,18 @@ void HumanDynamicsRemapper::onRead(hde::msgs::HumanDynamics& humanDynamicsData)
 // method of IHumanDynamics interface expose the buffer variables data
 std::vector<std::string> HumanDynamicsRemapper::getJointNames() const
 {
+    std::lock_guard<std::mutex> lock(pImpl->mtx);
     return pImpl->jointNames;
 }
 
 size_t HumanDynamicsRemapper::getNumberOfJoints() const
 {
+    std::lock_guard<std::mutex> lock(pImpl->mtx);
     return pImpl->jointTorques.size();
 }
 
 std::vector<double> HumanDynamicsRemapper::getJointTorques() const
 {
+    std::lock_guard<std::mutex> lock(pImpl->mtx);
     return pImpl->jointTorques;
 }
