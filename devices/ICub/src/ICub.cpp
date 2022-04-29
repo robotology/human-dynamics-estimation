@@ -52,7 +52,7 @@ public:
             this->wrenchValues.resize(wrench.size());
 
             for (size_t i = 0; i < wrench.size(); ++i) {
-                this->wrenchValues.at(i) = wrench.get(i).asDouble();
+                this->wrenchValues.at(i) = wrench.get(i).asFloat64();
             }
 
             if (this->firstRun) {

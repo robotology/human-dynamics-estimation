@@ -221,7 +221,7 @@ int main(int argc, char* argv[])
         }
         frame->name = frameMapYarp->get(0).asString();
         frame->vizIndex = visualizer.frames().addFrame(iDynTree::Transform::Identity(),
-                                                       frameMapYarp->get(2).asDouble());
+                                                       frameMapYarp->get(2).asFloat64());
         //      visualizer.frames()
         //          .getFrameLabel(frame->vizIndex)
         //          ->setText(frame->name); // to be merged
@@ -264,17 +264,17 @@ int main(int argc, char* argv[])
         yarp::os::Bottle* positionList = frameMapYarp->get(3).asList();
         yarp::os::Bottle* quatList = frameMapYarp->get(4).asList();
         if (positionList->size() == 3) {
-            iDynTree::Position position(positionList->get(0).asDouble(),
-                                        positionList->get(1).asDouble(),
-                                        positionList->get(2).asDouble());
+            iDynTree::Position position(positionList->get(0).asFloat64(),
+                                        positionList->get(1).asFloat64(),
+                                        positionList->get(2).asFloat64());
             transformation.setPosition(position);
         }
         if (quatList->size() == 4) {
             iDynTree::Vector4 quat;
-            quat[0] = quatList->get(0).asDouble();
-            quat[1] = quatList->get(1).asDouble();
-            quat[2] = quatList->get(2).asDouble();
-            quat[3] = quatList->get(3).asDouble();
+            quat[0] = quatList->get(0).asFloat64();
+            quat[1] = quatList->get(1).asFloat64();
+            quat[2] = quatList->get(2).asFloat64();
+            quat[3] = quatList->get(3).asFloat64();
 
             // normalize the quaternion
             double norm = 0;

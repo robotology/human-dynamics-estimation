@@ -715,7 +715,7 @@ bool XsensSuit::open(yarp::os::Searchable& config)
         yWarning() << logPrefix << "Endless scan mode ENABLED";
     }
     else {
-        scanTimeout = config.find("scan-timeout").asInt();
+        scanTimeout = config.find("scan-timeout").asInt32();
     }
 
     // Read from config file the sampling-rate.
@@ -726,7 +726,7 @@ bool XsensSuit::open(yarp::os::Searchable& config)
         yWarning() << logPrefix << "Using highest supported sampling rate";
     }
     else {
-        samplingRate = config.find("sampling-rate").asInt();
+        samplingRate = config.find("sampling-rate").asInt32();
     }
 
     // Get subject-specific body dimensions from the configuration file and push them to
@@ -740,10 +740,10 @@ bool XsensSuit::open(yarp::os::Searchable& config)
     }
     else {
         for (size_t i = 1; i < bodyDimensionSet.size(); ++i) {
-            if (bodyDimensionSet.get(i).asList()->get(1).isDouble()
-                && bodyDimensionSet.get(i).asList()->get(1).asDouble() != -1) {
+            if (bodyDimensionSet.get(i).asList()->get(1).isFloat64()
+                && bodyDimensionSet.get(i).asList()->get(1).asFloat64() != -1) {
                 subjectBodyDimensions.insert({bodyDimensionSet.get(i).asList()->get(0).asString(),
-                                              bodyDimensionSet.get(i).asList()->get(1).asDouble()});
+                                              bodyDimensionSet.get(i).asList()->get(1).asFloat64()});
             }
         }
     }

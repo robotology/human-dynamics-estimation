@@ -430,7 +430,7 @@ bool XSensMVNDriverImpl::fillJointNames()
 //        int scanTimeout =
 //            config.check("scan-timeout", yarp::os::Value(10), "Scan timeout [s]. -1 to
 //            disable.")
-//                .asInt()
+//                .asInt32()
 //            * 1000;
 
 //        // Scan for the suit until either the connection is successfull or the timeout is
@@ -500,11 +500,11 @@ bool XSensMVNDriverImpl::fillJointNames()
 //              "---");
 //        for (const auto& bd : bodyDimensionSet) {
 //            yarp::os::Value dimension = subjectBodyDimensionSet.find(bd.c_str());
-//            if (dimension.isNull() || !dimension.isDouble()) {
+//            if (dimension.isNull() || !dimension.isFloat64()) {
 //                yInfo(" - %s : Not Provided", bd.c_str());
 //                continue;
 //            }
-//            double dimValue = dimension.asDouble();
+//            double dimValue = dimension.asFloat64();
 //            yInfo(" - %s : %lf [m]", bd.c_str(), dimValue);
 //            bodyDimensionsMap.insert(
 //                std::map<std::string, double>::value_type(bd.c_str(), dimValue));

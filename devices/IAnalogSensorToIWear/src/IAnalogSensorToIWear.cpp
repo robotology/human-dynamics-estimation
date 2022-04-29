@@ -344,12 +344,12 @@ bool IAnalogSensorToIWear::open(yarp::os::Searchable& config)
         return false;
     }
 
-    if (!(config.check("numberOfChannels") && config.find("numberOfChannels").isInt())) {
+    if (!(config.check("numberOfChannels") && config.find("numberOfChannels").isInt32())) {
         yError() << LogPrefix << "Parameter 'numberOfChannels' missing or invalid";
         return false;
     }
 
-    if (!(config.check("channelOffset") && config.find("channelOffset").isInt())) {
+    if (!(config.check("channelOffset") && config.find("channelOffset").isInt32())) {
         yError() << LogPrefix << "Parameter 'channelOffset' missing or invalid";
         return false;
     }
@@ -370,8 +370,8 @@ bool IAnalogSensorToIWear::open(yarp::os::Searchable& config)
 
     pImpl->options.sensorName = config.find("sensorName").asString();
     pImpl->options.wearableName = config.find("wearableName").asString();
-    pImpl->options.numberOfChannels = config.find("numberOfChannels").asInt();
-    pImpl->options.channelOffset = config.find("channelOffset").asInt();
+    pImpl->options.numberOfChannels = config.find("numberOfChannels").asInt32();
+    pImpl->options.channelOffset = config.find("channelOffset").asInt32();
     std::string sensorType = config.find("wearableSensorType").asString();
     pImpl->options.getGroundReactionFT = config.find("getGroundReactionFT").asBool();
     pImpl->options.wearableSensorType = wearable::sensor::sensorTypeFromString(sensorType);

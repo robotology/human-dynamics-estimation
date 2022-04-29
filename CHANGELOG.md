@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Fix deprecated `YARP` functions in `YarpUtilities` component (https://github.com/robotology/wearables/pull/152)
+
 ### Added
 - Added the possibility to change the `carrier` for `IWearRemapper` connection. (https://github.com/robotology/wearables/pull/147)
 

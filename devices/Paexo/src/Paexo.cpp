@@ -329,7 +329,7 @@ bool Paexo::open(yarp::os::Searchable& config)
         }
         else {
             timeoutms =
-                static_cast<uint32_t>(ifeelDriverSerialGroup.find("serial-timeout-ms").asInt());
+                static_cast<uint32_t>(ifeelDriverSerialGroup.find("serial-timeout-ms").asInt32());
         }
         pImpl->serial.tout = serial::Timeout::simpleTimeout(timeoutms);
 
@@ -348,7 +348,7 @@ bool Paexo::open(yarp::os::Searchable& config)
         }
         else {
             pImpl->ifeelConfig.ConfigurationDuration = static_cast<std::chrono::seconds>(
-                ifeelDriverGroup.find("ifeeldriver-config-timeout-s").asInt());
+                ifeelDriverGroup.find("ifeeldriver-config-timeout-s").asInt32());
         }
 
         // iFeelDriver nodes configuration list
@@ -363,10 +363,10 @@ bool Paexo::open(yarp::os::Searchable& config)
         yarp::os::Bottle* nodeList = ifeelDriverGroup.find("ifeeldriver-config-nodes").asList();
 
         // NOTE: Assuming only one FTShoeNode is configured through iFeelDriver
-        assert(nodeList->size() == 1 && nodeList->get(i).asInt() == 2);
+        assert(nodeList->size() == 1 && nodeList->get(i).asInt32() == 2);
 
         for (size_t i = 0; i < nodeList->size(); i++) {
-            pImpl->ifeelConfig.ConfigurationNodes.push_back(nodeList->get(i).asInt());
+            pImpl->ifeelConfig.ConfigurationNodes.push_back(nodeList->get(i).asInt32());
         }
 
         pImpl->ifeelDriver =
@@ -726,7 +726,7 @@ void Paexo::PaexoImpl::PaexoMotorControlPort::onRead(yarp::os::Bottle& motorComm
     assert(paexoMotorActuator != nullptr);
     // yInfo() << LogPrefix << "Data received on " << portName << motorCommand.toString().c_str();
 
-    double cmd = motorCommand.get(0).asDouble();
+    double cmd = motorCommand.get(0).asFloat64();
     paexoMotorActuator.get()->setMotorPosition(cmd);
 }
 
@@ -768,9 +768,9 @@ void Paexo::run()
 
             // Add baroadcast data to buffer
             std::lock_guard<std::mutex> lock(pImpl->mutex);
-            pImpl->paexoData.angle = bc_data.get(0).asDouble();
-            pImpl->paexoData.force = bc_data.get(1).asDouble();
-            pImpl->paexoData.leverarm = bc_data.get(2).asDouble();
+            pImpl->paexoData.angle = bc_data.get(0).asFloat64();
+            pImpl->paexoData.force = bc_data.get(1).asFloat64();
+            pImpl->paexoData.leverarm = bc_data.get(2).asFloat64();
             pImpl->paexoData.updated = true;
         }
         else if (!isdigit(msg[0])) {
