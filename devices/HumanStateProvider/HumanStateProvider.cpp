@@ -356,11 +356,11 @@ public:
                 response.addString("Entered command <calibrate> is correct, trying to set offset calibration for the link " + this->parentLinkName);
                 this->cmdStatus = rpcCommand::calibrate;
             }
-            else if (command.get(0).asString() == "setRotationOffset" && !command.get(1).isNull() && command.get(2).isDouble() && command.get(3).isDouble() && command.get(4).isDouble()) {
+            else if (command.get(0).asString() == "setRotationOffset" && !command.get(1).isNull() && command.get(2).isFloat64() && command.get(3).isFloat64() && command.get(4).isFloat64()) {
                 this->parentLinkName = command.get(1).asString();
-                this->roll = command.get(2).asDouble();
-                this->pitch = command.get(3).asDouble();
-                this->yaw = command.get(4).asDouble();
+                this->roll = command.get(2).asFloat64();
+                this->pitch = command.get(3).asFloat64();
+                this->yaw = command.get(4).asFloat64();
                 response.addString("Entered command <calibrate> is correct, trying to set rotation offset for the link " + this->parentLinkName);
                 this->cmdStatus = rpcCommand::setRotationOffset;
             }
@@ -509,15 +509,15 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
 
             // check if FIXED_SENSOR_ROTATION matrix is passed (9 elements)
             if (!(    (listContent->size() == 9)
-                   && (listContent->get(0).isDouble())
-                   && (listContent->get(1).isDouble())
-                   && (listContent->get(2).isDouble())
-                   && (listContent->get(3).isDouble())
-                   && (listContent->get(4).isDouble())
-                   && (listContent->get(5).isDouble())
-                   && (listContent->get(6).isDouble())
-                   && (listContent->get(7).isDouble())
-                   && (listContent->get(8).isDouble()) )) {
+                   && (listContent->get(0).isFloat64())
+                   && (listContent->get(1).isFloat64())
+                   && (listContent->get(2).isFloat64())
+                   && (listContent->get(3).isFloat64())
+                   && (listContent->get(4).isFloat64())
+                   && (listContent->get(5).isFloat64())
+                   && (listContent->get(6).isFloat64())
+                   && (listContent->get(7).isFloat64())
+                   && (listContent->get(8).isFloat64()) )) {
                 yError() << LogPrefix << "FIXED_SENSOR_ROTATION " << linkName << " must have 9 double values describing the rotation matrix";
                 return false;
             }
@@ -563,15 +563,15 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         std::string modelLinkName = fixedRotationGroup.get(i).asList()->get(0).asString();
         yarp::os::Bottle* fixedRotationMatrixValues = fixedRotationGroup.get(i).asList()->get(1).asList();
 
-        iDynTree::Rotation fixedRotation = iDynTree::Rotation( fixedRotationMatrixValues->get(0).asDouble(),
-                                                               fixedRotationMatrixValues->get(1).asDouble(),
-                                                               fixedRotationMatrixValues->get(2).asDouble(),
-                                                               fixedRotationMatrixValues->get(3).asDouble(),
-                                                               fixedRotationMatrixValues->get(4).asDouble(),
-                                                               fixedRotationMatrixValues->get(5).asDouble(),
-                                                               fixedRotationMatrixValues->get(6).asDouble(),
-                                                               fixedRotationMatrixValues->get(7).asDouble(),
-                                                               fixedRotationMatrixValues->get(8).asDouble());
+        iDynTree::Rotation fixedRotation = iDynTree::Rotation( fixedRotationMatrixValues->get(0).asFloat64(),
+                                                               fixedRotationMatrixValues->get(1).asFloat64(),
+                                                               fixedRotationMatrixValues->get(2).asFloat64(),
+                                                               fixedRotationMatrixValues->get(3).asFloat64(),
+                                                               fixedRotationMatrixValues->get(4).asFloat64(),
+                                                               fixedRotationMatrixValues->get(5).asFloat64(),
+                                                               fixedRotationMatrixValues->get(6).asFloat64(),
+                                                               fixedRotationMatrixValues->get(7).asFloat64(),
+                                                               fixedRotationMatrixValues->get(8).asFloat64());
 
         pImpl->fixedSensorRotation.emplace(modelLinkName, fixedRotation);
         yInfo() << LogPrefix << "Adding Fixed Rotation for " << modelLinkName << "==>" << fixedRotation.toString();
@@ -587,7 +587,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
             yError() << LogPrefix << "allowFailures option not found or not valid";
             return false;
         }
-        if (!(config.check("maxIterationsIK") && config.find("maxIterationsIK").isInt())) {
+        if (!(config.check("maxIterationsIK") && config.find("maxIterationsIK").isInt32())) {
             yError() << LogPrefix << "maxIterationsIK option not found or not valid";
             return false;
         }
@@ -609,18 +609,18 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
             yError() << LogPrefix << "rotTargetWeight option not found or not valid";
             return false;
         }
-        if (!(config.check("costRegularization") && config.find("costRegularization").isDouble())) {
+        if (!(config.check("costRegularization") && config.find("costRegularization").isFloat64())) {
             yError() << LogPrefix << "costRegularization option not found or not valid";
             return false;
         }
 
         pImpl->allowIKFailures = config.find("allowIKFailures").asBool();
-        pImpl->maxIterationsIK = config.find("maxIterationsIK").asInt();
+        pImpl->maxIterationsIK = config.find("maxIterationsIK").asInt32();
         pImpl->costTolerance = config.find("costTolerance").asFloat64();
         pImpl->linearSolverName = config.find("ikLinearSolver").asString();
         pImpl->posTargetWeight = config.find("posTargetWeight").asFloat64();
         pImpl->rotTargetWeight = config.find("rotTargetWeight").asFloat64();
-        pImpl->costRegularization = config.find("costRegularization").asDouble();
+        pImpl->costRegularization = config.find("costRegularization").asFloat64();
     }
 
     if (pImpl->ikSolver == SolverIK::global || pImpl->ikSolver == SolverIK::dynamical) {
@@ -654,13 +654,13 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         pImpl->useDirectBaseMeasurement = config.find("useDirectBaseMeasurement").asBool();
         pImpl->linVelTargetWeight = config.find("linVelTargetWeight").asFloat64();
         pImpl->angVelTargetWeight = config.find("angVelTargetWeight").asFloat64();
-        pImpl->costRegularization = config.find("costRegularization").asDouble();
+        pImpl->costRegularization = config.find("costRegularization").asFloat64();
     }
 
     if (pImpl->ikSolver == SolverIK::pairwised) {
         if (!(config.check("ikPoolSizeOption")
               && (config.find("ikPoolSizeOption").isString()
-                  || config.find("ikPoolSizeOption").isInt()))) {
+                  || config.find("ikPoolSizeOption").isInt32()))) {
             yError() << LogPrefix << "ikPoolOption option not found or not valid";
             return false;
         }
@@ -672,8 +672,8 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
                     << " available logical threads for ik pool";
             pImpl->ikPoolSize = static_cast<int>(std::thread::hardware_concurrency());
         }
-        else if (config.find("ikPoolSizeOption").isInt()) {
-            pImpl->ikPoolSize = config.find("ikPoolSizeOption").asInt();
+        else if (config.find("ikPoolSizeOption").isInt32()) {
+            pImpl->ikPoolSize = config.find("ikPoolSizeOption").asInt32();
         }
 
         // The pairwised IK will always use the measured base pose and velocity for the base link
@@ -708,9 +708,9 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         }
 
         if (config.check("dynamicalIKJointVelocityLimit")
-            && config.find("dynamicalIKJointVelocityLimit").isDouble()) {
+            && config.find("dynamicalIKJointVelocityLimit").isFloat64()) {
             pImpl->dynamicalIKJointVelocityLimit =
-                config.find("dynamicalIKJointVelocityLimit").asDouble();
+                config.find("dynamicalIKJointVelocityLimit").asFloat64();
         }
         else {
             pImpl->dynamicalIKJointVelocityLimit =
@@ -913,7 +913,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
                 pImpl->custom_jointsVelocityLimitsValues.resize(constraintListContent->size());
                 for (size_t i = 0; i < constraintListContent->size(); i++) {
                     pImpl->custom_jointsVelocityLimitsValues.setVal(
-                        i, constraintListContent->get(i).asDouble());
+                        i, constraintListContent->get(i).asFloat64());
                 }
                 yInfo() << "custom_joints_velocity_limits_values: ";
                 for (size_t i = 0; i < pImpl->custom_jointsVelocityLimitsValues.size(); i++) {
@@ -940,7 +940,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
                                                              innerLoop->size());
                     }
                     for (size_t j = 0; j < innerLoop->size(); j++) {
-                        pImpl->customConstraintMatrix.setVal(i, j, innerLoop->get(j).asDouble());
+                        pImpl->customConstraintMatrix.setVal(i, j, innerLoop->get(j).asFloat64());
                     }
                 }
                 yInfo() << "Constraint matrix: ";
@@ -956,7 +956,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
                 pImpl->customConstraintUpperBound.resize(constraintListContent->size());
                 for (size_t i = 0; i < constraintListContent->size(); i++) {
                     pImpl->customConstraintUpperBound.setVal(
-                        i, constraintListContent->get(i).asDouble());
+                        i, constraintListContent->get(i).asFloat64());
                 }
                 yInfo() << "custom_constraint_upper_bound: ";
                 for (size_t i = 0; i < pImpl->customConstraintUpperBound.size(); i++) {
@@ -967,7 +967,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
                 pImpl->customConstraintLowerBound.resize(constraintListContent->size());
                 for (size_t i = 0; i < constraintListContent->size(); i++) {
                     pImpl->customConstraintLowerBound.setVal(
-                        i, constraintListContent->get(i).asDouble());
+                        i, constraintListContent->get(i).asFloat64());
                 }
                 yInfo() << "custom_constraint_lower_bound: ";
                 for (size_t i = 0; i < pImpl->customConstraintLowerBound.size(); i++) {
@@ -982,7 +982,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
                 pImpl->baseVelocityUpperLimit.resize(6);
                 for (size_t i = 0; i < constraintListContent->size(); i++) {
                     pImpl->baseVelocityUpperLimit.setVal(i,
-                                                         constraintListContent->get(i).asDouble());
+                                                         constraintListContent->get(i).asFloat64());
                 }
                 yInfo() << "base_velocity_limit_upper_buond: ";
                 for (size_t i = 0; i < pImpl->baseVelocityUpperLimit.size(); i++) {
@@ -997,7 +997,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
                 pImpl->baseVelocityLowerLimit.resize(6);
                 for (size_t i = 0; i < constraintListContent->size(); i++) {
                     pImpl->baseVelocityLowerLimit.setVal(i,
-                                                         constraintListContent->get(i).asDouble());
+                                                         constraintListContent->get(i).asFloat64());
                 }
                 yInfo() << "base_velocity_limit_lower_buond: ";
                 for (size_t i = 0; i < pImpl->baseVelocityLowerLimit.size(); i++) {
@@ -1005,14 +1005,14 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
                 }
             } // another option
             else if (constraintKey == "k_u") {
-                if (constraintGroup.check("k_u") && constraintGroup.find("k_u").isDouble()) {
-                    pImpl->k_u = constraintGroup.find("k_u").asDouble();
+                if (constraintGroup.check("k_u") && constraintGroup.find("k_u").isFloat64()) {
+                    pImpl->k_u = constraintGroup.find("k_u").asFloat64();
                     yInfo() << "k_u: " << pImpl->k_u;
                 }
             } // another option
             else if (constraintKey == "k_l") {
-                if (constraintGroup.check("k_l") && constraintGroup.find("k_l").isDouble()) {
-                    pImpl->k_l = constraintGroup.find("k_l").asDouble();
+                if (constraintGroup.check("k_l") && constraintGroup.find("k_l").isFloat64()) {
+                    pImpl->k_l = constraintGroup.find("k_l").asFloat64();
                     yInfo() << "k_l: " << pImpl->k_l;
                 }
             } // another option

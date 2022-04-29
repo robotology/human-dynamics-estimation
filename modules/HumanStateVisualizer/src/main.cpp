@@ -115,12 +115,12 @@ int main(int argc, char* argv[])
     }
     for (size_t idx = 0; idx < 3; idx++)
     {
-        if ( !(rf.find("cameraDeltaPosition").asList()->get(idx).isDouble()) )
+        if ( !(rf.find("cameraDeltaPosition").asList()->get(idx).isFloat64()) )
         {
             yError() << LogPrefix << "'cameraDeltaPosition' entry [ " << idx << " ] is not valid.";
             return EXIT_FAILURE;
         }
-        cameraDeltaPosition.setVal(idx, rf.find("cameraDeltaPosition").asList()->get(idx).asDouble());
+        cameraDeltaPosition.setVal(idx, rf.find("cameraDeltaPosition").asList()->get(idx).asFloat64());
     }
 
     if( !(rf.check("useFixedCamera") && rf.find("useFixedCamera").isBool()) ) 
@@ -140,21 +140,21 @@ int main(int argc, char* argv[])
         }
         for (size_t idx = 0; idx < 3; idx++)
         {
-            if ( !(rf.find("fixedCameraTarget").asList()->get(idx).isDouble()) )
+            if ( !(rf.find("fixedCameraTarget").asList()->get(idx).isFloat64()) )
             {
                 yError() << LogPrefix << "'fixedCameraTarget' entry [ " << idx << " ] is not valid.";
                 return EXIT_FAILURE;
             }
-            fixedCameraTarget.setVal(idx, rf.find("fixedCameraTarget").asList()->get(idx).asDouble());
+            fixedCameraTarget.setVal(idx, rf.find("fixedCameraTarget").asList()->get(idx).asFloat64());
         }
     }
 
-    if( !(rf.check("maxVisualizationFPS") && rf.find("maxVisualizationFPS").isInt() && rf.find("maxVisualizationFPS").asInt() > 0) ) 
+    if( !(rf.check("maxVisualizationFPS") && rf.find("maxVisualizationFPS").isInt32() && rf.find("maxVisualizationFPS").asInt32() > 0) ) 
     {
         yError() << LogPrefix << "'maxVisualizationFPS' option not found or not valid.";
         return EXIT_FAILURE;
     }
-    unsigned int maxVisualizationFPS = rf.find("maxVisualizationFPS").asInt();
+    unsigned int maxVisualizationFPS = rf.find("maxVisualizationFPS").asInt32();
 
     if( !(rf.check("humanStateDataPortName") && rf.find("humanStateDataPortName").isString()) ) 
     {
@@ -204,12 +204,12 @@ int main(int argc, char* argv[])
     double forceScalingFactor;
     if (visualizeWrenches)
     {
-        if ( !(rf.check("forceScalingFactor") && rf.find("forceScalingFactor").isDouble()) )
+        if ( !(rf.check("forceScalingFactor") && rf.find("forceScalingFactor").isFloat64()) )
         {
             yError() << LogPrefix << "'forceScalingFactor' option not found or not valid.";
             return EXIT_FAILURE;
         }
-        forceScalingFactor = rf.find("forceScalingFactor").asDouble();
+        forceScalingFactor = rf.find("forceScalingFactor").asFloat64();
     }
 
     // load model
