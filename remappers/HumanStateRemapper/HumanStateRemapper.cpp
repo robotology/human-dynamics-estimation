@@ -14,6 +14,7 @@
 #include <yarp/os/LogStream.h>
 
 #include <iostream>
+#include <mutex>
 
 const std::string RemapperName = "HumanStateRemapper";
 const std::string logPrefix = RemapperName + " :";
@@ -27,6 +28,7 @@ using namespace hde::devices;
 class HumanStateRemapper::impl
 {
 public:
+    std::mutex mtx;
     yarp::os::Network network;
     yarp::os::BufferedPort<hde::msgs::HumanState> inputPort;
     bool terminationCall = false;
@@ -135,6 +137,7 @@ void HumanStateRemapper::run()
 
 void HumanStateRemapper::onRead(hde::msgs::HumanState& humanStateData)
 {
+    std::lock_guard<std::mutex> lock(pImpl->mtx);
     if(!pImpl->terminationCall) {
         pImpl->jointNames = humanStateData.jointNames;
         pImpl->baseName = humanStateData.baseName;
@@ -155,49 +158,60 @@ void HumanStateRemapper::onRead(hde::msgs::HumanState& humanStateData)
 
 std::vector<std::string> HumanStateRemapper::getJointNames() const
 {
+    std::lock_guard<std::mutex> lock(pImpl->mtx);
+
     return pImpl->jointNames;
 }
 
 std::string HumanStateRemapper::getBaseName() const
 {
+    std::lock_guard<std::mutex> lock(pImpl->mtx);
     return pImpl->baseName;
 }
 size_t HumanStateRemapper::getNumberOfJoints() const
 {
+    std::lock_guard<std::mutex> lock(pImpl->mtx);
     return pImpl->jointPositions.size();
 }
 
 std::vector<double> HumanStateRemapper::getJointPositions() const
 {
+    std::lock_guard<std::mutex> lock(pImpl->mtx);
     return pImpl->jointPositions;
 }
 
 std::vector<double> HumanStateRemapper::getJointVelocities() const
 {
+    std::lock_guard<std::mutex> lock(pImpl->mtx);
     return pImpl->jointVelocities;
 }
 
 std::array<double, 3> HumanStateRemapper::getBasePosition() const
 {
+    std::lock_guard<std::mutex> lock(pImpl->mtx);
     return pImpl->basePosition;
 }
 
 std::array<double, 4> HumanStateRemapper::getBaseOrientation() const
 {
+    std::lock_guard<std::mutex> lock(pImpl->mtx);
     return pImpl->baseOrientation;
 }
 
 std::array<double, 6> HumanStateRemapper::getBaseVelocity() const
 {
+    std::lock_guard<std::mutex> lock(pImpl->mtx);
     return pImpl->baseVelocity;
 }
 
 std::array<double, 3> HumanStateRemapper::getCoMPosition() const
 {
+    std::lock_guard<std::mutex> lock(pImpl->mtx);
     return pImpl->CoMPosition;
 }
 
 std::array<double, 3> HumanStateRemapper::getCoMVelocity() const
 {
+    std::lock_guard<std::mutex> lock(pImpl->mtx);
     return pImpl->CoMVelocity;
 }
