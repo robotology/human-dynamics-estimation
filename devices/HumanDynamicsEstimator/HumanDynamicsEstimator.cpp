@@ -67,7 +67,7 @@ static bool parseYarpValueToStdVector(const yarp::os::Value& option, std::vector
                 return false;
             }
 
-            output.push_back(option.asList()->get(i).asDouble());
+            output.push_back(option.asList()->get(i).asFloat64());
         }
     }
     else if (isDouble) {
@@ -244,7 +244,7 @@ static bool getTripletsFromPriorGroupCase1Case2(const yarp::os::Value& covMeasur
                                                 const std::string& sensorType,
                                                 iDynTree::Triplets& triplets)
 {
-    if (covMeasurementOption.isDouble()) {
+    if (covMeasurementOption.isFloat64()) {
         std::vector<double> covValues;
         covValues.push_back(covMeasurementOption.asFloat64());
 
@@ -377,7 +377,7 @@ static bool getTripletsFromPriorGroup(const yarp::os::Bottle priorGroup,
 
             // This check allows sharing the same getTripletsFromPriorGroupCase1Case2 function
             // for parsing Case 3
-            if (!covMeasurementOfSpecificElement.isDouble()
+            if (!covMeasurementOfSpecificElement.isFloat64()
                 && !(covMeasurementOfSpecificElement.isList()
                      && (covMeasurementOfSpecificElement.asList()->size() > 0))) {
                 yError() << LogPrefix << "The specific elements for"
@@ -822,7 +822,7 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
         return false;
     }
 
-    if (!(config.check("number_of_wrench_sensors") && config.find("number_of_wrench_sensors").isInt())) {
+    if (!(config.check("number_of_wrench_sensors") && config.find("number_of_wrench_sensors").isInt32())) {
         yError() << LogPrefix << "Parameter 'number_of_wrench_sensors' missing or invalid";
         return false;
     }
@@ -839,7 +839,7 @@ bool HumanDynamicsEstimator::open(yarp::os::Searchable& config)
     double period = config.find("period").asFloat64();
     std::string urdfFileName = config.find("urdf").asString();
     std::string baseLink = config.find("baseLink").asString();
-    int number_of_wrench_sensors = config.find("number_of_wrench_sensors").asInt();
+    int number_of_wrench_sensors = config.find("number_of_wrench_sensors").asInt32();
     yarp::os::Bottle* linkNames = config.find("wrench_sensors_link_name").asList();
 
     if (number_of_wrench_sensors != linkNames->size()) {
