@@ -35,7 +35,7 @@ target_link_libraries(${EXE_TARGET_NAME} LINK_PUBLIC
   YARP::YARP_dev
   YARP::YARP_init
   iDynTree::idyntree-core
-  iDynTree::idyntree-modelio-urdf
+  iDynTree::idyntree-modelio
   iDynTree::idyntree-visualization
   IHumanState)
 
