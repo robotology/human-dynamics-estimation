@@ -78,7 +78,7 @@ bool HumanControlBoard::open(yarp::os::Searchable& config)
     // CHECK THE CONFIGURATION OPTIONS
     // ===============================
 
-    if (!(config.check("period") && config.find("period").isDouble())) {
+    if (!(config.check("period") && config.find("period").isFloat64())) {
         yInfo() << LogPrefix << "Using default period:" << DefaultPeriod << "s";
     }
 
@@ -91,7 +91,7 @@ bool HumanControlBoard::open(yarp::os::Searchable& config)
     // PARSE THE CONFIGURATION OPTIONS
     // ===============================
 
-    double period = config.check("period", yarp::os::Value(DefaultPeriod)).asDouble();
+    double period = config.check("period", yarp::os::Value(DefaultPeriod)).asFloat64();
     const std::string urdfFileName = config.find("urdf").asString();
 
     // ==========================

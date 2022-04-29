@@ -43,7 +43,7 @@ bool HumanDynamicsWrapper::open(yarp::os::Searchable& config)
     // CHECK THE CONFIGURATION OPTIONS
     // ===============================
 
-    if (!(config.check("period") && config.find("period").isDouble())) {
+    if (!(config.check("period") && config.find("period").isFloat64())) {
         yInfo() << LogPrefix << "Using default period:" << DefaultPeriod << "s";
     }
 
@@ -56,7 +56,7 @@ bool HumanDynamicsWrapper::open(yarp::os::Searchable& config)
     // PARSE THE CONFIGURATION OPTIONS
     // ===============================
 
-    double period = config.check("period", yarp::os::Value(DefaultPeriod)).asDouble();
+    double period = config.check("period", yarp::os::Value(DefaultPeriod)).asFloat64();
     std::string outputPortName = config.find("outputPort").asString();
 
     // =============

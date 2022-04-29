@@ -90,19 +90,19 @@ bool RobotPositionController::open(yarp::os::Searchable& config)
     // CHECK THE CONFIGURATION OPTIONS
     // ===============================
 
-    if (!(config.check("period") && config.find("period").isDouble())) {
+    if (!(config.check("period") && config.find("period").isFloat64())) {
         yInfo() << LogPrefix << "Using default period:" << DefaultPeriod << "s";
     }
 
-    if (!(config.check("refSpeed") && config.find("refSpeed").isDouble())) {
+    if (!(config.check("refSpeed") && config.find("refSpeed").isFloat64())) {
         yError() << LogPrefix << "refSpeed option not found or not valid";
     }
 
-    if (!(config.check("samplingTime") && config.find("samplingTime").isDouble())) {
+    if (!(config.check("samplingTime") && config.find("samplingTime").isFloat64())) {
         yError() << LogPrefix << "samplingTime option not found or not valid";
     }
 
-    if (!(config.check("smoothingTime") && config.find("smoothingTime").isDouble())) {
+    if (!(config.check("smoothingTime") && config.find("smoothingTime").isFloat64())) {
         yError() << LogPrefix << "smoothingTime option not found or not valid";
     }
 
@@ -130,11 +130,11 @@ bool RobotPositionController::open(yarp::os::Searchable& config)
     // PARSE THE CONFIGURATION OPTIONS
     // ===============================
 
-    double period = config.check("period", yarp::os::Value(DefaultPeriod)).asDouble();
+    double period = config.check("period", yarp::os::Value(DefaultPeriod)).asFloat64();
     pImpl->controlMode = config.find("controlMode").asString();
-    pImpl->refSpeed = config.find("refSpeed").asDouble();
-    pImpl->samplingTime = config.find("samplingTime").asDouble();
-    pImpl->smoothingTime = config.find("smoothingTime").asDouble();
+    pImpl->refSpeed = config.find("refSpeed").asFloat64();
+    pImpl->samplingTime = config.find("samplingTime").asFloat64();
+    pImpl->smoothingTime = config.find("smoothingTime").asFloat64();
     pImpl->initialSmoothingCount = 0;
     yarp::os::Bottle* controlBoardsList = config.find("controlBoardsList").asList();
     const std::string remotePrefix  = config.find("remotePrefix").asString();
@@ -142,20 +142,20 @@ bool RobotPositionController::open(yarp::os::Searchable& config)
 
     if (pImpl->controlMode == "positionDirect")
     {
-        if (!(config.check("initialSmoothingTime") && config.find("initialSmoothingTime").isDouble())) {
+        if (!(config.check("initialSmoothingTime") && config.find("initialSmoothingTime").isFloat64())) {
             yInfo() << LogPrefix << "initialSmoothingTime option not found or not valid, using default value of 2.5 Seconds";
             pImpl->initialSmoothingTime = 2.5;
         }
         else {
-            pImpl->initialSmoothingTime = config.find("initialSmoothingTime").asDouble();
+            pImpl->initialSmoothingTime = config.find("initialSmoothingTime").asFloat64();
         }
 
-        if (!(config.check("maxSmoothingCount") && config.find("maxSmoothingCount").isInt())) {
+        if (!(config.check("maxSmoothingCount") && config.find("maxSmoothingCount").isInt32())) {
             yInfo() << LogPrefix << "initialSmoothingCount option not found or not valid, using default value of 5000";
             pImpl->maxSmoothingCount = 5000;
         }
         else {
-            pImpl->maxSmoothingCount = config.find("maxSmoothingCount").asInt();
+            pImpl->maxSmoothingCount = config.find("maxSmoothingCount").asInt32();
         }
     }
 
