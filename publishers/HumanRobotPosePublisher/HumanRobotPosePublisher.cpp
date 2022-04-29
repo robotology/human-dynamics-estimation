@@ -130,15 +130,15 @@ bool parseRotation(yarp::os::Bottle* list, iDynTree::Rotation& rotation)
         return false;
     }
 
-    rotation = iDynTree::Rotation(list->get(0).asDouble(),
-                                  list->get(1).asDouble(),
-                                  list->get(2).asDouble(),
-                                  list->get(3).asDouble(),
-                                  list->get(4).asDouble(),
-                                  list->get(5).asDouble(),
-                                  list->get(6).asDouble(),
-                                  list->get(7).asDouble(),
-                                  list->get(8).asDouble());
+    rotation = iDynTree::Rotation(list->get(0).asFloat64(),
+                                  list->get(1).asFloat64(),
+                                  list->get(2).asFloat64(),
+                                  list->get(3).asFloat64(),
+                                  list->get(4).asFloat64(),
+                                  list->get(5).asFloat64(),
+                                  list->get(6).asFloat64(),
+                                  list->get(7).asFloat64(),
+                                  list->get(8).asFloat64());
     return true;
 }
 
@@ -150,7 +150,7 @@ bool parsePosition(yarp::os::Bottle* list, iDynTree::Position& position)
     }
 
     position = iDynTree::Position(
-        list->get(0).asDouble(), list->get(1).asDouble(), list->get(2).asDouble());
+        list->get(0).asFloat64(), list->get(1).asFloat64(), list->get(2).asFloat64());
     return true;
 }
 
