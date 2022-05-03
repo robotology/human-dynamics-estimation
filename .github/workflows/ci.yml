@@ -17,7 +17,8 @@ env:
     YCM_TAG: v0.13.0
     YARP_TAG: v3.5.0
     iDynTree_TAG: v5.1.0
-    matioCpp_TAG: v0.1.1
+    matioCpp_TAG: v0.2.0
+    yarp_telemetry_TAG: v0.4.0
     # Overwrite the VCPKG_INSTALLATION_ROOT env variable defined by Github Actions to point to our vcpkg
     VCPKG_INSTALLATION_ROOT: C:\robotology\vcpkg
 
@@ -81,7 +82,7 @@ jobs:
           with:
             path: ${{ github.workspace }}/install/deps
             # Including ${{ runner.temp }} is a workaround for https://github.com/robotology/whole-body-estimators/issues/60
-            key: source-deps-${{runner.os}}-${{runner.temp}}-vcpkg-robotology-${{env.vcpkg_robotology_TAG}}-ycm-${{env.YCM_TAG}}-yarp-${{env.YARP_TAG}}-iDynTree-${{env.iDynTree_TAG}}-matioCpp-${{env.matioCpp_TAG}}-yarp_telemetry
+            key: source-deps-${{runner.os}}-${{runner.temp}}-vcpkg-robotology-${{env.vcpkg_robotology_TAG}}-ycm-${{env.YCM_TAG}}-yarp-${{env.YARP_TAG}}-iDynTree-${{env.iDynTree_TAG}}-matioCpp-${{env.matioCpp_TAG}}-yarp_telemetry-${{env.yarp_telemetry_TAG}}
 
 
         - name: Source-based Dependencies [Ubuntu/macOS]
@@ -134,6 +135,7 @@ jobs:
             cd ${GITHUB_WORKSPACE}
             git clone https://github.com/robotology/yarp-telemetry
             cd yarp-telemetry
+            git checkout ${yarp_telemetry_TAG}
             mkdir -p build
             cd build
             cmake -DCMAKE_PREFIX_PATH=${GITHUB_WORKSPACE}/install/deps \
