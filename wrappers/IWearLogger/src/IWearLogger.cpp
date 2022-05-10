@@ -19,7 +19,7 @@
 #include <yarp/os/Network.h>
 #include <yarp/sig/Vector.h>
 
-#include <yarp/telemetry/experimental/BufferManager.h>
+#include <robometry/BufferManager.h>
 
 const std::string WrapperName = "IWearLogger";
 const std::string logPrefix = WrapperName + " :";
@@ -160,8 +160,8 @@ public:
     yarp::dev::IPreciselyTimed* iPreciselyTimed = nullptr;
     std::mutex loggerMutex;
     IWearLoggerSettings settings;
-    yarp::telemetry::experimental::BufferConfig bufferConfig;
-    yarp::telemetry::experimental::BufferManager<double> bufferManager;
+    robometry::BufferConfig bufferConfig;
+    robometry::BufferManager<double> bufferManager;
 
     wearable::VectorOfSensorPtr<const wearable::sensor::IAccelerometer> accelerometers;
     wearable::VectorOfSensorPtr<const wearable::sensor::IEmgSensor> emgSensors;
@@ -762,7 +762,7 @@ void IWearLogger::run()
         }
     }
 
-    if (pImpl->settings.logAllQuantities || pImpl->settings.logSkinSensors) 
+    if (pImpl->settings.logAllQuantities || pImpl->settings.logSkinSensors)
     {
         for (const auto& sensor : pImpl->skinSensors) {
             std::vector<double> pressureVector;

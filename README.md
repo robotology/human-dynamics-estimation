@@ -13,7 +13,7 @@ Here following there is a list of the required dependencies you need for using t
 It must be noted that `YARP`, together with a subset of the optional dependencies, can be installed together in one place using the [robotology-superbuild](https://github.com/robotology/robotology-superbuild) enabling its [`Human-Dynamics` profile](https://github.com/robotology/robotology-superbuild#human-dynamics).
 
 ### Optional
-* [YARP-telemetry](https://github.com/robotology/yarp-telemetry) device: if present, the `IWearLogger` is installed.
+* [robometry](https://github.com/robotology/robometry) device: if present, the `IWearLogger` is installed.
 
 ## Build the suite
 ### Linux/macOS

@@ -1,6 +1,6 @@
 name: C++ CI Workflow
 
-# template derived from https://github.com/robotology/how-to-export-cpp-library/tree/master/.github/workflows 
+# template derived from https://github.com/robotology/how-to-export-cpp-library/tree/master/.github/workflows
 # and https://github.com/robotology/idyntree/blob/master/.github/workflows/ci.yml
 
 on:
@@ -18,7 +18,7 @@ env:
     YARP_TAG: v3.5.0
     iDynTree_TAG: v5.1.0
     matioCpp_TAG: v0.2.0
-    yarp_telemetry_TAG: v0.4.0
+    robometry_TAG: master # It will become v1.0.0 as soon as will be released
     # Overwrite the VCPKG_INSTALLATION_ROOT env variable defined by Github Actions to point to our vcpkg
     VCPKG_INSTALLATION_ROOT: C:\robotology\vcpkg
 
@@ -29,12 +29,12 @@ jobs:
         strategy:
             matrix:
                 build_type: [Release]
-                os: [ubuntu-latest, windows-latest, macOS-latest]  
+                os: [ubuntu-latest, windows-latest, macOS-latest]
             fail-fast: false
 
         steps:
         # Clone the repository in $GITHUB_WORKSPACE
-        - uses: actions/checkout@master  
+        - uses: actions/checkout@master
 
         - uses: conda-incubator/setup-miniconda@v2
           if: contains(matrix.os, 'windows')
@@ -51,8 +51,8 @@ jobs:
           shell: bash
           run: env
 
-        # Remove apt repos on Ubuntu that are known to break from time to time 
-        # See https://github.com/actions/virtual-environments/issues/323 
+        # Remove apt repos on Ubuntu that are known to break from time to time
+        # See https://github.com/actions/virtual-environments/issues/323
         - name: Remove broken apt repos [Ubuntu]
           if: matrix.os == 'ubuntu-latest'
           run: |
@@ -66,7 +66,7 @@ jobs:
           if: matrix.os == 'macOS-latest'
           run: |
             brew install ccache eigen ace tinyxml gsl boost libmatio
-             
+
         - name: Dependencies [Ubuntu]
           if: matrix.os == 'ubuntu-latest'
           run: |
@@ -82,7 +82,7 @@ jobs:
           with:
             path: ${{ github.workspace }}/install/deps
             # Including ${{ runner.temp }} is a workaround for https://github.com/robotology/whole-body-estimators/issues/60
-            key: source-deps-${{runner.os}}-${{runner.temp}}-vcpkg-robotology-${{env.vcpkg_robotology_TAG}}-ycm-${{env.YCM_TAG}}-yarp-${{env.YARP_TAG}}-iDynTree-${{env.iDynTree_TAG}}-matioCpp-${{env.matioCpp_TAG}}-yarp_telemetry-${{env.yarp_telemetry_TAG}}
+            key: source-deps-${{runner.os}}-${{runner.temp}}-vcpkg-robotology-${{env.vcpkg_robotology_TAG}}-ycm-${{env.YCM_TAG}}-yarp-${{env.YARP_TAG}}-iDynTree-${{env.iDynTree_TAG}}-matioCpp-${{env.matioCpp_TAG}}-robometry-${{env.robometry_TAG}}
 
 
         - name: Source-based Dependencies [Ubuntu/macOS]
@@ -131,11 +131,11 @@ jobs:
                   -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/install/deps ..
             cmake --build . --config ${{matrix.build_type}} --target install
 
-            # yarp-telemetry
+            # robometry
             cd ${GITHUB_WORKSPACE}
-            git clone https://github.com/robotology/yarp-telemetry
-            cd yarp-telemetry
-            git checkout ${yarp_telemetry_TAG}
+            git clone https://github.com/robotology/robometry
+            cd robometry
+            git checkout ${robometry_TAG}
             mkdir -p build
             cd build
             cmake -DCMAKE_PREFIX_PATH=${GITHUB_WORKSPACE}/install/deps \
@@ -146,10 +146,10 @@ jobs:
           if: steps.cache-source-deps.outputs.cache-hit != 'true' && contains(matrix.os, 'windows')
           shell: bash -l {0}
           run: |
-            # Compilation related dependencies 
+            # Compilation related dependencies
             mamba install cmake compilers make ninja pkg-config
             # Actual dependencies
-            mamba install -c robotology yarp wearables idyntree matio-cpp yarp-telemetry
+            mamba install -c robotology yarp wearables idyntree matio-cpp robometry
 
         # ===================
         # CMAKE-BASED PROJECT
@@ -175,12 +175,12 @@ jobs:
             cmake -DCMAKE_PREFIX_PATH=${GITHUB_WORKSPACE}/install/deps \
                   -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/install ..
 
-        # Build step          
+        # Build step
         - name: Build
           shell: bash
           run: |
             cd build
-            # Attempt of fix for using YARP idl generators (that link ACE) in Windows 
+            # Attempt of fix for using YARP idl generators (that link ACE) in Windows
             # See https://github.com/robotology/idyntree/issues/569
             export PATH=$PATH:${GITHUB_WORKSPACE}/install/bin:${VCPKG_INSTALLATION_ROOT}/install/x64-windows/bin:${VCPKG_INSTALLATION_ROOT}/installed/x64-windows/debug/bin
             cmake --build . --config ${{matrix.build_type}}
