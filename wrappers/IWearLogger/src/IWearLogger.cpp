@@ -161,7 +161,7 @@ public:
     std::mutex loggerMutex;
     IWearLoggerSettings settings;
     robometry::BufferConfig bufferConfig;
-    robometry::BufferManager<double> bufferManager;
+    robometry::BufferManager bufferManager;
 
     wearable::VectorOfSensorPtr<const wearable::sensor::IAccelerometer> accelerometers;
     wearable::VectorOfSensorPtr<const wearable::sensor::IEmgSensor> emgSensors;

@@ -4,7 +4,7 @@
 
 find_package(YARP COMPONENTS dev QUIET)
 find_package(robometry QUIET)
-if (${YARP_FOUND})
+if (${YARP_FOUND} AND ${robometry_FOUND})
 
 yarp_prepare_plugin(iwear_logger
     TYPE wearable::wrappers::IWearLogger
