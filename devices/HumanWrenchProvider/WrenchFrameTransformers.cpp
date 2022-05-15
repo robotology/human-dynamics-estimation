@@ -31,3 +31,14 @@ bool RobotFrameWrenchTransformer::transformWrenchFrame(const iDynTree::Wrench in
     iDynTree::fromEigen(transformedWrench, transformedWrenchEigen);
     return true;
 }
+
+bool WorldWrenchTransformer::transformWrenchFrame(const iDynTree::Wrench inputWrench,
+                                                       iDynTree::Wrench& transformedWrench)
+{
+    std::lock_guard<std::mutex> lock(_mutex);
+
+    Eigen::Matrix<double,6,1> transformedWrenchEigen = iDynTree::toEigen(transform.asAdjointTransformWrench())
+                                                       * iDynTree::toEigen(wrench.asVector());
+    iDynTree::fromEigen(transformedWrench, transformedWrenchEigen);
+    return true;
+}

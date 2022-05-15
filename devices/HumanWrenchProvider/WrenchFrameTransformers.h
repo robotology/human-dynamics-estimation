@@ -21,6 +21,7 @@ namespace hde {
             class IWrenchFrameTransformer;
             class FixedFrameWrenchTransformer;
             class RobotFrameWrenchTransformer;
+            class WorldWrenchTransformer;
         } // namespace impl
     } // namespace devices
 } // namespace hde
@@ -52,12 +53,27 @@ class hde::devices::impl::RobotFrameWrenchTransformer final
     : public hde::devices::impl::IWrenchFrameTransformer
 {
 public:
-    iDynTree::Transform transform;
+    iDynTree::Transform transform = iDynTree::Transform::Identity();
     iDynTree::Transform fixedTransform;
     std::mutex _mutex;
 
     RobotFrameWrenchTransformer() = default;
     ~RobotFrameWrenchTransformer() override = default;
+
+    bool transformWrenchFrame(const iDynTree::Wrench inputWrench,
+                              iDynTree::Wrench& transformedWrench) override;
+};
+
+class hde::devices::impl::WorldWrenchTransformer final
+    : public hde::devices::impl::IWrenchFrameTransformer
+{
+public:
+    iDynTree::Transform transform;
+    iDynTree::Wrench wrench;
+    std::mutex _mutex;
+
+    WorldWrenchTransformer() = default;
+    ~WorldWrenchTransformer() override = default;
 
     bool transformWrenchFrame(const iDynTree::Wrench inputWrench,
                               iDynTree::Wrench& transformedWrench) override;

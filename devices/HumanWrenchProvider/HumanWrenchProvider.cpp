@@ -22,6 +22,7 @@
 
 #include <yarp/os/LogStream.h>
 #include <yarp/os/ResourceFinder.h>
+#include <yarp/os/RpcServer.h>
 
 #include <mutex>
 #include <string>
@@ -43,7 +44,14 @@ struct AnalogSensorData
 enum class WrenchSourceType
 {
     Fixed,
+    Dummy,
     Robot, // TODO
+};
+
+enum rpcCommand
+{
+    empty,
+    setWorldWrench,
 };
 
 struct WrenchSourceData
@@ -69,10 +77,16 @@ struct WrenchSourceData
 class HumanWrenchProvider::Impl
 {
 public:
+    // constructor
+    Impl();
+
     mutable std::mutex mutex;
 
     //pHRI scenario flag
     bool pHRIScenario;
+    
+    // Read human data
+    bool readHumanData = false;
 
     //Gravity variable
     iDynTree::Vector3 world_gravity;
@@ -86,8 +100,20 @@ public:
 
     // Human variables
     iDynTree::Model humanModel;
+    // buffer variables (iHumanState)
+    std::array<double, 3> basePositionInterface;
+    std::array<double, 4> baseOrientationInterface;
+    std::array<double, 6> baseVelocityInterface;
+    std::vector<double> jointPositionsInterface;
+    std::vector<double> jointVelocitiesInterface;
+    std::vector<std::string> jointNamesStateInterface;
+    // buffer variables (iDynTree)
     iDynTree::VectorDynSize humanJointPositionsVec;
     iDynTree::VectorDynSize humanJointVelocitiesVec;
+    iDynTree::Transform basePose;
+
+    // KinDynComputation
+    iDynTree::KinDynComputations humanKinDynComp;
 
     // Robot variables
     iDynTree::Model robotModel;
@@ -96,6 +122,12 @@ public:
     iDynTree::VectorDynSize robotJointVelocitiesVec;
     std::vector<std::string> robotJointNamesListFromConfig;
     wearable::VectorOfSensorPtr<const wearable::sensor::IVirtualJointKinSensor> robotJointWearableSensors;
+
+    // Rpc
+    class CmdParser;
+    std::unique_ptr<CmdParser> commandPro;
+    yarp::os::RpcServer rpcPort;
+    bool applyRpcCommand();
 };
 
 HumanWrenchProvider::HumanWrenchProvider()
@@ -106,6 +138,64 @@ HumanWrenchProvider::HumanWrenchProvider()
 // Without this destructor here, the linker complains for
 // undefined reference to vtable
 HumanWrenchProvider::~HumanWrenchProvider() = default;
+
+// ===============
+// RPC PORT PARSER
+// ===============
+
+class HumanWrenchProvider::Impl::CmdParser : public yarp::os::PortReader
+{
+public:
+    std::atomic<rpcCommand> cmdStatus{rpcCommand::empty};
+    std::atomic<double> wrench_fx;
+    std::atomic<double> wrench_fy;
+    std::atomic<double> wrench_fz;
+    std::atomic<double> wrench_tx;
+    std::atomic<double> wrench_ty;
+    std::atomic<double> wrench_tz;
+
+    void resetInternalVariables()
+    {
+        cmdStatus = rpcCommand::empty;
+        wrench_fx = wrench_fy = wrench_fz = 0;
+        wrench_tx = wrench_ty = wrench_tz = 0;
+    }
+
+    bool read(yarp::os::ConnectionReader& connection) override
+    {
+        yarp::os::Bottle command, response;
+        if (command.read(connection)) {
+            if (command.get(0).asString() == "setWorldWrench") {
+                this->cmdStatus = rpcCommand::setWorldWrench;
+                this->wrench_fx = command.get(1).asDouble();
+                this->wrench_fy = command.get(2).asDouble();
+                this->wrench_fz = command.get(3).asDouble();
+                this->wrench_tx = command.get(4).asDouble();
+                this->wrench_ty = command.get(5).asDouble();
+                this->wrench_tz = command.get(6).asDouble();
+            }
+            else {
+                response.addString(
+                    "Entered command is incorrect. Enter help to know available commands");
+            }
+        }
+        else {
+            resetInternalVariables();
+            return false;
+        }
+
+        yarp::os::ConnectionWriter* reply = connection.getWriter();
+
+        if (reply != NULL) {
+            response.write(*reply);
+        }
+        else
+            return false;
+
+        return true;
+    }
+
+};
 
 bool parseRotation(yarp::os::Bottle* list, iDynTree::Rotation& rotation)
 {
@@ -135,6 +225,18 @@ bool parsePosition(yarp::os::Bottle* list, iDynTree::Position& position)
 
     position = iDynTree::Position(
         list->get(0).asFloat64(), list->get(1).asFloat64(), list->get(2).asFloat64());
+    return true;
+}
+
+bool parseWrench(yarp::os::Bottle* list, iDynTree::Wrench& wrench)
+{
+    if (list->size() != 6) {
+        yError() << LogPrefix << "The list with wrench data does not contain 6 elements";
+        return false;
+    }
+
+    wrench = iDynTree::Wrench(iDynTree::Force(list->get(0).asDouble(), list->get(1).asDouble(), list->get(2).asDouble()),
+                                iDynTree::Torque(list->get(3).asDouble(), list->get(4).asDouble(), list->get(5).asDouble()));
     return true;
 }
 
@@ -185,6 +287,7 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
     }
 
     pImpl->humanModel = humanModelLoader.model();
+    pImpl->humanKinDynComp.loadRobotModel(pImpl->humanModel);
 
     // ==========================
     // INITIALIZE THE ROBOT MODEL
@@ -315,6 +418,10 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
         }
         else if (sourceType == "robot") {
             WrenchSourceData.type = WrenchSourceType::Robot;
+        }
+        else if (sourceType == "dummy") {
+            WrenchSourceData.type = WrenchSourceType::Dummy;
+            pImpl->readHumanData = true;
         }
         else {
             yError() << LogPrefix << "Option" << sourceName
@@ -467,11 +574,66 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
                 break;
             }
 
+            case WrenchSourceType::Dummy: {
+                auto transformer = std::make_unique<WorldWrenchTransformer>();
+
+                if (!(sourceGroup.check("value") && sourceGroup.find("value").isList())) {
+                    yError() << LogPrefix << "Option" << sourceName
+                             << ":: value not found or not a valid list";
+                    return false;
+                }
+
+                iDynTree::Wrench wrench;
+
+                if (!parseWrench(sourceGroup.find("value").asList(), wrench) ) {
+                    yError() << LogPrefix << "Failed to parse" << sourceName
+                             << ":: position or rotation";
+                    return false;
+                }
+
+                transformer->wrench = wrench;
+
+                // Downcast it and move the ownership into the object containing the source data
+                auto ptr = static_cast<WorldWrenchTransformer*>(transformer.release());
+                WrenchSourceData.frameTransformer.reset(ptr);
+
+
+                yDebug() << LogPrefix << "=============:";
+                yDebug() << LogPrefix << "New source   :" << WrenchSourceData.name;
+                yDebug() << LogPrefix << "Sensor name  :" << WrenchSourceData.sensorName;
+                yDebug() << LogPrefix << "Type         :" << sourceType;
+                yDebug() << LogPrefix << "Output frame :" << WrenchSourceData.outputFrame;
+                yDebug() << LogPrefix << "=============:";
+
+                break;
+            }
+
+
         }
 
         // Store the wrench source data
         pImpl->wrenchSources.emplace_back(std::move(WrenchSourceData));
     }
+
+    // ===================
+    // INITIALIZE RPC PORT
+    // ===================
+
+    std::string rpcPortName;
+    if (!(config.check("rpcPortPrefix") && config.find("rpcPortPrefix").isString())) {
+        rpcPortName = "/" + DeviceName + "/rpc:i";
+    }
+    else {
+        rpcPortName = "/" + config.find("rpcPortPrefix").asString() + "/" + DeviceName + "/rpc:i";
+    }
+
+    if (!pImpl->rpcPort.open(rpcPortName)) {
+        yError() << LogPrefix << "Unable to open rpc port " << rpcPortName;
+        return false;
+    }
+
+    // Set rpc port reader
+    pImpl->rpcPort.setReader(*pImpl->commandPro);
 
     return true;
 }
@@ -483,6 +645,41 @@ bool HumanWrenchProvider::close()
 
 void HumanWrenchProvider::run()
 {
+    if (pImpl->readHumanData) {
+        pImpl->basePositionInterface = pImpl->iHumanState->getBasePosition();
+        pImpl->baseOrientationInterface = pImpl->iHumanState->getBaseOrientation();
+        pImpl->baseVelocityInterface = pImpl->iHumanState->getBaseVelocity();
+        pImpl->jointPositionsInterface = pImpl->iHumanState->getJointPositions();
+        pImpl->jointVelocitiesInterface = pImpl->iHumanState->getJointVelocities();
+        pImpl->jointNamesStateInterface = pImpl->iHumanState->getJointNames();
+
+        // Resize human joint quantities buffer
+        pImpl->humanJointPositionsVec.resize(pImpl->humanModel.getNrOfDOFs());
+        pImpl->humanJointVelocitiesVec.resize(pImpl->humanModel.getNrOfDOFs());
+
+        pImpl->basePose.setPosition(iDynTree::Position(pImpl->jointPositionsInterface.at(0),
+                                                       pImpl->jointPositionsInterface.at(1),
+                                                       pImpl->jointPositionsInterface.at(2)));
+        iDynTree::Vector4 quaternion;
+
+        quaternion.setVal(0, pImpl->baseOrientationInterface.at(0));
+        quaternion.setVal(1, pImpl->baseOrientationInterface.at(1));
+        quaternion.setVal(2, pImpl->baseOrientationInterface.at(2));
+        quaternion.setVal(3, pImpl->baseOrientationInterface.at(3));
+        pImpl->basePose.setRotation(iDynTree::Rotation::RotationFromQuaternion(quaternion));
+        
+
+        // Human joint quantities are in radians
+        for (int j = 0; j < pImpl->humanModel.getNrOfDOFs(); j++) {
+            for (int i = 0; i < pImpl->jointNamesStateInterface.size(); i++) {
+                if (pImpl->humanModel.getJointName(j) == pImpl->jointNamesStateInterface.at(i)) {
+                    pImpl->humanJointPositionsVec.setVal(j, pImpl->jointPositionsInterface.at(i));
+                    pImpl->humanJointVelocitiesVec.setVal(j, pImpl->jointVelocitiesInterface.at(i));
+                    break;
+                }
+            }
+        }
+    }
     if (pImpl->pHRIScenario) {
 
         // Get human joint quantities from IHumanState interface
@@ -561,39 +758,70 @@ void HumanWrenchProvider::run()
         wearable::Vector3 forces;
         wearable::Vector3 torques;
 
-        if (!forceSource.ftWearableSensor) {
-            yError() << LogPrefix << "Failed to get wearable sensor for source" << forceSource.name;
-            askToStop();
-            return;
+        iDynTree::Wrench inputWrench = iDynTree::Wrench({0.0, 0.0, 0.0}, 
+                                                        {0.0, 0.0, 0.0});
+
+        if (forceSource.type == WrenchSourceType::Fixed)
+        {
+            if (!forceSource.ftWearableSensor) {
+                yError() << LogPrefix << "Failed to get wearable sensor for source" << forceSource.name;
+                askToStop();
+                return;
+            }
+
+            if (!forceSource.ftWearableSensor->getForceTorque6D(forces, torques)) {
+                yError() << LogPrefix << "Failed to get measurement from sensor"
+                        << forceSource.ftWearableSensor->getSensorName();
+                askToStop();
+                return;
+            }
+
+            inputWrench = iDynTree::Wrench({forces[0], forces[1], forces[2]},
+                                           {torques[0], torques[1], torques[2]});
         }
 
-        if (!forceSource.ftWearableSensor->getForceTorque6D(forces, torques)) {
-            yError() << LogPrefix << "Failed to get measurement from sensor"
-                     << forceSource.ftWearableSensor->getSensorName();
-            askToStop();
-            return;
-        }
+        
 
         // Tranform it to the correct frame
         // ================================
 
-        iDynTree::Wrench inputWrench({forces[0], forces[1], forces[2]},
-                                     {torques[0], torques[1], torques[2]});
-
         iDynTree::Wrench transformedWrench;
+
+        if (forceSource.type == WrenchSourceType::Dummy) {
+            pImpl->humanKinDynComp.setRobotState(pImpl->basePose,
+                                                 pImpl->humanJointPositionsVec,
+                                                 iDynTree::Twist::Zero(),
+                                                 pImpl->humanJointVelocitiesVec,
+                                                 pImpl->world_gravity);
+            auto worldToFrameRotation = pImpl->humanKinDynComp.getWorldTransform(forceSource.outputFrame).getRotation();
+
+            // Access the tranforms through pointers
+            std::lock_guard<std::mutex> lock(pImpl->mutex);
+
+            // Downcast it and move the pointer ownership into the object of derived class
+            auto transformerPtr = dynamic_cast<WorldWrenchTransformer*>(forceSource.frameTransformer.release());
+            std::unique_ptr<WorldWrenchTransformer> newTransformer;
+            newTransformer.reset(transformerPtr);
+
+            newTransformer->transform.setRotation(worldToFrameRotation.inverse());
+
+            // Downcast it and move the pointer ownership into the object containing the source data
+            auto ptr = static_cast<WorldWrenchTransformer*>(newTransformer.release());
+            forceSource.frameTransformer.reset(ptr);
+        }
 
         if (forceSource.type == WrenchSourceType::Robot) {
 
             iDynTree::Transform humanFeetToHandsTransform = iDynTree::Transform::Identity();
-            iDynTree::KinDynComputations humanKinDynComp;
+            
 
-            humanKinDynComp.loadRobotModel(pImpl->humanModel);
-            humanKinDynComp.setRobotState(iDynTree::Transform::Identity(),
-                                          pImpl->humanJointPositionsVec,
-                                          iDynTree::Twist::Zero(),
-                                          pImpl->humanJointVelocitiesVec,
-                                          pImpl->world_gravity);
-            humanFeetToHandsTransform = humanKinDynComp.getRelativeTransform(forceSource.outputFrame,forceSource.humanLinkingFrame);
+            
+            pImpl->humanKinDynComp.setRobotState(iDynTree::Transform::Identity(),
+                                                 pImpl->humanJointPositionsVec,
+                                                 iDynTree::Twist::Zero(),
+                                                 pImpl->humanJointVelocitiesVec,
+                                                 pImpl->world_gravity);
+            humanFeetToHandsTransform = pImpl->humanKinDynComp.getRelativeTransform(forceSource.outputFrame,forceSource.humanLinkingFrame);
 
             iDynTree::Transform robotFeetToHandsTransform = iDynTree::Transform::Identity();
             iDynTree::KinDynComputations robotKinDynComp;
@@ -659,6 +887,20 @@ void HumanWrenchProvider::run()
             pImpl->analogSensorData.measurements[6 * i + 5] = transformedWrench.getAngularVec3()(2);
         }
     }
+
+    // Check for rpc command status and apply command
+    if (pImpl->commandPro->cmdStatus != rpcCommand::empty) {
+        // Apply rpc command
+        if (!pImpl->applyRpcCommand()) {
+            yWarning() << LogPrefix << "Failed to execute the rpc command";
+        }
+
+        // reset the rpc internal status
+        {
+            std::lock_guard<std::mutex> lock(pImpl->mutex);
+            pImpl->commandPro->resetInternalVariables();
+        }
+    }
 }
 
 bool HumanWrenchProvider::attach(yarp::dev::PolyDriver* poly)
@@ -709,15 +951,18 @@ bool HumanWrenchProvider::attach(yarp::dev::PolyDriver* poly)
 
         // Get the ft wearable sensors containing the input measurements
         for (auto& ftSensorSourceData : pImpl->wrenchSources) {
-            auto sensor = pImpl->iWear->getForceTorque6DSensor(ftSensorSourceData.sensorName);
+            if (ftSensorSourceData.type == WrenchSourceType::Fixed)
+            {
+                auto sensor = pImpl->iWear->getForceTorque6DSensor(ftSensorSourceData.sensorName);
 
-            if (!sensor) {
-                yError() << LogPrefix << "Failed to get sensor" << ftSensorSourceData.sensorName
-                         << "from the attached IWear interface";
-                return false;
+                if (!sensor) {
+                    yError() << LogPrefix << "Failed to get sensor" << ftSensorSourceData.sensorName
+                            << "from the attached IWear interface";
+                    return false;
+                }
+
+                ftSensorSourceData.ftWearableSensor = sensor;
             }
-
-            ftSensorSourceData.ftWearableSensor = sensor;
         }
 
         // Initialize the number of channels of the equivalent IAnalogSensor
@@ -774,13 +1019,7 @@ bool HumanWrenchProvider::attach(yarp::dev::PolyDriver* poly)
     // MISC
     // ====
 
-    // Start the PeriodicThread loop
-    if (!start()) {
-        yError() << LogPrefix << "Failed to start the loop.";
-        return false;
-    }
-
-    yInfo() << LogPrefix << "attach() successful";
+    
     return true;
 }
 
@@ -816,6 +1055,14 @@ bool HumanWrenchProvider::attachAll(const yarp::dev::PolyDriverList& driverList)
 
         attachStatus = attach(driver->poly);
     }
+
+    // Start the PeriodicThread loop
+    if (!start()) {
+        yError() << LogPrefix << "Failed to start the loop.";
+        return false;
+    }
+
+    yInfo() << LogPrefix << "attach() successful";
 
     return attachStatus;
 }
@@ -947,4 +1194,42 @@ std::vector<double> HumanWrenchProvider::getWrenches() const
     return wrenchValues;
 }
 
+bool HumanWrenchProvider::Impl::applyRpcCommand()
+{
+    switch(commandPro->cmdStatus) {
+        case rpcCommand::setWorldWrench : {
+            for (unsigned i = 0; i < wrenchSources.size(); ++i) {
+                auto& forceSource = wrenchSources[i];
+                if (forceSource.type == WrenchSourceType::Dummy)
+                {
+                    // Downcast it and move the pointer ownership into the object of derived class
+                    auto transformerPtr = dynamic_cast<WorldWrenchTransformer*>(forceSource.frameTransformer.release());
+                    std::unique_ptr<WorldWrenchTransformer> newTransformer;
+                    newTransformer.reset(transformerPtr);
 
+                    newTransformer->wrench = iDynTree::Wrench(iDynTree::Force(commandPro->wrench_fx, commandPro->wrench_fy, commandPro->wrench_fz),
+                                                            iDynTree::Torque(commandPro->wrench_tx, commandPro->wrench_ty, commandPro->wrench_tz) );
+
+                    // Downcast it and move the pointer ownership into the object containing the source data
+                    auto ptr = static_cast<WorldWrenchTransformer*>(newTransformer.release());
+                    forceSource.frameTransformer.reset(ptr);
+                }
+
+            }
+            break;
+        }
+        default : {
+            yWarning() << LogPrefix << "Command not valid";
+            return false;
+        }
+    }
+    return true;
+}
+
+// ===========
+// CONSTRUCTOR
+// ===========
+
+HumanWrenchProvider::Impl::Impl()
+    : commandPro(new CmdParser())
+{}
