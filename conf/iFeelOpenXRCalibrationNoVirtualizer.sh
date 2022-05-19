@@ -1,0 +1,36 @@
+usage() {
+cat << EOF
+************************************************************************************************************************************
+Script for calibrating OpenVR world and iFeel world with the virtualizer world.
+The script should be launched expecting the subject inside the virtualizer in T-Pose.
+
+OPTION: <vertical distance from the subject belly to the subject eyes in meters>
+
+EXAMPLE USAGE: ./iFeelOpenVRCalibration.sh 0.5
+************************************************************************************************************************************
+
+EOF
+}
+
+
+################################################################################
+# "MAIN" FUNCTION:                                                             #
+################################################################################
+usage
+if [ $# -lt 1 ]; then
+    CHEST_TO_HEAD_DISTANCE_M=0.5
+    echo "[WARNING] No option passed, using default CHEST_TO_HEAD_DISTANCE "$CHEST_TO_HEAD_DISTANCE_M
+    echo ""
+else
+    CHEST_TO_HEAD_DISTANCE_M=$1
+fi
+
+echo "OpenVR: resetting seated position"
+echo "resetSeatedPosition" | yarp rpc /OpenVRTrackersModule/rpc
+
+echo "Creating static transform: virtualizer_root -> openVR_origin"
+echo "set_static_transform_rad virtualizer_root openVR_origin 0.1 0 $CHEST_TO_HEAD_DISTANCE_M 1.5708 0 -1.5708" | yarp rpc /transformServer/rpc
+echo "set_static_transform_rad virtualizer_root virtualizer_frame  0.0 0 0 0.0  0.0 0.0" | yarp rpc /transformServer/rpc
+echo "set_static_transform_rad virtualizer_frame root_link_desired 0.0 0 0 0.0 -0.2 0.0" | yarp rpc /transformServer/rpc
+
+exit 0
