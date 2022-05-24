@@ -19,6 +19,8 @@
 #include <iDynTree/Core/Transform.h>
 #include <iDynTree/Core/Wrench.h>
 #include <iDynTree/KinDynComputations.h>
+#include <iDynTree/Estimation/BerdySparseMAPSolver.h>
+#include <iDynTree/Estimation/BerdyHelper.h>
 
 #include <yarp/os/LogStream.h>
 #include <yarp/os/ResourceFinder.h>
@@ -27,6 +29,7 @@
 #include <mutex>
 #include <string>
 #include <vector>
+#include <unordered_map>
 
 const std::string DeviceName = "HumanWrenchProvider";
 const std::string LogPrefix = DeviceName + " :";
@@ -52,6 +55,19 @@ enum rpcCommand
 {
     empty,
     setWorldWrench,
+};
+
+/** 
+ * This structure holds the parameters used for the Non-Collocated Wrench Estimation.
+ */
+struct MAPEstParams
+{
+    bool useMAPEst;
+    iDynTree::VectorDynSize priorDynamicsRegularizationExpected; // mu_d
+    iDynTree::SparseMatrix<iDynTree::ColumnMajor> priorMeasurementsCovariance; // Sigma_y
+    // measurements
+    double measurementDefaultCovariance;
+    std::unordered_map<std::string, std::vector<double>> specificMeasurementsCovariance;
 };
 
 struct WrenchSourceData
@@ -125,6 +141,12 @@ public:
     std::unique_ptr<CmdParser> commandPro;
     yarp::os::RpcServer rpcPort;
     bool applyRpcCommand();
+    
+    // MAP estimator variables
+    MAPEstParams mapEstParams;
+    iDynTree::BerdyHelper berdyHelper;
+    std::unique_ptr<iDynTree::BerdySparseMAPSolver> mapSolver;
+    std::vector<iDynTree::Wrench> transformedWrenches;
 };
 
 HumanWrenchProvider::HumanWrenchProvider()
@@ -234,6 +256,102 @@ bool parseWrench(yarp::os::Bottle* list, iDynTree::Wrench& wrench)
 
     wrench = iDynTree::Wrench(iDynTree::Force(list->get(0).asFloat64(), list->get(1).asFloat64(), list->get(2).asFloat64()),
                                 iDynTree::Torque(list->get(3).asFloat64(), list->get(4).asFloat64(), list->get(5).asFloat64()));
+
+    return true;
+}
+
+bool parseMeasurementsCovariance(yarp::os::Searchable& config, MAPEstParams& mapEstParams)
+{
+    // find the group cov_measurements_NET_EXT_WRENCH_SENSOR
+    yarp::os::Bottle& priorMeasurementsCovarianceBottle = config.findGroup("cov_measurements_NET_EXT_WRENCH_SENSOR");
+    if(priorMeasurementsCovarianceBottle.isNull())
+    {
+        //TODO use default values?
+        return false;
+    }
+    
+    // find the default value
+    if(!priorMeasurementsCovarianceBottle.check("value"))
+    {
+        //TODO
+        return false;
+    }
+    mapEstParams.measurementDefaultCovariance = priorMeasurementsCovarianceBottle.find("value").asFloat64();  
+
+    // find the elements with specific covariance
+    yarp::os::Value& specificElements = priorMeasurementsCovarianceBottle.find("specificElements");
+    if(specificElements.isNull())
+    {
+        yInfo()<<"No specific elements to specify the measurements covariance were found! Using"<<mapEstParams.measurementDefaultCovariance<<"for all";
+        return true;
+    }
+    if(!specificElements.isList())
+    {
+        yError()<<"Parameter specificElements must be a list!";
+        return false;
+    }
+
+    yarp::os::Bottle *specificElementsList = specificElements.asList();
+    for(int i=0; i<specificElementsList->size(); i++)
+    {
+        std::string linkName = specificElementsList->get(i).asString();
+        yDebug()<<linkName<<"FOUND";
+        if(!priorMeasurementsCovarianceBottle.check(linkName))
+        {
+            yError()<<"The element"<<linkName<<"appears in the specificElements list, but its covariance is not specified!";
+            return false;
+        }
+
+        // get the diagonal values of the covariance
+        yarp::os::Bottle* covarianceList = priorMeasurementsCovarianceBottle.find(linkName).asList();
+        if(covarianceList==nullptr)
+        {
+            yError()<<"The"<<linkName<<"parameter must be a list!";
+            return false;
+        }
+        if(covarianceList->size()!=6)
+        {
+            yError()<<"The covariance values of"<<linkName<<"must have 6 parameters!";
+            return false;
+        }
+        std::vector<double> covarianceListValues;
+        for(int j=0; j<covarianceList->size(); j++)
+        {
+            covarianceListValues.push_back(covarianceList->get(j).asFloat64());
+        }
+        mapEstParams.specificMeasurementsCovariance.emplace(linkName, covarianceListValues);
+
+    }
+    return true;
+}
+
+bool parseMAPEstParams(yarp::os::Searchable& config, MAPEstParams& mapEstParams)
+{
+    // find the param group
+    yarp::os::Bottle& mapEstParamsGroup = config.findGroup("MAPEstParams");
+    if(mapEstParamsGroup.isNull())
+    {
+        mapEstParams.useMAPEst = false;
+        return true;
+    }
+
+    // parse the useMAP
+    if(!mapEstParamsGroup.check("useMAPEst"))
+    {
+        yError() << "Missing useMAPEst parameter!";
+        return false;
+    }
+    mapEstParams.useMAPEst = mapEstParamsGroup.find("useMAPEst").asBool();
+
+    // parse the prior dynamic variable covariance
+    //TODO mapEstParams.priorDynamicsRegularizationExpected
+
+    // parse the prior measurements covariance Sigma_y
+    if(!parseMeasurementsCovariance(mapEstParamsGroup, mapEstParams))
+    {
+        return false;
+    }
+
     return true;
 }
 
@@ -590,6 +708,12 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
         // Store the wrench source data
         pImpl->wrenchSources.emplace_back(WrenchSourceData);
     }
+    pImpl->transformedWrenches.resize(pImpl->wrenchSources.size());
+
+    if(!parseMAPEstParams(config, pImpl->mapEstParams))
+    {
+        return false;
+    }
 
     // ===================
     // INITIALIZE RPC PORT
@@ -806,9 +930,11 @@ void HumanWrenchProvider::run()
             return;
         }
 
+        pImpl->transformedWrenches[i] = transformedWrench;
+
         // Expose the data as IAnalogSensor
         // ================================
-        {
+        if(!pImpl->mapEstParams.useMAPEst){
             std::lock_guard<std::mutex> lock(pImpl->mutex);
 
             pImpl->analogSensorData.measurements[6 * i + 0] = transformedWrench.getLinearVec3()(0);
@@ -818,6 +944,11 @@ void HumanWrenchProvider::run()
             pImpl->analogSensorData.measurements[6 * i + 4] = transformedWrench.getAngularVec3()(1);
             pImpl->analogSensorData.measurements[6 * i + 5] = transformedWrench.getAngularVec3()(2);
         }
+    }
+
+    if(pImpl->mapEstParams.useMAPEst)
+    {
+        //TODO use MAP estimator
     }
 
     // Check for rpc command status and apply command

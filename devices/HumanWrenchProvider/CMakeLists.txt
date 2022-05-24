@@ -33,6 +33,7 @@ target_link_libraries(HumanWrenchProvider PUBLIC
     IWear::IWear
     iDynTree::idyntree-core
     iDynTree::idyntree-model
+    iDynTree::idyntree-estimation
     iDynTree::idyntree-high-level)
 
 yarp_install(
