@@ -161,6 +161,15 @@
             <param name="type">dummy</param>
             <param name="value">(0.0 0.0 0.0 0.0 0.0 0.0)</param>
         </group-->
+        <group name="MAPEstParams">
+            <param name="useMAPEst">true</param>
+            <group name="cov_measurements_NET_EXT_WRENCH_SENSOR">
+                <param name="value">1e-6</param>
+                <param name="specificElements">(LeftFoot RightFoot)</param>
+                <param name="LeftFoot">(0.0589998348 0.0589998348 0.0359999712 0.002250000225 0.002250000225 0.56e-3)</param>
+                <param name="RightFoot">(0.0589998348 0.0589998348 0.0359999712 0.002250000225 0.002250000225 0.56e-3)</param>
+            </group>
+        </group>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
                  <elem name="HumanWrenchProviderLabelFTShoeLeft">FTSourcesIWearRemapper</elem>
