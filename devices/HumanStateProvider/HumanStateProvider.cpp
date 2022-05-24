@@ -608,6 +608,27 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
             return false;
     }
 
+    yarp::os::Bottle& contactTresholdGroup = config.findGroup("CONTACT_TRESHOLDS");
+    if (!contactTresholdGroup.isNull()) {
+        for (size_t i = 1; i < contactTresholdGroup.size(); ++i) {
+            if (!(contactTresholdGroup.get(i).isList() && contactTresholdGroup.get(i).asList()->size() == 2)) {
+                yError() << LogPrefix
+                        << "Childs of CONTACT_TRESHOLDS must be lists of 2 elements";
+                return false;
+            }
+            yarp::os::Bottle* list = contactTresholdGroup.get(i).asList();
+            std::string linkName = list->get(0).asString();
+
+            if (!list->find(linkName).isFloat64()) {
+                yError() << LogPrefix << "CONTACT_TRESHOLDS " << linkName << " must be a float";
+                return false;
+            }
+
+            yInfo() << LogPrefix << "CONTACT_TRESHOLDS added for target " << linkName;
+        }
+    }
+
+
     // =======================================
     // PARSE THE GENERAL CONFIGURATION OPTIONS
     // =======================================
@@ -741,6 +762,23 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         pImpl->wearableTargets[targetName].get()->positionScaleFactor = positionScaleFactor;
         yInfo() << LogPrefix << "Adding Scale factor for " << targetName << "==>" << positionScaleFactor.toString();
     }
+
+    for (size_t i = 1; i < contactTresholdGroup.size(); ++i) {
+        hde::TargetName targetName = contactTresholdGroup.get(i).asList()->get(0).asString();
+        double contactTreshold = contactTresholdGroup.get(i).asList()->find(targetName).asFloat64();
+
+        if (pImpl->wearableTargets.find(targetName) == pImpl->wearableTargets.end())
+        {
+            yError() << LogPrefix << "Contact treshold for not existing target [" << targetName << "]";
+            return false;
+        }
+
+        pImpl->wearableTargets[targetName].get()->contactTreshold = contactTreshold;
+        yInfo() << LogPrefix << "Adding contact treshold for " << targetName << "==>" << contactTreshold;
+    }
+    
+
+    
 
     // ==========================================
     // PARSE THE DEPENDENDT CONFIGURATION OPTIONS
@@ -1769,7 +1807,7 @@ bool HumanStateProvider::impl::updateWearableTargets()
                 }
 
                 // If z force is greater then treshold add the contact constraint
-                bool contactActive = force.at(2) > 100;
+                bool contactActive = force.at(2) > wearableTargetEntry.second->contactTreshold;
                 // if swtiching to contact, use new position for contact
                 if (!wearableTargetEntry.second->contactActive && contactActive)
                 {
