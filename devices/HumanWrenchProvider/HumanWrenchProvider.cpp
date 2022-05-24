@@ -63,9 +63,10 @@ enum rpcCommand
 struct MAPEstParams
 {
     bool useMAPEst;
-    iDynTree::VectorDynSize priorDynamicsRegularizationExpected; // mu_d
     iDynTree::SparseMatrix<iDynTree::ColumnMajor> priorMeasurementsCovariance; // Sigma_y
-    // measurements
+    // dynamic variables params
+    double priorDynamicsRegularizationExpected; // mu_d
+    // measurements params
     double measurementDefaultCovariance;
     std::unordered_map<std::string, std::vector<double>> specificMeasurementsCovariance;
 };
@@ -295,7 +296,6 @@ bool parseMeasurementsCovariance(yarp::os::Searchable& config, MAPEstParams& map
     for(int i=0; i<specificElementsList->size(); i++)
     {
         std::string linkName = specificElementsList->get(i).asString();
-        yDebug()<<linkName<<"FOUND";
         if(!priorMeasurementsCovarianceBottle.check(linkName))
         {
             yError()<<"The element"<<linkName<<"appears in the specificElements list, but its covariance is not specified!";
@@ -335,7 +335,7 @@ bool parseMAPEstParams(yarp::os::Searchable& config, MAPEstParams& mapEstParams)
         return true;
     }
 
-    // parse the useMAP
+    // parse the useMAPEst param
     if(!mapEstParamsGroup.check("useMAPEst"))
     {
         yError() << "Missing useMAPEst parameter!";
@@ -344,12 +344,22 @@ bool parseMAPEstParams(yarp::os::Searchable& config, MAPEstParams& mapEstParams)
     mapEstParams.useMAPEst = mapEstParamsGroup.find("useMAPEst").asBool();
 
     // parse the prior dynamic variable covariance
-    //TODO mapEstParams.priorDynamicsRegularizationExpected
-
-    // parse the prior measurements covariance Sigma_y
-    if(!parseMeasurementsCovariance(mapEstParamsGroup, mapEstParams))
+    if(mapEstParams.useMAPEst)
     {
-        return false;
+        // parse the prior DynamicsVariableCovariance
+        if(!mapEstParamsGroup.check("mu_dyn_variables") ||
+            !mapEstParamsGroup.find("mu_dyn_variables").isFloat64())
+        {
+            yError() << "Missing valid floating point mu_dyn_variables parameter!";
+            return false;
+        }
+        mapEstParams.priorDynamicsRegularizationExpected = mapEstParamsGroup.find("mu_dyn_variables").asFloat64();
+
+        // parse the prior measurements covariance Sigma_y
+        if(!parseMeasurementsCovariance(mapEstParamsGroup, mapEstParams))
+        {
+            return false;
+        }
     }
 
     return true;
