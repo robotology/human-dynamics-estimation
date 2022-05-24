@@ -98,6 +98,8 @@ public:
 
     bool computeDesiredLinkVelocities();
 
+    bool computeDesiredLinkVelocitiesFeedForward();
+
     bool getJointPositionLimitsFromModel();
 
     bool initialize();
@@ -924,6 +926,15 @@ bool DynamicalInverseKinematics::impl::solveProblem(const double dt)
     m_stateIntegrator.getJointConfiguration(m_state.s);
     m_stateIntegrator.getBasePose(m_state.W_p_B, m_state.W_R_B);
 
+    // compute desired link velocities feedforward only for output velocity
+    if (!computeDesiredLinkVelocitiesFeedForward())
+        return false;
+
+    // solve inverse velocity kinematics
+    if (!m_inverseVelocityKinematics.solve())
+        return false;
+    if (!(m_inverseVelocityKinematics.getBaseVelocitySolution(m_state.dot_W_p_B, m_state.omega_B) && m_inverseVelocityKinematics.getJointsVelocitySolution(m_state.dot_s)))
+        return false;
 
     return true;
 }
@@ -977,6 +988,43 @@ bool DynamicalInverseKinematics::impl::computeDesiredLinkVelocities()
                                                                  - target.getPositionFeedbackGain()  * iDynTree::toEigen(m_errorBuffer).head(3);
                 iDynTree::toEigen(m_desiredAngularVelocityBuffer) = target.getAngularVelocityFeedforwardGain() * iDynTree::toEigen(target.getAngularVelocity()) 
                                                                  - target.getOrientationFeedbackGain()  * iDynTree::toEigen(m_errorBuffer).tail(3);
+                if (!m_inverseVelocityKinematics.updateTarget(target.getFrameName(), iDynTree::Twist(m_desiredLinearVelocityBuffer, m_desiredAngularVelocityBuffer), target.getLinearVelocityWeight(), target.getAngularVelocityWeight()))
+                    return false;
+                break;
+        }
+    }
+    return true;
+}
+
+bool DynamicalInverseKinematics::impl::computeDesiredLinkVelocitiesFeedForward()
+{
+    for (auto const& it : m_targets)
+    {
+        auto target = it.second;
+
+        switch (target.getTargetType()) {
+            case DynamicalInverseKinematics::impl::InverseKinematicsTarget::TargetType::TargetTypePosition:
+                m_errorBuffer.resize(3);
+                if (!target.computeError(m_dynamics.getWorldTransform(target.getFrameName()).getPosition(), m_errorBuffer))
+                    return false;
+                iDynTree::toEigen(m_desiredLinearVelocityBuffer) = target.getLinearVelocityFeedforwardGain() * iDynTree::toEigen(target.getLinearVelocity());
+                if (!m_inverseVelocityKinematics.updateTargetLinearVelocity(target.getFrameName(), m_desiredLinearVelocityBuffer, target.getLinearVelocityWeight()))
+                    return false;
+                break;
+            case DynamicalInverseKinematics::impl::InverseKinematicsTarget::TargetType::TargetTypeOrientation:
+                m_errorBuffer.resize(3);
+                if (!target.computeError(m_dynamics.getWorldTransform(target.getFrameName()).getRotation(), m_errorBuffer))
+                    return false;
+                iDynTree::toEigen(m_desiredAngularVelocityBuffer) = target.getAngularVelocityFeedforwardGain() * iDynTree::toEigen(target.getAngularVelocity());
+                if (!m_inverseVelocityKinematics.updateTargetAngularVelocity(target.getFrameName(), m_desiredAngularVelocityBuffer, target.getAngularVelocityWeight()))
+                    return false;
+                break;
+            case DynamicalInverseKinematics::impl::InverseKinematicsTarget::TargetType::TargetTypePose:
+                m_errorBuffer.resize(6);
+                if (!target.computeError(m_dynamics.getWorldTransform(target.getFrameName()), m_errorBuffer))
+                    return false;
+                iDynTree::toEigen(m_desiredLinearVelocityBuffer) = target.getLinearVelocityFeedforwardGain() * iDynTree::toEigen(target.getLinearVelocity());
+                iDynTree::toEigen(m_desiredAngularVelocityBuffer) = target.getAngularVelocityFeedforwardGain() * iDynTree::toEigen(target.getAngularVelocity());
                 if (!m_inverseVelocityKinematics.updateTarget(target.getFrameName(), iDynTree::Twist(m_desiredLinearVelocityBuffer, m_desiredAngularVelocityBuffer), target.getLinearVelocityWeight(), target.getAngularVelocityWeight()))
                     return false;
                 break;
