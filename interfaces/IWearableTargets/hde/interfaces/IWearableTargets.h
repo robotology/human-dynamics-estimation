@@ -63,8 +63,10 @@ namespace hde {
         iDynTree::Twist twistMeasured;
         iDynTree::Transform mixedTransform;
 
-        // flags for specifc target types
+        // target-specific configurations
+        // floor contact
         bool contactActive;
+        double contactTreshold = 0; // [N]
 
         mutable std::mutex mutex;
 
