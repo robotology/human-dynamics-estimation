@@ -881,6 +881,10 @@ int HumanWrenchProvider::getState(int ch)
         case wearable::WearStatus::WaitingForFirstRead:
             return IAnalogSensor::AS_TIMEOUT;
     };
+
+    // If there is no mapping between Wearable sensor 
+    // status to IAnalogSensor, return error
+    return IAnalogSensor::AS_ERROR;
 }
 
 int HumanWrenchProvider::getChannels()
