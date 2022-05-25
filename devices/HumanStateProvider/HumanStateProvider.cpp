@@ -402,7 +402,7 @@ public:
         yarp::os::Bottle command, response;
         if (command.read(connection)) {
             if (command.get(0).asString() == "help") {
-                response.addVocab(yarp::os::Vocab::encode("many"));
+                response.addVocab32(yarp::os::Vocab32::encode("many"));
                 response.addString("The following commands can be used to apply a secondary calibration assuming the subject is in the zero configuration of the model for the calibrated links. \n");
                 response.addString("Enter <calibrateAll> to apply a secondary calibration for all the links using the measured base pose \n");
                 response.addString("Enter <calibrateAllWithWorld <refLink>> to apply a secondary calibration for all the links assuming the <refLink> to be in the world origin \n");
