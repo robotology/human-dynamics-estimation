@@ -280,6 +280,27 @@ jobs:
             cmake -DCMAKE_PREFIX_PATH=${GITHUB_WORKSPACE}/install/deps \
                   -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/install/deps ..
             cmake --build . --config ${{matrix.build_type}} --target install
+            
+            # matioCpp
+            cd ${GITHUB_WORKSPACE}
+            git clone https://github.com/dic-iit/matio-cpp
+            cd matio-cpp
+            git checkout ${matioCpp_TAG}
+            mkdir -p build
+            cd build
+            cmake -DCMAKE_PREFIX_PATH=${GITHUB_WORKSPACE}/install/deps \
+                  -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/install/deps ..
+            cmake --build . --config ${{matrix.build_type}} --target install
+            # yarp-telemetry
+            cd ${GITHUB_WORKSPACE}
+            git clone https://github.com/robotology/yarp-telemetry
+            cd yarp-telemetry
+            git checkout ${yarp_telemetry_TAG}
+            mkdir -p build
+            cd build
+            cmake -DCMAKE_PREFIX_PATH=${GITHUB_WORKSPACE}/install/deps \
+                  -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/install/deps ..
+            cmake --build . --config ${{matrix.build_type}} --target install
               
         # ===================
         # CMAKE-BASED PROJECT
