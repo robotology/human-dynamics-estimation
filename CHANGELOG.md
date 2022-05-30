@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0] - 2022-05-24
+
 ### Changed
 - Fix deprecated `YARP` functions in `YarpUtilities` component (https://github.com/robotology/wearables/pull/152)
 - Ported `iWearLogger` to the usage of `robometry` (new name of `YARP_telemetry`, https://github.com/robotology/wearables/pull/155)
