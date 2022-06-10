@@ -149,7 +149,7 @@ jobs:
             # Compilation related dependencies
             mamba install cmake compilers make ninja pkg-config
             # Actual dependencies
-            mamba install -c robotology yarp idyntree matio-cpp
+            mamba install -c robotology yarp idyntree matio-cpp robometry
 
         # ===================
         # CMAKE-BASED PROJECT
