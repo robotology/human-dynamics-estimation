@@ -71,6 +71,13 @@ struct MAPEstParams
     std::unordered_map<std::string, std::vector<double>> specificMeasurementsCovariance;
 };
 
+struct MAPEstHelper
+{
+    iDynTree::BerdyOptions berdyOptions;
+    iDynTree::BerdyHelper berdyHelper;
+    std::unique_ptr<iDynTree::BerdySparseMAPSolver> mapSolver;
+};
+
 struct WrenchSourceData
 {
     std::string name;
@@ -145,8 +152,7 @@ public:
     
     // MAP estimator variables
     MAPEstParams mapEstParams;
-    iDynTree::BerdyHelper berdyHelper;
-    std::unique_ptr<iDynTree::BerdySparseMAPSolver> mapSolver;
+    MAPEstHelper mapEstHelper;
     std::vector<iDynTree::Wrench> transformedWrenches;
 };
 
@@ -723,6 +729,70 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
     if(!parseMAPEstParams(config, pImpl->mapEstParams))
     {
         return false;
+    }
+
+    // Configure map estimator
+    if(pImpl->mapEstParams.useMAPEst)
+    {
+        pImpl->mapEstHelper.berdyOptions.berdyVariant = iDynTree::BerdyVariants::BERDY_FLOATING_BASE_NON_COLLOCATED_EXT_WRENCHES;
+        pImpl->mapEstHelper.berdyOptions.includeAllNetExternalWrenchesAsSensors = true;
+        pImpl->mapEstHelper.berdyOptions.includeRcmAsSensor = true;
+        pImpl->mapEstHelper.berdyOptions.includeAllJointTorquesAsSensors = false;
+        pImpl->mapEstHelper.berdyOptions.includeAllJointAccelerationsAsSensors = false;
+        pImpl->mapEstHelper.berdyOptions.includeAllNetExternalWrenchesAsSensors = true;
+        pImpl->mapEstHelper.berdyOptions.includeAllNetExternalWrenchesAsDynamicVariables = true;
+
+        pImpl->mapEstHelper.berdyOptions.baseLink = "Pelvis"; //TODO use the ihumanstate one
+
+        if(!pImpl->mapEstHelper.berdyOptions.checkConsistency())
+        {
+            yError() << LogPrefix << "BERDY options are not consistent";
+            return false;
+        }
+
+        // Initialize the BerdyHelper
+        if (!pImpl->mapEstHelper.berdyHelper.init(humanModelLoader.model(), iDynTree::SensorsList(), pImpl->mapEstHelper.berdyOptions)) {
+            yError() << LogPrefix << "Failed to initialize BERDY";
+            return false;
+        }
+
+        pImpl->mapEstHelper.mapSolver = std::make_unique<iDynTree::BerdySparseMAPSolver>(pImpl->mapEstHelper.berdyHelper);
+        pImpl->mapEstHelper.mapSolver->initialize();
+
+        if (!pImpl->mapEstHelper.mapSolver->isValid()) {
+            yError() << LogPrefix << "Failed to initialize the Berdy MAP solver";
+            return false;
+        }
+
+        //TODO configure solver 
+
+        // sigma_y
+        iDynTree::SparseMatrix<iDynTree::ColumnMajor> measurementsCovarianceMatrix;
+        for (const iDynTree::BerdySensor& berdySensor : pImpl->mapEstHelper.berdyHelper.getSensorsOrdering()) {
+            switch(berdySensor.type)
+            {
+                case iDynTree::BerdySensorTypes::NET_EXT_WRENCH_SENSOR:
+                    //TODO
+                    //yInfo()<<LogPrefix<<"BERDYHELPER - Found sensor:"<<berdySensor.id;
+                    
+                    break;
+                case iDynTree::BerdySensorTypes::RCM_SENSOR:
+                    //TODO
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        // Set the priors to berdy solver for task1
+        //pImpl->berdyData.solver->setDynamicsRegularizationPriorExpectedValue(pImpl->berdyData.priors.task1_dynamicsRegularizationExpectedValueVector, pImpl->task1);
+        //yInfo() << LogPrefix << "Task1 Berdy solver DynamicsRegularizationPriorExpectedValue set successfully";
+//
+        //pImpl->berdyData.solver->setDynamicsRegularizationPriorCovariance(pImpl->berdyData.priors.task1_dynamicsRegularizationCovarianceMatrix, pImpl->task1);
+        //yInfo() << LogPrefix << "Task1 Berdy solver DynamicsRegularizationPriorCovariance set successfully";
+//
+        //pImpl->berdyData.solver->setMeasurementsPriorCovariance(pImpl->berdyData.priors.task1_measurementsCovarianceMatrix, pImpl->task1);
+        //yInfo() << LogPrefix << "Task1 Berdy solver MeasurementsPriorCovariance set successfully";
     }
 
     // ===================
