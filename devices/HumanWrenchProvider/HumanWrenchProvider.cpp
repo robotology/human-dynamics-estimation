@@ -1096,6 +1096,33 @@ void HumanWrenchProvider::run()
 
     if(pImpl->mapEstParams.useMAPEst)
     {
+        // Set NET_EXT_WRENCH measurements
+        iDynTree::VectorDynSize berdyMeasurementVector(pImpl->mapEstHelper.berdyHelper.getNrOfDynamicVariables());
+        berdyMeasurementVector.zero();
+        for (unsigned i = 0; i < pImpl->wrenchSources.size(); ++i) {
+            auto& forceSource = pImpl->wrenchSources[i];
+            std::string sensorName = forceSource.outputFrame;
+            iDynTree::LinkIndex linkIndex = pImpl->mapEstHelper.berdyHelper.model().getLinkIndex(sensorName);
+            if(linkIndex==iDynTree::LINK_INVALID_INDEX)
+            {
+                yError()<<LogPrefix<<"Cannot find link:"<<sensorName;
+                askToStop();
+            }
+            iDynTree::IndexRange sensorRange = pImpl->mapEstHelper.berdyHelper.getRangeLinkSensorVariable(iDynTree::BerdySensorTypes::NET_EXT_WRENCH_SENSOR, linkIndex);
+            for(std::size_t j=0; j<sensorRange.size; j++)
+            {
+                berdyMeasurementVector.setVal(sensorRange.offset+j, pImpl->transformedWrenches[i].getVal(j));
+            }
+        }
+
+        // Set RCM_SENSOR measurement
+        iDynTree::SpatialForceVector rcm; //TODO compute rcm
+        iDynTree::IndexRange rcmSensorRange = pImpl->mapEstHelper.berdyHelper.getRangeRCMSensorVariable(iDynTree::BerdySensorTypes::RCM_SENSOR);
+        for(std::size_t j=0; j<rcmSensorRange.size; j++)
+        {
+            berdyMeasurementVector.setVal(rcmSensorRange.offset+j, rcm.getVal(j));
+        }
+
         //TODO use MAP estimator
     }
 
