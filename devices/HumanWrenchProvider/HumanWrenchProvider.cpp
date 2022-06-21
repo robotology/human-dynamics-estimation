@@ -328,6 +328,37 @@ bool parseMeasurementsCovariance(yarp::os::Searchable& config, MAPEstParams& map
         mapEstParams.specificMeasurementsCovariance.emplace(linkName, covarianceListValues);
 
     }
+
+    // get the RCM sensor covariance (if the specified)
+    yarp::os::Value& rcmPriorMeasurementsCovarianceValue  = config.find("cov_measurements_RCM_SENSOR");
+    std::vector<double> rcmCovariance;
+    if(rcmPriorMeasurementsCovarianceValue.isNull())
+    {
+        yInfo()<<LogPrefix<<"Using default value"<<mapEstParams.measurementDefaultCovariance<<"for the RCM sensor";
+        for(int i=0; i<6; i++) rcmCovariance.push_back(mapEstParams.measurementDefaultCovariance);
+    }
+    else
+    {
+        if(!rcmPriorMeasurementsCovarianceValue.isList())
+        {
+            yError()<<LogPrefix<<"Param cov_measurements_RCM_SENSOR must be a list!";
+            return false;
+        }
+        yarp::os::Bottle* rcmPriorMeasurementsCovarianceList = rcmPriorMeasurementsCovarianceValue.asList();
+        if(rcmPriorMeasurementsCovarianceList->size()!=6)
+        {
+            yError()<<LogPrefix<<"Param cov_measurements_RCM_SENSOR must have 6 values!";
+            return false;
+        }
+
+        for(int i=0; i<rcmPriorMeasurementsCovarianceList->size(); i++)
+        {
+            rcmCovariance.push_back(rcmPriorMeasurementsCovarianceList->get(i).asFloat64());
+        }
+    }
+
+    mapEstParams.specificMeasurementsCovariance.emplace("RCM_SENSOR", rcmCovariance);
+
     return true;
 }
 
@@ -767,7 +798,7 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
         //TODO configure solver 
 
         // sigma_y
-        iDynTree::Triplets measurementsCovarianceMatrix;
+        iDynTree::Triplets measurementsCovarianceMatrixTriplets;
         for (const iDynTree::BerdySensor& berdySensor : pImpl->mapEstHelper.berdyHelper.getSensorsOrdering()) {
             switch(berdySensor.type)
             {
@@ -784,16 +815,26 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
                         for(int i=0; i<6; i++) wrenchCovariance.setVal(i, specificMeasurementsPtr->second[i]);
                     }
                     
-                    for(int i=0; i<6; i++) measurementsCovarianceMatrix.setTriplet({berdySensor.range.offset+i,berdySensor.range.offset+i, wrenchCovariance[i]});
+                    for(std::size_t i=0; i<6; i++) measurementsCovarianceMatrixTriplets.setTriplet({berdySensor.range.offset+i,berdySensor.range.offset+i, wrenchCovariance[i]});
                 }    
                     break;
                 case iDynTree::BerdySensorTypes::RCM_SENSOR:
                     //TODO
+                {
+                    auto specificMeasurementsPtr = pImpl->mapEstParams.specificMeasurementsCovariance.find("RCM_SENSOR");
+                    for(std::size_t i=0; i<6; i++) 
+                    {
+                        measurementsCovarianceMatrixTriplets.setTriplet({berdySensor.range.offset+i,berdySensor.range.offset+i, specificMeasurementsPtr->second[i]});
+                    }
+                }
                     break;
                 default:
                     break;
             }
         }
+        iDynTree::SparseMatrix<iDynTree::ColumnMajor> measurementsPriorCovarianceMatrix;
+        measurementsPriorCovarianceMatrix.setFromTriplets(measurementsCovarianceMatrixTriplets);
+        pImpl->mapEstHelper.mapSolver->setMeasurementsPriorCovariance(measurementsPriorCovarianceMatrix);
 
         // Set the priors to berdy solver for task1
         //pImpl->berdyData.solver->setDynamicsRegularizationPriorExpectedValue(pImpl->berdyData.priors.task1_dynamicsRegularizationExpectedValueVector, pImpl->task1);
@@ -801,9 +842,6 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
 //
         //pImpl->berdyData.solver->setDynamicsRegularizationPriorCovariance(pImpl->berdyData.priors.task1_dynamicsRegularizationCovarianceMatrix, pImpl->task1);
         //yInfo() << LogPrefix << "Task1 Berdy solver DynamicsRegularizationPriorCovariance set successfully";
-//
-        //pImpl->berdyData.solver->setMeasurementsPriorCovariance(pImpl->berdyData.priors.task1_measurementsCovarianceMatrix, pImpl->task1);
-        //yInfo() << LogPrefix << "Task1 Berdy solver MeasurementsPriorCovariance set successfully";
     }
 
     // ===================
