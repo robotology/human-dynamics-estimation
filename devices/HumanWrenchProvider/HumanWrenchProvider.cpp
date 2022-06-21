@@ -1079,25 +1079,12 @@ void HumanWrenchProvider::run()
         }
 
         pImpl->transformedWrenches[i] = transformedWrench;
-
-        // Expose the data as IAnalogSensor
-        // ================================
-        if(!pImpl->mapEstParams.useMAPEst){
-            std::lock_guard<std::mutex> lock(pImpl->mutex);
-
-            pImpl->analogSensorData.measurements[6 * i + 0] = transformedWrench.getLinearVec3()(0);
-            pImpl->analogSensorData.measurements[6 * i + 1] = transformedWrench.getLinearVec3()(1);
-            pImpl->analogSensorData.measurements[6 * i + 2] = transformedWrench.getLinearVec3()(2);
-            pImpl->analogSensorData.measurements[6 * i + 3] = transformedWrench.getAngularVec3()(0);
-            pImpl->analogSensorData.measurements[6 * i + 4] = transformedWrench.getAngularVec3()(1);
-            pImpl->analogSensorData.measurements[6 * i + 5] = transformedWrench.getAngularVec3()(2);
-        }
     }
 
     if(pImpl->mapEstParams.useMAPEst)
     {
         // Set NET_EXT_WRENCH measurements
-        iDynTree::VectorDynSize berdyMeasurementVector(pImpl->mapEstHelper.berdyHelper.getNrOfDynamicVariables());
+        iDynTree::VectorDynSize berdyMeasurementVector(pImpl->mapEstHelper.berdyHelper.getNrOfSensorsMeasurements());
         berdyMeasurementVector.zero();
         for (unsigned i = 0; i < pImpl->wrenchSources.size(); ++i) {
             auto& forceSource = pImpl->wrenchSources[i];
@@ -1117,13 +1104,71 @@ void HumanWrenchProvider::run()
 
         // Set RCM_SENSOR measurement
         iDynTree::SpatialForceVector rcm; //TODO compute rcm
+        rcm.zero();
         iDynTree::IndexRange rcmSensorRange = pImpl->mapEstHelper.berdyHelper.getRangeRCMSensorVariable(iDynTree::BerdySensorTypes::RCM_SENSOR);
         for(std::size_t j=0; j<rcmSensorRange.size; j++)
         {
             berdyMeasurementVector.setVal(rcmSensorRange.offset+j, rcm.getVal(j));
         }
 
-        //TODO use MAP estimator
+        // Use map estimator
+        iDynTree::Model &model = pImpl->mapEstHelper.berdyHelper.model();
+
+        iDynTree::Vector3 baseAngularVelocity;
+        iDynTree::JointPosDoubleArray jointsPosition(model);
+        iDynTree::JointDOFsDoubleArray jointsVelocity(model);
+        iDynTree::JointDOFsDoubleArray jointsAcceleration(model);
+        iDynTree::FrameIndex baseFrameIndex = model.getLinkIndex(pImpl->mapEstHelper.berdyOptions.baseLink);
+
+        for(int i=0; i<pImpl->jointPositionsInterface.size(); i++) jointsPosition.setVal(i, pImpl->jointPositionsInterface.at(i));
+        for(int i=0; i<pImpl->jointVelocitiesInterface.size(); i++) jointsVelocity.setVal(i, pImpl->jointVelocitiesInterface.at(i));
+        for(int i=0; i<3; i++) baseAngularVelocity.setVal(i, pImpl->baseVelocityInterface.at(i+3));
+
+         
+        // Set the kinematic information necessary for the dynamics estimation
+        //TODO check if needed
+        pImpl->mapEstHelper.berdyHelper.updateKinematicsFromFloatingBase(jointsPosition,
+                                                             jointsVelocity,
+                                                             baseFrameIndex,
+                                                             baseAngularVelocity);
+
+
+        pImpl->mapEstHelper.mapSolver->updateEstimateInformationFloatingBase(jointsPosition,
+                                                                             jointsVelocity,
+                                                                            baseFrameIndex,
+                                                                            baseAngularVelocity,
+                                                                            berdyMeasurementVector);
+
+
+        if(!pImpl->mapEstHelper.mapSolver->doEstimate())
+        {
+            yError()<<LogPrefix<<"Estimate computation failed!";
+            askToStop();
+        }
+
+        const iDynTree::VectorDynSize &estimatedWrenches = pImpl->mapEstHelper.mapSolver->getLastEstimate();
+
+        // update transformed wrenches with estimate
+        for (unsigned i = 0; i < pImpl->wrenchSources.size(); ++i)
+        {
+            for(int j=0; j<6; j++)
+            {
+                pImpl->transformedWrenches[i].setVal(j, estimatedWrenches.getVal(j));
+            }
+        }
+    }
+
+    // Expose the data as IAnalogSensor
+    {
+        std::lock_guard<std::mutex> lock(pImpl->mutex);
+        for (unsigned i = 0; i < pImpl->wrenchSources.size(); ++i) {
+            pImpl->analogSensorData.measurements[6 * i + 0] = pImpl->transformedWrenches[i].getLinearVec3()(0);
+            pImpl->analogSensorData.measurements[6 * i + 1] = pImpl->transformedWrenches[i].getLinearVec3()(1);
+            pImpl->analogSensorData.measurements[6 * i + 2] = pImpl->transformedWrenches[i].getLinearVec3()(2);
+            pImpl->analogSensorData.measurements[6 * i + 3] = pImpl->transformedWrenches[i].getAngularVec3()(0);
+            pImpl->analogSensorData.measurements[6 * i + 4] = pImpl->transformedWrenches[i].getAngularVec3()(1);
+            pImpl->analogSensorData.measurements[6 * i + 5] = pImpl->transformedWrenches[i].getAngularVec3()(2);
+        }
     }
 
     // Check for rpc command status and apply command
