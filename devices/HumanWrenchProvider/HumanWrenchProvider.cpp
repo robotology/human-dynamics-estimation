@@ -795,8 +795,6 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
             return false;
         }
 
-        //TODO configure solver 
-
         // sigma_y
         iDynTree::Triplets measurementsCovarianceMatrixTriplets;
         for (const iDynTree::BerdySensor& berdySensor : pImpl->mapEstHelper.berdyHelper.getSensorsOrdering()) {
@@ -836,12 +834,11 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
         measurementsPriorCovarianceMatrix.setFromTriplets(measurementsCovarianceMatrixTriplets);
         pImpl->mapEstHelper.mapSolver->setMeasurementsPriorCovariance(measurementsPriorCovarianceMatrix);
 
-        // Set the priors to berdy solver for task1
-        //pImpl->berdyData.solver->setDynamicsRegularizationPriorExpectedValue(pImpl->berdyData.priors.task1_dynamicsRegularizationExpectedValueVector, pImpl->task1);
-        //yInfo() << LogPrefix << "Task1 Berdy solver DynamicsRegularizationPriorExpectedValue set successfully";
-//
-        //pImpl->berdyData.solver->setDynamicsRegularizationPriorCovariance(pImpl->berdyData.priors.task1_dynamicsRegularizationCovarianceMatrix, pImpl->task1);
-        //yInfo() << LogPrefix << "Task1 Berdy solver DynamicsRegularizationPriorCovariance set successfully";
+        // Set mu_d
+        iDynTree::VectorDynSize dynamicsRegularizationExpectedValueVector;
+        dynamicsRegularizationExpectedValueVector.resize(6);
+        for(std::size_t i=0; i<6; i++) dynamicsRegularizationExpectedValueVector.setVal(i, pImpl->mapEstParams.priorDynamicsRegularizationExpected);
+        pImpl->mapEstHelper.mapSolver->setDynamicsRegularizationPriorExpectedValue(dynamicsRegularizationExpectedValueVector);
     }
 
     // ===================
