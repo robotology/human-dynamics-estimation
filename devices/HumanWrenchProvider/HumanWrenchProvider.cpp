@@ -64,8 +64,8 @@ struct MAPEstParams
 {
     bool useMAPEst;
     iDynTree::SparseMatrix<iDynTree::ColumnMajor> priorMeasurementsCovariance; // Sigma_y
-    // dynamic variables params
     double priorDynamicsRegularizationExpected; // mu_d
+    double priorDynamicsRegularizationCovarianceValue; // Sigma_d
     // measurements params
     double measurementDefaultCovariance;
     std::unordered_map<std::string, std::vector<double>> specificMeasurementsCovariance;
@@ -391,6 +391,14 @@ bool parseMAPEstParams(yarp::os::Searchable& config, MAPEstParams& mapEstParams)
             return false;
         }
         mapEstParams.priorDynamicsRegularizationExpected = mapEstParamsGroup.find("mu_dyn_variables").asFloat64();
+
+        if(!mapEstParamsGroup.check("cov_dyn_variables") ||
+            !mapEstParamsGroup.find("cov_dyn_variables").isFloat64())
+        {
+            yError() << "Missing valid floating point cov_dyn_variables parameter!";
+            return false;
+        }
+        mapEstParams.priorDynamicsRegularizationExpected = mapEstParamsGroup.find("cov_dyn_variables").asFloat64();
 
         // parse the prior measurements covariance Sigma_y
         if(!parseMeasurementsCovariance(mapEstParamsGroup, mapEstParams))
@@ -838,9 +846,21 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
 
         // Set mu_d
         iDynTree::VectorDynSize dynamicsRegularizationExpectedValueVector;
-        dynamicsRegularizationExpectedValueVector.resize(6);
-        for(std::size_t i=0; i<6; i++) dynamicsRegularizationExpectedValueVector.setVal(i, pImpl->mapEstParams.priorDynamicsRegularizationExpected);
+        dynamicsRegularizationExpectedValueVector.resize(pImpl->mapEstHelper.berdyHelper.getNrOfDynamicVariables());
+        for(std::size_t i=0; i<dynamicsRegularizationExpectedValueVector.size(); i++) dynamicsRegularizationExpectedValueVector.setVal(i, pImpl->mapEstParams.priorDynamicsRegularizationExpected);
         pImpl->mapEstHelper.mapSolver->setDynamicsRegularizationPriorExpectedValue(dynamicsRegularizationExpectedValueVector);
+
+        // set Sigma_d
+        iDynTree::Triplets priorDynamicsRegularizationCovarianceMatrixTriplets;
+        std::size_t sigmaDSize = pImpl->mapEstHelper.berdyHelper.getNrOfDynamicVariables();
+        for(std::size_t i=0; i<sigmaDSize; i++)
+        {
+            priorDynamicsRegularizationCovarianceMatrixTriplets.setTriplet({i,i,pImpl->mapEstParams.priorDynamicsRegularizationCovarianceValue});
+        }
+        iDynTree::SparseMatrix<iDynTree::ColumnMajor> priorDynamicsRegularizationCovarianceMatrix;
+        priorDynamicsRegularizationCovarianceMatrix.resize(sigmaDSize, sigmaDSize);
+        priorDynamicsRegularizationCovarianceMatrix.setFromTriplets(priorDynamicsRegularizationCovarianceMatrixTriplets);
+        pImpl->mapEstHelper.mapSolver->setDynamicsRegularizationPriorCovariance(priorDynamicsRegularizationCovarianceMatrix);
     }
 
     // ===================
