@@ -831,6 +831,8 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
             }
         }
         iDynTree::SparseMatrix<iDynTree::ColumnMajor> measurementsPriorCovarianceMatrix;
+        std::size_t sigmaYSize = pImpl->mapEstHelper.berdyHelper.getNrOfSensorsMeasurements();
+        measurementsPriorCovarianceMatrix.resize(sigmaYSize, sigmaYSize);
         measurementsPriorCovarianceMatrix.setFromTriplets(measurementsCovarianceMatrixTriplets);
         pImpl->mapEstHelper.mapSolver->setMeasurementsPriorCovariance(measurementsPriorCovarianceMatrix);
 
