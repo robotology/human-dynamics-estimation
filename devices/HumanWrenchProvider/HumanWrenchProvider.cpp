@@ -167,12 +167,12 @@ public:
         if (command.read(connection)) {
             if (command.get(0).asString() == "setWorldWrench") {
                 this->cmdStatus = rpcCommand::setWorldWrench;
-                this->wrench_fx = command.get(1).asDouble();
-                this->wrench_fy = command.get(2).asDouble();
-                this->wrench_fz = command.get(3).asDouble();
-                this->wrench_tx = command.get(4).asDouble();
-                this->wrench_ty = command.get(5).asDouble();
-                this->wrench_tz = command.get(6).asDouble();
+                this->wrench_fx = command.get(1).asFloat64();
+                this->wrench_fy = command.get(2).asFloat64();
+                this->wrench_fz = command.get(3).asFloat64();
+                this->wrench_tx = command.get(4).asFloat64();
+                this->wrench_ty = command.get(5).asFloat64();
+                this->wrench_tz = command.get(6).asFloat64();
             }
             else {
                 response.addString(
