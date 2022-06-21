@@ -235,8 +235,8 @@ bool parseWrench(yarp::os::Bottle* list, iDynTree::Wrench& wrench)
         return false;
     }
 
-    wrench = iDynTree::Wrench(iDynTree::Force(list->get(0).asDouble(), list->get(1).asDouble(), list->get(2).asDouble()),
-                                iDynTree::Torque(list->get(3).asDouble(), list->get(4).asDouble(), list->get(5).asDouble()));
+    wrench = iDynTree::Wrench(iDynTree::Force(list->get(0).asFloat64(), list->get(1).asFloat64(), list->get(2).asFloat64()),
+                                iDynTree::Torque(list->get(3).asFloat64(), list->get(4).asFloat64(), list->get(5).asFloat64()));
     return true;
 }
 
