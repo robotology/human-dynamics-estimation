@@ -767,14 +767,25 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
         //TODO configure solver 
 
         // sigma_y
-        iDynTree::SparseMatrix<iDynTree::ColumnMajor> measurementsCovarianceMatrix;
+        iDynTree::Triplets measurementsCovarianceMatrix;
         for (const iDynTree::BerdySensor& berdySensor : pImpl->mapEstHelper.berdyHelper.getSensorsOrdering()) {
             switch(berdySensor.type)
             {
                 case iDynTree::BerdySensorTypes::NET_EXT_WRENCH_SENSOR:
-                    //TODO
-                    //yInfo()<<LogPrefix<<"BERDYHELPER - Found sensor:"<<berdySensor.id;
+                {
+                    // initialize with default covariance
+                    iDynTree::Vector6 wrenchCovariance;
+                    for(int i=0; i<6; i++) wrenchCovariance.setVal(i,pImpl->mapEstParams.measurementDefaultCovariance);
                     
+                    // set specific covariance if configured
+                    auto specificMeasurementsPtr = pImpl->mapEstParams.specificMeasurementsCovariance.find(berdySensor.id);
+                    if(specificMeasurementsPtr!=pImpl->mapEstParams.specificMeasurementsCovariance.end())
+                    {
+                        for(int i=0; i<6; i++) wrenchCovariance.setVal(i, specificMeasurementsPtr->second[i]);
+                    }
+                    
+                    for(int i=0; i<6; i++) measurementsCovarianceMatrix.setTriplet({berdySensor.range.offset+i,berdySensor.range.offset+i, wrenchCovariance[i]});
+                }    
                     break;
                 case iDynTree::BerdySensorTypes::RCM_SENSOR:
                     //TODO
