@@ -170,6 +170,19 @@
                 <param name="RightFoot">(0.0589998348 0.0589998348 0.0359999712 0.002250000225 0.002250000225 0.56e-3)</param>
             </group>
         </group>
+    	<!--Example of dummy wrench data sources-->
+	    <!--group name="LeftHand">
+            <param name="sensorName">none</param>
+            <param name="outputFrame">LeftHand</param>
+            <param name="type">dummy</param>
+            <param name="value">(0.0 0.0 0.0 0.0 0.0 0.0)</param>
+        </group>
+        <group name="RightHand">
+            <param name="sensorName">none</param>
+            <param name="outputFrame">RightHand</param>
+            <param name="type">dummy</param>
+            <param name="value">(0.0 0.0 0.0 0.0 0.0 0.0)</param>
+        </group-->
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
                  <elem name="HumanWrenchProviderLabelFTShoeLeft">FTSourcesIWearRemapper</elem>
