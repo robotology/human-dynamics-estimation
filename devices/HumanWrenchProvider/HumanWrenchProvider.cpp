@@ -100,17 +100,11 @@ public:
 
     // Human variables
     iDynTree::Model humanModel;
-    // buffer variables (iHumanState)
-    std::array<double, 3> basePositionInterface;
-    std::array<double, 4> baseOrientationInterface;
-    std::array<double, 6> baseVelocityInterface;
-    std::vector<double> jointPositionsInterface;
-    std::vector<double> jointVelocitiesInterface;
-    std::vector<std::string> jointNamesStateInterface;
     // buffer variables (iDynTree)
     iDynTree::VectorDynSize humanJointPositionsVec;
     iDynTree::VectorDynSize humanJointVelocitiesVec;
     iDynTree::Transform basePose;
+    iDynTree::Twist baseVelocity;
 
     // KinDynComputation
     iDynTree::KinDynComputations humanKinDynComp;
@@ -418,6 +412,7 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
         }
         else if (sourceType == "robot") {
             WrenchSourceData.type = WrenchSourceType::Robot;
+            pImpl->readHumanData = true;
         }
         else if (sourceType == "dummy") {
             WrenchSourceData.type = WrenchSourceType::Dummy;
@@ -646,62 +641,58 @@ bool HumanWrenchProvider::close()
 void HumanWrenchProvider::run()
 {
     if (pImpl->readHumanData) {
-        pImpl->basePositionInterface = pImpl->iHumanState->getBasePosition();
-        pImpl->baseOrientationInterface = pImpl->iHumanState->getBaseOrientation();
-        pImpl->baseVelocityInterface = pImpl->iHumanState->getBaseVelocity();
-        pImpl->jointPositionsInterface = pImpl->iHumanState->getJointPositions();
-        pImpl->jointVelocitiesInterface = pImpl->iHumanState->getJointVelocities();
-        pImpl->jointNamesStateInterface = pImpl->iHumanState->getJointNames();
+        auto basePositionInterface = pImpl->iHumanState->getBasePosition();
+        auto baseVelocityInterface = pImpl->iHumanState->getBaseVelocity();
+        auto baseOrientationInterface = pImpl->iHumanState->getBaseOrientation();
+        auto jointPositionsInterface = pImpl->iHumanState->getJointPositions();
+        auto jointVelocitiesInterface = pImpl->iHumanState->getJointVelocities();
+        auto jointNamesStateInterface = pImpl->iHumanState->getJointNames();
 
         // Resize human joint quantities buffer
         pImpl->humanJointPositionsVec.resize(pImpl->humanModel.getNrOfDOFs());
         pImpl->humanJointVelocitiesVec.resize(pImpl->humanModel.getNrOfDOFs());
 
-        pImpl->basePose.setPosition(iDynTree::Position(pImpl->jointPositionsInterface.at(0),
-                                                       pImpl->jointPositionsInterface.at(1),
-                                                       pImpl->jointPositionsInterface.at(2)));
+        pImpl->basePose.setPosition(iDynTree::Position(basePositionInterface.at(0),
+                                                       basePositionInterface.at(1),
+                                                       basePositionInterface.at(2)));
         iDynTree::Vector4 quaternion;
-
-        quaternion.setVal(0, pImpl->baseOrientationInterface.at(0));
-        quaternion.setVal(1, pImpl->baseOrientationInterface.at(1));
-        quaternion.setVal(2, pImpl->baseOrientationInterface.at(2));
-        quaternion.setVal(3, pImpl->baseOrientationInterface.at(3));
+        quaternion.setVal(0, baseOrientationInterface.at(0));
+        quaternion.setVal(1, baseOrientationInterface.at(1));
+        quaternion.setVal(2, baseOrientationInterface.at(2));
+        quaternion.setVal(3, baseOrientationInterface.at(3));
         pImpl->basePose.setRotation(iDynTree::Rotation::RotationFromQuaternion(quaternion));
-        
+
+        iDynTree::Vector3 linearVelocity;
+        linearVelocity.setVal(0, baseVelocityInterface.at(0));
+        linearVelocity.setVal(1, baseVelocityInterface.at(1));
+        linearVelocity.setVal(2, baseVelocityInterface.at(2));
+        iDynTree::Vector3 angularVelocity;
+        angularVelocity.setVal(0, baseVelocityInterface.at(3));
+        angularVelocity.setVal(1, baseVelocityInterface.at(4));
+        angularVelocity.setVal(2, baseVelocityInterface.at(5));
+
+        pImpl->baseVelocity.setLinearVec3(linearVelocity);
+        pImpl->baseVelocity.setAngularVec3(angularVelocity);
 
         // Human joint quantities are in radians
         for (int j = 0; j < pImpl->humanModel.getNrOfDOFs(); j++) {
-            for (int i = 0; i < pImpl->jointNamesStateInterface.size(); i++) {
-                if (pImpl->humanModel.getJointName(j) == pImpl->jointNamesStateInterface.at(i)) {
-                    pImpl->humanJointPositionsVec.setVal(j, pImpl->jointPositionsInterface.at(i));
-                    pImpl->humanJointVelocitiesVec.setVal(j, pImpl->jointVelocitiesInterface.at(i));
+            for (int i = 0; i < jointNamesStateInterface.size(); i++) {
+                if (pImpl->humanModel.getJointName(j) == jointNamesStateInterface.at(i)) {
+                    pImpl->humanJointPositionsVec.setVal(j, jointPositionsInterface.at(i));
+                    pImpl->humanJointVelocitiesVec.setVal(j, jointVelocitiesInterface.at(i));
                     break;
                 }
             }
         }
+
+        // Update kin-dyn object for human
+        pImpl->humanKinDynComp.setRobotState(pImpl->basePose,
+                                                 pImpl->humanJointPositionsVec,
+                                                 pImpl->baseVelocity,
+                                                 pImpl->humanJointVelocitiesVec,
+                                                 pImpl->world_gravity);
     }
     if (pImpl->pHRIScenario) {
-
-        // Get human joint quantities from IHumanState interface
-        std::vector<std::string> humanJointsName = pImpl->iHumanState->getJointNames();
-        std::vector<double> humanJointsPosition = pImpl->iHumanState->getJointPositions();
-        std::vector<double> humanJointsVelocity = pImpl->iHumanState->getJointVelocities();
-
-        // Resize human joint quantities buffer
-        pImpl->humanJointPositionsVec.resize(pImpl->humanModel.getNrOfDOFs());
-        pImpl->humanJointVelocitiesVec.resize(pImpl->humanModel.getNrOfDOFs());
-
-        // Human joint quantities are in radians
-        for (int j = 0; j < pImpl->humanModel.getNrOfDOFs(); j++) {
-            for (int i = 0; i < humanJointsName.size(); i++) {
-                if (pImpl->humanModel.getJointName(j) == humanJointsName.at(i)) {
-                    pImpl->humanJointPositionsVec.setVal(j, humanJointsPosition.at(i));
-                    pImpl->humanJointVelocitiesVec.setVal(j, humanJointsVelocity.at(i));
-                    break;
-                }
-            }
-        }
-
         // Get robot joint quantities from joint wearable sensors
         std::vector<double> robotJointsPosition;
         std::vector<double> robotJointsVeclocity;
@@ -788,11 +779,6 @@ void HumanWrenchProvider::run()
         iDynTree::Wrench transformedWrench;
 
         if (forceSource.type == WrenchSourceType::Dummy) {
-            pImpl->humanKinDynComp.setRobotState(pImpl->basePose,
-                                                 pImpl->humanJointPositionsVec,
-                                                 iDynTree::Twist::Zero(),
-                                                 pImpl->humanJointVelocitiesVec,
-                                                 pImpl->world_gravity);
             auto worldToFrameRotation = pImpl->humanKinDynComp.getWorldTransform(forceSource.outputFrame).getRotation();
 
             // Access the tranforms through pointers
@@ -811,17 +797,7 @@ void HumanWrenchProvider::run()
         }
 
         if (forceSource.type == WrenchSourceType::Robot) {
-
-            iDynTree::Transform humanFeetToHandsTransform = iDynTree::Transform::Identity();
-            
-
-            
-            pImpl->humanKinDynComp.setRobotState(iDynTree::Transform::Identity(),
-                                                 pImpl->humanJointPositionsVec,
-                                                 iDynTree::Twist::Zero(),
-                                                 pImpl->humanJointVelocitiesVec,
-                                                 pImpl->world_gravity);
-            humanFeetToHandsTransform = pImpl->humanKinDynComp.getRelativeTransform(forceSource.outputFrame,forceSource.humanLinkingFrame);
+            iDynTree::Transform humanFeetToHandsTransform = pImpl->humanKinDynComp.getRelativeTransform(forceSource.outputFrame,forceSource.humanLinkingFrame);
 
             iDynTree::Transform robotFeetToHandsTransform = iDynTree::Transform::Identity();
             iDynTree::KinDynComputations robotKinDynComp;
@@ -829,7 +805,7 @@ void HumanWrenchProvider::run()
             robotKinDynComp.loadRobotModel(pImpl->robotModel);
             robotKinDynComp.setRobotState(iDynTree::Transform::Identity(),
                                           pImpl->robotJointPositionsVec,
-                                          iDynTree::Twist::Zero(),
+                                          pImpl->baseVelocity,
                                           pImpl->robotJointVelocitiesVec,
                                           pImpl->world_gravity);
             robotFeetToHandsTransform = robotKinDynComp.getRelativeTransformExplicit(pImpl->robotModel.getFrameIndex(forceSource.robotLinkingFrame),
