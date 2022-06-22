@@ -65,6 +65,8 @@ struct WrenchSourceData
     wearable::sensor::SensorName sensorName;
     wearable::SensorPtr<const wearable::sensor::IForceTorque6DSensor> ftWearableSensor;
 
+    iDynTree::Wrench wrench;
+
     // Variables for Robot Human Transformation
     std::string humanLinkingFrame;
     std::string robotLinkingFrame;
@@ -84,6 +86,7 @@ public:
 
     //pHRI scenario flag
     bool pHRIScenario;
+    iDynTree::Transform robotHumanFeetFixedTransform;
     
     // Read human data
     bool readHumanData = false;
@@ -315,6 +318,32 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
     // ==================================
 
     if (pImpl->pHRIScenario) {
+
+        if (!(config.check("FeetFixedTransformRotation") && config.find("FeetFixedTransformRotation").isList())) {
+            yError() << LogPrefix << "Option"
+                        << " FeetFixedTransformRotation not found or not a valid list";
+            return false;
+        }
+
+        if (!(config.check("FeetFixedTransformPosition") && config.find("FeetFixedTransformPosition").isList())) {
+            yError() << LogPrefix << "Option"
+                        << " FeetFixedTransformPosition not found or not a valid list";
+            return false;
+        }
+
+        iDynTree::Rotation rotation;
+        iDynTree::Position position;
+
+        if (!parseRotation(config.find("FeetFixedTransformRotation").asList(),rotation)
+                        || !parsePosition(config.find("FeetFixedTransformPosition").asList(),position)) {
+                    yError() << LogPrefix << "Failed to parse"
+                             << " FeetFixedTransformRotation or FeetFixedTransformPosition";
+                    return false;
+                }
+        pImpl->robotHumanFeetFixedTransform = {rotation, position};
+
+
+                
         yarp::os::Bottle& robotJointsGroup = config.findGroup("RobotJoints");
         if (robotJointsGroup.isNull()) {
             yError() << LogPrefix << "Failed to find RobotJoints group in the configuration file";
@@ -429,7 +458,6 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
                 // =========================
 
             case WrenchSourceType::Fixed: {
-                auto transformer = std::make_unique<FixedFrameWrenchTransformer>();
 
                 if (!(sourceGroup.check("rotation") && sourceGroup.find("rotation").isList())) {
                     yError() << LogPrefix << "Option" << sourceName
@@ -452,12 +480,8 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
                     return false;
                 }
 
-                // Store the transform in the temporary object
-                transformer->transform = {rotation, position};
-
-                // Downcast it and move the ownership into the object containing the source data
-                auto ptr = static_cast<IWrenchFrameTransformer*>(transformer.release());
-                WrenchSourceData.frameTransformer.reset(ptr);
+                // Store the transform 
+                WrenchSourceData.frameTransformer->transform = {rotation, position};
 
                 yDebug() << LogPrefix << "=============:";
                 yDebug() << LogPrefix << "New source   :" << WrenchSourceData.name;
@@ -474,29 +498,6 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
             // Process Robot source type
             // =========================
             case WrenchSourceType::Robot: {
-                auto transformer = std::make_unique<RobotFrameWrenchTransformer>();
-
-                if (!(sourceGroup.check("rotation") && sourceGroup.find("rotation").isList())) {
-                    yError() << LogPrefix << "Option" << sourceName
-                             << ":: rotation not found or not a valid list";
-                    return false;
-                }
-
-                if (!(sourceGroup.check("position") && sourceGroup.find("position").isList())) {
-                    yError() << LogPrefix << "Option" << sourceName
-                             << ":: position not found or not a valid list";
-                    return false;
-                }
-
-                iDynTree::Rotation rotation;
-                iDynTree::Position position;
-
-                if (!parseRotation(sourceGroup.find("rotation").asList(),rotation)
-                        || !parsePosition(sourceGroup.find("position").asList(),position)) {
-                    yError() << LogPrefix << "Failed to parse" << sourceName
-                             << ":: rotation or position";
-                    return false;
-                }
 
                 if (!(sourceGroup.check("humanLinkingFrame") && sourceGroup.find("humanLinkingFrame").isString())) {
                     yError() << LogPrefix << "Option" << sourceName
@@ -542,23 +543,11 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
                     return false;
                 }
 
-                // Store the fixed transform in the temporary object
-                transformer->fixedTransform = {rotation, position};
-
-                // Initialize the wrench transform to be Identity
-                transformer->transform = iDynTree::Transform::Identity();
-
-                // Downcast it and move the ownership into the object containing the source data
-                auto ptr = static_cast<IWrenchFrameTransformer*>(transformer.release());
-                WrenchSourceData.frameTransformer.reset(ptr);
-
                 yDebug() << LogPrefix << "================================:";
                 yDebug() << LogPrefix << "New source                      :" << WrenchSourceData.name;
                 yDebug() << LogPrefix << "Sensor name                     :" << WrenchSourceData.sensorName;
                 yDebug() << LogPrefix << "Type                            :" << sourceType;
                 yDebug() << LogPrefix << "Output frame                    :" << WrenchSourceData.outputFrame;
-                yDebug() << LogPrefix << "Rotation                        :" << sourceGroup.find("rotation").asList()->toString();
-                yDebug() << LogPrefix << "Position                        :" << sourceGroup.find("position").asList()->toString();
                 yDebug() << LogPrefix << "Human foot position             :" << sourceGroup.find("humanFootPosition").asList()->toString();
                 yDebug() << LogPrefix << "Human linking frame             :" << WrenchSourceData.humanLinkingFrame;
                 yDebug() << LogPrefix << "Robot linking frame             :" << WrenchSourceData.robotLinkingFrame;
@@ -570,8 +559,6 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
             }
 
             case WrenchSourceType::Dummy: {
-                auto transformer = std::make_unique<WorldWrenchTransformer>();
-
                 if (!(sourceGroup.check("value") && sourceGroup.find("value").isList())) {
                     yError() << LogPrefix << "Option" << sourceName
                              << ":: value not found or not a valid list";
@@ -579,18 +566,12 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
                 }
 
                 iDynTree::Wrench wrench;
-
                 if (!parseWrench(sourceGroup.find("value").asList(), wrench) ) {
                     yError() << LogPrefix << "Failed to parse" << sourceName
                              << ":: position or rotation";
                     return false;
                 }
-
-                transformer->wrench = wrench;
-
-                // Downcast it and move the ownership into the object containing the source data
-                auto ptr = static_cast<WorldWrenchTransformer*>(transformer.release());
-                WrenchSourceData.frameTransformer.reset(ptr);
+                WrenchSourceData.wrench = wrench;
 
 
                 yDebug() << LogPrefix << "=============:";
@@ -749,10 +730,7 @@ void HumanWrenchProvider::run()
         wearable::Vector3 forces;
         wearable::Vector3 torques;
 
-        iDynTree::Wrench inputWrench = iDynTree::Wrench({0.0, 0.0, 0.0}, 
-                                                        {0.0, 0.0, 0.0});
-
-        if (forceSource.type == WrenchSourceType::Fixed)
+        if (forceSource.type == WrenchSourceType::Fixed || forceSource.type == WrenchSourceType::Robot)
         {
             if (!forceSource.ftWearableSensor) {
                 yError() << LogPrefix << "Failed to get wearable sensor for source" << forceSource.name;
@@ -767,8 +745,8 @@ void HumanWrenchProvider::run()
                 return;
             }
 
-            inputWrench = iDynTree::Wrench({forces[0], forces[1], forces[2]},
-                                           {torques[0], torques[1], torques[2]});
+            forceSource.wrench = iDynTree::Wrench({forces[0], forces[1], forces[2]},
+                                                  {torques[0], torques[1], torques[2]});
         }
 
         
@@ -779,21 +757,11 @@ void HumanWrenchProvider::run()
         iDynTree::Wrench transformedWrench;
 
         if (forceSource.type == WrenchSourceType::Dummy) {
-            auto worldToFrameRotation = pImpl->humanKinDynComp.getWorldTransform(forceSource.outputFrame).getRotation();
-
-            // Access the tranforms through pointers
             std::lock_guard<std::mutex> lock(pImpl->mutex);
 
-            // Downcast it and move the pointer ownership into the object of derived class
-            auto transformerPtr = dynamic_cast<WorldWrenchTransformer*>(forceSource.frameTransformer.release());
-            std::unique_ptr<WorldWrenchTransformer> newTransformer;
-            newTransformer.reset(transformerPtr);
-
-            newTransformer->transform.setRotation(worldToFrameRotation.inverse());
-
-            // Downcast it and move the pointer ownership into the object containing the source data
-            auto ptr = static_cast<WorldWrenchTransformer*>(newTransformer.release());
-            forceSource.frameTransformer.reset(ptr);
+            // store the frame transform
+            auto worldToFrameRotation = pImpl->humanKinDynComp.getWorldTransform(forceSource.outputFrame).getRotation();
+            forceSource.frameTransformer->transform.setRotation(worldToFrameRotation.inverse());
         }
 
         if (forceSource.type == WrenchSourceType::Robot) {
@@ -818,34 +786,22 @@ void HumanWrenchProvider::run()
             // Access the tranforms through pointers
             std::lock_guard<std::mutex> lock(pImpl->mutex);
 
-            // Downcast it and move the pointer ownership into the object of derived class
-            auto transformerPtr = dynamic_cast<RobotFrameWrenchTransformer*>(forceSource.frameTransformer.release());
-            std::unique_ptr<RobotFrameWrenchTransformer> newTransformer;
-            newTransformer.reset(transformerPtr);
-
-            // Access the fixed transformation stored from configuration
-            auto robotHumanFeetFixedTransform = newTransformer->fixedTransform;
-
             // Compute the final robot to human transform
             iDynTree::Transform robotToHumanTransform;
 
             robotToHumanTransform = iDynTree::Transform::Identity() *
                                     humanFeetToHandsTransform * //HumanHand_H_HumanFoot
-                                    robotHumanFeetFixedTransform * //HumanFoot_H_RobotFoot
+                                    pImpl->robotHumanFeetFixedTransform * //HumanFoot_H_RobotFoot
                                     robotFeetToHandsTransform; //RobotFoot_H_RobotHand
 
             // Update the stored transform
-            newTransformer->transform = robotToHumanTransform;
+            forceSource.frameTransformer->transform = robotToHumanTransform;
 
             // Get reaction wrenches for the robot
-            inputWrench = inputWrench * -1;
-
-            // Downcast it and move the pointer ownership into the object containing the source data
-            auto ptr = static_cast<IWrenchFrameTransformer*>(newTransformer.release());
-            forceSource.frameTransformer.reset(ptr);
+            forceSource.wrench = forceSource.wrench * -1;
         }
 
-        if (!forceSource.frameTransformer->transformWrenchFrame(inputWrench, transformedWrench)) {
+        if (!forceSource.frameTransformer->transformWrenchFrame(forceSource.wrench, transformedWrench)) {
             askToStop();
             return;
         }
@@ -1178,17 +1134,8 @@ bool HumanWrenchProvider::Impl::applyRpcCommand()
                 auto& forceSource = wrenchSources[i];
                 if (forceSource.type == WrenchSourceType::Dummy)
                 {
-                    // Downcast it and move the pointer ownership into the object of derived class
-                    auto transformerPtr = dynamic_cast<WorldWrenchTransformer*>(forceSource.frameTransformer.release());
-                    std::unique_ptr<WorldWrenchTransformer> newTransformer;
-                    newTransformer.reset(transformerPtr);
-
-                    newTransformer->wrench = iDynTree::Wrench(iDynTree::Force(commandPro->wrench_fx, commandPro->wrench_fy, commandPro->wrench_fz),
+                    forceSource.wrench = iDynTree::Wrench(iDynTree::Force(commandPro->wrench_fx, commandPro->wrench_fy, commandPro->wrench_fz),
                                                             iDynTree::Torque(commandPro->wrench_tx, commandPro->wrench_ty, commandPro->wrench_tz) );
-
-                    // Downcast it and move the pointer ownership into the object containing the source data
-                    auto ptr = static_cast<WorldWrenchTransformer*>(newTransformer.release());
-                    forceSource.frameTransformer.reset(ptr);
                 }
 
             }
