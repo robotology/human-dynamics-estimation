@@ -12,33 +12,10 @@
 
 using namespace hde::devices::impl;
 
-bool FixedFrameWrenchTransformer::transformWrenchFrame(const iDynTree::Wrench inputWrench,
-                                                       iDynTree::Wrench& transformedWrench)
-{
-    Eigen::Matrix<double,6,1> transformedWrenchEigen = iDynTree::toEigen(transform.asAdjointTransformWrench())
-                                                       * iDynTree::toEigen(inputWrench.asVector());
-    iDynTree::fromEigen(transformedWrench, transformedWrenchEigen);
-    return true;
-}
-
-bool RobotFrameWrenchTransformer::transformWrenchFrame(const iDynTree::Wrench inputWrench,
-                                                       iDynTree::Wrench& transformedWrench)
+bool IWrenchFrameTransformer::transformWrenchFrame(const iDynTree::Wrench inputWrench,
+                                                   iDynTree::Wrench& transformedWrench)
 {
     std::lock_guard<std::mutex> lock(_mutex);
-
-    Eigen::Matrix<double,6,1> transformedWrenchEigen = iDynTree::toEigen(transform.asAdjointTransformWrench())
-                                                       * iDynTree::toEigen(inputWrench.asVector());
-    iDynTree::fromEigen(transformedWrench, transformedWrenchEigen);
-    return true;
-}
-
-bool WorldWrenchTransformer::transformWrenchFrame(const iDynTree::Wrench inputWrench,
-                                                       iDynTree::Wrench& transformedWrench)
-{
-    std::lock_guard<std::mutex> lock(_mutex);
-
-    Eigen::Matrix<double,6,1> transformedWrenchEigen = iDynTree::toEigen(transform.asAdjointTransformWrench())
-                                                       * iDynTree::toEigen(wrench.asVector());
-    iDynTree::fromEigen(transformedWrench, transformedWrenchEigen);
+    transformedWrench = transform * inputWrench;
     return true;
 }

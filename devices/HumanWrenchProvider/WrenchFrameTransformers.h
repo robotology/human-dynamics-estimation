@@ -19,9 +19,6 @@ namespace hde {
     namespace devices {
         namespace impl {
             class IWrenchFrameTransformer;
-            class FixedFrameWrenchTransformer;
-            class RobotFrameWrenchTransformer;
-            class WorldWrenchTransformer;
         } // namespace impl
     } // namespace devices
 } // namespace hde
@@ -29,54 +26,13 @@ namespace hde {
 class hde::devices::impl::IWrenchFrameTransformer
 {
 public:
-    virtual ~IWrenchFrameTransformer() = default;
-    virtual bool transformWrenchFrame(const iDynTree::Wrench inputWrench,
-                                      iDynTree::Wrench& transformedWrench) = 0;
-};
-
-class hde::devices::impl::FixedFrameWrenchTransformer final
-    : public hde::devices::impl::IWrenchFrameTransformer
-{
-public:
-    std::string originExpressedFrame;
-    std::string transformedExpressedFrame;
     iDynTree::Transform transform;
-
-    FixedFrameWrenchTransformer() = default;
-    ~FixedFrameWrenchTransformer() override = default;
-
-    bool transformWrenchFrame(const iDynTree::Wrench inputWrench,
-                              iDynTree::Wrench& transformedWrench) override;
-};
-
-class hde::devices::impl::RobotFrameWrenchTransformer final
-    : public hde::devices::impl::IWrenchFrameTransformer
-{
-public:
-    iDynTree::Transform transform = iDynTree::Transform::Identity();
-    iDynTree::Transform fixedTransform;
     std::mutex _mutex;
 
-    RobotFrameWrenchTransformer() = default;
-    ~RobotFrameWrenchTransformer() override = default;
-
+    IWrenchFrameTransformer() = default;
+    ~IWrenchFrameTransformer() = default;
     bool transformWrenchFrame(const iDynTree::Wrench inputWrench,
-                              iDynTree::Wrench& transformedWrench) override;
-};
-
-class hde::devices::impl::WorldWrenchTransformer final
-    : public hde::devices::impl::IWrenchFrameTransformer
-{
-public:
-    iDynTree::Transform transform;
-    iDynTree::Wrench wrench;
-    std::mutex _mutex;
-
-    WorldWrenchTransformer() = default;
-    ~WorldWrenchTransformer() override = default;
-
-    bool transformWrenchFrame(const iDynTree::Wrench inputWrench,
-                              iDynTree::Wrench& transformedWrench) override;
+                                      iDynTree::Wrench& transformedWrench);
 };
 
 #endif // HDE_DEVICES_IMPL_IWRENCHFRAMETRANSFORMERS
