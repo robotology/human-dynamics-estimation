@@ -410,6 +410,65 @@ bool parseMAPEstParams(yarp::os::Searchable& config, MAPEstParams& mapEstParams)
     return true;
 }
 
+iDynTree::SpatialForceVector computeRCMInBaseUsingMeasurements(iDynTree::KinDynComputations& kinDynComputations,
+                                                      iDynTree::LinkIndex baseIdx)
+{
+    const iDynTree::Model& model = kinDynComputations.model();
+
+    iDynTree::LinkPositions linkPos(model);
+    iDynTree::LinkVelArray linkVels(model);
+    iDynTree::LinkAccArray linkProperAccs(model);
+    iDynTree::LinkInertias linkInertias(model);
+
+    // Get links info
+    for(size_t linkIdx = 0; linkIdx < model.getNrOfLinks(); linkIdx++)
+    {
+        linkInertias(linkIdx) = model.getLink(linkIdx)->getInertia();
+        linkPos(linkIdx) = kinDynComputations.getWorldTransform(linkIdx);
+        linkVels(linkIdx) = kinDynComputations.getFrameVel(linkIdx);
+        
+        //TODO manage accelerations
+        linkProperAccs(linkIdx).zero();
+    }
+
+    iDynTree::SpatialForceVector rcm;
+    rcm.zero();
+
+    // Set centroidal to world transform
+    iDynTree::Transform world_H_centroidal = iDynTree::Transform(iDynTree::Rotation::Identity(), kinDynComputations.getCenterOfMassPosition());
+
+    // Iterate over measurements
+    for(iDynTree::LinkIndex visitedLinkIndex = 0; visitedLinkIndex < model.getNrOfLinks(); visitedLinkIndex++)
+    {
+        // Get world_H_link transform
+        const iDynTree::Transform world_H_link = linkPos(visitedLinkIndex);
+
+        // Compute link to centroidal transform
+        const iDynTree::Transform centroidal_H_link = world_H_centroidal.inverse() * world_H_link;
+
+        // Get link velocity L_v_A,L
+        const iDynTree::Twist linkVelocityExpressedInLink = linkVels(visitedLinkIndex);
+
+        // Get link acceleration L_a_A,L
+        const iDynTree::SpatialAcc linkAccelerationExpressedInLink = linkProperAccs(visitedLinkIndex);
+
+        // velocity contribution
+        const iDynTree::SpatialForceVector linkInertiaMultipliedVelocity = linkInertias(visitedLinkIndex).multiply(linkVelocityExpressedInLink);
+        const iDynTree::SpatialForceVector rcmLinkVelContrib = centroidal_H_link * (linkVelocityExpressedInLink.cross(linkInertiaMultipliedVelocity));
+        
+        // acceleration contribution
+        const iDynTree::SpatialForceVector rcmLinkAccContrib = centroidal_H_link * (linkInertias(visitedLinkIndex).multiply(linkAccelerationExpressedInLink));
+
+        // update rcm
+        rcm = rcm + rcmLinkVelContrib + rcmLinkAccContrib;
+    }
+
+    // base_H_centroidal transform
+    const iDynTree::Transform base_H_centroidal = kinDynComputations.getWorldBaseTransform().inverse() * world_H_centroidal;
+
+    return base_H_centroidal * rcm;
+}
+
 bool HumanWrenchProvider::open(yarp::os::Searchable& config)
 {
     //Set gravity vector
@@ -1103,28 +1162,36 @@ void HumanWrenchProvider::run()
         }
 
         // Set RCM_SENSOR measurement
-        iDynTree::SpatialForceVector rcm; //TODO compute rcm
-        rcm.zero();
+        iDynTree::Model &model = pImpl->mapEstHelper.berdyHelper.model();
+        iDynTree::FrameIndex baseFrameIndex = model.getLinkIndex(pImpl->mapEstHelper.berdyOptions.baseLink);
+
+        iDynTree::KinDynComputations kinDynComputations;
+        kinDynComputations.loadRobotModel(model);
+        kinDynComputations.setFrameVelocityRepresentation(iDynTree::FrameVelocityRepresentation::BODY_FIXED_REPRESENTATION);
+        kinDynComputations.setRobotState(pImpl->basePose,
+                                        pImpl->humanJointPositionsVec,
+                                        pImpl->baseVelocity,
+                                        pImpl->humanJointVelocitiesVec,
+                                        pImpl->world_gravity);
+
+        iDynTree::SpatialForceVector rcm = computeRCMInBaseUsingMeasurements(kinDynComputations, baseFrameIndex);
+
         iDynTree::IndexRange rcmSensorRange = pImpl->mapEstHelper.berdyHelper.getRangeRCMSensorVariable(iDynTree::BerdySensorTypes::RCM_SENSOR);
         for(std::size_t j=0; j<rcmSensorRange.size; j++)
         {
             berdyMeasurementVector.setVal(rcmSensorRange.offset+j, rcm.getVal(j));
         }
 
-        // Use map estimator
-        iDynTree::Model &model = pImpl->mapEstHelper.berdyHelper.model();
-
-        iDynTree::Vector3 baseAngularVelocity;
+        iDynTree::Vector3 baseAngularVelocity = pImpl->baseVelocity.getAngularVec3();
         iDynTree::JointPosDoubleArray jointsPosition(model);
         iDynTree::JointDOFsDoubleArray jointsVelocity(model);
         iDynTree::JointDOFsDoubleArray jointsAcceleration(model);
-        iDynTree::FrameIndex baseFrameIndex = model.getLinkIndex(pImpl->mapEstHelper.berdyOptions.baseLink);
 
-        for(int i=0; i<pImpl->jointPositionsInterface.size(); i++) jointsPosition.setVal(i, pImpl->jointPositionsInterface.at(i));
-        for(int i=0; i<pImpl->jointVelocitiesInterface.size(); i++) jointsVelocity.setVal(i, pImpl->jointVelocitiesInterface.at(i));
-        for(int i=0; i<3; i++) baseAngularVelocity.setVal(i, pImpl->baseVelocityInterface.at(i+3));
 
-         
+        for(int i=0; i<pImpl->humanJointPositionsVec.size(); i++) jointsPosition.setVal(i, pImpl->humanJointPositionsVec.getVal(i));
+        for(int i=0; i<pImpl->humanJointVelocitiesVec.size(); i++) jointsVelocity.setVal(i, pImpl->humanJointVelocitiesVec.getVal(i));
+
+
         // Set the kinematic information necessary for the dynamics estimation
         //TODO check if needed
         pImpl->mapEstHelper.berdyHelper.updateKinematicsFromFloatingBase(jointsPosition,
@@ -1135,9 +1202,9 @@ void HumanWrenchProvider::run()
 
         pImpl->mapEstHelper.mapSolver->updateEstimateInformationFloatingBase(jointsPosition,
                                                                              jointsVelocity,
-                                                                            baseFrameIndex,
-                                                                            baseAngularVelocity,
-                                                                            berdyMeasurementVector);
+                                                                             baseFrameIndex,
+                                                                             baseAngularVelocity,
+                                                                             berdyMeasurementVector);
 
 
         if(!pImpl->mapEstHelper.mapSolver->doEstimate())
