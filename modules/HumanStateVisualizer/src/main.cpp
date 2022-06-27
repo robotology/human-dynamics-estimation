@@ -709,7 +709,8 @@ int main(int argc, char* argv[])
                     break;
                 case hde::KinematicTargetType::floorContact:
                     linkTransform = iDynTree::Transform(targetEntity.second.get()->getCalibratedRotation(), iDynTree::Position(targetEntity.second.get()->getCalibratedPosition()));
-                    linkTransform.setPosition(iDynTree::Position(linkTransform.getPosition().getVal(0), linkTransform.getPosition().getVal(1), linkTransform.getPosition().getVal(1)));
+                    linkTransform.setPosition(iDynTree::Position(linkTransform.getPosition().getVal(0), linkTransform.getPosition().getVal(1), linkTransform.getPosition().getVal(2)));
+
         
                     viz.frames().updateFrame(framesIterator, linkTransform);
                     framesIterator++;
