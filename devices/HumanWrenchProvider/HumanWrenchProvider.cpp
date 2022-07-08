@@ -290,7 +290,6 @@ bool parseMeasurementsCovariance(yarp::os::Searchable& config, MAPEstParams& map
     if(specificElements.isNull())
     {
         yInfo()<<"No specific elements to specify the measurements covariance were found! Using"<<mapEstParams.measurementDefaultCovariance<<"for all";
-        return true;
     }
     if(!specificElements.isList())
     {
@@ -299,37 +298,41 @@ bool parseMeasurementsCovariance(yarp::os::Searchable& config, MAPEstParams& map
     }
 
     yarp::os::Bottle *specificElementsList = specificElements.asList();
-    for(int i=0; i<specificElementsList->size(); i++)
+    if(!specificElements.isNull())
     {
-        std::string linkName = specificElementsList->get(i).asString();
-        if(!priorMeasurementsCovarianceBottle.check(linkName))
+        for(int i=0; i<specificElementsList->size(); i++)
         {
-            yError()<<"The element"<<linkName<<"appears in the specificElements list, but its covariance is not specified!";
-            return false;
-        }
+            std::string linkName = specificElementsList->get(i).asString();
+            if(!priorMeasurementsCovarianceBottle.check(linkName))
+            {
+                yError()<<"The element"<<linkName<<"appears in the specificElements list, but its covariance is not specified!";
+                return false;
+            }
 
-        // get the diagonal values of the covariance
-        yarp::os::Bottle* covarianceList = priorMeasurementsCovarianceBottle.find(linkName).asList();
-        if(covarianceList==nullptr)
-        {
-            yError()<<"The"<<linkName<<"parameter must be a list!";
-            return false;
+            // get the diagonal values of the covariance
+            yarp::os::Bottle* covarianceList = priorMeasurementsCovarianceBottle.find(linkName).asList();
+            if(covarianceList==nullptr)
+            {
+                yError()<<"The"<<linkName<<"parameter must be a list!";
+                return false;
+            }
+            if(covarianceList->size()!=6)
+            {
+                yError()<<"The covariance values of"<<linkName<<"must have 6 parameters!";
+                return false;
+            }
+            std::vector<double> covarianceListValues;
+            for(int j=0; j<covarianceList->size(); j++)
+            {
+                covarianceListValues.push_back(covarianceList->get(j).asFloat64());
+            }
+            mapEstParams.specificMeasurementsCovariance.emplace(linkName, covarianceListValues);
+
         }
-        if(covarianceList->size()!=6)
-        {
-            yError()<<"The covariance values of"<<linkName<<"must have 6 parameters!";
-            return false;
-        }
-        std::vector<double> covarianceListValues;
-        for(int j=0; j<covarianceList->size(); j++)
-        {
-            covarianceListValues.push_back(covarianceList->get(j).asFloat64());
-        }
-        mapEstParams.specificMeasurementsCovariance.emplace(linkName, covarianceListValues);
 
     }
 
-    // get the RCM sensor covariance (if the specified)
+    // get the RCM sensor covariance (if specified)
     yarp::os::Value& rcmPriorMeasurementsCovarianceValue  = config.find("cov_measurements_RCM_SENSOR");
     std::vector<double> rcmCovariance;
     if(rcmPriorMeasurementsCovarianceValue.isNull())
@@ -398,7 +401,7 @@ bool parseMAPEstParams(yarp::os::Searchable& config, MAPEstParams& mapEstParams)
             yError() << "Missing valid floating point cov_dyn_variables parameter!";
             return false;
         }
-        mapEstParams.priorDynamicsRegularizationExpected = mapEstParamsGroup.find("cov_dyn_variables").asFloat64();
+        mapEstParams.priorDynamicsRegularizationCovarianceValue = mapEstParamsGroup.find("cov_dyn_variables").asFloat64();
 
         // parse the prior measurements covariance Sigma_y
         if(!parseMeasurementsCovariance(mapEstParamsGroup, mapEstParams))
@@ -413,6 +416,24 @@ bool parseMAPEstParams(yarp::os::Searchable& config, MAPEstParams& mapEstParams)
 iDynTree::SpatialForceVector computeRCMInBaseUsingMeasurements(iDynTree::KinDynComputations& kinDynComputations,
                                                       iDynTree::LinkIndex baseIdx)
 {
+    //TODO
+    iDynTree::SpatialForceVector rcm;
+    rcm.zero();
+    //return rcm;
+    
+    iDynTree::SpatialForceVector subjectWeight;
+    subjectWeight.zero();
+    subjectWeight.setVal(2, 9.81 * kinDynComputations.model().getTotalMass()); //TODO set weight from parameter
+    yDebug()<<LogPrefix<<"Mass of the model:"<<kinDynComputations.model().getTotalMass();
+
+    iDynTree::Transform centroidal_H_world;
+    centroidal_H_world.setPosition(kinDynComputations.getCenterOfMassPosition());
+    centroidal_H_world.setRotation(iDynTree::Rotation::Identity());
+
+    iDynTree::SpatialForceVector subjectWeightInBase = kinDynComputations.getWorldBaseTransform().inverse() * centroidal_H_world.inverse() * subjectWeight;
+
+    return subjectWeightInBase;
+
     const iDynTree::Model& model = kinDynComputations.model();
 
     iDynTree::LinkPositions linkPos(model);
@@ -430,9 +451,6 @@ iDynTree::SpatialForceVector computeRCMInBaseUsingMeasurements(iDynTree::KinDynC
         //TODO manage accelerations
         linkProperAccs(linkIdx).zero();
     }
-
-    iDynTree::SpatialForceVector rcm;
-    rcm.zero();
 
     // Set centroidal to world transform
     iDynTree::Transform world_H_centroidal = iDynTree::Transform(iDynTree::Rotation::Identity(), kinDynComputations.getCenterOfMassPosition());
@@ -832,9 +850,10 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
     // Configure map estimator
     if(pImpl->mapEstParams.useMAPEst)
     {
+        pImpl->readHumanData = true;
+
         pImpl->mapEstHelper.berdyOptions.berdyVariant = iDynTree::BerdyVariants::BERDY_FLOATING_BASE_NON_COLLOCATED_EXT_WRENCHES;
         pImpl->mapEstHelper.berdyOptions.includeAllNetExternalWrenchesAsSensors = true;
-        pImpl->mapEstHelper.berdyOptions.includeRcmAsSensor = true;
         pImpl->mapEstHelper.berdyOptions.includeAllJointTorquesAsSensors = false;
         pImpl->mapEstHelper.berdyOptions.includeAllJointAccelerationsAsSensors = false;
         pImpl->mapEstHelper.berdyOptions.includeAllNetExternalWrenchesAsSensors = true;
@@ -849,18 +868,13 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
         }
 
         // Initialize the BerdyHelper
-        if (!pImpl->mapEstHelper.berdyHelper.init(humanModelLoader.model(), iDynTree::SensorsList(), pImpl->mapEstHelper.berdyOptions)) {
+        if (!pImpl->mapEstHelper.berdyHelper.init(pImpl->humanModel, iDynTree::SensorsList(), pImpl->mapEstHelper.berdyOptions)) {
             yError() << LogPrefix << "Failed to initialize BERDY";
             return false;
         }
 
         pImpl->mapEstHelper.mapSolver = std::make_unique<iDynTree::BerdySparseMAPSolver>(pImpl->mapEstHelper.berdyHelper);
         pImpl->mapEstHelper.mapSolver->initialize();
-
-        if (!pImpl->mapEstHelper.mapSolver->isValid()) {
-            yError() << LogPrefix << "Failed to initialize the Berdy MAP solver";
-            return false;
-        }
 
         // sigma_y
         iDynTree::Triplets measurementsCovarianceMatrixTriplets;
@@ -884,7 +898,6 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
                 }    
                     break;
                 case iDynTree::BerdySensorTypes::RCM_SENSOR:
-                    //TODO
                 {
                     auto specificMeasurementsPtr = pImpl->mapEstParams.specificMeasurementsCovariance.find("RCM_SENSOR");
                     for(std::size_t i=0; i<6; i++) 
@@ -920,6 +933,12 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
         priorDynamicsRegularizationCovarianceMatrix.resize(sigmaDSize, sigmaDSize);
         priorDynamicsRegularizationCovarianceMatrix.setFromTriplets(priorDynamicsRegularizationCovarianceMatrixTriplets);
         pImpl->mapEstHelper.mapSolver->setDynamicsRegularizationPriorCovariance(priorDynamicsRegularizationCovarianceMatrix);
+
+        if (!pImpl->mapEstHelper.mapSolver->isValid()) {
+            yError() << LogPrefix << "Failed to initialize the Berdy MAP solver";
+            return false;
+        }
+
     }
 
     // ===================
@@ -942,6 +961,16 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
     // Set rpc port reader
     pImpl->rpcPort.setReader(*pImpl->commandPro);
 
+    // Initialize buffer data
+    pImpl->baseVelocity.zero();
+
+    // Resize human joint quantities buffer
+    pImpl->humanJointPositionsVec.resize(pImpl->humanModel.getNrOfDOFs());
+    pImpl->humanJointVelocitiesVec.resize(pImpl->humanModel.getNrOfDOFs());
+
+    pImpl->humanJointPositionsVec.zero();
+    pImpl->humanJointVelocitiesVec.zero();
+
     return true;
 }
 
@@ -953,16 +982,18 @@ bool HumanWrenchProvider::close()
 void HumanWrenchProvider::run()
 {
     if (pImpl->readHumanData) {
+        if(pImpl->iHumanState==nullptr)
+        {
+            yError()<<LogPrefix<<"iHumanState is not attached";
+            askToStop();
+            return;
+        }
         auto basePositionInterface = pImpl->iHumanState->getBasePosition();
         auto baseVelocityInterface = pImpl->iHumanState->getBaseVelocity();
         auto baseOrientationInterface = pImpl->iHumanState->getBaseOrientation();
         auto jointPositionsInterface = pImpl->iHumanState->getJointPositions();
         auto jointVelocitiesInterface = pImpl->iHumanState->getJointVelocities();
         auto jointNamesStateInterface = pImpl->iHumanState->getJointNames();
-
-        // Resize human joint quantities buffer
-        pImpl->humanJointPositionsVec.resize(pImpl->humanModel.getNrOfDOFs());
-        pImpl->humanJointVelocitiesVec.resize(pImpl->humanModel.getNrOfDOFs());
 
         pImpl->basePose.setPosition(iDynTree::Position(basePositionInterface.at(0),
                                                        basePositionInterface.at(1),
@@ -1153,6 +1184,7 @@ void HumanWrenchProvider::run()
             {
                 yError()<<LogPrefix<<"Cannot find link:"<<sensorName;
                 askToStop();
+                return;
             }
             iDynTree::IndexRange sensorRange = pImpl->mapEstHelper.berdyHelper.getRangeLinkSensorVariable(iDynTree::BerdySensorTypes::NET_EXT_WRENCH_SENSOR, linkIndex);
             for(std::size_t j=0; j<sensorRange.size; j++)
@@ -1166,7 +1198,7 @@ void HumanWrenchProvider::run()
         iDynTree::FrameIndex baseFrameIndex = model.getLinkIndex(pImpl->mapEstHelper.berdyOptions.baseLink);
 
         iDynTree::KinDynComputations kinDynComputations;
-        kinDynComputations.loadRobotModel(model);
+        kinDynComputations.loadRobotModel(pImpl->humanModel);
         kinDynComputations.setFrameVelocityRepresentation(iDynTree::FrameVelocityRepresentation::BODY_FIXED_REPRESENTATION);
         kinDynComputations.setRobotState(pImpl->basePose,
                                         pImpl->humanJointPositionsVec,
@@ -1211,17 +1243,23 @@ void HumanWrenchProvider::run()
         {
             yError()<<LogPrefix<<"Estimate computation failed!";
             askToStop();
+            return;
         }
 
-        const iDynTree::VectorDynSize &estimatedWrenches = pImpl->mapEstHelper.mapSolver->getLastEstimate();
+        const iDynTree::VectorDynSize& estimatedWrenches = pImpl->mapEstHelper.mapSolver->getLastEstimate();
+
+        iDynTree::LinkNetExternalWrenches linkExtWrenches(pImpl->humanModel);
+        pImpl->mapEstHelper.berdyHelper.extractLinkNetExternalWrenchesFromDynamicVariables(estimatedWrenches,linkExtWrenches);
 
         // update transformed wrenches with estimate
         for (unsigned i = 0; i < pImpl->wrenchSources.size(); ++i)
         {
+            iDynTree::LinkIndex linkIndex = pImpl->mapEstHelper.berdyHelper.model().getLinkIndex(pImpl->wrenchSources[i].outputFrame);
             for(int j=0; j<6; j++)
             {
-                pImpl->transformedWrenches[i].setVal(j, estimatedWrenches.getVal(j));
+                pImpl->transformedWrenches[i].setVal(j, linkExtWrenches(linkIndex).getVal(j));
             }
+        }
         }
     }
 
@@ -1263,7 +1301,9 @@ bool HumanWrenchProvider::attach(yarp::dev::PolyDriver* poly)
     // Get the device name from the driver
     const std::string deviceName = poly->getValue("device").asString();
 
-    if (deviceName == "human_state_provider") {
+    yInfo()<<LogPrefix<<"Attaching "<< deviceName;
+
+    if (deviceName == "human_state_provider" || deviceName == "human_state_remapper" ) {
 
         // Attach IHumanState interface from HumanStateProvider
         if (pImpl->iHumanState || !poly->view(pImpl->iHumanState) || !pImpl->iHumanState) {
@@ -1271,11 +1311,12 @@ bool HumanWrenchProvider::attach(yarp::dev::PolyDriver* poly)
             return false;
         }
 
-        // Check the interface
-        if (pImpl->iHumanState->getNumberOfJoints() == 0
+        //TODO Check the interface
+        int count = 1000000;
+        while (pImpl->iHumanState->getNumberOfJoints() == 0
                 || pImpl->iHumanState->getNumberOfJoints() != pImpl->iHumanState->getJointNames().size()) {
-            yError() << "The IHumanState interface might not be ready";
-            return false;
+            yError() << LogPrefix<<"The IHumanState interface might not be ready";
+            if(count--==0) return false;
         }
 
         yInfo() << LogPrefix << deviceName << "attach() successful";
