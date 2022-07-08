@@ -127,6 +127,7 @@ public:
 
     // Human variables
     iDynTree::Model humanModel;
+    double humanMass;
     // buffer variables (iDynTree)
     iDynTree::VectorDynSize humanJointPositionsVec;
     iDynTree::VectorDynSize humanJointVelocitiesVec;
@@ -154,6 +155,9 @@ public:
     MAPEstParams mapEstParams;
     MAPEstHelper mapEstHelper;
     std::vector<iDynTree::Wrench> transformedWrenches;
+
+    iDynTree::SpatialForceVector computeRCMInBaseUsingMeasurements(iDynTree::KinDynComputations& kinDynComputations,
+                                                                iDynTree::LinkIndex baseIdx);
 };
 
 HumanWrenchProvider::HumanWrenchProvider()
@@ -413,24 +417,24 @@ bool parseMAPEstParams(yarp::os::Searchable& config, MAPEstParams& mapEstParams)
     return true;
 }
 
-iDynTree::SpatialForceVector computeRCMInBaseUsingMeasurements(iDynTree::KinDynComputations& kinDynComputations,
-                                                      iDynTree::LinkIndex baseIdx)
+iDynTree::SpatialForceVector HumanWrenchProvider::Impl::computeRCMInBaseUsingMeasurements(iDynTree::KinDynComputations& kinDynComputations,
+                                                                iDynTree::LinkIndex baseIdx)
 {
     //TODO
     iDynTree::SpatialForceVector rcm;
     rcm.zero();
     //return rcm;
     
-    iDynTree::SpatialForceVector subjectWeight;
-    subjectWeight.zero();
-    subjectWeight.setVal(2, 9.81 * kinDynComputations.model().getTotalMass()); //TODO set weight from parameter
-    yDebug()<<LogPrefix<<"Mass of the model:"<<kinDynComputations.model().getTotalMass();
+    iDynTree::AngularForceVector3 gravityTorque(0., 0., 0.);
 
-    iDynTree::Transform centroidal_H_world;
-    centroidal_H_world.setPosition(kinDynComputations.getCenterOfMassPosition());
-    centroidal_H_world.setRotation(iDynTree::Rotation::Identity());
+    iDynTree::SpatialForceVector subjectWeightInCentroidal(world_gravity, gravityTorque);
+    subjectWeightInCentroidal = subjectWeightInCentroidal*(-humanMass);
 
-    iDynTree::SpatialForceVector subjectWeightInBase = kinDynComputations.getWorldBaseTransform().inverse() * centroidal_H_world.inverse() * subjectWeight;
+    iDynTree::Transform base_H_world;
+    base_H_world.setPosition(kinDynComputations.getCenterOfMassPosition() - kinDynComputations.getWorldBaseTransform().getPosition());
+    base_H_world.setRotation(kinDynComputations.getWorldBaseTransform().getRotation().inverse());
+
+    iDynTree::SpatialForceVector subjectWeightInBase = base_H_world * subjectWeightInCentroidal;
 
     return subjectWeightInBase;
 
@@ -535,6 +539,23 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
 
     pImpl->humanModel = humanModelLoader.model();
     pImpl->humanKinDynComp.loadRobotModel(pImpl->humanModel);
+
+    // set the human mass
+    pImpl->humanMass = 0.0;
+    if(!config.check("human_mass"))
+    {
+        yInfo() << LogPrefix << "Missing optional parameter \"human_mass\", using the model's total mass by default";
+        pImpl->humanMass = pImpl->humanModel.getTotalMass();
+    }
+    else
+    {
+        if(!(config.find("human_mass").isFloat64() || config.find("human_mass").isInt32()))
+        {
+            yError() << LogPrefix << "Parameter human_mass is not a valid number!";
+            return false;
+        }
+        pImpl->humanMass = config.find("human_mass").asFloat64();
+    }
 
     // ==========================
     // INITIALIZE THE ROBOT MODEL
