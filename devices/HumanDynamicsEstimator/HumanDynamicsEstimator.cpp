@@ -1231,11 +1231,12 @@ bool HumanDynamicsEstimator::attach(yarp::dev::PolyDriver* poly)
             return false;
         }
 
-        // Check the interface
-        if (pImpl->iHumanState->getNumberOfJoints() == 0
+        //TODO Check the interface
+        int count = 1000000;
+        while (pImpl->iHumanState->getNumberOfJoints() == 0
                 || pImpl->iHumanState->getNumberOfJoints() != pImpl->iHumanState->getJointNames().size()) {
-            yError() << "The IHumanState interface might not be ready";
-            return false;
+            yError() << LogPrefix<<"The IHumanState interface might not be ready";
+            if(count--==0) return false;
         }
 
         yInfo() << LogPrefix << deviceName << "attach() successful";
