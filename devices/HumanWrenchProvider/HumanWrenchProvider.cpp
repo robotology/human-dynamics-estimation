@@ -1259,7 +1259,7 @@ void HumanWrenchProvider::run()
             {
                 pImpl->transformedWrenches[i].setVal(j, linkExtWrenches(linkIndex).getVal(j));
             }
-        }
+        
         }
     }
 
