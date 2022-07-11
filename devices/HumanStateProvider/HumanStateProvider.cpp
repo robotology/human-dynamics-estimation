@@ -608,23 +608,23 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
             return false;
     }
 
-    yarp::os::Bottle& contactTresholdGroup = config.findGroup("CONTACT_TRESHOLDS");
-    if (!contactTresholdGroup.isNull()) {
-        for (size_t i = 1; i < contactTresholdGroup.size(); ++i) {
-            if (!(contactTresholdGroup.get(i).isList() && contactTresholdGroup.get(i).asList()->size() == 2)) {
+    yarp::os::Bottle& contactThresholdGroup = config.findGroup("CONTACT_THRESHOLDS");
+    if (!contactThresholdGroup.isNull()) {
+        for (size_t i = 1; i < contactThresholdGroup.size(); ++i) {
+            if (!(contactThresholdGroup.get(i).isList() && contactThresholdGroup.get(i).asList()->size() == 2)) {
                 yError() << LogPrefix
-                        << "Childs of CONTACT_TRESHOLDS must be lists of 2 elements";
+                        << "Childs of CONTACT_THRESHOLDS must be lists of 2 elements";
                 return false;
             }
-            yarp::os::Bottle* list = contactTresholdGroup.get(i).asList();
-            std::string linkName = list->get(0).asString();
+            yarp::os::Bottle* list = contactThresholdGroup.get(i).asList();
+            std::string targetName = list->get(0).asString();
 
-            if (!list->find(linkName).isFloat64()) {
-                yError() << LogPrefix << "CONTACT_TRESHOLDS " << linkName << " must be a float";
+            if (!list->find(targetName).isFloat64()) {
+                yError() << LogPrefix << "CONTACT_THRESHOLDS " << targetName << " must be a float";
                 return false;
             }
 
-            yInfo() << LogPrefix << "CONTACT_TRESHOLDS added for target " << linkName;
+            yInfo() << LogPrefix << "CONTACT_THRESHOLDS added for target " << targetName;
         }
     }
 
@@ -763,9 +763,9 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         yInfo() << LogPrefix << "Adding Scale factor for " << targetName << "==>" << positionScaleFactor.toString();
     }
 
-    for (size_t i = 1; i < contactTresholdGroup.size(); ++i) {
-        hde::TargetName targetName = contactTresholdGroup.get(i).asList()->get(0).asString();
-        double contactTreshold = contactTresholdGroup.get(i).asList()->find(targetName).asFloat64();
+    for (size_t i = 1; i < contactThresholdGroup.size(); ++i) {
+        hde::TargetName targetName = contactThresholdGroup.get(i).asList()->get(0).asString();
+        double contactTreshold = contactThresholdGroup.get(i).asList()->find(targetName).asFloat64();
 
         if (pImpl->wearableTargets.find(targetName) == pImpl->wearableTargets.end())
         {
@@ -1814,6 +1814,8 @@ bool HumanStateProvider::impl::updateWearableTargets()
                     kinDynComputations->setRobotState(baseTransformSolution, jointConfigurationSolution, baseVelocitySolution, jointVelocitiesSolution, worldGravity);
                     auto contactPosition = kinDynComputations->getWorldTransform(wearableTargetEntry.second->modelLinkName).getPosition();
                     contactPosition.setVal(2, 0);
+                    // recompute the sensor measurement to link offset (sensor_p_link) such that the target link position is contactPosition:
+                    // target_position = world_p_measWorld + world_R_measWorld * (measWorld_p_sensor + measWorld_R_sensor sensor_p_link)
                     wearableTargetEntry.second->calibrationMeasurementToLink.setPosition( ((contactPosition - wearableTargetEntry.second->calibrationWorldToMeasurementWorld.getPosition()).changeCoordinateFrame(wearableTargetEntry.second->calibrationWorldToMeasurementWorld.getRotation().inverse()) - iDynTree::Position(wearableTargetEntry.second->position)).changeCoordinateFrame(wearableTargetEntry.second->rotation.inverse()) );
                 }
 
