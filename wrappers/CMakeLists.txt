@@ -5,5 +5,9 @@
 add_subdirectory(IWear)
 add_subdirectory(IWearActuators)
 add_subdirectory(IXsensMVNControl)
-add_subdirectory(IWearLogger)
+
+if(ENABLE_Logger)
+    add_subdirectory(IWearLogger)
+endif()
+
 

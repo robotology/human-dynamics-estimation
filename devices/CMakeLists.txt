@@ -16,7 +16,7 @@ if(ENABLE_XsensSuit)
   add_subdirectory(XsensSuit)
 endif()
 
-if(iDynTree_FOUND)
+if(ENABLE_ICub)
   add_subdirectory(ICub)
 endif()
 

@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- `IWearLogger` compilation is enabled by the cmake flag `ENABLE_Logger`, that is set to `ON` by default if `robometry` is found. (https://github.com/robotology/wearables/pull/159)
+- `ICub` wearable device compilation is enabled by the cmake flag `ENABLE_ICub`, that is set to `ON` by default if `iDynTree` is found. (https://github.com/robotology/wearables/pull/159)
+- `ENABLE_FrameVisualizer` cmake falg is set to `ON` by default if `iDynTree` is found. (https://github.com/robotology/wearables/pull/159)
+- `ENABLE_XsensSuit` cmake falg is set to `ON` by default if `XsensXME` is found. (https://github.com/robotology/wearables/pull/159)
+
 ## [1.4.0] - 2022-05-24
 
 ### Changed

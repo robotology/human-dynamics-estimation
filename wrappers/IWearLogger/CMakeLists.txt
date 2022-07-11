@@ -2,9 +2,8 @@
 # This software may be modified and distributed under the terms of the
 # GNU Lesser General Public License v2.1 or any later version.
 
-find_package(YARP COMPONENTS dev QUIET)
-find_package(robometry QUIET)
-if (${YARP_FOUND} AND ${robometry_FOUND})
+find_package(YARP COMPONENTS dev REQUIRED)
+find_package(robometry REQUIRED)
 
 yarp_prepare_plugin(iwear_logger
     TYPE wearable::wrappers::IWearLogger
@@ -29,8 +28,3 @@ yarp_install(
     LIBRARY DESTINATION ${YARP_DYNAMIC_PLUGINS_INSTALL_DIR}
     ARCHIVE DESTINATION ${YARP_STATIC_PLUGINS_INSTALL_DIR}
     YARP_INI DESTINATION ${YARP_PLUGIN_MANIFESTS_INSTALL_DIR})
-
-else()
-    message(WARNING "robometry is missing. IWearLogger will not be installed.")
-endif()
-

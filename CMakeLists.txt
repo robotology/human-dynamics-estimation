@@ -59,16 +59,6 @@ endif()
 if(WIN32)
   #Add compile definition to suppress warning related to header <experimental/filesystem>
   add_compile_definitions(_SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING)
-
-  # Flag to enable XSensSuit wearable device
-  option(ENABLE_XsensSuit "Flag that enables building XsensSuit wearable device" OFF)
-  if(ENABLE_XsensSuit)
-    find_package(XsensXME)
-    if(NOT ${XsensXME_FOUND})
-      message(FATAL_ERROR "XsensSuit device requires XSENS XME!")
-    endif()
-    add_subdirectory(XSensMVN)
-  endif()
 endif()
 
 add_subdirectory(interfaces)
@@ -87,6 +77,13 @@ add_subdirectory(wrappers)
 add_subdirectory(app)
 add_subdirectory(modules)
 
+# Flag to enable XSensSuit wearable device
+find_package(XsensXME QUIET)
+option(ENABLE_XsensSuit "Flag that enables building XsensSuit wearable device" ${XsensXME_FOUND})
+if(ENABLE_XsensSuit)
+  add_subdirectory(XSensMVN)
+endif()
+
 # Flag to enable Paexo wearable device
 option(ENABLE_Paexo "Flag that enables building Paexo wearable device" OFF)
 
@@ -94,4 +91,12 @@ option(ENABLE_Paexo "Flag that enables building Paexo wearable device" OFF)
 option(ENABLE_HapticGlove "Flag that enables building Haptic Sense Glove wearable device" OFF)
 
 # Flag to enable IWearFrameVisualizer module
-option(ENABLE_FrameVisualizer "Flag that enables building IWearFrameVisualizer module" OFF)
+find_package(iDynTree QUIET)
+option(ENABLE_FrameVisualizer "Flag that enables building IWearFrameVisualizer module" ${iDynTree_FOUND})
+
+# Flag to enable IWearLogger device
+find_package(robometry QUIET)
+option(ENABLE_Logger "Flag that enables building Wearable Logger device" ${robometry_FOUND})
+
+# Flag to enable ICub wearable device
+option(ENABLE_ICub "Flag that enables building iCub wearable device" ${iDynTree_FOUND})
