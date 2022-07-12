@@ -267,13 +267,13 @@ int main(int argc, char* argv[])
     double linksFrameScalingFactor = 1.0;
     if (visualizeFrames)
     {
-        if ( !(rf.check("linksFrameScalingFactor") && rf.find("linksFrameScalingFactor").isDouble()) )
+        if ( !(rf.check("linksFrameScalingFactor") && rf.find("linksFrameScalingFactor").isFloat64()) )
         {
             yWarning() << LogPrefix << "'linksFrameScalingFactor' option not found or not valid. Using default scale factor = 1.0";
         }
         else
         {
-            linksFrameScalingFactor = rf.find("linksFrameScalingFactor").asDouble();
+            linksFrameScalingFactor = rf.find("linksFrameScalingFactor").asFloat64();
         }
     }
 
@@ -304,13 +304,13 @@ int main(int argc, char* argv[])
     double targetsFrameScalingFactor = 1.0;
     if (visualizeTargets)
     {
-        if ( !(rf.check("targetsFrameScalingFactor") && rf.find("targetsFrameScalingFactor").isDouble()) )
+        if ( !(rf.check("targetsFrameScalingFactor") && rf.find("targetsFrameScalingFactor").isFloat64()) )
         {
             yWarning() << LogPrefix << "'targetsFrameScalingFactor' option not found or not valid. Using default scale factor = 1.0";
         }
         else
         {
-            targetsFrameScalingFactor = rf.find("targetsFrameScalingFactor").asDouble();
+            targetsFrameScalingFactor = rf.find("targetsFrameScalingFactor").asFloat64();
         }
     }
 
