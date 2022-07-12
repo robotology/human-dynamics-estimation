@@ -156,8 +156,7 @@ public:
     MAPEstHelper mapEstHelper;
     std::vector<iDynTree::Wrench> transformedWrenches;
 
-    iDynTree::SpatialForceVector computeRCMInBaseUsingMeasurements(iDynTree::KinDynComputations& kinDynComputations,
-                                                                iDynTree::LinkIndex baseIdx);
+    iDynTree::SpatialForceVector computeRCMInBaseUsingMeasurements(iDynTree::KinDynComputations& kinDynComputations);
 };
 
 HumanWrenchProvider::HumanWrenchProvider()
@@ -417,16 +416,12 @@ bool parseMAPEstParams(yarp::os::Searchable& config, MAPEstParams& mapEstParams)
     return true;
 }
 
-iDynTree::SpatialForceVector HumanWrenchProvider::Impl::computeRCMInBaseUsingMeasurements(iDynTree::KinDynComputations& kinDynComputations,
-                                                                iDynTree::LinkIndex baseIdx)
+iDynTree::SpatialForceVector HumanWrenchProvider::Impl::computeRCMInBaseUsingMeasurements(iDynTree::KinDynComputations& kinDynComputations)
 {
-    //TODO
     iDynTree::SpatialForceVector rcm;
     rcm.zero();
-    //return rcm;
     
     iDynTree::AngularForceVector3 gravityTorque(0., 0., 0.);
-
     iDynTree::SpatialForceVector subjectWeightInCentroidal(world_gravity, gravityTorque);
     subjectWeightInCentroidal = subjectWeightInCentroidal*(-humanMass);
 
@@ -436,59 +431,10 @@ iDynTree::SpatialForceVector HumanWrenchProvider::Impl::computeRCMInBaseUsingMea
 
     iDynTree::SpatialForceVector subjectWeightInBase = base_H_world * subjectWeightInCentroidal;
 
-    return subjectWeightInBase;
+    rcm = rcm + subjectWeightInBase;
 
-    const iDynTree::Model& model = kinDynComputations.model();
+    return rcm;
 
-    iDynTree::LinkPositions linkPos(model);
-    iDynTree::LinkVelArray linkVels(model);
-    iDynTree::LinkAccArray linkProperAccs(model);
-    iDynTree::LinkInertias linkInertias(model);
-
-    // Get links info
-    for(size_t linkIdx = 0; linkIdx < model.getNrOfLinks(); linkIdx++)
-    {
-        linkInertias(linkIdx) = model.getLink(linkIdx)->getInertia();
-        linkPos(linkIdx) = kinDynComputations.getWorldTransform(linkIdx);
-        linkVels(linkIdx) = kinDynComputations.getFrameVel(linkIdx);
-        
-        //TODO manage accelerations
-        linkProperAccs(linkIdx).zero();
-    }
-
-    // Set centroidal to world transform
-    iDynTree::Transform world_H_centroidal = iDynTree::Transform(iDynTree::Rotation::Identity(), kinDynComputations.getCenterOfMassPosition());
-
-    // Iterate over measurements
-    for(iDynTree::LinkIndex visitedLinkIndex = 0; visitedLinkIndex < model.getNrOfLinks(); visitedLinkIndex++)
-    {
-        // Get world_H_link transform
-        const iDynTree::Transform world_H_link = linkPos(visitedLinkIndex);
-
-        // Compute link to centroidal transform
-        const iDynTree::Transform centroidal_H_link = world_H_centroidal.inverse() * world_H_link;
-
-        // Get link velocity L_v_A,L
-        const iDynTree::Twist linkVelocityExpressedInLink = linkVels(visitedLinkIndex);
-
-        // Get link acceleration L_a_A,L
-        const iDynTree::SpatialAcc linkAccelerationExpressedInLink = linkProperAccs(visitedLinkIndex);
-
-        // velocity contribution
-        const iDynTree::SpatialForceVector linkInertiaMultipliedVelocity = linkInertias(visitedLinkIndex).multiply(linkVelocityExpressedInLink);
-        const iDynTree::SpatialForceVector rcmLinkVelContrib = centroidal_H_link * (linkVelocityExpressedInLink.cross(linkInertiaMultipliedVelocity));
-        
-        // acceleration contribution
-        const iDynTree::SpatialForceVector rcmLinkAccContrib = centroidal_H_link * (linkInertias(visitedLinkIndex).multiply(linkAccelerationExpressedInLink));
-
-        // update rcm
-        rcm = rcm + rcmLinkVelContrib + rcmLinkAccContrib;
-    }
-
-    // base_H_centroidal transform
-    const iDynTree::Transform base_H_centroidal = kinDynComputations.getWorldBaseTransform().inverse() * world_H_centroidal;
-
-    return base_H_centroidal * rcm;
 }
 
 bool HumanWrenchProvider::open(yarp::os::Searchable& config)
@@ -1227,7 +1173,7 @@ void HumanWrenchProvider::run()
                                         pImpl->humanJointVelocitiesVec,
                                         pImpl->world_gravity);
 
-        iDynTree::SpatialForceVector rcm = computeRCMInBaseUsingMeasurements(kinDynComputations, baseFrameIndex);
+        iDynTree::SpatialForceVector rcm = pImpl->computeRCMInBaseUsingMeasurements(kinDynComputations);
 
         iDynTree::IndexRange rcmSensorRange = pImpl->mapEstHelper.berdyHelper.getRangeRCMSensorVariable(iDynTree::BerdySensorTypes::RCM_SENSOR);
         for(std::size_t j=0; j<rcmSensorRange.size; j++)
