@@ -535,22 +535,22 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
 
             // check if WORLD_TO_MEASUREMENT_TRANSFORMS matrix is passed (9 elements)
             if (!(    (listContent->size() == 16)
-                   && (listContent->get(0).isDouble())
-                   && (listContent->get(1).isDouble())
-                   && (listContent->get(2).isDouble())
-                   && (listContent->get(3).isDouble())
-                   && (listContent->get(4).isDouble())
-                   && (listContent->get(5).isDouble())
-                   && (listContent->get(6).isDouble())
-                   && (listContent->get(7).isDouble())
-                   && (listContent->get(8).isDouble())
-                   && (listContent->get(9).isDouble())
-                   && (listContent->get(10).isDouble())
-                   && (listContent->get(11).isDouble())
-                   && (listContent->get(12).isDouble())
-                   && (listContent->get(13).isDouble())
-                   && (listContent->get(14).isDouble())
-                   && (listContent->get(15).isDouble()) )) {
+                   && (listContent->get(0).isFloat64())
+                   && (listContent->get(1).isFloat64())
+                   && (listContent->get(2).isFloat64())
+                   && (listContent->get(3).isFloat64())
+                   && (listContent->get(4).isFloat64())
+                   && (listContent->get(5).isFloat64())
+                   && (listContent->get(6).isFloat64())
+                   && (listContent->get(7).isFloat64())
+                   && (listContent->get(8).isFloat64())
+                   && (listContent->get(9).isFloat64())
+                   && (listContent->get(10).isFloat64())
+                   && (listContent->get(11).isFloat64())
+                   && (listContent->get(12).isFloat64())
+                   && (listContent->get(13).isFloat64())
+                   && (listContent->get(14).isFloat64())
+                   && (listContent->get(15).isFloat64()) )) {
                 yError() << LogPrefix << "WORLD_TO_MEASUREMENT_TRANSFORMS " << linkName << " must have 16 double values describing the rotation matrix";
                 return false;
             }
@@ -576,9 +576,9 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
 
                 // check if FIXED_SENSOR_ROTATION matrix is passed (9 elements)
                 if (!(    (listContent->size() == 3)
-                    && (listContent->get(0).isDouble())
-                    && (listContent->get(1).isDouble())
-                    && (listContent->get(2).isDouble()) )) {
+                    && (listContent->get(0).isFloat64())
+                    && (listContent->get(1).isFloat64())
+                    && (listContent->get(2).isFloat64()) )) {
                     yError() << LogPrefix << "MEASUREMENT_POSITION_SCALE_FACTOR " << linkName << " must have 3 double values describing the scaling factor for x, y, and z axis";
                     return false;
                 }
@@ -592,17 +592,17 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     bool yScaleFactorAllFlag = positionScaleFactorGroup.check("y_scale_factor_all");
     bool zScaleFactorAllFlag = positionScaleFactorGroup.check("z_scale_factor_all");
 
-    if (xScaleFactorAllFlag && !positionScaleFactorGroup.find("x_scale_factor_all").isDouble())
+    if (xScaleFactorAllFlag && !positionScaleFactorGroup.find("x_scale_factor_all").isFloat64())
     {
             yError() << LogPrefix << "x_scale_factor_all must be a double ";
             return false;
     }
-    if (yScaleFactorAllFlag && !positionScaleFactorGroup.find("y_scale_factor_all").isDouble())
+    if (yScaleFactorAllFlag && !positionScaleFactorGroup.find("y_scale_factor_all").isFloat64())
     {
             yError() << LogPrefix << "y_scale_factor_all must be a double ";
             return false;
     }
-    if (zScaleFactorAllFlag && !positionScaleFactorGroup.find("z_scale_factor_all").isDouble())
+    if (zScaleFactorAllFlag && !positionScaleFactorGroup.find("z_scale_factor_all").isFloat64())
     {
             yError() << LogPrefix << "z_scale_factor_all must be a double ";
             return false;
@@ -678,18 +678,18 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         hde::TargetName targetName = fixedLeftTransformGroup.get(i).asList()->get(0).asString();
         yarp::os::Bottle* fixedLeftRotationMatrixValues = fixedLeftTransformGroup.get(i).asList()->get(1).asList();
 
-        iDynTree::Rotation fixedLeftRotation = iDynTree::Rotation( fixedLeftRotationMatrixValues->get(0).asDouble(),
-                                                                   fixedLeftRotationMatrixValues->get(1).asDouble(),
-                                                                   fixedLeftRotationMatrixValues->get(2).asDouble(),
-                                                                   fixedLeftRotationMatrixValues->get(4).asDouble(),
-                                                                   fixedLeftRotationMatrixValues->get(5).asDouble(),
-                                                                   fixedLeftRotationMatrixValues->get(6).asDouble(),
-                                                                   fixedLeftRotationMatrixValues->get(8).asDouble(),
-                                                                   fixedLeftRotationMatrixValues->get(9).asDouble(),
-                                                                   fixedLeftRotationMatrixValues->get(10).asDouble());
-        iDynTree::Position fixedLeftPositionOffset = iDynTree::Position(fixedLeftRotationMatrixValues->get(3).asDouble(),
-                                                                        fixedLeftRotationMatrixValues->get(7).asDouble(),
-                                                                        fixedLeftRotationMatrixValues->get(11).asDouble());
+        iDynTree::Rotation fixedLeftRotation = iDynTree::Rotation( fixedLeftRotationMatrixValues->get(0).asFloat64(),
+                                                                   fixedLeftRotationMatrixValues->get(1).asFloat64(),
+                                                                   fixedLeftRotationMatrixValues->get(2).asFloat64(),
+                                                                   fixedLeftRotationMatrixValues->get(4).asFloat64(),
+                                                                   fixedLeftRotationMatrixValues->get(5).asFloat64(),
+                                                                   fixedLeftRotationMatrixValues->get(6).asFloat64(),
+                                                                   fixedLeftRotationMatrixValues->get(8).asFloat64(),
+                                                                   fixedLeftRotationMatrixValues->get(9).asFloat64(),
+                                                                   fixedLeftRotationMatrixValues->get(10).asFloat64());
+        iDynTree::Position fixedLeftPositionOffset = iDynTree::Position(fixedLeftRotationMatrixValues->get(3).asFloat64(),
+                                                                        fixedLeftRotationMatrixValues->get(7).asFloat64(),
+                                                                        fixedLeftRotationMatrixValues->get(11).asFloat64());
 
         if (pImpl->wearableTargets.find(targetName) == pImpl->wearableTargets.end())
         {
@@ -738,19 +738,19 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
 
         iDynTree::Vector3 positionScaleFactor;
         if (xScaleFactorAllFlag)
-            positionScaleFactor.setVal(0, positionScaleFactorGroup.find("x_scale_factor_all").asDouble());
+            positionScaleFactor.setVal(0, positionScaleFactorGroup.find("x_scale_factor_all").asFloat64());
         else
-            positionScaleFactor.setVal(0, positionScaleFactorValues->get(0).asDouble());
+            positionScaleFactor.setVal(0, positionScaleFactorValues->get(0).asFloat64());
         
         if (yScaleFactorAllFlag)
-            positionScaleFactor.setVal(1, positionScaleFactorGroup.find("y_scale_factor_all").asDouble());
+            positionScaleFactor.setVal(1, positionScaleFactorGroup.find("y_scale_factor_all").asFloat64());
         else
-            positionScaleFactor.setVal(1, positionScaleFactorValues->get(1).asDouble());
+            positionScaleFactor.setVal(1, positionScaleFactorValues->get(1).asFloat64());
         
         if (zScaleFactorAllFlag)
-            positionScaleFactor.setVal(2, positionScaleFactorGroup.find("z_scale_factor_all").asDouble());
+            positionScaleFactor.setVal(2, positionScaleFactorGroup.find("z_scale_factor_all").asFloat64());
         else
-            positionScaleFactor.setVal(2, positionScaleFactorValues->get(2).asDouble());
+            positionScaleFactor.setVal(2, positionScaleFactorValues->get(2).asFloat64());
 
 
         if (pImpl->wearableTargets.find(targetName) == pImpl->wearableTargets.end())
