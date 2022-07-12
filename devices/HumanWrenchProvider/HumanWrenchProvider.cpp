@@ -277,14 +277,14 @@ bool parseMeasurementsCovariance(yarp::os::Searchable& config, MAPEstParams& map
     yarp::os::Bottle& priorMeasurementsCovarianceBottle = config.findGroup("cov_measurements_NET_EXT_WRENCH_SENSOR");
     if(priorMeasurementsCovarianceBottle.isNull())
     {
-        //TODO use default values?
+        yError() << LogPrefix << "Missing group cov_measurements_NET_EXT_WRENCH_SENSOR!";
         return false;
     }
     
     // find the default value
     if(!priorMeasurementsCovarianceBottle.check("value"))
     {
-        //TODO
+        yError() << LogPrefix << "Missing default covariance value for NET_EXT_WRENCH_SENSORs!";
         return false;
     }
     mapEstParams.measurementDefaultCovariance = priorMeasurementsCovarianceBottle.find("value").asFloat64();  
