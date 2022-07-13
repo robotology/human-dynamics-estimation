@@ -27,7 +27,6 @@ class hde::devices::impl::IWrenchFrameTransformer
 {
 public:
     iDynTree::Transform transform;
-    std::mutex _mutex;
 
     IWrenchFrameTransformer() = default;
     ~IWrenchFrameTransformer() = default;

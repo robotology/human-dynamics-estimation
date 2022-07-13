@@ -60,7 +60,7 @@ struct WrenchSourceData
     WrenchSourceType type;
 
     std::string outputFrame;
-    std::unique_ptr<IWrenchFrameTransformer> frameTransformer;
+    IWrenchFrameTransformer frameTransformer;
 
     wearable::sensor::SensorName sensorName;
     wearable::SensorPtr<const wearable::sensor::IForceTorque6DSensor> ftWearableSensor;
@@ -481,7 +481,7 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
                 }
 
                 // Store the transform 
-                WrenchSourceData.frameTransformer->transform = {rotation, position};
+                WrenchSourceData.frameTransformer.transform = {rotation, position};
 
                 yDebug() << LogPrefix << "=============:";
                 yDebug() << LogPrefix << "New source   :" << WrenchSourceData.name;
@@ -588,7 +588,7 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
         }
 
         // Store the wrench source data
-        pImpl->wrenchSources.emplace_back(std::move(WrenchSourceData));
+        pImpl->wrenchSources.emplace_back(WrenchSourceData);
     }
 
     // ===================
@@ -761,7 +761,7 @@ void HumanWrenchProvider::run()
 
             // store the frame transform
             auto worldToFrameRotation = pImpl->humanKinDynComp.getWorldTransform(forceSource.outputFrame).getRotation();
-            forceSource.frameTransformer->transform.setRotation(worldToFrameRotation.inverse());
+            forceSource.frameTransformer.transform.setRotation(worldToFrameRotation.inverse());
         }
 
         if (forceSource.type == WrenchSourceType::Robot) {
@@ -795,13 +795,13 @@ void HumanWrenchProvider::run()
                                     robotFeetToHandsTransform; //RobotFoot_H_RobotHand
 
             // Update the stored transform
-            forceSource.frameTransformer->transform = robotToHumanTransform;
+            forceSource.frameTransformer.transform = robotToHumanTransform;
 
             // Get reaction wrenches for the robot
             forceSource.wrench = forceSource.wrench * -1;
         }
 
-        if (!forceSource.frameTransformer->transformWrenchFrame(forceSource.wrench, transformedWrench)) {
+        if (!forceSource.frameTransformer.transformWrenchFrame(forceSource.wrench, transformedWrench)) {
             askToStop();
             return;
         }
