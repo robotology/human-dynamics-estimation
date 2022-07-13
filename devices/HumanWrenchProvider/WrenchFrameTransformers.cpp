@@ -15,7 +15,6 @@ using namespace hde::devices::impl;
 bool IWrenchFrameTransformer::transformWrenchFrame(const iDynTree::Wrench inputWrench,
                                                    iDynTree::Wrench& transformedWrench)
 {
-    std::lock_guard<std::mutex> lock(_mutex);
     transformedWrench = transform * inputWrench;
     return true;
 }
