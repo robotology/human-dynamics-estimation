@@ -128,6 +128,8 @@ public:
     // Human variables
     iDynTree::Model humanModel;
     double humanMass;
+    std::string baseLink;
+
     // buffer variables (iDynTree)
     iDynTree::VectorDynSize humanJointPositionsVec;
     iDynTree::VectorDynSize humanJointVelocitiesVec;
@@ -503,6 +505,30 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
         pImpl->humanMass = config.find("human_mass").asFloat64();
     }
 
+    std::string baseLink = "";
+    yarp::os::Value& baseLinkValue = config.find("base_name");
+    if(!baseLinkValue.isString())
+    {
+        yError() << LogPrefix << "Parameter baseLink is not a valid string!";
+        return false;
+    }
+
+    if(baseLinkValue.isNull())
+    {
+        pImpl->baseLink = pImpl->humanModel.getFrameName(pImpl->humanModel.getDefaultBaseLink());
+        yInfo() << LogPrefix << "Missing parameter baseLink, using the model's default base link" << pImpl->baseLink;
+    }
+    else
+    {
+        pImpl->baseLink = baseLinkValue.asString();
+        if(!pImpl->humanModel.isLinkNameUsed(pImpl->baseLink))
+        {
+            yError() << LogPrefix << "Base link name" << pImpl->baseLink << "is not valid!";
+            return false;
+        }
+        pImpl->humanModel.setDefaultBaseLink(pImpl->humanModel.getFrameIndex(pImpl->baseLink));
+    }
+
     // ==========================
     // INITIALIZE THE ROBOT MODEL
     // ==========================
@@ -826,7 +852,7 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
         pImpl->mapEstHelper.berdyOptions.includeAllNetExternalWrenchesAsSensors = true;
         pImpl->mapEstHelper.berdyOptions.includeAllNetExternalWrenchesAsDynamicVariables = true;
 
-        pImpl->mapEstHelper.berdyOptions.baseLink = "Pelvis"; //TODO use the ihumanstate one
+        pImpl->mapEstHelper.berdyOptions.baseLink = pImpl->baseLink;
 
         if(!pImpl->mapEstHelper.berdyOptions.checkConsistency())
         {
