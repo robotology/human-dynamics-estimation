@@ -1243,19 +1243,6 @@ bool HumanDynamicsEstimator::attach(yarp::dev::PolyDriver* poly)
     }
 
     if (deviceName == "human_wrench_provider") {
-        // Attach IAnalogServer interfaces coming from HumanWrenchProvider
-        if (pImpl->iAnalogSensor || !poly->view(pImpl->iAnalogSensor) || !pImpl->iAnalogSensor) {
-            yError() << LogPrefix << "Failed to view IAnalogSensor interface from the polydriver";
-            return false;
-        }
-
-        // Check the interface
-        auto numberOfSensors = stoi(poly->getValue("number_of_sources").asString());
-        if (pImpl->iAnalogSensor->getChannels() != 6 * numberOfSensors) {
-            yError() << LogPrefix << "The IAnalogSensor interface might not be ready";
-            return false;
-        }
-
         // Attach IHumanWrench interfaces coming from HumanWrenchProvider
         if (pImpl->iHumanWrench || !poly->view(pImpl->iHumanWrench) || !pImpl->iHumanWrench) {
             yError() << LogPrefix << "Failed to view iHumanWrench interface from the polydriver";
@@ -1263,9 +1250,22 @@ bool HumanDynamicsEstimator::attach(yarp::dev::PolyDriver* poly)
         }
 
         // Check the interface
-        if (pImpl->iHumanWrench->getNumberOfWrenchSources() == 0
-                || pImpl->iHumanWrench->getNumberOfWrenchSources() != pImpl->iHumanWrench->getWrenchSourceNames().size()) {
+        auto numberOfWrenchSources = pImpl->iHumanWrench->getNumberOfWrenchSources();
+        if ( numberOfWrenchSources == 0 ||
+             numberOfWrenchSources != pImpl->iHumanWrench->getWrenchSourceNames().size()) {
             yError() << "The IHumanWrench interface might not be ready";
+            return false;
+        }
+
+        // Attach IAnalogServer interfaces coming from HumanWrenchProvider
+        if (pImpl->iAnalogSensor || !poly->view(pImpl->iAnalogSensor) || !pImpl->iAnalogSensor) {
+            yError() << LogPrefix << "Failed to view IAnalogSensor interface from the polydriver";
+            return false;
+        }
+
+        // Check the interface
+        if (pImpl->iAnalogSensor->getChannels() != 6 * numberOfWrenchSources) {
+            yError() << LogPrefix << "The IAnalogSensor interface might not be ready";
             return false;
         }
 
