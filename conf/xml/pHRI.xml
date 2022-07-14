@@ -124,7 +124,6 @@
         <param name="pHRIScenario">true</param>
         <param name="robot_urdf">model.urdf</param>
         <param name="number_of_source_devices">3</param>
-        <param name="number_of_sources">4</param>
         <param name="sources">(FTShoeLeft FTShoeRight RobotLeftHandFT RobotRightHandFT)</param>
         <group name="FTShoeLeft">
             <param name="sensorName">FTShoeLeftFTSensors</param>
