@@ -1175,19 +1175,7 @@ void HumanWrenchProvider::run()
         }
 
         // Set RCM_SENSOR measurement
-        iDynTree::Model &model = pImpl->mapEstHelper.berdyHelper.model();
-        iDynTree::FrameIndex baseFrameIndex = model.getLinkIndex(pImpl->mapEstHelper.berdyOptions.baseLink);
-
-        iDynTree::KinDynComputations kinDynComputations;
-        kinDynComputations.loadRobotModel(pImpl->humanModel);
-        kinDynComputations.setFrameVelocityRepresentation(iDynTree::FrameVelocityRepresentation::BODY_FIXED_REPRESENTATION);
-        kinDynComputations.setRobotState(pImpl->basePose,
-                                        pImpl->humanJointPositionsVec,
-                                        pImpl->baseVelocity,
-                                        pImpl->humanJointVelocitiesVec,
-                                        pImpl->world_gravity);
-
-        iDynTree::SpatialForceVector rcm = pImpl->computeRCMInBaseUsingMeasurements(kinDynComputations);
+        iDynTree::SpatialForceVector rcm = pImpl->computeRCMInBaseUsingMeasurements(pImpl->humanKinDynComp);
 
         iDynTree::IndexRange rcmSensorRange = pImpl->mapEstHelper.berdyHelper.getRangeRCMSensorVariable(iDynTree::BerdySensorTypes::RCM_SENSOR);
         for(std::size_t j=0; j<rcmSensorRange.size; j++)
@@ -1195,31 +1183,24 @@ void HumanWrenchProvider::run()
             berdyMeasurementVector.setVal(rcmSensorRange.offset+j, rcm.getVal(j));
         }
 
+        // Update MAP solver status
         iDynTree::Vector3 baseAngularVelocity = pImpl->baseVelocity.getAngularVec3();
-        iDynTree::JointPosDoubleArray jointsPosition(model);
-        iDynTree::JointDOFsDoubleArray jointsVelocity(model);
-        iDynTree::JointDOFsDoubleArray jointsAcceleration(model);
-
+        iDynTree::JointPosDoubleArray jointsPosition(pImpl->humanModel);
+        iDynTree::JointDOFsDoubleArray jointsVelocity(pImpl->humanModel);
+        iDynTree::JointDOFsDoubleArray jointsAcceleration(pImpl->humanModel);
 
         for(int i=0; i<pImpl->humanJointPositionsVec.size(); i++) jointsPosition.setVal(i, pImpl->humanJointPositionsVec.getVal(i));
         for(int i=0; i<pImpl->humanJointVelocitiesVec.size(); i++) jointsVelocity.setVal(i, pImpl->humanJointVelocitiesVec.getVal(i));
 
-
-        // Set the kinematic information necessary for the dynamics estimation
-        //TODO check if needed
-        pImpl->mapEstHelper.berdyHelper.updateKinematicsFromFloatingBase(jointsPosition,
-                                                             jointsVelocity,
-                                                             baseFrameIndex,
-                                                             baseAngularVelocity);
-
-
         pImpl->mapEstHelper.mapSolver->updateEstimateInformationFloatingBase(jointsPosition,
                                                                              jointsVelocity,
-                                                                             baseFrameIndex,
+                                                                             pImpl->humanModel.getLinkIndex(pImpl->baseLink),
                                                                              baseAngularVelocity,
                                                                              berdyMeasurementVector);
 
 
+
+        // Compute estimate
         if(!pImpl->mapEstHelper.mapSolver->doEstimate())
         {
             yError()<<LogPrefix<<"Estimate computation failed!";
