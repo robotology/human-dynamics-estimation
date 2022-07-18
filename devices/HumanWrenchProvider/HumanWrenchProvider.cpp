@@ -427,11 +427,11 @@ iDynTree::SpatialForceVector HumanWrenchProvider::Impl::computeRCMInBaseUsingMea
     iDynTree::SpatialForceVector subjectWeightInCentroidal(world_gravity, gravityTorque);
     subjectWeightInCentroidal = subjectWeightInCentroidal*(-humanMass);
 
-    iDynTree::Transform base_H_world;
-    base_H_world.setPosition(kinDynComputations.getCenterOfMassPosition() - kinDynComputations.getWorldBaseTransform().getPosition());
-    base_H_world.setRotation(kinDynComputations.getWorldBaseTransform().getRotation().inverse());
+    iDynTree::Transform base_H_centroidal;
+    base_H_centroidal.setPosition(kinDynComputations.getCenterOfMassPosition() - kinDynComputations.getWorldBaseTransform().getPosition());
+    base_H_centroidal.setRotation(kinDynComputations.getWorldBaseTransform().getRotation().inverse());
 
-    iDynTree::SpatialForceVector subjectWeightInBase = base_H_world * subjectWeightInCentroidal;
+    iDynTree::SpatialForceVector subjectWeightInBase = base_H_centroidal * subjectWeightInCentroidal;
 
     rcm = rcm + subjectWeightInBase;
 
