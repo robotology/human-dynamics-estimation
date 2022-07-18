@@ -148,40 +148,36 @@
             <param name="position">(-0.0026 0.0 -0.1208)</param>
         </group>
 	<!--Example of dummy wrench data sources-->
-	<!--group name="LeftHand">
+	<!--group name="LeftHandCOM">
             <param name="sensorName">none</param>
-            <param name="outputFrame">LeftHand</param>
+            <param name="outputFrame">LeftHandCOM</param>
             <param name="type">dummy</param>
             <param name="value">(0.0 0.0 0.0 0.0 0.0 0.0)</param>
         </group>
-        <group name="RightHand">
+        <group name="RightHandCOM">
             <param name="sensorName">none</param>
-            <param name="outputFrame">RightHand</param>
+            <param name="outputFrame">RightHandCOM</param>
             <param name="type">dummy</param>
             <param name="value">(0.0 0.0 0.0 0.0 0.0 0.0)</param>
         </group-->
+        <!-- MAPEstPArams -->
+        <!-- Use this group to use a Maximum-A-Posteriori estimator for the
+            the transformed wrenches
+            In order to use it the useMAPEst parameter must be set to true -->
         <group name="MAPEstParams">
-            <param name="useMAPEst">true</param>
+            <param extern-name="useMAPEst" name="useMAPEst">false</param>
             <group name="cov_measurements_NET_EXT_WRENCH_SENSOR">
-                <param name="value">1e-6</param>
-                <param name="specificElements">(LeftFoot RightFoot)</param>
-                <param name="LeftFoot">(0.0589998348 0.0589998348 0.0359999712 0.002250000225 0.002250000225 0.56e-3)</param>
-                <param name="RightFoot">(0.0589998348 0.0589998348 0.0359999712 0.002250000225 0.002250000225 0.56e-3)</param>
+                <param name="value">1e-09</param>
+                <param name="specificElements">(LeftHandCOM)</param>
+                <param name="LeftHandCOM">(1e06 1e06 1e06 1e06 1e06 1e06)</param>
+                <param name="RightHandCOM">(1e-6 1e-6 1e-6 1e-6 1e-6 1e-6)</param>
+                <param name="LeftFoot">(1e-6 1e-6 1e-6 1e-6 1e-6 1e-6)</param>
+                <param name="RightFoot">(1e-6 1e-6 1e-6 1e-6 1e-6 1e-6)</param>
             </group>
+            <param name="cov_measurements_RCM_SENSOR">(1e-6 1e-6 1e-6 1e-6 1e-6 1e-6)</param>
+            <param name="mu_dyn_variables">1e-9</param>
+            <param name="cov_dyn_variables">1e04</param>
         </group>
-    	<!--Example of dummy wrench data sources-->
-	    <!--group name="LeftHand">
-            <param name="sensorName">none</param>
-            <param name="outputFrame">LeftHand</param>
-            <param name="type">dummy</param>
-            <param name="value">(0.0 0.0 0.0 0.0 0.0 0.0)</param>
-        </group>
-        <group name="RightHand">
-            <param name="sensorName">none</param>
-            <param name="outputFrame">RightHand</param>
-            <param name="type">dummy</param>
-            <param name="value">(0.0 0.0 0.0 0.0 0.0 0.0)</param>
-        </group-->
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
                  <elem name="HumanWrenchProviderLabelFTShoeLeft">FTSourcesIWearRemapper</elem>
