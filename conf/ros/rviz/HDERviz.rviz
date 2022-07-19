@@ -790,13 +790,13 @@ Visualization Manager:
       Arrow Width: 0.30000001192092896
       Class: rviz/WrenchStamped
       Enabled: true
-      Force Arrow Scale: 0.02500000037252903
-      Force Color: 0; 255; 200
-      Hide Small Values: true
+      Force Arrow Scale: 0.019999999552965164
+      Force Color: 255; 239; 6
+      Hide Small Values: false
       History Length: 1
       Name: LeftHand_ExtWrenches
-      Topic: /HDE/WrenchStamped/LeftHand
-      Torque Arrow Scale: 0
+      Topic: /HDE/WrenchStamped/LeftHandCOM
+      Torque Arrow Scale: 0.5
       Torque Color: 37; 95; 255
       Unreliable: false
       Value: true
@@ -804,13 +804,13 @@ Visualization Manager:
       Arrow Width: 0.30000001192092896
       Class: rviz/WrenchStamped
       Enabled: true
-      Force Arrow Scale: 0.02500000037252903
-      Force Color: 0; 255; 200
-      Hide Small Values: true
+      Force Arrow Scale: 0.019999999552965164
+      Force Color: 255; 239; 6
+      Hide Small Values: false
       History Length: 1
       Name: RightHand_ExtWrenches
-      Topic: /HDE/WrenchStamped/RightHand
-      Torque Arrow Scale: 0
+      Topic: /HDE/WrenchStamped/RightHandCOM
+      Torque Arrow Scale: 0.5
       Torque Color: 37; 95; 255
       Unreliable: false
       Value: true
