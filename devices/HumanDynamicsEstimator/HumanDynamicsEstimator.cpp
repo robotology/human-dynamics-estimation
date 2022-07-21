@@ -1087,6 +1087,7 @@ void HumanDynamicsEstimator::run()
     // Get state data from the attached IHumanState interface
     std::vector<double> jointsPosition    = pImpl->iHumanState->getJointPositions();
     std::vector<double> jointsVelocity    = pImpl->iHumanState->getJointVelocities();
+    std::vector<std::string> jointNames   = pImpl->iHumanState->getJointNames();
 
     std::array<double, 3> basePosition    = pImpl->iHumanState->getBasePosition();
     std::array<double, 4> baseOrientation = pImpl->iHumanState->getBaseOrientation();
@@ -1098,14 +1099,17 @@ void HumanDynamicsEstimator::run()
     pImpl->berdyData.state.baseAngularVelocity.setVal(2, baseVelocity.at(5));
 
     // Set the received state data to berdy state variables
-    pImpl->berdyData.state.jointsPosition.resize(jointsPosition.size());
-    for (size_t i = 0; i < jointsPosition.size(); i++) {
-        pImpl->berdyData.state.jointsPosition.setVal(i, jointsPosition.at(i));
-    }
-
-    pImpl->berdyData.state.jointsVelocity.resize(jointsVelocity.size());
-    for (size_t i = 0; i < jointsVelocity.size(); ++i) {
-        pImpl->berdyData.state.jointsVelocity.setVal(i, jointsVelocity.at(i));
+    for(int i=0; i<jointNames.size(); i++)
+    {
+        iDynTree::JointIndex jointIndex = pImpl->humanModel.getJointIndex(jointNames[i]);
+        if(jointIndex==iDynTree::JOINT_INVALID_INDEX)
+        {
+            yError() << LogPrefix << "Joint"<<jointNames[i]<<"from iHumanState not found in the loaded model!";
+            askToStop();
+            return;
+        }
+        pImpl->berdyData.state.jointsPosition.setVal(jointIndex, jointsPosition[i]);
+        pImpl->berdyData.state.jointsVelocity.setVal(jointIndex, jointsVelocity[i]);
     }
 
     // Fill in the y vector with sensor measurements for the FT sensors
