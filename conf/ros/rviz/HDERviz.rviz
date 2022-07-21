@@ -383,7 +383,7 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: true
       Max Color: 239; 41; 41
-      Max Intensity: 20
+      Max Intensity: 30
       Min Color: 138; 226; 52
       Min Intensity: 0
       Name: jL5S1Effort
@@ -533,7 +533,7 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: true
       Max Color: 239; 41; 41
-      Max Intensity: 40
+      Max Intensity: 30
       Min Color: 138; 226; 52
       Min Intensity: 0
       Name: jLeftShoulderEffort
@@ -563,7 +563,7 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: true
       Max Color: 239; 41; 41
-      Max Intensity: 15
+      Max Intensity: 6
       Min Color: 138; 226; 52
       Min Intensity: 0
       Name: jLeftWristEffort
@@ -713,7 +713,7 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: true
       Max Color: 239; 41; 41
-      Max Intensity: 40
+      Max Intensity: 30
       Min Color: 138; 226; 52
       Min Intensity: 0
       Name: jRightShoulderEffort
@@ -743,7 +743,7 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: true
       Max Color: 239; 41; 41
-      Max Intensity: 15
+      Max Intensity: 6
       Min Color: 138; 226; 52
       Min Intensity: 0
       Name: jRightWristEffort
