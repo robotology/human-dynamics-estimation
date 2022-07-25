@@ -16,6 +16,7 @@
 #include <iDynTree/Model/Model.h>
 #include <iDynTree/ModelIO/ModelLoader.h>
 #include <iDynTree/Core/EigenHelpers.h>
+#include <iDynTree/Core/EigenSparseHelpers.h>
 #include <iDynTree/Core/Transform.h>
 #include <iDynTree/Core/Wrench.h>
 #include <iDynTree/KinDynComputations.h>
