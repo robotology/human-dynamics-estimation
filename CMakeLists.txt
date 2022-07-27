@@ -48,6 +48,10 @@ add_install_rpath_support(LIB_DIRS "${CMAKE_INSTALL_FULL_LIBDIR}"       # Librar
 
 include(InstallBasicPackageFiles)
 
+#Function to automatize the process of creating python bindings
+include(AddWearablesPythonModule)
+
+
 # Tweak linker flags in Linux
 if(UNIX AND NOT APPLE)
     get_filename_component(LINKER_BIN ${CMAKE_LINKER} NAME)
@@ -76,6 +80,10 @@ add_subdirectory(devices)
 add_subdirectory(wrappers)
 add_subdirectory(app)
 add_subdirectory(modules)
+add_subdirectory(bindings)
+
+# Flag to enable Paexo wearable device
+option(WEARABLES_COMPILE_PYTHON_BINDINGS "Flag that enables building the bindings" OFF)
 
 # Flag to enable XSensSuit wearable device
 find_package(XsensXME QUIET)
