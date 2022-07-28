@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Add python bindings for the `WearablesData` msg. (https://github.com/robotology/wearables/pull/162)
+
 ### Changed
 - `IWearLogger` compilation is enabled by the cmake flag `ENABLE_Logger`, that is set to `ON` by default if `robometry` is found. (https://github.com/robotology/wearables/pull/159)
 - `ICub` wearable device compilation is enabled by the cmake flag `ENABLE_ICub`, that is set to `ON` by default if `iDynTree` is found. (https://github.com/robotology/wearables/pull/159)
