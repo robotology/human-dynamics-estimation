@@ -1279,7 +1279,8 @@ bool HumanWrenchProvider::attach(yarp::dev::PolyDriver* poly)
         while (pImpl->iHumanState->getNumberOfJoints() == 0
                 || pImpl->iHumanState->getNumberOfJoints() != pImpl->iHumanState->getJointNames().size()) {
             yError() << LogPrefix<<"The IHumanState interface might not be ready";
-            if(count--==0) return false;
+            count--;
+            if(count==0) return false;
         }
 
         yInfo() << LogPrefix << deviceName << "attach() successful";
