@@ -43,6 +43,9 @@ const std::string DeviceName = "HumanDynamicsEstimator";
 const std::string LogPrefix = DeviceName + " :";
 constexpr double DefaultPeriod = 0.01;
 
+// Timeout for checking that the iHumanState interface is providing consistent data
+constexpr static double INTERFACE_CHECK_TIMEOUT_S = 10;
+
 using namespace hde::devices;
 
 static bool parseYarpValueToStdVector(const yarp::os::Value& option, std::vector<double>& output)
@@ -1235,12 +1238,17 @@ bool HumanDynamicsEstimator::attach(yarp::dev::PolyDriver* poly)
             return false;
         }
 
-        //TODO Check the interface
+        // Check the iHumanState interface
+        double interfaceCheckStart = yarp::os::Time::now();
         int count = 1000000;
         while (pImpl->iHumanState->getNumberOfJoints() == 0
                 || pImpl->iHumanState->getNumberOfJoints() != pImpl->iHumanState->getJointNames().size()) {
-            yError() << LogPrefix<<"The IHumanState interface might not be ready";
-            if(count--==0) return false;
+            
+            if(yarp::os::Time::now()-interfaceCheckStart>INTERFACE_CHECK_TIMEOUT_S)
+            {
+                yError() << LogPrefix<<"The iHumanState interface has been providing inconsistent data for"<<INTERFACE_CHECK_TIMEOUT_S<<"seconds!";
+                return false;
+            }
         }
 
         yInfo() << LogPrefix << deviceName << "attach() successful";
