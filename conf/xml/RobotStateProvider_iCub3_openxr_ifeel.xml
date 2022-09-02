@@ -10,7 +10,7 @@
     <device type="human_state_provider" name="RobotStateProvider">
         <param name="period">0.01</param>
         <param name="urdf">teleoperation_iCub_model_V_3.urdf</param>
-        <param name="floatingBaseFrame">chest</param>
+        <param name="floatingBaseFrame">root_link</param>
         <!-- ikSolver options: pairwised, global, dynamical -->
         <param name="ikSolver">dynamical</param>
         <param name="allowIKFailures">true</param>
@@ -44,14 +44,14 @@
         <param name="dynamicalIKIntegralCorrectionGainsLinRot">(0.0 0.0)</param>
         <group name="WEARABLE_SENSOR_TARGETS">
             <param name="target_Pelvis">(root_link, TransformServer::pose::root_link_desired, orientation)</param>
-            <param name="target_Chest">(chest, TransformServer::pose::virtualizer_frame, pose)</param>
-            <param name="target_RightHand">(r_hand_fake, TransformServer::pose::/trackers/LHR-3C2E1582, pose)</param>
-            <param name="target_LeftHand">(l_hand_fake, TransformServer::pose::/trackers/LHR-8F3A4D72, pose)</param>
-            <param name="target_Head">(head, TransformServer::pose::/hmd/LHR-752422B9, pose)</param>
-            <param name="target_l_upper_arm_fake">(l_upper_arm_fake iFeelSuit::vLink::Node#5, orientationAndVelocity)</param>
-            <param name="target_l_forearm_fake">(l_forearm_fake, iFeelSuit::vLink::Node#4, orientationAndVelocity)</param>
-            <param name="target_r_upper_arm_fake">(r_upper_arm_fake iFeelSuit::vLink::Node#7, orientationAndVelocity)</param>
-            <param name="target_r_forearm_fake">(r_forearm_fake, iFeelSuit::vLink::Node#8, orientationAndVelocity)</param>
+            <param name="target_Chest">(chest, iFeelSuit::vLink::Node#6, gravity)</param>
+            <param name="target_RightHand">(r_hand_fake, TransformServer::pose::vive_tracker_right_elbow_pose, pose)</param>
+            <param name="target_LeftHand">(l_hand_fake, TransformServer::pose::vive_tracker_left_elbow_pose, pose)</param>
+            <param name="target_Head">(head, TransformServer::pose::openxr_head, pose)</param>
+            <param name="target_l_upper_arm_fake">(l_upper_arm_fake iFeelSuit::vLink::Node#5, gravity)</param>
+            <param name="target_l_forearm_fake">(l_forearm_fake, iFeelSuit::vLink::Node#4, gravity)</param>
+            <param name="target_r_upper_arm_fake">(r_upper_arm_fake iFeelSuit::vLink::Node#7, gravity)</param>
+            <param name="target_r_forearm_fake">(r_forearm_fake, iFeelSuit::vLink::Node#8, gravity)</param>
         </group>
         <param name="jointList">("l_shoulder_pitch",
                                  "l_shoulder_roll",
@@ -83,21 +83,28 @@
         <group name="MEASUREMENT_TO_LINK_TRANSFORMS">
             <param name="target_LeftHand">( 1.0   0.0  0.0  0.0
                                             0.0  -1.0  0.0  0.025
-                                            0.0   0.0 -1.0  0.11
+                                            0.0   0.0 -1.0  0.15
                                             0.0   0.0  0.0  1.0)</param>
             <param name="target_RightHand">(-1.0  0.0  0.0  0.0
                                              0.0  1.0  0.0  0.025
-                                             0.0  0.0 -1.0  0.11
+                                             0.0  0.0 -1.0  0.15
                                              0.0  0.0  0.0  1.0)</param>
             <param name="target_Head">( 0.0 -1.0  0.0  0.0
                                         0.0  0.0  1.0  0.0
                                        -1.0  0.0  0.0  0.1
+                                        0.0  0.0  0.0  1.0)</param>
+            <param name="target_Chest">( 0.0 1.0  0.0  0.0
+                                        0.0  0.0  1.0  0.0
+                                        1.0  0.0  0.0  0.0
                                         0.0  0.0  0.0  1.0)</param>
         </group>
         <group name="MEASUREMENT_POSITION_SCALE_FACTOR">
             <param name="target_Head">( 0.7 0.7 0.6 )</param>
             <param name="target_LeftHand">( 0.7 0.7 0.6 )</param>
             <param name="target_RightHand">( 0.7 0.7 0.6 )</param>
+            <param name="x_scale_factor_all" extern-name="xy_scale">0.7</param>
+            <param name="y_scale_factor_all" extern-name="xy_scale">0.7</param>
+            <param name="z_scale_factor_all" extern-name="z_scale">0.6</param>
         </group>
         <group name="CUSTOM_CONSTRAINTS">
         <!-- check issue https://github.com/robotology/human-dynamics-estimation/issues/132 for more info-->
@@ -109,8 +116,8 @@
             <!--param name="custom_joints_velocity_limits_values">(10.0, 15.0)</param-->
             <param name="custom_joints_velocity_limits_values">( )</param>
         <!-- **** base velocity limit: x, y, z, roll, pitch, yaw ****-->
-            <param name="base_velocity_limit_upper_buond">(0.0, 0.0,  0.0,  1.0,  1.0,  1.0 )</param>
-            <param name="base_velocity_limit_lower_buond">(0.0, 0.0,  0.0, -1.0, -1.0, -1.0 )</param>
+            <param name="base_velocity_limit_upper_buond">(0.0, 0.0,  0.0,  0.0,  0.0,  0.0 )</param>
+            <param name="base_velocity_limit_lower_buond">(0.0, 0.0,  0.0, 0.0, 0.0, 0.0 )</param>
         <!-- Custom joint Configuration constraints-->
         <!-- if the boudary value is inf, I will use -1000.0 rad, or +1000.0 rad-->
             <param name="custom_constraint_variables">(

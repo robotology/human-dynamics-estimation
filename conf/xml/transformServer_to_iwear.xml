@@ -11,14 +11,16 @@
 <device type="iframetransform_to_iwear" name="IFrameTransformToIWear">
 
     <param name="wearableName">TransformServer</param>
-    <param name="rootFrameID">virtualizer_root</param>
+    <param extern-name="rootFrame" name="rootFrameID">root_link_desired</param>
     <param name="wearableSensorType">PoseSensor</param>
-    <param name="frameIDs">(virtualizer_root
-                            virtualizer_frame
-                            root_link_desired
-                            /hmd/LHR-752422B9
-                            /trackers/LHR-3C2E1582
-                            /trackers/LHR-8F3A4D72)</param>
+    <param extern-name="frames" name="frameIDs">(root_link_desired
+                            openxr_origin
+                            openxr_head
+                            vive_tracker_waist_pose
+                            vive_tracker_right_elbow_pose
+                            vive_tracker_left_elbow_pose
+                            vive_tracker_left_foot_pose
+                            vive_tracker_right_foot_pose)</param>
     <action phase="startup" level="5" type="attach">
         <paramlist name="networks">
             <elem name="IFrameTransformToIWearLabel">TransformClient</elem>
