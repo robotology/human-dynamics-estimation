@@ -15,6 +15,7 @@ It must be noted that `YARP`, together with a subset of the optional dependencie
 ### Optional
 * [robometry](https://github.com/robotology/robometry) device: if present, the `IWearLogger` device is installed by default.
 * [iDynTree](https://github.com/robotology/idyntree): if present, the `IWearFrameVisualizer` module and `ICub` device are installed by default.
+* [pybind11](https://github.com/pybind/pybind11): if present, the user can enable `WEARABLES_COMPILE_PYTHON_BINDINGS` to enable the compilation of the python bindings.
 
 ## Build the suite
 ### Linux/macOS
