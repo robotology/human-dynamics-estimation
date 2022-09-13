@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.0] - 2022-09-13
+
 ### Added
 - Add python bindings for the `WearablesData` msg. (https://github.com/robotology/wearables/pull/162)
 
