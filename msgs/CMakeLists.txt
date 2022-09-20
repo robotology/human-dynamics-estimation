@@ -40,9 +40,19 @@ target_include_directories(WearableData PUBLIC
     $<BUILD_INTERFACE:${WEARABLEDATA_INCLUDE_DIRS}>)
 
 install(TARGETS WearableData
+        EXPORT WearableData
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
+install_basic_package_files(WearableData
+        VERSION ${PROJECT_VERSION}
+        COMPATIBILITY AnyNewerVersion
+        EXPORT WearableData
+        NO_CHECK_REQUIRED_COMPONENTS_MACRO)
+
+install(FILES ${WEARABLEDATA_FILES}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/thrift)
 
 # =================
 # WearableActuators
