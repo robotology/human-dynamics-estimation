@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-The minimum required version of CMake is now 3.16 ().
+The minimum required version of CMake is now 3.16 (https://github.com/robotology/wearables/pull/165).
 
 ## [1.5.0] - 2022-09-13
 
