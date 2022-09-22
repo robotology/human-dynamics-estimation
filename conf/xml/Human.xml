@@ -129,6 +129,7 @@
         <param name="human_urdf">humanSubject03_66dof.urdf</param>
         <param name="pHRIScenario">false</param>
         <param name="sources">(FTShoeLeft FTShoeRight)</param>
+	<param name="base_name">Pelvis</param>
         <group name="FTShoeLeft">
             <param name="sensorName">FTShoeLeftFTSensors</param>
             <param name="outputFrame">LeftFoot</param>
