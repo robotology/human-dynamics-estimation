@@ -186,7 +186,7 @@ bool HapticGlove::SenseGloveImpl::configure(yarp::os::Searchable& config)
 
 bool HapticGlove::SenseGloveImpl::run()
 {
-    yInfo() << "SenseGloveImpl::run()";
+    yTrace() << "SenseGloveImpl::run()";
     std::lock_guard<std::mutex> lock(this->mutex);
 
     // sensors
@@ -250,7 +250,7 @@ HapticGlove::~HapticGlove() = default;
 
 bool HapticGlove::open(yarp::os::Searchable& config)
 {
-    yInfo() << LogPrefix << "HapticGlove::open(yarp::os::Searchable& config)";
+    yTrace() << LogPrefix << "HapticGlove::open(yarp::os::Searchable& config)";
 
     // ==================================
     // Check the configuration parameters
@@ -573,7 +573,7 @@ void HapticGlove::run()
 
 bool HapticGlove::close()
 {
-    yInfo() << LogPrefix << "HapticGlove::close()";
+    yTrace() << LogPrefix << "HapticGlove::close()";
 
     if (!m_pImpl->close()) {
         yError() << LogPrefix << "Cannot close correctly the sense glove implementation.";
