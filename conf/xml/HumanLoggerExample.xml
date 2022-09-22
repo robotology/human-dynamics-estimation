@@ -24,7 +24,8 @@
         
         <param name="saveBufferManagerConfiguration">false</param>
         <param name="experimentName">test_human_logger</param>
-        <param name="path">/Users/lorenzorapetti/Desktop/</param>
+        <!--The directory of the stored path. By default it's the directory where the device is launched -->
+        <!--param name="path">custom/path</param-->
         <param name="n_samples">100000</param>
         <param name="save_periodically">true</param>
         <param name="save_period">120.0</param>
