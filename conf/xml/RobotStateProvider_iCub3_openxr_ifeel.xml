@@ -2,9 +2,40 @@
 <!DOCTYPE robot PUBLIC "-//YARP//DTD yarprobotinterface 3.0//EN" "http://www.yarp.it/DTD/yarprobotinterfaceV3.0.dtd">
 <robot name="iCub-Retargeting" build=0 portprefix="">
 
+    <device type="transformClient" name="TransformClient">
+        <param name="period">0.01</param>
+        <param name="local">/tf</param>
+        <param name="remote">/transformServer</param>
+    </device>
+
+    <device type="iframetransform_to_iwear" name="IFrameTransformToIWear">
+        <param name="wearableName">TransformServer</param>
+        <param extern-name="rootFrame" name="rootFrameID">root_link_desired</param>
+        <param name="wearableSensorType">PoseSensor</param>
+        <param extern-name="frames" name="frameIDs">(root_link_desired
+                                                     openxr_origin
+                                                     openxr_head
+                                                     vive_tracker_waist_pose
+                                                     vive_tracker_right_elbow_pose
+                                                     vive_tracker_left_elbow_pose
+                                                     vive_tracker_left_foot_pose
+                                                     vive_tracker_right_foot_pose)</param>
+        <action phase="startup" level="5" type="attach">
+            <paramlist name="networks">
+                <elem name="IFrameTransformToIWearLabel">TransformClient</elem>
+           </paramlist>
+        </action>
+        <action phase="shutdown" level="5" type="detach"/>
+    </device>
+
     <device type="iwear_remapper" name="XSenseIWearRemapper">
-        <param name="wearableDataPorts">(/Wearable/OpenXRTransform/data:o /iFeelSuit/WearableData/data:o)</param>
+        <param name="wearableDataPorts">(/iFeelSuit/WearableData/data:o)</param>
         <param name="useRPC">false</param>
+        <action phase="startup" level="5" type="attach">
+            <paramlist name="networks">
+                <elem name="IFrameTransformToIWear">IFrameTransformToIWear</elem>
+            </paramlist>
+        </action>
     </device>
 
     <device type="human_state_provider" name="RobotStateProvider">
