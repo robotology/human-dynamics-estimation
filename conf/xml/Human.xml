@@ -181,6 +181,7 @@
         </group>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
+		 <elem name="HumanStateProviderLabel">HumanStateProvider</elem>
                  <elem name="HumanWrenchProviderLabelFTShoeLeft">FTSourcesIWearRemapper</elem>
             </paramlist>
         </action>
