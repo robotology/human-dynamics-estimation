@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+- Remove unused definition in actuators thrift messages(https://github.com/robotology/wearables/pull/171).
+
 ## [1.6.0] - 2022-09-21
 
 ### Changed
