@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- The `IWearRemapper` can be attached also to IWear interfaces (https://github.com/robotology/wearables/pull/170)
+
 ### Removed
 - Remove unused definition in actuators thrift messages(https://github.com/robotology/wearables/pull/171).
 

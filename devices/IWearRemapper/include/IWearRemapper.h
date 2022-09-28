@@ -14,6 +14,7 @@
 #include <yarp/dev/DeviceDriver.h>
 #include <yarp/dev/PreciselyTimed.h>
 #include <yarp/os/PeriodicThread.h>
+#include <yarp/dev/Wrapper.h>
 #include <yarp/os/TypedReaderCallback.h>
 
 #include <memory>
@@ -32,6 +33,7 @@ class wearable::devices::IWearRemapper
     , public wearable::IWear
     , public yarp::os::TypedReaderCallback<msg::WearableData>
     , public yarp::os::PeriodicThread
+    , public yarp::dev::IMultipleWrapper
     , public yarp::dev::IPreciselyTimed
 {
 private:
@@ -127,6 +129,10 @@ public:
 
     inline ElementPtr<const actuator::IHeater>
     getHeaterActuator(const actuator::ActuatorName) const override;
+
+    // IMultipleWrapper interface
+    bool attachAll(const yarp::dev::PolyDriverList& driverList) override;
+    bool detachAll() override;
 };
 
 inline wearable::ElementPtr<const wearable::actuator::IActuator>

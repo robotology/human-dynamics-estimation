@@ -39,13 +39,15 @@ public:
     TimeStamp timestamp;
     bool firstRun = true;
     bool terminationCall = false;
+    bool inputDataPorts = false;
+    
+    // Flag to wait for first data received
+    bool waitForAttachAll = false;
 
     mutable std::recursive_mutex mutex;
 
     msg::WearableData wearableData;
     std::vector<std::unique_ptr<yarp::os::BufferedPort<msg::WearableData>>> inputPortsWearData;
-
-    std::map<wearable::sensor::SensorName, size_t> sensorNameToIndex;
 
     // Sensors stored for exposing wearable::IWear
     std::map<std::string, std::shared_ptr<sensor::impl::Accelerometer>> accelerometers;
@@ -89,86 +91,113 @@ IWearRemapper::~IWearRemapper() = default;
 
 bool IWearRemapper::open(yarp::os::Searchable& config)
 {
-    // ===============================
-    // CHECK THE CONFIGURATION OPTIONS
-    // ===============================
+    // =====================
+    // CHECK THE INPUT PORTS 
+    // =====================
 
-    // Data ports
-    if (!(config.check("wearableDataPorts") && config.find("wearableDataPorts").isList())) {
-        yError() << logPrefix << "wearableDataPorts option does not exist or it is not a list";
-        return false;
-    }
-    yarp::os::Bottle* inputDataPortsNamesList = config.find("wearableDataPorts").asList();
-    for (unsigned i = 0; i < inputDataPortsNamesList->size(); ++i) {
-        if (!inputDataPortsNamesList->get(i).isString()) {
-            yError() << logPrefix << "ith entry of wearableDataPorts list is not a string";
+    // wait for attachAll
+    if (config.check("waitForAttachAll")) {
+        if (!config.find("waitForAttachAll").isBool()) {
+            yError() << logPrefix << "waitForAttachAll option is not a bool";
             return false;
         }
+        pImpl->waitForAttachAll = config.find("waitForAttachAll").asBool();
     }
 
-    // ===============================
-    // PARSE THE CONFIGURATION OPTIONS
-    // ===============================
 
-    // Convert list to vector
-    std::vector<std::string> inputDataPortsNamesVector;
-    for (unsigned i = 0; i < inputDataPortsNamesList->size(); ++i) {
-        inputDataPortsNamesVector.emplace_back(inputDataPortsNamesList->get(i).asString());
-    }
+    pImpl->inputDataPorts = config.check("wearableDataPorts");
 
-    yInfo() << logPrefix << "*** ========================";
-    for (unsigned i = 0; i < inputDataPortsNamesVector.size(); ++i) {
-        yInfo() << logPrefix << "*** Wearable Data Port" << i + 1 << "  :"
-                << inputDataPortsNamesVector[i];
-    }
+    if (pImpl->inputDataPorts) {
 
-    yInfo() << logPrefix << "*** ========================";
-
-    // Carrier optional configuration
-    std::string carrier = "";
-    if (config.check("carrier")) {
-        carrier = config.find("carrier").asString();
-    }
-
-    // Initialize the network
-    pImpl->network = yarp::os::Network();
-    if (!yarp::os::Network::initialized() || !yarp::os::Network::checkNetwork(5.0)) {
-        yError() << logPrefix << "YARP server wasn't found active.";
-        return false;
-    }
-
-    // ==========================
-    // CONFIGURE INPUT DATA PORTS
-    // ==========================
-    yDebug() << logPrefix << "Configuring input data ports";
-
-    for (unsigned i = 0; i < config.find("wearableDataPorts").asList()->size(); ++i) {
-        pImpl->inputPortsWearData.emplace_back(new yarp::os::BufferedPort<msg::WearableData>());
-        pImpl->inputPortsWearData.back()->useCallback(*this);
-
-        if (!pImpl->inputPortsWearData.back()->open("...")) {
-            yError() << logPrefix << "Failed to open local input port";
+        // Check that wearableDataPorts option is a list
+        if (!config.find("wearableDataPorts").isList()) {
+            yError() << logPrefix << "wearableDataPorts option is not a list";
             return false;
         }
-    }
 
-    // ================
-    // OPEN INPUT PORTS
-    // ================
-    yDebug() << logPrefix << "Opening input ports";
+        yarp::os::Bottle* inputDataPortsNamesList = config.find("wearableDataPorts").asList();
 
-    for (unsigned i = 0; i < config.find("wearableDataPorts").asList()->size(); ++i) {
-        if (!yarp::os::Network::connect(inputDataPortsNamesVector[i],
-                                        pImpl->inputPortsWearData[i]->getName(),
-                                        carrier)) {
-            yError() << logPrefix << "Failed to connect " << inputDataPortsNamesVector[i]
-                     << " with " << pImpl->inputPortsWearData[i]->getName();
-            return false;
+        if (inputDataPortsNamesList->size() == 0) {
+            pImpl->inputDataPorts = false; 
+        }
+        else {
+            for (unsigned i = 0; i < inputDataPortsNamesList->size(); ++i) {
+                if (!inputDataPortsNamesList->get(i).isString()) {
+                    yError() << logPrefix << "ith entry of wearableDataPorts list is not a string";
+                    return false;
+                }
+            }
+
+            // ===============================
+            // PARSE THE CONFIGURATION OPTIONS
+            // ===============================
+
+            // Convert list to vector
+            std::vector<std::string> inputDataPortsNamesVector;
+            for (unsigned i = 0; i < inputDataPortsNamesList->size(); ++i) {
+                inputDataPortsNamesVector.emplace_back(inputDataPortsNamesList->get(i).asString());
+            }
+
+            yInfo() << logPrefix << "*** ========================";
+            for (unsigned i = 0; i < inputDataPortsNamesVector.size(); ++i) {
+                yInfo() << logPrefix << "*** Wearable Data Port" << i + 1 << "  :"
+                        << inputDataPortsNamesVector[i];
+            }
+
+            yInfo() << logPrefix << "*** ========================";
+
+            // Carrier optional configuration
+            std::string carrier = "";
+            if (config.check("carrier")) {
+                carrier = config.find("carrier").asString();
+            }
+
+            // ==========================
+            // CONFIGURE INPUT DATA PORTS
+            // ==========================
+            yDebug() << logPrefix << "Configuring input data ports";
+
+            for (unsigned i = 0; i < config.find("wearableDataPorts").asList()->size(); ++i) {
+                pImpl->inputPortsWearData.emplace_back(new yarp::os::BufferedPort<msg::WearableData>());
+                pImpl->inputPortsWearData.back()->useCallback(*this);
+
+                if (!pImpl->inputPortsWearData.back()->open("...")) {
+                    yError() << logPrefix << "Failed to open local input port";
+                    return false;
+                }
+            }
+
+            // ================
+            // OPEN INPUT PORTS
+            // ================
+            yDebug() << logPrefix << "Opening input ports";
+
+            for (unsigned i = 0; i < config.find("wearableDataPorts").asList()->size(); ++i) {
+                if (!yarp::os::Network::connect(inputDataPortsNamesVector[i],
+                                                pImpl->inputPortsWearData[i]->getName(),
+                                                carrier)) {
+                    yError() << logPrefix << "Failed to connect " << inputDataPortsNamesVector[i]
+                            << " with " << pImpl->inputPortsWearData[i]->getName();
+                    return false;
+                }
+            }
+
+            // Initialize the network
+            pImpl->network = yarp::os::Network();
+            if (!yarp::os::Network::initialized() || !yarp::os::Network::checkNetwork(5.0)) {
+                yError() << logPrefix << "YARP server wasn't found active.";
+                return false;
+            }
+
+            // If it not necessary to wait for the attachAll start the callbacks
+            // We use callbacks on the input ports, the loop is a no-op
+            if (!pImpl->waitForAttachAll) {
+                start();
+            }
+        
         }
     }
-
-    // We use callbacks on the input ports, the loop is a no-op
-    start();
+    
 
     yDebug() << logPrefix << "Opened correctly";
     return true;
@@ -693,6 +722,135 @@ SensorPtr<const sensor::ISensor> IWearRemapper::getSensor(const sensor::SensorNa
         }
     }
     return nullptr;
+}
+
+bool IWearRemapper::attachAll(const yarp::dev::PolyDriverList& driverList)
+{
+    for(int p=0; p<driverList.size(); p++)
+    {
+        wearable::IWear* iWear = nullptr;
+        if (!driverList[p]->poly->view(iWear)) {
+            yError() << logPrefix << "Failed to view the IWear interface from the PolyDriver.";
+            return false;
+        }
+
+        for (const auto& sensor : iWear->getAccelerometers()) {
+            const auto* constSensor = static_cast<const sensor::impl::Accelerometer*>(sensor.get());
+            auto* newSensor = const_cast<sensor::impl::Accelerometer*>(constSensor);
+            newSensor->setStatus(sensor->getSensorStatus());
+            pImpl->accelerometers.emplace(sensor->getSensorName(), newSensor);
+        }
+        for (const auto& sensor : iWear->getEmgSensors()) {
+            const auto* constSensor = static_cast<const sensor::impl::EmgSensor*>(sensor.get());
+            auto* newSensor = const_cast<sensor::impl::EmgSensor*>(constSensor);
+            newSensor->setStatus(sensor->getSensorStatus());
+            pImpl->emgSensors.emplace(sensor->getSensorName(), newSensor);
+        }
+        for (const auto& sensor : iWear->getForce3DSensors()) {
+            const auto* constSensor = static_cast<const sensor::impl::Force3DSensor*>(sensor.get());
+            auto* newSensor = const_cast<sensor::impl::Force3DSensor*>(constSensor);
+            newSensor->setStatus(sensor->getSensorStatus());
+            pImpl->force3DSensors.emplace(sensor->getSensorName(), newSensor);
+        }
+        for (const auto& sensor : iWear->getForceTorque6DSensors()) {
+            const auto* constSensor = static_cast<const sensor::impl::ForceTorque6DSensor*>(sensor.get());
+            auto* newSensor = const_cast<sensor::impl::ForceTorque6DSensor*>(constSensor);
+            newSensor->setStatus(sensor->getSensorStatus());
+            pImpl->forceTorque6DSensors.emplace(sensor->getSensorName(), newSensor);
+        }
+        for (const auto& sensor : iWear->getFreeBodyAccelerationSensors()) {
+            const auto* constSensor = static_cast<const sensor::impl::FreeBodyAccelerationSensor*>(sensor.get());
+            auto* newSensor = const_cast<sensor::impl::FreeBodyAccelerationSensor*>(constSensor);
+            newSensor->setStatus(sensor->getSensorStatus());
+            pImpl->freeBodyAccelerationSensors.emplace(sensor->getSensorName(), newSensor);
+        }
+        for (const auto& sensor : iWear->getGyroscopes()) {
+            const auto* constSensor = static_cast<const sensor::impl::Gyroscope*>(sensor.get());
+            auto* newSensor = const_cast<sensor::impl::Gyroscope*>(constSensor);
+            newSensor->setStatus(sensor->getSensorStatus());
+            pImpl->gyroscopes.emplace(sensor->getSensorName(), newSensor);
+        }
+        for (const auto& sensor : iWear->getMagnetometers()) {
+            const auto* constSensor = static_cast<const sensor::impl::Magnetometer*>(sensor.get());
+            auto* newSensor = const_cast<sensor::impl::Magnetometer*>(constSensor);
+            newSensor->setStatus(sensor->getSensorStatus());
+            pImpl->magnetometers.emplace(sensor->getSensorName(), newSensor);
+        }
+        for (const auto& sensor : iWear->getOrientationSensors()) {
+            const auto* constSensor = static_cast<const sensor::impl::OrientationSensor*>(sensor.get());
+            auto* newSensor = const_cast<sensor::impl::OrientationSensor*>(constSensor);
+            newSensor->setStatus(sensor->getSensorStatus());
+            pImpl->orientationSensors.emplace(sensor->getSensorName(), newSensor);
+        }
+        for (const auto& sensor : iWear->getPoseSensors()) {
+            const auto* constSensor = static_cast<const sensor::impl::PoseSensor*>(sensor.get());
+            auto* newSensor = const_cast<sensor::impl::PoseSensor*>(constSensor);
+            newSensor->setStatus(sensor->getSensorStatus());
+            pImpl->poseSensors.emplace(sensor->getSensorName(), newSensor);
+        }
+        for (const auto& sensor : iWear->getPositionSensors()) {
+            const auto* constSensor = static_cast<const sensor::impl::PositionSensor*>(sensor.get());
+            auto* newSensor = const_cast<sensor::impl::PositionSensor*>(constSensor);
+            newSensor->setStatus(sensor->getSensorStatus());
+            pImpl->positionSensors.emplace(sensor->getSensorName(), newSensor);
+        }
+        for (const auto& sensor : iWear->getSkinSensors()) {
+            const auto* constSensor = static_cast<const sensor::impl::SkinSensor*>(sensor.get());
+            auto* newSensor = const_cast<sensor::impl::SkinSensor*>(constSensor);
+            newSensor->setStatus(sensor->getSensorStatus());
+            pImpl->skinSensors.emplace(sensor->getSensorName(), newSensor);
+        }
+        for (const auto& sensor : iWear->getTemperatureSensors()) {
+            const auto* constSensor = static_cast<const sensor::impl::TemperatureSensor*>(sensor.get());
+            auto* newSensor = const_cast<sensor::impl::TemperatureSensor*>(constSensor);
+            newSensor->setStatus(sensor->getSensorStatus());
+            pImpl->temperatureSensors.emplace(sensor->getSensorName(), newSensor);
+        }
+        for (const auto& sensor : iWear->getTorque3DSensors()) {
+            const auto* constSensor = static_cast<const sensor::impl::Torque3DSensor*>(sensor.get());
+            auto* newSensor = const_cast<sensor::impl::Torque3DSensor*>(constSensor);
+            newSensor->setStatus(sensor->getSensorStatus());
+            pImpl->torque3DSensors.emplace(sensor->getSensorName(), newSensor);
+        }
+        for (const auto& sensor : iWear->getVirtualLinkKinSensors()) {
+            const auto* constSensor = static_cast<const sensor::impl::VirtualLinkKinSensor*>(sensor.get());
+            auto* newSensor = const_cast<sensor::impl::VirtualLinkKinSensor*>(constSensor);
+            newSensor->setStatus(sensor->getSensorStatus());
+            pImpl->virtualLinkKinSensors.emplace(sensor->getSensorName(), newSensor);
+        }
+        for (const auto& sensor : iWear->getVirtualJointKinSensors()) {
+            const auto* constSensor = static_cast<const sensor::impl::VirtualJointKinSensor*>(sensor.get());
+            auto* newSensor = const_cast<sensor::impl::VirtualJointKinSensor*>(constSensor);
+            newSensor->setStatus(sensor->getSensorStatus());
+            pImpl->virtualJointKinSensors.emplace(sensor->getSensorName(), newSensor);
+        }
+        for (const auto& sensor : iWear->getVirtualSphericalJointKinSensors()) {
+            const auto* constSensor = static_cast<const sensor::impl::VirtualSphericalJointKinSensor*>(sensor.get());
+            auto* newSensor = const_cast<sensor::impl::VirtualSphericalJointKinSensor*>(constSensor);
+            newSensor->setStatus(sensor->getSensorStatus());
+            pImpl->virtualSphericalJointKinSensors.emplace(sensor->getSensorName(), newSensor);
+        }
+
+    }
+
+    // If there are not input ports there is no need to wait for the first data and to start the no-op loop
+    if (!pImpl->inputDataPorts) {
+        pImpl->firstRun = false;
+        return true;
+    }
+    else {
+        // If it is wating for the attach all, the loop can now be started
+        if (pImpl->waitForAttachAll) {
+            start();
+        }
+    }
+
+    return true;
+}
+
+bool IWearRemapper::detachAll()
+{
+    return true;
 }
 
 VectorOfSensorPtr<const sensor::ISensor>
