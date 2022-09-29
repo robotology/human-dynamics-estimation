@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.0] - 2022-09-28
+
 ### Changed
 - The `IWearRemapper` can be attached also to IWear interfaces (https://github.com/robotology/wearables/pull/170)
 
