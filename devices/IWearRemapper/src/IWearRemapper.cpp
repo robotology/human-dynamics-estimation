@@ -75,7 +75,61 @@ public:
     SensorPtr<const SensorInterface>
     getSensor(const sensor::SensorName name,
               const sensor::SensorType type,
-              std::map<std::string, SensorPtr<SensorImpl>>& storage);
+              std::map<const std::string, SensorPtr<SensorImpl>>& storage) const;
+
+    template <typename SensorInterface, typename SensorImpl>
+    SensorPtr<const SensorInterface>
+    getOrMakeSensor(const sensor::SensorName name,
+              const sensor::SensorType type,
+              std::map<const std::string, SensorPtr<SensorImpl>>& storage);
+
+    SensorPtr<const sensor::IAccelerometer>
+    getAccelerometer(const sensor::SensorName /*name*/) const;
+
+    SensorPtr<const sensor::IEmgSensor>
+    getEmgSensor(const sensor::SensorName /*name*/) const;
+
+    SensorPtr<const sensor::IForce3DSensor>
+    getForce3DSensor(const sensor::SensorName /*name*/) const;
+
+    SensorPtr<const sensor::IForceTorque6DSensor>
+    getForceTorque6DSensor(const sensor::SensorName /*name*/) const;
+
+    SensorPtr<const sensor::IFreeBodyAccelerationSensor>
+    getFreeBodyAccelerationSensor(const sensor::SensorName /*name*/) const;
+
+    SensorPtr<const sensor::IGyroscope>
+    getGyroscope(const sensor::SensorName /*name*/) const;
+
+    SensorPtr<const sensor::IMagnetometer>
+    getMagnetometer(const sensor::SensorName /*name*/) const;
+
+    SensorPtr<const sensor::IOrientationSensor>
+    getOrientationSensor(const sensor::SensorName /*name*/) const;
+
+    SensorPtr<const sensor::IPoseSensor>
+    getPoseSensor(const sensor::SensorName /*name*/) const;
+
+    SensorPtr<const sensor::IPositionSensor>
+    getPositionSensor(const sensor::SensorName /*name*/) const;
+
+    SensorPtr<const sensor::ISkinSensor>
+    getSkinSensor(const sensor::SensorName /*name*/) const;
+
+    SensorPtr<const sensor::ITemperatureSensor>
+    getTemperatureSensor(const sensor::SensorName /*name*/) const;
+
+    SensorPtr<const sensor::ITorque3DSensor>
+    getTorque3DSensor(const sensor::SensorName /*name*/) const;
+
+    SensorPtr<const sensor::IVirtualLinkKinSensor>
+    getVirtualLinkKinSensor(const sensor::SensorName /*name*/) const;
+
+    SensorPtr<const sensor::IVirtualJointKinSensor>
+    getVirtualJointKinSensor(const sensor::SensorName /*name*/) const;
+
+    SensorPtr<const sensor::IVirtualSphericalJointKinSensor>
+    getVirtualSphericalJointKinSensor(const sensor::SensorName /*name*/) const;
 };
 
 // ==============
@@ -249,7 +303,8 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
         // ====================
         // EXPOSE THE INTERFACE
         // ====================
-        auto isensor = getAccelerometer(inputSensorName);
+        auto isensor = pImpl->getOrMakeSensor<const sensor::IAccelerometer, sensor::impl::Accelerometer>(
+                            inputSensorName, sensor::SensorType::Accelerometer, pImpl->accelerometers);
         if (!isensor) {
             yError() << logPrefix << "Failed to get Accelerometer" << inputSensorName;
             askToStop();
@@ -959,10 +1014,27 @@ template <typename SensorInterface, typename SensorImpl>
 SensorPtr<const SensorInterface>
 IWearRemapper::impl::getSensor(const sensor::SensorName name,
                                const sensor::SensorType type,
-                               std::map<std::string, SensorPtr<SensorImpl>>& storage)
+                               std::map<const std::string, SensorPtr<SensorImpl>>& storage) const
 {
 
     if (storage.find(name) == storage.end()) {
+        return nullptr;
+    }
+
+    return storage[name];
+}
+
+template <typename SensorInterface, typename SensorImpl>
+SensorPtr<const SensorInterface>
+IWearRemapper::impl::getOrMakeSensor(const sensor::SensorName name,
+                               const sensor::SensorType type,
+                               std::map<const std::string, SensorPtr<SensorImpl>>& storage)
+{
+
+    auto sensor = getSensor<SensorInterface, SensorImpl>(
+        name, type, storage);
+
+    if (!sensor) {
         const auto newSensor =
             std::make_shared<SensorImpl>(name, wearable::sensor::SensorStatus::Unknown);
         storage.emplace(name, newSensor);
@@ -972,135 +1044,232 @@ IWearRemapper::impl::getSensor(const sensor::SensorName name,
 }
 
 wearable::SensorPtr<const sensor::IAccelerometer>
+IWearRemapper::impl::getAccelerometer(const sensor::SensorName name) const
+{
+    return getSensor<const sensor::IAccelerometer, sensor::impl::Accelerometer>(
+        name, wearable::sensor::SensorType::Accelerometer, accelerometers);
+}
+
+wearable::SensorPtr<const sensor::IEmgSensor>
+IWearRemapper::impl::getEmgSensor(const sensor::SensorName name) const
+{
+    return getSensor<const sensor::IEmgSensor, sensor::impl::EmgSensor>(
+        name, sensor::SensorType::EmgSensor, emgSensors);
+}
+
+wearable::SensorPtr<const sensor::IForce3DSensor>
+IWearRemapper::impl::getForce3DSensor(const sensor::SensorName name) const
+{
+    return getSensor<const sensor::IForce3DSensor, sensor::impl::Force3DSensor>(
+        name, sensor::SensorType::Force3DSensor, force3DSensors);
+}
+
+wearable::SensorPtr<const sensor::IForceTorque6DSensor>
+IWearRemapper::impl::getForceTorque6DSensor(const sensor::SensorName name) const
+{
+    return getSensor<const sensor::IForceTorque6DSensor, sensor::impl::ForceTorque6DSensor>(
+        name, sensor::SensorType::ForceTorque6DSensor, forceTorque6DSensors);
+}
+
+wearable::SensorPtr<const sensor::IFreeBodyAccelerationSensor>
+IWearRemapper::impl::getFreeBodyAccelerationSensor(const sensor::SensorName name) const
+{
+    return getSensor<const sensor::IFreeBodyAccelerationSensor,
+                            sensor::impl::FreeBodyAccelerationSensor>(
+        name, sensor::SensorType::FreeBodyAccelerationSensor, freeBodyAccelerationSensors);
+}
+
+wearable::SensorPtr<const sensor::IGyroscope>
+IWearRemapper::impl::getGyroscope(const sensor::SensorName name) const
+{
+    return getSensor<const sensor::IGyroscope, sensor::impl::Gyroscope>(
+        name, sensor::SensorType::Gyroscope, gyroscopes);
+}
+
+wearable::SensorPtr<const sensor::IMagnetometer>
+IWearRemapper::impl::getMagnetometer(const sensor::SensorName name) const
+{
+    return getSensor<const sensor::IMagnetometer, sensor::impl::Magnetometer>(
+        name, sensor::SensorType::Magnetometer, magnetometers);
+}
+
+wearable::SensorPtr<const sensor::IOrientationSensor>
+IWearRemapper::impl::getOrientationSensor(const sensor::SensorName name) const
+{
+    return getSensor<const sensor::IOrientationSensor, sensor::impl::OrientationSensor>(
+        name, sensor::SensorType::OrientationSensor, orientationSensors);
+}
+
+wearable::SensorPtr<const sensor::IPoseSensor>
+IWearRemapper::impl::getPoseSensor(const sensor::SensorName name) const
+{
+    return getSensor<const sensor::IPoseSensor, sensor::impl::PoseSensor>(
+        name, sensor::SensorType::PoseSensor, poseSensors);
+}
+
+wearable::SensorPtr<const sensor::IPositionSensor>
+IWearRemapper::impl::getPositionSensor(const sensor::SensorName name) const
+{
+    return getSensor<const sensor::IPositionSensor, sensor::impl::PositionSensor>(
+        name, sensor::SensorType::PositionSensor, positionSensors);
+}
+
+wearable::SensorPtr<const sensor::ISkinSensor>
+IWearRemapper::impl::getSkinSensor(const sensor::SensorName name) const
+{
+    return getSensor<const sensor::ISkinSensor, sensor::impl::SkinSensor>(
+        name, sensor::SensorType::SkinSensor, skinSensors);
+}
+
+wearable::SensorPtr<const sensor::ITemperatureSensor>
+IWearRemapper::impl::getTemperatureSensor(const sensor::SensorName name) const
+{
+    return getSensor<const sensor::ITemperatureSensor, sensor::impl::TemperatureSensor>(
+        name, sensor::SensorType::TemperatureSensor, temperatureSensors);
+}
+
+wearable::SensorPtr<const sensor::ITorque3DSensor>
+IWearRemapper::impl::getTorque3DSensor(const sensor::SensorName name) const
+{
+    return getSensor<const sensor::ITorque3DSensor, sensor::impl::Torque3DSensor>(
+        name, sensor::SensorType::Torque3DSensor, torque3DSensors);
+}
+
+wearable::SensorPtr<const sensor::IVirtualLinkKinSensor>
+IWearRemapper::impl::getVirtualLinkKinSensor(const sensor::SensorName name) const
+{
+    return getSensor<const sensor::IVirtualLinkKinSensor, sensor::impl::VirtualLinkKinSensor>(
+            name, sensor::SensorType::VirtualLinkKinSensor, virtualLinkKinSensors);
+}
+
+wearable::SensorPtr<const sensor::IVirtualJointKinSensor>
+IWearRemapper::impl::getVirtualJointKinSensor(const sensor::SensorName name) const
+{
+    return getSensor<const sensor::IVirtualJointKinSensor, sensor::impl::VirtualJointKinSensor>(
+            name, sensor::SensorType::VirtualJointKinSensor, virtualJointKinSensors);
+}
+
+wearable::SensorPtr<const sensor::IVirtualSphericalJointKinSensor>
+IWearRemapper::impl::getVirtualSphericalJointKinSensor(const sensor::SensorName name) const
+{
+    return getSensor<const sensor::IVirtualSphericalJointKinSensor,
+                            sensor::impl::VirtualSphericalJointKinSensor>(
+        name,
+        sensor::SensorType::VirtualSphericalJointKinSensor,
+        virtualSphericalJointKinSensors);
+}
+
+
+//////////// Interface
+
+wearable::SensorPtr<const sensor::IAccelerometer>
 IWearRemapper::getAccelerometer(const sensor::SensorName name) const
 {
     std::lock_guard<std::mutex> lock(pImpl->mutex);
-    return pImpl->getSensor<const sensor::IAccelerometer, sensor::impl::Accelerometer>(
-        name, wearable::sensor::SensorType::Accelerometer, pImpl->accelerometers);
+    return pImpl->getAccelerometer(name);
 }
 
 wearable::SensorPtr<const sensor::IEmgSensor>
 IWearRemapper::getEmgSensor(const sensor::SensorName name) const
 {
     std::lock_guard<std::mutex> lock(pImpl->mutex);
-    return pImpl->getSensor<const sensor::IEmgSensor, sensor::impl::EmgSensor>(
-        name, sensor::SensorType::EmgSensor, pImpl->emgSensors);
+    return pImpl->getEmgSensor(name);
 }
 
 wearable::SensorPtr<const sensor::IForce3DSensor>
 IWearRemapper::getForce3DSensor(const sensor::SensorName name) const
 {
     std::lock_guard<std::mutex> lock(pImpl->mutex);
-    return pImpl->getSensor<const sensor::IForce3DSensor, sensor::impl::Force3DSensor>(
-        name, sensor::SensorType::Force3DSensor, pImpl->force3DSensors);
+    return pImpl->getForce3DSensor(name);
 }
 
 wearable::SensorPtr<const sensor::IForceTorque6DSensor>
 IWearRemapper::getForceTorque6DSensor(const sensor::SensorName name) const
 {
     std::lock_guard<std::mutex> lock(pImpl->mutex);
-    return pImpl->getSensor<const sensor::IForceTorque6DSensor, sensor::impl::ForceTorque6DSensor>(
-        name, sensor::SensorType::ForceTorque6DSensor, pImpl->forceTorque6DSensors);
+    return pImpl->getForceTorque6DSensor(name);
 }
 
 wearable::SensorPtr<const sensor::IFreeBodyAccelerationSensor>
 IWearRemapper::getFreeBodyAccelerationSensor(const sensor::SensorName name) const
 {
     std::lock_guard<std::mutex> lock(pImpl->mutex);
-    return pImpl->getSensor<const sensor::IFreeBodyAccelerationSensor,
-                            sensor::impl::FreeBodyAccelerationSensor>(
-        name, sensor::SensorType::FreeBodyAccelerationSensor, pImpl->freeBodyAccelerationSensors);
+    return pImpl->getFreeBodyAccelerationSensor(name);
 }
 
 wearable::SensorPtr<const sensor::IGyroscope>
 IWearRemapper::getGyroscope(const sensor::SensorName name) const
 {
     std::lock_guard<std::mutex> lock(pImpl->mutex);
-    return pImpl->getSensor<const sensor::IGyroscope, sensor::impl::Gyroscope>(
-        name, sensor::SensorType::Gyroscope, pImpl->gyroscopes);
+    return pImpl->getGyroscope(name);
 }
 
 wearable::SensorPtr<const sensor::IMagnetometer>
 IWearRemapper::getMagnetometer(const sensor::SensorName name) const
 {
     std::lock_guard<std::mutex> lock(pImpl->mutex);
-    return pImpl->getSensor<const sensor::IMagnetometer, sensor::impl::Magnetometer>(
-        name, sensor::SensorType::Magnetometer, pImpl->magnetometers);
+    return pImpl->getMagnetometer(name);
 }
 
 wearable::SensorPtr<const sensor::IOrientationSensor>
 IWearRemapper::getOrientationSensor(const sensor::SensorName name) const
 {
     std::lock_guard<std::mutex> lock(pImpl->mutex);
-    return pImpl->getSensor<const sensor::IOrientationSensor, sensor::impl::OrientationSensor>(
-        name, sensor::SensorType::OrientationSensor, pImpl->orientationSensors);
+    return pImpl->getOrientationSensor(name);
 }
 
 wearable::SensorPtr<const sensor::IPoseSensor>
 IWearRemapper::getPoseSensor(const sensor::SensorName name) const
 {
     std::lock_guard<std::mutex> lock(pImpl->mutex);
-    return pImpl->getSensor<const sensor::IPoseSensor, sensor::impl::PoseSensor>(
-        name, sensor::SensorType::PoseSensor, pImpl->poseSensors);
+    return pImpl->getPoseSensor(name);
 }
 
 wearable::SensorPtr<const sensor::IPositionSensor>
 IWearRemapper::getPositionSensor(const sensor::SensorName name) const
 {
     std::lock_guard<std::mutex> lock(pImpl->mutex);
-    return pImpl->getSensor<const sensor::IPositionSensor, sensor::impl::PositionSensor>(
-        name, sensor::SensorType::PositionSensor, pImpl->positionSensors);
+    return pImpl->getPositionSensor(name);
 }
 
 wearable::SensorPtr<const sensor::ISkinSensor>
 IWearRemapper::getSkinSensor(const sensor::SensorName name) const
 {
     std::lock_guard<std::mutex> lock(pImpl->mutex);
-    return pImpl->getSensor<const sensor::ISkinSensor, sensor::impl::SkinSensor>(
-        name, sensor::SensorType::SkinSensor, pImpl->skinSensors);
+    return pImpl->getSkinSensor(name);
 }
 
 wearable::SensorPtr<const sensor::ITemperatureSensor>
 IWearRemapper::getTemperatureSensor(const sensor::SensorName name) const
 {
     std::lock_guard<std::mutex> lock(pImpl->mutex);
-    return pImpl->getSensor<const sensor::ITemperatureSensor, sensor::impl::TemperatureSensor>(
-        name, sensor::SensorType::TemperatureSensor, pImpl->temperatureSensors);
+    return pImpl->getTemperatureSensor(name);
 }
 
 wearable::SensorPtr<const sensor::ITorque3DSensor>
 IWearRemapper::getTorque3DSensor(const sensor::SensorName name) const
 {
     std::lock_guard<std::mutex> lock(pImpl->mutex);
-    return pImpl->getSensor<const sensor::ITorque3DSensor, sensor::impl::Torque3DSensor>(
-        name, sensor::SensorType::Torque3DSensor, pImpl->torque3DSensors);
+    return pImpl->getTorque3DSensor(name);
 }
 
 wearable::SensorPtr<const sensor::IVirtualLinkKinSensor>
 IWearRemapper::getVirtualLinkKinSensor(const sensor::SensorName name) const
 {
     std::lock_guard<std::mutex> lock(pImpl->mutex);
-    return pImpl
-        ->getSensor<const sensor::IVirtualLinkKinSensor, sensor::impl::VirtualLinkKinSensor>(
-            name, sensor::SensorType::VirtualLinkKinSensor, pImpl->virtualLinkKinSensors);
+    return pImpl->getVirtualLinkKinSensor(name);
 }
 
 wearable::SensorPtr<const sensor::IVirtualJointKinSensor>
 IWearRemapper::getVirtualJointKinSensor(const sensor::SensorName name) const
 {
     std::lock_guard<std::mutex> lock(pImpl->mutex);
-    return pImpl
-        ->getSensor<const sensor::IVirtualJointKinSensor, sensor::impl::VirtualJointKinSensor>(
-            name, sensor::SensorType::VirtualJointKinSensor, pImpl->virtualJointKinSensors);
+    return pImpl->getVirtualJointKinSensor(name);
 }
 
 wearable::SensorPtr<const sensor::IVirtualSphericalJointKinSensor>
 IWearRemapper::getVirtualSphericalJointKinSensor(const sensor::SensorName name) const
 {
     std::lock_guard<std::mutex> lock(pImpl->mutex);
-    return pImpl->getSensor<const sensor::IVirtualSphericalJointKinSensor,
-                            sensor::impl::VirtualSphericalJointKinSensor>(
-        name,
-        sensor::SensorType::VirtualSphericalJointKinSensor,
-        pImpl->virtualSphericalJointKinSensors);
+    return pImpl->getVirtualSphericalJointKinSensor(name);
 }
