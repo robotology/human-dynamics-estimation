@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Use `std::mutex` instead of `std::recursive_mutex` in IWearRemapper (https://github.com/robotology/wearables/pull/174).
+
 ### Fixed
 - Fixed management of the `period` parameter in `HapticGlove` device (https://github.com/robotology/wearables/pull/173). 
 
