@@ -235,6 +235,9 @@ const std::map<msg::SensorStatus, sensor::SensorStatus> MapSensorStatus = {
 
 void IWearRemapper::onRead(msg::WearableData& receivedWearData)
 {
+    std::lock_guard<std::recursive_mutex> lock(pImpl->mutex);
+
+
     if (pImpl->terminationCall) {
         return;
     }
@@ -635,17 +638,13 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
         sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
     }
 
-    {
-        std::lock_guard<std::recursive_mutex> lock(pImpl->mutex);
+    // Update the timestamp
+    pImpl->timestamp.sequenceNumber++;
+    pImpl->timestamp.time = yarp::os::Time::now();
 
-        // Update the timestamp
-        pImpl->timestamp.sequenceNumber++;
-        pImpl->timestamp.time = yarp::os::Time::now();
-
-        // This is used to handle the overall status of IWear
-        if (pImpl->firstRun) {
-            pImpl->firstRun = false;
-        }
+    // This is used to handle the overall status of IWear
+    if (pImpl->firstRun) {
+        pImpl->firstRun = false;
     }
 }
 
