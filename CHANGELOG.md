@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Fixed management of the `period` parameter in `HapticGlove` device (https://github.com/robotology/wearables/pull/173). 
+
 ## [1.7.0] - 2022-09-28
 
 ### Changed

@@ -27,7 +27,6 @@
 
 const std::string DeviceName = "HapticGlove";
 const std::string LogPrefix = DeviceName + wearable::Separator;
-double period = 0.01;
 const size_t PoseSize = 7;
 
 using namespace wearable;
@@ -69,6 +68,9 @@ class HapticGlove::SenseGloveImpl
 {
 public:
     mutable std::mutex mutex;
+
+    double period = 0.01; //default 100Hz
+
     SenseGloveIMUData gloveData;
 
     WearableName wearableName;
@@ -241,7 +243,7 @@ bool HapticGlove::SenseGloveImpl::close()
     return true;
 }
 HapticGlove::HapticGlove()
-    : PeriodicThread(period)
+    : PeriodicThread(0.01) //default 100Hz
     , m_pImpl{std::make_unique<SenseGloveImpl>()}
 {}
 
@@ -257,12 +259,13 @@ bool HapticGlove::open(yarp::os::Searchable& config)
     // ==================================
     // Period of the this device
     if (!(config.check("period") && config.find("period").isFloat64())) {
-        yInfo() << LogPrefix << "Using default period: " << period << "s";
+        yInfo() << LogPrefix << "Using default period: " << m_pImpl->period << "s";
     }
     else {
-        period = config.find("period").asFloat64();
-        yInfo() << LogPrefix << "Using the period : " << period << "s";
+        m_pImpl->period = config.find("period").asFloat64();
+        yInfo() << LogPrefix << "Using the period : " << m_pImpl->period << "s";
     }
+    setPeriod(m_pImpl->period);
 
     if (!(config.check("wearableName") && config.find("wearableName").isString())) {
         yInfo() << LogPrefix << "Using default wearable name SenseGlove";
