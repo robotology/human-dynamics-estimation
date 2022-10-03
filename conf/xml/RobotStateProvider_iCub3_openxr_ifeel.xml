@@ -15,6 +15,7 @@
         <param extern-name="frames" name="frameIDs">(root_link_desired
                                                      openxr_origin
                                                      openxr_head
+                                                     stable_waist
                                                      vive_tracker_waist_pose
                                                      vive_tracker_right_elbow_pose
                                                      vive_tracker_left_elbow_pose
