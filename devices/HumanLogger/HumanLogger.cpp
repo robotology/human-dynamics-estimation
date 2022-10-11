@@ -19,7 +19,7 @@
 #include <yarp/os/Network.h>
 #include <yarp/sig/Vector.h>
 
-#include <yarp/telemetry/experimental/BufferManager.h>
+#include <robometry/BufferManager.h>
 
 const std::string LoggerName = "HumanLogger";
 const std::string logPrefix = LoggerName + " :";
@@ -68,8 +68,8 @@ public:
     interfaces::IHumanDynamics* iHumanDynamics = nullptr;
     std::mutex loggerMutex;
     HumanLoggerSettings settings;
-    yarp::telemetry::experimental::BufferConfig bufferConfig;
-    yarp::telemetry::experimental::BufferManager<double> bufferManager;
+    robometry::BufferConfig bufferConfig;
+    robometry::BufferManager bufferManager;
 
     // buffer variables
     // iHumanState

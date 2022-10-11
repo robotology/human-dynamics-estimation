@@ -2,7 +2,8 @@
 # This software may be modified and distributed under the terms of the
 # GNU Lesser General Public License v2.1 or any later version.
 
-find_package(YARP COMPONENTS telemetry dev)
+find_package(YARP COMPONENTS dev)
+find_package(robometry)
 
 
 yarp_prepare_plugin(human_logger
@@ -24,7 +25,7 @@ target_link_libraries(HumanLogger PUBLIC
     YARP::YARP_OS
     YARP::YARP_dev
     YARP::YARP_init
-    YARP::YARP_telemetry
+    robometry::robometry
     IHumanState
     IHumanDynamics
     )
