@@ -31,7 +31,7 @@ target_link_libraries(HumanLogger PUBLIC
     )
 
 if(MSVC)
-  target_compile_options(HumanStateProvider PRIVATE /bigobj)
+  target_compile_options(HumanLogger PRIVATE /bigobj)
 endif()
 
 yarp_install(
