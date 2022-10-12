@@ -14,11 +14,7 @@
     
     <device type="human_logger" name="HumanLoggerDevice">
         <param name="period">0.01</param>
-        
-        <!--Logger level parameter to control logging to matlab/yarp/both-->
-        <!--either a text parameter or a list of , separated text parameters-->
-        <param name="LoggerType">(matlab)</param>
-
+        <param name="LoggerType">matlab</param>
         <param name="logHumanDynamics">true</param>
         <param name="logHumanState">true</param>
         

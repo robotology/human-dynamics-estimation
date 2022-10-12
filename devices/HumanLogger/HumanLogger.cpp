@@ -53,7 +53,7 @@ class HumanLogger::impl
 {
 public:
     LoggerType loggerType;
-    void setLoggerType(std::string& str);
+    bool setLoggerType(const std::string& str);
 
     bool loadSettingsFromConfig(yarp::os::Searchable& config);
     void checkAndLoadBooleanOption(yarp::os::Searchable& config,
@@ -179,34 +179,29 @@ bool HumanLogger::open(yarp::os::Searchable& config)
     return true;
 }
 
-void HumanLogger::impl::setLoggerType(std::string& str)
+bool HumanLogger::impl::setLoggerType(const std::string& str)
 {
     if (!std::strcmp(str.c_str(), "matlab")) {
         this->loggerType = LoggerType::MATLAB;
     }
+    else {
+        this->loggerType = LoggerType::NONE;
+        return false;
+    }
+
+    return true;
 }
 
 bool HumanLogger::impl::loadSettingsFromConfig(yarp::os::Searchable& config)
 {
-    // Check for logLevel parameter
+    // Check for logger type parameter
     this->loggerType = LoggerType::NONE;
     if (!(config.check("LoggerType")
-          && (config.find("LoggerType").isString() || config.find("LoggerType").isList()))) {
-        yInfo() << logPrefix << "Using default LoggerType : MATLAB";
-        this->loggerType = LoggerType::MATLAB;
-    }
-    else if (config.check("LoggerType") && config.find("LoggerType").isList()) {
-        yarp::os::Bottle* loggerTypeList = config.find("LoggerType").asList();
-
-        for (size_t i = 0; i < loggerTypeList->size(); i++) {
-            std::string option = loggerTypeList->get(i).asString();
-
-            setLoggerType(option);
-        }
-    }
-    else if (config.check("LoggerType") && config.find("LoggerType").isString()) {
-        std::string option = config.find("LoggerType").asString();
-        setLoggerType(option);
+          && config.find("LoggerType").isString()
+          && setLoggerType(config.find("LoggerType").asString()) ) ) {
+ 
+        yError() << logPrefix << "LoggerType not found or not valid";
+        return false;
     }
 
     // Display the current logger level
