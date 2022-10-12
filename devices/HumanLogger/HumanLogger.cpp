@@ -56,7 +56,7 @@ public:
     void setLoggerType(std::string& str);
 
     bool loadSettingsFromConfig(yarp::os::Searchable& config);
-    void checkAndLoadBooleanOption(yarp::os::Property& prop,
+    void checkAndLoadBooleanOption(yarp::os::Searchable& config,
                                    const std::string& optionName,
                                    bool& option);
     bool configureBufferManager();
@@ -219,20 +219,17 @@ bool HumanLogger::impl::loadSettingsFromConfig(yarp::os::Searchable& config)
             break;
     }
 
-    yarp::os::Property prop;
-    prop.fromString(config.toString().c_str());
-
     // load logger flag settings
-    checkAndLoadBooleanOption(prop, "logHumanState", settings.logHumanState);
-    checkAndLoadBooleanOption(prop, "logHumanDynamics", settings.logHumanDynamics);
+    checkAndLoadBooleanOption(config, "logHumanState", settings.logHumanState);
+    checkAndLoadBooleanOption(config, "logHumanDynamics", settings.logHumanDynamics);
 
     // load buffer manager configuration settings
     checkAndLoadBooleanOption(
-        prop, "saveBufferManagerConfiguration", settings.saveBufferManagerConfiguration);
+        config, "saveBufferManagerConfiguration", settings.saveBufferManagerConfiguration);
 
     std::string experimentName = "experimentName";
-    if (prop.check(experimentName.c_str()) && prop.find(experimentName.c_str()).isString()) {
-        bufferConfig.filename = prop.find(experimentName.c_str()).asString();
+    if (config.check(experimentName.c_str()) && config.find(experimentName.c_str()).isString()) {
+        bufferConfig.filename = config.find(experimentName.c_str()).asString();
     }
     else {
         yError() << logPrefix << " missing parameter: " << experimentName;
@@ -240,13 +237,13 @@ bool HumanLogger::impl::loadSettingsFromConfig(yarp::os::Searchable& config)
     }
 
     std::string path = "path";
-    if (prop.check(path.c_str()) && prop.find(path.c_str()).isString()) {
-        bufferConfig.path = prop.find(path.c_str()).asString();
+    if (config.check(path.c_str()) && config.find(path.c_str()).isString()) {
+        bufferConfig.path = config.find(path.c_str()).asString();
     }
 
     std::string n_samples = "n_samples";
-    if (prop.check(n_samples.c_str()) && prop.find(n_samples.c_str()).isInt32()) {
-        bufferConfig.n_samples = prop.find(n_samples.c_str()).asInt32();
+    if (config.check(n_samples.c_str()) && config.find(n_samples.c_str()).isInt32()) {
+        bufferConfig.n_samples = config.find(n_samples.c_str()).asInt32();
     }
     else {
         yError() << logPrefix << " missing parameter: " << n_samples;
@@ -254,14 +251,14 @@ bool HumanLogger::impl::loadSettingsFromConfig(yarp::os::Searchable& config)
     }
 
     std::string save_periodically = "save_periodically";
-    if (prop.check(save_periodically.c_str()) && prop.find(save_periodically.c_str()).isBool()) {
-        bufferConfig.save_periodically = prop.find(save_periodically.c_str()).asBool();
+    if (config.check(save_periodically.c_str()) && config.find(save_periodically.c_str()).isBool()) {
+        bufferConfig.save_periodically = config.find(save_periodically.c_str()).asBool();
     }
 
     if (bufferConfig.save_periodically) {
         std::string save_period = "save_period";
-        if (prop.check(save_period.c_str()) && prop.find(save_period.c_str()).isFloat64()) {
-            bufferConfig.save_period = prop.find(save_period.c_str()).asFloat64();
+        if (config.check(save_period.c_str()) && config.find(save_period.c_str()).isFloat64()) {
+            bufferConfig.save_period = config.find(save_period.c_str()).asFloat64();
         }
         else {
             yError() << logPrefix << " missing parameter: " << save_period;
@@ -269,14 +266,14 @@ bool HumanLogger::impl::loadSettingsFromConfig(yarp::os::Searchable& config)
         }
 
         std::string data_threshold = "data_threshold";
-        if (prop.check(data_threshold.c_str()) && prop.find(data_threshold.c_str()).isInt32()) {
-            bufferConfig.data_threshold = prop.find(data_threshold.c_str()).asInt32();
+        if (config.check(data_threshold.c_str()) && config.find(data_threshold.c_str()).isInt32()) {
+            bufferConfig.data_threshold = config.find(data_threshold.c_str()).asInt32();
         }
     }
 
     std::string auto_save = "auto_save";
-    if (prop.check(auto_save.c_str()) && prop.find(auto_save.c_str()).isBool()) {
-        bufferConfig.auto_save = prop.find(auto_save.c_str()).asBool();
+    if (config.check(auto_save.c_str()) && config.find(auto_save.c_str()).isBool()) {
+        bufferConfig.auto_save = config.find(auto_save.c_str()).asBool();
     }
 
     if (!(bufferConfig.auto_save || bufferConfig.save_periodically)) {
@@ -289,12 +286,12 @@ bool HumanLogger::impl::loadSettingsFromConfig(yarp::os::Searchable& config)
     return true;
 }
 
-void HumanLogger::impl::checkAndLoadBooleanOption(yarp::os::Property& prop,
+void HumanLogger::impl::checkAndLoadBooleanOption(yarp::os::Searchable& config,
                                                   const std::string& optionName,
                                                   bool& option)
 {
-    if (prop.check(optionName.c_str())) {
-        option = prop.find(optionName.c_str()).asBool();
+    if (config.check(optionName.c_str())) {
+        option = config.find(optionName.c_str()).asBool();
     }
 }
 
