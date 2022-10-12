@@ -40,6 +40,16 @@ jobs:
         # Clone the repository in $GITHUB_WORKSPACE
         - uses: actions/checkout@master  
         
+        # Use conda for Windows dependencies
+        - uses: conda-incubator/setup-miniconda@v2
+          if: contains(matrix.os, 'windows')
+          with:
+            mamba-version: "*"
+            channels: conda-forge,defaults
+            channel-priority: true
+            environment: human-dynamics-estimation
+            python-version: 3.8
+        
         # Print the environment variables to simplify development and debugging
         - name: Environment Variables
         # Use bash  in order to have same basic commands in all OSs
