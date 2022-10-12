@@ -41,6 +41,8 @@ public:
     bool terminationCall = false;
     bool inputDataPorts = false;
     
+    bool allowDynamicData = true;
+
     // Flag to wait for first data received
     bool waitForAttachAll = false;
 
@@ -158,6 +160,11 @@ bool IWearRemapper::open(yarp::os::Searchable& config)
         pImpl->waitForAttachAll = config.find("waitForAttachAll").asBool();
     }
 
+    if (!config.check("allowDynamicData") || !config.find("allowDynamicData").isBool() )
+    {
+        yInfo() << logPrefix << "Cannot find a suitable allowDynamicData parameter, using default value"<<pImpl->allowDynamicData;
+    }
+    pImpl->allowDynamicData = config.find("allowDynamicData").asBool();
 
     pImpl->inputDataPorts = config.check("wearableDataPorts");
 
