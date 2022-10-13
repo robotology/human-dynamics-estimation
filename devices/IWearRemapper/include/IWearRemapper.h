@@ -53,7 +53,7 @@ public:
     void threadRelease() override;
 
     // TypedReaderCallback
-    void onRead(msg::WearableData& wearData) override;
+    void onRead(msg::WearableData& wearData, const yarp::os::TypedReader<msg::WearableData>& typedReader) override;
 
     // PreciselyTimed interface
     yarp::os::Stamp getLastInputStamp() override;

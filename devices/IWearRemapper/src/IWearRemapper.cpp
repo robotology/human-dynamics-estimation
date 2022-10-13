@@ -51,6 +51,7 @@ public:
 
     msg::WearableData wearableData;
     std::vector<std::unique_ptr<yarp::os::BufferedPort<msg::WearableData>>> inputPortsWearData;
+    std::vector<bool> firstInputReceived; //flag to check that at least a first message from the inputs port was received
 
     // Sensors stored for exposing wearable::IWear
     std::unordered_map<std::string, std::shared_ptr<sensor::impl::Accelerometer>> accelerometers;
@@ -234,6 +235,7 @@ bool IWearRemapper::open(yarp::os::Searchable& config)
                     yError() << logPrefix << "Failed to open local input port";
                     return false;
                 }
+                pImpl->firstInputReceived.push_back(false);
             }
 
             // ================
@@ -709,7 +711,7 @@ bool IWearRemapper::impl::updateData(msg::WearableData& receivedWearData, bool c
     return true;
 }
 
-void IWearRemapper::onRead(msg::WearableData& receivedWearData)
+void IWearRemapper::onRead(msg::WearableData& wearData, const yarp::os::TypedReader<msg::WearableData>& typedReader)
 {
     if (pImpl->terminationCall) {
         return;
@@ -720,12 +722,12 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
     {
         // locked version
         std::lock_guard<std::mutex> lock(pImpl->mutex);
-        dataUpdated = pImpl->updateData(receivedWearData, true);
+        dataUpdated = pImpl->updateData(wearData, true);
     }
     else
     {
         // non-locked version
-        dataUpdated = pImpl->updateData(receivedWearData, false);
+        dataUpdated = pImpl->updateData(wearData, false);
     }
 
     if(!dataUpdated)
@@ -738,11 +740,28 @@ void IWearRemapper::onRead(msg::WearableData& receivedWearData)
         std::lock_guard<std::mutex> lock(pImpl->mutex);
         pImpl->timestamp.sequenceNumber++;
         pImpl->timestamp.time = yarp::os::Time::now();
-    }
 
-    // This is used to handle the overall status of IWear
-    if (pImpl->firstRun) {
-        pImpl->firstRun = false;
+        // This is used to handle the overall status of IWear
+        if (pImpl->firstRun) {
+            // check if all ports were read
+            bool allRead = true;
+            for(int i = 0; i<pImpl->inputPortsWearData.size(); i++)
+            {
+                if(pImpl->inputPortsWearData[i]->getName()==typedReader.getName())
+                {
+                    pImpl->firstInputReceived[i] = true;
+                }
+                else if(!pImpl->firstInputReceived[i])
+                {
+                    allRead = false;
+                }
+            }
+            
+            if(allRead)
+            {
+                pImpl->firstRun = false;
+            }
+        }
     }
 }
 
