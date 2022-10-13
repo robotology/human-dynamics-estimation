@@ -166,10 +166,14 @@ bool IWearRemapper::open(yarp::os::Searchable& config)
 
     if (!config.check("allowDynamicData") || !config.find("allowDynamicData").isBool() )
     {
-        yInfo() << logPrefix << "Cannot find a suitable allowDynamicData parameter, using default value"<<pImpl->allowDynamicData;
+        yInfo() << logPrefix << "Cannot find a suitable allowDynamicData parameter, using default value.";
     }
-    pImpl->allowDynamicData = config.find("allowDynamicData").asBool();
-
+    else
+    {
+        pImpl->allowDynamicData = config.find("allowDynamicData").asBool();
+    }
+    yInfo() << logPrefix << "Using allowDynamicData parameter:"<<pImpl->allowDynamicData;
+    
     pImpl->inputDataPorts = config.check("wearableDataPorts");
 
     if (pImpl->inputDataPorts) {
