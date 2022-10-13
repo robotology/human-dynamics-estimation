@@ -21,6 +21,7 @@
 #include <algorithm>
 #include <mutex>
 #include <utility>
+#include <unordered_map>
 
 const std::string WrapperName = "IWearRemapper";
 const std::string logPrefix = WrapperName + " :";
@@ -52,25 +53,25 @@ public:
     std::vector<std::unique_ptr<yarp::os::BufferedPort<msg::WearableData>>> inputPortsWearData;
 
     // Sensors stored for exposing wearable::IWear
-    std::map<std::string, std::shared_ptr<sensor::impl::Accelerometer>> accelerometers;
-    std::map<std::string, std::shared_ptr<sensor::impl::EmgSensor>> emgSensors;
-    std::map<std::string, std::shared_ptr<sensor::impl::Force3DSensor>> force3DSensors;
-    std::map<std::string, std::shared_ptr<sensor::impl::ForceTorque6DSensor>> forceTorque6DSensors;
-    std::map<std::string, std::shared_ptr<sensor::impl::FreeBodyAccelerationSensor>>
+    std::unordered_map<std::string, std::shared_ptr<sensor::impl::Accelerometer>> accelerometers;
+    std::unordered_map<std::string, std::shared_ptr<sensor::impl::EmgSensor>> emgSensors;
+    std::unordered_map<std::string, std::shared_ptr<sensor::impl::Force3DSensor>> force3DSensors;
+    std::unordered_map<std::string, std::shared_ptr<sensor::impl::ForceTorque6DSensor>> forceTorque6DSensors;
+    std::unordered_map<std::string, std::shared_ptr<sensor::impl::FreeBodyAccelerationSensor>>
         freeBodyAccelerationSensors;
-    std::map<std::string, std::shared_ptr<sensor::impl::Gyroscope>> gyroscopes;
-    std::map<std::string, std::shared_ptr<sensor::impl::Magnetometer>> magnetometers;
-    std::map<std::string, std::shared_ptr<sensor::impl::OrientationSensor>> orientationSensors;
-    std::map<std::string, std::shared_ptr<sensor::impl::PoseSensor>> poseSensors;
-    std::map<std::string, std::shared_ptr<sensor::impl::PositionSensor>> positionSensors;
-    std::map<std::string, std::shared_ptr<sensor::impl::SkinSensor>> skinSensors;
-    std::map<std::string, std::shared_ptr<sensor::impl::TemperatureSensor>> temperatureSensors;
-    std::map<std::string, std::shared_ptr<sensor::impl::Torque3DSensor>> torque3DSensors;
-    std::map<std::string, std::shared_ptr<sensor::impl::VirtualLinkKinSensor>>
+    std::unordered_map<std::string, std::shared_ptr<sensor::impl::Gyroscope>> gyroscopes;
+    std::unordered_map<std::string, std::shared_ptr<sensor::impl::Magnetometer>> magnetometers;
+    std::unordered_map<std::string, std::shared_ptr<sensor::impl::OrientationSensor>> orientationSensors;
+    std::unordered_map<std::string, std::shared_ptr<sensor::impl::PoseSensor>> poseSensors;
+    std::unordered_map<std::string, std::shared_ptr<sensor::impl::PositionSensor>> positionSensors;
+    std::unordered_map<std::string, std::shared_ptr<sensor::impl::SkinSensor>> skinSensors;
+    std::unordered_map<std::string, std::shared_ptr<sensor::impl::TemperatureSensor>> temperatureSensors;
+    std::unordered_map<std::string, std::shared_ptr<sensor::impl::Torque3DSensor>> torque3DSensors;
+    std::unordered_map<std::string, std::shared_ptr<sensor::impl::VirtualLinkKinSensor>>
         virtualLinkKinSensors;
-    std::map<std::string, std::shared_ptr<sensor::impl::VirtualJointKinSensor>>
+    std::unordered_map<std::string, std::shared_ptr<sensor::impl::VirtualJointKinSensor>>
         virtualJointKinSensors;
-    std::map<std::string, std::shared_ptr<sensor::impl::VirtualSphericalJointKinSensor>>
+    std::unordered_map<std::string, std::shared_ptr<sensor::impl::VirtualSphericalJointKinSensor>>
         virtualSphericalJointKinSensors;
 
     bool updateData(msg::WearableData& receivedWearData, bool create);
@@ -79,13 +80,13 @@ public:
     SensorPtr<const SensorInterface>
     getSensor(const sensor::SensorName name,
               const sensor::SensorType type,
-              const std::map<std::string, SensorPtr<SensorImpl>>& storage) const;
+              const std::unordered_map<std::string, SensorPtr<SensorImpl>>& storage) const;
 
     template <typename SensorInterface, typename SensorImpl>
     SensorPtr<const SensorInterface>
     getOrCreateSensor(const sensor::SensorName name,
                     const sensor::SensorType type,
-                    std::map<std::string, SensorPtr<SensorImpl>>& storage,
+                    std::unordered_map<std::string, SensorPtr<SensorImpl>>& storage,
                     bool create);
 
     SensorPtr<const sensor::IAccelerometer>
@@ -287,7 +288,7 @@ void IWearRemapper::run()
     return;
 }
 
-const std::map<msg::SensorStatus, sensor::SensorStatus> MapSensorStatus = {
+const std::unordered_map<msg::SensorStatus, sensor::SensorStatus> MapSensorStatus = {
     {msg::SensorStatus::OK, sensor::SensorStatus::Ok},
     {msg::SensorStatus::ERROR, sensor::SensorStatus::Error},
     {msg::SensorStatus::DATA_OVERFLOW, sensor::SensorStatus::Overflow},
@@ -1052,7 +1053,7 @@ template <typename SensorInterface, typename SensorImpl>
 SensorPtr<const SensorInterface>
 IWearRemapper::impl::getSensor(const sensor::SensorName name,
                                const sensor::SensorType type,
-                               const std::map<std::string, SensorPtr<SensorImpl>>& storage) const
+                               const std::unordered_map<std::string, SensorPtr<SensorImpl>>& storage) const
 {
 
     if (storage.find(name) == storage.end()) {
@@ -1066,7 +1067,7 @@ template <typename SensorInterface, typename SensorImpl>
 SensorPtr<const SensorInterface>
 IWearRemapper::impl::getOrCreateSensor(const sensor::SensorName name,
                                const sensor::SensorType type,
-                               std::map<std::string, SensorPtr<SensorImpl>>& storage,
+                               std::unordered_map<std::string, SensorPtr<SensorImpl>>& storage,
                                bool create)
 {
 
