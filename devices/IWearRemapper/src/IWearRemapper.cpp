@@ -980,9 +980,17 @@ bool IWearRemapper::detachAll()
 VectorOfSensorPtr<const sensor::ISensor>
 IWearRemapper::getSensors(const sensor::SensorType type) const
 {
-    std::lock_guard<std::mutex> lock(pImpl->mutex);
     VectorOfSensorPtr<const sensor::ISensor> sensors;
 
+    if(pImpl->firstRun)
+    {
+        return sensors;
+    }
+    if(pImpl->allowDynamicData)
+    {
+        pImpl->mutex.lock();
+    }
+    
     switch (type) {
         case sensor::SensorType::Accelerometer:
             for (const auto& s : pImpl->accelerometers) {
@@ -1067,6 +1075,11 @@ IWearRemapper::getSensors(const sensor::SensorType type) const
         case sensor::SensorType::Invalid:
             yWarning() << logPrefix << "Requested Invalid sensor type";
             break;
+    }
+
+    if(pImpl->allowDynamicData)
+    {
+        pImpl->mutex.unlock();
     }
 
     return sensors;
