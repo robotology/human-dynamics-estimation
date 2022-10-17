@@ -7,4 +7,4 @@ add_subdirectory(HumanWrenchProvider)
 add_subdirectory(HumanDynamicsEstimator)
 add_subdirectory(HumanControlBoard)
 add_subdirectory(RobotPositionController)
-
+add_subdirectory(HumanLogger)

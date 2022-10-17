@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE robot PUBLIC "-//YARP//DTD yarprobotinterface 3.0//EN" "http://www.yarp.it/DTD/yarprobotinterfaceV3.0.dtd">
+<robot name="robot-name" build=0 portprefix="">
+
+
+    <!--Producer Device -->
+    <device type="human_state_remapper" name="HumanStateRemapper">
+       <param name="humanStateDataPort">/HDE/HumanStateWrapper/state:o</param>
+    </device>
+
+    <device type="human_dynamics_remapper" name="HumanDynamicsRemapper">
+       <param name="humanDynamicsDataPort">/HDE/HumanDynamicsWrapper/torques:o</param>
+    </device>
+    
+    <device type="human_logger" name="HumanLoggerDevice">
+        <param name="period">0.01</param>
+        <param name="LoggerType">matlab</param>
+        <param name="logHumanDynamics">true</param>
+        <param name="logHumanState">true</param>
+        
+        <param name="saveBufferManagerConfiguration">false</param>
+        <param name="experimentName">test_human_logger</param>
+        <!--The directory of the stored path. By default it's the directory where the device is launched -->
+        <!--param name="path">custom/path</param-->
+        <param name="n_samples">100000</param>
+        <param name="save_periodically">true</param>
+        <param name="save_period">120.0</param>
+        <param name="data_threshold">300</param>
+        <param name="auto_save">true</param>
+
+        <action phase="startup" level="5" type="attach">
+            <paramlist name="networks">
+            	<!-- attach the source device here -->
+                <elem name="HumanStateRemapper"> HumanStateRemapper </elem>
+                <elem name="HumanDynamicsRemapper"> HumanDynamicsRemapper </elem>
+            </paramlist>
+        </action>
+        <action phase="shutdown" level="5" type="detach"/>
+    </device>
+
+</robot>
+
