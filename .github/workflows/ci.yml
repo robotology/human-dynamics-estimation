@@ -45,7 +45,7 @@ jobs:
           if: contains(matrix.os, 'windows')
           with:
             mamba-version: "*"
-            channels: conda-forge,defaults
+            channels: conda-forge,robotology,defaults
             channel-priority: true
             environment: human-dynamics-estimation
             python-version: 3.8
@@ -97,7 +97,7 @@ jobs:
             # Compilation related dependencies 
             mamba install cmake compilers make ninja pkg-config
             # Actual dependencies
-            mamba install -c robotology yarp icub-main wearables idyntree matio-cpp robometry osqp-eigen
+            mamba install yarp icub-main wearables idyntree matio-cpp robometry osqp-eigen
              
         - name: Source-based Dependencies [Ubuntu/macOS]
           if: steps.cache-source-deps.outputs.cache-hit != 'true' && (matrix.os == 'ubuntu-latest' || matrix.os == 'macOS-latest')
