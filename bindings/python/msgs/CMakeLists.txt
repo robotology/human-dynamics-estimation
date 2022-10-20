@@ -9,4 +9,4 @@ add_wearables_python_module(
     NAME MsgsBindings
     SOURCES src/WearableData.cpp src/Module.cpp
     HEADERS ${H_PREFIX}/WearableData.h ${H_PREFIX}/BufferedPort.h ${H_PREFIX}/Module.h
-    LINK_LIBRARIES Wearable::WearableData YARP::YARP_OS)
+    LINK_LIBRARIES Wearable::WearableData YARP::YARP_os)

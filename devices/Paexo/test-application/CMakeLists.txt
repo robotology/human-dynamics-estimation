@@ -14,7 +14,7 @@ add_executable(${PROJECT_NAME} paexo-test-application.cpp)
 target_link_libraries(${PROJECT_NAME} PUBLIC
     IWear::IWear
     WearableActuators::WearableActuators
-    YARP::YARP_OS
+    YARP::YARP_os
     YARP::YARP_init)
 
 

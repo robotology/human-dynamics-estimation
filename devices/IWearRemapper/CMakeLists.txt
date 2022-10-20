@@ -21,7 +21,7 @@ target_link_libraries(IWearRemapper PUBLIC
     Wearable::WearableData
     Wearable::SensorsImpl
     YARP::YARP_dev
-    YARP::YARP_OS
+    YARP::YARP_os
     YARP::YARP_init)
 
 yarp_install(

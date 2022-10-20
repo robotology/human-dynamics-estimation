@@ -17,7 +17,7 @@ target_include_directories(IWearActuatorsWrapper PRIVATE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
 
 target_link_libraries(IWearActuatorsWrapper PUBLIC
-    IWear WearableActuators YARP::YARP_dev YARP::YARP_OS YARP::YARP_init)
+    IWear WearableActuators YARP::YARP_dev YARP::YARP_os YARP::YARP_init)
 
 yarp_install(
     TARGETS IWearActuatorsWrapper

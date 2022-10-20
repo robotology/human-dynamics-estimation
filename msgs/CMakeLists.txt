@@ -14,7 +14,7 @@ yarp_add_idl(WEARABLEDATA_FILES thrift/WearableData.thrift)
 
 add_library(WearableData ${WEARABLEDATA_FILES} thrift/WearableData.thrift)
 add_library(Wearable::WearableData ALIAS WearableData)
-target_link_libraries(WearableData YARP::YARP_OS)
+target_link_libraries(WearableData YARP::YARP_os)
 
 # Extract the include directory from the files names
 foreach(file ${WEARABLEDATA_FILES})
@@ -62,7 +62,7 @@ yarp_add_idl(WEARABLEACTUATORS_FILES thrift/WearableActuators.thrift)
 
 add_library(WearableActuators ${WEARABLEACTUATORS_FILES} thrift/WearableActuators.thrift)
 add_library(Wearable::WearableActuators ALIAS WearableActuators)
-target_link_libraries(WearableActuators YARP::YARP_OS)
+target_link_libraries(WearableActuators YARP::YARP_os)
 
 # Extract the include directory from the files names
 foreach(file ${WEARABLEACTUATORS_FILES})
@@ -110,7 +110,7 @@ install(FILES ${WEARABLEACTUATORS_FILES}
 yarp_add_idl(XSENSSUITCONTROL thrift/XsensSuitControlService.thrift)
 
 add_library(XsensSuitControl ${XSENSSUITCONTROL} thrift/XsensSuitControlService.thrift)
-target_link_libraries(XsensSuitControl YARP::YARP_OS)
+target_link_libraries(XsensSuitControl YARP::YARP_os)
 
 # Extract the include directory from the files names
 foreach(file ${XSENSSUITCONTROL})
