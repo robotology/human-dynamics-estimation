@@ -40,6 +40,7 @@ For installing the dependencies you can decide to install them individually or t
 - [**Wearables**](https://github.com/robotology/wearables): a library for communication and interfaces with wearable sensors.
 - [**Eigen**](http://eigen.tuxfamily.org/index.php?title=Main_Page) (3.3 or later): a C++ template library for linear algebra.
 - [**IPOPT**](http://wiki.icub.org/wiki/Installing_IPOPT): a software package for large-scale nonlinear optimization.
+- [**Robometry**](https://github.com/robotology/robometry : a telemetry suite for logging data.
 
 #### Optional dependencies
 - [**ROS**](http://wiki.ros.org) with [**rviz**](http://wiki.ros.org/rviz) package: an open-source provider of libraries and tools for creating robot applications.
