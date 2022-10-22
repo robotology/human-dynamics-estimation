@@ -24,6 +24,9 @@ include(CTest)
 
 option(HUMANSTATEPROVIDER_ENABLE_VISUALIZER "Enable the iDyntree-irricht based Human State Visualizer" OFF)
 
+find_package(robometry QUIET)
+option(HUMANSTATEPROVIDER_ENABLE_LOGGER "Enable the robometry based Human Logger" ${robometry_FOUND})
+
 option(BUILD_TESTING "Build tests" OFF)
 
 # Find packages needed for this main CMakeLists.txt.
