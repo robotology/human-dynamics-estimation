@@ -54,3 +54,8 @@ Wearable devices contained in [`/devices/`](/devices) are [YARP devices](http://
 | Paexo | Exposes [Paexo](https://paexo.com/?lang=en) data. |  Linux  | `iFeelDriver` (Contact the maintainer for more details) | - |
 | HapticGlove | Exposes [SenseGlove](https://www.senseglove.com/product/developers-kit/) data. |  Linux/Windows  | [`SenseGloveSDK`](https://github.com/Adjuvo/SenseGlove-API) | [:books:](./doc/How-to-compile-and-run-HapticGlove.md) |
 | IFrameTransform | Exposes YARP [`IFrameTransform` Interface](http://www.yarp.it/git-master/classyarp_1_1dev_1_1IFrameTransform.html). |  Linux/MacOS/Windows  | - |  - |
+
+## Mantainers
+
+* Lorenzo Rapetti ([@lrapetti](https://github.com/lrapetti))
+* Riccardo Grieco ([@RiccardoGrieco](https://github.com/RiccardoGrieco))
