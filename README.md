@@ -146,3 +146,7 @@ The development of HDE is supported by the FP7 EU projects [CoDyCo (No. 600716 I
 Systems and Robotics)](http://www.codyco.eu/) and by H2020 EU projects [An.Dy (No. 731540 H2020-ICT-2016-1)](http://andy-project.eu).
 The development is also supported by the [Istituto Italiano di Tecnologia](http://www.iit.it).
 
+## Mantainers
+
+* Lorenzo Rapetti ([@lrapetti](https://github.com/lrapetti))
+* Riccardo Grieco ([@RiccardoGrieco](https://github.com/RiccardoGrieco))
