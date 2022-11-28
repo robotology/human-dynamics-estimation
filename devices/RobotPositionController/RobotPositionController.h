@@ -11,7 +11,8 @@
 
 #include <yarp/dev/DeviceDriver.h>
 #include <yarp/os/PeriodicThread.h>
-#include <yarp/dev/Wrapper.h>
+#include <yarp/dev/IMultipleWrapper.h>
+#include <yarp/dev/IWrapper.h>
 
 #include <memory>
 
