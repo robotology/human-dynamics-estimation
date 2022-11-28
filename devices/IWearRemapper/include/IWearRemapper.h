@@ -12,9 +12,10 @@
 #include "Wearable/IWear/IWear.h"
 
 #include <yarp/dev/DeviceDriver.h>
-#include <yarp/dev/PreciselyTimed.h>
+#include <yarp/dev/IPreciselyTimed.h>
 #include <yarp/os/PeriodicThread.h>
-#include <yarp/dev/Wrapper.h>
+#include <yarp/dev/IWrapper.h>
+#include <yarp/dev/IMultipleWrapper.h>
 #include <yarp/os/TypedReaderCallback.h>
 
 #include <memory>

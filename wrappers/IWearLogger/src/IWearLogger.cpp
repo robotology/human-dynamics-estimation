@@ -13,7 +13,7 @@
 #include <functional>
 #include <mutex>
 #include <vector>
-#include <yarp/dev/PreciselyTimed.h>
+#include <yarp/dev/IPreciselyTimed.h>
 #include <yarp/os/BufferedPort.h>
 #include <yarp/os/LogStream.h>
 #include <yarp/os/Network.h>

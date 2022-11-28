@@ -11,7 +11,8 @@
 
 #include <memory>
 #include <yarp/dev/DeviceDriver.h>
-#include <yarp/dev/Wrapper.h>
+#include <yarp/dev/IWrapper.h>
+#include <yarp/dev/IMultipleWrapper.h>
 #include <yarp/os/PeriodicThread.h>
 
 namespace wearable {

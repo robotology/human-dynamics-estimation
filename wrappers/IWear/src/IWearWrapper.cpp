@@ -10,7 +10,7 @@
 #include "Wearable/IWear/IWear.h"
 #include "thrift/WearableData.h"
 
-#include <yarp/dev/PreciselyTimed.h>
+#include <yarp/dev/IPreciselyTimed.h>
 #include <yarp/os/BufferedPort.h>
 #include <yarp/os/LogStream.h>
 

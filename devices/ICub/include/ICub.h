@@ -12,7 +12,7 @@
 #include "Wearable/IWear/IWear.h"
 
 #include <yarp/dev/DeviceDriver.h>
-#include <yarp/dev/PreciselyTimed.h>
+#include <yarp/dev/IPreciselyTimed.h>
 
 #include <memory>
 
