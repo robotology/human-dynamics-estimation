@@ -15,7 +15,8 @@
 #include <yarp/dev/IPositionControl.h>
 #include <yarp/dev/ITorqueControl.h>
 #include <yarp/dev/IVelocityControl.h>
-#include <yarp/dev/Wrapper.h>
+#include <yarp/dev/IMultipleWrapper.h>
+#include <yarp/dev/IWrapper.h>
 #include <yarp/os/PeriodicThread.h>
 #include <yarp/dev/IControlLimits.h>
 
