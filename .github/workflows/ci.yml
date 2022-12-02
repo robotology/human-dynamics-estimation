@@ -125,7 +125,7 @@ jobs:
 
             # icub-main
             cd ${GITHUB_WORKSPACE}
-            git clone -b ${ICUB_MAIN_TAG} https://github.com/robotology/icub-main
+            git clone -b ${icub_main_TAG} https://github.com/robotology/icub-main
             cd icub-main
             mkdir -p build
             cd build
