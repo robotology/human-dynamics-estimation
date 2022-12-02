@@ -125,9 +125,8 @@ jobs:
 
             # icub-main
             cd ${GITHUB_WORKSPACE}
-            git clone https://github.com/robotology/icub-main
+            git clone -b ${ICUB_MAIN_TAG} https://github.com/robotology/icub-main
             cd icub-main
-            git checkout ${ICUB_MAIN_TAG}
             mkdir -p build
             cd build
             cmake -DCMAKE_PREFIX_PATH=${GITHUB_WORKSPACE}/install/deps \
