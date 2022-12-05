@@ -14,11 +14,11 @@ on:
     
 env:
     vcpkg_robotology_TAG: v0.6.0
-    YCM_TAG: v0.14.1
+    YCM_TAG: v0.14.2
     YARP_TAG: v3.7.1
     iDynTree_TAG: v6.0.0 
     wearables_TAG: v1.4.0 
-    icub_main_TAG: v1.21.0    
+    icub_main_TAG: v1.28.1    
     osqp_TAG: v0.6.0
     OsqpEigen_TAG: v0.6.2
     matioCpp_TAG: v0.2.0
@@ -125,9 +125,8 @@ jobs:
 
             # icub-main
             cd ${GITHUB_WORKSPACE}
-            git clone https://github.com/robotology/icub-main
+            git clone -b ${icub_main_TAG} https://github.com/robotology/icub-main
             cd icub-main
-            git checkout ${ICUB_MAIN_TAG}
             mkdir -p build
             cd build
             cmake -DCMAKE_PREFIX_PATH=${GITHUB_WORKSPACE}/install/deps \
