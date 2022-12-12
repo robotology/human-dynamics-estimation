@@ -73,7 +73,7 @@ jobs:
             sudo apt update
             sudo apt install git build-essential cmake libace-dev coinor-libipopt-dev  libboost-system-dev libboost-filesystem-dev \
                              libboost-thread-dev liborocos-kdl-dev libeigen3-dev swig qtbase5-dev qtdeclarative5-dev qtmultimedia5-dev libqt5charts5-dev \
-                             libxml2-dev liburdfdom-dev libtinyxml-dev liburdfdom-dev liboctave-dev python-dev python3-pybind11 valgrind libassimp-dev libmatio-dev
+                             libxml2-dev liburdfdom-dev libtinyxml-dev liburdfdom-dev liboctave-dev python3-dev python3-pybind11 valgrind libassimp-dev libmatio-dev
 
         - name: Cache Source-based dependencies  [Ubuntu/macOS]
           if: steps.cache-source-deps.outputs.cache-hit != 'true' && (contains(matrix.os, 'ubuntu') || contains(matrix.os, 'macOS'))
