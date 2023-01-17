@@ -5,6 +5,7 @@
 find_package(IWear REQUIRED)
 find_package(iDynTree REQUIRED)
 find_package(OsqpEigen 0.4.0 REQUIRED)
+find_package(BipedalLocomotionFramework COMPONENTS Math REQUIRED)
 
 
 yarp_prepare_plugin(human_state_provider
@@ -37,6 +38,11 @@ target_link_libraries(HumanStateProvider PUBLIC
     IWearableTargets
     HumanDynamicsEstimation::utils
     HumanDynamicsEstimation::algorithms
+    BipedalLocomotion::Math
+    BipedalLocomotion::IK
+    BipedalLocomotion::ContinuousDynamicalSystem
+    BipedalLocomotion::TextLogging
+    BipedalLocomotion::TextLoggingYarpImplementation
     )
 
 if(MSVC)

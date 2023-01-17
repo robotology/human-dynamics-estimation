@@ -25,6 +25,25 @@
 #include <iDynTree/Core/EigenHelpers.h>
 #include <iDynTree/Model/Traversal.h>
 
+#include <BipedalLocomotion/Conversions/ManifConversions.h>
+#include <BipedalLocomotion/ParametersHandler/StdImplementation.h>
+
+#include <BipedalLocomotion/System/ConstantWeightProvider.h>
+#include <BipedalLocomotion/System/VariablesHandler.h>
+
+#include <BipedalLocomotion/IK/CoMTask.h>
+#include <BipedalLocomotion/IK/IntegrationBasedIK.h>
+#include <BipedalLocomotion/IK/JointTrackingTask.h>
+#include <BipedalLocomotion/IK/QPInverseKinematics.h>
+#include <BipedalLocomotion/IK/SE3Task.h>
+
+#include <BipedalLocomotion/ContinuousDynamicalSystem/FloatingBaseSystemKinematics.h>
+#include <BipedalLocomotion/ContinuousDynamicalSystem/ForwardEuler.h>
+
+#include <BipedalLocomotion/TextLogging/Logger.h>
+#include <BipedalLocomotion/TextLogging/LoggerBuilder.h>
+#include <BipedalLocomotion/TextLogging/YarpLogger.h>
+
 #include <array>
 #include <atomic>
 #include <chrono>
@@ -35,6 +54,13 @@
 #include <unordered_map>
 #include <numeric>
 #include <algorithm>
+
+
+struct InverseKinematicsTasks
+{
+    std::shared_ptr<BipedalLocomotion::IK::SE3Task> se3Task;
+    std::shared_ptr<BipedalLocomotion::IK::JointTrackingTask> regularizationTask;
+};
 
 /*!
  * @brief analyze model and list of segments to create all possible segment pairs
@@ -239,11 +265,17 @@ public:
     hde::algorithms::DynamicalInverseKinematics dynamicalInverseKinematics;
     hde::utils::idyntree::state::Integrator stateIntegrator;
 
+    std::shared_ptr<BipedalLocomotion::IK::IntegrationBasedIK> BLFik;
+    InverseKinematicsTasks BLFikTasks;
+    std::shared_ptr<BipedalLocomotion::ContinuousDynamicalSystem::ForwardEuler<BipedalLocomotion::ContinuousDynamicalSystem::FloatingBaseSystemKinematics>> BLFintegrator;
+    std::shared_ptr<BipedalLocomotion::ContinuousDynamicalSystem::FloatingBaseSystemKinematics> BLFdynamics;
+
     // clock
     double lastTime{-1.0};
 
     // kinDynComputation
-    std::unique_ptr<iDynTree::KinDynComputations> kinDynComputations;
+    std::shared_ptr<iDynTree::KinDynComputations> kinDynComputations;
+    std::shared_ptr<iDynTree::KinDynComputations> kinDynComputationsBLF;
     iDynTree::Vector3 worldGravity;
 
     // get input data
@@ -399,7 +431,10 @@ HumanStateProvider::impl::impl()
 HumanStateProvider::HumanStateProvider()
     : PeriodicThread(DefaultPeriod)
     , pImpl{new impl()}
-{}
+{
+    BipedalLocomotion::TextLogging::LoggerBuilder::setFactory(
+        std::make_shared<BipedalLocomotion::TextLogging::YarpLoggerFactory>());
+}
 
 HumanStateProvider::~HumanStateProvider() {}
 
@@ -1027,6 +1062,11 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     pImpl->kinDynComputations->loadRobotModel(modelLoader.model());
     pImpl->kinDynComputations->setFloatingBase(pImpl->floatingBaseFrame);
 
+    // pImpl->kinDynComputationsBLF =
+    //     std::unique_ptr<iDynTree::KinDynComputations>(new iDynTree::KinDynComputations());
+    // pImpl->kinDynComputationsBLF->loadRobotModel(modelLoader.model());
+    // pImpl->kinDynComputationsBLF->setFloatingBase(pImpl->floatingBaseFrame);
+
     // =========================
     // INITIALIZE JOINTS BUFFERS
     // =========================
@@ -1366,6 +1406,28 @@ void HumanStateProvider::run()
         return;
     }
 
+
+    std::cerr << "here" << std::endl;
+    iDynTree::Transform base_transform;
+    base_transform.setPosition(iDynTree::Position(pImpl->wearableTargets["target_Pelvis"]->getCalibratedPosition()));
+    base_transform.setRotation(pImpl->wearableTargets["target_Pelvis"]->getCalibratedRotation());
+
+    manif::SE3d endEffectorPose  = BipedalLocomotion::Conversions::toManifPose(base_transform);
+    pImpl->BLFikTasks.se3Task->setSetPoint(endEffectorPose, manif::SE3d::Tangent::Zero());
+
+    std::cerr << "ready to advance" << std::endl;
+    pImpl->BLFik->advance();
+
+    Eigen::Matrix<double, 6, 1> baseVelocity = Eigen::Matrix<double, 6, 1>::Zero();
+    Eigen::VectorXd jointVelocity = Eigen::VectorXd::Zero(pImpl->humanModel.getNrOfDOFs());
+
+    baseVelocity = pImpl->BLFik->getOutput().baseVelocity.coeffs();
+    jointVelocity = pImpl->BLFik->getOutput().jointVelocity;
+
+    std::cerr << "base velocity: " << std::endl;
+    std::cerr << baseVelocity << std::endl;    
+
+
     auto tock = std::chrono::high_resolution_clock::now();
     yTrace() << LogPrefix << "IK took"
              << std::chrono::duration_cast<std::chrono::milliseconds>(tock - tick).count() << "ms";
@@ -1450,6 +1512,57 @@ void HumanStateProvider::run()
     //                                          pImpl->jointVelocitiesSolution,
     //                                          pImpl->baseVelocitySolution,
     //                                          pImpl->linkErrorAngularVelocities);
+
+
+    pImpl->BLFdynamics->setControlInput({baseVelocity, jointVelocity});
+    pImpl->BLFintegrator->integrate(0, 0.02);
+
+    const auto& [basePosition, baseRotation, jointPosition]
+                    = pImpl->BLFintegrator->getSolution();
+    
+    Eigen::Matrix4d baseTransform = Eigen::Matrix4d::Identity();
+    // Eigen::Matrix<double, 6, 1> baseVelocity = Eigen::Matrix<double, 6, 1>::Zero();
+    // Eigen::VectorXd jointVelocity = Eigen::VectorXd::Zero(model.getNrOfDOFs());
+    Eigen::Vector3d gravity;
+
+    // update the KinDynComputations object
+    baseTransform.topLeftCorner<3, 3>() = baseRotation.rotation();
+    baseTransform.topRightCorner<3, 1>() = basePosition;
+
+    iDynTree::Transform baseTransformiDyn;
+
+    std::cerr << "base position: " << std::endl;
+    std::cerr << basePosition << std::endl;
+
+    pImpl->kinDynComputations->setRobotState(baseTransform,
+                                             jointPosition,
+                                             baseVelocity,
+                                             jointVelocity,
+                                             gravity);
+
+    pImpl->solution.basePosition = {baseTransform.coeff(0, 3), 
+                                    baseTransform.coeff(1, 3), 
+                                    baseTransform.coeff(2, 3)};
+
+    for (unsigned i = 0; i < pImpl->jointConfigurationSolution.size(); ++i) {
+            pImpl->solution.jointPositions[i] = jointPosition(i);
+        }
+
+    Eigen::Quaternion baseOrientationQuaternion(baseRotation.quat());
+
+    std::cerr << "quaternion: " << baseOrientationQuaternion << std::endl;
+
+
+    pImpl->solution.baseOrientation = {baseOrientationQuaternion.w(),
+                                       baseOrientationQuaternion.x(),
+                                       baseOrientationQuaternion.y(),
+                                       baseOrientationQuaternion.z()};
+    
+    // pImpl->kinDynComputations->setRobotState(pImpl->baseTransformSolution,
+    //                                          pImpl->jointConfigurationSolution,
+    //                                          pImpl->baseVelocitySolution,
+    //                                          pImpl->jointVelocitiesSolution,
+    //                                          pImpl->worldGravity);
 }
 
 void HumanStateProvider::impl::ereaseTargetCalibration(const hde::TargetName& targetName)
@@ -2131,6 +2244,97 @@ bool HumanStateProvider::impl::initializeDynamicalInverseKinematicsSolver()
             return false;
     }
 
+
+    /// PARAMETER HANDLER 
+    auto parameterHandler = std::make_shared<BipedalLocomotion::ParametersHandler::StdImplementation>();
+    parameterHandler->setParameter("robot_velocity_variable_name", "robotVelocity");
+
+    parameterHandler->setParameter("verbosity", false);
+
+
+    /////// SE3 Task
+    auto SE3ParameterHandler = std::make_shared<BipedalLocomotion::ParametersHandler::StdImplementation>();
+    SE3ParameterHandler->setParameter("robot_velocity_variable_name", "robotVelocity");
+
+    SE3ParameterHandler->setParameter("kp_linear", 8.0);
+    SE3ParameterHandler->setParameter("kp_angular", 20.0);
+    parameterHandler->setGroup("SE3_TASK", SE3ParameterHandler);
+
+
+    /////// Joint regularization task
+    auto jointRegularizationHandler = std::make_shared<BipedalLocomotion::ParametersHandler::StdImplementation>();
+    jointRegularizationHandler->setParameter("robot_velocity_variable_name", "robotVelocity");
+    parameterHandler->setGroup("REGULARIZATION_TASK", jointRegularizationHandler);
+
+
+    parameterHandler->getGroup("SE3_TASK")
+                .lock()
+                ->setParameter("frame_name", "Pelvis");
+
+    // VARIABLE HANDLER
+    // Instantiate the handler
+    BipedalLocomotion::System::VariablesHandler variablesHandler;
+    variablesHandler.addVariable("robotVelocity", humanModel.getNrOfDOFs() + 6);
+
+    BLFik = std::make_shared<BipedalLocomotion::IK::QPInverseKinematics>();
+    BLFik->initialize(parameterHandler);
+
+    
+
+
+    Eigen::Matrix<double, 6, 1> baseVelocity;
+    Eigen::VectorXd jointVelocities = Eigen::VectorXd::Zero(kinDynComputations->getNrOfDegreesOfFreedom());
+    Eigen::Matrix4d basePose = Eigen::Matrix4d::Identity();;
+    Eigen::VectorXd jointPositions = Eigen::VectorXd::Zero(kinDynComputations->getNrOfDegreesOfFreedom());
+    Eigen::Vector3d gravity;
+
+    BLFdynamics = std::make_shared<BipedalLocomotion::ContinuousDynamicalSystem::FloatingBaseSystemKinematics>();
+    BLFdynamics->setState({basePose.topRightCorner<3, 1>(),
+                           BipedalLocomotion::Conversions::toManifRot(basePose.topLeftCorner<3, 3>()),
+                           jointPositions});
+
+                           
+
+    BLFintegrator = std::make_shared<BipedalLocomotion::ContinuousDynamicalSystem::ForwardEuler<BipedalLocomotion::ContinuousDynamicalSystem::FloatingBaseSystemKinematics>>();
+    BLFintegrator->setIntegrationStep(0.02);
+    BLFintegrator->setDynamicalSystem(BLFdynamics);
+
+   
+    std::cerr << "Add regularization task" << std::endl;
+
+    const Eigen::VectorXd kpRegularization = Eigen::VectorXd::Ones(humanModel.getNrOfDOFs());
+    const Eigen::VectorXd weightRegularization = kpRegularization;
+    parameterHandler->getGroup("REGULARIZATION_TASK").lock()->setParameter("kp", kpRegularization);
+
+
+    BLFikTasks.regularizationTask = std::make_shared<BipedalLocomotion::IK::JointTrackingTask>();
+    BLFikTasks.regularizationTask->setKinDyn(kinDynComputations);
+    BLFikTasks.regularizationTask->initialize(parameterHandler->getGroup("REGULARIZATION_TASK"));
+
+
+    BLFik->addTask(BLFikTasks.regularizationTask,
+                            "regularization_task",
+                            1,
+                            weightRegularization);
+    
+
+    BLFikTasks.se3Task = std::make_shared<BipedalLocomotion::IK::SE3Task>();
+    BLFikTasks.se3Task->setKinDyn(kinDynComputations);
+    
+    std::cerr << "initialize SE3 task" << std::endl;
+    if (!BLFikTasks.se3Task->initialize(parameterHandler->getGroup("SE3_TASK")))
+    {
+        std::cerr << "Failed to initialize" << std::endl;
+        return false;
+    }
+    std::cerr << "SE3 task initialized" << std::endl;
+
+    BLFik->addTask(BLFikTasks.se3Task, "se3_task", 0);
+
+    std::cerr << "Ready to finalize" << std::endl;
+
+    BLFik->finalize(variablesHandler);
+
     return true;
 }
 
@@ -2176,6 +2380,10 @@ bool HumanStateProvider::impl::solvePairwisedInverseKinematicsSolver()
             }
         }
     }
+
+
+
+
 
     return true;
 }

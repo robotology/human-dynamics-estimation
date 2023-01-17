@@ -80,8 +80,8 @@
             <!--param name="custom_joints_velocity_limits_values">(10.0, 15.0)</param-->
             <param name="custom_joints_velocity_limits_values">()</param>
         <!-- **** base velocity limit: roll, pitch, yaw, x, y, z ****-->
-            <!--param name="base_velocity_limit_upper_buond">(1.0, 1.0, 1.0, 1.0, 1.0, 1.0 )</param>
-            <param name="base_velocity_limit_lower_buond">(-1.0, -1.0, -1.0, -1.0, -1.0, -1.0 )</param-->
+            <param name="base_velocity_limit_upper_buond">(1.0, 1.0, 1.0, 1.0, 1.0, 1.0 )</param>
+            <param name="base_velocity_limit_lower_buond">(-1.0, -1.0, -1.0, -1.0, -1.0, -1.0 )</param>
         <!-- Custom joint Configuration constraints-->
         <!-- if the boudary value is inf, I will use -1000.0 rad, or +1000.0 rad-->
         <!--param name="custom_constraint_variables">(
