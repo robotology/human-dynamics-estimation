@@ -1023,7 +1023,7 @@ bool DynamicalInverseKinematics::impl::computeDesiredLinkVelocities()
 
                     if (rotActivation[idx])
                     {
-                        nrPosTargets[idx] +=1;
+                        nrRotTargets[idx] +=1;
                     }
                 }
                 iDynTree::toEigen(m_desiredLinearVelocityBuffer) = target.getLinearVelocityFeedforwardGain() * iDynTree::toEigen(target.getLinearVelocity())
