@@ -237,7 +237,6 @@ public:
     iDynTree::InverseKinematics globalIK;
     hde::algorithms::InverseVelocityKinematics inverseVelocityKinematics; // used for computing joint velocity in global IK solution
     hde::algorithms::DynamicalInverseKinematics dynamicalInverseKinematics;
-    hde::utils::idyntree::state::Integrator stateIntegrator;
 
     // clock
     double lastTime{-1.0};
@@ -2055,24 +2054,6 @@ bool HumanStateProvider::impl::initializeGlobalInverseKinematicsSolver()
 
 bool HumanStateProvider::impl::initializeDynamicalInverseKinematicsSolver()
 {
-    // Initialize state integrator
-    stateIntegrator.setInterpolatorType(hde::utils::idyntree::state::Integrator::InterpolationType::trapezoidal);
-    stateIntegrator.setNJoints(humanModel.getNrOfDOFs());
-
-    iDynTree::VectorDynSize jointLowerLimits;
-    jointLowerLimits.resize(humanModel.getNrOfDOFs());
-    iDynTree::VectorDynSize jointUpperLimits;
-    jointUpperLimits.resize(humanModel.getNrOfDOFs());
-    size_t DOFIndex = 0;
-    for (size_t jointIndex = 0; jointIndex < humanModel.getNrOfJoints(); ++jointIndex) {
-        if (humanModel.getJoint(jointIndex)->getNrOfDOFs() == 1) {
-            jointLowerLimits.setVal(DOFIndex, humanModel.getJoint(jointIndex)->getMinPosLimit(0));
-            jointUpperLimits.setVal(DOFIndex, humanModel.getJoint(jointIndex)->getMaxPosLimit(0));
-            DOFIndex++;
-        }
-    }
-    stateIntegrator.setJointLimits(jointLowerLimits, jointUpperLimits);
-
     // Set inverse velocity kinematics parameters
     dynamicalInverseKinematics.setInverseVelocityKinematicsResolutionMode(inverseVelocityKinematicsSolver);
     dynamicalInverseKinematics.setInverseVelocityKinematicsRegularization(costRegularization);
