@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Dependency on robometry is changed to optional. (https://github.com/robotology/human-dynamics-estimation/pull/323)
 
+### Fixed
+- Fixed a typo in `DynamicalInverseKinematics` that caused a wrong calculation of the rotation mean error. (https://github.com/robotology/human-dynamics-estimation/pull/330)
+
 ## [2.7.0] - 2020-10-20
 
 First release with CHANGELOG.
