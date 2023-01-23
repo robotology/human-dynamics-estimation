@@ -209,7 +209,7 @@ jobs:
             mkdir -p build
             cd build
             cmake -A x64 cmake -G"Visual Studio 17 2022" -DCMAKE_PREFIX_PATH=${GITHUB_WORKSPACE}/install/deps \
-                                                         -DCMAKE_BUILD_TPYE=${{matrix.build_type}} \
+                                                         -DCMAKE_BUILD_TYPE=${{matrix.build_type}} \
                                                          -DHUMANSTATEPROVIDER_ENABLE_VISUALIZER:BOOL=ON \
                                                          -DHUMANSTATEPROVIDER_ENABLE_LOGGER:BOOL=ON \
                                                          -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/install ..
@@ -221,6 +221,7 @@ jobs:
             mkdir -p build
             cd build
             cmake -DCMAKE_PREFIX_PATH=${GITHUB_WORKSPACE}/install/deps \
+                  -DCMAKE_BUILD_TYPE=${{matrix.build_type}} \
                   -DHUMANSTATEPROVIDER_ENABLE_VISUALIZER:BOOL=ON \
                   -DHUMANSTATEPROVIDER_ENABLE_LOGGER:BOOL=ON \
                   -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/install ..
