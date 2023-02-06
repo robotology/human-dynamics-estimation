@@ -65,23 +65,6 @@ if(WIN32)
   add_compile_definitions(_SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING)
 endif()
 
-add_subdirectory(interfaces)
-add_subdirectory(impl)
-
-# Prepare YARP wrapper and devices
-find_package(YARP 3.2 REQUIRED)
-set(YARP_FORCE_DYNAMIC_PLUGINS ON)
-yarp_configure_plugins_installation(wearable)
-
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-
-add_subdirectory(msgs)
-add_subdirectory(devices)
-add_subdirectory(wrappers)
-add_subdirectory(app)
-add_subdirectory(modules)
-add_subdirectory(bindings)
-
 # Flag to enable Paexo wearable device
 option(WEARABLES_COMPILE_PYTHON_BINDINGS "Flag that enables building the bindings" OFF)
 
@@ -108,3 +91,22 @@ option(ENABLE_Logger "Flag that enables building Wearable Logger device" ${robom
 
 # Flag to enable ICub wearable device
 option(ENABLE_ICub "Flag that enables building iCub wearable device" ${iDynTree_FOUND})
+
+add_subdirectory(interfaces)
+add_subdirectory(impl)
+
+# Prepare YARP wrapper and devices
+find_package(YARP 3.2 REQUIRED)
+set(YARP_FORCE_DYNAMIC_PLUGINS ON)
+yarp_configure_plugins_installation(wearable)
+
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+add_subdirectory(msgs)
+add_subdirectory(devices)
+add_subdirectory(wrappers)
+add_subdirectory(app)
+add_subdirectory(modules)
+add_subdirectory(bindings)
+
+
