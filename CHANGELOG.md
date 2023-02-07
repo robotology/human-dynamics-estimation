@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.1] - 2023-02-07
+
 ### Changed
 - Use `std::mutex` instead of `std::recursive_mutex` in IWearRemapper (https://github.com/robotology/wearables/pull/174).
 
