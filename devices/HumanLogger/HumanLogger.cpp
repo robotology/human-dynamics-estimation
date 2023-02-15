@@ -318,7 +318,7 @@ bool HumanLogger::attach(yarp::dev::PolyDriver* poly)
     std::cerr << "attaching " << deviceName << std::endl;
     if (deviceName == "human_state_provider" || deviceName == "human_state_remapper") {
         // Attach IHumanState interface
-        if (pImpl->iHumanState || !poly->view(pImpl->iHumanState) || !pImpl->iHumanState) {
+        if (!poly->view(pImpl->iHumanState) || !pImpl->iHumanState) {
             yError() << logPrefix << "Failed to view IHumanState interface from the polydriver";
             return false;
         }
@@ -335,7 +335,7 @@ bool HumanLogger::attach(yarp::dev::PolyDriver* poly)
 
     if (deviceName == "human_dynamics_estimator" || deviceName == "human_dynamics_remapper") {
         // Attach IHumanDynamics interface
-        if (pImpl->iHumanDynamics || !poly->view(pImpl->iHumanDynamics) || !pImpl->iHumanDynamics) {
+        if (!poly->view(pImpl->iHumanDynamics) || !pImpl->iHumanDynamics) {
             yError() << logPrefix << "Failed to view IHumanDynamics interface from the polydriver";
             return false;
         }
