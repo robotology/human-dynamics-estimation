@@ -47,8 +47,6 @@ struct hde::devices::HumanLoggerSettings
 
 using namespace hde::devices;
 
-using MatlabChannelName = std::string;
-
 class HumanLogger::impl
 {
 public:
@@ -61,7 +59,6 @@ public:
                                    bool& option);
     bool configureBufferManager();
 
-    bool firstRun = true;
     size_t waitingFirstReadCounter = 1;
 
     interfaces::IHumanState* iHumanState = nullptr;
@@ -353,6 +350,22 @@ bool HumanLogger::attach(yarp::dev::PolyDriver* poly)
         yInfo() << logPrefix << deviceName << "attach() successful";
     }
 
+    // If only one type of data is used, attachAll will not be called
+    // so we have to start the periodic thread from here
+    if ((!pImpl->settings.logHumanState || pImpl->iHumanState) && 
+        (!pImpl->settings.logHumanDynamics || pImpl->iHumanDynamics))
+    {
+        if (!pImpl->configureBufferManager()) {
+            yError() << logPrefix << "Failed to configure buffer manager for the logger.";
+            return false;
+        }
+
+        if(!start()) {
+            yError() << logPrefix << "Failed to start the loop.";
+            return false;
+        }
+    }
+
     return true;
 }
 
@@ -427,23 +440,9 @@ bool HumanLogger::attachAll(const yarp::dev::PolyDriverList& driverList)
 
         attachStatus = attachStatus && attach(driver->poly);
     }
-
-    if (!pImpl->configureBufferManager()) {
-        yError() << logPrefix << "Failed to configure buffer manager for the logger.";
-    }
-
+    
     if (attachStatus) {
         yDebug() << logPrefix << "attach() successful";
-    }
-
-    // ====
-    // MISC
-    // ====
-
-    // Start the PeriodicThread loop
-    if (attachStatus && !start()) {
-        yError() << logPrefix << "Failed to start the loop.";
-        return false;
     }
 
     return attachStatus;
