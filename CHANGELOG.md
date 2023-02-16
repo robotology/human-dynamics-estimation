@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Fixed a typo in `DynamicalInverseKinematics` that caused a wrong calculation of the rotation mean error. (https://github.com/robotology/human-dynamics-estimation/pull/330)
+- Fixed `HumanLogger` when logging just one kind of data (https://github.com/robotology/human-dynamics-estimation/pull/338)
 
 ## [2.7.0] - 2020-10-20
 
