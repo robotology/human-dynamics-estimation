@@ -50,7 +50,7 @@
         <param name="rotTargetWeight">1.0</param>
         <param name="costRegularization">1.0</param>
         <param name="costTolerance">0.001</param>
-        <param name="rpcPortPrefix">iCub</param>
+        <param name="rpcPortPrefix">ergoCub</param>
         <!-- inverse velocity kinematics parameters -->
         <!-- inverseVelocityKinematicsSolver values:
         QP
@@ -84,22 +84,16 @@
                                  "l_shoulder_roll",
                                  "l_shoulder_yaw",
                                  "l_elbow",
-                                 "l_wrist_prosup",
+                                 "l_wrist_roll",
                                  "l_wrist_pitch",
                                  "l_wrist_yaw",
                                  "r_shoulder_pitch",
                                  "r_shoulder_roll",
                                  "r_shoulder_yaw",
                                  "r_elbow",
-                                 "r_wrist_prosup",
+                                 "r_wrist_roll",
                                  "r_wrist_pitch",
                                  "r_wrist_yaw",
-                                 "j_l_upper_arm_fake",
-                                 "j_r_upper_arm_fake",
-                                 "j_l_forearm_fake",
-                                 "j_r_forearm_fake",
-                                 "j_l_hand_fake",
-                                 "j_r_hand_fake",
                                  "torso_pitch",
                                  "torso_roll",
                                  "torso_yaw",
@@ -109,12 +103,12 @@
         </param>
         <group name="MEASUREMENT_TO_LINK_TRANSFORMS">
             <param name="target_LeftHand">( 1.0   0.0  0.0  0.0
-                                            0.0  -1.0  0.0  0.025
-                                            0.0   0.0 -1.0  0.15
+                                            0.0   0.0  1.0  -0.02
+                                            0.0  -1.0  0.0  0.05
                                             0.0   0.0  0.0  1.0)</param>
             <param name="target_RightHand">(-1.0  0.0  0.0  0.0
-                                             0.0  1.0  0.0  0.025
-                                             0.0  0.0 -1.0  0.15
+                                             0.0  0.0  1.0  -0.02
+                                             0.0  1.0  0.0  0.05
                                              0.0  0.0  0.0  1.0)</param>
             <param name="target_Head">( 0.0 -1.0  0.0  0.0
                                         0.0  0.0  1.0  0.0
@@ -124,21 +118,21 @@
                                          0.0  0.0  1.0  0.0
                                          1.0  0.0  0.0  0.0
                                          0.0  0.0  0.0  1.0)</param>
-            <param name="target_l_upper_arm">( 0.0 1.0  0.0  0.0
+            <param name="target_r_upper_arm">( 1.0  0.0  0.0  0.0
                                                0.0  0.0  1.0  0.0
-                                               1.0  0.0  0.0  0.0
+                                               0.0 -1.0  0.0  0.0
                                                0.0  0.0  0.0  1.0)</param>
-            <param name="target_r_upper_arm">( 0.0 1.0  0.0  0.0
-                                               0.0  0.0  1.0  0.0
-                                               1.0  0.0  0.0  0.0
+            <param name="target_l_upper_arm">( 1.0  0.0  0.0  0.0
+                                               0.0  0.0 -1.0  0.0
+                                               0.0  1.0  0.0  0.0
                                                0.0  0.0  0.0  1.0)</param>
-            <param name="target_l_forearm">( 0.0 1.0  0.0  0.0
+            <param name="target_r_forearm">( 1.0  0.0  0.0  0.0
                                              0.0  0.0  1.0  0.0
-                                             1.0  0.0  0.0  0.0
+                                             0.0 -1.0  0.0  0.0
                                              0.0  0.0  0.0  1.0)</param>
-            <param name="target_l_forearm">( 0.0 1.0  0.0  0.0
-                                             0.0  0.0  1.0  0.0
-                                             1.0  0.0  0.0  0.0
+            <param name="target_l_forearm">( 1.0  0.0  0.0  0.0
+                                             0.0  0.0 -1.0  0.0
+                                             0.0  1.0  0.0  0.0
                                              0.0  0.0  0.0  1.0)</param>
         </group>
         <group name="MEASUREMENT_POSITION_SCALE_FACTOR">
@@ -147,7 +141,7 @@
             <param name="target_RightHand">( 0.7 0.7 0.6 )</param>
             <param name="x_scale_factor_all" extern-name="xy_scale">0.7</param>
             <param name="y_scale_factor_all" extern-name="xy_scale">0.7</param>
-            <param name="z_scale_factor_all" extern-name="z_scale">0.6</param>
+            <param name="z_scale_factor_all" extern-name="z_scale">0.7</param>
         </group>
         <group name="CUSTOM_CONSTRAINTS">
         <!-- check issue https://github.com/robotology/human-dynamics-estimation/issues/132 for more info-->
@@ -159,23 +153,19 @@
             <!--param name="custom_joints_velocity_limits_values">(10.0, 15.0)</param-->
             <param name="custom_joints_velocity_limits_values">( )</param>
         <!-- **** base velocity limit: x, y, z, roll, pitch, yaw ****-->
-            <param name="base_velocity_limit_upper_buond">(0.0, 0.0,  0.0,  0.0,  0.0,  0.0 )</param>
-            <param name="base_velocity_limit_lower_buond">(0.0, 0.0,  0.0, 0.0, 0.0, 0.0 )</param>
+            <param name="base_velocity_limit_upper_buond">(0.0, 0.0, 0.0, 0.0, 0.0, 0.0)</param>
+            <param name="base_velocity_limit_lower_buond">(0.0, 0.0, 0.0, 0.0, 0.0, 0.0)</param>
         <!-- Custom joint Configuration constraints-->
         <!-- if the boudary value is inf, I will use -1000.0 rad, or +1000.0 rad-->
             <param name="custom_constraint_variables">(
-             l_wrist_prosup, l_elbow,  r_wrist_prosup, r_elbow, l_shoulder_roll, r_shoulder_roll)</param>
+             l_shoulder_roll, r_shoulder_roll)</param>
             <param name="custom_constraint_matrix"> (
-            (1.0,    2.4856, 0.0,  0.0,    0.0, 0.0),
-            (-1.0,   2.593,  0.0,  0.0,    0.0, 0.0),
-            (0.0,    0.0,    1.0,  2.4856, 0.0, 0.0),
-            (0.0,    0.0,    -1.0, 2.593,  0.0, 0.0),
-            (0.0,    0.0,    0.0,  0.0,    1.0, 0.0),
-            (0.0,    0.0,    0.0,  0.0,    0.0, 1.0))</param>
+            (1.0, 0.0),
+            (0.0, 1.0))</param>
             <param name="custom_constraint_lower_bound"> (
-            -1000.0, -1000.0, -1000.0, -1000.0, -100.0, -100.0)</param>
+            -100.0, -100.0)</param>
             <param name="custom_constraint_upper_bound"> (
-            4.7772, 4.9630, 4.7772, 4.9630, 1.4, 1.4)</param>
+             1.4, 1.4)</param>
             <param name="k_u">0.5</param>
             <param name="k_l">0.5</param>
         </group>
@@ -190,7 +180,7 @@
     <!-- Uncomment to stream the output of HumanStateProvider on a YARP port -->
     <device type="human_state_wrapper" name="RobotStateWrapper">
         <param name="period">0.01</param>
-        <param name="outputPort">/iCub/RobotStateWrapper/state:o</param>
+        <param name="outputPort">/ergoCub/RobotStateWrapper/state:o</param>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
                 <elem name="HumanStateWrapperLabel">RobotStateProvider</elem>
