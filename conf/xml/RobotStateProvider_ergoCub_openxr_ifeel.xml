@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE robot PUBLIC "-//YARP//DTD yarprobotinterface 3.0//EN" "http://www.yarp.it/DTD/yarprobotinterfaceV3.0.dtd">
-<robot name="iCub-Retargeting" build=0 portprefix="">
+<robot name="ergoCub-Retargeting" build=0 portprefix="">
 
     <device type="transformClient" name="TransformClient">
         <param name="period">0.01</param>
