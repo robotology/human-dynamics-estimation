@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Added configuration files for ergoCub robot. (https://github.com/robotology/human-dynamics-estimation/pull/340)
+
 ## [2.7.1] - 2023-02-16
 
 ### Removed
