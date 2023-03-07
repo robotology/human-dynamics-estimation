@@ -542,6 +542,9 @@ int main(int argc, char* argv[])
     iDynTree::Visualizer viz;
     iDynTree::VisualizerOptions options;
 
+    options.winHeight = rf.check("windowHeight", yarp::os::Value(options.winHeight)).asInt32();
+    options.winWidth = rf.check("windowWidth", yarp::os::Value(options.winWidth)).asInt32();
+
     viz.init(options);
 
     viz.camera().setPosition(cameraDeltaPosition);
