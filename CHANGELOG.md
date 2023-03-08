@@ -7,9 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-
 - [`HumanStateVisualizer`] Added custom options for window dimensions (https://github.com/robotology/human-dynamics-estimation/pull/341).
 - [`HumanStateProvider`] Added a parameter that allows to set custom angles for calibration purposes (https://github.com/robotology/human-dynamics-estimation/pull/341).
+- Added configuration files for ergoCub robot. (https://github.com/robotology/human-dynamics-estimation/pull/340)
+
 
 ## [2.7.1] - 2023-02-16
 
