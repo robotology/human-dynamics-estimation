@@ -443,6 +443,11 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     else
     {
         auto calibrationJointConfigurationBottle = config.find("calibrationJointConfiguration").asList();
+        if(calibrationJointConfigurationBottle->size()!=jointList.size())
+        {
+                yError() << LogPrefix << "Parameter calibrationJointConfiguration must have the same size of the list of selected joints!";
+                return false;
+        }
         for (size_t it = 0; it < calibrationJointConfigurationBottle->size(); it++)
         {
             pImpl->calibrationJointConfiguration.push_back(calibrationJointConfigurationBottle->get(it).asFloat64());
