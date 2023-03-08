@@ -162,7 +162,7 @@ public:
     FloatingBaseName floatingBaseFrame;
 
     std::vector<std::string> jointList;
-    std::vector<double> CalibrationConfig;
+    std::vector<double> calibrationJointConfiguration;
 
     std::vector<SegmentInfo> segments;
     std::vector<LinkPairInfo> linkPairs;
@@ -436,16 +436,16 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         }
     }
 
-     if (!(config.check("CalibrationConfig") && config.find("CalibrationConfig").isList())) {
-        yInfo() << LogPrefix << "CalibrationConfig option not found or not valid, all the model joints are selected.";
-        pImpl->CalibrationConfig.clear();
+     if (!(config.check("calibrationJointConfiguration") && config.find("calibrationJointConfiguration").isList())) {
+        yInfo() << LogPrefix << "calibrationJointConfiguration option not found or not valid, using zero configuration instead.";
+        pImpl->calibrationJointConfiguration.clear();
     }
     else
     {
-        auto CalibrationConfigBottle = config.find("CalibrationConfig").asList();
-        for (size_t it = 0; it < CalibrationConfigBottle->size(); it++)
+        auto calibrationJointConfigurationBottle = config.find("calibrationJointConfiguration").asList();
+        for (size_t it = 0; it < calibrationJointConfigurationBottle->size(); it++)
         {
-            pImpl->CalibrationConfig.push_back(CalibrationConfigBottle->get(it).asFloat64());
+            pImpl->calibrationJointConfiguration.push_back(calibrationJointConfigurationBottle->get(it).asFloat64());
         }
     }
 
@@ -1531,9 +1531,8 @@ void HumanStateProvider::impl::computeSecondaryCalibrationRotationsForChain(cons
     iDynTree::Twist baseVel;
     baseVel.zero();
 
-    // setting to zero all the selected joints
     for (auto const& jointZeroIdx: jointZeroIndices) {
-        jointPos.setVal(jointZeroIdx, CalibrationConfig[jointZeroIdx]);
+        jointPos.setVal(jointZeroIdx, calibrationJointConfiguration[jointZeroIdx]);
     }
     // TODO check which value to give to the base (before we were using the base target measurement)
     kinDynComputations->setRobotState(iDynTree::Transform::Identity(), jointPos, baseVel, jointVel, worldGravity);
@@ -1635,7 +1634,7 @@ bool HumanStateProvider::impl::applyRpcCommand()
         // setting to zero all the selected joints
         for (auto const& jointZeroIdx: jointZeroIndices) {
 
-            jointPos.setVal(jointZeroIdx, CalibrationConfig[jointZeroIdx]);
+            jointPos.setVal(jointZeroIdx, calibrationJointConfiguration[jointZeroIdx]);
             
         }
 
