@@ -162,7 +162,6 @@ public:
     FloatingBaseName floatingBaseFrame;
 
     std::vector<std::string> jointList;
-    std::vector<double> calibrationJointConfiguration;
 
     std::vector<SegmentInfo> segments;
     std::vector<LinkPairInfo> linkPairs;
@@ -175,6 +174,7 @@ public:
     std::unordered_map<std::string, iDynTree::Transform> linkTransformMatricesRaw;
     std::unordered_map<std::string, iDynTree::Twist> linkVelocities;
     iDynTree::VectorDynSize jointConfigurationSolution;
+    iDynTree::VectorDynSize jointCalibrationSolution;
     iDynTree::VectorDynSize jointVelocitiesSolution;
     iDynTree::Transform baseTransformSolution;
     iDynTree::Twist baseVelocitySolution;
@@ -436,9 +436,10 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         }
     }
 
-     if (!(config.check("calibrationJointConfiguration") && config.find("calibrationJointConfiguration").isList())) {
+    std::vector<double> calibrationJointConfiguration;
+    if (!(config.check("calibrationJointConfiguration") && config.find("calibrationJointConfiguration").isList())) {
         yInfo() << LogPrefix << "calibrationJointConfiguration option not found or not valid, using zero configuration instead.";
-        pImpl->calibrationJointConfiguration.clear();
+       calibrationJointConfiguration.clear();
     }
     else
     {
@@ -450,7 +451,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         }
         for (size_t it = 0; it < calibrationJointConfigurationBottle->size(); it++)
         {
-            pImpl->calibrationJointConfiguration.push_back(calibrationJointConfigurationBottle->get(it).asFloat64());
+            calibrationJointConfiguration.push_back(calibrationJointConfigurationBottle->get(it).asFloat64());
         }
     }
 
@@ -1061,6 +1062,18 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     pImpl->jointVelocitiesSolution.resize(nrOfDOFs);
     pImpl->jointVelocitiesSolution.zero();
 
+    pImpl->jointCalibrationSolution.resize(nrOfDOFs);
+
+    // Fill iDynTreeVector with 0 if calibration configuration list is empty
+    if (calibrationJointConfiguration.empty()){
+        pImpl->jointCalibrationSolution.zero();
+    }
+    else {
+        for (int idx = 0; idx < calibrationJointConfiguration.size(); idx++) {
+            pImpl->jointCalibrationSolution.setVal(idx, calibrationJointConfiguration[idx]);
+        }
+    }
+
     // =======================
     // INITIALIZE BASE BUFFERS
     // =======================
@@ -1537,7 +1550,7 @@ void HumanStateProvider::impl::computeSecondaryCalibrationRotationsForChain(cons
     baseVel.zero();
 
     for (auto const& jointZeroIdx: jointZeroIndices) {
-        jointPos.setVal(jointZeroIdx, calibrationJointConfiguration[jointZeroIdx]);
+        jointPos.setVal(jointZeroIdx, jointConfigurationSolution.getVal(jointZeroIdx));
     }
     // TODO check which value to give to the base (before we were using the base target measurement)
     kinDynComputations->setRobotState(iDynTree::Transform::Identity(), jointPos, baseVel, jointVel, worldGravity);
@@ -1635,11 +1648,9 @@ bool HumanStateProvider::impl::applyRpcCommand()
         iDynTree::Twist baseVel;
         baseVel.zero();
 
-
-        // setting to zero all the selected joints
         for (auto const& jointZeroIdx: jointZeroIndices) {
 
-            jointPos.setVal(jointZeroIdx, calibrationJointConfiguration[jointZeroIdx]);
+            jointPos.setVal(jointZeroIdx, jointConfigurationSolution.getVal(jointZeroIdx));
             
         }
 
