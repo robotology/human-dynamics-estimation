@@ -437,13 +437,20 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     }
 
     std::vector<double> calibrationJointConfiguration;
-    if (!(config.check("calibrationJointConfiguration") && config.find("calibrationJointConfiguration").isList())) {
+    if (!config.check("calibrationJointConfiguration"))
+    {
         yInfo() << LogPrefix << "calibrationJointConfiguration option not found or not valid, using zero configuration instead.";
-       calibrationJointConfiguration.clear();
+        calibrationJointConfiguration.clear();
     }
     else
     {
-        auto calibrationJointConfigurationBottle = config.find("calibrationJointConfiguration").asList();
+        auto calibrationJointConfigurationValue = config.find("calibrationJointConfiguration");
+        if(!calibrationJointConfigurationValue.isList())
+        {
+            yError() << LogPrefix << "Param calibrationJointConfiguration must be a list";
+            return false;
+        }
+        auto calibrationJointConfigurationBottle = calibrationJointConfigurationValue.asList();
         if(calibrationJointConfigurationBottle->size() !=  pImpl->jointList.size())
         {
                 yError() << LogPrefix << "Parameter calibrationJointConfiguration must have the same size of the list of selected joints!";
