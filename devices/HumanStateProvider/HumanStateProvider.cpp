@@ -1065,10 +1065,18 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     pImpl->jointCalibrationSolution.resize(nrOfDOFs);
 
     // Fill iDynTreeVector with 0 if calibration configuration list is empty
-    if (calibrationJointConfiguration.empty()){
+    if (calibrationJointConfiguration.empty())
+    {
         pImpl->jointCalibrationSolution.zero();
     }
-    else {
+    else if(calibrationJointConfiguration.size() != nrOfDOFs)
+    {
+        yError() << LogPrefix << "calibrationJointConfiguration param size (" << calibrationJointConfiguration.size() 
+                 << ") must match the number of DOFs of the model (" << nrOfDOFs <<"). ";
+        return false;
+    }
+    else
+    {
         for (int idx = 0; idx < calibrationJointConfiguration.size(); idx++) {
             pImpl->jointCalibrationSolution.setVal(idx, calibrationJointConfiguration[idx]);
         }
