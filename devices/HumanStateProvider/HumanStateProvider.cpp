@@ -439,7 +439,7 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     std::vector<double> calibrationJointConfiguration;
     if (!config.check("calibrationJointConfiguration"))
     {
-        yInfo() << LogPrefix << "calibrationJointConfiguration option not found or not valid, using zero configuration instead.";
+        yInfo() << LogPrefix << "calibrationJointConfiguration option not found, using zero configuration instead.";
         calibrationJointConfiguration.clear();
     }
     else
