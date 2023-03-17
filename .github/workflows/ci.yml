@@ -42,7 +42,7 @@ jobs:
             mamba-version: "*"
             channels: conda-forge,defaults
             channel-priority: true
-            environment: wearables
+            activate-environment: wearables
             python-version: 3.8
 
         # Print the environment variables to simplify development and debugging
@@ -78,7 +78,7 @@ jobs:
         - name: Cache Source-based dependencies  [Ubuntu/macOS]
           if: steps.cache-source-deps.outputs.cache-hit != 'true' && (contains(matrix.os, 'ubuntu') || contains(matrix.os, 'macOS'))
           id: cache-source-deps
-          uses: actions/cache@v1
+          uses: actions/cache@v3
           with:
             path: ${{ github.workspace }}/install/deps
             # Including ${{ runner.temp }} is a workaround for https://github.com/robotology/whole-body-estimators/issues/60
