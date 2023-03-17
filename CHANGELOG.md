@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Fixed EMG normalization value in IWearWrapper and IWearLogger (https://github.com/robotology/wearables/pull/186)
+
 ## [1.7.1] - 2023-02-07
 
 ### Changed

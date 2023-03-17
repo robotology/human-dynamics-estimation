@@ -190,7 +190,7 @@ void IWearWrapper::run()
         for (const auto& sensor : pImpl->emgSensors) {
             double value, normalization;
             // double normalizationValue;
-            if (!sensor->getEmgSignal(value) || !sensor->getEmgSignal(normalization)) {
+            if (!sensor->getEmgSignal(value) || !sensor->getNormalizationValue(normalization)) {
                 yWarning() << logPrefix << "[EmgSensors] "
                          << "Failed to read data, "
                          << "sensor status is "
