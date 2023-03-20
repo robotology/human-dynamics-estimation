@@ -174,6 +174,7 @@ public:
     std::unordered_map<std::string, iDynTree::Transform> linkTransformMatricesRaw;
     std::unordered_map<std::string, iDynTree::Twist> linkVelocities;
     iDynTree::VectorDynSize jointConfigurationSolution;
+    iDynTree::VectorDynSize jointCalibrationSolution;
     iDynTree::VectorDynSize jointVelocitiesSolution;
     iDynTree::Transform baseTransformSolution;
     iDynTree::Twist baseVelocitySolution;
@@ -432,6 +433,32 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         for (size_t it = 0; it < jointListBottle->size(); it++)
         {
             pImpl->jointList.push_back(jointListBottle->get(it).asString());
+        }
+    }
+
+    std::vector<double> calibrationJointConfiguration;
+    if (!config.check("calibrationJointConfiguration"))
+    {
+        yInfo() << LogPrefix << "calibrationJointConfiguration option not found, using zero configuration instead.";
+        calibrationJointConfiguration.clear();
+    }
+    else
+    {
+        auto calibrationJointConfigurationValue = config.find("calibrationJointConfiguration");
+        if(!calibrationJointConfigurationValue.isList())
+        {
+            yError() << LogPrefix << "Param calibrationJointConfiguration must be a list";
+            return false;
+        }
+        auto calibrationJointConfigurationBottle = calibrationJointConfigurationValue.asList();
+        if(calibrationJointConfigurationBottle->size() !=  pImpl->jointList.size())
+        {
+                yError() << LogPrefix << "Parameter calibrationJointConfiguration must have the same size of the list of selected joints!";
+                return false;
+        }
+        for (size_t it = 0; it < calibrationJointConfigurationBottle->size(); it++)
+        {
+            calibrationJointConfiguration.push_back(calibrationJointConfigurationBottle->get(it).asFloat64());
         }
     }
 
@@ -1042,6 +1069,26 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     pImpl->jointVelocitiesSolution.resize(nrOfDOFs);
     pImpl->jointVelocitiesSolution.zero();
 
+    pImpl->jointCalibrationSolution.resize(nrOfDOFs);
+
+    // Fill iDynTreeVector with 0 if calibration configuration list is empty
+    if (calibrationJointConfiguration.empty())
+    {
+        pImpl->jointCalibrationSolution.zero();
+    }
+    else if(calibrationJointConfiguration.size() != nrOfDOFs)
+    {
+        yError() << LogPrefix << "calibrationJointConfiguration param size (" << calibrationJointConfiguration.size() 
+                 << ") must match the number of DOFs of the model (" << nrOfDOFs <<"). ";
+        return false;
+    }
+    else
+    {
+        for (int idx = 0; idx < calibrationJointConfiguration.size(); idx++) {
+            pImpl->jointCalibrationSolution.setVal(idx, calibrationJointConfiguration[idx]);
+        }
+    }
+
     // =======================
     // INITIALIZE BASE BUFFERS
     // =======================
@@ -1517,9 +1564,8 @@ void HumanStateProvider::impl::computeSecondaryCalibrationRotationsForChain(cons
     iDynTree::Twist baseVel;
     baseVel.zero();
 
-    // setting to zero all the selected joints
     for (auto const& jointZeroIdx: jointZeroIndices) {
-        jointPos.setVal(jointZeroIdx, 0);
+        jointPos.setVal(jointZeroIdx, jointConfigurationSolution.getVal(jointZeroIdx));
     }
     // TODO check which value to give to the base (before we were using the base target measurement)
     kinDynComputations->setRobotState(iDynTree::Transform::Identity(), jointPos, baseVel, jointVel, worldGravity);
@@ -1617,10 +1663,10 @@ bool HumanStateProvider::impl::applyRpcCommand()
         iDynTree::Twist baseVel;
         baseVel.zero();
 
-
-        // setting to zero all the selected joints
         for (auto const& jointZeroIdx: jointZeroIndices) {
-            jointPos.setVal(jointZeroIdx, 0);
+
+            jointPos.setVal(jointZeroIdx, jointConfigurationSolution.getVal(jointZeroIdx));
+            
         }
 
         kinDynComputations->setRobotState(iDynTree::Transform::Identity(), jointPos, baseVel, jointVel, worldGravity);
