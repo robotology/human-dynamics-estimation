@@ -63,7 +63,6 @@ public:
 
     interfaces::IHumanState* iHumanState = nullptr;
     interfaces::IHumanDynamics* iHumanDynamics = nullptr;
-    std::mutex loggerMutex;
     HumanLoggerSettings settings;
     robometry::BufferConfig bufferConfig;
     robometry::BufferManager bufferManager;
@@ -158,7 +157,6 @@ void HumanLogger::run()
 
 bool HumanLogger::open(yarp::os::Searchable& config)
 {
-    std::lock_guard<std::mutex> guard(pImpl->loggerMutex);
     if (!config.check("period")) {
         yInfo() << logPrefix << "Using default period: " << DefaultPeriod << "s";
     }
@@ -432,7 +430,6 @@ bool HumanLogger::attachAll(const yarp::dev::PolyDriverList& driverList)
 
 bool HumanLogger::detachAll()
 {
-    std::lock_guard<std::mutex> guard(pImpl->loggerMutex);
     while (isRunning()) {
         stop();
     }
