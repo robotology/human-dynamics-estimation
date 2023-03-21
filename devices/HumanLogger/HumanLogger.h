@@ -23,7 +23,6 @@ namespace hde {
 
 class hde::devices::HumanLogger
     : public yarp::dev::DeviceDriver
-    , public yarp::dev::IWrapper
     , public yarp::dev::IMultipleWrapper
     , public yarp::os::PeriodicThread
 {
@@ -42,10 +41,6 @@ public:
     // DeviceDriver interface
     bool open(yarp::os::Searchable& config) override;
     bool close() override;
-
-    // IWrapper interface
-    bool attach(yarp::dev::PolyDriver* poly) override;
-    bool detach() override;
 
     // IMultipleWrapper interface
     bool attachAll(const yarp::dev::PolyDriverList& driverList) override;

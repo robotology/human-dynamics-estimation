@@ -302,72 +302,6 @@ bool HumanLogger::close()
     return ok;
 }
 
-// ==================
-// IWrapper interface
-// ==================
-
-bool HumanLogger::attach(yarp::dev::PolyDriver* poly)
-{
-    if (!poly) {
-        yError() << logPrefix << "Passed PolyDriver is nullptr.";
-        return false;
-    }
-
-    // Get the device name from the driver
-    const std::string deviceName = poly->getValue("device").asString();
-    std::cerr << "attaching " << deviceName << std::endl;
-    if (deviceName == "human_state_provider" || deviceName == "human_state_remapper") {
-        // Attach IHumanState interface
-        if (!poly->view(pImpl->iHumanState) || !pImpl->iHumanState) {
-            yError() << logPrefix << "Failed to view IHumanState interface from the polydriver";
-            return false;
-        }
-
-        // Check the interface
-        if (pImpl->iHumanState->getNumberOfJoints() == 0
-                || pImpl->iHumanState->getNumberOfJoints() != pImpl->iHumanState->getJointNames().size()) {
-            yError() << "The IHumanState interface might not be ready";
-            return false;
-        }
-
-        yInfo() << logPrefix << deviceName << "attach() successful";
-    }
-
-    if (deviceName == "human_dynamics_estimator" || deviceName == "human_dynamics_remapper") {
-        // Attach IHumanDynamics interface
-        if (!poly->view(pImpl->iHumanDynamics) || !pImpl->iHumanDynamics) {
-            yError() << logPrefix << "Failed to view IHumanDynamics interface from the polydriver";
-            return false;
-        }
-
-        // Check the interface
-        if (pImpl->iHumanDynamics->getNumberOfJoints() == 0
-                || pImpl->iHumanDynamics->getNumberOfJoints() != pImpl->iHumanDynamics->getJointNames().size()) {
-            yError() << "The IHumanDynamics interface might not be ready";
-            return false;
-        }
-
-        yInfo() << logPrefix << deviceName << "attach() successful";
-    }
-
-    // If only one type of data is used, attachAll will not be called
-    // so we have to start the periodic thread from here
-    if ((!pImpl->settings.logHumanState || pImpl->iHumanState) && 
-        (!pImpl->settings.logHumanDynamics || pImpl->iHumanDynamics))
-    {
-        if (!pImpl->configureBufferManager()) {
-            yError() << logPrefix << "Failed to configure buffer manager for the logger.";
-            return false;
-        }
-
-        if(!start()) {
-            yError() << logPrefix << "Failed to start the loop.";
-            return false;
-        }
-    }
-
-    return true;
-}
 
 bool HumanLogger::impl::configureBufferManager()
 {
@@ -404,7 +338,99 @@ bool HumanLogger::impl::configureBufferManager()
 
 void HumanLogger::threadRelease() {}
 
-bool HumanLogger::detach()
+// ==========================
+// IMultipleWrapper interface
+// ==========================
+
+bool HumanLogger::attachAll(const yarp::dev::PolyDriverList& driverList)
+{
+    bool attachStatus = true;
+
+    if (driverList.size() > 2) {
+        yError() << logPrefix << "This wrapper accepts maximum two attached PolyDriver.";
+        return false;
+    }
+
+    for (int i = 0; i < driverList.size(); i++) {
+        yarp::dev::PolyDriver* poly = driverList[i]->poly;
+
+        if (!poly) {
+            yError() << logPrefix << "Passed PolyDriver is nullptr.";
+            return false;
+        }
+
+        // Get the device name from the driver
+        const std::string deviceName = poly->getValue("device").asString();
+        interfaces::IHumanState* tmpIHumanState = nullptr;
+        interfaces::IHumanDynamics* tmpIHumanDynamics = nullptr;
+
+        // View IHumanState
+        if(pImpl->settings.logHumanState && !pImpl->iHumanState && poly->view(tmpIHumanState))
+        {
+            // Check the interface
+            if (tmpIHumanState->getNumberOfJoints() == 0
+                    || tmpIHumanState->getNumberOfJoints() != tmpIHumanState->getJointNames().size()) {
+                yError() << logPrefix <<"The IHumanState interface"<<deviceName<<"might not be ready";
+                return false;
+            }
+
+            pImpl->iHumanState = tmpIHumanState;
+        }
+
+        // View IHumanDynamics
+        if(pImpl->settings.logHumanDynamics && !pImpl->iHumanDynamics && poly->view(tmpIHumanDynamics))
+        {
+            // Check the interface
+            if (pImpl->iHumanDynamics->getNumberOfJoints() == 0
+                    || pImpl->iHumanDynamics->getNumberOfJoints() != pImpl->iHumanDynamics->getJointNames().size()) {
+                yError() << logPrefix << "The IHumanDynamics interface"<<deviceName<<"might not be ready";
+                return false;
+            }
+
+            pImpl->iHumanDynamics = tmpIHumanDynamics;
+        }
+
+        if(!tmpIHumanState && !tmpIHumanDynamics)
+        {
+            yWarning()<<logPrefix<<"The device"<<deviceName<<"does not implement any supported device, so it cannot be attached";
+        }
+        else
+        {
+            yInfo()<<logPrefix<<"Device"<<deviceName<<"successfully attached";
+        }
+    }
+
+    // Check IHumanState interface
+    if (pImpl->settings.logHumanState && !pImpl->iHumanState)
+    {
+        yError()<<logPrefix<<"No IHumanState interface attached, stopping";
+        return false;
+    }
+
+    // Check IHumanDynamics interface
+    if (pImpl->settings.logHumanDynamics && !pImpl->iHumanDynamics)
+    {
+        yError()<<logPrefix<<"No IHumanDynamics interface attached, stopping";
+        return false;
+    }
+
+    if (!pImpl->configureBufferManager()) {
+        yError() << logPrefix << "Failed to configure buffer manager for the logger.";
+        return false;
+    }
+
+    // Start the periodic thread
+    if(!start()) {
+        yError() << logPrefix << "Failed to start the loop.";
+        return false;
+    }
+    
+    yInfo() << logPrefix << "Successfully attached all the required devices";
+
+    return true;
+}
+
+bool HumanLogger::detachAll()
 {
     std::lock_guard<std::mutex> guard(pImpl->loggerMutex);
     while (isRunning()) {
@@ -415,40 +441,4 @@ bool HumanLogger::detach()
     pImpl->iHumanDynamics = nullptr;
 
     return true;
-}
-
-// ==========================
-// IMultipleWrapper interface
-// ==========================
-
-bool HumanLogger::attachAll(const yarp::dev::PolyDriverList& driverList)
-{
-    bool attachStatus = true;
-
-    if (driverList.size() > 2) {
-        yError() << logPrefix << "This wrapper accepts maximum three attached PolyDriver.";
-        return false;
-    }
-
-    for (size_t i = 0; i < driverList.size(); i++) {
-        const yarp::dev::PolyDriverDescriptor* driver = driverList[i];
-
-        if (!driver) {
-            yError() << logPrefix << "Passed PolyDriverDescriptor is nullptr";
-            return false;
-        }
-
-        attachStatus = attachStatus && attach(driver->poly);
-    }
-    
-    if (attachStatus) {
-        yDebug() << logPrefix << "attach() successful";
-    }
-
-    return attachStatus;
-}
-
-bool HumanLogger::detachAll()
-{
-    return detach();
 }
