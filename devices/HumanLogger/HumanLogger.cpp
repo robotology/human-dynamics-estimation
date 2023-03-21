@@ -379,8 +379,8 @@ bool HumanLogger::attachAll(const yarp::dev::PolyDriverList& driverList)
         if(pImpl->settings.logHumanDynamics && !pImpl->iHumanDynamics && poly->view(tmpIHumanDynamics))
         {
             // Check the interface
-            if (pImpl->iHumanDynamics->getNumberOfJoints() == 0
-                    || pImpl->iHumanDynamics->getNumberOfJoints() != pImpl->iHumanDynamics->getJointNames().size()) {
+            if (tmpIHumanDynamics->getNumberOfJoints() == 0
+                    || tmpIHumanDynamics->getNumberOfJoints() != tmpIHumanDynamics->getJointNames().size()) {
                 yError() << logPrefix << "The IHumanDynamics interface"<<deviceName<<"might not be ready";
                 return false;
             }
