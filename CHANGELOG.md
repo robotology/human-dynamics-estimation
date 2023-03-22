@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.8.0] - 2023-03-22
+
 ### Added
 - [`HumanStateVisualizer`] Added custom options for window dimensions (https://github.com/robotology/human-dynamics-estimation/pull/341).
 - [`HumanStateProvider`] Added a parameter that allows to set custom angles for calibration purposes (https://github.com/robotology/human-dynamics-estimation/pull/341).
