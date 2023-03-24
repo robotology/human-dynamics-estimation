@@ -7,7 +7,6 @@
 #include <memory>
 #include <yarp/dev/DeviceDriver.h>
 #include <yarp/dev/IMultipleWrapper.h>
-#include <yarp/dev/IWrapper.h>
 #include <yarp/os/PeriodicThread.h>
 
 namespace hde {
