@@ -7,7 +7,6 @@
 #include <yarp/dev/DeviceDriver.h>
 #include <yarp/dev/IMultipleWrapper.h>
 #include <yarp/os/PeriodicThread.h>
-#include <yarp/dev/IWrapper.h>
 #include <hde/interfaces/IHumanState.h>
 #include <hde/interfaces/IWearableTargets.h>
 
@@ -21,7 +20,6 @@ namespace hde {
 
 class hde::devices::HumanStateProvider final
     : public yarp::dev::DeviceDriver
-    , public yarp::dev::IWrapper
     , public yarp::dev::IMultipleWrapper
     , public yarp::os::PeriodicThread
     , public hde::interfaces::IHumanState
@@ -42,10 +40,6 @@ public:
     // PeriodicThread
     void run() override;
     void threadRelease() override;
-
-    // IWrapper interface
-    bool attach(yarp::dev::PolyDriver* poly) override;
-    bool detach() override;
 
     // IMultipleWrapper interface
     bool attachAll(const yarp::dev::PolyDriverList& driverList) override;

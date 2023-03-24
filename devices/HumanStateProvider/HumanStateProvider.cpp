@@ -276,6 +276,9 @@ public:
 
     // constructor
     impl();
+
+    // attach IWear interface
+    bool attach(yarp::dev::PolyDriver* poly);
 };
 
 // ===============
@@ -2633,26 +2636,26 @@ bool HumanStateProvider::impl::computeLinksAngularVelocityErrors(
     return true;
 }
 
-bool HumanStateProvider::attach(yarp::dev::PolyDriver* poly)
+bool HumanStateProvider::impl::attach(yarp::dev::PolyDriver* poly)
 {
     if (!poly) {
         yError() << LogPrefix << "Passed PolyDriver is nullptr";
         return false;
     }
 
-    if (pImpl->iWear || !poly->view(pImpl->iWear) || !pImpl->iWear) {
+    if (!poly->view(iWear)) {
         yError() << LogPrefix << "Failed to view the IWear interface from the PolyDriver";
         return false;
     }
 
-    while (pImpl->iWear->getStatus() == WearStatus::WaitingForFirstRead) {
+    while (iWear->getStatus() == WearStatus::WaitingForFirstRead) {
         yInfo() << LogPrefix << "IWear interface waiting for first data. Waiting...";
         yarp::os::Time::delay(5);
     }
 
-    if (pImpl->iWear->getStatus() != WearStatus::Ok) {
+    if (iWear->getStatus() != WearStatus::Ok) {
         yError() << LogPrefix << "The status of the attached IWear interface is not ok ("
-                 << static_cast<int>(pImpl->iWear->getStatus()) << ")";
+                 << static_cast<int>(iWear->getStatus()) << ")";
         return false;
     }
 
@@ -2660,21 +2663,21 @@ bool HumanStateProvider::attach(yarp::dev::PolyDriver* poly)
     // CHECK WEARABLE TARGETS
     // ======================
 
-    for (auto wearableTargetEntry : pImpl->wearableTargets)
+    for (auto wearableTargetEntry : wearableTargets)
     {
         ModelLinkName linkName = wearableTargetEntry.second->modelLinkName;
         hde::TargetName targetName = wearableTargetEntry.first;
         WearableName wearableName = wearableTargetEntry.second->wearableName;
 
         // Check if the link exist in the model
-        if (pImpl->humanModel.getLinkIndex(linkName) == iDynTree::LINK_INVALID_INDEX)
+        if (humanModel.getLinkIndex(linkName) == iDynTree::LINK_INVALID_INDEX)
         {
             yError() << "Failed to find link " << linkName << " used in target " << targetName;
             return false;
         }
 
         // Check if the wearable sensor exist and read the type
-        auto sensor = pImpl->iWear->getSensor(wearableName);
+        auto sensor = iWear->getSensor(wearableName);
         if (!sensor) 
         {
             yError() << "Failed to find sensor " << wearableName << " used in target " << targetName;
@@ -2687,12 +2690,12 @@ bool HumanStateProvider::attach(yarp::dev::PolyDriver* poly)
     // =======================
 
     // Check that the attached IWear interface contains all the model links
-    for (size_t linkIndex = 0; linkIndex < pImpl->humanModel.getNrOfLinks(); ++linkIndex) {
+    for (size_t linkIndex = 0; linkIndex < humanModel.getNrOfLinks(); ++linkIndex) {
         // Get the name of the link from the model and its prefix from iWear
-        std::string modelLinkName = pImpl->humanModel.getLinkName(linkIndex);
+        std::string modelLinkName = humanModel.getLinkName(linkIndex);
 
-        if (pImpl->wearableStorage.modelToWearable_LinkName.find(modelLinkName)
-            == pImpl->wearableStorage.modelToWearable_LinkName.end()) {
+        if (wearableStorage.modelToWearable_LinkName.find(modelLinkName)
+            == wearableStorage.modelToWearable_LinkName.end()) {
             // yWarning() << LogPrefix << "Failed to find" << modelLinkName
             //           << "entry in the configuration map. Skipping this link.";
             continue;
@@ -2700,10 +2703,10 @@ bool HumanStateProvider::attach(yarp::dev::PolyDriver* poly)
 
         // Get the name of the sensor associated to the link
         WearableName wearableName =
-            pImpl->wearableStorage.modelToWearable_LinkName.at(modelLinkName);
+            wearableStorage.modelToWearable_LinkName.at(modelLinkName);
 
         // Try to get the sensor
-        auto sensor = pImpl->iWear->getVirtualLinkKinSensor(wearableName);
+        auto sensor = iWear->getVirtualLinkKinSensor(wearableName);
         if (!sensor) {
             // yError() << LogPrefix << "Failed to find sensor associated to link" <<
             // wearableName
@@ -2712,21 +2715,15 @@ bool HumanStateProvider::attach(yarp::dev::PolyDriver* poly)
         }
 
         // Create a sensor map entry using the wearable sensor name as key
-        pImpl->wearableStorage.linkSensorsMap[wearableName] =
-            pImpl->iWear->getVirtualLinkKinSensor(wearableName);
+        wearableStorage.linkSensorsMap[wearableName] =
+            iWear->getVirtualLinkKinSensor(wearableName);
     }
 
     // ====
     // MISC
     // ====
 
-    // Start the PeriodicThread loop
-    if (!start()) {
-        yError() << LogPrefix << "Failed to start the loop.";
-        return false;
-    }
-
-    yInfo() << LogPrefix << "attach() successful";
+    yInfo() << LogPrefix << "IWear interface attached successfully";
     return true;
 }
 
@@ -2737,24 +2734,15 @@ void HumanStateProvider::threadRelease()
     }
 }
 
-bool HumanStateProvider::detach()
+bool HumanStateProvider::detachAll()
 {
-    while (isRunning()) {
+    if (isRunning()) {
         stop();
     }
 
-    {
-        std::lock_guard<std::mutex>(pImpl->mutex);
-        pImpl->solution.clear();
-    }
-
     pImpl->iWear = nullptr;
-    return true;
-}
 
-bool HumanStateProvider::detachAll()
-{
-    return detach();
+    return true;
 }
 
 bool HumanStateProvider::attachAll(const yarp::dev::PolyDriverList& driverList)
@@ -2771,7 +2759,18 @@ bool HumanStateProvider::attachAll(const yarp::dev::PolyDriverList& driverList)
         return false;
     }
 
-    return attach(driver->poly);
+    // attach the device
+    if(!pImpl->attach(driver->poly)) {
+        return false;
+    }
+
+    // Start the PeriodicThread loop
+    if (!start()) {
+        yError() << LogPrefix << "Failed to start the loop.";
+        return false;
+    }
+
+    return true;
 }
 
 std::vector<std::string> HumanStateProvider::getJointNames() const
