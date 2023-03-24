@@ -140,7 +140,7 @@ public:
 
     bool allowIKFailures;
 
-    float period;
+    double period;
     mutable std::mutex mutex;
 
     // Rpc
