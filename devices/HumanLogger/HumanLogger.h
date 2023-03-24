@@ -18,7 +18,7 @@ namespace hde {
 class hde::devices::HumanLogger
     : public yarp::dev::DeviceDriver
     , public yarp::dev::IMultipleWrapper
-    , public yarp::os::PeriodicThread
+    , private yarp::os::PeriodicThread
 {
 private:
     class impl;
