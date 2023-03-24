@@ -159,6 +159,8 @@ public:
     std::vector<iDynTree::Wrench> transformedWrenches;
 
     iDynTree::SpatialForceVector computeRCMInBaseUsingMeasurements(iDynTree::KinDynComputations& kinDynComputations);
+
+    bool attach(yarp::dev::PolyDriver* poly);
 };
 
 HumanWrenchProvider::HumanWrenchProvider()
@@ -957,6 +959,8 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
 
 bool HumanWrenchProvider::close()
 {
+    detachAll();
+
     return true;
 }
 
@@ -1253,7 +1257,7 @@ void HumanWrenchProvider::run()
     }
 }
 
-bool HumanWrenchProvider::attach(yarp::dev::PolyDriver* poly)
+bool HumanWrenchProvider::Impl::attach(yarp::dev::PolyDriver* poly)
 {
     if (!poly) {
         yError() << LogPrefix << "Passed PolyDriver is nullptr";
@@ -1263,55 +1267,48 @@ bool HumanWrenchProvider::attach(yarp::dev::PolyDriver* poly)
     // Get the device name from the driver
     const std::string deviceName = poly->getValue("device").asString();
 
-    yInfo()<<LogPrefix<<"Attaching "<< deviceName;
+    wearable::IWear* tmpIWear = nullptr;
+    hde::interfaces::IHumanState* tmpIHumanState = nullptr;
 
-    if (deviceName == "human_state_provider" || deviceName == "human_state_remapper" ) {
+    yInfo()<<LogPrefix<<"Attaching device"<< deviceName;
 
-        // Attach IHumanState interface from HumanStateProvider
-        if (pImpl->iHumanState || !poly->view(pImpl->iHumanState) || !pImpl->iHumanState) {
-            yError() << LogPrefix << "Failed to view IHumanState interface from the polydriver";
-            return false;
-        }
+    // Attach IHumanState
+    if (!iHumanState && poly->view(tmpIHumanState)) {
 
         // Check the iHumanState interface
-        double interfaceCheckStart = yarp::os::Time::now();
-        int count = 1000000;
-        while (pImpl->iHumanState->getNumberOfJoints() == 0
-                || pImpl->iHumanState->getNumberOfJoints() != pImpl->iHumanState->getJointNames().size()) {
+        if (tmpIHumanState->getNumberOfJoints() == 0
+            || tmpIHumanState->getNumberOfJoints() != tmpIHumanState->getJointNames().size()) {
             
-            if(yarp::os::Time::now()-interfaceCheckStart>INTERFACE_CHECK_TIMEOUT_S)
-            {
-                yError() << LogPrefix<<"The iHumanState interface has been providing inconsistent data for"<<INTERFACE_CHECK_TIMEOUT_S<<"seconds!";
+            yError() << LogPrefix<<"The IHumanState interface has been providing inconsistent data and might not be ready";
                 return false;
-            }
         }
 
-        yInfo() << LogPrefix << deviceName << "attach() successful";
+        iHumanState = tmpIHumanState;
+        yInfo() << LogPrefix << "Device" <<deviceName << "attached successfully as IHumanState interface";
     }
 
-    if (deviceName == "iwear_remapper") {
+    // Attach IWear interface
+    if(!iWear && poly->view(tmpIWear)) {
 
-        if (pImpl->iWear || !poly->view(pImpl->iWear) || !pImpl->iWear) {
-            yError() << LogPrefix << "Failed to view the IWear interface from the PolyDriver";
-            return false;
-        }
-
-        while (pImpl->iWear->getStatus() == wearable::WearStatus::WaitingForFirstRead) {
+        while (tmpIWear->getStatus() == wearable::WearStatus::WaitingForFirstRead) {
             yInfo() << LogPrefix << "IWear interface waiting for first data. Waiting...";
             yarp::os::Time::delay(5);
         }
 
-        if (pImpl->iWear->getStatus() != wearable::WearStatus::Ok) {
+        if (tmpIWear->getStatus() != wearable::WearStatus::Ok) {
             yError() << LogPrefix << "The status of the attached IWear interface is not ok ("
-                     << static_cast<int>(pImpl->iWear->getStatus()) << ")";
+                     << static_cast<int>(tmpIWear->getStatus()) << ")";
             return false;
         }
 
+        iWear = tmpIWear;
+        yInfo() << LogPrefix << "Device" <<deviceName << "attached successfully as IWear interface";
+
         // Get the ft wearable sensors containing the input measurements
-        for (auto& ftSensorSourceData : pImpl->wrenchSources) {
+        for (auto& ftSensorSourceData : wrenchSources) {
             if (ftSensorSourceData.type == WrenchSourceType::Fixed)
             {
-                auto sensor = pImpl->iWear->getForceTorque6DSensor(ftSensorSourceData.sensorName);
+                auto sensor = iWear->getForceTorque6DSensor(ftSensorSourceData.sensorName);
 
                 if (!sensor) {
                     yError() << LogPrefix << "Failed to get sensor" << ftSensorSourceData.sensorName
@@ -1324,26 +1321,26 @@ bool HumanWrenchProvider::attach(yarp::dev::PolyDriver* poly)
         }
 
         // Initialize the number of channels of the equivalent IAnalogSensor
-        const size_t numberOfFTSensors = pImpl->wrenchSources.size();
+        const size_t numberOfFTSensors = wrenchSources.size();
         {
-            std::lock_guard<std::mutex> lock(pImpl->mutex);
-            pImpl->analogSensorData.measurements.resize(6 * numberOfFTSensors, 0);
-            pImpl->analogSensorData.numberOfChannels = 6 * numberOfFTSensors;
+            std::lock_guard<std::mutex> lock(mutex);
+            analogSensorData.measurements.resize(6 * numberOfFTSensors, 0);
+            analogSensorData.numberOfChannels = 6 * numberOfFTSensors;
         }
 
 
-        if (pImpl->pHRIScenario) {
+        if (pHRIScenario) {
 
             // Check the size is at least as much as the one required by the config joints list
-            if (pImpl->iWear->getVirtualJointKinSensors().size() < pImpl->robotJointNamesListFromConfig.size()) {
+            if (iWear->getVirtualJointKinSensors().size() < robotJointNamesListFromConfig.size()) {
                 yError() << LogPrefix << "The number of joints from the IWear interface are less than the number of joints needed as defined in the configuration file";
                 return false;
             }
 
             // Get the joing position sensors containing the joint data
-            pImpl->robotJointWearableSensors = pImpl->iWear->getVirtualJointKinSensors();
+            robotJointWearableSensors = iWear->getVirtualJointKinSensors();
 
-            for (auto& robotJointWearableSensor : pImpl->robotJointWearableSensors) {
+            for (auto& robotJointWearableSensor : robotJointWearableSensors) {
                 if (!robotJointWearableSensor) {
                     yError() << LogPrefix << "Failed to get robot joint wearabke sensor pointer from the attached IWear interface";
                     return false;
@@ -1356,12 +1353,12 @@ bool HumanWrenchProvider::attach(yarp::dev::PolyDriver* poly)
                 std::string jointName = sensorName.substr(found+1);
 
                 std::vector<std::string>::iterator jointVecIterator
-                                            = std::find(pImpl->robotJointNamesListFromConfig.begin(),
-                                                        pImpl->robotJointNamesListFromConfig.end(),
+                                            = std::find(robotJointNamesListFromConfig.begin(),
+                                                        robotJointNamesListFromConfig.end(),
                                                         jointName);
 
-                if (jointVecIterator != pImpl->robotJointNamesListFromConfig.end()) {
-                     pImpl->robotJointsName.push_back(jointName);
+                if (jointVecIterator != robotJointNamesListFromConfig.end()) {
+                     robotJointsName.push_back(jointName);
                 }
                  else {
                     yWarning() << LogPrefix << "Ignoring sensor " << sensorName
@@ -1370,13 +1367,17 @@ bool HumanWrenchProvider::attach(yarp::dev::PolyDriver* poly)
             }
         }
 
-        yInfo() << LogPrefix << deviceName << "attach() successful";
     }
 
     // ====
     // MISC
     // ====
 
+    if(!tmpIWear && !tmpIHumanState)
+    {
+        yError() << LogPrefix << "Device"<<deviceName<<"does not implement any of the attachable interfaces!";
+        return false;
+    }
     
     return true;
 }
@@ -1384,26 +1385,15 @@ bool HumanWrenchProvider::attach(yarp::dev::PolyDriver* poly)
 void HumanWrenchProvider::threadRelease()
 {}
 
-bool HumanWrenchProvider::detach()
-{
-    while(isRunning()) {
-        stop();
-    }
-
-    pImpl->iHumanState = nullptr;
-    pImpl->iWear = nullptr;
-    return true;
-}
 
 bool HumanWrenchProvider::attachAll(const yarp::dev::PolyDriverList& driverList)
 {
-    bool attachStatus = false;
     if (driverList.size() > 2) {
         yError() << LogPrefix << "This wrapper accepts only two attached PolyDriver";
         return false;
     }
 
-    for (size_t i = 0; i < driverList.size(); i++) {
+    for (int i = 0; i < driverList.size(); i++) {
         const yarp::dev::PolyDriverDescriptor* driver = driverList[i];
 
         if (!driver) {
@@ -1411,7 +1401,18 @@ bool HumanWrenchProvider::attachAll(const yarp::dev::PolyDriverList& driverList)
             return false;
         }
 
-        attachStatus = attach(driver->poly);
+        if(!pImpl->attach(driver->poly)){
+            return false;
+        }
+    }
+
+    if(!pImpl->iWear){
+        yError() << LogPrefix << "Missing attached IWear interface!";
+        return false;
+    }
+    if(!pImpl->iHumanState){
+        yError() << LogPrefix << "Missing attached IHumanState interface!";
+        return false;
     }
 
     // Start the PeriodicThread loop
@@ -1420,14 +1421,19 @@ bool HumanWrenchProvider::attachAll(const yarp::dev::PolyDriverList& driverList)
         return false;
     }
 
-    yInfo() << LogPrefix << "attach() successful";
-
-    return attachStatus;
+    return true;
 }
 
 bool HumanWrenchProvider::detachAll()
 {
-    return detach();
+    if(isRunning()) {
+        stop();
+    }
+
+    pImpl->iHumanState = nullptr;
+    pImpl->iWear = nullptr;
+
+    return true;
 }
 
 // =============
