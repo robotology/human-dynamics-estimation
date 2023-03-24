@@ -19,7 +19,7 @@ namespace hde {
 class hde::devices::RobotPositionController final
         : public yarp::dev::DeviceDriver
         , public yarp::dev::IWrapper
-        , public yarp::os::PeriodicThread
+        , private yarp::os::PeriodicThread
 {
 private:
     class impl;
