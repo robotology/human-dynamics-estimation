@@ -6,7 +6,6 @@
 
 #include <yarp/dev/DeviceDriver.h>
 #include <yarp/os/PeriodicThread.h>
-#include <yarp/dev/IMultipleWrapper.h>
 #include <yarp/dev/IWrapper.h>
 
 #include <memory>
@@ -20,7 +19,6 @@ namespace hde {
 class hde::devices::RobotPositionController final
         : public yarp::dev::DeviceDriver
         , public yarp::dev::IWrapper
-        , public yarp::dev::IMultipleWrapper
         , public yarp::os::PeriodicThread
 {
 private:
@@ -43,9 +41,6 @@ public:
     bool attach(yarp::dev::PolyDriver* poly) override;
     bool detach() override;
 
-    // IMultipleWrapper interface
-    bool attachAll(const yarp::dev::PolyDriverList& driverList) override;
-    bool detachAll() override;
 };
 
 #endif // HDE_DEVICES_ROBOTPOSITIONCONTROLLER
