@@ -21,7 +21,7 @@ namespace hde {
 class hde::devices::HumanStateProvider final
     : public yarp::dev::DeviceDriver
     , public yarp::dev::IMultipleWrapper
-    , public yarp::os::PeriodicThread
+    , private yarp::os::PeriodicThread
     , public hde::interfaces::IHumanState
     , public hde::interfaces::IWearableTargets
 {
