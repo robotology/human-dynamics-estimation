@@ -11,7 +11,6 @@
 #include <yarp/dev/ITorqueControl.h>
 #include <yarp/dev/IVelocityControl.h>
 #include <yarp/dev/IMultipleWrapper.h>
-#include <yarp/dev/IWrapper.h>
 #include <yarp/os/PeriodicThread.h>
 #include <yarp/dev/IControlLimits.h>
 
@@ -25,7 +24,6 @@ namespace hde {
 
 class hde::devices::HumanControlBoard final
     : public yarp::dev::DeviceDriver
-    , public yarp::dev::IWrapper
     , public yarp::dev::IMultipleWrapper
     , public yarp::os::PeriodicThread
     , public yarp::dev::IAxisInfo
@@ -50,10 +48,6 @@ public:
     // PeriodicThread
     void run() override;
     void threadRelease() override;
-
-    // IWrapper interface
-    bool attach(yarp::dev::PolyDriver* poly) override;
-    bool detach() override;
 
     // IMultipleWrapper interface
     bool attachAll(const yarp::dev::PolyDriverList& driverList) override;
