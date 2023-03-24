@@ -56,6 +56,8 @@ public:
     yarp::sig::Vector jointAccelerations;
 
     yarp::sig::Vector jointTorques;
+
+    bool attach(yarp::dev::PolyDriver* poly);
 };
 
 // =========================
@@ -214,7 +216,7 @@ void HumanControlBoard::run()
 
 }
 
-bool HumanControlBoard::attach(yarp::dev::PolyDriver* poly)
+bool HumanControlBoard::impl::attach(yarp::dev::PolyDriver* poly)
 {
     if (!poly) {
         yError() << LogPrefix << "Passed PolyDriver is nullptr";
@@ -223,43 +225,45 @@ bool HumanControlBoard::attach(yarp::dev::PolyDriver* poly)
 
     // Get the device name from the driver
     const std::string deviceName = poly->getValue("device").asString();
+    yInfo() << LogPrefix << "Attaching device"<<deviceName;
 
-    if (deviceName == "human_state_provider" || deviceName == "human_state_remapper") {
+    hde::interfaces::IHumanState* tmpIHumanState = nullptr;
+    hde::interfaces::IHumanDynamics* tmpIHumanDynamics = nullptr;
 
-        // Attach IHumanState interface from HumanStateProvider
-        if (pImpl->iHumanState || !poly->view(pImpl->iHumanState) || !pImpl->iHumanState) {
-            yError() << LogPrefix << "Failed to view IHumanState interface from the polydriver";
-            return false;
-        }
-
+    // Try to attach as IHumanState
+    if(!iHumanState && !poly->view(tmpIHumanState)) {
+        
         // Check the interface
-        if (pImpl->iHumanState->getNumberOfJoints() == 0
-                || pImpl->iHumanState->getNumberOfJoints() != pImpl->iHumanState->getJointNames().size()) {
+        if (tmpIHumanState->getNumberOfJoints() == 0
+                || tmpIHumanState->getNumberOfJoints() != tmpIHumanState->getJointNames().size()) {
             yError() << "The IHumanState interface might not be ready";
             return false;
         }
 
-        pImpl->isHumanStateAttached = true;
-        yInfo() << LogPrefix << deviceName << "attach() successful";
+        isHumanStateAttached = true;
+        iHumanState = tmpIHumanState;
+        yInfo() << LogPrefix << deviceName << "attached successful as IHumanState interface";
     }
 
-    if (deviceName == "human_dynamics_estimator") {
-        // Attach IHumanDynamics interfaces coming from HumanDynamicsEstimator
-        if (pImpl->iHumanDynamics || !poly->view(pImpl->iHumanDynamics) || !pImpl->iHumanDynamics) {
-            yError() << LogPrefix << "Failed to view IHumanDynamics interface from the polydriver";
-            return false;
-        }
+    // Try to attach as IHumanDynamics
+    if (!iHumanDynamics && poly->view(tmpIHumanDynamics)) {
 
         // Check the interface
-        if (pImpl->iHumanDynamics->getNumberOfJoints() != 0
-            && (pImpl->iHumanDynamics->getNumberOfJoints() != pImpl->iHumanDynamics->getJointNames().size())) {
+        if (tmpIHumanDynamics->getNumberOfJoints() != 0
+            && (tmpIHumanDynamics->getNumberOfJoints() != tmpIHumanDynamics->getJointNames().size())) {
             yError() << LogPrefix << "The IHumanDynamics interface is not valid."
                      << "The number of joints should match the number of joint names.";
             return false;
         }
 
-        pImpl->isHumanDynamicsAttached = true;
-        yInfo() << LogPrefix << deviceName << "attach() successful";
+        isHumanDynamicsAttached = true;
+        iHumanDynamics = tmpIHumanDynamics;
+        yInfo() << LogPrefix << deviceName << "attached successfully as IHumanDynamics interface";
+    }
+
+    if(!tmpIHumanState || !tmpIHumanDynamics){
+        yError() << LogPrefix << "Unable to attach"<<deviceName<<"as one of the supported interfaces";
+        return false;
     }
 
     return true;
@@ -267,17 +271,6 @@ bool HumanControlBoard::attach(yarp::dev::PolyDriver* poly)
 
 void HumanControlBoard::threadRelease()
 {}
-
-bool HumanControlBoard::detach()
-{
-    while(isRunning()) {
-        yarp::os::PeriodicThread::stop();
-    }
-
-    pImpl->iHumanState = nullptr;
-    pImpl->iHumanDynamics = nullptr;
-    return true;
-}
 
 bool HumanControlBoard::attachAll(const yarp::dev::PolyDriverList& driverList)
 {
@@ -295,7 +288,14 @@ bool HumanControlBoard::attachAll(const yarp::dev::PolyDriverList& driverList)
             return false;
         }
 
-        attachStatus = attachStatus && attach(driver->poly);
+        if(pImpl->attach(driver->poly)) {
+            return false;
+        }
+    }
+
+    if(!pImpl->isHumanStateAttached && !pImpl->isHumanDynamicsAttached){
+        yError() << LogPrefix << "Neither IHumanState nor IHumanState have been attached!";
+        return true;
     }
 
     // ====
@@ -303,17 +303,23 @@ bool HumanControlBoard::attachAll(const yarp::dev::PolyDriverList& driverList)
     // ====
 
     // Start the PeriodicThread loop
-    if (attachStatus && !start()) {
+    if (!start()) {
         yError() << LogPrefix << "Failed to start the loop";
         return false;
     }
 
-    return attachStatus;
+    return true;
 }
 
 bool HumanControlBoard::detachAll()
 {
-    return detach();
+    if(isRunning()) {
+        yarp::os::PeriodicThread::stop();
+    }
+
+    pImpl->iHumanState = nullptr;
+    pImpl->iHumanDynamics = nullptr;
+    return true;
 }
 
 // IAxisInfo interface
