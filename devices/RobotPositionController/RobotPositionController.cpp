@@ -460,7 +460,7 @@ bool RobotPositionController::attach(yarp::dev::PolyDriver* poly)
         return false;
     }
 
-    if (pImpl->iHumanState || !poly->view(pImpl->iHumanState) || !pImpl->iHumanState) {
+    if (!pImpl->iHumanState && !poly->view(pImpl->iHumanState)) {
         yError() << LogPrefix << "Failed to view the IHumanState interface from the PolyDriver";
         return false;
     }
@@ -542,26 +542,4 @@ bool RobotPositionController::detach()
     pImpl->iPosDirectControl = nullptr;
 
     return true;
-}
-
-bool RobotPositionController::attachAll(const yarp::dev::PolyDriverList& driverList)
-{
-    if (driverList.size() > 1) {
-        yError() << LogPrefix << "This wrapper accepts only one attached PolyDriver";
-        return false;
-    }
-
-    const yarp::dev::PolyDriverDescriptor* driver = driverList[0];
-
-    if (!driver) {
-        yError() << LogPrefix << "Passed PolyDriverDescriptor is nullptr";
-        return false;
-    }
-
-    return attach(driver->poly);
-}
-
-bool RobotPositionController::detachAll()
-{
-    return detach();
 }
