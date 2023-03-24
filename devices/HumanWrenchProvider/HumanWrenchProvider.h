@@ -22,7 +22,7 @@ namespace hde {
 class hde::devices::HumanWrenchProvider final
     : public yarp::dev::DeviceDriver
     , public yarp::dev::IMultipleWrapper
-    , public yarp::os::PeriodicThread
+    , private yarp::os::PeriodicThread
     , public yarp::dev::IAnalogSensor
     , public hde::interfaces::IHumanWrench
 {
