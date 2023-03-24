@@ -21,7 +21,7 @@ namespace hde {
 class hde::devices::HumanDynamicsEstimator final
     : public yarp::dev::DeviceDriver
     , public yarp::dev::IMultipleWrapper
-    , public yarp::os::PeriodicThread
+    , private yarp::os::PeriodicThread
     , public hde::interfaces::IHumanDynamics
 {
 private:
