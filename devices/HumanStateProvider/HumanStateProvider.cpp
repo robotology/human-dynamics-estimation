@@ -1565,7 +1565,7 @@ void HumanStateProvider::impl::computeSecondaryCalibrationRotationsForChain(cons
     baseVel.zero();
 
     for (auto const& jointZeroIdx: jointZeroIndices) {
-        jointPos.setVal(jointZeroIdx, jointConfigurationSolution.getVal(jointZeroIdx));
+        jointPos.setVal(jointZeroIdx, jointCalibrationSolution.getVal(jointZeroIdx));
     }
     // TODO check which value to give to the base (before we were using the base target measurement)
     kinDynComputations->setRobotState(iDynTree::Transform::Identity(), jointPos, baseVel, jointVel, worldGravity);
@@ -1665,7 +1665,7 @@ bool HumanStateProvider::impl::applyRpcCommand()
 
         for (auto const& jointZeroIdx: jointZeroIndices) {
 
-            jointPos.setVal(jointZeroIdx, jointConfigurationSolution.getVal(jointZeroIdx));
+            jointPos.setVal(jointZeroIdx, jointCalibrationSolution.getVal(jointZeroIdx));
             
         }
 
