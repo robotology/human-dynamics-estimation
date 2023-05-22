@@ -58,4 +58,3 @@ Wearable devices contained in [`/devices/`](/devices) are [YARP devices](http://
 ## Mantainers
 
 * Lorenzo Rapetti ([@lrapetti](https://github.com/lrapetti))
-* Riccardo Grieco ([@RiccardoGrieco](https://github.com/RiccardoGrieco))
