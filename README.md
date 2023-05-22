@@ -149,4 +149,3 @@ The development is also supported by the [Istituto Italiano di Tecnologia](http:
 ## Mantainers
 
 * Lorenzo Rapetti ([@lrapetti](https://github.com/lrapetti))
-* Riccardo Grieco ([@RiccardoGrieco](https://github.com/RiccardoGrieco))
