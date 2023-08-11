@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: Fondazione Istituto Italiano di Tecnologia (IIT)
+# SPDX-License-Identifier: BSD-3-Clause
+
 set (HDE_PROJECT_NAME HumanDynamicsEstimation)
 
 # HDE xml files installation
