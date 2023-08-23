@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [`HumanStateProvider`] Added a parameter that allows to set custom angles for calibration purposes (https://github.com/robotology/human-dynamics-estimation/pull/341).
 - Added configuration files for ergoCub robot. (https://github.com/robotology/human-dynamics-estimation/pull/340)
 
+### Changed
+- The license of the repo changed to [`BSD-3-Clause`](https://spdx.org/licenses/BSD-3-Clause.html) (https://github.com/robotology/human-dynamics-estimation/pull/350).
+
 ### Fixed
 - [`HumanLogger`] Removed IWrapper from implemented interface to fix checks on log flags and attached interfaces (https://github.com/robotology/human-dynamics-estimation/pull/344)
 
