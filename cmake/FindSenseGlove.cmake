@@ -1,5 +1,5 @@
-# Copyright 2021 Istituto Italiano di Tecnologia (IIT)
-# @author Kourosh Darvish <kourosh.darvish@iit.it>
+# SPDX-FileCopyrightText: Fondazione Istituto Italiano di Tecnologia (IIT)
+# SPDX-License-Identifier: BSD-3-Clause
 
 # Finds the Sense Glove SDK
 #

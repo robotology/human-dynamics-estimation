@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Fixed EMG normalization value in IWearWrapper and IWearLogger (https://github.com/robotology/wearables/pull/186)
 
+### Changed
+- The license of the repo changed to [`BSD-3-Clause`](https://spdx.org/licenses/BSD-3-Clause.html) (https://github.com/robotology/wearables/pull/192).
+
 ## [1.7.1] - 2023-02-07
 
 ### Changed

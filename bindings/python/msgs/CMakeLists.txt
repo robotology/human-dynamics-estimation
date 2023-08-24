@@ -1,6 +1,5 @@
-# Copyright (C) 2022 Istituto Italiano di Tecnologia (IIT). All rights reserved.
-# This software may be modified and distributed under the terms of the
-# BSD-3-Clause license.
+# SPDX-FileCopyrightText: Fondazione Istituto Italiano di Tecnologia (IIT)
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 set(H_PREFIX include/Wearable/bindings/msgs)

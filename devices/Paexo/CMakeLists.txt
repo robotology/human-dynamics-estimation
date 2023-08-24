@@ -1,8 +1,5 @@
-#/*
-# * Copyright (C) 2020 iCub Facility
-#* Authors: Yeshasvi Tirupachuri
-#* CopyPolicy: Released under the terms of the LGPLv2.1 or later, see LGPL.TXT
-#*/
+# SPDX-FileCopyrightText: Fondazione Istituto Italiano di Tecnologia (IIT)
+# SPDX-License-Identifier: BSD-3-Clause
 
 # Flag to enable iFeelDriver in Paexo wearable device
 option(ENABLE_PAEXO_USE_iFEELDriver "Flag that enables building Paexo wearable device with iFeelDriver" OFF)

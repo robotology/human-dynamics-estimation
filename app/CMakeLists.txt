@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: Fondazione Istituto Italiano di Tecnologia (IIT)
+# SPDX-License-Identifier: BSD-3-Clause
+
 # HDE xml files installation
 
 set (WEARABLES_XML_FILES xml/FTShoeLeftWearableDevice.xml

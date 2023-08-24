@@ -1,8 +1,5 @@
-#/*
-# Copyright 2021 Istituto Italiano di Tecnologia (IIT)
-# @author Kourosh Darvish <kourosh.darvish@iit.it>
-#* CopyPolicy: Released under the terms of the LGPLv2.1 or later, see LGPL.TXT
-#*/
+# SPDX-FileCopyrightText: Fondazione Istituto Italiano di Tecnologia (IIT)
+# SPDX-License-Identifier: BSD-3-Clause
 
 find_package(Eigen3 REQUIRED NO_MODULE)
 find_package(SenseGlove REQUIRED)

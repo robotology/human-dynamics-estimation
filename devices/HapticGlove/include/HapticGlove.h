@@ -1,10 +1,6 @@
-/**
- * @file HapticGlove.h
- * @authors  Kourosh Darvish <kourosh.darvish@iit.it>
- * @copyright 2021 iCub Facility - Istituto Italiano di Tecnologia
- *            Released under the terms of the LGPLv2.1 or later, see LGPL.TXT
- * @date 2021
- */
+// SPDX-FileCopyrightText: Fondazione Istituto Italiano di Tecnologia (IIT)
+// SPDX-License-Identifier: BSD-3-Clause
+
 
 #ifndef HAPTIC_GLOVE_H
 #define HAPTIC_GLOVE_H
