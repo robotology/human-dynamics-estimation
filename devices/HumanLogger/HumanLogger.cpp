@@ -64,11 +64,11 @@ public:
 
     // buffer variables
     // iHumanState
-    std::array<double, 3> basePositionInterface;
-    std::array<double, 4> baseOrientationInterface;
-    std::array<double, 6> baseVelocityInterface;
-    std::vector<double> jointPositionsInterface;
-    std::vector<double> jointVelocitiesInterface;
+    std::array<double, 3> basePosition;
+    std::array<double, 4> baseOrientation;
+    std::array<double, 6> baseVelocity;
+    std::vector<double> jointPositions;
+    std::vector<double> jointVelocities;
     std::vector<std::string> jointNamesStateInterface;
     // iHumanDynamics
     std::vector<double> jointTorquesInterface;
@@ -103,26 +103,26 @@ void HumanLogger::run()
             return;
         }
 
-        pImpl->basePositionInterface = pImpl->iHumanState->getBasePosition();
-        pImpl->baseOrientationInterface = pImpl->iHumanState->getBaseOrientation();
-        pImpl->baseVelocityInterface = pImpl->iHumanState->getBaseVelocity();
-        pImpl->jointPositionsInterface = pImpl->iHumanState->getJointPositions();
-        pImpl->jointVelocitiesInterface = pImpl->iHumanState->getJointVelocities();
+        pImpl->basePosition = pImpl->iHumanState->getBasePosition();
+        pImpl->baseOrientation = pImpl->iHumanState->getBaseOrientation();
+        pImpl->baseVelocity = pImpl->iHumanState->getBaseVelocity();
+        pImpl->jointPositions = pImpl->iHumanState->getJointPositions();
+        pImpl->jointVelocities = pImpl->iHumanState->getJointVelocities();
 
         if (pImpl->loggerType == LoggerType::MATLAB) {
-            pImpl->bufferManager.push_back(pImpl->basePositionInterface,
+            pImpl->bufferManager.push_back(pImpl->basePosition,
                                            timeNow,
                                            "human_state::base_position");
-            pImpl->bufferManager.push_back(pImpl->baseOrientationInterface,
+            pImpl->bufferManager.push_back(pImpl->baseOrientation,
                                            timeNow,
                                            "human_state::base_orientation");
-            pImpl->bufferManager.push_back(pImpl->baseVelocityInterface,
+            pImpl->bufferManager.push_back(pImpl->baseVelocity,
                                            timeNow,
                                            "human_state::base_velocity");
-            pImpl->bufferManager.push_back(pImpl->jointPositionsInterface,
+            pImpl->bufferManager.push_back(pImpl->jointPositions,
                                            timeNow,
                                            "human_state::joint_positions");
-            pImpl->bufferManager.push_back(pImpl->jointVelocitiesInterface,
+            pImpl->bufferManager.push_back(pImpl->jointVelocities,
                                            timeNow,
                                            "human_state::joint_velocities");
         }
