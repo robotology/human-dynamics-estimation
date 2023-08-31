@@ -6,7 +6,6 @@
         <param name="wearableDataPorts">(/XSensSuit/WearableData_2/data:o)</param>
         <param name="useRPC">false</param>
         <param name="wearableRPCPorts">(/XSensSuit/WearableData_2/metadataRpc:o)</param>
-        <param name="outputPortName">/HDE_2/XsensIWearRemapper/data:o</param>
     </device>
 
     <device type="human_state_provider" name="HumanStateProvider_2">
