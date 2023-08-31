@@ -337,8 +337,6 @@ void HumanLogger::threadRelease() {}
 
 bool HumanLogger::attachAll(const yarp::dev::PolyDriverList& driverList)
 {
-    bool attachStatus = true;
-
     if (driverList.size() > 2) {
         yError() << logPrefix << "This wrapper accepts maximum two attached PolyDriver.";
         return false;
@@ -385,7 +383,8 @@ bool HumanLogger::attachAll(const yarp::dev::PolyDriverList& driverList)
 
         if(!tmpIHumanState && !tmpIHumanDynamics)
         {
-            yWarning()<<logPrefix<<"The device"<<deviceName<<"does not implement any supported device, so it cannot be attached";
+            yError()<<logPrefix<<"The device"<<deviceName<<"does not implement any of the attachable interfaces!";
+            return false;
         }
         else
         {
