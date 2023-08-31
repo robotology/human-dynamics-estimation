@@ -26,7 +26,6 @@
 
     <device type="iwear_remapper" name="XSenseIWearRemapper">
         <param name="wearableDataPorts">()</param>
-        <param name="useRPC">false</param>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
                 <elem name="IFrameTransformToIWear">IFrameTransformToIWear</elem>

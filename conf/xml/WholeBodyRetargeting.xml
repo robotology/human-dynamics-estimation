@@ -12,8 +12,6 @@
 
     <device type="iwear_remapper" name="XSenseIWearRemapper">
         <param name="wearableDataPorts">(/XSensSuit/WearableData/data:o)</param>
-        <param name="useRPC">false</param>
-        <param name="wearableRPCPorts">(/XSensSuit/WearableData/metadataRpc:o)</param>
     </device>
 
     <device type="human_state_provider" name="RobotStateProvider">
