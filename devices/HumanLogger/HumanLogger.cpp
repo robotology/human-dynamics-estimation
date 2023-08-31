@@ -69,10 +69,10 @@ public:
     std::array<double, 6> baseVelocity;
     std::vector<double> jointPositions;
     std::vector<double> jointVelocities;
-    std::vector<std::string> jointNamesStateInterface;
+    std::vector<std::string> jointNamesState;
     // iHumanDynamics
     std::vector<double> jointTorquesInterface;
-    std::vector<std::string> jointNamesDynamicsInterface;
+    std::vector<std::string> jointNamesDynamics;
 
 };
 
@@ -303,20 +303,20 @@ bool HumanLogger::impl::configureBufferManager()
     if(settings.logHumanState) {
         if (loggerType == LoggerType::MATLAB)
         {
-            jointNamesStateInterface =  iHumanState->getJointNames();
+            jointNamesState =  iHumanState->getJointNames();
             ok = ok && bufferManager.addChannel({"human_state::base_position", {3, 1}});
             ok = ok && bufferManager.addChannel({"human_state::base_orientation", {4, 1}});
             ok = ok && bufferManager.addChannel({"human_state::base_velocity", {6, 1}});
-            ok = ok && bufferManager.addChannel({"human_state::joint_positions", {jointNamesStateInterface.size(), 1}});
-            ok = ok && bufferManager.addChannel({"human_state::joint_velocities", {jointNamesStateInterface.size(), 1}});
+            ok = ok && bufferManager.addChannel({"human_state::joint_positions", {jointNamesState.size(), 1}, jointNamesState});
+            ok = ok && bufferManager.addChannel({"human_state::joint_velocities", {jointNamesState.size(), 1}, jointNamesState});
         }
     }
     if (settings.logHumanDynamics)
     {
         if (loggerType == LoggerType::MATLAB)
         {
-            jointNamesDynamicsInterface =  iHumanDynamics->getJointNames();
-            ok = ok && bufferManager.addChannel({"human_dynamics::joint_torques", {jointNamesDynamicsInterface.size(), 1}});
+            jointNamesDynamics =  iHumanDynamics->getJointNames();
+            ok = ok && bufferManager.addChannel({"human_dynamics::joint_torques", {jointNamesDynamics.size(), 1}, jointNamesDynamics});
         }
     }
     

@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - [`HumanLogger`] Removed IWrapper from implemented interface to fix checks on log flags and attached interfaces (https://github.com/robotology/human-dynamics-estimation/pull/344)
+- [`HumanLogger`] Fix joint names (https://github.com/robotology/human-dynamics-estimation/pull/352)
 
 
 ## [2.7.1] - 2023-02-16
