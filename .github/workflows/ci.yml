@@ -13,16 +13,16 @@ on:
     - cron: '0 2 * * *'
     
 env:
-    vcpkg_robotology_TAG: v0.6.0
-    YCM_TAG: v0.14.2
-    YARP_TAG: v3.7.2
-    iDynTree_TAG: v6.0.0 
-    wearables_TAG: v1.4.0 
-    icub_main_TAG: v1.28.1    
-    osqp_TAG: v0.6.0
-    OsqpEigen_TAG: v0.6.2
-    matioCpp_TAG: v0.2.0
-    robometry_TAG: v1.2.0
+    vcpkg_robotology_TAG: v0.10.1
+    YCM_TAG: v0.15.3
+    YARP_TAG: v3.8.1
+    iDynTree_TAG: v9.0.0 
+    wearables_TAG: v1.7.1 
+    icub_main_TAG: v2.2.1    
+    osqp_TAG: v0.6.3
+    OsqpEigen_TAG: v0.8.1
+    matioCpp_TAG: v0.2.2
+    robometry_TAG: v1.2.1
     # Overwrite the VCPKG_INSTALLATION_ROOT env variable defined by Github Actions to point to our vcpkg
     VCPKG_INSTALLATION_ROOT: C:\robotology\vcpkg
 
@@ -71,7 +71,7 @@ jobs:
         - name: Dependencies [macOS]
           if: matrix.os == 'macOS-latest'
           run: |
-            brew install ccache eigen ace tinyxml gsl irrlicht libmatio boost sdl2
+            brew install ccache eigen ace tinyxml gsl irrlicht libmatio boost glfw sdl2
              
         - name: Dependencies [Ubuntu]
           if: matrix.os == 'ubuntu-latest'
@@ -79,7 +79,7 @@ jobs:
             sudo apt update
             sudo apt install git build-essential cmake libace-dev coinor-libipopt-dev  libboost-system-dev libboost-filesystem-dev \
                              libboost-thread-dev liborocos-kdl-dev libeigen3-dev swig qtbase5-dev qtdeclarative5-dev qtmultimedia5-dev libqt5charts5-dev \
-                             libxml2-dev liburdfdom-dev libtinyxml-dev liburdfdom-dev liboctave-dev python3-dev valgrind libassimp-dev libirrlicht-dev libmatio-dev
+                             libxml2-dev liburdfdom-dev libtinyxml-dev liburdfdom-dev liboctave-dev python3-dev valgrind libassimp-dev libirrlicht-dev libmatio-dev libglfw3-dev
                              
         - name: Cache Source-based dependencies  [Ubuntu/macOS]
           if: steps.cache-source-deps.outputs.cache-hit != 'true' && (contains(matrix.os, 'ubuntu') || contains(matrix.os, 'macOS'))
