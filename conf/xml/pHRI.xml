@@ -15,7 +15,6 @@
         <param name="wearableDataPorts">(/XSensSuit/WearableData/data:o)</param>
         <param name="useRPC">false</param>
         <param name="wearableRPCPorts">(/XSensSuit/WearableData/metadataRpc:o)</param>
-        <param name="outputPortName">/HDE/XsensIWearRemapper/data:o</param>
     </device>
 
     <device type="human_state_provider" name="HumanStateProvider">
@@ -115,7 +114,6 @@
         <param name="wearableDataPorts">(/FTShoeLeft/WearableData/data:o /FTShoeRight/WearableData/data:o /ICub/WearableData/data:o)</param>
         <param name="useRPC">false</param>
         <param name="wearableRPCPorts">(/FTShoeLeft/WearableData/metadataRpc:o /FTShoeRight/WearableData/metadataRpc:o /ICub/WearableData/metadataRpc:o)</param>
-        <param name="outputPortName">/HDE/FTSourcesIWearRemapper/data:o</param>
     </device>
 
     <device type="human_wrench_provider" name="HumanWrenchProvider">
@@ -311,7 +309,6 @@
         <param name="wearableDataPorts">(/XSensSuit/WearableData/data:o /FTShoeLeft/WearableData/data:o /FTShoeRight/WearableData/data:o /ICub/WearableData/data:o)</param>
         <param name="useRPC">false</param>
         <param name="wearableRPCPorts">(/XSensSuit/WearableData/metadataRpc:o /FTShoeLeft/WearableData/metadataRpc:o /FTShoeRight/WearableData/metadataRpc:o /ICub/WearableData/metadataRpc:o)</param>
-        <param name="outputPortName">/pHRI/IWearRemapper/data:o</param>
     </device>
 
     <device type="iwear_wrapper" name="pHRIWearableDataWrapper">
