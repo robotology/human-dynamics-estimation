@@ -373,7 +373,7 @@ bool InverseVelocityKinematics::impl::solveInverseDifferentialKinematics(
         }
 
         // solve the QP problem
-        if (!m_optimizerSolver->solve()) {
+        if (m_optimizerSolver->solveProblem() != OsqpEigen::ErrorExitFlag::NoError) {
             yError() << "[InverseVelocityKinematics::impl::solveInverseDifferentialKinematics] "
                      << "qp solver for [solve] returns false.";
 
