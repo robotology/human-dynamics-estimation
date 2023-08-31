@@ -13,12 +13,12 @@ on:
     - cron: '0 2 * * *'
 
 env:
-    vcpkg_robotology_TAG: v0.7.0
-    YCM_TAG: v0.14.0
-    YARP_TAG: v3.5.0
-    iDynTree_TAG: v5.1.0
-    matioCpp_TAG: v0.2.0
-    robometry_TAG: v1.2.0
+    vcpkg_robotology_TAG: v0.10.1
+    YCM_TAG: v0.15.3
+    YARP_TAG: v3.8.1
+    iDynTree_TAG: v9.1.0
+    matioCpp_TAG: v0.2.2
+    robometry_TAG: v1.2.1
     # Overwrite the VCPKG_INSTALLATION_ROOT env variable defined by Github Actions to point to our vcpkg
     VCPKG_INSTALLATION_ROOT: C:\robotology\vcpkg
 
