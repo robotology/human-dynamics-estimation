@@ -71,7 +71,7 @@ jobs:
         - name: Dependencies [macOS]
           if: matrix.os == 'macOS-latest'
           run: |
-            brew install ccache eigen ace tinyxml gsl irrlicht libmatio boost
+            brew install ccache eigen ace tinyxml gsl irrlicht libmatio boost sdl2
              
         - name: Dependencies [Ubuntu]
           if: matrix.os == 'ubuntu-latest'
