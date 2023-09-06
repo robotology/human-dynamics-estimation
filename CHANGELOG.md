@@ -7,7 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
-- Fixed EMG normalization value in IWearWrapper and IWearLogger (https://github.com/robotology/wearables/pull/186)
+- Fixed EMG normalization value in IWearWrapper and IWearLogger (https://github.com/robotology/wearables/pull/186).
+- Fixed IWearLogger termination when `BufferManager` configuration fails (https://github.com/robotology/wearables/pull/195).
 
 ### Changed
 - The license of the repo changed to [`BSD-3-Clause`](https://spdx.org/licenses/BSD-3-Clause.html) (https://github.com/robotology/wearables/pull/192).
