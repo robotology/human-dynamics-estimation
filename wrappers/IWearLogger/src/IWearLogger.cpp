@@ -1008,6 +1008,7 @@ bool IWearLogger::attach(yarp::dev::PolyDriver* poly)
 
     if (!pImpl->configureBufferManager()) {
         yError() << logPrefix << "Failed to configure buffer manager for the logger.";
+        return false;
     }
 
     // Start the PeriodicThread loop
