@@ -12,7 +12,7 @@
 #include <iostream>
 
 const std::string RemapperName = "WearableTargetsRemapper";
-const std::string logPrefix = RemapperName + " :";
+const std::string LogPrefix = RemapperName + " :";
 
 using namespace hde::devices;
 
@@ -88,7 +88,7 @@ bool WearableTargetsRemapper::open(yarp::os::Searchable& config)
 
     // Data ports
     if (!(config.check("wearableTargetsDataPort") && config.find("wearableTargetsDataPort").isString())) {
-        yError() << logPrefix << "wearableTargetsDataPort option does not exist or it is not a list";
+        yError() << LogPrefix << "wearableTargetsDataPort option does not exist or it is not a list";
         return false;
     }
 
@@ -102,30 +102,30 @@ bool WearableTargetsRemapper::open(yarp::os::Searchable& config)
     // TODO: is this required in every DeviceDriver?
     pImpl->network = yarp::os::Network();
     if (!yarp::os::Network::initialized() || !yarp::os::Network::checkNetwork(5.0)) {
-        yError() << logPrefix << "YARP server wasn't found active.";
+        yError() << LogPrefix << "YARP server wasn't found active.";
         return false;
     }
 
     // ==========================
     // CONFIGURE INPUT DATA PORTS
     // ==========================
-    yDebug() << logPrefix << "Configuring input data ports";
+    yDebug() << LogPrefix << "Configuring input data ports";
 
     pImpl->inputPort.useCallback(*this);
     if (!pImpl->inputPort.open("...")) {
-        yError() << logPrefix << "Failed to open port" << wearableTargetsDataPortName;
+        yError() << LogPrefix << "Failed to open port" << wearableTargetsDataPortName;
         return false;
     }
 
     // ================
     // OPEN INPUT PORTS
     // ================
-    yDebug() << logPrefix << "Opening input ports";
+    yDebug() << LogPrefix << "Opening input ports";
 
 
     if (!yarp::os::Network::connect(wearableTargetsDataPortName,
                                     pImpl->inputPort.getName())) {
-        yError() << logPrefix << "Failed to connect " << wearableTargetsDataPortName
+        yError() << LogPrefix << "Failed to connect " << wearableTargetsDataPortName
                  << " with " << pImpl->inputPort.getName();
         return false;
     }
@@ -133,7 +133,7 @@ bool WearableTargetsRemapper::open(yarp::os::Searchable& config)
     // We use callbacks on the input ports, the loop is a no-op
     start();
 
-    yDebug() << logPrefix << "Opened correctly";
+    yDebug() << LogPrefix << "Opened correctly";
     return true;
 }
 

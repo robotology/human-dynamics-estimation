@@ -17,7 +17,7 @@
 #include <robometry/BufferManager.h>
 
 const std::string LoggerName = "HumanLogger";
-const std::string logPrefix = LoggerName + " :";
+const std::string LogPrefix = LoggerName + " :";
 constexpr double DefaultPeriod = 0.01;
 
 namespace hde {
@@ -98,7 +98,7 @@ void HumanLogger::run()
     if (pImpl->settings.logHumanState)
     {
         if(!pImpl->iHumanState) {
-            yError() << logPrefix << "The IHumanState pointer is null in the driver loop.";
+            yError() << LogPrefix << "The IHumanState pointer is null in the driver loop.";
             askToStop();
             return;
         }
@@ -131,7 +131,7 @@ void HumanLogger::run()
     if (pImpl->settings.logHumanDynamics)
     {
         if(!pImpl->iHumanDynamics) {
-            yError() << logPrefix << "The IHumanDynamics pointer is null in the driver loop.";
+            yError() << LogPrefix << "The IHumanDynamics pointer is null in the driver loop.";
             askToStop();
             return;
         }
@@ -153,7 +153,7 @@ void HumanLogger::run()
 bool HumanLogger::open(yarp::os::Searchable& config)
 {
     if (!config.check("period")) {
-        yInfo() << logPrefix << "Using default period: " << DefaultPeriod << "s";
+        yInfo() << LogPrefix << "Using default period: " << DefaultPeriod << "s";
     }
 
     const double period = config.check("period", yarp::os::Value(DefaultPeriod)).asFloat64();
@@ -162,7 +162,7 @@ bool HumanLogger::open(yarp::os::Searchable& config)
     // Load settings in the class
     bool ok = pImpl->loadSettingsFromConfig(config);
     if (!ok) {
-        yError() << logPrefix << "Problem in loading settings from config.";
+        yError() << LogPrefix << "Problem in loading settings from config.";
         return false;
     }
 
@@ -190,14 +190,14 @@ bool HumanLogger::impl::loadSettingsFromConfig(yarp::os::Searchable& config)
           && config.find("LoggerType").isString()
           && setLoggerType(config.find("LoggerType").asString()) ) ) {
  
-        yError() << logPrefix << "LoggerType not found or not valid";
+        yError() << LogPrefix << "LoggerType not found or not valid";
         return false;
     }
 
     // Display the current logger level
     switch (this->loggerType) {
         case LoggerType::MATLAB: {
-            yInfo() << logPrefix << "LoggerType set to MATLAB";
+            yInfo() << LogPrefix << "LoggerType set to MATLAB";
             break;
         }
         default:
@@ -217,7 +217,7 @@ bool HumanLogger::impl::loadSettingsFromConfig(yarp::os::Searchable& config)
         bufferConfig.filename = config.find(experimentName.c_str()).asString();
     }
     else {
-        yError() << logPrefix << " missing parameter: " << experimentName;
+        yError() << LogPrefix << " missing parameter: " << experimentName;
         return false;
     }
 
@@ -231,7 +231,7 @@ bool HumanLogger::impl::loadSettingsFromConfig(yarp::os::Searchable& config)
         bufferConfig.n_samples = config.find(n_samples.c_str()).asInt32();
     }
     else {
-        yError() << logPrefix << " missing parameter: " << n_samples;
+        yError() << LogPrefix << " missing parameter: " << n_samples;
         return false;
     }
 
@@ -246,7 +246,7 @@ bool HumanLogger::impl::loadSettingsFromConfig(yarp::os::Searchable& config)
             bufferConfig.save_period = config.find(save_period.c_str()).asFloat64();
         }
         else {
-            yError() << logPrefix << " missing parameter: " << save_period;
+            yError() << LogPrefix << " missing parameter: " << save_period;
             return false;
         }
 
@@ -263,7 +263,7 @@ bool HumanLogger::impl::loadSettingsFromConfig(yarp::os::Searchable& config)
 
     if (!(bufferConfig.auto_save || bufferConfig.save_periodically)) {
         yError()
-            << logPrefix
+            << LogPrefix
             << " both auto_save and save_periodically are set to false, nothing will be saved.";
         return false;
     }
@@ -323,7 +323,7 @@ bool HumanLogger::impl::configureBufferManager()
 
     ok = ok && bufferManager.configure(bufferConfig);
     if (ok) {
-        yDebug() << logPrefix << " buffer manager configured successfully.";
+        yDebug() << LogPrefix << " buffer manager configured successfully.";
     }
 
     return ok;
@@ -338,7 +338,7 @@ void HumanLogger::threadRelease() {}
 bool HumanLogger::attachAll(const yarp::dev::PolyDriverList& driverList)
 {
     if (driverList.size() > 2) {
-        yError() << logPrefix << "This wrapper accepts maximum two attached PolyDriver.";
+        yError() << LogPrefix << "This wrapper accepts maximum two attached PolyDriver.";
         return false;
     }
 
@@ -346,7 +346,7 @@ bool HumanLogger::attachAll(const yarp::dev::PolyDriverList& driverList)
         yarp::dev::PolyDriver* poly = driverList[i]->poly;
 
         if (!poly) {
-            yError() << logPrefix << "Passed PolyDriver is nullptr.";
+            yError() << LogPrefix << "Passed PolyDriver is nullptr.";
             return false;
         }
 
@@ -383,41 +383,41 @@ bool HumanLogger::attachAll(const yarp::dev::PolyDriverList& driverList)
 
         if(!tmpIHumanState && !tmpIHumanDynamics)
         {
-            yError()<<logPrefix<<"The device"<<deviceName<<"does not implement any of the attachable interfaces!";
+            yError()<<LogPrefix<<"The device"<<deviceName<<"does not implement any of the attachable interfaces!";
             return false;
         }
         else
         {
-            yInfo()<<logPrefix<<"Device"<<deviceName<<"successfully attached";
+            yInfo()<<LogPrefix<<"Device"<<deviceName<<"successfully attached";
         }
     }
 
     // Check IHumanState interface
     if (pImpl->settings.logHumanState && !pImpl->iHumanState)
     {
-        yError()<<logPrefix<<"No IHumanState interface attached, stopping";
+        yError()<<LogPrefix<<"No IHumanState interface attached, stopping";
         return false;
     }
 
     // Check IHumanDynamics interface
     if (pImpl->settings.logHumanDynamics && !pImpl->iHumanDynamics)
     {
-        yError()<<logPrefix<<"No IHumanDynamics interface attached, stopping";
+        yError()<<LogPrefix<<"No IHumanDynamics interface attached, stopping";
         return false;
     }
 
     if (!pImpl->configureBufferManager()) {
-        yError() << logPrefix << "Failed to configure buffer manager for the logger.";
+        yError() << LogPrefix << "Failed to configure buffer manager for the logger.";
         return false;
     }
 
     // Start the periodic thread
     if(!start()) {
-        yError() << logPrefix << "Failed to start the loop.";
+        yError() << LogPrefix << "Failed to start the loop.";
         return false;
     }
     
-    yInfo() << logPrefix << "Successfully attached all the required devices";
+    yInfo() << LogPrefix << "Successfully attached all the required devices";
 
     return true;
 }
