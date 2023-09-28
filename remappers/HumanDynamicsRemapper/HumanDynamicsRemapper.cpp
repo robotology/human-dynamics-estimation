@@ -12,7 +12,7 @@
 #include <mutex>
 
 const std::string RemapperName = "HumanDynamicsRemapper";
-const std::string logPrefix = RemapperName + " :";
+const std::string LogPrefix = RemapperName + " :";
 
 using namespace hde::devices;
 
@@ -54,7 +54,7 @@ bool HumanDynamicsRemapper::open(yarp::os::Searchable& config)
     // Data ports
     // TODO: where to check this port?
     if (!(config.check("humanDynamicsDataPort") && config.find("humanDynamicsDataPort").isString())) {
-        yError() << logPrefix << "humanDynamicsData option does not exist or it is not a list";
+        yError() << LogPrefix << "humanDynamicsData option does not exist or it is not a list";
         return false;
     }
 
@@ -68,30 +68,30 @@ bool HumanDynamicsRemapper::open(yarp::os::Searchable& config)
     // TODO: is this required in every DeviceDriver?
     pImpl->network = yarp::os::Network();
     if (!yarp::os::Network::initialized() || !yarp::os::Network::checkNetwork(5.0)) {
-        yError() << logPrefix << "YARP server wasn't found active.";
+        yError() << LogPrefix << "YARP server wasn't found active.";
         return false;
     }
 
     // ==========================
     // CONFIGURE INPUT DATA PORTS
     // ==========================
-    yDebug() << logPrefix << "Configuring input data ports";
+    yDebug() << LogPrefix << "Configuring input data ports";
 
     pImpl->inputPort.useCallback(*this);
     if (!pImpl->inputPort.open("...")) {
-        yError() << logPrefix << "Failed to open port" << humanDynamicsDataPortName;
+        yError() << LogPrefix << "Failed to open port" << humanDynamicsDataPortName;
         return false;
     }
 
     // ================
     // OPEN INPUT PORTS
     // ================
-    yDebug() << logPrefix << "Opening input ports";
+    yDebug() << LogPrefix << "Opening input ports";
 
 
     if (!yarp::os::Network::connect(humanDynamicsDataPortName,
                                     pImpl->inputPort.getName())) {
-        yError() << logPrefix << "Failed to connect " << humanDynamicsDataPortName
+        yError() << LogPrefix << "Failed to connect " << humanDynamicsDataPortName
                  << " with " << pImpl->inputPort.getName();
         return false;
     }
@@ -99,7 +99,7 @@ bool HumanDynamicsRemapper::open(yarp::os::Searchable& config)
     // We use callbacks on the input ports, the loop is a no-op
     start();
 
-    yDebug() << logPrefix << "Opened correctly";
+    yDebug() << LogPrefix << "Opened correctly";
     return true;
 }
 
