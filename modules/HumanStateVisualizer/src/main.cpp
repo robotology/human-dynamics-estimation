@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BSD-3-Clause
 
 #include <hde/interfaces/IHumanState.h>
+#include <hde/interfaces/IHumanWrench.h>
 #include <hde/interfaces/IWearableTargets.h>
 
 #include <yarp/os/Network.h>
@@ -379,19 +380,19 @@ int main(int argc, char* argv[])
 
 
     // initialize iHumanState interface from remapper
-    yarp::dev::PolyDriver remapperDevice;
+    yarp::dev::PolyDriver humanStateRemapperDevice;
     hde::interfaces::IHumanState* iHumanState{nullptr};
 
     yarp::os::Property remapperOptions;
     remapperOptions.put("device", "human_state_remapper");
     remapperOptions.put("humanStateDataPort", humanStateDataPortName);
 
-    if(!remapperDevice.open(remapperOptions))
+    if(!humanStateRemapperDevice.open(remapperOptions))
     {
         yError() << LogPrefix << "Failed to connect remapper device";
         return EXIT_FAILURE;
     }
-    if(!remapperDevice.view(iHumanState) || !iHumanState )
+    if(!humanStateRemapperDevice.view(iHumanState) || !iHumanState )
     {
         yError() << LogPrefix << "Failed to view iHumanState interface";
         return EXIT_FAILURE;
@@ -485,32 +486,37 @@ int main(int argc, char* argv[])
         }
     }
 
-    // initialize wrench port
-    yarp::os::BufferedPort<yarp::sig::Vector> wrenchPort;
-    yarp::sig::Vector* wrenchMeasuresVector;
+    // initialize iHumanWrench 
+    yarp::dev::PolyDriver humanWrenchRemapperDevice;
+    hde::interfaces::IHumanWrench* iHumanWrench{nullptr};
     if (visualizeWrenches)
     {
-        wrenchPort.open("/HumanStateVisualizer" + humanWrenchWrapperPortName);
-        if (wrenchPort.isClosed())
+        yarp::os::Property humanWrenchRemapperOptions;
+        humanWrenchRemapperOptions.put("device", "human_wrench_remapper");
+        humanWrenchRemapperOptions.put("humanWrenchDataPort", humanWrenchWrapperPortName);
+
+        if(!humanWrenchRemapperDevice.open(humanWrenchRemapperOptions))
         {
-            yError() << LogPrefix << "failed to open the port /HumanStateVisualizer" << humanWrenchWrapperPortName;
+            yError() << LogPrefix << "Failed to connect remapper device";
             return EXIT_FAILURE;
         }
-        if (!yarp.connect(humanWrenchWrapperPortName, wrenchPort.getName()))
+        if(!humanWrenchRemapperDevice.view(iHumanWrench) || !iHumanWrench )
         {
-            yError() << LogPrefix << "failed to connect to the port"  << humanWrenchWrapperPortName;
+            yError() << LogPrefix << "Failed to view iHumanWrench interface";
             return EXIT_FAILURE;
         }
-        wrenchMeasuresVector = wrenchPort.read(true);
-        if (wrenchMeasuresVector == nullptr)
+
+        // wait for the iHumanWrench to be initialized
+        while (iHumanWrench->getWrenchSourceNames().empty())
         {
-            yError() << LogPrefix << "no data coming from the port " << humanWrenchWrapperPortName;
-            return EXIT_FAILURE;
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+            yInfo() << LogPrefix << "Waiting for data from HumanWrenchRemapper";
         }
-        if(wrenchMeasuresVector->size() != (numberOfWrenchElements) )
+
+        if(iHumanWrench->getNumberOfWrenchSources() != wrenchSourceLinks.size() )
         {
-            yError() << LogPrefix << "expected " << numberOfWrenchElements << " elements in port " << humanWrenchWrapperPortName
-                    << ", received " << wrenchMeasuresVector->size();
+            yError() << LogPrefix << "expected " << wrenchSourceLinks.size() << " wrench sources in port " << humanWrenchWrapperPortName
+                    << ", received " << iHumanWrench->getNumberOfWrenchSources();
             return EXIT_FAILURE;
         }
     }
@@ -556,7 +562,7 @@ int main(int argc, char* argv[])
             linkTransform = viz.modelViz("human").getWorldLinkTransform(wrenchSourceLinkIndices.at(vectorIndex));
             for (size_t i = 0; i < 3; i++)
             {
-                force.setVal(i, forceScalingFactor * wrenchMeasuresVector->data()[6 * vectorIndex + i]);
+                force.setVal(i, forceScalingFactor * iHumanWrench->getWrenches()[6 * vectorIndex + i]);
             }
             force = linkTransform.getRotation() * force;
             viz.vectors().addVector(linkTransform.getPosition(), force);
@@ -649,13 +655,12 @@ int main(int argc, char* argv[])
         size_t vectorsIterator = 0;
         if (visualizeWrenches)
         {
-            wrenchMeasuresVector = wrenchPort.read(true);
             for (size_t vectorIndex = 0; vectorIndex < wrenchSourceLinks.size(); vectorIndex++)
             {
                 linkTransform = viz.modelViz("human").getWorldLinkTransform(wrenchSourceLinkIndices.at(vectorIndex));
                 for (size_t i = 0; i < 3; i++)
                 {
-                    force.setVal(i, forceScalingFactor * wrenchMeasuresVector->data()[6 * vectorIndex + i]);
+                    force.setVal(i, forceScalingFactor * iHumanWrench->getWrenches()[6 * vectorIndex + i]);
                 }
                 force = linkTransform.getRotation() * force;
                 viz.vectors().updateVector(vectorIndex, linkTransform.getPosition(), force);
@@ -735,9 +740,9 @@ int main(int argc, char* argv[])
     }
 
     viz.close();
-    remapperDevice.close();
+    humanStateRemapperDevice.close();
     wearableTargetsRemapperDevice.close();
-    wrenchPort.close();
+    humanWrenchRemapperDevice.close();
 
     return 0;
 }

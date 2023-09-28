@@ -182,15 +182,15 @@
         <action phase="shutdown" level="5" type="detach" />
     </device>
 
-    <device type="analogServer" name="HumanWrenchWrapper">
-        <param name="name">/HDE/HumanWrenchWrapper/wrench:o</param>
-        <param name="period">10</param>
+    <device type="human_wrench_wrapper" name="HumanWrenchWrapper">
+        <param name="period">0.1</param>
+        <param name="outputPort">/HDE/HumanWrenchWrapper/wrench:o</param>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
-                <elem name="HumanWrenchWrapperLabel">HumanWrenchProvider</elem>
+                <elem name="HumanDynamicsWrapperLabel">HumanWrenchProvider</elem>
             </paramlist>
         </action>
-        <action phase="shutdown" level="5" type="detach" />
+        <action phase="shutdown" level="5" type="detach"/>
     </device>
 
     <!--Wrapper to publish WrenchStamped message to Rviz-->
