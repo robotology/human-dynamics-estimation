@@ -1251,6 +1251,7 @@ bool HumanDynamicsEstimator::Impl::attach(yarp::dev::PolyDriver* poly)
              numberOfWrenchSources != tmpIHumanWrench->getWrenchSourceNames().size()) {
             yInfo() << LogPrefix << "IHumanWrench interface waiting for first data. Waiting...";
             yarp::os::Time::delay(5);
+            numberOfWrenchSources = tmpIHumanWrench->getNumberOfWrenchSources();
         }
 
         yInfo() << LogPrefix << "Device" << deviceName << "attached successfully as IHumanWrench";

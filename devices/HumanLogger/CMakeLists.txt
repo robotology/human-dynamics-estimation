@@ -27,6 +27,7 @@ target_link_libraries(HumanLogger PUBLIC
     robometry::robometry
     IHumanState
     IHumanDynamics
+    IHumanWrench
     )
 
 if(MSVC)
