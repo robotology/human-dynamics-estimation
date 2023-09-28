@@ -43,9 +43,9 @@ public:
     std::array<double, 3> CoMVelocity;
 };
 
-// ==============
-// IWEAR REMAPPER
-// ==============
+// ====================
+// IHUMANSTATE REMAPPER
+// ====================
 
 HumanStateRemapper::HumanStateRemapper()
     : PeriodicThread(1)
