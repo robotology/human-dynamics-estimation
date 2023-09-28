@@ -26,7 +26,6 @@
 
 #include <yarp/os/LogStream.h>
 #include <yarp/os/ResourceFinder.h>
-#include <yarp/dev/IAnalogSensor.h>
 #include <iDynTree/yarp/YARPConversions.h>
 
 #include <mutex>
@@ -761,7 +760,6 @@ public:
     // Attached interfaces
     hde::interfaces::IHumanState* iHumanState = nullptr;
     hde::interfaces::IHumanWrench* iHumanWrench = nullptr;
-    yarp::dev::IAnalogSensor* iAnalogSensor = nullptr;
 
     mutable std::mutex mutex;
     iDynTree::Vector3 gravity;
@@ -1258,18 +1256,6 @@ bool HumanDynamicsEstimator::Impl::attach(yarp::dev::PolyDriver* poly)
         yInfo() << LogPrefix << "Device" << deviceName << "attached successfully as IHumanWrench";
         iHumanWrench = tmpIHumanWrench;
 
-        // Try to attach IAnalogSensor
-        if(!poly->view(iAnalogSensor)){
-            yError() << LogPrefix << "Device" << deviceName << "must implement also the IAnalog interface!"; 
-            return false;
-        }
-
-        // Check the interface
-        if (iAnalogSensor->getChannels() != 6 * numberOfWrenchSources) {
-            yError() << LogPrefix << "The IAnalogSensor interface might not be ready";
-            return false;
-        }
-
     }
 
     if(!tmpIHumanState && !tmpIHumanWrench){
@@ -1325,7 +1311,6 @@ bool HumanDynamicsEstimator::detachAll()
 
     pImpl->iHumanState = nullptr;
     pImpl->iHumanWrench = nullptr;
-    pImpl->iAnalogSensor = nullptr;
 
     return true;
 }

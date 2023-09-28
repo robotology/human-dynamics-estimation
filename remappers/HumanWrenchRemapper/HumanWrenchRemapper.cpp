@@ -1,9 +1,9 @@
 // SPDX-FileCopyrightText: Fondazione Istituto Italiano di Tecnologia (IIT)
 // SPDX-License-Identifier: BSD-3-Clause
 
-#include "HumanDynamicsRemapper.h"
+#include "HumanWrenchRemapper.h"
 
-#include <hde/msgs/HumanDynamics.h>
+#include <hde/msgs/HumanWrench.h>
 
 #include <yarp/os/Network.h>
 #include <yarp/os/LogStream.h>
@@ -11,7 +11,7 @@
 #include <iostream>
 #include <mutex>
 
-const std::string RemapperName = "HumanDynamicsRemapper";
+const std::string RemapperName = "HumanWrenchRemapper";
 const std::string LogPrefix = RemapperName + " :";
 
 using namespace hde::devices;
@@ -20,32 +20,32 @@ using namespace hde::devices;
 // IMPL AND UTILS
 // ==============
 
-class HumanDynamicsRemapper::impl
+class HumanWrenchRemapper::impl
 {
 public:
     std::mutex mtx;
     yarp::os::Network network;
-    yarp::os::BufferedPort<hde::msgs::HumanDynamics> inputPort;
+    yarp::os::BufferedPort<hde::msgs::HumanWrench> inputPort;
     bool terminationCall = false;
 
-    // Buffer HumanDynamics variables
-    std::vector<std::string> jointNames;
-    std::vector<double>  jointTorques;
+    // Buffer HumanWrench variables
+    std::vector<std::string> wrenchSourceNames;
+    std::vector<double>  wrenches;
 };
 
-// =======================
-// IHUMANDYNAMICS REMAPPER
-// =======================
+// ====================
+// HUMANWRENCH REMAPPER
+// ====================
 
-HumanDynamicsRemapper::HumanDynamicsRemapper()
+HumanWrenchRemapper::HumanWrenchRemapper()
     : PeriodicThread(1)
     , pImpl{new impl()}
 {}
 
-HumanDynamicsRemapper::~HumanDynamicsRemapper() = default;
+HumanWrenchRemapper::~HumanWrenchRemapper() = default;
 
 // parsing the configuration file and connect ports
-bool HumanDynamicsRemapper::open(yarp::os::Searchable& config)
+bool HumanWrenchRemapper::open(yarp::os::Searchable& config)
 {
     // ===============================
     // CHECK THE CONFIGURATION OPTIONS
@@ -53,8 +53,8 @@ bool HumanDynamicsRemapper::open(yarp::os::Searchable& config)
 
     // Data ports
     // TODO: where to check this port?
-    if (!(config.check("humanDynamicsDataPort") && config.find("humanDynamicsDataPort").isString())) {
-        yError() << LogPrefix << "humanDynamicsData option does not exist or it is not a list";
+    if (!(config.check("humanWrenchDataPort") && config.find("humanWrenchDataPort").isString())) {
+        yError() << LogPrefix << "humanWrenchData option does not exist or it is not a list";
         return false;
     }
 
@@ -62,7 +62,7 @@ bool HumanDynamicsRemapper::open(yarp::os::Searchable& config)
     // PARSE THE CONFIGURATION OPTIONS
     // ===============================
 
-    std::string humanDynamicsDataPortName = config.find("humanDynamicsDataPort").asString();
+    std::string humanWrenchDataPortName = config.find("humanWrenchDataPort").asString();
 
     // Initialize the network
     // TODO: is this required in every DeviceDriver?
@@ -79,7 +79,7 @@ bool HumanDynamicsRemapper::open(yarp::os::Searchable& config)
 
     pImpl->inputPort.useCallback(*this);
     if (!pImpl->inputPort.open("...")) {
-        yError() << LogPrefix << "Failed to open port" << humanDynamicsDataPortName;
+        yError() << LogPrefix << "Failed to open port" << humanWrenchDataPortName;
         return false;
     }
 
@@ -89,9 +89,9 @@ bool HumanDynamicsRemapper::open(yarp::os::Searchable& config)
     yDebug() << LogPrefix << "Opening input ports";
 
 
-    if (!yarp::os::Network::connect(humanDynamicsDataPortName,
+    if (!yarp::os::Network::connect(humanWrenchDataPortName,
                                     pImpl->inputPort.getName())) {
-        yError() << LogPrefix << "Failed to connect " << humanDynamicsDataPortName
+        yError() << LogPrefix << "Failed to connect " << humanWrenchDataPortName
                  << " with " << pImpl->inputPort.getName();
         return false;
     }
@@ -103,10 +103,10 @@ bool HumanDynamicsRemapper::open(yarp::os::Searchable& config)
     return true;
 }
 
-void HumanDynamicsRemapper::threadRelease()
+void HumanWrenchRemapper::threadRelease()
 {}
 
-bool HumanDynamicsRemapper::close()
+bool HumanWrenchRemapper::close()
 {
     pImpl->terminationCall = true;
 
@@ -117,37 +117,37 @@ bool HumanDynamicsRemapper::close()
     return true;
 }
 
-void HumanDynamicsRemapper::run()
+void HumanWrenchRemapper::run()
 {
     return;
 }
 
 // data are read from the port and saved in buffer variables
-void HumanDynamicsRemapper::onRead(hde::msgs::HumanDynamics& humanDynamicsData)
+void HumanWrenchRemapper::onRead(hde::msgs::HumanWrench& humanWrenchData)
 {
     std::lock_guard<std::mutex> lock(pImpl->mtx);
     if(!pImpl->terminationCall) {
-        pImpl->jointNames = humanDynamicsData.jointNames;
+        pImpl->wrenchSourceNames = humanWrenchData.wrenchSourceNames;
 
-        pImpl->jointTorques = humanDynamicsData.torques;
+        pImpl->wrenches = humanWrenchData.wrenches;
     }
 }
 
-// method of IHumanDynamics interface expose the buffer variables data
-std::vector<std::string> HumanDynamicsRemapper::getJointNames() const
+// method of IHumanWrench interface expose the buffer variables data
+std::vector<std::string> HumanWrenchRemapper::getWrenchSourceNames() const
 {
     std::lock_guard<std::mutex> lock(pImpl->mtx);
-    return pImpl->jointNames;
+    return pImpl->wrenchSourceNames;
 }
 
-size_t HumanDynamicsRemapper::getNumberOfJoints() const
+size_t HumanWrenchRemapper::getNumberOfWrenchSources() const
 {
     std::lock_guard<std::mutex> lock(pImpl->mtx);
-    return pImpl->jointTorques.size();
+    return pImpl->wrenchSourceNames.size();
 }
 
-std::vector<double> HumanDynamicsRemapper::getJointTorques() const
+std::vector<double> HumanWrenchRemapper::getWrenches() const
 {
     std::lock_guard<std::mutex> lock(pImpl->mtx);
-    return pImpl->jointTorques;
+    return pImpl->wrenches;
 }

@@ -69,9 +69,9 @@ public:
     std::unordered_map<hde::TargetName, std::shared_ptr<hde::WearableSensorTarget>> wearableTargets;
 };
 
-// ==============
-// IWEAR REMAPPER
-// ==============
+// ========================
+// WEARABLETARGETS REMAPPER
+// ========================
 
 WearableTargetsRemapper::WearableTargetsRemapper()
     : PeriodicThread(1)

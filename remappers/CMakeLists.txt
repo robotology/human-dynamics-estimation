@@ -3,4 +3,5 @@
 
 add_subdirectory(HumanStateRemapper)
 add_subdirectory(HumanDynamicsRemapper)
+add_subdirectory(HumanWrenchRemapper)
 add_subdirectory(WearableTargetsRemapper)
