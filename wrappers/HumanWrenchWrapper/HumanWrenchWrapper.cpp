@@ -125,6 +125,7 @@ bool HumanWrenchWrapper::attach(yarp::dev::PolyDriver* poly)
             numberOfWrenchSources != pImpl->humanWrench->getWrenchSourceNames().size()) {
         yInfo() << LogPrefix << "IHumanWrench interface waiting for first data. Waiting...";
         yarp::os::Time::delay(5);
+        numberOfWrenchSources = pImpl->humanWrench->getNumberOfWrenchSources();
     }
 
     // ====
