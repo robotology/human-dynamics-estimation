@@ -178,10 +178,10 @@ bool HumanStateWrapper::attach(yarp::dev::PolyDriver* poly)
         yInfo() << "Joint name (" << i << "): " << pImpl->iHumanState->getJointNames()[i];
     }
 
-    if (pImpl->iHumanState->getNumberOfJoints() == 0
+    while (pImpl->iHumanState->getNumberOfJoints() == 0
         || pImpl->iHumanState->getNumberOfJoints() != pImpl->iHumanState->getJointNames().size()) {
-        yError() << "The IHumanState interface might not be ready";
-        return false;
+        yInfo() << LogPrefix << "IHumanState interface waiting for first data. Waiting...";
+        yarp::os::Time::delay(5);
     }
 
     yDebug() << LogPrefix << "Read" << pImpl->iHumanState->getNumberOfJoints() << "joints";

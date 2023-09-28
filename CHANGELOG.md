@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - The license of the repo changed to [`BSD-3-Clause`](https://spdx.org/licenses/BSD-3-Clause.html) (https://github.com/robotology/human-dynamics-estimation/pull/350).
+- Devices wait for data available in IHumanState and IHumanDynamics interfaces instead of returning error (https://github.com/robotology/human-dynamics-estimation/pull/357).
 
 ### Fixed
 - [`HumanLogger`] Removed IWrapper from implemented interface to fix checks on log flags and attached interfaces (https://github.com/robotology/human-dynamics-estimation/pull/344)

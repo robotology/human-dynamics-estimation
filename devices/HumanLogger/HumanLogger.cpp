@@ -359,10 +359,10 @@ bool HumanLogger::attachAll(const yarp::dev::PolyDriverList& driverList)
         if(pImpl->settings.logHumanState && !pImpl->iHumanState && poly->view(tmpIHumanState))
         {
             // Check the interface
-            if (tmpIHumanState->getNumberOfJoints() == 0
+            while (tmpIHumanState->getNumberOfJoints() == 0
                     || tmpIHumanState->getNumberOfJoints() != tmpIHumanState->getJointNames().size()) {
-                yError() << logPrefix <<"The IHumanState interface"<<deviceName<<"might not be ready";
-                return false;
+                yInfo() << LogPrefix << "IHumanState interface waiting for first data. Waiting...";
+                yarp::os::Time::delay(5);
             }
 
             pImpl->iHumanState = tmpIHumanState;
@@ -372,10 +372,10 @@ bool HumanLogger::attachAll(const yarp::dev::PolyDriverList& driverList)
         if(pImpl->settings.logHumanDynamics && !pImpl->iHumanDynamics && poly->view(tmpIHumanDynamics))
         {
             // Check the interface
-            if (tmpIHumanDynamics->getNumberOfJoints() == 0
+            while (tmpIHumanDynamics->getNumberOfJoints() == 0
                     || tmpIHumanDynamics->getNumberOfJoints() != tmpIHumanDynamics->getJointNames().size()) {
-                yError() << logPrefix << "The IHumanDynamics interface"<<deviceName<<"might not be ready";
-                return false;
+                yInfo() << LogPrefix << "IHumanDynamics interface waiting for first data. Waiting...";
+                yarp::os::Time::delay(5);
             }
 
             pImpl->iHumanDynamics = tmpIHumanDynamics;

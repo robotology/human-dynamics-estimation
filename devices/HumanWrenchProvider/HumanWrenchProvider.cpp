@@ -1276,11 +1276,11 @@ bool HumanWrenchProvider::Impl::attach(yarp::dev::PolyDriver* poly)
     if (!iHumanState && poly->view(tmpIHumanState)) {
 
         // Check the iHumanState interface
-        if (tmpIHumanState->getNumberOfJoints() == 0
+        while (tmpIHumanState->getNumberOfJoints() == 0
             || tmpIHumanState->getNumberOfJoints() != tmpIHumanState->getJointNames().size()) {
             
-            yError() << LogPrefix<<"The IHumanState interface has been providing inconsistent data and might not be ready";
-                return false;
+            yInfo() << LogPrefix << "IHumanState interface waiting for first data. Waiting...";
+            yarp::os::Time::delay(5);
         }
 
         iHumanState = tmpIHumanState;

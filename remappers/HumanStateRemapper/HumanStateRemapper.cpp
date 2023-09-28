@@ -12,7 +12,7 @@
 #include <mutex>
 
 const std::string RemapperName = "HumanStateRemapper";
-const std::string logPrefix = RemapperName + " :";
+const std::string LogPrefix = RemapperName + " :";
 
 using namespace hde::devices;
 
@@ -62,7 +62,7 @@ bool HumanStateRemapper::open(yarp::os::Searchable& config)
 
     // Data ports
     if (!(config.check("humanStateDataPort") && config.find("humanStateDataPort").isString())) {
-        yError() << logPrefix << "humanStateData option does not exist or it is not a list";
+        yError() << LogPrefix << "humanStateData option does not exist or it is not a list";
         return false;
     }
 
@@ -76,30 +76,30 @@ bool HumanStateRemapper::open(yarp::os::Searchable& config)
     // TODO: is this required in every DeviceDriver?
     pImpl->network = yarp::os::Network();
     if (!yarp::os::Network::initialized() || !yarp::os::Network::checkNetwork(5.0)) {
-        yError() << logPrefix << "YARP server wasn't found active.";
+        yError() << LogPrefix << "YARP server wasn't found active.";
         return false;
     }
 
     // ==========================
     // CONFIGURE INPUT DATA PORTS
     // ==========================
-    yDebug() << logPrefix << "Configuring input data ports";
+    yDebug() << LogPrefix << "Configuring input data ports";
 
     pImpl->inputPort.useCallback(*this);
     if (!pImpl->inputPort.open("...")) {
-        yError() << logPrefix << "Failed to open port" << humanStateDataPortName;
+        yError() << LogPrefix << "Failed to open port" << humanStateDataPortName;
         return false;
     }
 
     // ================
     // OPEN INPUT PORTS
     // ================
-    yDebug() << logPrefix << "Opening input ports";
+    yDebug() << LogPrefix << "Opening input ports";
 
 
     if (!yarp::os::Network::connect(humanStateDataPortName,
                                     pImpl->inputPort.getName())) {
-        yError() << logPrefix << "Failed to connect " << humanStateDataPortName
+        yError() << LogPrefix << "Failed to connect " << humanStateDataPortName
                  << " with " << pImpl->inputPort.getName();
         return false;
     }
@@ -107,7 +107,7 @@ bool HumanStateRemapper::open(yarp::os::Searchable& config)
     // We use callbacks on the input ports, the loop is a no-op
     start();
 
-    yDebug() << logPrefix << "Opened correctly";
+    yDebug() << LogPrefix << "Opened correctly";
     return true;
 }
 

@@ -451,11 +451,10 @@ bool HumanStatePublisher::attach(yarp::dev::PolyDriver* poly)
     // ===================
 
     // If it is ready, check that is valid
-    if (pImpl->humanState->getNumberOfJoints() != 0
+    while (pImpl->humanState->getNumberOfJoints() != 0
         && (pImpl->humanState->getNumberOfJoints() != pImpl->humanState->getJointNames().size())) {
-        yError() << LogPrefix << "The IHumanState interface is not valid."
-                 << "The number of joints should match the number of joint names.";
-        return false;
+        yInfo() << LogPrefix << "IHumanState interface waiting for first data. Waiting...";
+        yarp::os::Time::delay(5);
     }
 
     // ====
