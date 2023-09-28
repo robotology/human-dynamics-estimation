@@ -119,11 +119,11 @@ bool HumanDynamicsWrapper::attach(yarp::dev::PolyDriver* poly)
     // CHECK THE INTERFACE
     // ===================
 
-    if (pImpl->humanDynamics->getNumberOfJoints() == 0
+    while (pImpl->humanDynamics->getNumberOfJoints() == 0
         || pImpl->humanDynamics->getNumberOfJoints()
                != pImpl->humanDynamics->getJointNames().size()) {
-        yError() << "The IHumanDynamics interface might not be ready";
-        return false;
+        yInfo() << LogPrefix << "IHumanDynamics interface waiting for first data. Waiting...";
+        yarp::os::Time::delay(5);
     }
 
     yDebug() << LogPrefix << "Read" << pImpl->humanDynamics->getNumberOfJoints() << "joints";

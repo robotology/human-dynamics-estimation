@@ -250,11 +250,10 @@ bool HumanDynamicsPublisher::attach(yarp::dev::PolyDriver* poly)
     // ===================
 
     // If it is ready, check that is valid
-    if (pImpl->humanDynamics->getNumberOfJoints() != 0
+    while (pImpl->humanDynamics->getNumberOfJoints() != 0
         && (pImpl->humanDynamics->getNumberOfJoints() != pImpl->humanDynamics->getJointNames().size())) {
-        yError() << LogPrefix << "The IHumanDynamics interface is not valid."
-                 << "The number of joints should match the number of joint names.";
-        return false;
+        yInfo() << LogPrefix << "IHumanDynamics interface waiting for first data. Waiting...";
+        yarp::os::Time::delay(5);
     }
 
     // ====

@@ -1235,11 +1235,10 @@ bool HumanDynamicsEstimator::Impl::attach(yarp::dev::PolyDriver* poly)
     // Try to attach IHumanState
     if(!iHumanState && poly->view(tmpIHumanState)){
         // Check the iHumanState interface
-        if (tmpIHumanState->getNumberOfJoints() == 0
+        while (tmpIHumanState->getNumberOfJoints() == 0
             || tmpIHumanState->getNumberOfJoints() != tmpIHumanState->getJointNames().size()) {
-            
-            yError() << LogPrefix<<"The IHumanState interface has been providing inconsistent data and might not be ready";
-                return false;
+            yInfo() << LogPrefix << "IHumanState interface waiting for first data. Waiting...";
+                yarp::os::Time::delay(5);
         }
 
         yInfo() << LogPrefix << "Device" << deviceName << "attached successfully as IHumanState interfaces";
@@ -1250,10 +1249,10 @@ bool HumanDynamicsEstimator::Impl::attach(yarp::dev::PolyDriver* poly)
     if(!iHumanWrench && poly->view(tmpIHumanWrench)){
         // Check the interface
         auto numberOfWrenchSources = tmpIHumanWrench->getNumberOfWrenchSources();
-        if ( numberOfWrenchSources == 0 ||
+        while ( numberOfWrenchSources == 0 ||
              numberOfWrenchSources != tmpIHumanWrench->getWrenchSourceNames().size()) {
-            yError() << LogPrefix << "The IHumanWrench interface might not be ready";
-            return false;
+            yInfo() << LogPrefix << "IHumanWrench interface waiting for first data. Waiting...";
+            yarp::os::Time::delay(5);
         }
 
         yInfo() << LogPrefix << "Device" << deviceName << "attached successfully as IHumanWrench";

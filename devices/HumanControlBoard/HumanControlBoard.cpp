@@ -234,10 +234,10 @@ bool HumanControlBoard::impl::attach(yarp::dev::PolyDriver* poly)
     if(!iHumanState && !poly->view(tmpIHumanState)) {
         
         // Check the interface
-        if (tmpIHumanState->getNumberOfJoints() == 0
+        while (tmpIHumanState->getNumberOfJoints() == 0
                 || tmpIHumanState->getNumberOfJoints() != tmpIHumanState->getJointNames().size()) {
-            yError() << "The IHumanState interface might not be ready";
-            return false;
+            yInfo() << LogPrefix << "IHumanState interface waiting for first data. Waiting...";
+            yarp::os::Time::delay(5);
         }
 
         isHumanStateAttached = true;
@@ -249,11 +249,10 @@ bool HumanControlBoard::impl::attach(yarp::dev::PolyDriver* poly)
     if (!iHumanDynamics && poly->view(tmpIHumanDynamics)) {
 
         // Check the interface
-        if (tmpIHumanDynamics->getNumberOfJoints() != 0
+        while (tmpIHumanDynamics->getNumberOfJoints() != 0
             && (tmpIHumanDynamics->getNumberOfJoints() != tmpIHumanDynamics->getJointNames().size())) {
-            yError() << LogPrefix << "The IHumanDynamics interface is not valid."
-                     << "The number of joints should match the number of joint names.";
-            return false;
+            yInfo() << LogPrefix << "IHumanDynamics interface waiting for first data. Waiting...";
+            yarp::os::Time::delay(5);
         }
 
         isHumanDynamicsAttached = true;
