@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- [`HumanControlBoard`] Fix attach method (https://github.com/robotology/human-dynamics-estimation/pull/365).
+
 ## [2.8.0] - 2023-09-06
 
 ### Added
