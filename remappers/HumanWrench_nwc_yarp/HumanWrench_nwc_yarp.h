@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: Fondazione Istituto Italiano di Tecnologia (IIT)
 // SPDX-License-Identifier: BSD-3-Clause
 
-#ifndef HDE_DEVICES_HUMANWRENCHREMAPPER
-#define HDE_DEVICES_HUMANWRENCHREMAPPER
+#ifndef HDE_DEVICES_HUMANWRENCH_NWC_YARP
+#define HDE_DEVICES_HUMANWRENCH_NWC_YARP
 
 #include <hde/interfaces/IHumanWrench.h> 
 
@@ -17,10 +17,10 @@ namespace hde::msgs {
     class HumanWrench;
 } // namespace hde::msgs
 namespace hde::devices {
-    class HumanWrenchRemapper;
+    class HumanWrench_nwc_yarp;
 } // namespace hde::devices
 
-class hde::devices::HumanWrenchRemapper final
+class hde::devices::HumanWrench_nwc_yarp final
     : public yarp::dev::DeviceDriver
     // inherite from the interface to be exposed
     , public hde::interfaces::IHumanWrench
@@ -34,8 +34,8 @@ private:
     std::unique_ptr<impl> pImpl;
 
 public:
-    HumanWrenchRemapper();
-    ~HumanWrenchRemapper() override;
+    HumanWrench_nwc_yarp();
+    ~HumanWrench_nwc_yarp() override;
     
 
 
@@ -58,5 +58,5 @@ public:
     std::vector<double> getWrenches() const override;
 };
 
-#endif // HDE_DEVICES_HUMANWRENCHREMAPPER
+#endif // HDE_DEVICES_HUMANWRENCH_NWC_YARP
 

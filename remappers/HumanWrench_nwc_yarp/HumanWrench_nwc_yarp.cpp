@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Fondazione Istituto Italiano di Tecnologia (IIT)
 // SPDX-License-Identifier: BSD-3-Clause
 
-#include "HumanWrenchRemapper.h"
+#include "HumanWrench_nwc_yarp.h"
 
 #include <hde/msgs/HumanWrench.h>
 
@@ -11,7 +11,7 @@
 #include <iostream>
 #include <mutex>
 
-const std::string RemapperName = "HumanWrenchRemapper";
+const std::string RemapperName = "HumanWrench_nwc_yarp";
 const std::string LogPrefix = RemapperName + " :";
 
 using namespace hde::devices;
@@ -20,7 +20,7 @@ using namespace hde::devices;
 // IMPL AND UTILS
 // ==============
 
-class HumanWrenchRemapper::impl
+class HumanWrench_nwc_yarp::impl
 {
 public:
     std::mutex mtx;
@@ -34,18 +34,18 @@ public:
 };
 
 // ====================
-// HUMANWRENCH REMAPPER
+// HUMANWRENCH CLIENT
 // ====================
 
-HumanWrenchRemapper::HumanWrenchRemapper()
+HumanWrench_nwc_yarp::HumanWrench_nwc_yarp()
     : PeriodicThread(1)
     , pImpl{new impl()}
 {}
 
-HumanWrenchRemapper::~HumanWrenchRemapper() = default;
+HumanWrench_nwc_yarp::~HumanWrench_nwc_yarp() = default;
 
 // parsing the configuration file and connect ports
-bool HumanWrenchRemapper::open(yarp::os::Searchable& config)
+bool HumanWrench_nwc_yarp::open(yarp::os::Searchable& config)
 {
     // ===============================
     // CHECK THE CONFIGURATION OPTIONS
@@ -103,10 +103,10 @@ bool HumanWrenchRemapper::open(yarp::os::Searchable& config)
     return true;
 }
 
-void HumanWrenchRemapper::threadRelease()
+void HumanWrench_nwc_yarp::threadRelease()
 {}
 
-bool HumanWrenchRemapper::close()
+bool HumanWrench_nwc_yarp::close()
 {
     pImpl->terminationCall = true;
 
@@ -117,13 +117,13 @@ bool HumanWrenchRemapper::close()
     return true;
 }
 
-void HumanWrenchRemapper::run()
+void HumanWrench_nwc_yarp::run()
 {
     return;
 }
 
 // data are read from the port and saved in buffer variables
-void HumanWrenchRemapper::onRead(hde::msgs::HumanWrench& humanWrenchData)
+void HumanWrench_nwc_yarp::onRead(hde::msgs::HumanWrench& humanWrenchData)
 {
     std::lock_guard<std::mutex> lock(pImpl->mtx);
     if(!pImpl->terminationCall) {
@@ -134,19 +134,19 @@ void HumanWrenchRemapper::onRead(hde::msgs::HumanWrench& humanWrenchData)
 }
 
 // method of IHumanWrench interface expose the buffer variables data
-std::vector<std::string> HumanWrenchRemapper::getWrenchSourceNames() const
+std::vector<std::string> HumanWrench_nwc_yarp::getWrenchSourceNames() const
 {
     std::lock_guard<std::mutex> lock(pImpl->mtx);
     return pImpl->wrenchSourceNames;
 }
 
-size_t HumanWrenchRemapper::getNumberOfWrenchSources() const
+size_t HumanWrench_nwc_yarp::getNumberOfWrenchSources() const
 {
     std::lock_guard<std::mutex> lock(pImpl->mtx);
     return pImpl->wrenchSourceNames.size();
 }
 
-std::vector<double> HumanWrenchRemapper::getWrenches() const
+std::vector<double> HumanWrench_nwc_yarp::getWrenches() const
 {
     std::lock_guard<std::mutex> lock(pImpl->mtx);
     return pImpl->wrenches;

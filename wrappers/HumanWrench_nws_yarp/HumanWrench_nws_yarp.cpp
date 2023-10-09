@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Fondazione Istituto Italiano di Tecnologia (IIT)
 // SPDX-License-Identifier: BSD-3-Clause
 
-#include "HumanWrenchWrapper.h"
+#include "HumanWrench_nws_yarp.h"
 #include <hde/interfaces/IHumanWrench.h>
 #include <hde/msgs/HumanWrench.h>
 
@@ -11,13 +11,13 @@
 
 #include <mutex>
 
-const std::string DeviceName = "HumanWrenchWrapper";
+const std::string DeviceName = "HumanWrench_nws_yarp";
 const std::string LogPrefix = DeviceName + " :";
 constexpr double DefaultPeriod = 0.01;
 
 using namespace hde::wrappers;
 
-class HumanWrenchWrapper::impl
+class HumanWrench_nws_yarp::impl
 {
 public:
     mutable std::mutex mutex;
@@ -25,14 +25,14 @@ public:
     yarp::os::BufferedPort<hde::msgs::HumanWrench> outputPort;
 };
 
-HumanWrenchWrapper::HumanWrenchWrapper()
+HumanWrench_nws_yarp::HumanWrench_nws_yarp()
     : PeriodicThread(DefaultPeriod)
     , pImpl{new impl()}
 {}
 
-HumanWrenchWrapper::~HumanWrenchWrapper() {}
+HumanWrench_nws_yarp::~HumanWrench_nws_yarp() {}
 
-bool HumanWrenchWrapper::open(yarp::os::Searchable& config)
+bool HumanWrench_nws_yarp::open(yarp::os::Searchable& config)
 {
     // ===============================
     // CHECK THE CONFIGURATION OPTIONS
@@ -72,13 +72,13 @@ bool HumanWrenchWrapper::open(yarp::os::Searchable& config)
     return true;
 }
 
-bool HumanWrenchWrapper::close()
+bool HumanWrench_nws_yarp::close()
 {
     pImpl->outputPort.close();
     return true;
 }
 
-void HumanWrenchWrapper::run()
+void HumanWrench_nws_yarp::run()
 {
     // Get data from the interface
     std::vector<std::string> wrenchSourceNames = pImpl->humanWrench->getWrenchSourceNames();
@@ -104,7 +104,7 @@ void HumanWrenchWrapper::run()
     pImpl->outputPort.write();
 }
 
-bool HumanWrenchWrapper::attach(yarp::dev::PolyDriver* poly)
+bool HumanWrench_nws_yarp::attach(yarp::dev::PolyDriver* poly)
 {
     if (!poly) {
         yError() << LogPrefix << "Passed PolyDriver is nullptr";
@@ -141,9 +141,9 @@ bool HumanWrenchWrapper::attach(yarp::dev::PolyDriver* poly)
     return true;
 }
 
-void HumanWrenchWrapper::threadRelease() {}
+void HumanWrench_nws_yarp::threadRelease() {}
 
-bool HumanWrenchWrapper::detach()
+bool HumanWrench_nws_yarp::detach()
 {
     while (isRunning()) {
         stop();
@@ -153,7 +153,7 @@ bool HumanWrenchWrapper::detach()
     return true;
 }
 
-bool HumanWrenchWrapper::attachAll(const yarp::dev::PolyDriverList& driverList)
+bool HumanWrench_nws_yarp::attachAll(const yarp::dev::PolyDriverList& driverList)
 {
     if (driverList.size() > 1) {
         yError() << LogPrefix << "This wrapper accepts only one attached PolyDriver";
@@ -170,7 +170,7 @@ bool HumanWrenchWrapper::attachAll(const yarp::dev::PolyDriverList& driverList)
     return attach(driver->poly);
 }
 
-bool HumanWrenchWrapper::detachAll()
+bool HumanWrench_nws_yarp::detachAll()
 {
     return detach();
 }

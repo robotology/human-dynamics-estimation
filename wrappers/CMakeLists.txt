@@ -3,5 +3,5 @@
 
 add_subdirectory(HumanState_nws_yarp)
 add_subdirectory(HumanDynamics_nws_yarp)
-add_subdirectory(HumanWrenchWrapper)
+add_subdirectory(HumanWrench_nws_yarp)
 add_subdirectory(WearableTargetsWrapper)
