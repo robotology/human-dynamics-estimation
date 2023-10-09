@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Fondazione Istituto Italiano di Tecnologia (IIT)
 // SPDX-License-Identifier: BSD-3-Clause
 
-#include "HumanDynamicsRemapper.h"
+#include "HumanDynamics_nwc_yarp.h"
 
 #include <hde/msgs/HumanDynamics.h>
 
@@ -11,8 +11,8 @@
 #include <iostream>
 #include <mutex>
 
-const std::string RemapperName = "HumanDynamicsRemapper";
-const std::string LogPrefix = RemapperName + " :";
+const std::string ClientName = "HumanDynamics_nwc_yarp";
+const std::string LogPrefix = ClientName + " :";
 
 using namespace hde::devices;
 
@@ -20,7 +20,7 @@ using namespace hde::devices;
 // IMPL AND UTILS
 // ==============
 
-class HumanDynamicsRemapper::impl
+class HumanDynamics_nwc_yarp::impl
 {
 public:
     std::mutex mtx;
@@ -34,18 +34,18 @@ public:
 };
 
 // =======================
-// IHUMANDYNAMICS REMAPPER
+// IHUMANDYNAMICS CLIENT
 // =======================
 
-HumanDynamicsRemapper::HumanDynamicsRemapper()
+HumanDynamics_nwc_yarp::HumanDynamics_nwc_yarp()
     : PeriodicThread(1)
     , pImpl{new impl()}
 {}
 
-HumanDynamicsRemapper::~HumanDynamicsRemapper() = default;
+HumanDynamics_nwc_yarp::~HumanDynamics_nwc_yarp() = default;
 
 // parsing the configuration file and connect ports
-bool HumanDynamicsRemapper::open(yarp::os::Searchable& config)
+bool HumanDynamics_nwc_yarp::open(yarp::os::Searchable& config)
 {
     // ===============================
     // CHECK THE CONFIGURATION OPTIONS
@@ -103,10 +103,10 @@ bool HumanDynamicsRemapper::open(yarp::os::Searchable& config)
     return true;
 }
 
-void HumanDynamicsRemapper::threadRelease()
+void HumanDynamics_nwc_yarp::threadRelease()
 {}
 
-bool HumanDynamicsRemapper::close()
+bool HumanDynamics_nwc_yarp::close()
 {
     pImpl->terminationCall = true;
 
@@ -117,13 +117,13 @@ bool HumanDynamicsRemapper::close()
     return true;
 }
 
-void HumanDynamicsRemapper::run()
+void HumanDynamics_nwc_yarp::run()
 {
     return;
 }
 
 // data are read from the port and saved in buffer variables
-void HumanDynamicsRemapper::onRead(hde::msgs::HumanDynamics& humanDynamicsData)
+void HumanDynamics_nwc_yarp::onRead(hde::msgs::HumanDynamics& humanDynamicsData)
 {
     std::lock_guard<std::mutex> lock(pImpl->mtx);
     if(!pImpl->terminationCall) {
@@ -134,19 +134,19 @@ void HumanDynamicsRemapper::onRead(hde::msgs::HumanDynamics& humanDynamicsData)
 }
 
 // method of IHumanDynamics interface expose the buffer variables data
-std::vector<std::string> HumanDynamicsRemapper::getJointNames() const
+std::vector<std::string> HumanDynamics_nwc_yarp::getJointNames() const
 {
     std::lock_guard<std::mutex> lock(pImpl->mtx);
     return pImpl->jointNames;
 }
 
-size_t HumanDynamicsRemapper::getNumberOfJoints() const
+size_t HumanDynamics_nwc_yarp::getNumberOfJoints() const
 {
     std::lock_guard<std::mutex> lock(pImpl->mtx);
     return pImpl->jointTorques.size();
 }
 
-std::vector<double> HumanDynamicsRemapper::getJointTorques() const
+std::vector<double> HumanDynamics_nwc_yarp::getJointTorques() const
 {
     std::lock_guard<std::mutex> lock(pImpl->mtx);
     return pImpl->jointTorques;

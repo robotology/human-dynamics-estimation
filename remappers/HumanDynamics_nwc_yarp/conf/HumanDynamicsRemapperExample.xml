@@ -3,8 +3,8 @@
 <robot name="Human-Dynamics-Remapper" build=0 portprefix="">
 
 
-    <device type="human_dynamics_remapper" name="HumanDynamicsRemapper">
-       <param name="humanDynamicsDataPort">/HDE/HumanDynamicsWrapper/torques:o</param>
+    <device type="human_dynamics_remapper" name="HumanDynamics_nwc_yarp">
+       <param name="humanDynamicsDataPort">/HDE/HumanDynamics_nwc_yarp/torques:o</param>
     </device>
 
 

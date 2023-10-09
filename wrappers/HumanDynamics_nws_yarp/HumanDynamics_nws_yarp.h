@@ -13,11 +13,11 @@
 
 namespace hde {
     namespace wrappers {
-        class HumanDynamicsWrapper;
+        class HumanDynamics_nws_yarp;
     } // namespace wrappers
 } // namespace hde
 
-class hde::wrappers::HumanDynamicsWrapper final
+class hde::wrappers::HumanDynamics_nws_yarp final
         : public yarp::dev::DeviceDriver
         , public yarp::dev::IWrapper
         , public yarp::dev::IMultipleWrapper
@@ -28,8 +28,8 @@ private:
     std::unique_ptr<impl> pImpl;
 
 public:
-    HumanDynamicsWrapper();
-    ~HumanDynamicsWrapper() override;
+    HumanDynamics_nws_yarp();
+    ~HumanDynamics_nws_yarp() override;
 
     // DeviceDriver interface
     bool open(yarp::os::Searchable& config) override;

@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: Fondazione Istituto Italiano di Tecnologia (IIT)
 // SPDX-License-Identifier: BSD-3-Clause
 
-#ifndef HDE_DEVICES_HUMANDYNAMICSREMAPPER
-#define HDE_DEVICES_HUMANDYNAMICSREMAPPER
+#ifndef HDE_DEVICES_HUMANDYNAMICS_NEC_YARP
+#define HDE_DEVICES_HUMANDYNAMICS_NEC_YARP
 
 #include <hde/interfaces/IHumanDynamics.h> 
 
@@ -17,10 +17,10 @@ namespace hde::msgs {
     class HumanDynamics;
 } // namespace hde::msgs
 namespace hde::devices {
-    class HumanDynamicsRemapper;
+    class HumanDynamics_nwc_yarp;
 } // namespace hde::devices
 
-class hde::devices::HumanDynamicsRemapper final
+class hde::devices::HumanDynamics_nwc_yarp final
     : public yarp::dev::DeviceDriver
     // inherite from the interface to be exposed
     , public hde::interfaces::IHumanDynamics
@@ -34,8 +34,8 @@ private:
     std::unique_ptr<impl> pImpl;
 
 public:
-    HumanDynamicsRemapper();
-    ~HumanDynamicsRemapper() override;
+    HumanDynamics_nwc_yarp();
+    ~HumanDynamics_nwc_yarp() override;
     
 
 
@@ -58,5 +58,5 @@ public:
     std::vector<double> getJointTorques() const override;
 };
 
-#endif // HDE_DEVICES_HUMANDYNAMICSREMAPPER
+#endif // HDE_DEVICES_HUMANDYNAMICS_NEC_YARP
 

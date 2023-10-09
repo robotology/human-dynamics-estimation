@@ -1,21 +1,21 @@
 # SPDX-FileCopyrightText: Fondazione Istituto Italiano di Tecnologia (IIT)
 # SPDX-License-Identifier: BSD-3-Clause
 
-yarp_prepare_plugin(human_dynamics_remapper
-    TYPE hde::devices::HumanDynamicsRemapper
-    INCLUDE HumanDynamicsRemapper.h
+yarp_prepare_plugin(human_dynamics_nwc_yarp
+    TYPE hde::devices::HumanDynamics_nwc_yarp
+    INCLUDE HumanDynamics_nwc_yarp.h
     CATEGORY device
     ADVANCED
     DEFAULT ON)
 
-yarp_add_plugin(HumanDynamicsRemapper
-    HumanDynamicsRemapper.cpp
-    HumanDynamicsRemapper.h)
+yarp_add_plugin(HumanDynamics_nwc_yarp
+    HumanDynamics_nwc_yarp.cpp
+    HumanDynamics_nwc_yarp.h)
 
-target_include_directories(HumanDynamicsRemapper PUBLIC
+target_include_directories(HumanDynamics_nwc_yarp PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
 
-target_link_libraries(HumanDynamicsRemapper PUBLIC
+target_link_libraries(HumanDynamics_nwc_yarp PUBLIC
     IHumanDynamics
     HumanDynamicsMsg
     YARP::YARP_OS
@@ -23,7 +23,7 @@ target_link_libraries(HumanDynamicsRemapper PUBLIC
     YARP::YARP_init)
 
 yarp_install(
-    TARGETS HumanDynamicsRemapper
+    TARGETS HumanDynamics_nwc_yarp
     COMPONENT runtime
     LIBRARY DESTINATION ${YARP_DYNAMIC_PLUGINS_INSTALL_DIR}
     ARCHIVE DESTINATION ${YARP_STATIC_PLUGINS_INSTALL_DIR}
