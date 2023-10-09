@@ -11,8 +11,8 @@
 #include <iostream>
 #include <mutex>
 
-const std::string RemapperName = "HumanWrench_nwc_yarp";
-const std::string LogPrefix = RemapperName + " :";
+const std::string ClientName = "HumanWrench_nwc_yarp";
+const std::string LogPrefix = ClientName + " :";
 
 using namespace hde::devices;
 

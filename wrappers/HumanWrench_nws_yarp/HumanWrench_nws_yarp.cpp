@@ -156,7 +156,7 @@ bool HumanWrench_nws_yarp::detach()
 bool HumanWrench_nws_yarp::attachAll(const yarp::dev::PolyDriverList& driverList)
 {
     if (driverList.size() > 1) {
-        yError() << LogPrefix << "This wrapper accepts only one attached PolyDriver";
+        yError() << LogPrefix << "This server accepts only one attached PolyDriver";
         return false;
     }
 

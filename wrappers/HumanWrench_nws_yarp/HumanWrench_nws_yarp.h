@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: Fondazione Istituto Italiano di Tecnologia (IIT)
 // SPDX-License-Identifier: BSD-3-Clause
 
-#ifndef HDE_DEVICES_HUMANWRENCHWRAPPER
-#define HDE_DEVICES_HUMANWRENCHWRAPPER
+#ifndef HDE_DEVICES_HUMANWRENCH_NWS_YARP
+#define HDE_DEVICES_HUMANWRENCH_NWS_YARP
 
 #include <yarp/dev/DeviceDriver.h>
 #include <yarp/dev/IMultipleWrapper.h>
@@ -49,4 +49,4 @@ public:
 
 };
 
-#endif // HDE_DEVICES_HUMANWRENCHWRAPPER
+#endif // HDE_DEVICES_HUMANWRENCH_NWS_YARP

@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: Fondazione Istituto Italiano di Tecnologia (IIT)
 # SPDX-License-Identifier: BSD-3-Clause
 
-yarp_prepare_plugin(wearable_targets_remapper
+yarp_prepare_plugin(wearable_targets_nwc_yarp
     TYPE hde::devices::WearableTargets_nwc_yarp
     INCLUDE WearableTargets_nwc_yarp.h
     CATEGORY device

@@ -11,8 +11,8 @@
 #include <unordered_map>
 #include <iostream>
 
-const std::string RemapperName = "WearableTargets_nwc_yarp";
-const std::string LogPrefix = RemapperName + " :";
+const std::string ClientName = "WearableTargets_nwc_yarp";
+const std::string LogPrefix = ClientName + " :";
 
 using namespace hde::devices;
 
@@ -70,7 +70,7 @@ public:
 };
 
 // ========================
-// WEARABLETARGETS REMAPPER
+// WEARABLETARGETS CLIENT
 // ========================
 
 WearableTargets_nwc_yarp::WearableTargets_nwc_yarp()
