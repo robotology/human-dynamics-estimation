@@ -185,18 +185,18 @@ int main(int argc, char* argv[])
     std::string humanStateDataPortName = rf.find("humanStateDataPortName").asString();
 
     // Visualize Wrenches Options
-    std::string humanWrenchWrapperPortName;
+    std::string humanWrenchServerPortName;
     std::vector<std::string> wrenchSourceLinks;
     if (visualizeWrenches)
     {
-        if( !(rf.check("humanWrenchWrapperPortName") && rf.find("humanWrenchWrapperPortName").isString()) )
+        if( !(rf.check("humanWrenchServerPortName") && rf.find("humanWrenchServerPortName").isString()) )
         {
-            yError() << LogPrefix << "'humanWrenchWrapperPortName' option not found or not valid. Wrench Visualization will be disabled";
+            yError() << LogPrefix << "'humanWrenchServerPortName' option not found or not valid. Wrench Visualization will be disabled";
             visualizeWrenches = false;
         }
         else
         {
-            humanWrenchWrapperPortName = rf.find("humanWrenchWrapperPortName").asString();
+            humanWrenchServerPortName = rf.find("humanWrenchServerPortName").asString();
         }
     }
 
@@ -308,17 +308,17 @@ int main(int argc, char* argv[])
         }
     }
 
-    std::string wearableTargetsWrapperPortName;
+    std::string wearableTargetsServerPortName;
     if (visualizeTargets)
     {
-        if( !(rf.check("wearableTargetsWrapperPortName") && rf.find("wearableTargetsWrapperPortName").isString()) )
+        if( !(rf.check("wearableTargetsServerPortName") && rf.find("wearableTargetsServerPortName").isString()) )
         {
-            yError() << LogPrefix << "'wearableTargetsWrapperPortName' option not found or not valid. Wrench Visualization will be disabled";
+            yError() << LogPrefix << "'wearableTargetsServerPortName' option not found or not valid. Wrench Visualization will be disabled";
             visualizeTargets = false;
         }
         else
         {
-            wearableTargetsWrapperPortName = rf.find("wearableTargetsWrapperPortName").asString();
+            wearableTargetsServerPortName = rf.find("wearableTargetsServerPortName").asString();
         }
     }
 
@@ -379,20 +379,20 @@ int main(int argc, char* argv[])
     }
 
 
-    // initialize iHumanState interface from remapper
-    yarp::dev::PolyDriver humanStateRemapperDevice;
+    // initialize iHumanState interface from client
+    yarp::dev::PolyDriver humanStateClientDevice;
     hde::interfaces::IHumanState* iHumanState{nullptr};
 
-    yarp::os::Property remapperOptions;
-    remapperOptions.put("device", "human_state_remapper");
-    remapperOptions.put("humanStateDataPort", humanStateDataPortName);
+    yarp::os::Property clientOptions;
+    clientOptions.put("device", "human_state_nwc_yarp");
+    clientOptions.put("humanStateDataPort", humanStateDataPortName);
 
-    if(!humanStateRemapperDevice.open(remapperOptions))
+    if(!humanStateClientDevice.open(clientOptions))
     {
-        yError() << LogPrefix << "Failed to connect remapper device";
+        yError() << LogPrefix << "Failed to connect client device";
         return EXIT_FAILURE;
     }
-    if(!humanStateRemapperDevice.view(iHumanState) || !iHumanState )
+    if(!humanStateClientDevice.view(iHumanState) || !iHumanState )
     {
         yError() << LogPrefix << "Failed to view iHumanState interface";
         return EXIT_FAILURE;
@@ -402,7 +402,7 @@ int main(int argc, char* argv[])
     while (iHumanState->getBaseName().empty())
     {
         std::this_thread::sleep_for(std::chrono::seconds(1));
-        yInfo() << LogPrefix << "Waiting for data from HumanStateRemapper";
+        yInfo() << LogPrefix << "Waiting for data from HumanStateClient";
     }
      
     // compare the iHumanState base and joint names with the visualization model
@@ -429,23 +429,23 @@ int main(int argc, char* argv[])
         }
     }
 
-    // initialize iWearableTargets interface from remapper
+    // initialize iWearableTargets interface from client
     std::unordered_map<hde::TargetName, std::shared_ptr<hde::WearableSensorTarget>> targets;
-    yarp::dev::PolyDriver wearableTargetsRemapperDevice;
+    yarp::dev::PolyDriver wearableTargetsClientDevice;
     if (visualizeTargets) {
         hde::interfaces::IWearableTargets* iWearableTargets{nullptr};
 
-        yarp::os::Property wearableTargetsRemapperOptions;
-        wearableTargetsRemapperOptions.put("device", "wearable_targets_remapper");
-        wearableTargetsRemapperOptions.put("wearableTargetsDataPort", wearableTargetsWrapperPortName);
-        std::cerr << "my wrapper port name is: "  << wearableTargetsWrapperPortName << std::endl;
+        yarp::os::Property wearableTargetsClientOptions;
+        wearableTargetsClientOptions.put("device", "wearable_targets_nwc_yarp");
+        wearableTargetsClientOptions.put("wearableTargetsDataPort", wearableTargetsServerPortName);
+        std::cerr << "my server port name is: "  << wearableTargetsServerPortName << std::endl;
 
-        if(!wearableTargetsRemapperDevice.open(wearableTargetsRemapperOptions))
+        if(!wearableTargetsClientDevice.open(wearableTargetsClientOptions))
         {
-            yError() << LogPrefix << "Failed to connect remapper device";
+            yError() << LogPrefix << "Failed to connect client device";
             return EXIT_FAILURE;
         }
-        if(!wearableTargetsRemapperDevice.view(iWearableTargets) || !iWearableTargets )
+        if(!wearableTargetsClientDevice.view(iWearableTargets) || !iWearableTargets )
         {
             yError() << LogPrefix << "Failed to view iWearableTargets interface";
             return EXIT_FAILURE;
@@ -456,7 +456,7 @@ int main(int argc, char* argv[])
         while (iWearableTargets->getAllTargetsName().empty())
         {
             std::this_thread::sleep_for(std::chrono::seconds(1));
-            yInfo() << LogPrefix << "Waiting for data from WearableTargetsRemapper";
+            yInfo() << LogPrefix << "Waiting for data from WearableTargetsClient";
         }
 
         // Verify the selected targets exist, and that the associated link exists in the visualized model
@@ -487,20 +487,20 @@ int main(int argc, char* argv[])
     }
 
     // initialize iHumanWrench 
-    yarp::dev::PolyDriver humanWrenchRemapperDevice;
+    yarp::dev::PolyDriver humanWrenchClientDevice;
     hde::interfaces::IHumanWrench* iHumanWrench{nullptr};
     if (visualizeWrenches)
     {
-        yarp::os::Property humanWrenchRemapperOptions;
-        humanWrenchRemapperOptions.put("device", "human_wrench_remapper");
-        humanWrenchRemapperOptions.put("humanWrenchDataPort", humanWrenchWrapperPortName);
+        yarp::os::Property humanWrenchClientOptions;
+        humanWrenchClientOptions.put("device", "human_wrench_nwc_yarp");
+        humanWrenchClientOptions.put("humanWrenchDataPort", humanWrenchServerPortName);
 
-        if(!humanWrenchRemapperDevice.open(humanWrenchRemapperOptions))
+        if(!humanWrenchClientDevice.open(humanWrenchClientOptions))
         {
-            yError() << LogPrefix << "Failed to connect remapper device";
+            yError() << LogPrefix << "Failed to connect client device";
             return EXIT_FAILURE;
         }
-        if(!humanWrenchRemapperDevice.view(iHumanWrench) || !iHumanWrench )
+        if(!humanWrenchClientDevice.view(iHumanWrench) || !iHumanWrench )
         {
             yError() << LogPrefix << "Failed to view iHumanWrench interface";
             return EXIT_FAILURE;
@@ -510,12 +510,12 @@ int main(int argc, char* argv[])
         while (iHumanWrench->getWrenchSourceNames().empty())
         {
             std::this_thread::sleep_for(std::chrono::seconds(1));
-            yInfo() << LogPrefix << "Waiting for data from HumanWrenchRemapper";
+            yInfo() << LogPrefix << "Waiting for data from HumanWrenchClient";
         }
 
         if(iHumanWrench->getNumberOfWrenchSources() != wrenchSourceLinks.size() )
         {
-            yError() << LogPrefix << "expected " << wrenchSourceLinks.size() << " wrench sources in port " << humanWrenchWrapperPortName
+            yError() << LogPrefix << "expected " << wrenchSourceLinks.size() << " wrench sources in port " << humanWrenchServerPortName
                     << ", received " << iHumanWrench->getNumberOfWrenchSources();
             return EXIT_FAILURE;
         }
@@ -740,9 +740,9 @@ int main(int argc, char* argv[])
     }
 
     viz.close();
-    humanStateRemapperDevice.close();
-    wearableTargetsRemapperDevice.close();
-    humanWrenchRemapperDevice.close();
+    humanStateClientDevice.close();
+    wearableTargetsClientDevice.close();
+    humanWrenchClientDevice.close();
 
     return 0;
 }
