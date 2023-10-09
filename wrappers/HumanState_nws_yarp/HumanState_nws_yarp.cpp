@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Fondazione Istituto Italiano di Tecnologia (IIT)
 // SPDX-License-Identifier: BSD-3-Clause
 
-#include "HumanStateWrapper.h"
+#include "HumanState_nws_yarp.h"
 #include <hde/interfaces/IHumanState.h>
 #include <hde/msgs/HumanState.h>
 
@@ -9,13 +9,13 @@
 #include <yarp/os/LogStream.h>
 #include <yarp/sig/Vector.h>
 
-const std::string DeviceName = "HumanStateWrapper";
+const std::string DeviceName = "HumanState_nws_yarp";
 const std::string LogPrefix = DeviceName + " :";
 constexpr double DefaultPeriod = 0.01;
 
 using namespace hde::wrappers;
 
-class HumanStateWrapper::impl
+class HumanState_nws_yarp::impl
 {
 public:
     hde::interfaces::IHumanState* iHumanState = nullptr;
@@ -33,14 +33,14 @@ public:
     std::string baseName;
 };
 
-HumanStateWrapper::HumanStateWrapper()
+HumanState_nws_yarp::HumanState_nws_yarp()
     : PeriodicThread(DefaultPeriod)
     , pImpl{new impl()}
 {}
 
-HumanStateWrapper::~HumanStateWrapper() {}
+HumanState_nws_yarp::~HumanState_nws_yarp() {}
 
-bool HumanStateWrapper::open(yarp::os::Searchable& config)
+bool HumanState_nws_yarp::open(yarp::os::Searchable& config)
 {
     // ===============================
     // CHECK THE CONFIGURATION OPTIONS
@@ -82,12 +82,12 @@ bool HumanStateWrapper::open(yarp::os::Searchable& config)
 
 #include <iostream>
 
-bool HumanStateWrapper::close()
+bool HumanState_nws_yarp::close()
 {
     return true;
 }
 
-void HumanStateWrapper::run()
+void HumanState_nws_yarp::run()
 {
 
     // Get data from the interface
@@ -154,7 +154,7 @@ void HumanStateWrapper::run()
     pImpl->outputPort.write(/*forceStrict=*/true);
 }
 
-bool HumanStateWrapper::attach(yarp::dev::PolyDriver* poly)
+bool HumanState_nws_yarp::attach(yarp::dev::PolyDriver* poly)
 {
     if (!poly) {
         yError() << LogPrefix << "Passed PolyDriver is nullptr";
@@ -199,9 +199,9 @@ bool HumanStateWrapper::attach(yarp::dev::PolyDriver* poly)
     return true;
 }
 
-void HumanStateWrapper::threadRelease() {}
+void HumanState_nws_yarp::threadRelease() {}
 
-bool HumanStateWrapper::detach()
+bool HumanState_nws_yarp::detach()
 {
     while (isRunning()) {
         stop();
@@ -215,7 +215,7 @@ bool HumanStateWrapper::detach()
     return true;
 }
 
-bool HumanStateWrapper::attachAll(const yarp::dev::PolyDriverList& driverList)
+bool HumanState_nws_yarp::attachAll(const yarp::dev::PolyDriverList& driverList)
 {
     if (driverList.size() > 1) {
         yError() << LogPrefix << "This wrapper accepts only one attached PolyDriver";
@@ -232,7 +232,7 @@ bool HumanStateWrapper::attachAll(const yarp::dev::PolyDriverList& driverList)
     return attach(driver->poly);
 }
 
-bool HumanStateWrapper::detachAll()
+bool HumanState_nws_yarp::detachAll()
 {
     return detach();
 }

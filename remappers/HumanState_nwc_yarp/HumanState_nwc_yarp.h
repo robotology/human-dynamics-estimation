@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: Fondazione Istituto Italiano di Tecnologia (IIT)
 // SPDX-License-Identifier: BSD-3-Clause
 
-#ifndef HDE_DEVICES_HUMANSTATEREMAPPER
-#define HDE_DEVICES_HUMANSTATEREMAPPER
+#ifndef HDE_DEVICES_HUMANSTATE_NWC_YARP
+#define HDE_DEVICES_HUMANSTATE_NWC_YARP
 
 #include <hde/interfaces/IHumanState.h>
 
@@ -17,10 +17,10 @@ namespace hde::msgs {
     class HumanState;
 } // namespace hde::msgs
 namespace hde::devices {
-    class HumanStateRemapper;
+    class HumanState_nwc_yarp;
 } // namespace hde::devices
 
-class hde::devices::HumanStateRemapper final
+class hde::devices::HumanState_nwc_yarp final
     : public yarp::dev::DeviceDriver
     , public hde::interfaces::IHumanState
     , public yarp::os::TypedReaderCallback<hde::msgs::HumanState>
@@ -31,8 +31,8 @@ private:
     std::unique_ptr<impl> pImpl;
 
 public:
-    HumanStateRemapper();
-    ~HumanStateRemapper() override;
+    HumanState_nwc_yarp();
+    ~HumanState_nwc_yarp() override;
 
     std::mutex mtx;
 
@@ -64,4 +64,4 @@ public:
     std::array<double, 3> getCoMVelocity() const override;
 };
 
-#endif // HDE_DEVICES_HUMANSTATEREMAPPER
+#endif // HDE_DEVICES_HUMANSTATE_NWC_YARP

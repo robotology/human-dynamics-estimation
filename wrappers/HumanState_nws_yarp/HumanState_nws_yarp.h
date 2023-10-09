@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: Fondazione Istituto Italiano di Tecnologia (IIT)
 // SPDX-License-Identifier: BSD-3-Clause
 
-#ifndef HDE_DEVICES_HUMANSTATEWRAPPER
-#define HDE_DEVICES_HUMANSTATEWRAPPER
+#ifndef HDE_DEVICES_HUMANSTATE_NWS_YARP
+#define HDE_DEVICES_HUMANSTATE_NWS_YARP
 
 #include <yarp/dev/DeviceDriver.h>
 #include <yarp/dev/IMultipleWrapper.h>
@@ -13,11 +13,11 @@
 
 namespace hde {
     namespace wrappers {
-        class HumanStateWrapper;
+        class HumanState_nws_yarp;
     } // namespace wrappers
 } // namespace hde
 
-class hde::wrappers::HumanStateWrapper final
+class hde::wrappers::HumanState_nws_yarp final
     : public yarp::dev::DeviceDriver
     , public yarp::dev::IWrapper
     , public yarp::dev::IMultipleWrapper
@@ -28,8 +28,8 @@ private:
     std::unique_ptr<impl> pImpl;
 
 public:
-    HumanStateWrapper();
-    ~HumanStateWrapper() override;
+    HumanState_nws_yarp();
+    ~HumanState_nws_yarp() override;
 
     // DeviceDriver interface
     bool open(yarp::os::Searchable& config) override;
@@ -48,4 +48,4 @@ public:
     bool detachAll() override;
 };
 
-#endif // HDE_DEVICES_HUMANSTATEWRAPPER
+#endif // HDE_DEVICES_HUMANSTATE_NWS_YARP

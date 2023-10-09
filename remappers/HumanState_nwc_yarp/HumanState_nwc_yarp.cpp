@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Fondazione Istituto Italiano di Tecnologia (IIT)
 // SPDX-License-Identifier: BSD-3-Clause
 
-#include "HumanStateRemapper.h"
+#include "HumanState_nwc_yarp.h"
 
 #include <hde/msgs/HumanState.h>
 
@@ -11,8 +11,8 @@
 #include <iostream>
 #include <mutex>
 
-const std::string RemapperName = "HumanStateRemapper";
-const std::string LogPrefix = RemapperName + " :";
+const std::string ClientName = "HumanState_nwc_yarp";
+const std::string LogPrefix = ClientName + " :";
 
 using namespace hde::devices;
 
@@ -20,7 +20,7 @@ using namespace hde::devices;
 // IMPL AND UTILS
 // ==============
 
-class HumanStateRemapper::impl
+class HumanState_nwc_yarp::impl
 {
 public:
     std::mutex mtx;
@@ -44,17 +44,17 @@ public:
 };
 
 // ====================
-// IHUMANSTATE REMAPPER
+// IHUMANSTATE CLIENT
 // ====================
 
-HumanStateRemapper::HumanStateRemapper()
+HumanState_nwc_yarp::HumanState_nwc_yarp()
     : PeriodicThread(1)
     , pImpl{new impl()}
 {}
 
-HumanStateRemapper::~HumanStateRemapper() = default;
+HumanState_nwc_yarp::~HumanState_nwc_yarp() = default;
 
-bool HumanStateRemapper::open(yarp::os::Searchable& config)
+bool HumanState_nwc_yarp::open(yarp::os::Searchable& config)
 {
     // ===============================
     // CHECK THE CONFIGURATION OPTIONS
@@ -111,10 +111,10 @@ bool HumanStateRemapper::open(yarp::os::Searchable& config)
     return true;
 }
 
-void HumanStateRemapper::threadRelease()
+void HumanState_nwc_yarp::threadRelease()
 {}
 
-bool HumanStateRemapper::close()
+bool HumanState_nwc_yarp::close()
 {
     pImpl->terminationCall = true;
 
@@ -125,12 +125,12 @@ bool HumanStateRemapper::close()
     return true;
 }
 
-void HumanStateRemapper::run()
+void HumanState_nwc_yarp::run()
 {
     return;
 }
 
-void HumanStateRemapper::onRead(hde::msgs::HumanState& humanStateData)
+void HumanState_nwc_yarp::onRead(hde::msgs::HumanState& humanStateData)
 {
     std::lock_guard<std::mutex> lock(pImpl->mtx);
     if(!pImpl->terminationCall) {
@@ -151,61 +151,61 @@ void HumanStateRemapper::onRead(hde::msgs::HumanState& humanStateData)
     }
 }
 
-std::vector<std::string> HumanStateRemapper::getJointNames() const
+std::vector<std::string> HumanState_nwc_yarp::getJointNames() const
 {
     std::lock_guard<std::mutex> lock(pImpl->mtx);
 
     return pImpl->jointNames;
 }
 
-std::string HumanStateRemapper::getBaseName() const
+std::string HumanState_nwc_yarp::getBaseName() const
 {
     std::lock_guard<std::mutex> lock(pImpl->mtx);
     return pImpl->baseName;
 }
-size_t HumanStateRemapper::getNumberOfJoints() const
+size_t HumanState_nwc_yarp::getNumberOfJoints() const
 {
     std::lock_guard<std::mutex> lock(pImpl->mtx);
     return pImpl->jointPositions.size();
 }
 
-std::vector<double> HumanStateRemapper::getJointPositions() const
+std::vector<double> HumanState_nwc_yarp::getJointPositions() const
 {
     std::lock_guard<std::mutex> lock(pImpl->mtx);
     return pImpl->jointPositions;
 }
 
-std::vector<double> HumanStateRemapper::getJointVelocities() const
+std::vector<double> HumanState_nwc_yarp::getJointVelocities() const
 {
     std::lock_guard<std::mutex> lock(pImpl->mtx);
     return pImpl->jointVelocities;
 }
 
-std::array<double, 3> HumanStateRemapper::getBasePosition() const
+std::array<double, 3> HumanState_nwc_yarp::getBasePosition() const
 {
     std::lock_guard<std::mutex> lock(pImpl->mtx);
     return pImpl->basePosition;
 }
 
-std::array<double, 4> HumanStateRemapper::getBaseOrientation() const
+std::array<double, 4> HumanState_nwc_yarp::getBaseOrientation() const
 {
     std::lock_guard<std::mutex> lock(pImpl->mtx);
     return pImpl->baseOrientation;
 }
 
-std::array<double, 6> HumanStateRemapper::getBaseVelocity() const
+std::array<double, 6> HumanState_nwc_yarp::getBaseVelocity() const
 {
     std::lock_guard<std::mutex> lock(pImpl->mtx);
     return pImpl->baseVelocity;
 }
 
-std::array<double, 3> HumanStateRemapper::getCoMPosition() const
+std::array<double, 3> HumanState_nwc_yarp::getCoMPosition() const
 {
     std::lock_guard<std::mutex> lock(pImpl->mtx);
     return pImpl->CoMPosition;
 }
 
-std::array<double, 3> HumanStateRemapper::getCoMVelocity() const
+std::array<double, 3> HumanState_nwc_yarp::getCoMVelocity() const
 {
     std::lock_guard<std::mutex> lock(pImpl->mtx);
     return pImpl->CoMVelocity;
