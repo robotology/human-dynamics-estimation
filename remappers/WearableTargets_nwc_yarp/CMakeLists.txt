@@ -2,20 +2,20 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 yarp_prepare_plugin(wearable_targets_remapper
-    TYPE hde::devices::WearableTargetsRemapper
-    INCLUDE WearableTargetsRemapper.h
+    TYPE hde::devices::WearableTargets_nwc_yarp
+    INCLUDE WearableTargets_nwc_yarp.h
     CATEGORY device
     ADVANCED
     DEFAULT ON)
 
-yarp_add_plugin(WearableTargetsRemapper
-WearableTargetsRemapper.cpp
-WearableTargetsRemapper.h)
+yarp_add_plugin(WearableTargets_nwc_yarp
+WearableTargets_nwc_yarp.cpp
+WearableTargets_nwc_yarp.h)
 
-target_include_directories(WearableTargetsRemapper PUBLIC
+target_include_directories(WearableTargets_nwc_yarp PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
 
-target_link_libraries(WearableTargetsRemapper PUBLIC
+target_link_libraries(WearableTargets_nwc_yarp PUBLIC
     IWearableTargets
     WearableTargetsMsg
     YARP::YARP_OS
@@ -23,7 +23,7 @@ target_link_libraries(WearableTargetsRemapper PUBLIC
     YARP::YARP_init)
 
 yarp_install(
-    TARGETS WearableTargetsRemapper
+    TARGETS WearableTargets_nwc_yarp
     COMPONENT runtime
     LIBRARY DESTINATION ${YARP_DYNAMIC_PLUGINS_INSTALL_DIR}
     ARCHIVE DESTINATION ${YARP_STATIC_PLUGINS_INSTALL_DIR}

@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: Fondazione Istituto Italiano di Tecnologia (IIT)
 // SPDX-License-Identifier: BSD-3-Clause
 
-#ifndef HDE_DEVICES_WEARABLETARGETSWRAPPER
-#define HDE_DEVICES_WEARABLETARGETSWRAPPER
+#ifndef HDE_DEVICES_WEARABLETARGETS_NWS_YARP
+#define HDE_DEVICES_WEARABLETARGETS_NWS_YARP
 
 #include <yarp/dev/DeviceDriver.h>
 #include <yarp/dev/IMultipleWrapper.h>
@@ -13,11 +13,11 @@
 
 namespace hde {
     namespace wrappers {
-        class WearableTargetsWrapper;
+        class WearableTargets_nws_yarp;
     } // namespace wrappers
 } // namespace hde
 
-class hde::wrappers::WearableTargetsWrapper final
+class hde::wrappers::WearableTargets_nws_yarp final
     : public yarp::dev::DeviceDriver
     , public yarp::dev::IWrapper
     , public yarp::dev::IMultipleWrapper
@@ -28,8 +28,8 @@ private:
     std::unique_ptr<impl> pImpl;
 
 public:
-    WearableTargetsWrapper();
-    ~WearableTargetsWrapper() override;
+    WearableTargets_nws_yarp();
+    ~WearableTargets_nws_yarp() override;
 
     // DeviceDriver interface
     bool open(yarp::os::Searchable& config) override;
@@ -48,4 +48,4 @@ public:
     bool detachAll() override;
 };
 
-#endif // HDE_DEVICES_WEARABLETARGETSWRAPPER
+#endif // HDE_DEVICES_WEARABLETARGETS_NWS_YARP

@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Fondazione Istituto Italiano di Tecnologia (IIT)
 // SPDX-License-Identifier: BSD-3-Clause
 
-#include "WearableTargetsWrapper.h"
+#include "WearableTargets_nws_yarp.h"
 #include <hde/interfaces/IWearableTargets.h>
 #include <hde/msgs/WearableTargets.h>
 
@@ -11,7 +11,7 @@
 
 #include <unordered_map>
 
-const std::string DeviceName = "WearableTargetsWrapper";
+const std::string DeviceName = "WearableTargets_nws_yarp";
 const std::string LogPrefix = DeviceName + " :";
 constexpr double DefaultPeriod = 0.01;
 
@@ -55,7 +55,7 @@ hde::msgs::Transform generateMsgTransform(const iDynTree::Transform& input)
     return {generateMsgVector3(input.getPosition()), generateMsgQuaternion(input.getRotation())};
 }
 
-class WearableTargetsWrapper::impl
+class WearableTargets_nws_yarp::impl
 {
 public:
     hde::interfaces::IWearableTargets* iWearableTargets = nullptr;
@@ -67,14 +67,14 @@ public:
     std::unordered_map<hde::TargetName, std::shared_ptr<hde::WearableSensorTarget>> wearableTargets;
 };
 
-WearableTargetsWrapper::WearableTargetsWrapper()
+WearableTargets_nws_yarp::WearableTargets_nws_yarp()
     : PeriodicThread(DefaultPeriod)
     , pImpl{new impl()}
 {}
 
-WearableTargetsWrapper::~WearableTargetsWrapper() {}
+WearableTargets_nws_yarp::~WearableTargets_nws_yarp() {}
 
-bool WearableTargetsWrapper::open(yarp::os::Searchable& config)
+bool WearableTargets_nws_yarp::open(yarp::os::Searchable& config)
 {
     // ===============================
     // CHECK THE CONFIGURATION OPTIONS
@@ -115,13 +115,13 @@ bool WearableTargetsWrapper::open(yarp::os::Searchable& config)
 }
 
 
-bool WearableTargetsWrapper::close()
+bool WearableTargets_nws_yarp::close()
 {
     pImpl->outputPort.close();
     return true;
 }
 
-void WearableTargetsWrapper::run()
+void WearableTargets_nws_yarp::run()
 {
     if (pImpl->firstRun) {
         pImpl->firstRun = false;
@@ -216,7 +216,7 @@ void WearableTargetsWrapper::run()
     // pImpl->outputPort.write(/*forceStrict=*/true);
 }
 
-bool WearableTargetsWrapper::attach(yarp::dev::PolyDriver* poly)
+bool WearableTargets_nws_yarp::attach(yarp::dev::PolyDriver* poly)
 {
     if (!poly) {
         yError() << LogPrefix << "Passed PolyDriver is nullptr";
@@ -239,9 +239,9 @@ bool WearableTargetsWrapper::attach(yarp::dev::PolyDriver* poly)
     return true;
 }
 
-void WearableTargetsWrapper::threadRelease() {}
+void WearableTargets_nws_yarp::threadRelease() {}
 
-bool WearableTargetsWrapper::detach()
+bool WearableTargets_nws_yarp::detach()
 {
     while (isRunning()) {
         stop();
@@ -256,7 +256,7 @@ bool WearableTargetsWrapper::detach()
     return true;
 }
 
-bool WearableTargetsWrapper::attachAll(const yarp::dev::PolyDriverList& driverList)
+bool WearableTargets_nws_yarp::attachAll(const yarp::dev::PolyDriverList& driverList)
 {
     if (driverList.size() > 1) {
         yError() << LogPrefix << "This wrapper accepts only one attached PolyDriver";
@@ -273,7 +273,7 @@ bool WearableTargetsWrapper::attachAll(const yarp::dev::PolyDriverList& driverLi
     return attach(driver->poly);
 }
 
-bool WearableTargetsWrapper::detachAll()
+bool WearableTargets_nws_yarp::detachAll()
 {
     return detach();
 }

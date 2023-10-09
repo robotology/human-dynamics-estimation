@@ -1,21 +1,21 @@
 # SPDX-FileCopyrightText: Fondazione Istituto Italiano di Tecnologia (IIT)
 # SPDX-License-Identifier: BSD-3-Clause
 
-yarp_prepare_plugin(wearable_targets_wrapper
-    TYPE hde::wrappers::WearableTargetsWrapper
-    INCLUDE WearableTargetsWrapper.h
+yarp_prepare_plugin(wearable_targets_nws_yarp
+    TYPE hde::wrappers::WearableTargets_nws_yarp
+    INCLUDE WearableTargets_nws_yarp.h
     CATEGORY device
     ADVANCED
     DEFAULT ON)
 
-yarp_add_plugin(WearableTargetsWrapper
-WearableTargetsWrapper.cpp
-WearableTargetsWrapper.h)
+yarp_add_plugin(WearableTargets_nws_yarp
+WearableTargets_nws_yarp.cpp
+WearableTargets_nws_yarp.h)
 
-target_include_directories(WearableTargetsWrapper PUBLIC
+target_include_directories(WearableTargets_nws_yarp PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
 
-target_link_libraries(WearableTargetsWrapper PUBLIC
+target_link_libraries(WearableTargets_nws_yarp PUBLIC
     IWearableTargets
     WearableTargetsMsg
     YARP::YARP_OS
@@ -23,7 +23,7 @@ target_link_libraries(WearableTargetsWrapper PUBLIC
     YARP::YARP_init)
 
 yarp_install(
-    TARGETS WearableTargetsWrapper
+    TARGETS WearableTargets_nws_yarp
     COMPONENT runtime
     LIBRARY DESTINATION ${YARP_DYNAMIC_PLUGINS_INSTALL_DIR}
     ARCHIVE DESTINATION ${YARP_STATIC_PLUGINS_INSTALL_DIR}

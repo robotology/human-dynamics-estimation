@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Fondazione Istituto Italiano di Tecnologia (IIT)
 // SPDX-License-Identifier: BSD-3-Clause
 
-#include "WearableTargetsRemapper.h"
+#include "WearableTargets_nwc_yarp.h"
 
 #include <hde/msgs/WearableTargets.h>
 
@@ -11,7 +11,7 @@
 #include <unordered_map>
 #include <iostream>
 
-const std::string RemapperName = "WearableTargetsRemapper";
+const std::string RemapperName = "WearableTargets_nwc_yarp";
 const std::string LogPrefix = RemapperName + " :";
 
 using namespace hde::devices;
@@ -56,7 +56,7 @@ iDynTree::Transform generateTransformFromMsg(const hde::msgs::Transform& input)
     return iDynTree::Transform(generateRotationFromMsg(input.orientation), iDynTree::Position(generateVector3FromMsg(input.position)));
 }
 
-class WearableTargetsRemapper::impl
+class WearableTargets_nwc_yarp::impl
 {
 public:
     yarp::os::Network network;
@@ -73,14 +73,14 @@ public:
 // WEARABLETARGETS REMAPPER
 // ========================
 
-WearableTargetsRemapper::WearableTargetsRemapper()
+WearableTargets_nwc_yarp::WearableTargets_nwc_yarp()
     : PeriodicThread(1)
     , pImpl{new impl()}
 {}
 
-WearableTargetsRemapper::~WearableTargetsRemapper() = default;
+WearableTargets_nwc_yarp::~WearableTargets_nwc_yarp() = default;
 
-bool WearableTargetsRemapper::open(yarp::os::Searchable& config)
+bool WearableTargets_nwc_yarp::open(yarp::os::Searchable& config)
 {
     // ===============================
     // CHECK THE CONFIGURATION OPTIONS
@@ -137,10 +137,10 @@ bool WearableTargetsRemapper::open(yarp::os::Searchable& config)
     return true;
 }
 
-void WearableTargetsRemapper::threadRelease()
+void WearableTargets_nwc_yarp::threadRelease()
 {}
 
-bool WearableTargetsRemapper::close()
+bool WearableTargets_nwc_yarp::close()
 {
     pImpl->terminationCall = true;
 
@@ -151,12 +151,12 @@ bool WearableTargetsRemapper::close()
     return true;
 }
 
-void WearableTargetsRemapper::run()
+void WearableTargets_nwc_yarp::run()
 {
     return;
 }
 
-void WearableTargetsRemapper::onRead(hde::msgs::WearableTargets& wearableTargetsData)
+void WearableTargets_nwc_yarp::onRead(hde::msgs::WearableTargets& wearableTargetsData)
 {
     if(!pImpl->terminationCall) {
 
@@ -181,7 +181,7 @@ void WearableTargetsRemapper::onRead(hde::msgs::WearableTargets& wearableTargets
     }
 }
 
-std::vector<hde::TargetName> WearableTargetsRemapper::getAllTargetsName() const {
+std::vector<hde::TargetName> WearableTargets_nwc_yarp::getAllTargetsName() const {
     std::lock_guard<std::recursive_mutex> lock(pImpl->mutex);
     std::vector<std::string> targetsName;
     for (auto wearableTargetEntry : pImpl->wearableTargets)
@@ -191,7 +191,7 @@ std::vector<hde::TargetName> WearableTargetsRemapper::getAllTargetsName() const 
     return targetsName;
 }
 
-std::shared_ptr<hde::WearableSensorTarget> WearableTargetsRemapper::getTarget(const TargetName name) const {
+std::shared_ptr<hde::WearableSensorTarget> WearableTargets_nwc_yarp::getTarget(const TargetName name) const {
      std::lock_guard<std::recursive_mutex> lock(pImpl->mutex);
 
     // TODO: what to do if the target name do not exist

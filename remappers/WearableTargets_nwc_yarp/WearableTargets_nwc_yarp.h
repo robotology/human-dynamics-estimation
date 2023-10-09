@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: Fondazione Istituto Italiano di Tecnologia (IIT)
 // SPDX-License-Identifier: BSD-3-Clause
 
-#ifndef HDE_DEVICES_WEARABLETARGETSREMAPPER
-#define HDE_DEVICES_WEARABLETARGETSREMAPPER
+#ifndef HDE_DEVICES_WEARABLETARGETS_NWC_YARP
+#define HDE_DEVICES_WEARABLETARGETS_NWC_YARP
 
 #include <hde/interfaces/IWearableTargets.h>
 
@@ -17,10 +17,10 @@ namespace hde::msgs {
     class WearableTargets;
 } // namespace hde::msgs
 namespace hde::devices {
-    class WearableTargetsRemapper;
+    class WearableTargets_nwc_yarp;
 } // namespace hde::devices
 
-class hde::devices::WearableTargetsRemapper final
+class hde::devices::WearableTargets_nwc_yarp final
     : public yarp::dev::DeviceDriver
     , public hde::interfaces::IWearableTargets
     , public yarp::os::TypedReaderCallback<hde::msgs::WearableTargets>
@@ -31,8 +31,8 @@ private:
     std::unique_ptr<impl> pImpl;
 
 public:
-    WearableTargetsRemapper();
-    ~WearableTargetsRemapper() override;
+    WearableTargets_nwc_yarp();
+    ~WearableTargets_nwc_yarp() override;
 
     // DeviceDriver interface
     bool open(yarp::os::Searchable& config) override;
@@ -50,4 +50,4 @@ public:
     std::shared_ptr<hde::WearableSensorTarget> getTarget(const TargetName name) const override;
 };
 
-#endif // HDE_DEVICES_WEARABLETARGETSREMAPPER
+#endif // HDE_DEVICES_WEARABLETARGETS_NWC_YARP
