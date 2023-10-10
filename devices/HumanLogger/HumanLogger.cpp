@@ -121,10 +121,10 @@ void HumanLogger::run()
                                            "human_state::base_velocity");
             pImpl->bufferManager.push_back(pImpl->jointPositions,
                                            timeNow,
-                                           "human_state::joint_positions");
+                                           "joints_state::positions");
             pImpl->bufferManager.push_back(pImpl->jointVelocities,
                                            timeNow,
-                                           "human_state::joint_velocities");
+                                           "joints_state::velocities");
         }
     }
 
@@ -240,6 +240,17 @@ bool HumanLogger::impl::loadSettingsFromConfig(yarp::os::Searchable& config)
         bufferConfig.save_periodically = config.find(save_periodically.c_str()).asBool();
     }
 
+    std::string yarpRobotName = "yarp_robot_name";
+    std::string defaultYarpRobotName = "human-gazebo";
+    if (config.check(yarpRobotName.c_str()) && config.find(yarpRobotName.c_str()).isString()) {
+        bufferConfig.yarp_robot_name = config.find(yarpRobotName.c_str()).asString();
+    }
+    else {
+        bufferConfig.yarp_robot_name = defaultYarpRobotName;
+        yInfo() << LogPrefix << " missing parameter: " << yarpRobotName
+                << " using default value: " << defaultYarpRobotName;
+    }
+
     if (bufferConfig.save_periodically) {
         std::string save_period = "save_period";
         if (config.check(save_period.c_str()) && config.find(save_period.c_str()).isFloat64()) {
@@ -260,6 +271,8 @@ bool HumanLogger::impl::loadSettingsFromConfig(yarp::os::Searchable& config)
     if (config.check(auto_save.c_str()) && config.find(auto_save.c_str()).isBool()) {
         bufferConfig.auto_save = config.find(auto_save.c_str()).asBool();
     }
+
+    bufferConfig.mat_file_version = matioCpp::FileVersion::MAT7_3;
 
     if (!(bufferConfig.auto_save || bufferConfig.save_periodically)) {
         yError()
@@ -307,8 +320,8 @@ bool HumanLogger::impl::configureBufferManager()
             ok = ok && bufferManager.addChannel({"human_state::base_position", {3, 1}});
             ok = ok && bufferManager.addChannel({"human_state::base_orientation", {4, 1}});
             ok = ok && bufferManager.addChannel({"human_state::base_velocity", {6, 1}});
-            ok = ok && bufferManager.addChannel({"human_state::joint_positions", {jointNamesState.size(), 1}, jointNamesState});
-            ok = ok && bufferManager.addChannel({"human_state::joint_velocities", {jointNamesState.size(), 1}, jointNamesState});
+            ok = ok && bufferManager.addChannel({"joints_state::positions", {jointNamesState.size(), 1}, jointNamesState});
+            ok = ok && bufferManager.addChannel({"joints_state::velocities", {jointNamesState.size(), 1}, jointNamesState});
         }
     }
     if (settings.logHumanDynamics)
@@ -416,6 +429,8 @@ bool HumanLogger::attachAll(const yarp::dev::PolyDriverList& driverList)
         yError() << LogPrefix << "Failed to start the loop.";
         return false;
     }
+
+    pImpl->bufferManager.setDescriptionList(pImpl->jointNamesState);
     
     yInfo() << LogPrefix << "Successfully attached all the required devices";
 
