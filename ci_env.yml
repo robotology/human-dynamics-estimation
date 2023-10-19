@@ -1,0 +1,16 @@
+name: human-dynamics-estimation
+channels:
+  - conda-forge
+dependencies:
+  - cmake 
+  - compilers
+  - make 
+  - ninja
+  - pkg-config 
+  - yarp
+  - icub-main 
+  - wearables 
+  - idyntree 
+  - matio-cpp 
+  - robometry 
+  - osqp-eigen
