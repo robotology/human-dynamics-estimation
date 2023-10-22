@@ -14,14 +14,17 @@ if(WEARABLES_COMPILE_PYTHON_BINDINGS)
     FALSE)
 
   # Install the resulting Python package for the active interpreter
-  if(WEARABLES_DETECT_ACTIVE_PYTHON_SITEPACKAGES)
-    set(PYTHON_INSTDIR ${Python3_SITELIB}/wearables)
-  else()
-    execute_process(COMMAND ${Python3_EXECUTABLE} -c "from distutils import sysconfig; print(sysconfig.get_python_lib(1,0,prefix=''))"
-      OUTPUT_VARIABLE _PYTHON_INSTDIR)
-    string(STRIP ${_PYTHON_INSTDIR} _PYTHON_INSTDIR_CLEAN)
-    set(PYTHON_INSTDIR ${_PYTHON_INSTDIR_CLEAN}/wearables)
+  if(NOT DEFINED WEARABLES_PYTHON_INSTALL_DIR)
+    if(WEARABLES_DETECT_ACTIVE_PYTHON_SITEPACKAGES)
+      set(WEARABLES_PYTHON_INSTALL_DIR ${Python3_SITELIB})
+    else()
+      execute_process(COMMAND ${Python3_EXECUTABLE} -c "from distutils import sysconfig; print(sysconfig.get_python_lib(1,0,prefix=''))"
+        OUTPUT_VARIABLE _PYTHON_INSTDIR)
+      string(STRIP ${_PYTHON_INSTDIR} _PYTHON_INSTDIR_CLEAN)
+      set(WEARABLES_PYTHON_INSTALL_DIR ${_PYTHON_INSTDIR_CLEAN})
+    endif()
   endif()
+  set(PYTHON_INSTDIR ${WEARABLES_PYTHON_INSTALL_DIR}/wearables)
 
   # Folder of the Python package within the build tree.
   # It is used for the Python tests.
