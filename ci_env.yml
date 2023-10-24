@@ -1,0 +1,14 @@
+name: wearables
+channels:
+  - conda-forge
+  - robotology
+dependencies:
+  - cmake
+  - compilers
+  - make
+  - ninja
+  - pkg-config
+  - yarp
+  - idyntree
+  - matio-cpp
+  - robometry

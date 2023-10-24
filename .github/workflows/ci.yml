@@ -36,14 +36,10 @@ jobs:
         # Clone the repository in $GITHUB_WORKSPACE
         - uses: actions/checkout@master
 
-        - uses: conda-incubator/setup-miniconda@v2
+        - uses: mamba-org/setup-micromamba@v1
           if: contains(matrix.os, 'windows')
           with:
-            mamba-version: "*"
-            channels: conda-forge,defaults
-            channel-priority: true
-            activate-environment: wearables
-            python-version: 3.8
+            environment-file: ci_env.yml
 
         # Print the environment variables to simplify development and debugging
         - name: Environment Variables
@@ -141,15 +137,6 @@ jobs:
             cmake -DCMAKE_PREFIX_PATH=${GITHUB_WORKSPACE}/install/deps \
                   -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/install/deps ..
             cmake --build . --config ${{matrix.build_type}} --target install
-
-        - name: Dependencies (using conda) [Windows]
-          if: steps.cache-source-deps.outputs.cache-hit != 'true' && contains(matrix.os, 'windows')
-          shell: bash -l {0}
-          run: |
-            # Compilation related dependencies
-            mamba install cmake compilers make ninja pkg-config
-            # Actual dependencies
-            mamba install -c robotology yarp idyntree matio-cpp robometry
 
         # ===================
         # CMAKE-BASED PROJECT
