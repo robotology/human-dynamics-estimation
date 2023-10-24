@@ -178,7 +178,7 @@ jobs:
             
         - name: Configure [Ubuntu/macOS]
           if: matrix.os == 'ubuntu-latest' || matrix.os == 'macOS-latest'
-          shell: bash
+          shell: bash -l {0}
           run: |
             mkdir -p build
             cd build
