@@ -13,5 +13,5 @@ dependencies:
   - wearables 
   - idyntree 
   - matio-cpp 
-  - robometry 
+  - librobometry 
   - osqp-eigen
