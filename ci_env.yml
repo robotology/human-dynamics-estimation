@@ -1,7 +1,7 @@
 name: human-dynamics-estimation
 channels:
-  - robotology
   - conda-forge
+  - robotology
 dependencies:
   - cmake 
   - compilers
