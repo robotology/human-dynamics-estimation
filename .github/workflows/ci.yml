@@ -80,8 +80,8 @@ jobs:
             # Including ${{ runner.temp }} is a workaround for https://github.com/robotology/whole-body-estimators/issues/60
             key: source-deps-${{runner.os}}-${{runner.temp}}-vcpkg-robotology-${{env.vcpkg_robotology_TAG}}-ycm-${{env.YCM_TAG}}-yarp-${{env.YARP_TAG}}-iDynTree-${{env.iDynTree_TAG}}-wearables-${{env.wearables_TAG}}-icub_main-${{env.icub_main_TAG}}-OsqpEigen-${{env.OsqpEigen_TAG}}-matioCpp-${{env.matioCpp_TAG}}-robometry-${{env.robometry_TAG}}
              
-        - name: Source-based Dependencies [Ubuntu/macOS]
-          if: steps.cache-source-deps.outputs.cache-hit != 'true' && (matrix.os == 'ubuntu-latest' || matrix.os == 'macOS-latest')
+        - name: Source-based Dependencies [Ubuntu]
+          if: steps.cache-source-deps.outputs.cache-hit != 'true' && matrix.os == 'ubuntu-latest'
           shell: bash
           run: |
             # YCM
