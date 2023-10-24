@@ -42,7 +42,7 @@ jobs:
 
         # Use mamba for Windows dependencies
         - uses: mamba-org/setup-micromamba@v1
-          if: contains(matrix.os, 'windows')
+          if: matrix.os == 'windows-latest' || matrix.os == 'macOS-latest'
           with:
             environment-file: ci_env.yml
         
@@ -62,12 +62,6 @@ jobs:
         # ============
         # DEPENDENCIES
         # ============
-
-               
-        - name: Dependencies [macOS]
-          if: matrix.os == 'macOS-latest'
-          run: |
-            brew install ccache eigen ace tinyxml gsl irrlicht libmatio boost glfw sdl2
              
         - name: Dependencies [Ubuntu]
           if: matrix.os == 'ubuntu-latest'
@@ -77,8 +71,8 @@ jobs:
                              libboost-thread-dev liborocos-kdl-dev libeigen3-dev swig qtbase5-dev qtdeclarative5-dev qtmultimedia5-dev libqt5charts5-dev \
                              libxml2-dev liburdfdom-dev libtinyxml-dev liburdfdom-dev liboctave-dev python3-dev valgrind libassimp-dev libirrlicht-dev libmatio-dev libglfw3-dev
                              
-        - name: Cache Source-based dependencies  [Ubuntu/macOS]
-          if: steps.cache-source-deps.outputs.cache-hit != 'true' && (contains(matrix.os, 'ubuntu') || contains(matrix.os, 'macOS'))
+        - name: Cache Source-based dependencies  [Ubuntu]
+          if: steps.cache-source-deps.outputs.cache-hit != 'true' && contains(matrix.os, 'ubuntu')
           id: cache-source-deps
           uses: actions/cache@v1
           with:
