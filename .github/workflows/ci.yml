@@ -37,7 +37,7 @@ jobs:
         - uses: actions/checkout@master
 
         - uses: mamba-org/setup-micromamba@v1
-          if: contains(matrix.os, 'windows')
+          if: matrix.os == 'windows-latest' || matrix.os == 'macOS-latest'
           with:
             environment-file: ci_env.yml
 
@@ -58,11 +58,6 @@ jobs:
         # DEPENDENCIES
         # ============
 
-        - name: Dependencies [macOS]
-          if: matrix.os == 'macOS-latest'
-          run: |
-            brew install ccache eigen ace tinyxml gsl boost libmatio pybind11
-
         - name: Dependencies [Ubuntu]
           if: matrix.os == 'ubuntu-latest'
           run: |
@@ -71,18 +66,9 @@ jobs:
                              libboost-thread-dev liborocos-kdl-dev libeigen3-dev swig qtbase5-dev qtdeclarative5-dev qtmultimedia5-dev libqt5charts5-dev \
                              libxml2-dev liburdfdom-dev libtinyxml-dev liburdfdom-dev liboctave-dev python3-dev python3-pybind11 valgrind libassimp-dev libmatio-dev
 
-        - name: Cache Source-based dependencies  [Ubuntu/macOS]
-          if: steps.cache-source-deps.outputs.cache-hit != 'true' && (contains(matrix.os, 'ubuntu') || contains(matrix.os, 'macOS'))
-          id: cache-source-deps
-          uses: actions/cache@v3
-          with:
-            path: ${{ github.workspace }}/install/deps
-            # Including ${{ runner.temp }} is a workaround for https://github.com/robotology/whole-body-estimators/issues/60
-            key: source-deps-${{runner.os}}-${{runner.temp}}-vcpkg-robotology-${{env.vcpkg_robotology_TAG}}-ycm-${{env.YCM_TAG}}-yarp-${{env.YARP_TAG}}-iDynTree-${{env.iDynTree_TAG}}-matioCpp-${{env.matioCpp_TAG}}-robometry-${{env.robometry_TAG}}
 
-
-        - name: Source-based Dependencies [Ubuntu/macOS]
-          if: steps.cache-source-deps.outputs.cache-hit != 'true' && (matrix.os == 'ubuntu-latest' || matrix.os == 'macOS-latest')
+        - name: Source-based Dependencies [Ubuntu]
+          if: steps.cache-source-deps.outputs.cache-hit != 'true' && (matrix.os == 'ubuntu-latest')
           shell: bash
           run: |
             # YCM
@@ -151,15 +137,17 @@ jobs:
             cd build
             cmake -G"Visual Studio 17 2022" -DCMAKE_PREFIX_PATH=${GITHUB_WORKSPACE}/install/deps \
                                             -DCMAKE_BUILD_TPYE=${{matrix.build_type}} \
+                                            -DWEARABLES_COMPILE_PYTHON_BINDINGS=ON \
                                             -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/install ..
 
         - name: Configure [Ubuntu/macOS]
           if: matrix.os == 'ubuntu-latest' || matrix.os == 'macOS-latest'
-          shell: bash
+          shell: bash -l {0}
           run: |
             mkdir -p build
             cd build
             cmake -DCMAKE_PREFIX_PATH=${GITHUB_WORKSPACE}/install/deps \
+                  -DCMAKE_BUILD_TPYE=${{matrix.build_type}} \
                   -DWEARABLES_COMPILE_PYTHON_BINDINGS=ON \
                   -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/install ..
 

@@ -8,6 +8,7 @@ dependencies:
   - make
   - ninja
   - pkg-config
+  - pybind11
   - yarp
   - idyntree
   - matio-cpp
