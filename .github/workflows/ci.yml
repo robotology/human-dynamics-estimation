@@ -42,6 +42,7 @@ jobs:
           if: matrix.os == 'windows-latest' || matrix.os == 'macOS-latest'
           with:
             environment-file: ci_env.yml
+            channel-priority: true
         
         # Print the environment variables to simplify development and debugging
         - name: Environment Variables
