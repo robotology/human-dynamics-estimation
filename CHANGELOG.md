@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - [`HumanControlBoard`] Fix attach method (https://github.com/robotology/human-dynamics-estimation/pull/365).
 
+### Changed
+- Naming convention from `wrapper`\ `server` to `nws`\ `nwc` (https://github.com/robotology/human-dynamics-estimation/pull/367).
+
 ### Added
 - Added `HumanWrenchWrapper` and `HumanWrenchRemapper` (https://github.com/robotology/human-dynamics-estimation/pull/362/files).
 - Added `IHumanWrench` to `HumanLogger` (https://github.com/robotology/human-dynamics-estimation/pull/363).
