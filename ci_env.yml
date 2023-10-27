@@ -12,6 +12,6 @@ dependencies:
   - icub-main 
   - wearables 
   - idyntree 
-  - libmatio-cpp 
-  - librobometry 
+  - matio-cpp 
+  - robometry 
   - osqp-eigen
