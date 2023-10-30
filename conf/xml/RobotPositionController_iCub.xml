@@ -4,7 +4,7 @@
 
 
     <device type="human_state_remapper" name="RobotStateRemapper">
-       <param name="humanStateDataPort">/iCub/RobotStateWrapper/state:o</param>
+       <param name="humanStateDataPort">/iCub/RobotStateServer/state:o</param>
     </device>
 
     <!-- uncomment if you want to use the RobotStateProvider data to control the robot position -->

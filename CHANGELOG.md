@@ -7,10 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- Naming convention from `wrapper`\ `server` to `nws`\ `nwc` (https://github.com/robotology/human-dynamics-estimation/pull/367).
 - HumanLogger device to be compatible with the `robot-log-visualizer` (https://github.com/robotology/human-dynamics-estimation/pull/372).
+
+## [2.9.0] - 2023-10-17
 
 ### Fixed
 - [`HumanControlBoard`] Fix attach method (https://github.com/robotology/human-dynamics-estimation/pull/365).
+
+### Added
+- Added `HumanWrenchWrapper` and `HumanWrenchRemapper` (https://github.com/robotology/human-dynamics-estimation/pull/362/files).
+- Added `IHumanWrench` to `HumanLogger` (https://github.com/robotology/human-dynamics-estimation/pull/363).
 
 ## [2.8.0] - 2023-09-06
 

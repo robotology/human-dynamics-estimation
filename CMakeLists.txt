@@ -4,7 +4,7 @@
 cmake_minimum_required(VERSION 3.5)
 project(HumanDynamicsEstimation
         LANGUAGES CXX
-        VERSION 2.8.0)
+        VERSION 2.9.0)
 
 # =====================
 # PROJECT CONFIGURATION
@@ -83,8 +83,8 @@ add_subdirectory(msgs)
 add_subdirectory(interfaces)
 add_subdirectory(devices)
 add_subdirectory(modules)
-add_subdirectory(wrappers)
-add_subdirectory(remappers)
+add_subdirectory(servers)
+add_subdirectory(clients)
 add_subdirectory(publishers)
 add_subdirectory(HumanDynamicsEstimationLibrary)
 

@@ -121,12 +121,12 @@
     </device>
 
     <!-- Uncomment to stream the output of HumanStateProvider on a YARP port -->
-    <!-- <device type="human_state_wrapper" name="HumanStateWrapper">
+    <!-- <device type="human_state_nws_yarp" name="HumanState_nws_yarp">
         <param name="period">0.02</param>
-        <param name="outputPort">/Human/HumanStateWrapper/state:o</param>
+        <param name="outputPort">/Human/HumanStateServer/state:o</param>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
-                <elem name="HumanStateWrapperLabel">HumanStateProvider</elem>
+                <elem name="HumanStateServerLabel">HumanStateProvider</elem>
             </paramlist>
         </action>
         <action phase="shutdown" level="5" type="detach"/>

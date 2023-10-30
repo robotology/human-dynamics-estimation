@@ -4,12 +4,12 @@
 
 
     <!--Producer Device -->
-    <device type="human_state_remapper" name="HumanStateRemapper">
-       <param name="humanStateDataPort">/HDE/HumanStateWrapper/state:o</param>
+    <device type="human_state_nwc_yarp" name="HumanState_nwc_yarp">
+       <param name="humanStateDataPort">/HDE/HumanStateServer/state:o</param>
     </device>
 
-    <device type="human_dynamics_remapper" name="HumanDynamicsRemapper">
-       <param name="humanDynamicsDataPort">/HDE/HumanDynamicsWrapper/torques:o</param>
+    <device type="human_dynamics_nwc_yarp" name="HumanDynamics_nwc_yarp">
+       <param name="humanDynamicsDataPort">/HDE/HumanDynamicsServer/torques:o</param>
     </device>
     
     <device type="human_logger" name="HumanLoggerDevice">
@@ -31,8 +31,8 @@
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
             	<!-- attach the source device here -->
-                <elem name="HumanStateRemapper"> HumanStateRemapper </elem>
-                <elem name="HumanDynamicsRemapper"> HumanDynamicsRemapper </elem>
+                <elem name="HumanState_nwc_yarp"> HumanState_nwc_yarp </elem>
+                <elem name="HumanDynamics_nwc_yarp"> HumanDynamics_nwc_yarp </elem>
             </paramlist>
         </action>
         <action phase="shutdown" level="5" type="detach"/>

@@ -4,6 +4,7 @@
 #include "HumanLogger.h"
 #include <hde/interfaces/IHumanState.h>
 #include <hde/interfaces/IHumanDynamics.h>
+#include <hde/interfaces/IHumanWrench.h>
 
 #include <algorithm>
 #include <functional>
@@ -38,6 +39,7 @@ struct hde::devices::HumanLoggerSettings
     bool saveBufferManagerConfiguration{false};
     bool logHumanState{false};
     bool logHumanDynamics{false};
+    bool logHumanWrench{false};
 };
 
 using namespace hde::devices;
@@ -58,6 +60,7 @@ public:
 
     interfaces::IHumanState* iHumanState = nullptr;
     interfaces::IHumanDynamics* iHumanDynamics = nullptr;
+    interfaces::IHumanWrench* iHumanWrench = nullptr;
     HumanLoggerSettings settings;
     robometry::BufferConfig bufferConfig;
     robometry::BufferManager bufferManager;
@@ -71,8 +74,12 @@ public:
     std::vector<double> jointVelocities;
     std::vector<std::string> jointNamesState;
     // iHumanDynamics
-    std::vector<double> jointTorquesInterface;
+    std::vector<double> jointTorques;
     std::vector<std::string> jointNamesDynamics;
+    // iHumanWrench
+    std::vector<double> wrenches;
+    std::vector<std::string> wrenchSourceNames;
+
 
 };
 
@@ -136,12 +143,29 @@ void HumanLogger::run()
             return;
         }
 
-        pImpl->jointTorquesInterface = pImpl->iHumanDynamics->getJointTorques();
+        pImpl->jointTorques = pImpl->iHumanDynamics->getJointTorques();
 
         if (pImpl->loggerType == LoggerType::MATLAB) {
-            pImpl->bufferManager.push_back(pImpl->jointTorquesInterface,
+            pImpl->bufferManager.push_back(pImpl->jointTorques,
                                            timeNow,
                                            "human_dynamics::joint_torques");
+        }
+    }
+
+    if (pImpl->settings.logHumanWrench)
+    {
+        if(!pImpl->iHumanWrench) {
+            yError() << LogPrefix << "The IHumanWrench pointer is null in the driver loop.";
+            askToStop();
+            return;
+        }
+
+        pImpl->wrenches = pImpl->iHumanWrench->getWrenches();
+
+        if (pImpl->loggerType == LoggerType::MATLAB) {
+            pImpl->bufferManager.push_back(pImpl->wrenches,
+                                           timeNow,
+                                           "human_wrench::wrenches");
         }
     }
 }
@@ -207,6 +231,7 @@ bool HumanLogger::impl::loadSettingsFromConfig(yarp::os::Searchable& config)
     // load logger flag settings
     checkAndLoadBooleanOption(config, "logHumanState", settings.logHumanState);
     checkAndLoadBooleanOption(config, "logHumanDynamics", settings.logHumanDynamics);
+    checkAndLoadBooleanOption(config, "logHumanWrench", settings.logHumanWrench);
 
     // load buffer manager configuration settings
     checkAndLoadBooleanOption(
@@ -332,6 +357,14 @@ bool HumanLogger::impl::configureBufferManager()
             ok = ok && bufferManager.addChannel({"human_dynamics::joint_torques", {jointNamesDynamics.size(), 1}, jointNamesDynamics});
         }
     }
+    if (settings.logHumanWrench)
+    {
+        if (loggerType == LoggerType::MATLAB)
+        {
+            wrenchSourceNames =  iHumanWrench->getWrenchSourceNames();
+            ok = ok && bufferManager.addChannel({"human_wrench::wrenches", {6 * wrenchSourceNames.size(), 1}, wrenchSourceNames});
+        }
+    }
     
 
     ok = ok && bufferManager.configure(bufferConfig);
@@ -350,8 +383,8 @@ void HumanLogger::threadRelease() {}
 
 bool HumanLogger::attachAll(const yarp::dev::PolyDriverList& driverList)
 {
-    if (driverList.size() > 2) {
-        yError() << LogPrefix << "This wrapper accepts maximum two attached PolyDriver.";
+    if (driverList.size() > 3) {
+        yError() << LogPrefix << "This wrapper accepts maximum three attached PolyDriver.";
         return false;
     }
 
@@ -367,6 +400,7 @@ bool HumanLogger::attachAll(const yarp::dev::PolyDriverList& driverList)
         const std::string deviceName = poly->getValue("device").asString();
         interfaces::IHumanState* tmpIHumanState = nullptr;
         interfaces::IHumanDynamics* tmpIHumanDynamics = nullptr;
+        interfaces::IHumanWrench* tmpIHumanWrench = nullptr;
 
         // View IHumanState
         if(pImpl->settings.logHumanState && !pImpl->iHumanState && poly->view(tmpIHumanState))
@@ -394,7 +428,22 @@ bool HumanLogger::attachAll(const yarp::dev::PolyDriverList& driverList)
             pImpl->iHumanDynamics = tmpIHumanDynamics;
         }
 
-        if(!tmpIHumanState && !tmpIHumanDynamics)
+        // View IHumanWrench
+        if(pImpl->settings.logHumanWrench && !pImpl->iHumanWrench && poly->view(tmpIHumanWrench))
+        {
+            // Check the interface
+            auto numberOfWrenchSources = tmpIHumanWrench->getNumberOfWrenchSources();
+            while ( numberOfWrenchSources == 0 ||
+                numberOfWrenchSources != tmpIHumanWrench->getWrenchSourceNames().size()) {
+                yInfo() << LogPrefix << "IHumanWrench interface waiting for first data. Waiting...";
+                yarp::os::Time::delay(5);
+                numberOfWrenchSources = tmpIHumanWrench->getNumberOfWrenchSources();
+            }
+
+            pImpl->iHumanWrench = tmpIHumanWrench;
+        }
+
+        if(!tmpIHumanState && !tmpIHumanDynamics && !tmpIHumanWrench)
         {
             yError()<<LogPrefix<<"The device"<<deviceName<<"does not implement any of the attachable interfaces!";
             return false;
@@ -416,6 +465,13 @@ bool HumanLogger::attachAll(const yarp::dev::PolyDriverList& driverList)
     if (pImpl->settings.logHumanDynamics && !pImpl->iHumanDynamics)
     {
         yError()<<LogPrefix<<"No IHumanDynamics interface attached, stopping";
+        return false;
+    }
+
+    // Check IHumanDynamics interface
+    if (pImpl->settings.logHumanWrench && !pImpl->iHumanWrench)
+    {
+        yError()<<LogPrefix<<"No IHumanWrench interface attached, stopping";
         return false;
     }
 
@@ -445,6 +501,7 @@ bool HumanLogger::detachAll()
 
     pImpl->iHumanState = nullptr;
     pImpl->iHumanDynamics = nullptr;
+    pImpl->iHumanWrench = nullptr;
 
     return true;
 }

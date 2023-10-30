@@ -27,11 +27,11 @@ For kinematic calibration, please refere to [Inverse Kinematics Calibration](/do
 If the device is running correctly, the terminal will show the frequency at which the dynamical inverse kinematics step is running.
 The computed model configuration is accessible reading the following port:
 ```bash
-yarp read ... /HDE/HumanStateWrapper/state:o
+yarp read ... /HDE/HumanStateServer/state:o
 ```
 The computed joint torques are accessible reading the following port:
 ```bash
-yarp read ... /HDE/HumanDynamicsWrapper/torques:o
+yarp read ... /HDE/HumanDynamicsServer/torques:o
 ```
 
 ## Visualization

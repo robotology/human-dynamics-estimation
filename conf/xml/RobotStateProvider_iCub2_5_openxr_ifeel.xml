@@ -155,23 +155,23 @@
     </device>
 
     <!-- Uncomment to stream the output of HumanStateProvider on a YARP port -->
-    <device type="human_state_wrapper" name="RobotStateWrapper">
+    <device type="human_state_nws_yarp" name="RobotState_nws_yarp">
         <param name="period">0.01</param>
-        <param name="outputPort">/iCub/RobotStateWrapper/state:o</param>
+        <param name="outputPort">/iCub/RobotStateServer/state:o</param>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
-                <elem name="HumanStateWrapperLabel">RobotStateProvider</elem>
+                <elem name="HumanStateServerLabel">RobotStateProvider</elem>
             </paramlist>
         </action>
         <action phase="shutdown" level="5" type="detach"/>
     </device>
     
-    <device type="wearable_targets_wrapper" name="WearableTargetsWrapper">
+    <device type="wearable_targets_nws_yarp" name="WearableTargets_nws_yarp">
         <param name="period">0.01</param>
-        <param name="outputPort">/HDE/WearableTargetsWrapper/state:o</param>
+        <param name="outputPort">/HDE/WearableTargetsServer/state:o</param>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
-                <elem name="HumanStateWrapperLabel">RobotStateProvider</elem>
+                <elem name="HumanStateServerLabel">RobotStateProvider</elem>
             </paramlist>
         </action>
         <action phase="shutdown" level="5" type="detach"/>

@@ -76,7 +76,7 @@
   </connection>
 	
 	<connection>
-        <from>/HDE/HumanStateWrapper/state:o</from>
+        <from>/HDE/HumanStateServer/state:o</from>
         <to>/human_dump/humanState</to>
         <protocol>udp</protocol>
   </connection>
@@ -106,7 +106,7 @@
   </connection>
 
   <connection>
-        <from>/HDE/HumanDynamicsWrapper/torques:o</from>
+        <from>/HDE/HumanDynamicsServer/torques:o</from>
         <to>/human_dump/humanDynamics</to>
         <protocol>udp</protocol>
   </connection>

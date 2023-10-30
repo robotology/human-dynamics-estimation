@@ -84,20 +84,20 @@
     </device>
 
     <!-- Uncomment to stream the output of HumanStateProvider on a YARP port -->
-    <device type="human_state_wrapper" name="HumanStateWrapper">
+    <device type="human_state_nws_yarp" name="HumanState_nws_yarp">
         <param name="period">0.02</param>
-        <param name="outputPort">/HDE/HumanStateWrapper/state:o</param>
+        <param name="outputPort">/HDE/HumanStateServer/state:o</param>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
-                <elem name="HumanStateWrapperLabel">HumanStateProvider</elem>
+                <elem name="HumanStateServerLabel">HumanStateProvider</elem>
             </paramlist>
         </action>
         <action phase="shutdown" level="5" type="detach"/>
     </device>
 
     <!-- An HumanStateRemapper device can be used to attach directly to a HumanStateWrapper port without running HumanStateProvider device -->
-    <!-- <device type="human_state_remapper" name="HumanStateRemapper">
-      <param name="humanStateDataPort">/HDE/HumanStateWrapper/state:o</param>
+    <!-- <device type="human_state_nwc_yarp" name="HumanState_nwc_yarp">
+      <param name="humanStateDataPort">/HDE/HumanStateServer/state:o</param>
     </device> -->
 
     <device type="human_state_publisher" name="HumanStatePublisher">
@@ -182,12 +182,12 @@
         <action phase="shutdown" level="5" type="detach" />
     </device>
 
-    <device type="human_wrench_wrapper" name="HumanWrenchWrapper">
+    <device type="human_wrench_nws_yarp" name="HumanWrench_nws_yarp">
         <param name="period">0.1</param>
-        <param name="outputPort">/HDE/HumanWrenchWrapper/wrench:o</param>
+        <param name="outputPort">/HDE/HumanWrenchServer/wrench:o</param>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
-                <elem name="HumanDynamicsWrapperLabel">HumanWrenchProvider</elem>
+                <elem name="HumanDynamicsServerLabel">HumanWrenchProvider</elem>
             </paramlist>
         </action>
         <action phase="shutdown" level="5" type="detach"/>
@@ -248,12 +248,12 @@
         <action phase="shutdown" level="5" type="detach"/>
     </device>
 
-    <device type="human_dynamics_wrapper" name="HumanDynamicsWrapper">
+    <device type="human_dynamics_nws_yarp" name="HumanDynamics_nws_yarp">
         <param name="period">0.1</param>
-        <param name="outputPort">/HDE/HumanDynamicsWrapper/torques:o</param>
+        <param name="outputPort">/HDE/HumanDynamicsServer/torques:o</param>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
-                <elem name="HumanDynamicsWrapperLabel">HumanDynamicsEstimator</elem>
+                <elem name="HumanDynamicsServerLabel">HumanDynamicsEstimator</elem>
             </paramlist>
         </action>
         <action phase="shutdown" level="5" type="detach"/>

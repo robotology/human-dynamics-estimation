@@ -29,7 +29,7 @@
     <name>HumanStateVisualizer</name>
     <parameters>--from HumanStateVisualizer.ini</parameters>
     <dependencies>
-          <port timeout="5.0">/HDE/HumanStateWrapper/state:o</port>
+          <port timeout="5.0">/HDE/HumanStateServer/state:o</port>
     </dependencies>
     <environment>YARP_FORWARD_LOG_ENABLE=1</environment>
     <description>Run the iDynTree Human Visualizer</description>
