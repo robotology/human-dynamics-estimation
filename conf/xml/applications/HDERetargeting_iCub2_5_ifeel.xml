@@ -34,7 +34,7 @@
     <name>HumanStateVisualizer</name>
     <parameters>--from HumanStateVisualizer_iCub2_5_openxr_ifeel.ini</parameters>
     <dependencies>
-          <port timeout="15.0">/iCub/RobotStateWrapper/state:o</port>
+          <port timeout="15.0">/iCub/RobotStateServer/state:o</port>
     </dependencies>
     <environment>YARP_FORWARD_LOG_ENABLE=1</environment>
     <description>Run the iDynTree Visualizer</description>
@@ -47,7 +47,7 @@
     <name>yarprobotinterface</name>
     <parameters>--config RobotPositionController_iCub2_5.xml</parameters>
     <dependencies>
-      <port timeout="15.0">/iCub/RobotStateWrapper/state:o</port>
+      <port timeout="15.0">/iCub/RobotStateServer/state:o</port>
     </dependencies>
     <environment>YARP_FORWARD_LOG_ENABLE=1</environment>
     <description>Run the iCub position controller</description>
