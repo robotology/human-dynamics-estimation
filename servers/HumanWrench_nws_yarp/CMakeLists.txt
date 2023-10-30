@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 yarp_prepare_plugin(human_wrench_nws_yarp
-    TYPE hde::wrappers::HumanWrench_nws_yarp
+    TYPE hde::servers::HumanWrench_nws_yarp
     INCLUDE HumanWrench_nws_yarp.h
     CATEGORY device
     ADVANCED

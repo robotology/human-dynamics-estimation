@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 yarp_prepare_plugin(wearable_targets_nws_yarp
-    TYPE hde::wrappers::WearableTargets_nws_yarp
+    TYPE hde::servers::WearableTargets_nws_yarp
     INCLUDE WearableTargets_nws_yarp.h
     CATEGORY device
     ADVANCED

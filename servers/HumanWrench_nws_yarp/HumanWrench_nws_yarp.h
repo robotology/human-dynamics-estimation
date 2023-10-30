@@ -12,12 +12,12 @@
 #include <memory>
 
 namespace hde {
-    namespace wrappers {
+    namespace servers {
         class HumanWrench_nws_yarp;
-    } // namespace wrappers
+    } // namespace servers
 } // namespace hde
 
-class hde::wrappers::HumanWrench_nws_yarp final
+class hde::servers::HumanWrench_nws_yarp final
         : public yarp::dev::DeviceDriver
         , public yarp::dev::IWrapper
         , public yarp::dev::IMultipleWrapper

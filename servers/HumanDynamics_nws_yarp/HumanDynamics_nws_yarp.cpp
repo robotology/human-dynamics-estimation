@@ -15,7 +15,7 @@ const std::string DeviceName = "HumanDynamics_nws_yarp";
 const std::string LogPrefix = DeviceName + " :";
 constexpr double DefaultPeriod = 0.01;
 
-using namespace hde::wrappers;
+using namespace hde::servers;
 
 class HumanDynamics_nws_yarp::impl
 {

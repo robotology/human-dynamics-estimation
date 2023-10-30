@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 yarp_prepare_plugin(human_state_nws_yarp
-    TYPE hde::wrappers::HumanState_nws_yarp
+    TYPE hde::servers::HumanState_nws_yarp
     INCLUDE HumanState_nws_yarp.h
     CATEGORY device
     ADVANCED
