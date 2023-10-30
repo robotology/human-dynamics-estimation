@@ -13,7 +13,6 @@ on:
     - cron: '0 2 * * *'
     
 env:
-    vcpkg_robotology_TAG: v0.10.1
     YCM_TAG: v0.15.3
     YARP_TAG: v3.8.1
     iDynTree_TAG: v9.0.0 
@@ -23,8 +22,6 @@ env:
     OsqpEigen_TAG: v0.8.1
     matioCpp_TAG: v0.2.2
     robometry_TAG: v1.2.1
-    # Overwrite the VCPKG_INSTALLATION_ROOT env variable defined by Github Actions to point to our vcpkg
-    VCPKG_INSTALLATION_ROOT: C:\robotology\vcpkg
 
 jobs:
     build:
@@ -42,32 +39,20 @@ jobs:
 
         # Use mamba for Windows dependencies
         - uses: mamba-org/setup-micromamba@v1
-          if: contains(matrix.os, 'windows')
+          if: matrix.os == 'windows-latest' || matrix.os == 'macOS-latest'
           with:
             environment-file: ci_env.yml
+            channel-priority: true
         
         # Print the environment variables to simplify development and debugging
         - name: Environment Variables
-        # Use bash  in order to have same basic commands in all OSs
+          if: matrix.os == 'ubuntu-latest'
           shell: bash
           run: env
-          
-        # Remove apt repos on Ubuntu that are known to break from time to time 
-        # See https://github.com/actions/virtual-environments/issues/323 
-        - name: Remove broken apt repos [Ubuntu]
-          if: matrix.os == 'ubuntu-latest'
-          run: |
-            for apt_file in `grep -lr microsoft /etc/apt/sources.list.d/`; do sudo rm $apt_file; done
         
         # ============
         # DEPENDENCIES
         # ============
-
-               
-        - name: Dependencies [macOS]
-          if: matrix.os == 'macOS-latest'
-          run: |
-            brew install ccache eigen ace tinyxml gsl irrlicht libmatio boost glfw sdl2
              
         - name: Dependencies [Ubuntu]
           if: matrix.os == 'ubuntu-latest'
@@ -76,18 +61,9 @@ jobs:
             sudo apt install git build-essential cmake libace-dev coinor-libipopt-dev  libboost-system-dev libboost-filesystem-dev \
                              libboost-thread-dev liborocos-kdl-dev libeigen3-dev swig qtbase5-dev qtdeclarative5-dev qtmultimedia5-dev libqt5charts5-dev \
                              libxml2-dev liburdfdom-dev libtinyxml-dev liburdfdom-dev liboctave-dev python3-dev valgrind libassimp-dev libirrlicht-dev libmatio-dev libglfw3-dev
-                             
-        - name: Cache Source-based dependencies  [Ubuntu/macOS]
-          if: steps.cache-source-deps.outputs.cache-hit != 'true' && (contains(matrix.os, 'ubuntu') || contains(matrix.os, 'macOS'))
-          id: cache-source-deps
-          uses: actions/cache@v1
-          with:
-            path: ${{ github.workspace }}/install/deps
-            # Including ${{ runner.temp }} is a workaround for https://github.com/robotology/whole-body-estimators/issues/60
-            key: source-deps-${{runner.os}}-${{runner.temp}}-vcpkg-robotology-${{env.vcpkg_robotology_TAG}}-ycm-${{env.YCM_TAG}}-yarp-${{env.YARP_TAG}}-iDynTree-${{env.iDynTree_TAG}}-wearables-${{env.wearables_TAG}}-icub_main-${{env.icub_main_TAG}}-OsqpEigen-${{env.OsqpEigen_TAG}}-matioCpp-${{env.matioCpp_TAG}}-robometry-${{env.robometry_TAG}}
-             
-        - name: Source-based Dependencies [Ubuntu/macOS]
-          if: steps.cache-source-deps.outputs.cache-hit != 'true' && (matrix.os == 'ubuntu-latest' || matrix.os == 'macOS-latest')
+
+        - name: Source-based Dependencies [Ubuntu]
+          if: steps.cache-source-deps.outputs.cache-hit != 'true' && matrix.os == 'ubuntu-latest'
           shell: bash
           run: |
             # YCM
@@ -203,7 +179,7 @@ jobs:
             
         - name: Configure [Ubuntu/macOS]
           if: matrix.os == 'ubuntu-latest' || matrix.os == 'macOS-latest'
-          shell: bash
+          shell: bash -l {0}
           run: |
             mkdir -p build
             cd build
@@ -218,9 +194,6 @@ jobs:
           shell: bash
           run: |
             cd build
-            # Attempt of fix for using YARP idl generators (that link ACE) in Windows 
-            # See https://github.com/robotology/idyntree/issues/569
-            export PATH=$PATH:${GITHUB_WORKSPACE}/install/bin:${VCPKG_INSTALLATION_ROOT}/install/x64-windows/bin:${VCPKG_INSTALLATION_ROOT}/installed/x64-windows/debug/bin
             cmake --build . --config ${{matrix.build_type}}
             
                     
