@@ -31,7 +31,7 @@ For kinematic calibration, please refere to [Inverse Kinematics Calibration](/do
 If the device is running correctly, the terminal will show the frequency at which the dynamical inverse kinematics step is running.
 The computed model configuration is accessible reading the following port:
 ```bash
-yarp read ... /iCub/RobotStateWrapper/state:o
+yarp read ... /iCub/RobotStateServer/state:o
 ```
 
 ## Visualization
