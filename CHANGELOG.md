@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Naming convention from `wrapper`\ `server` to `nws`\ `nwc` (https://github.com/robotology/human-dynamics-estimation/pull/367).
+- Added files for ergoCub teleoperation without using iFeel (https://github.com/robotology/human-dynamics-estimation/pull/374)
 
 ## [2.9.0] - 2023-10-17
 
