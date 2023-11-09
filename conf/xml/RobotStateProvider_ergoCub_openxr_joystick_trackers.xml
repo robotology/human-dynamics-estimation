@@ -2,10 +2,11 @@
 <!DOCTYPE robot PUBLIC "-//YARP//DTD yarprobotinterface 3.0//EN" "http://www.yarp.it/DTD/yarprobotinterfaceV3.0.dtd">
 <robot name="ergoCub-Retargeting" build=0 portprefix="">
 
-    <device type="transformClient" name="TransformClient">
+    <device type="frameTransformClient" name="TransformClient">
         <param name="period">0.01</param>
-        <param name="local">/tf</param>
-        <param name="remote">/transformServer</param>
+        <param name="filexml_option">ftc_yarp_only.xml</param>
+        <param name="ft_client_prefix">/IFrameTransformToIWear/tf</param>
+        <param name="local_rpc">/IFrameTransformToIWear/tf/local_rpc</param>
     </device>
 
     <device type="iframetransform_to_iwear" name="IFrameTransformToIWear">
