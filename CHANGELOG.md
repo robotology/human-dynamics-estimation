@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Naming convention from `wrapper`\ `server` to `nws`\ `nwc` (https://github.com/robotology/human-dynamics-estimation/pull/367).
 
-| Old name | New name |
+| Previous devices name | New devices name |
 |:------------:|:--------------:|
 | HumanDynamicsWrapper | HumanDynamics_nws_yarp |
 | HumanDynamicsRemapper | HumanDynamics_nwc_yarp |
