@@ -10,7 +10,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Naming convention from `wrapper`\ `server` to `nws`\ `nwc` (https://github.com/robotology/human-dynamics-estimation/pull/367).
-- HumanLogger device to be compatible with the `robot-log-visualizer` (https://github.com/robotology/human-dynamics-estimation/pull/372).
+
+| Old name | New name |
+|:------------:|:--------------:|
+| HumanDynamicsWrapper | HumanDynamics_nws_yarp |
+| HumanDynamicsRemapper | HumanDynamics_nwc_yarp |
+| HumanStateWrapper | HumanState_nws_yarp |
+| HumanStateRemapper | HumanState_nwc_yarp |
+| HumanWrenchWrapper | HumanWrench_nws_yarp |
+| HumanWrenchRemapper | HumanWrench_nwc_yarp |
+| WearableTargetsWrapper | WearableTargets_nws_yarp |
+| WearableTargetsRemapper | WearableTargets_nwc_yarp |
+
+-  HumanLogger device to be compatible with the `robot-log-visualizer` (https://github.com/robotology/human-dynamics-estimation/pull/372).
 
 ### Added
 - Added files for ergoCub teleoperation without using iFeel (https://github.com/robotology/human-dynamics-estimation/pull/374)
