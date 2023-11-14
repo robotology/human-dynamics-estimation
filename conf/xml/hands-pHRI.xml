@@ -266,8 +266,8 @@
         <action phase="shutdown" level="5" type="detach"/>
     </device>
 
-    <device type="controlboardwrapper2" name="HumanControlBoardWrapper">
-        <param name="period">20</param>
+    <device type="controlBoard_nws_yarp" name="HumanControlBoardWrapper">
+        <param name="period">0.02</param>
         <param name="name">/Human/HumanControlBoard</param>
         <param name="joints">66</param>
         <paramlist name="networks">
