@@ -22,7 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 | WearableTargetsWrapper | WearableTargets_nws_yarp |
 | WearableTargetsRemapper | WearableTargets_nwc_yarp |
 
--  HumanLogger device to be compatible with the `robot-log-visualizer` (https://github.com/robotology/human-dynamics-estimation/pull/372).
+- HumanLogger device to be compatible with the `robot-log-visualizer` (https://github.com/robotology/human-dynamics-estimation/pull/372).
+- Updated applications and modules that use the transform server (https://github.com/robotology/human-dynamics-estimation/pull/377)
 
 ### Added
 - Added files for ergoCub teleoperation without using iFeel (https://github.com/robotology/human-dynamics-estimation/pull/374)

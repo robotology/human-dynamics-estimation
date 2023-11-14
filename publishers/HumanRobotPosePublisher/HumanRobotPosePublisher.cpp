@@ -283,9 +283,10 @@ bool HumanRobotPosePublisher::open(yarp::os::Searchable& config)
     // =========================
 
     yarp::os::Property options;
-    options.put("device", "transformClient");
-    options.put("local", "/" + DeviceName + "/transformClient");
-    options.put("remote", "/transformServer");
+    options.put("device", "frameTransformClient");
+    options.put("filexml_option",  "ftc_yarp_only.xml");
+    options.put("ft_client_prefix", "/" + DeviceName + "/transformClient");
+    options.put("local_rpc", "/" + DeviceName + "/transformClient/local_rpc");
 
     if (!pImpl->transformClientDevice.open(options)) {
         yError() << LogPrefix << "Failed to open the transformClient device";

@@ -261,15 +261,14 @@ bool HumanStatePublisher::open(yarp::os::Searchable& config)
     // OPEN THE TRANSFORM CLIENT
     // =========================
 
+    std::string tfPrefix = hasPortPrefix ? "/" + portPrefix + "/" : "/";
+    tfPrefix += DeviceName;
+
     yarp::os::Property options;
-    options.put("device", "transformClient");
-    if (hasPortPrefix) {
-        options.put("local", "/" + portPrefix + "/" + DeviceName + "/transformClient");
-    }
-    else {
-        options.put("local", "/" + DeviceName + "/transformClient");
-    }
-    options.put("remote", "/transformServer");
+    options.put("device", "frameTransformClient");
+    options.put("filexml_option",  "ftc_yarp_only.xml");
+    options.put("ft_client_prefix", tfPrefix + "/transformClient");
+    options.put("local_rpc", tfPrefix + "/transformClient/local_rpc");
 
     if (!pImpl->transformClientDevice.open(options)) {
         yError() << LogPrefix << "Failed to open the transformClient device";
