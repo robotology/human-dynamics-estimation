@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Update iframetransform_to_iwear.xml to use new TF device (https://github.com/robotology/wearables/pull/202)
+
 ### Added
 - CMake: Permit to explictly specify Python installation directory by setting the `WEARABLES_PYTHON_INSTALL_DIR` CMake variable (https://github.com/robotology/wearables/pull/197).
 
