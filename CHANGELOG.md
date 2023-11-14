@@ -6,8 +6,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.0] - 2023-11-09
+
 ### Changed
 - Naming convention from `wrapper`\ `server` to `nws`\ `nwc` (https://github.com/robotology/human-dynamics-estimation/pull/367).
+
+| Previous devices name | New devices name |
+|:------------:|:--------------:|
+| HumanDynamicsWrapper | HumanDynamics_nws_yarp |
+| HumanDynamicsRemapper | HumanDynamics_nwc_yarp |
+| HumanStateWrapper | HumanState_nws_yarp |
+| HumanStateRemapper | HumanState_nwc_yarp |
+| HumanWrenchWrapper | HumanWrench_nws_yarp |
+| HumanWrenchRemapper | HumanWrench_nwc_yarp |
+| WearableTargetsWrapper | WearableTargets_nws_yarp |
+| WearableTargetsRemapper | WearableTargets_nwc_yarp |
+
 - HumanLogger device to be compatible with the `robot-log-visualizer` (https://github.com/robotology/human-dynamics-estimation/pull/372).
 - `controlboardwrapper2` is replaced by `controlBoard_nws_yarp` (https://github.com/robotology/human-dynamics-estimation/pull/378).
 - Updated applications and modules that use the transform server (https://github.com/robotology/human-dynamics-estimation/pull/377)
