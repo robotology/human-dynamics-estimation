@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Naming convention from `wrapper`\ `server` to `nws`\ `nwc` (https://github.com/robotology/human-dynamics-estimation/pull/367).
 - HumanLogger device to be compatible with the `robot-log-visualizer` (https://github.com/robotology/human-dynamics-estimation/pull/372).
 - `controlboardwrapper2` is replaced by `controlBoard_nws_yarp` (https://github.com/robotology/human-dynamics-estimation/pull/378).
+- Updated applications and modules that use the transform server (https://github.com/robotology/human-dynamics-estimation/pull/377)
 
 ### Added
 - Added files for ergoCub teleoperation without using iFeel (https://github.com/robotology/human-dynamics-estimation/pull/374)
