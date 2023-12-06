@@ -75,9 +75,9 @@
             <param name="target_RightHand">(r_hand_palm, TransformServer::pose::vive_tracker_right_elbow_pose, pose)</param>
             <param name="target_LeftHand">(l_hand_palm, TransformServer::pose::vive_tracker_left_elbow_pose, pose)</param>
             <param name="target_Head">(head, TransformServer::pose::openxr_head, pose)</param>
-            <param name="target_l_upper_arm">(l_upperarm iFeelSuit::vLink::Node#5, gravity)</param>
+            <param name="target_l_upper_arm">(l_upper_arm iFeelSuit::vLink::Node#5, gravity)</param>
             <param name="target_l_forearm">(l_forearm, iFeelSuit::vLink::Node#4, gravity)</param>
-            <param name="target_r_upper_arm">(r_upperarm iFeelSuit::vLink::Node#7, gravity)</param>
+            <param name="target_r_upper_arm">(r_upper_arm iFeelSuit::vLink::Node#7, gravity)</param>
             <param name="target_r_forearm">(r_forearm, iFeelSuit::vLink::Node#8, gravity)</param>
         </group>
         <param name="jointList">("l_shoulder_pitch",
