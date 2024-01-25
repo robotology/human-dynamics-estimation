@@ -51,6 +51,9 @@ endif()
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+# Flag to enable python bindings
+option(HDE_COMPILE_PYTHON_BINDINGS "Flag that enables building the bindings" OFF)
+
 # Plugins are force to be Shared/Dynamic Library 
 set(YARP_FORCE_DYNAMIC_PLUGINS ON)
 
@@ -79,6 +82,7 @@ include(AddUninstallTarget)
 
 yarp_configure_plugins_installation(hde)
 add_subdirectory(conf)
+#add_subdirectory(cmake)
 add_subdirectory(msgs)
 add_subdirectory(interfaces)
 add_subdirectory(devices)
@@ -86,6 +90,7 @@ add_subdirectory(modules)
 add_subdirectory(servers)
 add_subdirectory(clients)
 add_subdirectory(publishers)
+add_subdirectory(bindings)
 add_subdirectory(HumanDynamicsEstimationLibrary)
 
 include(InstallBasicPackageFiles)
