@@ -110,7 +110,7 @@ void IWearActuatorsWrapper::onRead(msg::WearableActuatorCommand& wearableActuato
                    wearable::ElementPtr<const wearable::actuator::IHaptic> castActuator = std::static_pointer_cast<const wearable::actuator::IHaptic>(pImpl->actuatorsMap[info.name]);
 
                    // Send haptic command
-                   castActuator->setHapticCommand(wearableActuatorCommand.value);
+                   castActuator->setHapticsCommand(wearableActuatorCommand.forceValue, wearableActuatorCommand.vibroTactileValue);
                }
 
                break;
@@ -124,7 +124,7 @@ void IWearActuatorsWrapper::onRead(msg::WearableActuatorCommand& wearableActuato
                    wearable::ElementPtr<const wearable::actuator::IMotor> castActuator = std::static_pointer_cast<const wearable::actuator::IMotor>(pImpl->actuatorsMap[info.name]);
 
                    // Send motor command
-                   castActuator->setMotorPosition(wearableActuatorCommand.value);
+                   castActuator->setMotorPosition(wearableActuatorCommand.forceValue);
                }
 
                break;

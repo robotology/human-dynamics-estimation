@@ -24,6 +24,7 @@ struct ActuatorInfo {
 
 struct WearableActuatorCommand {
   1: ActuatorInfo info;
-  2: double value;
-  3: double duration;
+  2: double forceValue;
+  3: double vibroTactileValue;
+  4: double duration;
 }
