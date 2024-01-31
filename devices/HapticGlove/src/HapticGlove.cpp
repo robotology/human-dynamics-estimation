@@ -309,8 +309,8 @@ bool HapticGlove::open(yarp::os::Searchable& config)
         m_pImpl->sensegloveHapticActuatorVector.push_back(
             std::make_shared<SenseGloveImpl::SenseGloveHapticActuator>(
                 m_pImpl.get(),
-                m_pImpl->hapticActuatorPrefix + m_pImpl->gloveData.humanFingerNames[i]
-                    + "::HapticFeedback"));
+                m_pImpl->hapticActuatorPrefix
+                    + "HapticFeedback"));
     }
 
     for (size_t i = 0; i < m_pImpl->gloveData.humanFingerNames.size(); i++) {
@@ -349,8 +349,8 @@ bool HapticGlove::open(yarp::os::Searchable& config)
 
     for (size_t i = 0; i < m_pImpl->gloveData.humanFingerNames.size(); i++)
         m_pImpl->gloveData.humanHapticActuatorNameIdMap.emplace(
-            std::make_pair(m_pImpl->hapticActuatorPrefix + m_pImpl->gloveData.humanFingerNames[i]
-                               + "::HapticFeedback",
+            std::make_pair(m_pImpl->hapticActuatorPrefix
+                               + "HapticFeedback",
                            i));
 
     for (size_t i = 0; i < m_pImpl->gloveData.humanFingerNames.size(); i++)
@@ -567,25 +567,26 @@ public:
         return true;
     }
 
-    bool setHapticsCommand(double& forceValue, double& vibrotactileValue) const override
+    bool setHapticsCommand(std::vector<double>& forceValue, std::vector<double>& vibrotactileValue) const override
     {
 
         std::lock_guard<std::mutex> lock(m_gloveImpl->mutex);
 
-        if (!m_gloveImpl->isAvailable(m_actuatorName,
-                                      m_gloveImpl->gloveData.humanHapticActuatorNameIdMap)) {
-            yError() << LogPrefix << "The actuator name (" << m_actuatorName
-                     << ") is not found in the list of actuators.";
+        // if (!m_gloveImpl->isAvailable(m_actuatorName,
+        //                               m_gloveImpl->gloveData.humanHapticActuatorNameIdMap)) {
+        //     yError() << LogPrefix << "The actuator name (" << m_actuatorName
+        //              << ") is not found in the list of actuators.";
 
-            return false;
-        }
+        //     return false;
+        // }
         // m_gloveImpl->gloveData.fingersHapticFeedback
         //     [m_gloveImpl->gloveData.humanHapticActuatorNameIdMap[m_actuatorName]] = value;
 
-        m_gloveImpl->gloveData.fingersHapticFeedback[
-            m_gloveImpl->gloveData.humanHapticActuatorNameIdMap[m_actuatorName]] = forceValue;
-        m_gloveImpl->gloveData.fingersHapticFeedback[
-            m_gloveImpl->gloveData.humanHapticActuatorNameIdMap[m_actuatorName] + 5] = vibrotactileValue;
+        for (size_t i = 0; i < m_gloveImpl->nFingers; i++)
+        {
+            m_gloveImpl->gloveData.fingersHapticFeedback[i] = forceValue[i];
+            m_gloveImpl->gloveData.fingersHapticFeedback[i + 5] = vibrotactileValue[i];
+        }
 
         return true;
     }

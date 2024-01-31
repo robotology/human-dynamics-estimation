@@ -124,7 +124,7 @@ void IWearActuatorsWrapper::onRead(msg::WearableActuatorCommand& wearableActuato
                    wearable::ElementPtr<const wearable::actuator::IMotor> castActuator = std::static_pointer_cast<const wearable::actuator::IMotor>(pImpl->actuatorsMap[info.name]);
 
                    // Send motor command
-                   castActuator->setMotorPosition(wearableActuatorCommand.forceValue);
+                   castActuator->setMotorPosition(wearableActuatorCommand.forceValue[0]);
                }
 
                break;
