@@ -4,7 +4,6 @@
 #include <pybind11/pybind11.h>
 
 #include <hde/bindings/msgs/HumanState.h>
-// #include <Wearable/bindings/msgs/WearableData.h>
 
 namespace hde {
     namespace bindings {

@@ -4,7 +4,6 @@
 
 #include <pybind11/pybind11.h>
 
-// #include <Wearable/bindings/msgs/Module.h>
 #include <hde/bindings/msgs/Module.h>
 
 // Create the Python module

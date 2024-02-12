@@ -6,12 +6,9 @@
 
 #include <string>
 #include <hde/msgs/HumanState.h>
-// #include <thrift/WearableData.h>
 
 #include <hde/bindings/msgs/BufferedPort.h>
 #include <hde/bindings/msgs/HumanState.h>
-// #include <Wearable/bindings/msgs/BufferedPort.h>
-// #include <Wearable/bindings/msgs/WearableData.h>
 
 namespace hde {
     namespace bindings {
@@ -25,7 +22,14 @@ namespace hde {
                 py::class_<HumanState>(module, "HumanState")
                     .def(py::init())
                     .def_readwrite("jointNames", &HumanState::jointNames)
-                    .def_readwrite("positions", &HumanState::positions);
+                    .def_readwrite("positions", &HumanState::positions)
+                    .def_readwrite("velocities", &HumanState::velocities)
+                    .def_readwrite("baseName", &HumanState::baseName)
+                    .def_readwrite("baseOriginWRTGlobal", &HumanState::baseOriginWRTGlobal)
+                    .def_readwrite("baseOrientationWRTGlobal", &HumanState::baseOrientationWRTGlobal)
+                    .def_readwrite("baseVelocityWRTGlobal", &HumanState::baseVelocityWRTGlobal)
+                    .def_readwrite("CoMPositionWRTGlobal", &HumanState::CoMPositionWRTGlobal)
+                    .def_readwrite("CoMVelocityWRTGlobal", &HumanState::CoMVelocityWRTGlobal);
 
                 CreateBufferedPort<HumanState>(module, "BufferedPortHumanState");
             }
