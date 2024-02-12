@@ -5,6 +5,7 @@
 #include <pybind11/stl.h>
 
 #include <string>
+#include <hde/msgs/HumanState.h>
 // #include <thrift/WearableData.h>
 
 #include <hde/bindings/msgs/BufferedPort.h>
@@ -19,12 +20,12 @@ namespace hde {
             void CreateHumanState(pybind11::module& module)
             {
                 namespace py = ::pybind11;
-                using namespace ::hde::msg;
+                using namespace ::hde::msgs;
 
                 py::class_<HumanState>(module, "HumanState")
                     .def(py::init())
                     .def_readwrite("jointNames", &HumanState::jointNames)
-                    .def_readwrite("positions", &HumanState::positions)
+                    .def_readwrite("positions", &HumanState::positions);
 
                 CreateBufferedPort<HumanState>(module, "BufferedPortHumanState");
             }

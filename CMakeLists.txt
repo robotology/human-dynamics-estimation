@@ -36,6 +36,7 @@ find_package(YCM REQUIRED)
 # Import cmake utilities
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 include(AddWarningsConfigurationToTarget)
+include(AddHDEPythonModule)
 
 # To build shared libraries in Windows, we set CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS to TRUE
 # See https://cmake.org/cmake/help/v3.4/variable/CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS.html
@@ -82,7 +83,6 @@ include(AddUninstallTarget)
 
 yarp_configure_plugins_installation(hde)
 add_subdirectory(conf)
-#add_subdirectory(cmake)
 add_subdirectory(msgs)
 add_subdirectory(interfaces)
 add_subdirectory(devices)

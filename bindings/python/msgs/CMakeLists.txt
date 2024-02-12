@@ -8,4 +8,4 @@ add_hde_python_module(
     NAME MsgsBindings
     SOURCES src/HumanState.cpp src/Module.cpp
     HEADERS ${H_PREFIX}/HumanState.h ${H_PREFIX}/BufferedPort.h ${H_PREFIX}/Module.h
-    LINK_LIBRARIES hde::HumanState YARP::YARP_os)
+    LINK_LIBRARIES HumanDynamicsEstimation::HumanStateMsg YARP::YARP_os)
