@@ -7,6 +7,7 @@
         <param name="filexml_option">ftc_yarp_only.xml</param>
         <param name="ft_client_prefix">/IFrameTransformToIWear/tf</param>
         <param name="local_rpc">/IFrameTransformToIWear/tf/local_rpc</param>
+        <param name="ftc_storage_timeout">1.0</param>
     </device>
 
     <device type="iframetransform_to_iwear" name="IFrameTransformToIWear">
