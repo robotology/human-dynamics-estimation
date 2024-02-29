@@ -20,7 +20,7 @@ constexpr double DefaultPeriod = 0.01;
 class IWearActuatorsWrapper::impl : public wearable::msg::WearableActuatorCommand
 {
 public:
-    std::string attachedWearableDeviceName;
+    std::string attachedWearableDeviceKey = "defaultIWearActuatorsWrapperDevice";
 
     std::string actuatorCommandInputPortName;
     yarp::os::BufferedPort<wearable::msg::WearableActuatorCommand> actuatorCommandInputPort;
@@ -94,7 +94,7 @@ void IWearActuatorsWrapper::onRead(msg::WearableActuatorCommand& wearableActuato
    // Check if the commanded actuator name is available
    if (pImpl->actuatorsMap.find(info.name) == pImpl->actuatorsMap.end())
    {
-       yWarning() << "Requested actuator with name " << info.name << " is not available in " << pImpl->attachedWearableDeviceName << " wearable device \n \t Ignoring wearable actuation command.";
+       yWarning() << "Requested actuator with name " << info.name << " is not available in " << pImpl->attachedWearableDeviceKey << " wearable device \n \t Ignoring wearable actuation command.";
    }
    else // process the wearable actuator command
    {
@@ -153,8 +153,6 @@ bool IWearActuatorsWrapper::attach(yarp::dev::PolyDriver* poly)
         return false;
     }
 
-    pImpl->attachedWearableDeviceName = poly->getValue("device").asString();
-
     if (pImpl->iWear || !poly->view(pImpl->iWear) || !pImpl->iWear) {
         yError() << LogPrefix << "Failed to view the IWear interface from the PolyDriver.";
         return false;
@@ -162,7 +160,7 @@ bool IWearActuatorsWrapper::attach(yarp::dev::PolyDriver* poly)
 
     // Check and add all the available actuators
 
-    yInfo() << LogPrefix << "Finding available actuators from " << pImpl->attachedWearableDeviceName << " wearable deive ...";
+    yInfo() << LogPrefix << "Finding available actuators from " << pImpl->attachedWearableDeviceKey << " wearable deive ...";
 
     for (const auto& a : pImpl->iWear->getHapticActuators())
     {
@@ -226,6 +224,9 @@ bool IWearActuatorsWrapper::attachAll(const yarp::dev::PolyDriverList& driverLis
         yError() << LogPrefix << "Passed PolyDriverDescriptor is nullptr.";
         return false;
     }
+    
+    // Save key that identifies the driver
+    pImpl->attachedWearableDeviceKey = driver->key;
 
     return attach(driver->poly);
 }

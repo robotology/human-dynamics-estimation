@@ -60,8 +60,6 @@ public:
     std::unique_ptr<CmdParser> cmdPro;
     yarp::os::RpcServer rpcPort;
 
-    std::string serialComPortName;
-
     // Paexo data buffer
     PaexoData paexoData;
 
@@ -805,9 +803,6 @@ bool Paexo::attach(yarp::dev::PolyDriver* poly)
     else {
         yInfo() << LogPrefix << "ISerialDevice interface viewed correctly";
     }
-
-    // Get the comport name of the serial device
-    pImpl->serialComPortName = poly->getValue("comport").asString();
 
     // TODO: Check if the ISerialDevice interface is configured correctly
     // I do not see any method to check this
