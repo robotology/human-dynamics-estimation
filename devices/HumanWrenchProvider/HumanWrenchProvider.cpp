@@ -160,7 +160,7 @@ public:
 
     iDynTree::SpatialForceVector computeRCMInBaseUsingMeasurements(iDynTree::KinDynComputations& kinDynComputations);
 
-    bool attach(yarp::dev::PolyDriver* poly);
+    bool attach(const std::string& deviceKey, yarp::dev::PolyDriver* poly);
 };
 
 HumanWrenchProvider::HumanWrenchProvider()
@@ -1257,7 +1257,7 @@ void HumanWrenchProvider::run()
     }
 }
 
-bool HumanWrenchProvider::Impl::attach(yarp::dev::PolyDriver* poly)
+bool HumanWrenchProvider::Impl::attach(const std::string& deviceKey, yarp::dev::PolyDriver* poly)
 {
     if (!poly) {
         yError() << LogPrefix << "Passed PolyDriver is nullptr";
@@ -1398,7 +1398,7 @@ bool HumanWrenchProvider::attachAll(const yarp::dev::PolyDriverList& driverList)
             return false;
         }
 
-        if(!pImpl->attach(driver->poly)){
+        if(!pImpl->attach(driver->key, driver->poly)){
             return false;
         }
     }
