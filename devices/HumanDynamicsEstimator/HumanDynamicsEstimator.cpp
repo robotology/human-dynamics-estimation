@@ -792,7 +792,7 @@ public:
     // Wrench sensor link names variable
     std::vector<std::string> wrenchSensorsLinkNames;
 
-    bool attach(yarp::dev::PolyDriver* poly);
+    bool attach(const std::string& deviceKey, yarp::dev::PolyDriver* poly);
 };
 
 HumanDynamicsEstimator::HumanDynamicsEstimator()
@@ -1216,16 +1216,14 @@ void HumanDynamicsEstimator::run()
 
 }
 
-bool HumanDynamicsEstimator::Impl::attach(yarp::dev::PolyDriver* poly)
+bool HumanDynamicsEstimator::Impl::attach(const std::string& deviceKey, yarp::dev::PolyDriver* poly)
 {
     if (!poly) {
         yError() << LogPrefix << "Passed PolyDriver is nullptr";
         return false;
     }
 
-    // Get the device name from the driver
-    const std::string deviceName = poly->getValue("device").asString();
-    yInfo() << LogPrefix << "Attaching device"<<deviceName;
+    yInfo() << LogPrefix << "Attaching device"<<deviceKey;
     
     hde::interfaces::IHumanState* tmpIHumanState = nullptr;
     hde::interfaces::IHumanWrench* tmpIHumanWrench = nullptr;
@@ -1239,7 +1237,7 @@ bool HumanDynamicsEstimator::Impl::attach(yarp::dev::PolyDriver* poly)
                 yarp::os::Time::delay(5);
         }
 
-        yInfo() << LogPrefix << "Device" << deviceName << "attached successfully as IHumanState interfaces";
+        yInfo() << LogPrefix << "Device" << deviceKey << "attached successfully as IHumanState interfaces";
         iHumanState = tmpIHumanState;
     }
 
@@ -1254,13 +1252,13 @@ bool HumanDynamicsEstimator::Impl::attach(yarp::dev::PolyDriver* poly)
             numberOfWrenchSources = tmpIHumanWrench->getNumberOfWrenchSources();
         }
 
-        yInfo() << LogPrefix << "Device" << deviceName << "attached successfully as IHumanWrench";
+        yInfo() << LogPrefix << "Device" << deviceKey << "attached successfully as IHumanWrench";
         iHumanWrench = tmpIHumanWrench;
 
     }
 
     if(!tmpIHumanState && !tmpIHumanWrench){
-        yError() << LogPrefix << "Device" << deviceName << "does not implement any of the attachable interfaces!";
+        yError() << LogPrefix << "Device" << deviceKey << "does not implement any of the attachable interfaces!";
         return false;
     }
 
@@ -1286,7 +1284,7 @@ bool HumanDynamicsEstimator::attachAll(const yarp::dev::PolyDriverList& driverLi
             return false;
         }
 
-        if(!pImpl->attach(driver->poly)){
+        if(!pImpl->attach(driver->key, driver->poly)){
             return false;
         }
     }

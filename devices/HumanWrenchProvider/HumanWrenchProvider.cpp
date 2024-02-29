@@ -160,7 +160,7 @@ public:
 
     iDynTree::SpatialForceVector computeRCMInBaseUsingMeasurements(iDynTree::KinDynComputations& kinDynComputations);
 
-    bool attach(yarp::dev::PolyDriver* poly);
+    bool attach(const std::string& deviceKey, yarp::dev::PolyDriver* poly);
 };
 
 HumanWrenchProvider::HumanWrenchProvider()
@@ -1257,20 +1257,17 @@ void HumanWrenchProvider::run()
     }
 }
 
-bool HumanWrenchProvider::Impl::attach(yarp::dev::PolyDriver* poly)
+bool HumanWrenchProvider::Impl::attach(const std::string& deviceKey, yarp::dev::PolyDriver* poly)
 {
     if (!poly) {
         yError() << LogPrefix << "Passed PolyDriver is nullptr";
         return false;
     }
 
-    // Get the device name from the driver
-    const std::string deviceName = poly->getValue("device").asString();
-
     wearable::IWear* tmpIWear = nullptr;
     hde::interfaces::IHumanState* tmpIHumanState = nullptr;
 
-    yInfo()<<LogPrefix<<"Attaching device"<< deviceName;
+    yInfo()<<LogPrefix<<"Attaching device"<< deviceKey;
 
     // Attach IHumanState
     if (!iHumanState && poly->view(tmpIHumanState)) {
@@ -1284,7 +1281,7 @@ bool HumanWrenchProvider::Impl::attach(yarp::dev::PolyDriver* poly)
         }
 
         iHumanState = tmpIHumanState;
-        yInfo() << LogPrefix << "Device" <<deviceName << "attached successfully as IHumanState interface";
+        yInfo() << LogPrefix << "Device" <<deviceKey << "attached successfully as IHumanState interface";
     }
 
     // Attach IWear interface
@@ -1302,7 +1299,7 @@ bool HumanWrenchProvider::Impl::attach(yarp::dev::PolyDriver* poly)
         }
 
         iWear = tmpIWear;
-        yInfo() << LogPrefix << "Device" <<deviceName << "attached successfully as IWear interface";
+        yInfo() << LogPrefix << "Device" <<deviceKey << "attached successfully as IWear interface";
 
         // Get the ft wearable sensors containing the input measurements
         for (auto& ftSensorSourceData : wrenchSources) {
@@ -1375,7 +1372,7 @@ bool HumanWrenchProvider::Impl::attach(yarp::dev::PolyDriver* poly)
 
     if(!tmpIWear && !tmpIHumanState)
     {
-        yError() << LogPrefix << "Device"<<deviceName<<"does not implement any of the attachable interfaces!";
+        yError() << LogPrefix << "Device"<<deviceKey<<"does not implement any of the attachable interfaces!";
         return false;
     }
     
@@ -1401,7 +1398,7 @@ bool HumanWrenchProvider::attachAll(const yarp::dev::PolyDriverList& driverList)
             return false;
         }
 
-        if(!pImpl->attach(driver->poly)){
+        if(!pImpl->attach(driver->key, driver->poly)){
             return false;
         }
     }

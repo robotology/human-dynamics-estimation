@@ -57,7 +57,7 @@ public:
 
     yarp::sig::Vector jointTorques;
 
-    bool attach(yarp::dev::PolyDriver* poly);
+    bool attach(const std::string& deviceKey, yarp::dev::PolyDriver* poly);
 };
 
 // =========================
@@ -216,7 +216,7 @@ void HumanControlBoard::run()
 
 }
 
-bool HumanControlBoard::impl::attach(yarp::dev::PolyDriver* poly)
+bool HumanControlBoard::impl::attach(const std::string& deviceKey, yarp::dev::PolyDriver* poly)
 {
     if (!poly) {
         yError() << LogPrefix << "Passed PolyDriver is nullptr";
@@ -224,8 +224,7 @@ bool HumanControlBoard::impl::attach(yarp::dev::PolyDriver* poly)
     }
 
     // Get the device name from the driver
-    const std::string deviceName = poly->getValue("device").asString();
-    yInfo() << LogPrefix << "Attaching device"<<deviceName;
+    yInfo() << LogPrefix << "Attaching device"<<deviceKey;
 
     hde::interfaces::IHumanState* tmpIHumanState = nullptr;
     hde::interfaces::IHumanDynamics* tmpIHumanDynamics = nullptr;
@@ -242,7 +241,7 @@ bool HumanControlBoard::impl::attach(yarp::dev::PolyDriver* poly)
 
         isHumanStateAttached = true;
         iHumanState = tmpIHumanState;
-        yInfo() << LogPrefix << deviceName << "attached successful as IHumanState interface";
+        yInfo() << LogPrefix << deviceKey << "attached successful as IHumanState interface";
     }
 
     // Try to attach as IHumanDynamics
@@ -257,11 +256,11 @@ bool HumanControlBoard::impl::attach(yarp::dev::PolyDriver* poly)
 
         isHumanDynamicsAttached = true;
         iHumanDynamics = tmpIHumanDynamics;
-        yInfo() << LogPrefix << deviceName << "attached successfully as IHumanDynamics interface";
+        yInfo() << LogPrefix << deviceKey << "attached successfully as IHumanDynamics interface";
     }
 
     if(!tmpIHumanState && !tmpIHumanDynamics){
-        yError() << LogPrefix << "Unable to attach"<<deviceName<<"as one of the supported interfaces";
+        yError() << LogPrefix << "Unable to attach"<<deviceKey<<"as one of the supported interfaces";
         return false;
     }
 
@@ -287,7 +286,7 @@ bool HumanControlBoard::attachAll(const yarp::dev::PolyDriverList& driverList)
             return false;
         }
 
-        if(!pImpl->attach(driver->poly)) {
+        if(!pImpl->attach(driver->key, driver->poly)) {
             return false;
         }
     }

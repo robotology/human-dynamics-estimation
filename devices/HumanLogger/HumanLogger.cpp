@@ -390,6 +390,7 @@ bool HumanLogger::attachAll(const yarp::dev::PolyDriverList& driverList)
 
     for (int i = 0; i < driverList.size(); i++) {
         yarp::dev::PolyDriver* poly = driverList[i]->poly;
+        std::string deviceKey = driverList[i]->key;
 
         if (!poly) {
             yError() << LogPrefix << "Passed PolyDriver is nullptr.";
@@ -397,7 +398,6 @@ bool HumanLogger::attachAll(const yarp::dev::PolyDriverList& driverList)
         }
 
         // Get the device name from the driver
-        const std::string deviceName = poly->getValue("device").asString();
         interfaces::IHumanState* tmpIHumanState = nullptr;
         interfaces::IHumanDynamics* tmpIHumanDynamics = nullptr;
         interfaces::IHumanWrench* tmpIHumanWrench = nullptr;
@@ -445,12 +445,12 @@ bool HumanLogger::attachAll(const yarp::dev::PolyDriverList& driverList)
 
         if(!tmpIHumanState && !tmpIHumanDynamics && !tmpIHumanWrench)
         {
-            yError()<<LogPrefix<<"The device"<<deviceName<<"does not implement any of the attachable interfaces!";
+            yError()<<LogPrefix<<"The device"<<deviceKey<<"does not implement any of the attachable interfaces!";
             return false;
         }
         else
         {
-            yInfo()<<LogPrefix<<"Device"<<deviceName<<"successfully attached";
+            yInfo()<<LogPrefix<<"Device"<<deviceKey<<"successfully attached";
         }
     }
 
