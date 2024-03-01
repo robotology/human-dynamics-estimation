@@ -551,19 +551,6 @@ public:
 
     bool setHapticCommand(double& value) const override
     {
-
-        // std::lock_guard<std::mutex> lock(m_gloveImpl->mutex);
-
-        // if (!m_gloveImpl->isAvailable(m_actuatorName,
-        //                               m_gloveImpl->gloveData.humanHapticActuatorNameIdMap)) {
-        //     yError() << LogPrefix << "The actuator name (" << m_actuatorName
-        //              << ") is not found in the list of actuators.";
-
-        //     return false;
-        // }
-        // m_gloveImpl->gloveData.fingersHapticFeedback
-        //     [m_gloveImpl->gloveData.humanHapticActuatorNameIdMap[m_actuatorName]] = value;
-
         return true;
     }
 
@@ -571,16 +558,6 @@ public:
     {
 
         std::lock_guard<std::mutex> lock(m_gloveImpl->mutex);
-
-        // if (!m_gloveImpl->isAvailable(m_actuatorName,
-        //                               m_gloveImpl->gloveData.humanHapticActuatorNameIdMap)) {
-        //     yError() << LogPrefix << "The actuator name (" << m_actuatorName
-        //              << ") is not found in the list of actuators.";
-
-        //     return false;
-        // }
-        // m_gloveImpl->gloveData.fingersHapticFeedback
-        //     [m_gloveImpl->gloveData.humanHapticActuatorNameIdMap[m_actuatorName]] = value;
 
         for (size_t i = 0; i < m_gloveImpl->nFingers; i++)
         {

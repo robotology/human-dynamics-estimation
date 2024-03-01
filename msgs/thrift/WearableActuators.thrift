@@ -22,13 +22,6 @@ struct ActuatorInfo {
 // Actuator Command data type
 // ==========================
 
-// struct WearableActuatorCommand {
-//  1: ActuatorInfo info;
-//  2: double forceValue;
-//  3: double vibroTactileValue;
-//  4: double duration;
-// }
-
 struct WearableActuatorCommand {
   1: ActuatorInfo info;
   2: list<double> forceValue;
