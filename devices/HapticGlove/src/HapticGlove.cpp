@@ -551,7 +551,8 @@ public:
 
     bool setHapticCommand(double& value) const override
     {
-        return true;
+        yError() << LogPrefix << "Wrong method has been called! To set the haptic command please use the setHapticsCommand method.";
+        return false;
     }
 
     bool setHapticsCommand(std::vector<double>& forceValue, std::vector<double>& vibrotactileValue) const override
