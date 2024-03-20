@@ -3,7 +3,7 @@
 
 #include <hde/interfaces/IHumanState.h>
 #include <hde/interfaces/IHumanWrench.h>
-#include <hde/interfaces/IWearableTargets.h
+#include <hde/interfaces/IWearableTargets.h>
 #include <hde/interfaces/IHumanDynamics.h>
 
 #include <yarp/os/Network.h>
@@ -29,17 +29,14 @@ std::atomic<bool> isClosing{false};
 
 struct JointEffortData
 {
-    LinkName parentLinkName;
+    // LinkName parentLinkName;
+    std::string parentLinkName;
     std::string sphericalJointName;
-    std::vector<JointIndex> fakeJointsIndices;
+    std::vector<iDynTree::JointIndex> fakeJointsIndices;
 
-    yarp::rosmsg::sensor_msgs::Temperature message;
-    std::shared_ptr<yarp::os::Publisher<yarp::rosmsg::sensor_msgs::Temperature>> publisher;
-};
-
-struct ModelEffortData
-{
-    std::vector<JointEffortData> efforts;
+    // yarp::rosmsg::sensor_msgs::Temperature message; // To be changed
+    double message;
+    //std::shared_ptr<yarp::os::Publisher<yarp::rosmsg::sensor_msgs::Temperature>> publisher; // To be removed?
 };
 
 void my_handler(int signal)
@@ -143,6 +140,15 @@ int main(int argc, char* argv[])
         visualizeTargets = false;
     }
     visualizeTargets = rf.find("visualizeTargets").asBool();
+
+    bool visualizeEfforts;
+    if (!(rf.check("visualizeEfforts") && rf.find("visualizeEfforts").isBool()) )
+    {
+        yWarning() << LogPrefix
+                   << "'visualizeEfforts' option not found or not valid. It is set to False.";
+        visualizeEfforts = false;
+    }
+    visualizeEfforts = rf.find("visualizeEfforts").asBool();
 
     iDynTree::Position cameraDeltaPosition;
     if( !(rf.check("cameraDeltaPosition") && rf.find("cameraDeltaPosition").isList() && rf.find("cameraDeltaPosition").asList()->size() == 3) ) 
@@ -248,6 +254,57 @@ int main(int argc, char* argv[])
             return EXIT_FAILURE;
         }
         forceScalingFactor = rf.find("forceScalingFactor").asFloat64();
+    }
+
+    // Visualzie Efforts Options
+    std::string humanDynamicsDataPortName;
+    std::vector<JointEffortData> modelEffortData;
+
+    if (visualizeEfforts) {
+        if (!(rf.check("humanDynamicsServerPortName")
+              && rf.find("humanDynamicsServerPortName").isString())) {
+            yError() << LogPrefix
+                     << "'humanDynamicsServerPortName' option not found or not valid. Effort Visualization will be disabled";
+            visualizeEfforts = false;
+        }
+        else {
+            humanDynamicsDataPortName = rf.find("humanDynamicsServerPortName").asString();
+        }
+    }
+    if (visualizeEfforts) {
+
+        auto parentLinkNamesList = rf.find("parentLinkNames").asList();
+        for (size_t it = 0; it < parentLinkNamesList->size(); it++) {
+            if (!parentLinkNamesList->get(it).isString()) {
+                yError() << LogPrefix
+                            << "in 'parentLinkNames' there is a field that is not a string.";
+                return EXIT_FAILURE;
+            }
+            modelEffortData.emplace_back();
+            modelEffortData.back().parentLinkName = parentLinkNamesList->get(it).asString();
+        }
+      
+
+        if (!(rf.check("sphericalJointNames") && rf.find("sphericalJointNames").isList()) )
+        {
+            yError() << LogPrefix
+                     << "'sphericalJointNamse' option not found or valid. Efforts Visualization will "
+                        "be disabled";
+            visualizeEfforts = false;
+        }
+        else
+        {
+            auto sphericalJointNamesList = rf.find("sphericalJointNames").asList();
+            for (size_t it = 0; it < sphericalJointNamesList->size(); it++) {
+                if (!sphericalJointNamesList->get(it).isString()) {
+                    yError() << LogPrefix
+                             << "in 'sphericalJointNames' there is a field that is not a string.";
+                    return EXIT_FAILURE;
+                }
+                modelEffortData[it].sphericalJointName = sphericalJointNamesList->get(it).asString();
+            }
+        }
+        
     }
 
     // Visualize Frames Options
@@ -405,7 +462,7 @@ int main(int argc, char* argv[])
 
     if(!humanStateClientDevice.open(clientOptions))
     {
-        yError() << LogPrefix << "Failed to connect client device";
+        yError() << LogPrefix << "Failed to connect client device (iHumanState)";
         return EXIT_FAILURE;
     }
     if(!humanStateClientDevice.view(iHumanState) || !iHumanState )
@@ -458,7 +515,7 @@ int main(int argc, char* argv[])
 
         if(!wearableTargetsClientDevice.open(wearableTargetsClientOptions))
         {
-            yError() << LogPrefix << "Failed to connect client device";
+            yError() << LogPrefix << "Failed to connect client device (iWearableTargets)";
             return EXIT_FAILURE;
         }
         if(!wearableTargetsClientDevice.view(iWearableTargets) || !iWearableTargets )
@@ -513,7 +570,7 @@ int main(int argc, char* argv[])
 
         if(!humanWrenchClientDevice.open(humanWrenchClientOptions))
         {
-            yError() << LogPrefix << "Failed to connect client device";
+            yError() << LogPrefix << "Failed to connect client device (iHumanWrench)";
             return EXIT_FAILURE;
         }
         if(!humanWrenchClientDevice.view(iHumanWrench) || !iHumanWrench )
@@ -538,41 +595,52 @@ int main(int argc, char* argv[])
     }
 
     // initialize iHumanDynamics
-    std::string humanDynamicsDataPortName = "";
     yarp::dev::PolyDriver humanDynamicsClientDevice;
     hde::interfaces::IHumanDynamics* iHumanDynamics{nullptr};
-    std::vector<JointEffortData> modelEffortData;
     std::vector<double> jointTorques;
 
-    yarp::os::Property humanDynamicsClientOptions;
-    clientOptions.put("device", "human_dynamics_nwc_yarp");
-    clientOptions.put("humanDynamicsDataPort", humanDynamicsDataPortName);
-
-    if (!humanStateClientDevice.open(humanDynamicsClientOptions))
+    if (visualizeEfforts)
     {
-        yError() << LogPrefix << "Failed to connect client device";
-        return EXIT_FAILURE;
-    }
-    if (!humanStateClientDevice.view(iHumanDynamics) || !iHumanDynamics)
-    {
-        yError() << LogPrefix << "Failed to view iHumanDynamics interface";
-        return EXIT_FAILURE;
-    }
+        yarp::os::Property humanDynamicsClientOptions;
+        humanDynamicsClientOptions.put("device", "human_dynamics_nwc_yarp");
+        humanDynamicsClientOptions.put("humanDynamicsDataPort", humanDynamicsDataPortName);
 
-    // Get the fake joint indices
-    std::vector<std::string> URDFjoints = iHumanDynamics->getJointNames();
+        if (!humanDynamicsClientDevice.open(humanDynamicsClientOptions))
+        {
+            yError() << LogPrefix << "Failed to connect client device (iHumanDynamics)";
+            return EXIT_FAILURE;
+        }
+        if (!humanDynamicsClientDevice.view(iHumanDynamics) || !iHumanDynamics)
+        {
+            yError() << LogPrefix << "Failed to view iHumanDynamics interface";
+            return EXIT_FAILURE;
+        }
 
-    // Check all the occurences of sphericalJointName* in the urdf model joints 
-    for (unsigned jointIdx = 0; jointIdx < URDFjoints.size(); ++jointIdx) {
-        // Name of the processed urdf joint
-        const std::string urdfJointName = URDFjoints[jointIdx];
-        // Find if one of the sphericalJointNames from the conf is a substring
-        for (auto& effortData : modelEffortData) {
-            if (urdfJointName.find(effortData.sphericalJointName) != std::string::npos) {// (sphericalJointName FROM CONFIG FILE)
-                // Store the index
-                effortData.fakeJointsIndices.push_back(jointIdx);
+         // wait for the iHumanDynamics to be initialized
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+        while (iHumanDynamics->getJointNames().empty()) {
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+
+            yInfo() << LogPrefix << "Waiting for data from humanDynamicsClient";
+        }
+
+        // Get the fake joint indices
+        std::vector<std::string> URDFjoints = iHumanDynamics->getJointNames();
+
+        // Check all the occurences of sphericalJointName* in the urdf model joints 
+        for (unsigned jointIdx = 0; jointIdx < URDFjoints.size(); ++jointIdx) {
+            // Name of the processed urdf joint
+            const std::string urdfJointName = URDFjoints[jointIdx];
+            // Find if one of the sphericalJointNames from the conf is a substring
+            for (auto& effortData : modelEffortData) {
+                if (urdfJointName.find(effortData.sphericalJointName) != std::string::npos) {// (sphericalJointName FROM CONFIG FILE)
+                    // Store the index
+                    effortData.fakeJointsIndices.push_back(jointIdx);
+                    yInfo() << "Adding" << urdfJointName << "to" << effortData.parentLinkName << "with" << effortData.sphericalJointName;
+                }
             }
         }
+       
     }
 
     // initialize state variables for visualization
@@ -777,6 +845,34 @@ int main(int argc, char* argv[])
                 }
             }
         }
+        if (visualizeEfforts)
+        {
+            jointTorques = iHumanDynamics->getJointTorques();
+            for (auto& jointEffortData : modelEffortData) {
+                // Update metadata
+                //jointEffortData.message.header.seq++;
+                //jointEffortData.message.header.stamp = getTimeStampFromYarp();
+
+                double effortTmp = 0;
+
+                for (const auto& modelFakeJointIdx : jointEffortData.fakeJointsIndices) {
+                    effortTmp += pow(jointTorques.at(modelFakeJointIdx), 2);
+                }
+                effortTmp = sqrt(effortTmp);
+
+                jointEffortData.message = effortTmp;
+
+                // Store the message into the publisher
+                // auto& effortMsg = jointEffortData.publisher->prepare();
+                // effortMsg = jointEffortData.message;
+
+                // Publish the effort for this joint
+                // jointEffortData.publisher->write();
+
+                yInfo() << LogPrefix << "Joint Name:" << jointEffortData.sphericalJointName
+                        << ", Effort:" << jointEffortData.message << ", Parent Link:" << jointEffortData.parentLinkName;
+            }
+        }
 
         // follow the desired link with the camera
         if ( !useFixedCamera )
@@ -786,34 +882,6 @@ int main(int argc, char* argv[])
             viz.camera().setTarget(basePosition);
 
             basePositionOld = basePosition;
-        }
-
-        jointTorques = iHumanDynamics->getJointTorques();
-
-        for (auto& jointEffortData : modelEffortData) {
-            // Update metadata
-            jointEffortData.message.header.seq++;
-            jointEffortData.message.header.stamp = getTimeStampFromYarp();
-
-            double effortTmp = 0;
-
-            for (const auto& modelFakeJointIdx : jointEffortData.fakeJointsIndices) {
-                effortTmp += pow(pImpl->jointTorques.at(modelFakeJointIdx), 2);
-            }
-            effortTmp = sqrt(effortTmp);
-
-            jointEffortData.message.temperature = effortTmp;
-
-            // Store the message into the publisher
-            // auto& effortMsg = jointEffortData.publisher->prepare();
-            effortMsg = jointEffortData.message;
-
-            // Publish the effort for this joint
-            //jointEffortData.publisher->write();
-
-            yInfo() << LogPrefix << "Joint Name " << jointEffortData.sphericalJointName
-                    << ", Effort : " << jointEffortData.message;
-            
         }
         
         // Update the visualizer
