@@ -29,14 +29,10 @@ std::atomic<bool> isClosing{false};
 
 struct JointEffortData
 {
-    // LinkName parentLinkName;
     std::string parentLinkName;
     std::string sphericalJointName;
     std::vector<iDynTree::JointIndex> fakeJointsIndices;
-
-    // yarp::rosmsg::sensor_msgs::Temperature message; // To be changed
     double message;
-    //std::shared_ptr<yarp::os::Publisher<yarp::rosmsg::sensor_msgs::Temperature>> publisher; // To be removed?
 };
 
 void my_handler(int signal)
@@ -849,25 +845,17 @@ int main(int argc, char* argv[])
         {
             jointTorques = iHumanDynamics->getJointTorques();
             for (auto& jointEffortData : modelEffortData) {
-                // Update metadata
-                //jointEffortData.message.header.seq++;
-                //jointEffortData.message.header.stamp = getTimeStampFromYarp();
 
                 double effortTmp = 0;
 
+                // Compute the module of the Joint Torque
                 for (const auto& modelFakeJointIdx : jointEffortData.fakeJointsIndices) {
                     effortTmp += pow(jointTorques.at(modelFakeJointIdx), 2);
                 }
                 effortTmp = sqrt(effortTmp);
 
+
                 jointEffortData.message = effortTmp;
-
-                // Store the message into the publisher
-                // auto& effortMsg = jointEffortData.publisher->prepare();
-                // effortMsg = jointEffortData.message;
-
-                // Publish the effort for this joint
-                // jointEffortData.publisher->write();
 
                 yInfo() << LogPrefix << "Joint Name:" << jointEffortData.sphericalJointName
                         << ", Effort:" << jointEffortData.message << ", Parent Link:" << jointEffortData.parentLinkName;
