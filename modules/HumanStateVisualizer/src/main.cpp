@@ -147,6 +147,30 @@ int main(int argc, char* argv[])
     }
     visualizeEfforts = rf.find("visualizeEfforts").asBool();
 
+    bool setBackgroundColor = true;
+    iDynTree::Vector4 backgroundColorVector;
+    if (!(rf.check("colorBackground") && rf.find("colorBackground").isList()
+          && rf.find("colorBackground").asList()->size() == 4))
+    {
+        yError() << LogPrefix << "'colorBackground' option not found or not valid. Setting default background.";
+        setBackgroundColor = false;
+    }
+    if (setBackgroundColor)
+    {
+        for (size_t idx = 0; idx < 4; idx++) {
+            if (!(rf.find("colorBackground").asList()->get(idx).isFloat64())) {
+                yError() << LogPrefix << "'colorBackground' entry [ " << idx
+                         << " ] is not valid. Setting default background.";
+                setBackgroundColor = false;
+            }
+            else
+            {
+                backgroundColorVector[idx] = rf.find("colorBackground").asList()->get(idx).asFloat64();
+
+            }
+        }
+    }
+
     iDynTree::Position cameraDeltaPosition;
     if( !(rf.check("cameraDeltaPosition") && rf.find("cameraDeltaPosition").isList() && rf.find("cameraDeltaPosition").asList()->size() == 3) ) 
     {
@@ -704,6 +728,12 @@ int main(int argc, char* argv[])
     
     viz.addModel(model, "human");
 
+    if (setBackgroundColor)
+    {
+        iDynTree::ColorViz colorBackground(backgroundColorVector);
+        viz.environment().setBackgroundColor(colorBackground);
+    }
+
     if (visualizeWrenches)
     {
         for (size_t vectorIndex = 0; vectorIndex < wrenchSourceLinks.size(); vectorIndex++)
@@ -918,8 +948,6 @@ int main(int argc, char* argv[])
                 iDynTree::ColorViz color(r, g, b, 0.0);
                 viz.shapes().setShapeColor(i, color);
 
-                yInfo() << LogPrefix << "Joint Name:" << jointEffortData.sphericalJointName
-                        << ", Effort:" << jointEffortData.effort << ", Parent Link:" << jointEffortData.parentLinkName;
             }
         }
 
