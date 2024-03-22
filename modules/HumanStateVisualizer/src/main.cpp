@@ -754,11 +754,11 @@ int main(int argc, char* argv[])
 
     if (visualizeEfforts)
     {
-        iDynTree::ColorViz modelColor(1.0, 0.0, 0.0, 0.5);
+        iDynTree::ColorViz modelColor(0.0, 0.0, 0.0, 0.5);
         viz.modelViz("human").setModelColor(modelColor);
         iDynTree::Sphere sphere;
         sphere.setRadius(0.08);
-        iDynTree::ColorViz color(1.0, 0.0, 0.0, 0.5);
+        iDynTree::ColorViz color(0.0, 0.0, 0.0, 1);
         iDynTree::Material material = sphere.getMaterial();
         material.setColor(color.toVector4());
         sphere.setMaterial(material);
@@ -892,7 +892,8 @@ int main(int argc, char* argv[])
         if (visualizeEfforts)
         {
             jointTorques = iHumanDynamics->getJointTorques();
-            iDynTree::ColorViz color(1.0, 0.0, 0.0, 0.5);
+            float minR = 0.0, minG = 1.0, minB = 0.0;
+            float maxR = 1.0, maxG = 0.0, maxB = 0.0;
 
             for (size_t i = 0; i < modelEffortData.size(); ++i) {
                 auto& jointEffortData = modelEffortData[i];
@@ -905,9 +906,16 @@ int main(int argc, char* argv[])
                 }
                 effortTmp = sqrt(effortTmp);
 
-
                 jointEffortData.effort = effortTmp;
 
+                double effortWeight = jointEffortData.effort / jointEffortData.effortMax;
+                if (effortWeight > 1.0) effortWeight = 1.0;
+
+                double r = minR + (maxR - minR) * effortWeight;
+                double g = minG + (maxG - minG) * effortWeight;
+                double b = minB + (maxB - minB) * effortWeight;
+
+                iDynTree::ColorViz color(r, g, b, 0.0);
                 viz.shapes().setShapeColor(i, color);
 
                 yInfo() << LogPrefix << "Joint Name:" << jointEffortData.sphericalJointName
