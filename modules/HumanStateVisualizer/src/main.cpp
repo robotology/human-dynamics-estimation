@@ -269,23 +269,31 @@ int main(int argc, char* argv[])
         }
     }
     if (visualizeEfforts) {
-
-        auto parentLinkNamesList = rf.find("parentLinkNames").asList();
-        for (size_t it = 0; it < parentLinkNamesList->size(); it++) {
-            if (!parentLinkNamesList->get(it).isString()) {
-                yError() << LogPrefix
-                            << "in 'parentLinkNames' there is a field that is not a string.";
-                return EXIT_FAILURE;
-            }
-            modelEffortData.emplace_back();
-            modelEffortData.back().parentLinkName = parentLinkNamesList->get(it).asString();
+        if (!(rf.check("parentLinkNames") && rf.find("parentLinkNames").isList())) {
+            yError() << LogPrefix
+                     << "'parentLinkNames' option not found or valid. Efforts Visualization will "
+                        "be disabled";
+            visualizeEfforts = false;
         }
-      
-
+        else {
+            auto parentLinkNamesList = rf.find("parentLinkNames").asList();
+            for (size_t it = 0; it < parentLinkNamesList->size(); it++) {
+                if (!parentLinkNamesList->get(it).isString()) {
+                    yError() << LogPrefix
+                             << "in 'parentLinkNames' there is a field that is not a string.";
+                    return EXIT_FAILURE;
+                }
+                modelEffortData.emplace_back();
+                modelEffortData.back().parentLinkName = parentLinkNamesList->get(it).asString();
+            }
+        }
+    }
+    if (visualizeEfforts) 
+    {
         if (!(rf.check("sphericalJointNames") && rf.find("sphericalJointNames").isList()) )
         {
             yError() << LogPrefix
-                     << "'sphericalJointNamse' option not found or valid. Efforts Visualization will "
+                     << "'sphericalJointNames' option not found or valid. Efforts Visualization will "
                         "be disabled";
             visualizeEfforts = false;
         }
