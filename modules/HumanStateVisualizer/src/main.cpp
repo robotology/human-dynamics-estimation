@@ -303,6 +303,28 @@ int main(int argc, char* argv[])
         }
         
     }
+    if (visualizeEfforts)
+    {
+        if (!(rf.check("maxEffort") && rf.find("maxEffort").isList())) {
+            yError()
+                << LogPrefix
+                << "'maxEffort' option not found or valid. Efforts Visualization will "
+                   "be disabled";
+            visualizeEfforts = false;
+        }
+        else {
+            auto maxEffortList = rf.find("maxEffort").asList();
+            for (size_t it = 0; it < maxEffortList->size(); it++) {
+                if (!maxEffortList->get(it).isFloat64()) {
+                    yError() << LogPrefix
+                             << "in 'maxEffort' there is a field that is not a number.";
+                    return EXIT_FAILURE;
+                }
+                modelEffortData[it].effortMax = maxEffortList->get(it).asFloat64();
+            }
+        }
+    }
+
 
     // Visualize Frames Options
     std::vector<std::string> visualizedLinksFrame;
