@@ -32,7 +32,8 @@ struct JointEffortData
     std::string parentLinkName;
     std::string sphericalJointName;
     std::vector<iDynTree::JointIndex> fakeJointsIndices;
-    double message;
+    double effortMax;
+    double effort;
 };
 
 void my_handler(int signal)
@@ -721,6 +722,23 @@ int main(int argc, char* argv[])
         }
     }
 
+    if (visualizeEfforts)
+    {
+        iDynTree::ColorViz modelColor(1.0, 0.0, 0.0, 0.5);
+        viz.modelViz("human").setModelColor(modelColor);
+        iDynTree::Sphere sphere;
+        sphere.setRadius(0.08);
+        iDynTree::ColorViz color(1.0, 0.0, 0.0, 0.5);
+        iDynTree::Material material = sphere.getMaterial();
+        material.setColor(color.toVector4());
+        sphere.setMaterial(material);
+
+        for (auto& jointEffortData : modelEffortData)
+        {
+            viz.shapes().addShape(sphere, "human", jointEffortData.parentLinkName);
+        }
+    }
+
     // start Visualization
     std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
     std::chrono::steady_clock::time_point lastViz = std::chrono::steady_clock::now();
@@ -844,7 +862,10 @@ int main(int argc, char* argv[])
         if (visualizeEfforts)
         {
             jointTorques = iHumanDynamics->getJointTorques();
-            for (auto& jointEffortData : modelEffortData) {
+            iDynTree::ColorViz color(1.0, 0.0, 0.0, 0.5);
+
+            for (size_t i = 0; i < modelEffortData.size(); ++i) {
+                auto& jointEffortData = modelEffortData[i];
 
                 double effortTmp = 0;
 
@@ -855,10 +876,12 @@ int main(int argc, char* argv[])
                 effortTmp = sqrt(effortTmp);
 
 
-                jointEffortData.message = effortTmp;
+                jointEffortData.effort = effortTmp;
+
+                viz.shapes().setShapeColor(i, color);
 
                 yInfo() << LogPrefix << "Joint Name:" << jointEffortData.sphericalJointName
-                        << ", Effort:" << jointEffortData.message << ", Parent Link:" << jointEffortData.parentLinkName;
+                        << ", Effort:" << jointEffortData.effort << ", Parent Link:" << jointEffortData.parentLinkName;
             }
         }
 
