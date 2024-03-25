@@ -784,8 +784,9 @@ int main(int argc, char* argv[])
 
     if (visualizeEfforts)
     {
-        iDynTree::ColorViz modelColor(0.0, 0.0, 0.0, 0.5);
+        iDynTree::ColorViz modelColor(0.0, 0.0, 0.0, 0.3);
         viz.modelViz("human").setModelColor(modelColor);
+
         iDynTree::Sphere sphere;
         sphere.setRadius(0.08);
         iDynTree::ColorViz color(0.0, 0.0, 0.0, 1);
@@ -945,9 +946,8 @@ int main(int argc, char* argv[])
                 double g = minG + (maxG - minG) * effortWeight;
                 double b = minB + (maxB - minB) * effortWeight;
 
-                iDynTree::ColorViz color(r, g, b, 0.0);
+                iDynTree::ColorViz color(r, g, b, 1.0);
                 viz.shapes().setShapeColor(i, color);
-
             }
         }
 
