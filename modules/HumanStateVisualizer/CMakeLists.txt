@@ -15,7 +15,7 @@ add_install_rpath_support(BIN_DIRS "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BIND
 
 # Find required package
 find_package(YARP REQUIRED)
-find_package(iDynTree REQUIRED)
+find_package(iDynTree 11.1.0 REQUIRED)
 find_package(OsqpEigen 0.4.0 REQUIRED)
 
 # set cpp files
