@@ -40,6 +40,7 @@ target_link_libraries(${EXE_TARGET_NAME} LINK_PUBLIC
   iDynTree::idyntree-visualization
   IHumanState
   IWearableTargets
-  IHumanWrench)
+  IHumanWrench
+  IHumanDynamics)
 
 install(TARGETS ${EXE_TARGET_NAME} DESTINATION bin)
