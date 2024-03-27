@@ -4,6 +4,7 @@
 #include <hde/interfaces/IHumanState.h>
 #include <hde/interfaces/IHumanWrench.h>
 #include <hde/interfaces/IWearableTargets.h>
+#include <hde/interfaces/IHumanDynamics.h>
 
 #include <yarp/os/Network.h>
 #include <yarp/os/LogStream.h>
@@ -25,6 +26,15 @@ const std::string ModuleName = "HumanStateVisualizer";
 const std::string LogPrefix = ModuleName + " :";
 
 std::atomic<bool> isClosing{false};
+
+struct JointEffortData
+{
+    std::string parentLinkName;
+    std::string sphericalJointName;
+    std::vector<iDynTree::JointIndex> fakeJointsIndices;
+    double effortMax;
+    double effort;
+};
 
 void my_handler(int signal)
 {
@@ -127,6 +137,39 @@ int main(int argc, char* argv[])
         visualizeTargets = false;
     }
     visualizeTargets = rf.find("visualizeTargets").asBool();
+
+    bool visualizeEfforts;
+    if (!(rf.check("visualizeEfforts") && rf.find("visualizeEfforts").isBool()) )
+    {
+        yWarning() << LogPrefix
+                   << "'visualizeEfforts' option not found or not valid. It is set to False.";
+        visualizeEfforts = false;
+    }
+    visualizeEfforts = rf.find("visualizeEfforts").asBool();
+
+    bool setBackgroundColor = true;
+    iDynTree::Vector4 backgroundColorVector;
+    if (!(rf.check("colorBackground") && rf.find("colorBackground").isList()
+          && rf.find("colorBackground").asList()->size() == 4))
+    {
+        yError() << LogPrefix << "'colorBackground' option not found or not valid. Setting default background.";
+        setBackgroundColor = false;
+    }
+    if (setBackgroundColor)
+    {
+        for (size_t idx = 0; idx < 4; idx++) {
+            if (!(rf.find("colorBackground").asList()->get(idx).isFloat64())) {
+                yError() << LogPrefix << "'colorBackground' entry [ " << idx
+                         << " ] is not valid. Setting default background.";
+                setBackgroundColor = false;
+            }
+            else
+            {
+                backgroundColorVector[idx] = rf.find("colorBackground").asList()->get(idx).asFloat64();
+
+            }
+        }
+    }
 
     iDynTree::Position cameraDeltaPosition;
     if( !(rf.check("cameraDeltaPosition") && rf.find("cameraDeltaPosition").isList() && rf.find("cameraDeltaPosition").asList()->size() == 3) ) 
@@ -233,6 +276,87 @@ int main(int argc, char* argv[])
         }
         forceScalingFactor = rf.find("forceScalingFactor").asFloat64();
     }
+
+    // Visualzie Efforts Options
+    std::string humanDynamicsDataPortName;
+    std::vector<JointEffortData> modelEffortData;
+
+    if (visualizeEfforts) {
+        if (!(rf.check("humanDynamicsServerPortName")
+              && rf.find("humanDynamicsServerPortName").isString())) {
+            yError() << LogPrefix
+                     << "'humanDynamicsServerPortName' option not found or not valid. Effort Visualization will be disabled";
+            visualizeEfforts = false;
+        }
+        else {
+            humanDynamicsDataPortName = rf.find("humanDynamicsServerPortName").asString();
+        }
+    }
+    if (visualizeEfforts) {
+        if (!(rf.check("parentLinkNames") && rf.find("parentLinkNames").isList())) {
+            yError() << LogPrefix
+                     << "'parentLinkNames' option not found or valid. Efforts Visualization will "
+                        "be disabled";
+            visualizeEfforts = false;
+        }
+        else {
+            auto parentLinkNamesList = rf.find("parentLinkNames").asList();
+            for (size_t it = 0; it < parentLinkNamesList->size(); it++) {
+                if (!parentLinkNamesList->get(it).isString()) {
+                    yError() << LogPrefix
+                             << "in 'parentLinkNames' there is a field that is not a string.";
+                    return EXIT_FAILURE;
+                }
+                modelEffortData.emplace_back();
+                modelEffortData.back().parentLinkName = parentLinkNamesList->get(it).asString();
+            }
+        }
+    }
+    if (visualizeEfforts) 
+    {
+        if (!(rf.check("sphericalJointNames") && rf.find("sphericalJointNames").isList()) )
+        {
+            yError() << LogPrefix
+                     << "'sphericalJointNames' option not found or valid. Efforts Visualization will "
+                        "be disabled";
+            visualizeEfforts = false;
+        }
+        else
+        {
+            auto sphericalJointNamesList = rf.find("sphericalJointNames").asList();
+            for (size_t it = 0; it < sphericalJointNamesList->size(); it++) {
+                if (!sphericalJointNamesList->get(it).isString()) {
+                    yError() << LogPrefix
+                             << "in 'sphericalJointNames' there is a field that is not a string.";
+                    return EXIT_FAILURE;
+                }
+                modelEffortData[it].sphericalJointName = sphericalJointNamesList->get(it).asString();
+            }
+        }
+        
+    }
+    if (visualizeEfforts)
+    {
+        if (!(rf.check("maxEffort") && rf.find("maxEffort").isList())) {
+            yError()
+                << LogPrefix
+                << "'maxEffort' option not found or valid. Efforts Visualization will "
+                   "be disabled";
+            visualizeEfforts = false;
+        }
+        else {
+            auto maxEffortList = rf.find("maxEffort").asList();
+            for (size_t it = 0; it < maxEffortList->size(); it++) {
+                if (!maxEffortList->get(it).isFloat64()) {
+                    yError() << LogPrefix
+                             << "in 'maxEffort' there is a field that is not a number.";
+                    return EXIT_FAILURE;
+                }
+                modelEffortData[it].effortMax = maxEffortList->get(it).asFloat64();
+            }
+        }
+    }
+
 
     // Visualize Frames Options
     std::vector<std::string> visualizedLinksFrame;
@@ -389,7 +513,7 @@ int main(int argc, char* argv[])
 
     if(!humanStateClientDevice.open(clientOptions))
     {
-        yError() << LogPrefix << "Failed to connect client device";
+        yError() << LogPrefix << "Failed to connect client device (iHumanState)";
         return EXIT_FAILURE;
     }
     if(!humanStateClientDevice.view(iHumanState) || !iHumanState )
@@ -442,7 +566,7 @@ int main(int argc, char* argv[])
 
         if(!wearableTargetsClientDevice.open(wearableTargetsClientOptions))
         {
-            yError() << LogPrefix << "Failed to connect client device";
+            yError() << LogPrefix << "Failed to connect client device (iWearableTargets)";
             return EXIT_FAILURE;
         }
         if(!wearableTargetsClientDevice.view(iWearableTargets) || !iWearableTargets )
@@ -497,7 +621,7 @@ int main(int argc, char* argv[])
 
         if(!humanWrenchClientDevice.open(humanWrenchClientOptions))
         {
-            yError() << LogPrefix << "Failed to connect client device";
+            yError() << LogPrefix << "Failed to connect client device (iHumanWrench)";
             return EXIT_FAILURE;
         }
         if(!humanWrenchClientDevice.view(iHumanWrench) || !iHumanWrench )
@@ -519,6 +643,55 @@ int main(int argc, char* argv[])
                     << ", received " << iHumanWrench->getNumberOfWrenchSources();
             return EXIT_FAILURE;
         }
+    }
+
+    // initialize iHumanDynamics
+    yarp::dev::PolyDriver humanDynamicsClientDevice;
+    hde::interfaces::IHumanDynamics* iHumanDynamics{nullptr};
+    std::vector<double> jointTorques;
+
+    if (visualizeEfforts)
+    {
+        yarp::os::Property humanDynamicsClientOptions;
+        humanDynamicsClientOptions.put("device", "human_dynamics_nwc_yarp");
+        humanDynamicsClientOptions.put("humanDynamicsDataPort", humanDynamicsDataPortName);
+
+        if (!humanDynamicsClientDevice.open(humanDynamicsClientOptions))
+        {
+            yError() << LogPrefix << "Failed to connect client device (iHumanDynamics)";
+            return EXIT_FAILURE;
+        }
+        if (!humanDynamicsClientDevice.view(iHumanDynamics) || !iHumanDynamics)
+        {
+            yError() << LogPrefix << "Failed to view iHumanDynamics interface";
+            return EXIT_FAILURE;
+        }
+
+         // wait for the iHumanDynamics to be initialized
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+        while (iHumanDynamics->getJointNames().empty()) {
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+
+            yInfo() << LogPrefix << "Waiting for data from humanDynamicsClient";
+        }
+
+        // Get the fake joint indices
+        std::vector<std::string> URDFjoints = iHumanDynamics->getJointNames();
+
+        // Check all the occurences of sphericalJointName* in the urdf model joints 
+        for (unsigned jointIdx = 0; jointIdx < URDFjoints.size(); ++jointIdx) {
+            // Name of the processed urdf joint
+            const std::string urdfJointName = URDFjoints[jointIdx];
+            // Find if one of the sphericalJointNames from the conf is a substring
+            for (auto& effortData : modelEffortData) {
+                if (urdfJointName.find(effortData.sphericalJointName) != std::string::npos) {// (sphericalJointName FROM CONFIG FILE)
+                    // Store the index
+                    effortData.fakeJointsIndices.push_back(jointIdx);
+                    yInfo() << "Adding" << urdfJointName << "to" << effortData.parentLinkName << "with" << effortData.sphericalJointName;
+                }
+            }
+        }
+       
     }
 
     // initialize state variables for visualization
@@ -554,6 +727,12 @@ int main(int argc, char* argv[])
     viz.camera().animator()->enableMouseControl(true);
     
     viz.addModel(model, "human");
+
+    if (setBackgroundColor)
+    {
+        iDynTree::ColorViz colorBackground(backgroundColorVector);
+        viz.environment().setBackgroundColor(colorBackground);
+    }
 
     if (visualizeWrenches)
     {
@@ -600,6 +779,24 @@ int main(int argc, char* argv[])
                 viz.vectors().addVector(linkTransform.getPosition(), gravityVector );
             }
             
+        }
+    }
+
+    if (visualizeEfforts)
+    {
+        iDynTree::ColorViz modelColor(0.0, 0.0, 0.0, 0.3);
+        viz.modelViz("human").setModelColor(modelColor);
+
+        iDynTree::Sphere sphere;
+        sphere.setRadius(0.08);
+        iDynTree::ColorViz color(0.0, 0.0, 0.0, 1);
+        iDynTree::Material material = sphere.getMaterial();
+        material.setColor(color.toVector4());
+        sphere.setMaterial(material);
+
+        for (auto& jointEffortData : modelEffortData)
+        {
+            viz.shapes().addShape(sphere, "human", jointEffortData.parentLinkName);
         }
     }
 
@@ -721,6 +918,36 @@ int main(int argc, char* argv[])
                     viz.frames().updateFrame(framesIterator, linkTransform);
                     framesIterator++;
                 }
+            }
+        }
+        if (visualizeEfforts)
+        {
+            jointTorques = iHumanDynamics->getJointTorques();
+            float minR = 0.0, minG = 1.0, minB = 0.0;
+            float maxR = 1.0, maxG = 0.0, maxB = 0.0;
+
+            for (size_t i = 0; i < modelEffortData.size(); ++i) {
+                auto& jointEffortData = modelEffortData[i];
+
+                double effortTmp = 0;
+
+                // Compute the module of the Joint Torque
+                for (const auto& modelFakeJointIdx : jointEffortData.fakeJointsIndices) {
+                    effortTmp += pow(jointTorques.at(modelFakeJointIdx), 2);
+                }
+                effortTmp = sqrt(effortTmp);
+
+                jointEffortData.effort = effortTmp;
+
+                double effortWeight = jointEffortData.effort / jointEffortData.effortMax;
+                if (effortWeight > 1.0) effortWeight = 1.0;
+
+                double r = minR + (maxR - minR) * effortWeight;
+                double g = minG + (maxG - minG) * effortWeight;
+                double b = minB + (maxB - minB) * effortWeight;
+
+                iDynTree::ColorViz color(r, g, b, 1.0);
+                viz.shapes().setShapeColor(i, color);
             }
         }
 

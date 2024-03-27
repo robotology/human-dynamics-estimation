@@ -15,7 +15,7 @@ add_install_rpath_support(BIN_DIRS "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BIND
 
 # Find required package
 find_package(YARP REQUIRED)
-find_package(iDynTree REQUIRED)
+find_package(iDynTree 12.0.0 REQUIRED)
 find_package(OsqpEigen 0.4.0 REQUIRED)
 
 # set cpp files
@@ -40,6 +40,7 @@ target_link_libraries(${EXE_TARGET_NAME} LINK_PUBLIC
   iDynTree::idyntree-visualization
   IHumanState
   IWearableTargets
-  IHumanWrench)
+  IHumanWrench
+  IHumanDynamics)
 
 install(TARGETS ${EXE_TARGET_NAME} DESTINATION bin)
