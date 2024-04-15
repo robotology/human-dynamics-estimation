@@ -16,7 +16,7 @@ env:
     YCM_TAG: v0.15.3
     YARP_TAG: v3.8.1
     iDynTree_TAG: v9.1.0
-    matioCpp_TAG: v0.2.2
+    matioCpp_TAG: v0.2.4
     robometry_TAG: v1.2.1
 
 jobs:
