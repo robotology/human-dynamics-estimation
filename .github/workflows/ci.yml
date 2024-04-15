@@ -20,7 +20,7 @@ env:
     icub_main_TAG: v2.2.1    
     osqp_TAG: v0.6.3
     OsqpEigen_TAG: v0.8.1
-    matioCpp_TAG: v0.2.2
+    matioCpp_TAG: v0.2.4
     robometry_TAG: v1.2.1
 
 jobs:
