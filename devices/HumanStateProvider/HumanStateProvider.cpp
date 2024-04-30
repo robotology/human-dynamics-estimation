@@ -142,6 +142,9 @@ public:
     double period;
     mutable std::mutex mutex;
 
+    bool resetIntegrator = false;
+    std::mutex mutexFlagIntegrator;
+
     // Rpc
     class CmdParser;
     std::unique_ptr<CmdParser> commandPro;
