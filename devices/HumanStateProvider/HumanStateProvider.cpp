@@ -1611,8 +1611,8 @@ void HumanStateProvider::impl::computeSecondaryCalibrationRotationsForChain(
     baseVel.zero();
 
     for (auto const& jointZeroIdx : jointZeroIndices) {
-        jointPos.setVal(jointZeroIdx, jointCalibrationSolution.getVal(jointZeroIdx));
-        std::cout << "jointPos: " << jointPos.getVal(jointZeroIdx) << std::endl;
+        // jointPos.setVal(jointZeroIdx, jointConfigurationSolution.getVal(jointZeroIdx));
+        std::cout << "jointPos " << jointPos.getVal(jointZeroIdx) << std::endl;
     }
 
     std::lock_guard<std::mutex> lock(mutexFlagIntegrator);

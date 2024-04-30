@@ -91,7 +91,7 @@ public:
 
     TargetsMap::iterator getTargetRefIfItExists(const std::string& targetFrameName);
 
-    bool solveProblem(const double dt);
+    bool solveProblem(const double dt, bool* reset = nullptr);
 
     bool computeDesiredLinkVelocities();
 
@@ -905,7 +905,7 @@ bool DynamicalInverseKinematics::impl::addTarget(const InverseKinematicsTarget& 
     return result.second;
 }
 
-bool DynamicalInverseKinematics::impl::solveProblem(const double dt)
+bool DynamicalInverseKinematics::impl::solveProblem(const double dt, bool* reset)
 {
     if (!m_isInverseKinematicsInitializd) {
         if (!initialize())
@@ -925,6 +925,12 @@ bool DynamicalInverseKinematics::impl::solveProblem(const double dt)
         return false;
     if (!(m_inverseVelocityKinematics.getBaseVelocitySolution(m_state.dot_W_p_B, m_state.omega_B) && m_inverseVelocityKinematics.getJointsVelocitySolution(m_state.dot_s)))
         return false;
+
+    if(*reset){
+        *reset = false;
+        std::cout << "Resetting the state of the integrator" << std::endl;
+        m_state.zero();
+    }
 
     m_stateIntegrator.integrate(m_state.dot_s,
                               m_state.dot_W_p_B,
@@ -1659,7 +1665,7 @@ bool DynamicalInverseKinematics::getBaseVelocitySolution(iDynTree::Vector3& line
 
 bool DynamicalInverseKinematics::solve(const double dt, bool* reset)
 {
-    return pImpl->solveProblem(dt);
+    return pImpl->solveProblem(dt, reset);
 }
 
 void DynamicalInverseKinematics::clearProblem()
