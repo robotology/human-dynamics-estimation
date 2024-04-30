@@ -20,16 +20,16 @@
 #include <iDynTree/Core/EigenHelpers.h>
 #include <iDynTree/Model/Traversal.h>
 
+#include <algorithm>
 #include <array>
 #include <atomic>
 #include <chrono>
 #include <mutex>
+#include <numeric>
 #include <stack>
 #include <string>
 #include <thread>
 #include <unordered_map>
-#include <numeric>
-#include <algorithm>
 
 /*!
  * @brief analyze model and list of segments to create all possible segment pairs
@@ -67,7 +67,6 @@ using ModelJointName = std::string;
 using InverseVelocityKinematicsSolverName = std::string;
 
 using FloatingBaseName = std::string;
-
 
 // Struct that contains all the data exposed by the HumanState interface
 struct SolutionIK
@@ -109,14 +108,15 @@ enum rpcCommand
     resetAll
 };
 
-static std::unordered_map<std::string,hde::KinematicTargetType> const stringToKinemaitcTargetType = { {"pose",hde::KinematicTargetType::pose},
-                                                                                                    {"poseAndVelocity",hde::KinematicTargetType::poseAndVelocity},
-                                                                                                    {"position",hde::KinematicTargetType::position},
-                                                                                                    {"positionAndVelocity",hde::KinematicTargetType::positionAndVelocity},
-                                                                                                    {"orientation",hde::KinematicTargetType::orientation},
-                                                                                                    {"orientationAndVelocity",hde::KinematicTargetType::orientationAndVelocity},
-                                                                                                    {"gravity",hde::KinematicTargetType::gravity},
-                                                                                                    {"floorContact",hde::KinematicTargetType::floorContact}};
+static std::unordered_map<std::string, hde::KinematicTargetType> const stringToKinemaitcTargetType =
+    {{"pose", hde::KinematicTargetType::pose},
+     {"poseAndVelocity", hde::KinematicTargetType::poseAndVelocity},
+     {"position", hde::KinematicTargetType::position},
+     {"positionAndVelocity", hde::KinematicTargetType::positionAndVelocity},
+     {"orientation", hde::KinematicTargetType::orientation},
+     {"orientationAndVelocity", hde::KinematicTargetType::orientationAndVelocity},
+     {"gravity", hde::KinematicTargetType::gravity},
+     {"floorContact", hde::KinematicTargetType::floorContact}};
 
 // Container of data coming from the wearable interface
 struct WearableStorage
@@ -128,8 +128,7 @@ struct WearableStorage
     std::unordered_map<hde::ModelLinkName, WearableName> modelToWearable_LinkName;
 
     // Maps [wearable virtual sensor name] ==> [virtual sensor]
-    std::unordered_map<WearableName, SensorPtr<const sensor::IVirtualLinkKinSensor>>
-        linkSensorsMap;
+    std::unordered_map<WearableName, SensorPtr<const sensor::IVirtualLinkKinSensor>> linkSensorsMap;
 };
 
 class HumanStateProvider::impl
@@ -187,7 +186,6 @@ public:
     std::unique_ptr<IKWorkerPool> ikPool;
     SolutionIK solution;
     InverseVelocityKinematicsSolverName inverseVelocityKinematicsSolver;
-    
 
     double posTargetWeight;
     double rotTargetWeight;
@@ -220,9 +218,16 @@ public:
     // Secondary calibration
     void ereaseTargetCalibration(const hde::TargetName& targetName);
     void ereaseTargetsCalibration();
-    void selectChainJointsAndLinksForSecondaryCalibration(const std::string& linkName, const std::string& childLinkName,
-                                                  std::vector<iDynTree::JointIndex>& jointZeroIndices, std::vector<iDynTree::LinkIndex>& linkToCalibrateIndices);
-    void computeSecondaryCalibrationRotationsForChain(const std::vector<iDynTree::JointIndex>& jointZeroIndices, const iDynTree::Transform &refLinkForCalibrationTransform, const std::vector<iDynTree::LinkIndex>& linkToCalibrateIndices, const hde::TargetName& refLinkForCalibrationName);
+    void selectChainJointsAndLinksForSecondaryCalibration(
+        const std::string& linkName,
+        const std::string& childLinkName,
+        std::vector<iDynTree::JointIndex>& jointZeroIndices,
+        std::vector<iDynTree::LinkIndex>& linkToCalibrateIndices);
+    void computeSecondaryCalibrationRotationsForChain(
+        const std::vector<iDynTree::JointIndex>& jointZeroIndices,
+        const iDynTree::Transform& refLinkForCalibrationTransform,
+        const std::vector<iDynTree::LinkIndex>& linkToCalibrateIndices,
+        const hde::TargetName& refLinkForCalibrationName);
 
     SolverIK ikSolver;
 
@@ -231,7 +236,8 @@ public:
     bool useFixedBase;
 
     iDynTree::InverseKinematics globalIK;
-    hde::algorithms::InverseVelocityKinematics inverseVelocityKinematics; // used for computing joint velocity in global IK solution
+    hde::algorithms::InverseVelocityKinematics
+        inverseVelocityKinematics; // used for computing joint velocity in global IK solution
     hde::algorithms::DynamicalInverseKinematics dynamicalInverseKinematics;
 
     // clock
@@ -294,9 +300,9 @@ public:
     std::string childLinkName;
     std::string refLinkName;
     // variables for manual calibration
-    std::atomic<double> roll;  // [deg]
+    std::atomic<double> roll; // [deg]
     std::atomic<double> pitch; // [deg]
-    std::atomic<double> yaw;   // [deg]
+    std::atomic<double> yaw; // [deg]
 
     void resetInternalVariables()
     {
@@ -311,52 +317,78 @@ public:
         if (command.read(connection)) {
             if (command.get(0).asString() == "help") {
                 response.addVocab32(yarp::os::Vocab32::encode("many"));
-                response.addString("The following commands can be used to apply a secondary calibration assuming the subject is in the zero configuration of the model for the calibrated links. \n");
-                response.addString("Enter <calibrateAll> to apply a secondary calibration for all the targets using the measured base pose \n");
-                response.addString("Enter <calibrateAllWithWorld <refTarget>> to apply a secondary calibration for all the targets assuming the <refTarget> to be in the world origin \n");
-                response.addString("Enter <calibrateAllWorldYaw> to remove the yaw offset for all the data \n");
-                response.addString("Enter <setRotationOffset <targetName> <r p y [deg]>> to apply a secondary calibration for the given target using the given rotation offset (defined using rpy)\n");
-                response.addString("Enter <calibrateRelativeLink <parentTargetName> <childTargetName>> to apply a secondary calibration for the child target using the parent target measurement as reference \n");
-                response.addString("Enter <reset <targetName>> to remove secondary calibration for the given target \n");
+                response.addString("The following commands can be used to apply a secondary "
+                                   "calibration assuming the subject is in the zero configuration "
+                                   "of the model for the calibrated links. \n");
+                response.addString("Enter <calibrateAll> to apply a secondary calibration for all "
+                                   "the targets using the measured base pose \n");
+                response.addString(
+                    "Enter <calibrateAllWithWorld <refTarget>> to apply a secondary calibration "
+                    "for all the targets assuming the <refTarget> to be in the world origin \n");
+                response.addString(
+                    "Enter <calibrateAllWorldYaw> to remove the yaw offset for all the data \n");
+                response.addString("Enter <setRotationOffset <targetName> <r p y [deg]>> to apply "
+                                   "a secondary calibration for the given target using the given "
+                                   "rotation offset (defined using rpy)\n");
+                response.addString(
+                    "Enter <calibrateRelativeLink <parentTargetName> <childTargetName>> to apply a "
+                    "secondary calibration for the child target using the parent target "
+                    "measurement as reference \n");
+                response.addString("Enter <reset <targetName>> to remove secondary calibration for "
+                                   "the given target \n");
                 response.addString("Enter <resetAll> to remove all the secondary calibrations");
             }
-            else if (command.get(0).asString() == "calibrateRelativeLink" && !command.get(1).isNull() && !command.get(2).isNull()) {
+            else if (command.get(0).asString() == "calibrateRelativeLink"
+                     && !command.get(1).isNull() && !command.get(2).isNull()) {
                 this->parentLinkName = command.get(1).asString();
                 this->childLinkName = command.get(2).asString();
-                response.addString("Entered command <calibrateRelativeLink> is correct, trying to set offset of " + this->childLinkName + " using " + this->parentLinkName + " as reference");
+                response.addString(
+                    "Entered command <calibrateRelativeLink> is correct, trying to set offset of "
+                    + this->childLinkName + " using " + this->parentLinkName + " as reference");
                 this->cmdStatus = rpcCommand::calibrateRelativeLink;
             }
             else if (command.get(0).asString() == "calibrateAllWorldYaw") {
                 this->parentLinkName = "";
-                response.addString("Entered command <calibrateAllWorldYaw> is correct, trying to set yaw calibration for all the targets");
+                response.addString("Entered command <calibrateAllWorldYaw> is correct, trying to "
+                                   "set yaw calibration for all the targets");
                 this->cmdStatus = rpcCommand::calibrateAllWorldYaw;
             }
             else if (command.get(0).asString() == "calibrateAll") {
                 this->parentLinkName = "";
-                response.addString("Entered command <calibrateAll> is correct, trying to set offset calibration for all the targets");
+                response.addString("Entered command <calibrateAll> is correct, trying to set "
+                                   "offset calibration for all the targets");
                 this->cmdStatus = rpcCommand::calibrateAll;
             }
             else if (command.get(0).asString() == "calibrateAllWithWorld") {
                 this->parentLinkName = "";
                 this->refLinkName = command.get(1).asString();
-                response.addString("Entered command <calibrateAllWithWorld> is correct, trying to set offset calibration for all the targets, and setting target " + this->refLinkName + " to the origin");
+                response.addString("Entered command <calibrateAllWithWorld> is correct, trying to "
+                                   "set offset calibration for all the targets, and setting target "
+                                   + this->refLinkName + " to the origin");
                 this->cmdStatus = rpcCommand::calibrateAllWithWorld;
             }
-            else if (command.get(0).asString() == "setRotationOffset" && !command.get(1).isNull() && command.get(2).isFloat64() && command.get(3).isFloat64() && command.get(4).isFloat64()) {
+            else if (command.get(0).asString() == "setRotationOffset" && !command.get(1).isNull()
+                     && command.get(2).isFloat64() && command.get(3).isFloat64()
+                     && command.get(4).isFloat64()) {
                 this->parentLinkName = command.get(1).asString();
                 this->roll = command.get(2).asFloat64();
                 this->pitch = command.get(3).asFloat64();
                 this->yaw = command.get(4).asFloat64();
-                response.addString("Entered command <calibrate> is correct, trying to set rotation offset for the target " + this->parentLinkName);
+                response.addString("Entered command <calibrate> is correct, trying to set rotation "
+                                   "offset for the target "
+                                   + this->parentLinkName);
                 this->cmdStatus = rpcCommand::setRotationOffset;
             }
             else if (command.get(0).asString() == "resetAll") {
-                response.addString("Entered command <resetAll> is correct,  trying to remove calibration transforms (right and left) for all the targets");
+                response.addString("Entered command <resetAll> is correct,  trying to remove "
+                                   "calibration transforms (right and left) for all the targets");
                 this->cmdStatus = rpcCommand::resetAll;
             }
             else if (command.get(0).asString() == "reset" && !command.get(1).isNull()) {
                 this->parentLinkName = command.get(1).asString();
-                response.addString("Entered command <reset> is correct, trying to remove calibration transforms (right and left) for the target " + this->parentLinkName);
+                response.addString("Entered command <reset> is correct, trying to remove "
+                                   "calibration transforms (right and left) for the target "
+                                   + this->parentLinkName);
                 this->cmdStatus = rpcCommand::resetCalibration;
             }
             else {
@@ -388,7 +420,6 @@ public:
 HumanStateProvider::impl::impl()
     : commandPro(new CmdParser())
 {}
-
 
 // =========================
 // HUMANSTATEPROVIDER DEVICE
@@ -422,62 +453,65 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     }
 
     if (!(config.check("jointList") && config.find("jointList").isList())) {
-        yInfo() << LogPrefix << "jointList option not found or not valid, all the model joints are selected.";
+        yInfo() << LogPrefix
+                << "jointList option not found or not valid, all the model joints are selected.";
         pImpl->jointList.clear();
     }
-    else
-    {
+    else {
         auto jointListBottle = config.find("jointList").asList();
-        for (size_t it = 0; it < jointListBottle->size(); it++)
-        {
+        for (size_t it = 0; it < jointListBottle->size(); it++) {
             pImpl->jointList.push_back(jointListBottle->get(it).asString());
         }
     }
 
     std::vector<double> calibrationJointConfiguration;
-    if (!config.check("calibrationJointConfiguration"))
-    {
-        yInfo() << LogPrefix << "calibrationJointConfiguration option not found, using zero configuration instead.";
+    if (!config.check("calibrationJointConfiguration")) {
+        yInfo()
+            << LogPrefix
+            << "calibrationJointConfiguration option not found, using zero configuration instead.";
         calibrationJointConfiguration.clear();
     }
-    else
-    {
+    else {
         auto calibrationJointConfigurationValue = config.find("calibrationJointConfiguration");
-        if(!calibrationJointConfigurationValue.isList())
-        {
+        if (!calibrationJointConfigurationValue.isList()) {
             yError() << LogPrefix << "Param calibrationJointConfiguration must be a list";
             return false;
         }
         auto calibrationJointConfigurationBottle = calibrationJointConfigurationValue.asList();
-        if(calibrationJointConfigurationBottle->size() !=  pImpl->jointList.size())
-        {
-                yError() << LogPrefix << "Parameter calibrationJointConfiguration must have the same size of the list of selected joints!";
-                return false;
+        if (calibrationJointConfigurationBottle->size() != pImpl->jointList.size()) {
+            yError() << LogPrefix
+                     << "Parameter calibrationJointConfiguration must have the same size of the "
+                        "list of selected joints!";
+            return false;
         }
-        for (size_t it = 0; it < calibrationJointConfigurationBottle->size(); it++)
-        {
-            calibrationJointConfiguration.push_back(calibrationJointConfigurationBottle->get(it).asFloat64());
+        for (size_t it = 0; it < calibrationJointConfigurationBottle->size(); it++) {
+            calibrationJointConfiguration.push_back(
+                calibrationJointConfigurationBottle->get(it).asFloat64());
         }
     }
 
     std::string baseFrameName;
-    if(config.check("floatingBaseFrame") && config.find("floatingBaseFrame").isList() ) {
-              baseFrameName = config.find("floatingBaseFrame").asList()->get(0).asString();
-              pImpl->useFixedBase = false;
-              yWarning() << LogPrefix << "'floatingBaseFrame' configuration option as list is deprecated. Please use a string with the model base name only.";
+    if (config.check("floatingBaseFrame") && config.find("floatingBaseFrame").isList()) {
+        baseFrameName = config.find("floatingBaseFrame").asList()->get(0).asString();
+        pImpl->useFixedBase = false;
+        yWarning() << LogPrefix
+                   << "'floatingBaseFrame' configuration option as list is deprecated. Please use "
+                      "a string with the model base name only.";
     }
-    else if(config.check("floatingBaseFrame") && config.find("floatingBaseFrame").isString() ) {
-              baseFrameName = config.find("floatingBaseFrame").asString();
-              pImpl->useFixedBase = false;
+    else if (config.check("floatingBaseFrame") && config.find("floatingBaseFrame").isString()) {
+        baseFrameName = config.find("floatingBaseFrame").asString();
+        pImpl->useFixedBase = false;
     }
-    else if(config.check("fixedBaseFrame") && config.find("fixedBaseFrame").isList() ) {
-              baseFrameName = config.find("fixedBaseFrame").asList()->get(0).asString();
-              pImpl->useFixedBase = true;
-              yWarning() << LogPrefix << "'fixedBaseFrame' configuration option as list is deprecated. Please use a string with the model base name only.";
+    else if (config.check("fixedBaseFrame") && config.find("fixedBaseFrame").isList()) {
+        baseFrameName = config.find("fixedBaseFrame").asList()->get(0).asString();
+        pImpl->useFixedBase = true;
+        yWarning() << LogPrefix
+                   << "'fixedBaseFrame' configuration option as list is deprecated. Please use a "
+                      "string with the model base name only.";
     }
-    else if(config.check("fixedBaseFrame") && config.find("fixedBaseFrame").isString() ) {
-              baseFrameName = config.find("fixedBaseFrame").asString();
-              pImpl->useFixedBase = true;
+    else if (config.check("fixedBaseFrame") && config.find("fixedBaseFrame").isString()) {
+        baseFrameName = config.find("fixedBaseFrame").asString();
+        pImpl->useFixedBase = true;
     }
     else {
         yError() << LogPrefix << "BaseFrame option not found or not valid";
@@ -506,13 +540,13 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         }
     }
 
-
     yarp::os::Bottle& fixedRightTransformGroup = config.findGroup("MEASUREMENT_TO_LINK_TRANSFORMS");
     if (!fixedRightTransformGroup.isNull()) {
         for (size_t i = 1; i < fixedRightTransformGroup.size(); ++i) {
-            if (!(fixedRightTransformGroup.get(i).isList() && fixedRightTransformGroup.get(i).asList()->size() == 2)) {
+            if (!(fixedRightTransformGroup.get(i).isList()
+                  && fixedRightTransformGroup.get(i).asList()->size() == 2)) {
                 yError() << LogPrefix
-                        << "Childs of MEASUREMENT_TO_LINK_TRANSFORMS must be lists of 2 elements";
+                         << "Childs of MEASUREMENT_TO_LINK_TRANSFORMS must be lists of 2 elements";
                 return false;
             }
             yarp::os::Bottle* list = fixedRightTransformGroup.get(i).asList();
@@ -520,24 +554,17 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
             yarp::os::Bottle* listContent = list->get(1).asList();
 
             // check if MEASUREMENT_TO_LINK_TRANSFORMS matrix is passed (16 elements)
-            if (!(    (listContent->size() == 16)
-                   && (listContent->get(0).isFloat64())
-                   && (listContent->get(1).isFloat64())
-                   && (listContent->get(2).isFloat64())
-                   && (listContent->get(3).isFloat64())
-                   && (listContent->get(4).isFloat64())
-                   && (listContent->get(5).isFloat64())
-                   && (listContent->get(6).isFloat64())
-                   && (listContent->get(7).isFloat64())
-                   && (listContent->get(8).isFloat64())
-                   && (listContent->get(9).isFloat64())
-                   && (listContent->get(10).isFloat64())
-                   && (listContent->get(11).isFloat64())
-                   && (listContent->get(12).isFloat64())
-                   && (listContent->get(13).isFloat64())
-                   && (listContent->get(14).isFloat64())
-                   && (listContent->get(15).isFloat64()))) {
-                yError() << LogPrefix << "MEASUREMENT_TO_LINK_TRANSFORMS " << linkName << " must have 16 double values describing the rotation matrix";
+            if (!((listContent->size() == 16) && (listContent->get(0).isFloat64())
+                  && (listContent->get(1).isFloat64()) && (listContent->get(2).isFloat64())
+                  && (listContent->get(3).isFloat64()) && (listContent->get(4).isFloat64())
+                  && (listContent->get(5).isFloat64()) && (listContent->get(6).isFloat64())
+                  && (listContent->get(7).isFloat64()) && (listContent->get(8).isFloat64())
+                  && (listContent->get(9).isFloat64()) && (listContent->get(10).isFloat64())
+                  && (listContent->get(11).isFloat64()) && (listContent->get(12).isFloat64())
+                  && (listContent->get(13).isFloat64()) && (listContent->get(14).isFloat64())
+                  && (listContent->get(15).isFloat64()))) {
+                yError() << LogPrefix << "MEASUREMENT_TO_LINK_TRANSFORMS " << linkName
+                         << " must have 16 double values describing the rotation matrix";
                 return false;
             }
 
@@ -548,9 +575,10 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     yarp::os::Bottle& fixedLeftTransformGroup = config.findGroup("WORLD_TO_MEASUREMENT_TRANSFORMS");
     if (!fixedLeftTransformGroup.isNull()) {
         for (size_t i = 1; i < fixedLeftTransformGroup.size(); ++i) {
-            if (!(fixedLeftTransformGroup.get(i).isList() && fixedLeftTransformGroup.get(i).asList()->size() == 2)) {
+            if (!(fixedLeftTransformGroup.get(i).isList()
+                  && fixedLeftTransformGroup.get(i).asList()->size() == 2)) {
                 yError() << LogPrefix
-                        << "Childs of WORLD_TO_MEASUREMENT_TRANSFORMS must be lists of 2 elements";
+                         << "Childs of WORLD_TO_MEASUREMENT_TRANSFORMS must be lists of 2 elements";
                 return false;
             }
             yarp::os::Bottle* list = fixedLeftTransformGroup.get(i).asList();
@@ -558,24 +586,17 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
             yarp::os::Bottle* listContent = list->get(1).asList();
 
             // check if WORLD_TO_MEASUREMENT_TRANSFORMS matrix is passed (9 elements)
-            if (!(    (listContent->size() == 16)
-                   && (listContent->get(0).isFloat64())
-                   && (listContent->get(1).isFloat64())
-                   && (listContent->get(2).isFloat64())
-                   && (listContent->get(3).isFloat64())
-                   && (listContent->get(4).isFloat64())
-                   && (listContent->get(5).isFloat64())
-                   && (listContent->get(6).isFloat64())
-                   && (listContent->get(7).isFloat64())
-                   && (listContent->get(8).isFloat64())
-                   && (listContent->get(9).isFloat64())
-                   && (listContent->get(10).isFloat64())
-                   && (listContent->get(11).isFloat64())
-                   && (listContent->get(12).isFloat64())
-                   && (listContent->get(13).isFloat64())
-                   && (listContent->get(14).isFloat64())
-                   && (listContent->get(15).isFloat64()) )) {
-                yError() << LogPrefix << "WORLD_TO_MEASUREMENT_TRANSFORMS " << linkName << " must have 16 double values describing the rotation matrix";
+            if (!((listContent->size() == 16) && (listContent->get(0).isFloat64())
+                  && (listContent->get(1).isFloat64()) && (listContent->get(2).isFloat64())
+                  && (listContent->get(3).isFloat64()) && (listContent->get(4).isFloat64())
+                  && (listContent->get(5).isFloat64()) && (listContent->get(6).isFloat64())
+                  && (listContent->get(7).isFloat64()) && (listContent->get(8).isFloat64())
+                  && (listContent->get(9).isFloat64()) && (listContent->get(10).isFloat64())
+                  && (listContent->get(11).isFloat64()) && (listContent->get(12).isFloat64())
+                  && (listContent->get(13).isFloat64()) && (listContent->get(14).isFloat64())
+                  && (listContent->get(15).isFloat64()))) {
+                yError() << LogPrefix << "WORLD_TO_MEASUREMENT_TRANSFORMS " << linkName
+                         << " must have 16 double values describing the rotation matrix";
                 return false;
             }
 
@@ -583,30 +604,33 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         }
     }
 
-    yarp::os::Bottle& positionScaleFactorGroup = config.findGroup("MEASUREMENT_POSITION_SCALE_FACTOR");
+    yarp::os::Bottle& positionScaleFactorGroup =
+        config.findGroup("MEASUREMENT_POSITION_SCALE_FACTOR");
     if (!positionScaleFactorGroup.isNull()) {
         for (size_t i = 1; i < positionScaleFactorGroup.size(); ++i) {
-            if (!(positionScaleFactorGroup.get(i).isList() && positionScaleFactorGroup.get(i).asList()->size() == 2)) {
-                yError() << LogPrefix
-                        << "Childs of MEASUREMENT_POSITION_SCALE_FACTOR must be lists of 2 elements";
+            if (!(positionScaleFactorGroup.get(i).isList()
+                  && positionScaleFactorGroup.get(i).asList()->size() == 2)) {
+                yError()
+                    << LogPrefix
+                    << "Childs of MEASUREMENT_POSITION_SCALE_FACTOR must be lists of 2 elements";
                 return false;
             }
             yarp::os::Bottle* list = positionScaleFactorGroup.get(i).asList();
             std::string linkName = list->get(0).asString();
 
-            if (list->get(1).isList())
-            {
+            if (list->get(1).isList()) {
                 yarp::os::Bottle* listContent = list->get(1).asList();
 
                 // check if FIXED_SENSOR_ROTATION matrix is passed (9 elements)
-                if (!(    (listContent->size() == 3)
-                    && (listContent->get(0).isFloat64())
-                    && (listContent->get(1).isFloat64())
-                    && (listContent->get(2).isFloat64()) )) {
-                    yError() << LogPrefix << "MEASUREMENT_POSITION_SCALE_FACTOR " << linkName << " must have 3 double values describing the scaling factor for x, y, and z axis";
+                if (!((listContent->size() == 3) && (listContent->get(0).isFloat64())
+                      && (listContent->get(1).isFloat64()) && (listContent->get(2).isFloat64()))) {
+                    yError() << LogPrefix << "MEASUREMENT_POSITION_SCALE_FACTOR " << linkName
+                             << " must have 3 double values describing the scaling factor for x, "
+                                "y, and z axis";
                     return false;
                 }
-                yInfo() << LogPrefix << "MEASUREMENT_POSITION_SCALE_FACTOR added for target " << linkName;
+                yInfo() << LogPrefix << "MEASUREMENT_POSITION_SCALE_FACTOR added for target "
+                        << linkName;
             }
         }
     }
@@ -616,28 +640,25 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     bool yScaleFactorAllFlag = positionScaleFactorGroup.check("y_scale_factor_all");
     bool zScaleFactorAllFlag = positionScaleFactorGroup.check("z_scale_factor_all");
 
-    if (xScaleFactorAllFlag && !positionScaleFactorGroup.find("x_scale_factor_all").isFloat64())
-    {
-            yError() << LogPrefix << "x_scale_factor_all must be a double ";
-            return false;
+    if (xScaleFactorAllFlag && !positionScaleFactorGroup.find("x_scale_factor_all").isFloat64()) {
+        yError() << LogPrefix << "x_scale_factor_all must be a double ";
+        return false;
     }
-    if (yScaleFactorAllFlag && !positionScaleFactorGroup.find("y_scale_factor_all").isFloat64())
-    {
-            yError() << LogPrefix << "y_scale_factor_all must be a double ";
-            return false;
+    if (yScaleFactorAllFlag && !positionScaleFactorGroup.find("y_scale_factor_all").isFloat64()) {
+        yError() << LogPrefix << "y_scale_factor_all must be a double ";
+        return false;
     }
-    if (zScaleFactorAllFlag && !positionScaleFactorGroup.find("z_scale_factor_all").isFloat64())
-    {
-            yError() << LogPrefix << "z_scale_factor_all must be a double ";
-            return false;
+    if (zScaleFactorAllFlag && !positionScaleFactorGroup.find("z_scale_factor_all").isFloat64()) {
+        yError() << LogPrefix << "z_scale_factor_all must be a double ";
+        return false;
     }
 
     yarp::os::Bottle& contactThresholdGroup = config.findGroup("CONTACT_THRESHOLDS");
     if (!contactThresholdGroup.isNull()) {
         for (size_t i = 1; i < contactThresholdGroup.size(); ++i) {
-            if (!(contactThresholdGroup.get(i).isList() && contactThresholdGroup.get(i).asList()->size() == 2)) {
-                yError() << LogPrefix
-                        << "Childs of CONTACT_THRESHOLDS must be lists of 2 elements";
+            if (!(contactThresholdGroup.get(i).isList()
+                  && contactThresholdGroup.get(i).asList()->size() == 2)) {
+                yError() << LogPrefix << "Childs of CONTACT_THRESHOLDS must be lists of 2 elements";
                 return false;
             }
             yarp::os::Bottle* list = contactThresholdGroup.get(i).asList();
@@ -651,7 +672,6 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
             yInfo() << LogPrefix << "CONTACT_THRESHOLDS added for target " << targetName;
         }
     }
-
 
     // =======================================
     // PARSE THE GENERAL CONFIGURATION OPTIONS
@@ -689,120 +709,139 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         hde::KinematicTargetType targetType = it->second;
         hde::TargetName targetName = linksGroup.get(i).asList()->get(0).asString();
 
-        if (pImpl->wearableTargets.find(targetName) != pImpl->wearableTargets.end())
-        {
+        if (pImpl->wearableTargets.find(targetName) != pImpl->wearableTargets.end()) {
             yError() << LogPrefix << "Duplicated target name found [" << targetName << "]";
             return false;
         }
 
-        pImpl->wearableTargets[targetName] = std::make_shared<hde::WearableSensorTarget>(wearableName, modelLinkName, targetType);
+        pImpl->wearableTargets[targetName] =
+            std::make_shared<hde::WearableSensorTarget>(wearableName, modelLinkName, targetType);
     }
 
     for (size_t i = 1; i < fixedLeftTransformGroup.size(); ++i) {
         hde::TargetName targetName = fixedLeftTransformGroup.get(i).asList()->get(0).asString();
-        yarp::os::Bottle* fixedLeftRotationMatrixValues = fixedLeftTransformGroup.get(i).asList()->get(1).asList();
+        yarp::os::Bottle* fixedLeftRotationMatrixValues =
+            fixedLeftTransformGroup.get(i).asList()->get(1).asList();
 
-        iDynTree::Rotation fixedLeftRotation = iDynTree::Rotation( fixedLeftRotationMatrixValues->get(0).asFloat64(),
-                                                                   fixedLeftRotationMatrixValues->get(1).asFloat64(),
-                                                                   fixedLeftRotationMatrixValues->get(2).asFloat64(),
-                                                                   fixedLeftRotationMatrixValues->get(4).asFloat64(),
-                                                                   fixedLeftRotationMatrixValues->get(5).asFloat64(),
-                                                                   fixedLeftRotationMatrixValues->get(6).asFloat64(),
-                                                                   fixedLeftRotationMatrixValues->get(8).asFloat64(),
-                                                                   fixedLeftRotationMatrixValues->get(9).asFloat64(),
-                                                                   fixedLeftRotationMatrixValues->get(10).asFloat64());
-        iDynTree::Position fixedLeftPositionOffset = iDynTree::Position(fixedLeftRotationMatrixValues->get(3).asFloat64(),
-                                                                        fixedLeftRotationMatrixValues->get(7).asFloat64(),
-                                                                        fixedLeftRotationMatrixValues->get(11).asFloat64());
+        iDynTree::Rotation fixedLeftRotation =
+            iDynTree::Rotation(fixedLeftRotationMatrixValues->get(0).asFloat64(),
+                               fixedLeftRotationMatrixValues->get(1).asFloat64(),
+                               fixedLeftRotationMatrixValues->get(2).asFloat64(),
+                               fixedLeftRotationMatrixValues->get(4).asFloat64(),
+                               fixedLeftRotationMatrixValues->get(5).asFloat64(),
+                               fixedLeftRotationMatrixValues->get(6).asFloat64(),
+                               fixedLeftRotationMatrixValues->get(8).asFloat64(),
+                               fixedLeftRotationMatrixValues->get(9).asFloat64(),
+                               fixedLeftRotationMatrixValues->get(10).asFloat64());
+        iDynTree::Position fixedLeftPositionOffset =
+            iDynTree::Position(fixedLeftRotationMatrixValues->get(3).asFloat64(),
+                               fixedLeftRotationMatrixValues->get(7).asFloat64(),
+                               fixedLeftRotationMatrixValues->get(11).asFloat64());
 
-        if (pImpl->wearableTargets.find(targetName) == pImpl->wearableTargets.end())
-        {
-            yError() << LogPrefix << "Left calibration rotation for not existing target [" << targetName << "]";
+        if (pImpl->wearableTargets.find(targetName) == pImpl->wearableTargets.end()) {
+            yError() << LogPrefix << "Left calibration rotation for not existing target ["
+                     << targetName << "]";
             return false;
         }
 
-        pImpl->wearableTargets[targetName].get()->calibrationWorldToMeasurementWorld.setRotation(fixedLeftRotation);
-        pImpl->wearableTargets[targetName].get()->calibrationWorldToMeasurementWorld.setPosition(fixedLeftPositionOffset);
-        yInfo() << LogPrefix << "Adding Fixed Transform for " << targetName << "==>" << pImpl->wearableTargets[targetName].get()->calibrationWorldToMeasurementWorld.toString();
+        pImpl->wearableTargets[targetName].get()->calibrationWorldToMeasurementWorld.setRotation(
+            fixedLeftRotation);
+        pImpl->wearableTargets[targetName].get()->calibrationWorldToMeasurementWorld.setPosition(
+            fixedLeftPositionOffset);
+        yInfo() << LogPrefix << "Adding Fixed Transform for " << targetName << "==>"
+                << pImpl->wearableTargets[targetName]
+                       .get()
+                       ->calibrationWorldToMeasurementWorld.toString();
     }
 
     for (size_t i = 1; i < fixedRightTransformGroup.size(); ++i) {
         hde::TargetName targetName = fixedRightTransformGroup.get(i).asList()->get(0).asString();
-        yarp::os::Bottle* fixedRightRotationMatrixValues = fixedRightTransformGroup.get(i).asList()->get(1).asList();
+        yarp::os::Bottle* fixedRightRotationMatrixValues =
+            fixedRightTransformGroup.get(i).asList()->get(1).asList();
 
-        iDynTree::Rotation fixedRightRotation = iDynTree::Rotation( fixedRightRotationMatrixValues->get(0).asFloat64(),
-                                                                    fixedRightRotationMatrixValues->get(1).asFloat64(),
-                                                                    fixedRightRotationMatrixValues->get(2).asFloat64(),
-                                                                    fixedRightRotationMatrixValues->get(4).asFloat64(),
-                                                                    fixedRightRotationMatrixValues->get(5).asFloat64(),
-                                                                    fixedRightRotationMatrixValues->get(6).asFloat64(),
-                                                                    fixedRightRotationMatrixValues->get(8).asFloat64(),
-                                                                    fixedRightRotationMatrixValues->get(9).asFloat64(),
-                                                                    fixedRightRotationMatrixValues->get(10).asFloat64());
+        iDynTree::Rotation fixedRightRotation =
+            iDynTree::Rotation(fixedRightRotationMatrixValues->get(0).asFloat64(),
+                               fixedRightRotationMatrixValues->get(1).asFloat64(),
+                               fixedRightRotationMatrixValues->get(2).asFloat64(),
+                               fixedRightRotationMatrixValues->get(4).asFloat64(),
+                               fixedRightRotationMatrixValues->get(5).asFloat64(),
+                               fixedRightRotationMatrixValues->get(6).asFloat64(),
+                               fixedRightRotationMatrixValues->get(8).asFloat64(),
+                               fixedRightRotationMatrixValues->get(9).asFloat64(),
+                               fixedRightRotationMatrixValues->get(10).asFloat64());
 
-        iDynTree::Position fixedRightPositionOffset = iDynTree::Position(fixedRightRotationMatrixValues->get(3).asFloat64(),
-                                                                         fixedRightRotationMatrixValues->get(7).asFloat64(),
-                                                                         fixedRightRotationMatrixValues->get(11).asFloat64());
-        if (pImpl->wearableTargets.find(targetName) == pImpl->wearableTargets.end())
-        {
-            yError() << LogPrefix << "Right calibration rotation for not existing target [" << targetName << "]";
+        iDynTree::Position fixedRightPositionOffset =
+            iDynTree::Position(fixedRightRotationMatrixValues->get(3).asFloat64(),
+                               fixedRightRotationMatrixValues->get(7).asFloat64(),
+                               fixedRightRotationMatrixValues->get(11).asFloat64());
+        if (pImpl->wearableTargets.find(targetName) == pImpl->wearableTargets.end()) {
+            yError() << LogPrefix << "Right calibration rotation for not existing target ["
+                     << targetName << "]";
             return false;
         }
 
-        pImpl->wearableTargets[targetName].get()->calibrationMeasurementToLink.setRotation(fixedRightRotation);
-        pImpl->wearableTargets[targetName].get()->calibrationMeasurementToLink.setPosition(fixedRightPositionOffset);
-        yInfo() << LogPrefix << "Adding Fixed Rotation for " << targetName << "==>" << pImpl->wearableTargets[targetName].get()->calibrationMeasurementToLink.toString();
+        pImpl->wearableTargets[targetName].get()->calibrationMeasurementToLink.setRotation(
+            fixedRightRotation);
+        pImpl->wearableTargets[targetName].get()->calibrationMeasurementToLink.setPosition(
+            fixedRightPositionOffset);
+        yInfo()
+            << LogPrefix << "Adding Fixed Rotation for " << targetName << "==>"
+            << pImpl->wearableTargets[targetName].get()->calibrationMeasurementToLink.toString();
     }
 
     for (size_t i = 1; i < positionScaleFactorGroup.size(); ++i) {
         hde::TargetName targetName = positionScaleFactorGroup.get(i).asList()->get(0).asString();
-        if (targetName == "x_scale_factor_all" || targetName == "y_scale_factor_all" || targetName == "z_scale_factor_all")
+        if (targetName == "x_scale_factor_all" || targetName == "y_scale_factor_all"
+            || targetName == "z_scale_factor_all")
             continue;
-        yarp::os::Bottle* positionScaleFactorValues = positionScaleFactorGroup.get(i).asList()->get(1).asList();
+        yarp::os::Bottle* positionScaleFactorValues =
+            positionScaleFactorGroup.get(i).asList()->get(1).asList();
 
         iDynTree::Vector3 positionScaleFactor;
         if (xScaleFactorAllFlag)
-            positionScaleFactor.setVal(0, positionScaleFactorGroup.find("x_scale_factor_all").asFloat64());
+            positionScaleFactor.setVal(
+                0, positionScaleFactorGroup.find("x_scale_factor_all").asFloat64());
         else
             positionScaleFactor.setVal(0, positionScaleFactorValues->get(0).asFloat64());
-        
+
         if (yScaleFactorAllFlag)
-            positionScaleFactor.setVal(1, positionScaleFactorGroup.find("y_scale_factor_all").asFloat64());
+            positionScaleFactor.setVal(
+                1, positionScaleFactorGroup.find("y_scale_factor_all").asFloat64());
         else
             positionScaleFactor.setVal(1, positionScaleFactorValues->get(1).asFloat64());
-        
+
         if (zScaleFactorAllFlag)
-            positionScaleFactor.setVal(2, positionScaleFactorGroup.find("z_scale_factor_all").asFloat64());
+            positionScaleFactor.setVal(
+                2, positionScaleFactorGroup.find("z_scale_factor_all").asFloat64());
         else
             positionScaleFactor.setVal(2, positionScaleFactorValues->get(2).asFloat64());
 
-
-        if (pImpl->wearableTargets.find(targetName) == pImpl->wearableTargets.end())
-        {
-            yError() << LogPrefix << "Position Scale Factor for not existing target [" << targetName << "]";
+        if (pImpl->wearableTargets.find(targetName) == pImpl->wearableTargets.end()) {
+            yError() << LogPrefix << "Position Scale Factor for not existing target [" << targetName
+                     << "]";
             return false;
         }
 
         pImpl->wearableTargets[targetName].get()->positionScaleFactor = positionScaleFactor;
-        yInfo() << LogPrefix << "Adding Scale factor for " << targetName << "==>" << positionScaleFactor.toString();
+        yInfo() << LogPrefix << "Adding Scale factor for " << targetName << "==>"
+                << positionScaleFactor.toString();
     }
 
     for (size_t i = 1; i < contactThresholdGroup.size(); ++i) {
         hde::TargetName targetName = contactThresholdGroup.get(i).asList()->get(0).asString();
-        double contactTreshold = contactThresholdGroup.get(i).asList()->find(targetName).asFloat64();
+        double contactTreshold =
+            contactThresholdGroup.get(i).asList()->find(targetName).asFloat64();
 
-        if (pImpl->wearableTargets.find(targetName) == pImpl->wearableTargets.end())
-        {
-            yError() << LogPrefix << "Contact treshold for not existing target [" << targetName << "]";
+        if (pImpl->wearableTargets.find(targetName) == pImpl->wearableTargets.end()) {
+            yError() << LogPrefix << "Contact treshold for not existing target [" << targetName
+                     << "]";
             return false;
         }
 
         pImpl->wearableTargets[targetName].get()->contactTreshold = contactTreshold;
-        yInfo() << LogPrefix << "Adding contact treshold for " << targetName << "==>" << contactTreshold;
+        yInfo() << LogPrefix << "Adding contact treshold for " << targetName << "==>"
+                << contactTreshold;
     }
-    
-
-    
 
     // ==========================================
     // PARSE THE DEPENDENDT CONFIGURATION OPTIONS
@@ -835,7 +874,8 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
             yError() << LogPrefix << "rotTargetWeight option not found or not valid";
             return false;
         }
-        if (!(config.check("costRegularization") && config.find("costRegularization").isFloat64())) {
+        if (!(config.check("costRegularization")
+              && config.find("costRegularization").isFloat64())) {
             yError() << LogPrefix << "costRegularization option not found or not valid";
             return false;
         }
@@ -917,11 +957,9 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
 
         if (!(config.check("dynamicalIKMeasuredVelocityGainLinRot")
               && config.find("dynamicalIKMeasuredVelocityGainLinRot").isList()
-              && config.find("dynamicalIKMeasuredVelocityGainLinRot").asList()->size()
-                     == 2)) {
-            yError()
-                << LogPrefix
-                << "dynamicalIKMeasuredVelocityGainLinRot option not found or not valid";
+              && config.find("dynamicalIKMeasuredVelocityGainLinRot").asList()->size() == 2)) {
+            yError() << LogPrefix
+                     << "dynamicalIKMeasuredVelocityGainLinRot option not found or not valid";
             return false;
         }
 
@@ -990,8 +1028,8 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
                 << pImpl->dynamicalIKAngularCorrectionGain;
         yInfo() << LogPrefix
                 << "*** Cost regularization              :" << pImpl->costRegularization;
-        yInfo() << LogPrefix << "*** Joint velocity limit             :"
-                << pImpl->dynamicalIKJointVelocityLimit;
+        yInfo() << LogPrefix
+                << "*** Joint velocity limit             :" << pImpl->dynamicalIKJointVelocityLimit;
     }
     if (pImpl->ikSolver == SolverIK::dynamical || pImpl->ikSolver == SolverIK::global) {
         yInfo() << LogPrefix << "*** Inverse Velocity Kinematics solver:"
@@ -1011,21 +1049,20 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     }
 
     iDynTree::ModelLoader modelLoader;
-    if ( pImpl->jointList.empty())
-    {
+    if (pImpl->jointList.empty()) {
         if (!modelLoader.loadModelFromFile(urdfFilePath) || !modelLoader.isValid()) {
-        yError() << LogPrefix << "Failed to load model" << urdfFilePath;
-        return false;
+            yError() << LogPrefix << "Failed to load model" << urdfFilePath;
+            return false;
         }
     }
-    else
-    {
-        if (!modelLoader.loadReducedModelFromFile(urdfFilePath, pImpl->jointList) || !modelLoader.isValid()) {
-        yError() << LogPrefix << "Failed to load model" << urdfFilePath;
-        return false;
+    else {
+        if (!modelLoader.loadReducedModelFromFile(urdfFilePath, pImpl->jointList)
+            || !modelLoader.isValid()) {
+            yError() << LogPrefix << "Failed to load model" << urdfFilePath;
+            return false;
         }
     }
-    
+
     yInfo() << LogPrefix << "----------------------------------------" << modelLoader.isValid();
     yInfo() << LogPrefix << modelLoader.model().toString();
     yInfo() << LogPrefix << modelLoader.model().getNrOfLinks()
@@ -1070,18 +1107,16 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
     pImpl->jointCalibrationSolution.resize(nrOfDOFs);
 
     // Fill iDynTreeVector with 0 if calibration configuration list is empty
-    if (calibrationJointConfiguration.empty())
-    {
+    if (calibrationJointConfiguration.empty()) {
         pImpl->jointCalibrationSolution.zero();
     }
-    else if(calibrationJointConfiguration.size() != nrOfDOFs)
-    {
-        yError() << LogPrefix << "calibrationJointConfiguration param size (" << calibrationJointConfiguration.size() 
-                 << ") must match the number of DOFs of the model (" << nrOfDOFs <<"). ";
+    else if (calibrationJointConfiguration.size() != nrOfDOFs) {
+        yError() << LogPrefix << "calibrationJointConfiguration param size ("
+                 << calibrationJointConfiguration.size()
+                 << ") must match the number of DOFs of the model (" << nrOfDOFs << "). ";
         return false;
     }
-    else
-    {
+    else {
         for (int idx = 0; idx < calibrationJointConfiguration.size(); idx++) {
             pImpl->jointCalibrationSolution.setVal(idx, calibrationJointConfiguration[idx]);
         }
@@ -1117,11 +1152,10 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
         }
         if (pImpl->inverseVelocityKinematicsSolver != "QP"
             || pImpl->ikSolver != SolverIK::dynamical) {
-            yWarning()
-                << LogPrefix
-                << "'CUSTOM_CONSTRAINTS' group option is available only if "
-                   "'ikSolver==dynamical' & 'inverseVelocityKinematicsSolver==QP'. \n "
-                   "Currently, you are NOT using the customized constraint group.";
+            yWarning() << LogPrefix
+                       << "'CUSTOM_CONSTRAINTS' group option is available only if "
+                          "'ikSolver==dynamical' & 'inverseVelocityKinematicsSolver==QP'. \n "
+                          "Currently, you are NOT using the customized constraint group.";
         }
 
         yInfo() << "==================>>>>>>> constraint group: " << constraintGroup.size();
@@ -1383,7 +1417,6 @@ void HumanStateProvider::run()
         return;
     }
 
-
     // Solve Inverse Kinematics and Inverse Velocity Problems
     auto tick = std::chrono::high_resolution_clock::now();
     bool inverseKinematicsFailure;
@@ -1414,8 +1447,8 @@ void HumanStateProvider::run()
     yTrace() << LogPrefix << "IK took"
              << std::chrono::duration_cast<std::chrono::milliseconds>(tock - tick).count() << "ms";
 
-    // If useDirectBaseMeasurement is true, directly use the measured base pose and velocity. If useFixedBase is also enabled,
-    // identity transform and zero velocity will be used.
+    // If useDirectBaseMeasurement is true, directly use the measured base pose and velocity. If
+    // useFixedBase is also enabled, identity transform and zero velocity will be used.
     if (pImpl->useFixedBase) {
         pImpl->baseTransformSolution = iDynTree::Transform::Identity();
         pImpl->baseVelocitySolution.zero();
@@ -1503,14 +1536,16 @@ void HumanStateProvider::impl::ereaseTargetCalibration(const hde::TargetName& ta
 
 void HumanStateProvider::impl::ereaseTargetsCalibration()
 {
-    for (auto wearableTargetEntry : wearableTargets)
-    {
+    for (auto wearableTargetEntry : wearableTargets) {
         wearableTargetEntry.second.get()->clearCalibrationMatrices();
     }
 }
 
-void HumanStateProvider::impl::selectChainJointsAndLinksForSecondaryCalibration(const std::string& linkName, const std::string& childLinkName,
-                                              std::vector<iDynTree::JointIndex>& jointZeroIndices, std::vector<iDynTree::LinkIndex>& linkToCalibrateIndices)
+void HumanStateProvider::impl::selectChainJointsAndLinksForSecondaryCalibration(
+    const std::string& linkName,
+    const std::string& childLinkName,
+    std::vector<iDynTree::JointIndex>& jointZeroIndices,
+    std::vector<iDynTree::LinkIndex>& linkToCalibrateIndices)
 {
     if (childLinkName == "") {
         // Select the chosen link [linkName] and the joints between the link and its parend link
@@ -1519,20 +1554,22 @@ void HumanStateProvider::impl::selectChainJointsAndLinksForSecondaryCalibration(
         linkToCalibrateIndices.push_back(kinDynComputations->model().getLinkIndex(linkName));
 
         // add joints to [jointZeroIndices]
-        for (auto pairInfo = linkPairs.begin(); pairInfo != linkPairs.end(); pairInfo++)
-        {
+        for (auto pairInfo = linkPairs.begin(); pairInfo != linkPairs.end(); pairInfo++) {
             if (pairInfo->parentFrameName == linkName) {
-                for (size_t pairModelJointIndex = 0; pairModelJointIndex < pairInfo->pairModel.getNrOfJoints(); pairModelJointIndex++) {
+                for (size_t pairModelJointIndex = 0;
+                     pairModelJointIndex < pairInfo->pairModel.getNrOfJoints();
+                     pairModelJointIndex++) {
                     std::string jointName = pairInfo->pairModel.getJointName(pairModelJointIndex);
-                    jointZeroIndices.push_back(kinDynComputations->model().getJointIndex(jointName));
+                    jointZeroIndices.push_back(
+                        kinDynComputations->model().getJointIndex(jointName));
                 }
                 break;
             }
         }
-
     }
     else {
-        // Create chain between the given parent link [linkName] and the child link [childLinkName] and select the joints and the links involved in the chain
+        // Create chain between the given parent link [linkName] and the child link [childLinkName]
+        // and select the joints and the links involved in the chain
 
         // create reduced model between parent and child frame
         iDynTree::Model chainModel;
@@ -1540,30 +1577,37 @@ void HumanStateProvider::impl::selectChainJointsAndLinksForSecondaryCalibration(
 
         // add links found in the submodel to [linkToCalibrateIndices]
         // TODO missing fake links that are frames
-        for (size_t chainModelLinkIndex = 0; chainModelLinkIndex < chainModel.getNrOfLinks(); chainModelLinkIndex ++) {
+        for (size_t chainModelLinkIndex = 0; chainModelLinkIndex < chainModel.getNrOfLinks();
+             chainModelLinkIndex++) {
             std::string chainLinkName = chainModel.getLinkName(chainModelLinkIndex);
-            linkToCalibrateIndices.push_back(kinDynComputations->model().getLinkIndex(chainLinkName));
+            linkToCalibrateIndices.push_back(
+                kinDynComputations->model().getLinkIndex(chainLinkName));
         }
 
         // add joints found in the submodel to [jointZeroIndices]
-        for (size_t chainModelJointIndex = 0; chainModelJointIndex < chainModel.getNrOfJoints(); chainModelJointIndex++) {
+        for (size_t chainModelJointIndex = 0; chainModelJointIndex < chainModel.getNrOfJoints();
+             chainModelJointIndex++) {
             std::string jointName = chainModel.getJointName(chainModelJointIndex);
             jointZeroIndices.push_back(kinDynComputations->model().getJointIndex(jointName));
         }
     }
 }
 
-void HumanStateProvider::impl::computeSecondaryCalibrationRotationsForChain(const std::vector<iDynTree::JointIndex>& jointZeroIndices, const iDynTree::Transform& refLinkForCalibrationTransform, const std::vector<iDynTree::LinkIndex>& linkToCalibrateIndices, const hde::TargetName& refTargetForCalibrationName)
+void HumanStateProvider::impl::computeSecondaryCalibrationRotationsForChain(
+    const std::vector<iDynTree::JointIndex>& jointZeroIndices,
+    const iDynTree::Transform& refLinkForCalibrationTransform,
+    const std::vector<iDynTree::LinkIndex>& linkToCalibrateIndices,
+    const hde::TargetName& refTargetForCalibrationName)
 {
     // initialize vectors
     iDynTree::VectorDynSize jointPos(jointConfigurationSolution);
-    jointPos.zero(); 
+    jointPos.zero();
     iDynTree::VectorDynSize jointVel(jointVelocitiesSolution);
     jointVel.zero();
     iDynTree::Twist baseVel;
     baseVel.zero();
 
-    for (auto const& jointZeroIdx: jointZeroIndices) {
+    for (auto const& jointZeroIdx : jointZeroIndices) {
         jointPos.setVal(jointZeroIdx, jointCalibrationSolution.getVal(jointZeroIdx));
         std::cout << "jointPos: " << jointPos.getVal(jointZeroIdx) << std::endl;
     }
@@ -1572,21 +1616,21 @@ void HumanStateProvider::impl::computeSecondaryCalibrationRotationsForChain(cons
     resetIntegrator = true;
 
     // TODO check which value to give to the base (before we were using the base target measurement)
-    kinDynComputations->setRobotState(iDynTree::Transform::Identity(), jointPos, baseVel, jointVel, worldGravity);
-
+    kinDynComputations->setRobotState(
+        iDynTree::Transform::Identity(), jointPos, baseVel, jointVel, worldGravity);
 
     // If needed compute world calibration matrix
     // in this case the same world calibration transform i used for all the targets
     iDynTree::Transform secondaryCalibrationWorld = iDynTree::Transform::Identity();
-    if (refTargetForCalibrationName != "")
-    {
+    if (refTargetForCalibrationName != "") {
         std::string linkName = wearableTargets[refTargetForCalibrationName].get()->modelLinkName;
-        iDynTree::Transform linkForCalibrationTransform = kinDynComputations->getWorldTransform(linkName);
-        secondaryCalibrationWorld = refLinkForCalibrationTransform * linkForCalibrationTransform.inverse();
+        iDynTree::Transform linkForCalibrationTransform =
+            kinDynComputations->getWorldTransform(linkName);
+        secondaryCalibrationWorld =
+            refLinkForCalibrationTransform * linkForCalibrationTransform.inverse();
     }
-    
-    for (auto wearableTargetEntry : wearableTargets)
-    {
+
+    for (auto wearableTargetEntry : wearableTargets) {
         hde::TargetName targetName = wearableTargetEntry.first;
         ModelLinkName linkName = wearableTargetEntry.second->modelLinkName;
         iDynTree::LinkIndex linkIndex = kinDynComputations->model().getLinkIndex(linkName);
@@ -1594,17 +1638,29 @@ void HumanStateProvider::impl::computeSecondaryCalibrationRotationsForChain(cons
         std::cerr << "target: " << targetName << std::endl;
         std::cerr << "link index" << linkIndex << std::endl;
 
-        if (std::find(linkToCalibrateIndices.begin(), linkToCalibrateIndices.end(), linkIndex) != linkToCalibrateIndices.end())
-        {
+        if (std::find(linkToCalibrateIndices.begin(), linkToCalibrateIndices.end(), linkIndex)
+            != linkToCalibrateIndices.end()) {
             std::cerr << "link found" << std::endl;
             wearableTargetEntry.second->clearSecondaryCalibrationMatrix();
-            wearableTargetEntry.second->calibrationMeasurementToLink.setRotation(wearableTargetEntry.second->getCalibratedRotation().inverse() * kinDynComputations->getWorldTransform(linkName).getRotation());
-            wearableTargetEntry.second->calibrationMeasurementToLink.setPosition( ((kinDynComputations->getWorldTransform(linkName).getPosition() - wearableTargetEntry.second->calibrationWorldToMeasurementWorld.getPosition()).changeCoordinateFrame(wearableTargetEntry.second->calibrationWorldToMeasurementWorld.getRotation().inverse()) - iDynTree::Position(wearableTargetEntry.second->position)).changeCoordinateFrame(wearableTargetEntry.second->rotation.inverse()) );
+            wearableTargetEntry.second->calibrationMeasurementToLink.setRotation(
+                wearableTargetEntry.second->getCalibratedRotation().inverse()
+                * kinDynComputations->getWorldTransform(linkName).getRotation());
+            wearableTargetEntry.second->calibrationMeasurementToLink.setPosition(
+                ((kinDynComputations->getWorldTransform(linkName).getPosition()
+                  - wearableTargetEntry.second->calibrationWorldToMeasurementWorld.getPosition())
+                     .changeCoordinateFrame(
+                         wearableTargetEntry.second->calibrationWorldToMeasurementWorld
+                             .getRotation()
+                             .inverse())
+                 - iDynTree::Position(wearableTargetEntry.second->position))
+                    .changeCoordinateFrame(wearableTargetEntry.second->rotation.inverse()));
 
-            wearableTargetEntry.second->calibrationWorldToMeasurementWorld = secondaryCalibrationWorld * wearableTargetEntry.second->calibrationWorldToMeasurementWorld;
-            
+            wearableTargetEntry.second->calibrationWorldToMeasurementWorld =
+                secondaryCalibrationWorld
+                * wearableTargetEntry.second->calibrationWorldToMeasurementWorld;
 
-            yInfo() << LogPrefix << "Sensor to Link calibration rotation for " << targetName << " is set";
+            yInfo() << LogPrefix << "Sensor to Link calibration rotation for " << targetName
+                    << " is set";
         }
     }
 }
@@ -1614,12 +1670,15 @@ bool HumanStateProvider::impl::applyRpcCommand()
     // check is the choosen links are valid
     hde::TargetName targetName = commandPro->parentLinkName;
     hde::TargetName childTargetName = commandPro->childLinkName;
-    if (!(targetName == "") && ( wearableTargets.find(targetName) == wearableTargets.end())) {
-        yWarning() << LogPrefix << "Target " << targetName << " choosen for secondaty calibration is not valid";
+    if (!(targetName == "") && (wearableTargets.find(targetName) == wearableTargets.end())) {
+        yWarning() << LogPrefix << "Target " << targetName
+                   << " choosen for secondaty calibration is not valid";
         return false;
     }
-    if (!(childTargetName == "") && (wearableTargets.find(childTargetName) == wearableTargets.end())) {
-        yWarning() << LogPrefix << "Target " << childTargetName << " choosen for secondaty calibration is not valid";
+    if (!(childTargetName == "")
+        && (wearableTargets.find(childTargetName) == wearableTargets.end())) {
+        yWarning() << LogPrefix << "Target " << childTargetName
+                   << " choosen for secondaty calibration is not valid";
         return false;
     }
 
@@ -1628,121 +1687,138 @@ bool HumanStateProvider::impl::applyRpcCommand()
     std::vector<iDynTree::LinkIndex> linkToCalibrateIndices;
     iDynTree::Rotation secondaryCalibrationRotation;
 
-    switch(commandPro->cmdStatus) {
-    case rpcCommand::resetAll: {
-        ereaseTargetsCalibration();
-        break;
-    }
-    case rpcCommand::resetCalibration: {
-        ereaseTargetCalibration(targetName);
-        break;
-    }
-    case rpcCommand::calibrateAll: {
-        // Select all the links and the joints
-        // add all the links of the model to [linkToCalibrateIndices]
-        linkToCalibrateIndices.resize(kinDynComputations->getNrOfLinks());
-        std::iota(linkToCalibrateIndices.begin(), linkToCalibrateIndices.end(), 0);
-
-        // add all the joints of the model to [jointZeroIndices]
-        jointZeroIndices.resize(kinDynComputations->getNrOfDegreesOfFreedom());
-        std::iota(jointZeroIndices.begin(), jointZeroIndices.end(), 0);
-
-        // Compute secondary calibration for the selected links setting to zero the given joints
-        computeSecondaryCalibrationRotationsForChain(jointZeroIndices, iDynTree::Transform::Identity(), linkToCalibrateIndices, "");
-        break;
-    }
-    case rpcCommand::calibrateAllWorldYaw: {
-        // Select all the links and the joints
-        linkToCalibrateIndices.resize(kinDynComputations->getNrOfLinks());
-        std::iota(linkToCalibrateIndices.begin(), linkToCalibrateIndices.end(), 0);
-
-        // add all the joints of the model to [jointZeroIndices]
-        jointZeroIndices.resize(kinDynComputations->getNrOfDegreesOfFreedom());
-        std::iota(jointZeroIndices.begin(), jointZeroIndices.end(), 0);
-
-        // initialize vectors
-        iDynTree::VectorDynSize jointPos(jointConfigurationSolution);
-        iDynTree::VectorDynSize jointVel(jointVelocitiesSolution);
-        jointVel.zero();
-        iDynTree::Twist baseVel;
-        baseVel.zero();
-
-        for (auto const& jointZeroIdx: jointZeroIndices) {
-
-            jointPos.setVal(jointZeroIdx, jointCalibrationSolution.getVal(jointZeroIdx));
-            
+    switch (commandPro->cmdStatus) {
+        case rpcCommand::resetAll: {
+            ereaseTargetsCalibration();
+            break;
         }
+        case rpcCommand::resetCalibration: {
+            ereaseTargetCalibration(targetName);
+            break;
+        }
+        case rpcCommand::calibrateAll: {
+            // Select all the links and the joints
+            // add all the links of the model to [linkToCalibrateIndices]
+            linkToCalibrateIndices.resize(kinDynComputations->getNrOfLinks());
+            std::iota(linkToCalibrateIndices.begin(), linkToCalibrateIndices.end(), 0);
 
-        kinDynComputations->setRobotState(iDynTree::Transform::Identity(), jointPos, baseVel, jointVel, worldGravity);
+            // add all the joints of the model to [jointZeroIndices]
+            jointZeroIndices.resize(kinDynComputations->getNrOfDegreesOfFreedom());
+            std::iota(jointZeroIndices.begin(), jointZeroIndices.end(), 0);
 
-        for (auto wearableTargetEntry : wearableTargets)
-        {
-            hde::TargetName targetName = wearableTargetEntry.first;
-            ModelLinkName linkName = wearableTargetEntry.second->modelLinkName;
-            iDynTree::LinkIndex linkIndex = kinDynComputations->model().getLinkIndex(linkName);
+            // Compute secondary calibration for the selected links setting to zero the given joints
+            computeSecondaryCalibrationRotationsForChain(
+                jointZeroIndices, iDynTree::Transform::Identity(), linkToCalibrateIndices, "");
+            break;
+        }
+        case rpcCommand::calibrateAllWorldYaw: {
+            // Select all the links and the joints
+            linkToCalibrateIndices.resize(kinDynComputations->getNrOfLinks());
+            std::iota(linkToCalibrateIndices.begin(), linkToCalibrateIndices.end(), 0);
 
-            if (std::find(linkToCalibrateIndices.begin(), linkToCalibrateIndices.end(), linkIndex) != linkToCalibrateIndices.end())
-            {
-                wearableTargetEntry.second->clearWorldCalibrationMatrix();
+            // add all the joints of the model to [jointZeroIndices]
+            jointZeroIndices.resize(kinDynComputations->getNrOfDegreesOfFreedom());
+            std::iota(jointZeroIndices.begin(), jointZeroIndices.end(), 0);
 
-                iDynTree::Vector3 rpyOffsetTransform = iDynTree::Rotation(kinDynComputations->getWorldTransform(linkName).getRotation() * wearableTargetEntry.second->getCalibratedRotation().inverse()).asRPY();
-                wearableTargetEntry.second->calibrationWorldToMeasurementWorld.setRotation(iDynTree::Rotation::RotZ(rpyOffsetTransform.getVal(2)));
+            // initialize vectors
+            iDynTree::VectorDynSize jointPos(jointConfigurationSolution);
+            iDynTree::VectorDynSize jointVel(jointVelocitiesSolution);
+            jointVel.zero();
+            iDynTree::Twist baseVel;
+            baseVel.zero();
+
+            for (auto const& jointZeroIdx : jointZeroIndices) {
+
+                jointPos.setVal(jointZeroIdx, jointCalibrationSolution.getVal(jointZeroIdx));
+            }
+
+            kinDynComputations->setRobotState(
+                iDynTree::Transform::Identity(), jointPos, baseVel, jointVel, worldGravity);
+
+            for (auto wearableTargetEntry : wearableTargets) {
+                hde::TargetName targetName = wearableTargetEntry.first;
+                ModelLinkName linkName = wearableTargetEntry.second->modelLinkName;
+                iDynTree::LinkIndex linkIndex = kinDynComputations->model().getLinkIndex(linkName);
+
+                if (std::find(
+                        linkToCalibrateIndices.begin(), linkToCalibrateIndices.end(), linkIndex)
+                    != linkToCalibrateIndices.end()) {
+                    wearableTargetEntry.second->clearWorldCalibrationMatrix();
+
+                    iDynTree::Vector3 rpyOffsetTransform =
+                        iDynTree::Rotation(
+                            kinDynComputations->getWorldTransform(linkName).getRotation()
+                            * wearableTargetEntry.second->getCalibratedRotation().inverse())
+                            .asRPY();
+                    wearableTargetEntry.second->calibrationWorldToMeasurementWorld.setRotation(
+                        iDynTree::Rotation::RotZ(rpyOffsetTransform.getVal(2)));
+                }
             }
         }
+        case rpcCommand::calibrateAllWithWorld: {
+            // Check if the chose baseLink exist in the model
+            hde::TargetName refTargetForCalibrationName = commandPro->refLinkName;
+            if ((wearableTargets.find(refTargetForCalibrationName) == wearableTargets.end())) {
+                yWarning() << LogPrefix << "Target " << refTargetForCalibrationName
+                           << " choosen as base for secondaty calibration is not valid";
+                return false;
+            }
 
-    }
-    case rpcCommand::calibrateAllWithWorld: {
-        // Check if the chose baseLink exist in the model
-        hde::TargetName refTargetForCalibrationName = commandPro->refLinkName;
-        if((wearableTargets.find(refTargetForCalibrationName) == wearableTargets.end()))
-        {
-            yWarning() << LogPrefix << "Target " << refTargetForCalibrationName << " choosen as base for secondaty calibration is not valid";
+            // Select all the links and the joints
+            // add all the links of the model to [linkToCalibrateIndices]
+            linkToCalibrateIndices.resize(kinDynComputations->getNrOfLinks());
+            std::iota(linkToCalibrateIndices.begin(), linkToCalibrateIndices.end(), 0);
+
+            // add all the joints of the model to [jointZeroIndices]
+            jointZeroIndices.resize(kinDynComputations->getNrOfDegreesOfFreedom());
+            std::iota(jointZeroIndices.begin(), jointZeroIndices.end(), 0);
+
+            // Compute secondary calibration for the selected links setting to zero the given joints
+            computeSecondaryCalibrationRotationsForChain(jointZeroIndices,
+                                                         iDynTree::Transform::Identity(),
+                                                         linkToCalibrateIndices,
+                                                         refTargetForCalibrationName);
+            break;
+        }
+        case rpcCommand::calibrateRelativeLink: {
+            ereaseTargetCalibration(childTargetName);
+            // Compute the relative transform at zero configuration
+            // setting to zero all the joints
+            iDynTree::VectorDynSize jointPos;
+            jointPos.resize(jointConfigurationSolution.size());
+            jointPos.zero();
+            kinDynComputations->setJointPos(jointPos);
+            std::string childLinkName = wearableTargets[childTargetName].get()->modelLinkName;
+            std::string parentLinkName = wearableTargets[targetName].get()->modelLinkName;
+
+            iDynTree::Rotation relativeRotationZero =
+                kinDynComputations->getWorldTransform(parentLinkName).getRotation().inverse()
+                * kinDynComputations->getWorldTransform(childLinkName).getRotation();
+
+            iDynTree::Rotation calibrationRotationMeasurementToLink =
+                wearableTargets[childTargetName].get()->rotation
+                * wearableTargets[childTargetName].get()->rotation * relativeRotationZero;
+            wearableTargets[childTargetName].get()->calibrationMeasurementToLink.setRotation(
+                calibrationRotationMeasurementToLink);
+            yInfo() << LogPrefix << "secondary calibration for " << childTargetName << " is set";
+            break;
+        }
+        case rpcCommand::setRotationOffset: {
+            ereaseTargetCalibration(targetName);
+            iDynTree::Rotation calibrationRotationMeasurementToLink =
+                iDynTree::Rotation::RPY(3.14 * commandPro->roll / 180,
+                                        3.14 * commandPro->pitch / 180,
+                                        3.14 * commandPro->yaw / 180);
+            // add new calibration
+            wearableTargets[targetName].get()->calibrationMeasurementToLink.setRotation(
+                calibrationRotationMeasurementToLink);
+            yInfo() << LogPrefix << "secondary calibration for " << targetName << " is set";
+            break;
+        }
+        default: {
+            yWarning() << LogPrefix << "Command not valid";
             return false;
         }
-
-        // Select all the links and the joints
-        // add all the links of the model to [linkToCalibrateIndices]
-        linkToCalibrateIndices.resize(kinDynComputations->getNrOfLinks());
-        std::iota(linkToCalibrateIndices.begin(), linkToCalibrateIndices.end(), 0);
-
-        // add all the joints of the model to [jointZeroIndices]
-        jointZeroIndices.resize(kinDynComputations->getNrOfDegreesOfFreedom());
-        std::iota(jointZeroIndices.begin(), jointZeroIndices.end(), 0);
-
-        // Compute secondary calibration for the selected links setting to zero the given joints
-        computeSecondaryCalibrationRotationsForChain(jointZeroIndices, iDynTree::Transform::Identity(), linkToCalibrateIndices, refTargetForCalibrationName);
-        break;
-    }
-    case rpcCommand::calibrateRelativeLink: {
-        ereaseTargetCalibration(childTargetName);
-        // Compute the relative transform at zero configuration
-        // setting to zero all the joints
-        iDynTree::VectorDynSize jointPos;
-        jointPos.resize(jointConfigurationSolution.size());
-        jointPos.zero();
-        kinDynComputations->setJointPos(jointPos);
-        std::string childLinkName = wearableTargets[childTargetName].get()->modelLinkName;
-        std::string parentLinkName = wearableTargets[targetName].get()->modelLinkName;
-
-        iDynTree::Rotation relativeRotationZero = kinDynComputations->getWorldTransform(parentLinkName).getRotation().inverse() * kinDynComputations->getWorldTransform(childLinkName).getRotation();
-    
-        iDynTree::Rotation calibrationRotationMeasurementToLink = wearableTargets[childTargetName].get()->rotation * wearableTargets[childTargetName].get()->rotation * relativeRotationZero;
-        wearableTargets[childTargetName].get()->calibrationMeasurementToLink.setRotation(calibrationRotationMeasurementToLink);
-        yInfo() << LogPrefix << "secondary calibration for " << childTargetName << " is set";
-        break;
-    }
-    case rpcCommand::setRotationOffset: {
-        ereaseTargetCalibration(targetName);
-        iDynTree::Rotation calibrationRotationMeasurementToLink = iDynTree::Rotation::RPY( 3.14 * commandPro->roll / 180 , 3.14 * commandPro->pitch / 180 , 3.14 * commandPro->yaw / 180 );
-        // add new calibration
-        wearableTargets[targetName].get()->calibrationMeasurementToLink.setRotation(calibrationRotationMeasurementToLink);
-        yInfo() << LogPrefix << "secondary calibration for " << targetName << " is set";
-        break;
-    }
-    default: {
-        yWarning() << LogPrefix << "Command not valid";
-        return false;
-    }
     }
 
     return true;
@@ -1750,29 +1826,31 @@ bool HumanStateProvider::impl::applyRpcCommand()
 
 bool HumanStateProvider::impl::updateWearableTargets()
 {
-    for (auto wearableTargetEntry : wearableTargets)
-    {
+    for (auto wearableTargetEntry : wearableTargets) {
         WearableName wearableName = wearableTargetEntry.second->wearableName;
         hde::TargetName targetName = wearableTargetEntry.first;
         hde::KinematicTargetType targetType = wearableTargetEntry.second->targetType;
 
         switch (iWear->getSensor(wearableName)->getSensorType()) {
-            case sensor::SensorType::VirtualLinkKinSensor : {
+            case sensor::SensorType::VirtualLinkKinSensor: {
                 auto sensor = iWear->getVirtualLinkKinSensor(wearableName);
                 if (!sensor) {
                     yError() << LogPrefix << "Sensor" << wearableName
-                            << "has been added but is not properly configured.";
+                             << "has been added but is not properly configured.";
                     return false;
                 }
                 if (sensor->getSensorStatus() != sensor::SensorStatus::Ok) {
                     yWarning() << LogPrefix << "The sensor status of" << wearableName
-                            << "is not ok (" << static_cast<double>(sensor->getSensorStatus()) << ")";
+                               << "is not ok (" << static_cast<double>(sensor->getSensorStatus())
+                               << ")";
                     continue;
                 }
 
                 wearable::Vector3 position;
                 if (!sensor->getLinkPosition(position)) {
-                    yWarning() << LogPrefix << "Failed to read link position from virtual link sensor " << wearableName;
+                    yWarning() << LogPrefix
+                               << "Failed to read link position from virtual link sensor "
+                               << wearableName;
                     continue;
                 }
                 wearableTargetEntry.second->position.setVal(0, position.at(0));
@@ -1781,14 +1859,18 @@ bool HumanStateProvider::impl::updateWearableTargets()
 
                 Quaternion orientation;
                 if (!sensor->getLinkOrientation(orientation)) {
-                    yWarning() << LogPrefix << "Failed to read link orientation from virtual link sensor " << wearableName;
+                    yWarning() << LogPrefix
+                               << "Failed to read link orientation from virtual link sensor "
+                               << wearableName;
                     continue;
                 }
                 wearableTargetEntry.second->rotation.fromQuaternion({orientation.data(), 4});
 
                 wearable::Vector3 linearVelocity;
                 if (!sensor->getLinkLinearVelocity(linearVelocity)) {
-                    yWarning() << LogPrefix << "Failed to read link linear velocity from virtual link sensor " << wearableName;
+                    yWarning() << LogPrefix
+                               << "Failed to read link linear velocity from virtual link sensor "
+                               << wearableName;
                     continue;
                 }
                 wearableTargetEntry.second->linearVelocity.setVal(0, linearVelocity.at(0));
@@ -1798,7 +1880,8 @@ bool HumanStateProvider::impl::updateWearableTargets()
                 wearable::Vector3 angularVelocity;
                 if (!sensor->getLinkAngularVelocity(angularVelocity)) {
                     yWarning() << LogPrefix
-                            << "Failed to read link angular velocity from virtual link sensor " << wearableName;
+                               << "Failed to read link angular velocity from virtual link sensor "
+                               << wearableName;
                     continue;
                 }
                 wearableTargetEntry.second->angularVelocity.setVal(0, angularVelocity.at(0));
@@ -1806,22 +1889,25 @@ bool HumanStateProvider::impl::updateWearableTargets()
                 wearableTargetEntry.second->angularVelocity.setVal(2, angularVelocity.at(2));
                 break;
             }
-            case::sensor::SensorType::PoseSensor : {
-            auto sensor = iWear->getPoseSensor(wearableName);
+            case ::sensor::SensorType::PoseSensor: {
+                auto sensor = iWear->getPoseSensor(wearableName);
                 if (!sensor) {
                     yError() << LogPrefix << "Sensor" << wearableName
-                            << "has been added but is not properly configured.";
+                             << "has been added but is not properly configured.";
                     return false;
                 }
                 if (sensor->getSensorStatus() != sensor::SensorStatus::Ok) {
                     yWarning() << LogPrefix << "The sensor status of" << wearableName
-                            << "is not ok (" << static_cast<double>(sensor->getSensorStatus()) << ")";
+                               << "is not ok (" << static_cast<double>(sensor->getSensorStatus())
+                               << ")";
                     continue;
                 }
 
                 wearable::Vector3 position;
                 if (!sensor->getPosePosition(position)) {
-                    yWarning() << LogPrefix << "Failed to read link position from virtual link sensor " << wearableName;
+                    yWarning() << LogPrefix
+                               << "Failed to read link position from virtual link sensor "
+                               << wearableName;
                     continue;
                 }
                 wearableTargetEntry.second->position.setVal(0, position.at(0));
@@ -1830,50 +1916,71 @@ bool HumanStateProvider::impl::updateWearableTargets()
 
                 Quaternion orientation;
                 if (!sensor->getPoseOrientationAsQuaternion(orientation)) {
-                    yWarning() << LogPrefix << "Failed to read link orientation from virtual link sensor " << wearableName;
+                    yWarning() << LogPrefix
+                               << "Failed to read link orientation from virtual link sensor "
+                               << wearableName;
                     continue;
                 }
                 wearableTargetEntry.second->rotation.fromQuaternion({orientation.data(), 4});
                 break;
             }
-            case::sensor::SensorType::ForceTorque6DSensor : {
+            case ::sensor::SensorType::ForceTorque6DSensor: {
                 auto sensor = iWear->getForceTorque6DSensor(wearableName);
                 if (!sensor) {
                     yError() << LogPrefix << "Sensor" << wearableName
-                            << "has been added but is not properly configured.";
+                             << "has been added but is not properly configured.";
                     return false;
                 }
                 if (sensor->getSensorStatus() != sensor::SensorStatus::Ok) {
                     yWarning() << LogPrefix << "The sensor status of" << wearableName
-                            << "is not ok (" << static_cast<double>(sensor->getSensorStatus()) << ")";
+                               << "is not ok (" << static_cast<double>(sensor->getSensorStatus())
+                               << ")";
                     continue;
                 }
 
                 wearable::Vector3 force;
                 if (!sensor->getForceTorque3DForce(force)) {
-                    yWarning() << LogPrefix << "Failed to read force from forcetorque 6D sensor " << wearableName;
+                    yWarning() << LogPrefix << "Failed to read force from forcetorque 6D sensor "
+                               << wearableName;
                     continue;
                 }
 
                 // If z force is greater then treshold add the contact constraint
                 bool contactActive = force.at(2) > wearableTargetEntry.second->contactTreshold;
                 // if swtiching to contact, use new position for contact
-                if (!wearableTargetEntry.second->contactActive && contactActive)
-                {
-                    kinDynComputations->setRobotState(baseTransformSolution, jointConfigurationSolution, baseVelocitySolution, jointVelocitiesSolution, worldGravity);
-                    auto contactPosition = kinDynComputations->getWorldTransform(wearableTargetEntry.second->modelLinkName).getPosition();
+                if (!wearableTargetEntry.second->contactActive && contactActive) {
+                    kinDynComputations->setRobotState(baseTransformSolution,
+                                                      jointConfigurationSolution,
+                                                      baseVelocitySolution,
+                                                      jointVelocitiesSolution,
+                                                      worldGravity);
+                    auto contactPosition =
+                        kinDynComputations
+                            ->getWorldTransform(wearableTargetEntry.second->modelLinkName)
+                            .getPosition();
                     contactPosition.setVal(2, 0);
-                    // recompute the sensor measurement to link offset (sensor_p_link) such that the target link position is contactPosition:
-                    // target_position = world_p_measWorld + world_R_measWorld * (measWorld_p_sensor + measWorld_R_sensor sensor_p_link)
-                    wearableTargetEntry.second->calibrationMeasurementToLink.setPosition( ((contactPosition - wearableTargetEntry.second->calibrationWorldToMeasurementWorld.getPosition()).changeCoordinateFrame(wearableTargetEntry.second->calibrationWorldToMeasurementWorld.getRotation().inverse()) - iDynTree::Position(wearableTargetEntry.second->position)).changeCoordinateFrame(wearableTargetEntry.second->rotation.inverse()) );
+                    // recompute the sensor measurement to link offset (sensor_p_link) such that the
+                    // target link position is contactPosition: target_position = world_p_measWorld
+                    // + world_R_measWorld * (measWorld_p_sensor + measWorld_R_sensor sensor_p_link)
+                    wearableTargetEntry.second->calibrationMeasurementToLink.setPosition(
+                        ((contactPosition
+                          - wearableTargetEntry.second->calibrationWorldToMeasurementWorld
+                                .getPosition())
+                             .changeCoordinateFrame(
+                                 wearableTargetEntry.second->calibrationWorldToMeasurementWorld
+                                     .getRotation()
+                                     .inverse())
+                         - iDynTree::Position(wearableTargetEntry.second->position))
+                            .changeCoordinateFrame(wearableTargetEntry.second->rotation.inverse()));
                 }
 
                 wearableTargetEntry.second->contactActive = contactActive;
 
                 break;
             }
-            default : {
-                yError() << LogPrefix << "Sensor Type for taget " << targetName << " can not be used as target.";
+            default: {
+                yError() << LogPrefix << "Sensor Type for taget " << targetName
+                         << " can not be used as target.";
                 return false;
             }
         }
@@ -1924,7 +2031,8 @@ bool HumanStateProvider::impl::createLinkPairs()
         pairInfo.childFrameName = pairNames[index].second;
         pairInfo.childFrameSegmentsIndex = pairSegmentIndeces[index].second;
 
-        yInfo() << "getting the reduced model from: " << pairInfo.parentFrameName << " to " << pairInfo.childFrameName;
+        yInfo() << "getting the reduced model from: " << pairInfo.parentFrameName << " to "
+                << pairInfo.childFrameName;
         // Get the reduced pair model
         if (!getReducedModel(humanModel,
                              pairInfo.parentFrameName,
@@ -1946,8 +2054,7 @@ bool HumanStateProvider::impl::createLinkPairs()
 
 bool HumanStateProvider::impl::initializePairwisedInverseKinematicsSolver()
 {
-    for (auto pairInfo = linkPairs.begin(); pairInfo != linkPairs.end(); pairInfo++)
-    {
+    for (auto pairInfo = linkPairs.begin(); pairInfo != linkPairs.end(); pairInfo++) {
         // Allocate the ik solver
         pairInfo->ikSolver = std::make_unique<iDynTree::InverseKinematics>();
 
@@ -1971,7 +2078,7 @@ bool HumanStateProvider::impl::initializePairwisedInverseKinematicsSolver()
 
         // Add parent link as fixed base constraint with identity transform
         pairInfo->ikSolver->addFrameConstraint(pairInfo->parentFrameName,
-                                              iDynTree::Transform::Identity());
+                                               iDynTree::Transform::Identity());
 
         // Add child link as a target and set initial transform to be identity
         pairInfo->ikSolver->addTarget(pairInfo->childFrameName, iDynTree::Transform::Identity());
@@ -1991,8 +2098,8 @@ bool HumanStateProvider::impl::initializePairwisedInverseKinematicsSolver()
         if (!pairInfo->ikSolver->setFloatingBaseOnFrameNamed(
                 pairInfo->pairModel.getLinkName(pairInfo->floatingBaseIndex))) {
             yError() << "Failed to set floating base frame for the segment pair"
-                     << pairInfo->parentFrameName.c_str() << ", " << pairInfo->childFrameName.c_str()
-                     << " Skipping pair";
+                     << pairInfo->parentFrameName.c_str() << ", "
+                     << pairInfo->childFrameName.c_str() << " Skipping pair";
             return false;
         }
 
@@ -2035,8 +2142,10 @@ bool HumanStateProvider::impl::initializePairwisedInverseKinematicsSolver()
 
         // Save the indeces
         // TODO: check if link or frame
-        pairInfo->parentFrameModelIndex = pairInfo->pairModel.getFrameIndex(pairInfo->parentFrameName);
-        pairInfo->childFrameModelIndex = pairInfo->pairModel.getFrameIndex(pairInfo->childFrameName);
+        pairInfo->parentFrameModelIndex =
+            pairInfo->pairModel.getFrameIndex(pairInfo->parentFrameName);
+        pairInfo->childFrameModelIndex =
+            pairInfo->pairModel.getFrameIndex(pairInfo->childFrameName);
 
         // Configure KinDynComputation
         pairInfo->kinDynComputations =
@@ -2105,7 +2214,8 @@ bool HumanStateProvider::impl::initializeGlobalInverseKinematicsSolver()
 bool HumanStateProvider::impl::initializeDynamicalInverseKinematicsSolver()
 {
     // Set inverse velocity kinematics parameters
-    dynamicalInverseKinematics.setInverseVelocityKinematicsResolutionMode(inverseVelocityKinematicsSolver);
+    dynamicalInverseKinematics.setInverseVelocityKinematicsResolutionMode(
+        inverseVelocityKinematicsSolver);
     dynamicalInverseKinematics.setInverseVelocityKinematicsRegularization(costRegularization);
 
     if (!dynamicalInverseKinematics.setModel(humanModel)) {
@@ -2114,7 +2224,8 @@ bool HumanStateProvider::impl::initializeDynamicalInverseKinematicsSolver()
     }
 
     if (!dynamicalInverseKinematics.setFloatingBaseOnFrameNamed(floatingBaseFrame)) {
-        yError() << LogPrefix << "DynamicalInverseKinematics: Failed to set the floating base frame on link"
+        yError() << LogPrefix
+                 << "DynamicalInverseKinematics: Failed to set the floating base frame on link"
                  << floatingBaseFrame;
         return false;
     }
@@ -2123,8 +2234,8 @@ bool HumanStateProvider::impl::initializeDynamicalInverseKinematicsSolver()
         yError() << LogPrefix << "Failed to set the dynamical inverse velocity kinematics targets";
         return false;
     }
-    
-     if (!dynamicalInverseKinematics.setAllJointsVelocityLimit(dynamicalIKJointVelocityLimit)) {
+
+    if (!dynamicalInverseKinematics.setAllJointsVelocityLimit(dynamicalIKJointVelocityLimit)) {
         yError() << LogPrefix << "Failed to set all joints velocity limits";
         return false;
     }
@@ -2132,12 +2243,10 @@ bool HumanStateProvider::impl::initializeDynamicalInverseKinematicsSolver()
     if (!dynamicalInverseKinematics.setConstraintParametersJointValues(k_u, k_l))
         return false;
 
-
     if (custom_jointsVelocityLimitsNames.size() != 0) {
         for (size_t i = 0; i < custom_jointsVelocityLimitsNames.size(); i++) {
-            if (!dynamicalInverseKinematics.setJointVelocityLimit(custom_jointsVelocityLimitsIndexes[i],
-                                                                  custom_jointsVelocityLimitsValues[i]))
-            {
+            if (!dynamicalInverseKinematics.setJointVelocityLimit(
+                    custom_jointsVelocityLimitsIndexes[i], custom_jointsVelocityLimitsValues[i])) {
                 yError() << LogPrefix << "Failed to set joint velocity limit for dof " << i;
                 return false;
             }
@@ -2146,8 +2255,7 @@ bool HumanStateProvider::impl::initializeDynamicalInverseKinematicsSolver()
 
     if (baseVelocityUpperLimit.size() != 0) {
         if (!dynamicalInverseKinematics.setBaseVelocityLimit(baseVelocityLowerLimit,
-                                                             baseVelocityUpperLimit))
-        {
+                                                             baseVelocityUpperLimit)) {
             yError() << LogPrefix << "Failed to set base velocity limit ";
             return false;
         }
@@ -2259,92 +2367,112 @@ bool HumanStateProvider::impl::solveDynamicalInverseKinematics()
     };
     lastTime = yarp::os::Time::now();
 
-
-    for (auto wearableTargetEntry : wearableTargets)
-    {
+    for (auto wearableTargetEntry : wearableTargets) {
         hde::KinematicTargetType targetType = wearableTargetEntry.second->targetType;
         ModelLinkName linkName = wearableTargetEntry.second->modelLinkName;
         hde::TargetName targetName = wearableTargetEntry.first;
 
-        switch (targetType)
-        {
-        case hde::KinematicTargetType::pose: {
-            if (!dynamicalInverseKinematics.updateTargetPose(linkName, 
-                                                             wearableTargetEntry.second->getCalibratedPosition(),
-                                                             wearableTargetEntry.second->getCalibratedRotation())) {
-                yError() << LogPrefix << "Failed to update pose target for " << targetName;
-                return false;
-                                                          }
-            break; }
-        case hde::KinematicTargetType::poseAndVelocity: {
-            if (!dynamicalInverseKinematics.updateTargetPoseAndVelocity(linkName, 
-                                                                        wearableTargetEntry.second->getCalibratedPosition(),
-                                                                        wearableTargetEntry.second->getCalibratedRotation(),
-                                                                        wearableTargetEntry.second->getCalibratedLinearVelocity(),
-                                                                        wearableTargetEntry.second->getCalibratedAngularVelocity())) {
-                yError() << LogPrefix << "Failed to update pose and velocity target for " << targetName;
-                return false;
-                                                                     }
-            break; }
-        case hde::KinematicTargetType::position: {
-            if (!dynamicalInverseKinematics.updateTargetPosition(linkName, 
-                                                                 wearableTargetEntry.second->getCalibratedPosition())) {
-                yError() << LogPrefix << "Failed to update position target for " << targetName;
-                return false;
-                                                              }
-            break; }
-        case hde::KinematicTargetType::positionAndVelocity: {
-            if (!dynamicalInverseKinematics.updateTargetPositionAndVelocity(linkName, 
-                                                                            wearableTargetEntry.second->getCalibratedPosition(),
-                                                                            wearableTargetEntry.second->getCalibratedLinearVelocity())) {
-                yError() << LogPrefix << "Failed to update position and velocity target for " << targetName;
-                return false;
-                                                                         }
-            break; }
-        case hde::KinematicTargetType::orientation: {
-            if (!dynamicalInverseKinematics.updateTargetOrientation(linkName,
-                                                                    wearableTargetEntry.second->getCalibratedRotation())) {
-                yError() << LogPrefix << "Failed to update orientation target for " << targetName;
-                return false;
-                                                                 }
-            break; }
-        case hde::KinematicTargetType::orientationAndVelocity: {
-            if (!dynamicalInverseKinematics.updateTargetOrientationAndVelocity(linkName,
-                                                                               wearableTargetEntry.second->getCalibratedRotation(),
-                                                                               wearableTargetEntry.second->getCalibratedAngularVelocity())) {
-                yError() << LogPrefix << "Failed to update orientation and velocity target for " << targetName;
-                return false;
-                                                                            }
-            break; }
-        case hde::KinematicTargetType::gravity: {
-            if (!dynamicalInverseKinematics.updateTargetOrientation(linkName,
-                                                                    wearableTargetEntry.second->getCalibratedRotation())) {
-                yError() << LogPrefix << "Failed to update gravity target for " << targetName;
-                return false;
-                                                                 }
-            break; }
-        case hde::KinematicTargetType::floorContact: {
-            if (!dynamicalInverseKinematics.updateTargetPositionAndVelocity(linkName, 
-                                                                            wearableTargetEntry.second->getCalibratedPosition(),
-                                                                            wearableTargetEntry.second->getCalibratedLinearVelocity())
-                || !dynamicalInverseKinematics.updatePositionTargetAxis(linkName, {wearableTargetEntry.second->contactActive, wearableTargetEntry.second->contactActive,  wearableTargetEntry.second->contactActive})) {
+        switch (targetType) {
+            case hde::KinematicTargetType::pose: {
+                if (!dynamicalInverseKinematics.updateTargetPose(
+                        linkName,
+                        wearableTargetEntry.second->getCalibratedPosition(),
+                        wearableTargetEntry.second->getCalibratedRotation())) {
+                    yError() << LogPrefix << "Failed to update pose target for " << targetName;
+                    return false;
+                }
+                break;
+            }
+            case hde::KinematicTargetType::poseAndVelocity: {
+                if (!dynamicalInverseKinematics.updateTargetPoseAndVelocity(
+                        linkName,
+                        wearableTargetEntry.second->getCalibratedPosition(),
+                        wearableTargetEntry.second->getCalibratedRotation(),
+                        wearableTargetEntry.second->getCalibratedLinearVelocity(),
+                        wearableTargetEntry.second->getCalibratedAngularVelocity())) {
+                    yError() << LogPrefix << "Failed to update pose and velocity target for "
+                             << targetName;
+                    return false;
+                }
+                break;
+            }
+            case hde::KinematicTargetType::position: {
+                if (!dynamicalInverseKinematics.updateTargetPosition(
+                        linkName, wearableTargetEntry.second->getCalibratedPosition())) {
+                    yError() << LogPrefix << "Failed to update position target for " << targetName;
+                    return false;
+                }
+                break;
+            }
+            case hde::KinematicTargetType::positionAndVelocity: {
+                if (!dynamicalInverseKinematics.updateTargetPositionAndVelocity(
+                        linkName,
+                        wearableTargetEntry.second->getCalibratedPosition(),
+                        wearableTargetEntry.second->getCalibratedLinearVelocity())) {
+                    yError() << LogPrefix << "Failed to update position and velocity target for "
+                             << targetName;
+                    return false;
+                }
+                break;
+            }
+            case hde::KinematicTargetType::orientation: {
+                if (!dynamicalInverseKinematics.updateTargetOrientation(
+                        linkName, wearableTargetEntry.second->getCalibratedRotation())) {
+                    yError() << LogPrefix << "Failed to update orientation target for "
+                             << targetName;
+                    return false;
+                }
+                break;
+            }
+            case hde::KinematicTargetType::orientationAndVelocity: {
+                if (!dynamicalInverseKinematics.updateTargetOrientationAndVelocity(
+                        linkName,
+                        wearableTargetEntry.second->getCalibratedRotation(),
+                        wearableTargetEntry.second->getCalibratedAngularVelocity())) {
+                    yError() << LogPrefix << "Failed to update orientation and velocity target for "
+                             << targetName;
+                    return false;
+                }
+                break;
+            }
+            case hde::KinematicTargetType::gravity: {
+                if (!dynamicalInverseKinematics.updateTargetOrientation(
+                        linkName, wearableTargetEntry.second->getCalibratedRotation())) {
+                    yError() << LogPrefix << "Failed to update gravity target for " << targetName;
+                    return false;
+                }
+                break;
+            }
+            case hde::KinematicTargetType::floorContact: {
+                if (!dynamicalInverseKinematics.updateTargetPositionAndVelocity(
+                        linkName,
+                        wearableTargetEntry.second->getCalibratedPosition(),
+                        wearableTargetEntry.second->getCalibratedLinearVelocity())
+                    || !dynamicalInverseKinematics.updatePositionTargetAxis(
+                        linkName,
+                        {wearableTargetEntry.second->contactActive,
+                         wearableTargetEntry.second->contactActive,
+                         wearableTargetEntry.second->contactActive})) {
 
-                yError() << LogPrefix << "Failed to update position and velocity target for " << targetName;
+                    yError() << LogPrefix << "Failed to update position and velocity target for "
+                             << targetName;
+                    return false;
+                }
+                break;
+            }
+            default: {
+                yError() << LogPrefix << "Invalid target type for " << targetName;
                 return false;
-                                                       }
-            break;
-        }
-        default: {
-            yError() << LogPrefix << "Invalid target type for " << targetName;
-            return false;}
+            }
         }
     }
 
     std::lock_guard<std::mutex> lock(mutexFlagIntegrator);
     if (!dynamicalInverseKinematics.solve(dt, &resetIntegrator))
         return false;
-    
-    dynamicalInverseKinematics.getConfigurationSolution(baseTransformSolution, jointConfigurationSolution);
+
+    dynamicalInverseKinematics.getConfigurationSolution(baseTransformSolution,
+                                                        jointConfigurationSolution);
     dynamicalInverseKinematics.getVelocitySolution(baseVelocitySolution, jointVelocitiesSolution);
 
     return true;
@@ -2367,8 +2495,10 @@ bool HumanStateProvider::impl::updateInverseKinematicTargets()
         // base measurements and the base is not fixed.
         if (linkName == floatingBaseFrame) {
             if (!(useDirectBaseMeasurement || useFixedBase)) {
-                if (!globalIK.updateTarget(linkName, linkTransformMatrices.at(linkName), 1.0, 1.0)) {
-                    yError() << LogPrefix << "Failed to update target for floating base" << linkName;
+                if (!globalIK.updateTarget(
+                        linkName, linkTransformMatrices.at(linkName), 1.0, 1.0)) {
+                    yError() << LogPrefix << "Failed to update target for floating base"
+                             << linkName;
                     return false;
                 }
             }
@@ -2383,8 +2513,7 @@ bool HumanStateProvider::impl::updateInverseKinematicTargets()
         linkTransform = linkTransformMatrices.at(linkName);
         // if useDirectBaseMeasurement, use the link transform relative to the base
         if (useDirectBaseMeasurement) {
-            linkTransform =
-                linkTransformMatrices.at(floatingBaseFrame).inverse() * linkTransform;
+            linkTransform = linkTransformMatrices.at(floatingBaseFrame).inverse() * linkTransform;
         }
 
         if (!globalIK.updateTarget(linkName, linkTransform, posTargetWeight, rotTargetWeight)) {
@@ -2397,198 +2526,232 @@ bool HumanStateProvider::impl::updateInverseKinematicTargets()
 
 bool HumanStateProvider::impl::addInverseKinematicTargets()
 {
-    for (auto wearableTargetEntry : wearableTargets)
-    {
+    for (auto wearableTargetEntry : wearableTargets) {
         hde::KinematicTargetType targetType = wearableTargetEntry.second->targetType;
         ModelLinkName linkName = wearableTargetEntry.second->modelLinkName;
         hde::TargetName targetName = wearableTargetEntry.first;
 
-        switch (targetType)
-        {
-        case hde::KinematicTargetType::pose: {
-            if (!globalIK.addTarget(linkName, iDynTree::Transform::Identity(), 1.0, 1.0)) {
-                yError() << LogPrefix << "Failed to taget for " << targetName;
-                return false;
-                                                          }
+        switch (targetType) {
+            case hde::KinematicTargetType::pose: {
+                if (!globalIK.addTarget(linkName, iDynTree::Transform::Identity(), 1.0, 1.0)) {
+                    yError() << LogPrefix << "Failed to taget for " << targetName;
+                    return false;
+                }
                 yInfo() << LogPrefix << "Target " << targetName << " added for link " << linkName;
-            break; }
-        case hde::KinematicTargetType::poseAndVelocity: {
-            if (!globalIK.addTarget(linkName, iDynTree::Transform::Identity(), 1.0, 1.0)) {
-                yError() << LogPrefix << "Failed to taget for " << targetName;
-                return false;
-                                                          }
+                break;
+            }
+            case hde::KinematicTargetType::poseAndVelocity: {
+                if (!globalIK.addTarget(linkName, iDynTree::Transform::Identity(), 1.0, 1.0)) {
+                    yError() << LogPrefix << "Failed to taget for " << targetName;
+                    return false;
+                }
                 yInfo() << LogPrefix << "Target " << targetName << " added for link " << linkName;
-            break; }
-        case hde::KinematicTargetType::position: {
-            if (!globalIK.addPositionTarget(linkName, iDynTree::Transform::Identity(), 1.0)) {
-                yError() << LogPrefix << "Failed to taget for " << targetName;
-                return false;
-                                                          }
+                break;
+            }
+            case hde::KinematicTargetType::position: {
+                if (!globalIK.addPositionTarget(linkName, iDynTree::Transform::Identity(), 1.0)) {
+                    yError() << LogPrefix << "Failed to taget for " << targetName;
+                    return false;
+                }
                 yInfo() << LogPrefix << "Target " << targetName << " added for link " << linkName;
-            break; }
-        case hde::KinematicTargetType::positionAndVelocity: {
-            if (!globalIK.addPositionTarget(linkName, iDynTree::Transform::Identity(), 1.0)) {
-                yError() << LogPrefix << "Failed to taget for " << targetName;
-                return false;
-                                                          }
+                break;
+            }
+            case hde::KinematicTargetType::positionAndVelocity: {
+                if (!globalIK.addPositionTarget(linkName, iDynTree::Transform::Identity(), 1.0)) {
+                    yError() << LogPrefix << "Failed to taget for " << targetName;
+                    return false;
+                }
                 yInfo() << LogPrefix << "Target " << targetName << " added for link " << linkName;
-            break; }
-        case hde::KinematicTargetType::orientation: {
-            if (!globalIK.addRotationTarget(linkName, iDynTree::Transform::Identity(), 1.0)) {
-                yError() << LogPrefix << "Failed to taget for " << targetName;
-                return false;
-                                                          }
+                break;
+            }
+            case hde::KinematicTargetType::orientation: {
+                if (!globalIK.addRotationTarget(linkName, iDynTree::Transform::Identity(), 1.0)) {
+                    yError() << LogPrefix << "Failed to taget for " << targetName;
+                    return false;
+                }
                 yInfo() << LogPrefix << "Target " << targetName << " added for link " << linkName;
-            break; }
-        case hde::KinematicTargetType::orientationAndVelocity: {
-            if (!globalIK.addRotationTarget(linkName, iDynTree::Transform::Identity(), 1.0)) {
-                yError() << LogPrefix << "Failed to taget for " << targetName;
-                return false;
-                                                          }
+                break;
+            }
+            case hde::KinematicTargetType::orientationAndVelocity: {
+                if (!globalIK.addRotationTarget(linkName, iDynTree::Transform::Identity(), 1.0)) {
+                    yError() << LogPrefix << "Failed to taget for " << targetName;
+                    return false;
+                }
                 yInfo() << LogPrefix << "Target " << targetName << " added for link " << linkName;
-            break; }
-        case hde::KinematicTargetType::gravity: {
-            yError() << LogPrefix << "Failed to taget for " << targetName << " (gravity taget is not implemented in globalIK)";
+                break;
+            }
+            case hde::KinematicTargetType::gravity: {
+                yError() << LogPrefix << "Failed to taget for " << targetName
+                         << " (gravity taget is not implemented in globalIK)";
                 return false;
-            break; }
-        case hde::KinematicTargetType::floorContact: {
-            yError() << LogPrefix << "Failed to taget for " << targetName << " (floorContact taget is not implemented in globalIK)";
+                break;
+            }
+            case hde::KinematicTargetType::floorContact: {
+                yError() << LogPrefix << "Failed to taget for " << targetName
+                         << " (floorContact taget is not implemented in globalIK)";
                 return false;
-            break; }
-        default: {
-            yError() << LogPrefix << "Invalid target type for " << targetName;
-            return false;}
+                break;
+            }
+            default: {
+                yError() << LogPrefix << "Invalid target type for " << targetName;
+                return false;
+            }
         }
     }
 
     if ((useDirectBaseMeasurement || useFixedBase)
-     && !globalIK.addFrameConstraint(floatingBaseFrame, iDynTree::Transform::Identity())) {
-         yError() << LogPrefix << "Failed to add constraint for base link" << floatingBaseFrame;
-         return false;
-     }
+        && !globalIK.addFrameConstraint(floatingBaseFrame, iDynTree::Transform::Identity())) {
+        yError() << LogPrefix << "Failed to add constraint for base link" << floatingBaseFrame;
+        return false;
+    }
 
     return true;
 }
 
 bool HumanStateProvider::impl::addDynamicalInverseKinematicsTargets()
 {
-    for (auto wearableTargetEntry : wearableTargets)
-    {
+    for (auto wearableTargetEntry : wearableTargets) {
         hde::KinematicTargetType targetType = wearableTargetEntry.second->targetType;
         ModelLinkName linkName = wearableTargetEntry.second->modelLinkName;
         hde::TargetName targetName = wearableTargetEntry.first;
 
-        switch (targetType)
-        {
-        case hde::KinematicTargetType::pose: {
-            if (!dynamicalInverseKinematics.addPoseTarget(linkName, 
-                                                          wearableTargetEntry.second->position,
-                                                          wearableTargetEntry.second->rotation,
-                                                          {true, true, true},
-                                                          {true, true, true},
-                                                          dynamicalIKLinearCorrectionGain,
-                                                          dynamicalIKAngularCorrectionGain,
-                                                          linVelTargetWeight,
-                                                          angVelTargetWeight)) {
-                yError() << LogPrefix << "Failed to add pose target for " << targetName;
-                return false;
-                                                          }
-                yInfo() << LogPrefix << "Pose Target " << targetName << " added for link " << linkName;
-            break; }
-        case hde::KinematicTargetType::poseAndVelocity: {
-            if (!dynamicalInverseKinematics.addPoseAndVelocityTarget(linkName, 
-                                                                     wearableTargetEntry.second->position,
-                                                                     wearableTargetEntry.second->rotation,
-                                                                     wearableTargetEntry.second->linearVelocity,
-                                                                     wearableTargetEntry.second->angularVelocity,
-                                                                     {true, true, true},
-                                                                     {true, true, true},
-                                                                     dynamicalIKLinearCorrectionGain,
-                                                                     dynamicalIKAngularCorrectionGain,
-                                                                     dynamicalIKMeasuredLinearVelocityGain,
-                                                                     dynamicalIKMeasuredAngularVelocityGain,
-                                                                     linVelTargetWeight,
-                                                                     angVelTargetWeight)) {
-                yError() << LogPrefix << "Failed to add pose and velocity target for " << targetName;
-                return false;
-                                                                     }
-                yInfo() << LogPrefix << "Pose and Velocity Target " << targetName << " added for link " << linkName;
-            break; }
-        case hde::KinematicTargetType::position: {
-            if (!dynamicalInverseKinematics.addPositionTarget(linkName, 
+        switch (targetType) {
+            case hde::KinematicTargetType::pose: {
+                if (!dynamicalInverseKinematics.addPoseTarget(linkName,
                                                               wearableTargetEntry.second->position,
+                                                              wearableTargetEntry.second->rotation,
+                                                              {true, true, true},
                                                               {true, true, true},
                                                               dynamicalIKLinearCorrectionGain,
-                                                              linVelTargetWeight)) {
-                yError() << LogPrefix << "Failed to add position target for " << targetName;
+                                                              dynamicalIKAngularCorrectionGain,
+                                                              linVelTargetWeight,
+                                                              angVelTargetWeight)) {
+                    yError() << LogPrefix << "Failed to add pose target for " << targetName;
+                    return false;
+                }
+                yInfo() << LogPrefix << "Pose Target " << targetName << " added for link "
+                        << linkName;
+                break;
+            }
+            case hde::KinematicTargetType::poseAndVelocity: {
+                if (!dynamicalInverseKinematics.addPoseAndVelocityTarget(
+                        linkName,
+                        wearableTargetEntry.second->position,
+                        wearableTargetEntry.second->rotation,
+                        wearableTargetEntry.second->linearVelocity,
+                        wearableTargetEntry.second->angularVelocity,
+                        {true, true, true},
+                        {true, true, true},
+                        dynamicalIKLinearCorrectionGain,
+                        dynamicalIKAngularCorrectionGain,
+                        dynamicalIKMeasuredLinearVelocityGain,
+                        dynamicalIKMeasuredAngularVelocityGain,
+                        linVelTargetWeight,
+                        angVelTargetWeight)) {
+                    yError() << LogPrefix << "Failed to add pose and velocity target for "
+                             << targetName;
+                    return false;
+                }
+                yInfo() << LogPrefix << "Pose and Velocity Target " << targetName
+                        << " added for link " << linkName;
+                break;
+            }
+            case hde::KinematicTargetType::position: {
+                if (!dynamicalInverseKinematics.addPositionTarget(
+                        linkName,
+                        wearableTargetEntry.second->position,
+                        {true, true, true},
+                        dynamicalIKLinearCorrectionGain,
+                        linVelTargetWeight)) {
+                    yError() << LogPrefix << "Failed to add position target for " << targetName;
+                    return false;
+                }
+                yInfo() << LogPrefix << "Position Target " << targetName << " added for link "
+                        << linkName;
+                break;
+            }
+            case hde::KinematicTargetType::positionAndVelocity: {
+                if (!dynamicalInverseKinematics.addPositionAndVelocityTarget(
+                        linkName,
+                        wearableTargetEntry.second->position,
+                        wearableTargetEntry.second->linearVelocity,
+                        {true, true, true},
+                        dynamicalIKLinearCorrectionGain,
+                        dynamicalIKMeasuredLinearVelocityGain,
+                        linVelTargetWeight)) {
+                    yError() << LogPrefix << "Failed to add position and velocity target for "
+                             << targetName;
+                    return false;
+                }
+                yInfo() << LogPrefix << "Position and Velocity Target " << targetName
+                        << " added for link " << linkName;
+                break;
+            }
+            case hde::KinematicTargetType::orientation: {
+                if (!dynamicalInverseKinematics.addOrientationTarget(
+                        linkName,
+                        wearableTargetEntry.second->rotation,
+                        {true, true, true},
+                        dynamicalIKAngularCorrectionGain,
+                        angVelTargetWeight)) {
+                    yError() << LogPrefix << "Failed to add orientation target for " << targetName;
+                    return false;
+                }
+                yInfo() << LogPrefix << "Orientation Target " << targetName << " added for link "
+                        << linkName;
+                break;
+            }
+            case hde::KinematicTargetType::orientationAndVelocity: {
+                if (!dynamicalInverseKinematics.addOrientationAndVelocityTarget(
+                        linkName,
+                        wearableTargetEntry.second->rotation,
+                        wearableTargetEntry.second->angularVelocity,
+                        {true, true, true},
+                        dynamicalIKAngularCorrectionGain,
+                        dynamicalIKMeasuredAngularVelocityGain,
+                        angVelTargetWeight)) {
+                    yError() << LogPrefix << "Failed to add orientation and velocity target for "
+                             << targetName;
+                    return false;
+                }
+                yInfo() << LogPrefix << "Orientation and Velocity Target " << targetName
+                        << " added for link " << linkName;
+                break;
+            }
+            case hde::KinematicTargetType::gravity: {
+                if (!dynamicalInverseKinematics.addOrientationTarget(
+                        linkName,
+                        wearableTargetEntry.second->rotation,
+                        {false, false, true},
+                        dynamicalIKAngularCorrectionGain,
+                        angVelTargetWeight)) {
+                    yError() << LogPrefix << "Failed to add gravity target for " << targetName;
+                    return false;
+                }
+                yInfo() << LogPrefix << "Gravity Target " << targetName << " added for link "
+                        << linkName;
+                break;
+            }
+            case hde::KinematicTargetType::floorContact: {
+                if (!dynamicalInverseKinematics.addPositionAndVelocityTarget(
+                        linkName,
+                        wearableTargetEntry.second->position,
+                        wearableTargetEntry.second->linearVelocity,
+                        {true, true, true},
+                        dynamicalIKLinearCorrectionGain,
+                        dynamicalIKMeasuredLinearVelocityGain,
+                        linVelTargetWeight)) {
+                    yError() << LogPrefix << "Failed to add floorContact target for " << targetName;
+                    return false;
+                }
+                yInfo() << LogPrefix << "Floor Contact Target " << targetName << " added for link "
+                        << linkName;
+                break;
+            }
+            default: {
+                yError() << LogPrefix << "Invalid target type for " << targetName;
                 return false;
-                                                              }
-                yInfo() << LogPrefix << "Position Target " << targetName << " added for link " << linkName;
-            break; }
-        case hde::KinematicTargetType::positionAndVelocity: {
-            if (!dynamicalInverseKinematics.addPositionAndVelocityTarget(linkName, 
-                                                                         wearableTargetEntry.second->position,
-                                                                         wearableTargetEntry.second->linearVelocity,
-                                                                         {true, true, true},
-                                                                         dynamicalIKLinearCorrectionGain,
-                                                                         dynamicalIKMeasuredLinearVelocityGain,
-                                                                         linVelTargetWeight)) {
-                yError() << LogPrefix << "Failed to add position and velocity target for " << targetName;
-                return false;
-                                                                         }
-                yInfo() << LogPrefix << "Position and Velocity Target " << targetName << " added for link " << linkName;
-            break; }
-        case hde::KinematicTargetType::orientation: {
-            if (!dynamicalInverseKinematics.addOrientationTarget(linkName,
-                                                                 wearableTargetEntry.second->rotation,
-                                                                 {true, true, true},
-                                                                 dynamicalIKAngularCorrectionGain,
-                                                                 angVelTargetWeight)) {
-                yError() << LogPrefix << "Failed to add orientation target for " << targetName;
-                return false;
-                                                                 }
-                yInfo() << LogPrefix << "Orientation Target " << targetName << " added for link " << linkName;
-            break; }
-        case hde::KinematicTargetType::orientationAndVelocity: {
-            if (!dynamicalInverseKinematics.addOrientationAndVelocityTarget(linkName,
-                                                                            wearableTargetEntry.second->rotation,
-                                                                            wearableTargetEntry.second->angularVelocity,
-                                                                            {true, true, true},
-                                                                            dynamicalIKAngularCorrectionGain,
-                                                                            dynamicalIKMeasuredAngularVelocityGain,
-                                                                            angVelTargetWeight)) {
-                yError() << LogPrefix << "Failed to add orientation and velocity target for " << targetName;
-                return false;
-                                                                            }
-                yInfo() << LogPrefix << "Orientation and Velocity Target " << targetName << " added for link " << linkName;
-            break; }
-        case hde::KinematicTargetType::gravity: {
-            if (!dynamicalInverseKinematics.addOrientationTarget(linkName,
-                                                                 wearableTargetEntry.second->rotation,
-                                                                 {false, false, true},
-                                                                 dynamicalIKAngularCorrectionGain,
-                                                                 angVelTargetWeight)) {
-                yError() << LogPrefix << "Failed to add gravity target for " << targetName;
-                return false;
-                                                                 }
-                yInfo() << LogPrefix << "Gravity Target " << targetName << " added for link " << linkName;
-            break; }
-        case hde::KinematicTargetType::floorContact: {
-            if (!dynamicalInverseKinematics.addPositionAndVelocityTarget(linkName, 
-                                                                         wearableTargetEntry.second->position,
-                                                                         wearableTargetEntry.second->linearVelocity,
-                                                                         {true, true, true},
-                                                                         dynamicalIKLinearCorrectionGain,
-                                                                         dynamicalIKMeasuredLinearVelocityGain,
-                                                                         linVelTargetWeight)) {
-                yError() << LogPrefix << "Failed to add floorContact target for " << targetName;
-                return false;
-                                                                 }
-                yInfo() << LogPrefix << "Floor Contact Target " << targetName << " added for link " << linkName;
-            break; }
-        default: {
-            yError() << LogPrefix << "Invalid target type for " << targetName;
-            return false;}
+            }
         }
     }
 
@@ -2670,24 +2833,22 @@ bool HumanStateProvider::impl::attach(yarp::dev::PolyDriver* poly)
     // CHECK WEARABLE TARGETS
     // ======================
 
-    for (auto wearableTargetEntry : wearableTargets)
-    {
+    for (auto wearableTargetEntry : wearableTargets) {
         ModelLinkName linkName = wearableTargetEntry.second->modelLinkName;
         hde::TargetName targetName = wearableTargetEntry.first;
         WearableName wearableName = wearableTargetEntry.second->wearableName;
 
         // Check if the link exist in the model
-        if (humanModel.getLinkIndex(linkName) == iDynTree::LINK_INVALID_INDEX)
-        {
+        if (humanModel.getLinkIndex(linkName) == iDynTree::LINK_INVALID_INDEX) {
             yError() << "Failed to find link " << linkName << " used in target " << targetName;
             return false;
         }
 
         // Check if the wearable sensor exist and read the type
         auto sensor = iWear->getSensor(wearableName);
-        if (!sensor) 
-        {
-            yError() << "Failed to find sensor " << wearableName << " used in target " << targetName;
+        if (!sensor) {
+            yError() << "Failed to find sensor " << wearableName << " used in target "
+                     << targetName;
             return false;
         }
     }
@@ -2709,8 +2870,7 @@ bool HumanStateProvider::impl::attach(yarp::dev::PolyDriver* poly)
         }
 
         // Get the name of the sensor associated to the link
-        WearableName wearableName =
-            wearableStorage.modelToWearable_LinkName.at(modelLinkName);
+        WearableName wearableName = wearableStorage.modelToWearable_LinkName.at(modelLinkName);
 
         // Try to get the sensor
         auto sensor = iWear->getVirtualLinkKinSensor(wearableName);
@@ -2722,8 +2882,7 @@ bool HumanStateProvider::impl::attach(yarp::dev::PolyDriver* poly)
         }
 
         // Create a sensor map entry using the wearable sensor name as key
-        wearableStorage.linkSensorsMap[wearableName] =
-            iWear->getVirtualLinkKinSensor(wearableName);
+        wearableStorage.linkSensorsMap[wearableName] = iWear->getVirtualLinkKinSensor(wearableName);
     }
 
     // ====
@@ -2767,7 +2926,7 @@ bool HumanStateProvider::attachAll(const yarp::dev::PolyDriverList& driverList)
     }
 
     // attach the device
-    if(!pImpl->attach(driver->poly)) {
+    if (!pImpl->attach(driver->poly)) {
         return false;
     }
 
@@ -2851,14 +3010,14 @@ std::vector<hde::TargetName> HumanStateProvider::getAllTargetsName() const
 {
     std::lock_guard<std::mutex> lock(pImpl->mutex);
     std::vector<std::string> targetsName;
-    for (auto wearableTargetEntry : pImpl->wearableTargets)
-    {
+    for (auto wearableTargetEntry : pImpl->wearableTargets) {
         targetsName.push_back(wearableTargetEntry.first);
     }
     return targetsName;
 }
 
-std::shared_ptr<hde::WearableSensorTarget> HumanStateProvider::getTarget(const TargetName name) const
+std::shared_ptr<hde::WearableSensorTarget>
+HumanStateProvider::getTarget(const TargetName name) const
 {
     std::lock_guard<std::mutex> lock(pImpl->mutex);
 
