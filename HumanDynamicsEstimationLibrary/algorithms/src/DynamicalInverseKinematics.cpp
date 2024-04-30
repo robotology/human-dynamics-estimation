@@ -1657,7 +1657,7 @@ bool DynamicalInverseKinematics::getBaseVelocitySolution(iDynTree::Vector3& line
     return true;
 }
 
-bool DynamicalInverseKinematics::solve(const double dt)
+bool DynamicalInverseKinematics::solve(const double dt, bool* reset)
 {
     return pImpl->solveProblem(dt);
 }

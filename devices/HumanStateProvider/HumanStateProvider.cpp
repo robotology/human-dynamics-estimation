@@ -1557,6 +1557,7 @@ void HumanStateProvider::impl::computeSecondaryCalibrationRotationsForChain(cons
 {
     // initialize vectors
     iDynTree::VectorDynSize jointPos(jointConfigurationSolution);
+    jointPos.zero(); 
     iDynTree::VectorDynSize jointVel(jointVelocitiesSolution);
     jointVel.zero();
     iDynTree::Twist baseVel;
@@ -1564,7 +1565,12 @@ void HumanStateProvider::impl::computeSecondaryCalibrationRotationsForChain(cons
 
     for (auto const& jointZeroIdx: jointZeroIndices) {
         jointPos.setVal(jointZeroIdx, jointCalibrationSolution.getVal(jointZeroIdx));
+        std::cout << "jointPos: " << jointPos.getVal(jointZeroIdx) << std::endl;
     }
+
+    std::lock_guard<std::mutex> lock(mutexFlagIntegrator);
+    resetIntegrator = true;
+
     // TODO check which value to give to the base (before we were using the base target measurement)
     kinDynComputations->setRobotState(iDynTree::Transform::Identity(), jointPos, baseVel, jointVel, worldGravity);
 
@@ -2334,7 +2340,8 @@ bool HumanStateProvider::impl::solveDynamicalInverseKinematics()
         }
     }
 
-    if (!dynamicalInverseKinematics.solve(dt))
+    std::lock_guard<std::mutex> lock(mutexFlagIntegrator);
+    if (!dynamicalInverseKinematics.solve(dt, &resetIntegrator))
         return false;
     
     dynamicalInverseKinematics.getConfigurationSolution(baseTransformSolution, jointConfigurationSolution);

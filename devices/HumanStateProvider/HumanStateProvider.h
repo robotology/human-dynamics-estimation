@@ -28,6 +28,8 @@ class hde::devices::HumanStateProvider final
 private:
     class impl;
     std::unique_ptr<impl> pImpl;
+    std::mutex mutexFlagIntegrator;
+    bool resetIntegrator = false;
 
 public:
     HumanStateProvider();
