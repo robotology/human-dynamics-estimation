@@ -2474,7 +2474,7 @@ bool HumanStateProvider::impl::solveDynamicalInverseKinematics()
 
     {
         std::lock_guard<std::mutex> lock(mutexFlagIntegrator);
-        if (!dynamicalInverseKinematics.solve(dt, &resetIntegrator))
+        if (!dynamicalInverseKinematics.solve(dt, resetIntegrator))
             return false;
     }
 

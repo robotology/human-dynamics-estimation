@@ -201,7 +201,7 @@ public:
 
     void clearProblem();
 
-    bool solve(const double dt, bool* reset = nullptr);
+    bool solve(const double dt, bool &reset);
 
     double getTargetsMeanOrientationErrorNorm() const;
     double getTargetsMeanPositionErrorNorm() const;

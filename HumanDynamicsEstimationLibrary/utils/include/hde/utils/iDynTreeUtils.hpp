@@ -134,7 +134,7 @@ public:
                    const iDynTree::Vector3& dot_W_p_B,
                    const iDynTree::Vector3& omega_B,
                    const double dt,
-                   bool* resetFlags = nullptr);
+                   bool &resetFlags);
 
 private:
     unsigned int nJoints;
