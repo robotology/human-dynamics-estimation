@@ -926,16 +926,11 @@ bool DynamicalInverseKinematics::impl::solveProblem(const double dt, bool* reset
     if (!(m_inverseVelocityKinematics.getBaseVelocitySolution(m_state.dot_W_p_B, m_state.omega_B) && m_inverseVelocityKinematics.getJointsVelocitySolution(m_state.dot_s)))
         return false;
 
-    if(*reset){
-        *reset = false;
-        std::cout << "Resetting the state of the integrator" << std::endl;
-        m_state.zero();
-    }
-
     m_stateIntegrator.integrate(m_state.dot_s,
                               m_state.dot_W_p_B,
                               m_state.omega_B,
-                              dt);
+                              dt,
+                              reset);
     m_stateIntegrator.getJointConfiguration(m_state.s);
     m_stateIntegrator.getBasePose(m_state.W_p_B, m_state.W_R_B);
 
