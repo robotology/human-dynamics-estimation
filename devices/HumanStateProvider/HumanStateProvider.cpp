@@ -1615,8 +1615,10 @@ void HumanStateProvider::impl::computeSecondaryCalibrationRotationsForChain(
         std::cout << "jointPos " << jointPos.getVal(jointZeroIdx) << std::endl;
     }
 
-    std::lock_guard<std::mutex> lock(mutexFlagIntegrator);
-    resetIntegrator = true;
+    {
+        std::lock_guard<std::mutex> lock(mutexFlagIntegrator);
+        resetIntegrator = true;
+    }
 
     // TODO check which value to give to the base (before we were using the base target measurement)
     kinDynComputations->setRobotState(
@@ -2470,9 +2472,11 @@ bool HumanStateProvider::impl::solveDynamicalInverseKinematics()
         }
     }
 
-    std::lock_guard<std::mutex> lock(mutexFlagIntegrator);
-    if (!dynamicalInverseKinematics.solve(dt, &resetIntegrator))
-        return false;
+    {
+        std::lock_guard<std::mutex> lock(mutexFlagIntegrator);
+        if (!dynamicalInverseKinematics.solve(dt, &resetIntegrator))
+            return false;
+    }
 
     dynamicalInverseKinematics.getConfigurationSolution(baseTransformSolution,
                                                         jointConfigurationSolution);
