@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.0.0] - 2023-11-09
 
+### Fixed
+- Fixed human model calibration bug in which sometimes it gets stuck (https://github.com/robotology/human-dynamics-estimation/pull/388).
+
 ### Changed
 - Stream and visualize human effort data in HumanStateVisualizer (https://github.com/robotology/human-dynamics-estimation/pull/385).
 - Naming convention from `wrapper`\ `server` to `nws`\ `nwc` (https://github.com/robotology/human-dynamics-estimation/pull/367).
