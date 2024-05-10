@@ -396,7 +396,6 @@ void state::Integrator::integrate(const iDynTree::VectorDynSize& new_dot_s,
 {
     if(resetFlag) {
         resetFlag = false;
-        std::cout << "Reset old state integrator" << std::endl;
         oldState.zero();
     }
     

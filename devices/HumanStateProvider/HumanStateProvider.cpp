@@ -1610,11 +1610,6 @@ void HumanStateProvider::impl::computeSecondaryCalibrationRotationsForChain(
     iDynTree::Twist baseVel;
     baseVel.zero();
 
-    for (auto const& jointZeroIdx : jointZeroIndices) {
-        // jointPos.setVal(jointZeroIdx, jointConfigurationSolution.getVal(jointZeroIdx));
-        std::cout << "jointPos " << jointPos.getVal(jointZeroIdx) << std::endl;
-    }
-
     {
         std::lock_guard<std::mutex> lock(mutexFlagIntegrator);
         resetIntegrator = true;
