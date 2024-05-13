@@ -4,11 +4,11 @@
 #ifndef HDE_DEVICES_HUMANSTATEPROVIDER
 #define HDE_DEVICES_HUMANSTATEPROVIDER
 
+#include <hde/interfaces/IHumanState.h>
+#include <hde/interfaces/IWearableTargets.h>
 #include <yarp/dev/DeviceDriver.h>
 #include <yarp/dev/IMultipleWrapper.h>
 #include <yarp/os/PeriodicThread.h>
-#include <hde/interfaces/IHumanState.h>
-#include <hde/interfaces/IWearableTargets.h>
 
 #include <memory>
 

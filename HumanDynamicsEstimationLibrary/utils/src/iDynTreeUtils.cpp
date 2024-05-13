@@ -391,8 +391,13 @@ void state::Integrator::integrate(const iDynTree::VectorDynSize& new_dot_s, cons
 void state::Integrator::integrate(const iDynTree::VectorDynSize& new_dot_s,
                                   const iDynTree::Vector3& new_dot_W_p_B,
                                   const iDynTree::Vector3& new_omega_B,
-                                  const double dt)
+                                  const double dt,
+                                  const bool resetFlag)
 {
+    if(resetFlag) {
+        oldState.zero();
+    }
+    
     // integrate joints configuration
     integrate(new_dot_s, dt);
 

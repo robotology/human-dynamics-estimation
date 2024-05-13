@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Fixed human model calibration bug in which sometimes it gets stuck (https://github.com/robotology/human-dynamics-estimation/pull/388).
+
 ## [3.0.0] - 2023-11-09
 
 ### Changed

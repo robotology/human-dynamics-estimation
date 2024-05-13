@@ -133,7 +133,8 @@ public:
     void integrate(const iDynTree::VectorDynSize& dot_s,
                    const iDynTree::Vector3& dot_W_p_B,
                    const iDynTree::Vector3& omega_B,
-                   const double dt);
+                   const double dt,
+                   const bool resetFlags = false);
 
 private:
     unsigned int nJoints;
