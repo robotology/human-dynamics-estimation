@@ -392,10 +392,9 @@ void state::Integrator::integrate(const iDynTree::VectorDynSize& new_dot_s,
                                   const iDynTree::Vector3& new_dot_W_p_B,
                                   const iDynTree::Vector3& new_omega_B,
                                   const double dt,
-                                  bool &resetFlag)
+                                  const bool resetFlag)
 {
     if(resetFlag) {
-        resetFlag = false;
         oldState.zero();
     }
     
