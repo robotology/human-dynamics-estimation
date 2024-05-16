@@ -30,19 +30,16 @@ jobs:
         strategy:
             matrix:
                 build_type: [Release]
-                # Windows and macOS disabled until we have idyntree==12 wearables packages on macos and Windows
-                # See https://github.com/robotology/human-dynamics-estimation/pull/385#issuecomment-2019827813
-                os: [ubuntu-latest]
-                # os: [ubuntu-latest, windows-latest, macOS-latest]  
+                os: [ubuntu-latest, windows-latest, macos-12]  
             fail-fast: false
                 
         steps:
         # Clone the repository in $GITHUB_WORKSPACE
         - uses: actions/checkout@master  
 
-        # Use mamba for Windows dependencies
+        # Use mamba for Windows and macos dependencies
         - uses: mamba-org/setup-micromamba@v1
-          if: matrix.os == 'windows-latest' || matrix.os == 'macOS-latest'
+          if: matrix.os == 'windows-latest' || contains(matrix.os, 'macos')
           with:
             environment-file: ci_env.yml
             channel-priority: true
@@ -181,7 +178,7 @@ jobs:
                                                          -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/install ..
             
         - name: Configure [Ubuntu/macOS]
-          if: matrix.os == 'ubuntu-latest' || matrix.os == 'macOS-latest'
+          if: matrix.os == 'ubuntu-latest' || contains(matrix.os, 'macos')
           shell: bash -l {0}
           run: |
             mkdir -p build
