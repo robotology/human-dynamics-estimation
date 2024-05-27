@@ -36,6 +36,7 @@ find_package(YCM REQUIRED)
 # Import cmake utilities
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 include(AddWarningsConfigurationToTarget)
+include(AddHDEPythonModule)
 
 # To build shared libraries in Windows, we set CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS to TRUE
 # See https://cmake.org/cmake/help/v3.4/variable/CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS.html
@@ -50,6 +51,9 @@ else()
 endif()
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+# Flag to enable python bindings
+option(HDE_COMPILE_PYTHON_BINDINGS "Flag that enables building the bindings" OFF)
 
 # Plugins are force to be Shared/Dynamic Library 
 set(YARP_FORCE_DYNAMIC_PLUGINS ON)
@@ -86,6 +90,7 @@ add_subdirectory(modules)
 add_subdirectory(servers)
 add_subdirectory(clients)
 add_subdirectory(publishers)
+add_subdirectory(bindings)
 add_subdirectory(HumanDynamicsEstimationLibrary)
 
 include(InstallBasicPackageFiles)
