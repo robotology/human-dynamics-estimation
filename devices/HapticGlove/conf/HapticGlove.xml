@@ -30,7 +30,7 @@
 
     <device type="iwearactuators_wrapper" name="LeftHapticGloveWearableDeviceActuatorsWrapper">
         <param extern-name="period" name="period">0.1</param>
-        <param name="actuatorCommandInputPortName">/WearableData/HapticGlove/LeftHand/Actuators/input:i</param>
+        <param name="gloveActuatorCommandInputPortName">/WearableData/HapticGlove/LeftHand/Actuators/input:i</param>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
                 <elem name="HapticGloveWearableDeviceActuatorWrapperLabel"> LeftHapticGloveWearableDevice </elem>
@@ -66,7 +66,7 @@
 
     <device type="iwearactuators_wrapper" name="RightHapticGloveWearableDeviceActuatorsWrapper">
         <param extern-name="period" name="period">0.1</param>
-        <param name="actuatorCommandInputPortName">/WearableData/HapticGlove/RightHand/Actuators/input:i</param>
+        <param name="gloveActuatorCommandInputPortName">/WearableData/HapticGlove/RightHand/Actuators/input:i</param>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
                 <elem name="HapticGloveWearableDeviceActuatorWrapperLabel"> RightHapticGloveWearableDevice </elem>
