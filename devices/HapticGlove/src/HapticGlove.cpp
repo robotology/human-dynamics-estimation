@@ -80,6 +80,7 @@ public:
 
     // Number of actuators
     const int nActuators = 11; // humanFingerNames.size()*2 + hand/palm thumper
+    const int nActuatorsPerGlove = 5; // Number of the actuators per glove
 
     std::unique_ptr<senseGlove::SenseGloveHelper> pGlove; /**< Pointer to the glove object. */
 
@@ -555,7 +556,7 @@ public:
         return false;
     }
 
-    bool setHapticsCommand(std::vector<double>& forceValue, std::vector<double>& vibrotactileValue) const override
+    bool setHapticCommands(std::vector<double>& forceValue, std::vector<double>& vibrotactileValue) const override
     {
 
         std::lock_guard<std::mutex> lock(m_gloveImpl->mutex);
@@ -565,7 +566,11 @@ public:
             m_gloveImpl->gloveData.fingersHapticFeedback[i] = forceValue[i];
             m_gloveImpl->gloveData.fingersHapticFeedback[i + 5] = vibrotactileValue[i];
         }
-
+        if (forceValue.size() != m_gloveImpl->nActuatorsPerGlove || vibrotactileValue.size() != m_gloveImpl->nActuatorsPerGlove)
+        {
+            yError() << "The sizes of the forceValue and the vibrotactileValue vectors are not correct!";
+            return false;
+        }
         return true;
     }
 

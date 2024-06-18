@@ -28,7 +28,7 @@ public:
 
     virtual bool setHapticCommand(double& value) const = 0;
 
-    virtual bool setHapticsCommand(std::vector<double>& forceValue, std::vector<double>& vibrotactileValue) const = 0;
+    virtual bool setHapticCommands(std::vector<double>& forceValue, std::vector<double>& vibrotactileValue) const = 0;
 };
 
 inline const std::string wearable::actuator::IHaptic::getPrefix()

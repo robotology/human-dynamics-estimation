@@ -62,11 +62,18 @@ bool IWearActuatorsWrapper::open(yarp::os::Searchable& config)
         return false;
     }
 
-    if (!config.check("gloveActuatorCommandInputPortName") || !config.find("gloveActuatorCommandInputPortName").isString()) {
-        yError() << LogPrefix << "gloveActuatorCommandInputPortName parameter not found";
+    if (!config.check("rightHand") || !config.find("rightHand").isString()) {
+        yError() << LogPrefix << "rightHand parameter not found";
         return false;
     }
 
+    bool isRightHand = config.find("rightHand").asBool();
+    gloveHandSide = isRightHand ? "RightHand" : "LeftHand";
+
+    if (!config.check("gloveActuatorCommandInputPortName") || !config.find("gloveActuatorCommandInputPortName").isString()) {
+        yWarning() << LogPrefix << "gloveActuatorCommandInputPortName parameter not found! Using the default one.";
+        pImpl->gloveActuatorCommandInputPortName = "/WearableData/HapticGlove/" + gloveHandSide + "/Actuators/input:i"; // default actuator port
+    }
 
     if (!config.check("period")) {
         yInfo() << LogPrefix << "Using default period: " << DefaultPeriod << "s";
@@ -78,7 +85,7 @@ bool IWearActuatorsWrapper::open(yarp::os::Searchable& config)
     setPeriod(period);
 
     pImpl->actuatorCommandInputPortName = config.find("actuatorCommandInputPortName").asString();
-    pImpl->gloveActuatorCommandInputPortName = config.find("actuatorCommandInputPortName").asString();
+    pImpl->gloveActuatorCommandInputPortName = config.find("gloveActuatorCommandInputPortName").asString();
 
 
     // Configure yarp ports
@@ -164,27 +171,24 @@ void IWearActuatorsWrapper::onRead(msg::GloveActuatorCommand& gloveActuatorComma
    }
    else // process the wearable actuator command
    {
-       wearable::actuator::ActuatorType aType = pImpl->actuatorsMap[info.name]->getActuatorType();
+        wearable::actuator::ActuatorType aType = pImpl->actuatorsMap[info.name]->getActuatorType();
+        if (aType == wearable::actuator::ActuatorType::Haptic)
+        {
+            // Check if the actuator type in the wearable command is correct
+            if(info.type == wearable::msg::ActuatorType::HAPTIC)
+            {
+                // Get haptic actuator
+                wearable::ElementPtr<const wearable::actuator::IHaptic> castActuator = std::static_pointer_cast<const wearable::actuator::IHaptic>(pImpl->actuatorsMap[info.name]);
 
-       switch (aType) {
-            case wearable::actuator::ActuatorType::Haptic: {
-
-               // Check if the actuator type in the wearable command is correct
-               if(info.type == wearable::msg::ActuatorType::HAPTIC)
-               {
-                   // Get haptic actuator
-                   wearable::ElementPtr<const wearable::actuator::IHaptic> castActuator = std::static_pointer_cast<const wearable::actuator::IHaptic>(pImpl->actuatorsMap[info.name]);
-
-                   // Send haptic command
-                   castActuator->setHapticsCommand(gloveActuatorCommand.forceValue, gloveActuatorCommand.vibroTactileValue);
-               }
-
-               break;
+                // Send haptic command
+                castActuator->setHapticCommands(gloveActuatorCommand.forceValue, gloveActuatorCommand.vibroTactileValue);
             }
-            default: {
-               return;
-            }
-       }
+        }
+        else
+        {
+            yError() << "Actuator type is not correct!";
+            return;
+        }
    }
 }
 
