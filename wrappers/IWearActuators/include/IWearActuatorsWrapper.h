@@ -31,7 +31,6 @@ class wearable::wrappers::IWearActuatorsWrapper
 private:
     class impl;
     std::unique_ptr<impl> pImpl;
-    std::string gloveHandSide;
 
 public:
     IWearActuatorsWrapper();

@@ -62,17 +62,18 @@ bool IWearActuatorsWrapper::open(yarp::os::Searchable& config)
         return false;
     }
 
-    if (!config.check("rightHand") || !config.find("rightHand").isString()) {
-        yError() << LogPrefix << "rightHand parameter not found";
-        return false;
-    }
-
-    bool isRightHand = config.find("rightHand").asBool();
-    gloveHandSide = isRightHand ? "RightHand" : "LeftHand";
-
+    // Find and configure yarp port related to the actuator commands
     if (!config.check("gloveActuatorCommandInputPortName") || !config.find("gloveActuatorCommandInputPortName").isString()) {
-        yWarning() << LogPrefix << "gloveActuatorCommandInputPortName parameter not found! Using the default one.";
-        pImpl->gloveActuatorCommandInputPortName = "/WearableData/HapticGlove/" + gloveHandSide + "/Actuators/input:i"; // default actuator port
+        yWarning() << LogPrefix << "gloveActuatorCommandInputPortName parameter not found! The port will not be opened.";
+    }
+    else
+    {
+        pImpl->gloveActuatorCommandInputPortName = config.find("gloveActuatorCommandInputPortName").asString();
+        if(!pImpl->gloveActuatorCommandInputPort.open(pImpl->gloveActuatorCommandInputPortName))
+        {
+            yError() << "Failed to open " << pImpl->gloveActuatorCommandInputPortName << " yarp port";
+            return false;
+        }
     }
 
     if (!config.check("period")) {
@@ -85,20 +86,12 @@ bool IWearActuatorsWrapper::open(yarp::os::Searchable& config)
     setPeriod(period);
 
     pImpl->actuatorCommandInputPortName = config.find("actuatorCommandInputPortName").asString();
-    pImpl->gloveActuatorCommandInputPortName = config.find("gloveActuatorCommandInputPortName").asString();
-
 
     // Configure yarp ports
 
     if(!pImpl->actuatorCommandInputPort.open(pImpl->actuatorCommandInputPortName))
     {
         yError() << "Failed to open " << pImpl->actuatorCommandInputPortName << " yarp port";
-        return false;
-    }
-
-    if(!pImpl->gloveActuatorCommandInputPort.open(pImpl->gloveActuatorCommandInputPortName))
-    {
-        yError() << "Failed to open " << pImpl->gloveActuatorCommandInputPortName << " yarp port";
         return false;
     }
 

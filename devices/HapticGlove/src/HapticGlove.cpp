@@ -561,15 +561,15 @@ public:
 
         std::lock_guard<std::mutex> lock(m_gloveImpl->mutex);
 
-        for (size_t i = 0; i < m_gloveImpl->nFingers; i++)
-        {
-            m_gloveImpl->gloveData.fingersHapticFeedback[i] = forceValue[i];
-            m_gloveImpl->gloveData.fingersHapticFeedback[i + 5] = vibrotactileValue[i];
-        }
         if (forceValue.size() != m_gloveImpl->nActuatorsPerGlove || vibrotactileValue.size() != m_gloveImpl->nActuatorsPerGlove)
         {
             yError() << "The sizes of the forceValue and the vibrotactileValue vectors are not correct!";
             return false;
+        }
+        for (size_t i = 0; i < m_gloveImpl->nFingers; i++)
+        {
+            m_gloveImpl->gloveData.fingersHapticFeedback[i] = forceValue[i];
+            m_gloveImpl->gloveData.fingersHapticFeedback[i + 5] = vibrotactileValue[i];
         }
         return true;
     }
