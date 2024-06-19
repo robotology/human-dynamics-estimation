@@ -556,7 +556,7 @@ public:
         return false;
     }
 
-    bool setHapticCommands(std::vector<double>& forceValue, std::vector<double>& vibrotactileValue) const override
+    bool setHapticCommands(const std::vector<double>& forceValue, const std::vector<double>& vibrotactileValue) const override
     {
 
         std::lock_guard<std::mutex> lock(m_gloveImpl->mutex);

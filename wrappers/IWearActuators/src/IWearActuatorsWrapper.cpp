@@ -74,6 +74,8 @@ bool IWearActuatorsWrapper::open(yarp::os::Searchable& config)
             yError() << "Failed to open " << pImpl->gloveActuatorCommandInputPortName << " yarp port";
             return false;
         }
+        // Set the callback to use onRead() method of this device
+        pImpl->gloveActuatorCommandInputPort.useCallback(*this);
     }
 
     if (!config.check("period")) {
@@ -97,7 +99,6 @@ bool IWearActuatorsWrapper::open(yarp::os::Searchable& config)
 
     // Set the callback to use onRead() method of this device
     pImpl->actuatorCommandInputPort.useCallback(*this);
-    pImpl->gloveActuatorCommandInputPort.useCallback(*this);
 
     return true;
 }
