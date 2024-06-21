@@ -57,12 +57,16 @@ void IWearActuatorsWrapper::run()
 
 bool IWearActuatorsWrapper::open(yarp::os::Searchable& config)
 {
-    if (!config.check("actuatorCommandInputPortName") || !config.find("actuatorCommandInputPortName").isString()) {
-        yError() << LogPrefix << "actuatorCommandInputPortName parameter not found";
+    if (!config.check("actuatorCommandInputPortName") || !config.check("gloveActuatorCommandInputPortName"))
+    {
+        yError() << LogPrefix << "No actuator command input ports found.";
         return false;
     }
 
     // Find and configure yarp port related to the actuator commands
+    if (!config.find("actuatorCommandInputPortName").isString()) {
+        yWarning() << LogPrefix << "actuatorCommandInputPortName parameter not found. Haptic feedback will not be available.";
+    }
     if (!config.check("gloveActuatorCommandInputPortName") || !config.find("gloveActuatorCommandInputPortName").isString()) {
         yWarning() << LogPrefix << "gloveActuatorCommandInputPortName parameter not found! The port will not be opened.";
     }
