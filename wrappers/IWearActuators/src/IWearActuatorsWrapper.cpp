@@ -67,6 +67,19 @@ bool IWearActuatorsWrapper::open(yarp::os::Searchable& config)
     if (!config.find("actuatorCommandInputPortName").isString()) {
         yWarning() << LogPrefix << "actuatorCommandInputPortName parameter not found. Haptic feedback will not be available.";
     }
+    else
+    {
+        pImpl->actuatorCommandInputPortName = config.find("actuatorCommandInputPortName").asString();
+        if(!pImpl->actuatorCommandInputPort.open(pImpl->actuatorCommandInputPortName))
+        {
+            yError() << "Failed to open " << pImpl->actuatorCommandInputPortName << " yarp port";
+            return false;
+        }
+
+        // Set the callback to use onRead() method of this device
+        pImpl->actuatorCommandInputPort.useCallback(*this);
+
+    }
     if (!config.check("gloveActuatorCommandInputPortName") || !config.find("gloveActuatorCommandInputPortName").isString()) {
         yWarning() << LogPrefix << "gloveActuatorCommandInputPortName parameter not found! The port will not be opened.";
     }
@@ -90,19 +103,6 @@ bool IWearActuatorsWrapper::open(yarp::os::Searchable& config)
 
     const double period = config.check("period", yarp::os::Value(DefaultPeriod)).asFloat64();
     setPeriod(period);
-
-    pImpl->actuatorCommandInputPortName = config.find("actuatorCommandInputPortName").asString();
-
-    // Configure yarp ports
-
-    if(!pImpl->actuatorCommandInputPort.open(pImpl->actuatorCommandInputPortName))
-    {
-        yError() << "Failed to open " << pImpl->actuatorCommandInputPortName << " yarp port";
-        return false;
-    }
-
-    // Set the callback to use onRead() method of this device
-    pImpl->actuatorCommandInputPort.useCallback(*this);
 
     return true;
 }
