@@ -1,5 +1,5 @@
 # Changelog
-This file documents notable changes to this project done before February 2024. For changes after that date, plase refer to the release notes of each release at https://github.com/robotology/wearables/releases.
+This file documents notable changes to this project done before November 2023. For changes after that date, plase refer to the release notes of each release at https://github.com/robotology/wearables/releases.
 
 ## [1.8.0] - 2023-11-17
 
