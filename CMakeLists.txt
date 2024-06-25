@@ -4,7 +4,7 @@
 
 cmake_minimum_required(VERSION 3.16)
 
-set(PROJECT_VERSION "1.8.0")
+set(PROJECT_VERSION "1.9.0")
 
 set (WEARABLES_PROJECT_NAME Wearables)
 

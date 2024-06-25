@@ -12,6 +12,7 @@
 #include <yarp/os/TypedReaderCallback.h>
 
 #include "thrift/WearableActuatorCommand.h"
+#include "thrift/GloveActuatorCommand.h"
 
 namespace wearable {
     namespace wrappers {
@@ -25,6 +26,7 @@ class wearable::wrappers::IWearActuatorsWrapper
     , public yarp::dev::IMultipleWrapper
     , public yarp::os::PeriodicThread
     , public yarp::os::TypedReaderCallback<msg::WearableActuatorCommand>
+    , public yarp::os::TypedReaderCallback<msg::GloveActuatorCommand>
 {
 private:
     class impl;
@@ -40,6 +42,7 @@ public:
 
     // TypedReaderCallback
     void onRead(msg::WearableActuatorCommand& wearableActuatorCommand) override;
+    void onRead(msg::GloveActuatorCommand& gloveActuatorCommand) override;
 
     // PeriodicThread
     void run() override;

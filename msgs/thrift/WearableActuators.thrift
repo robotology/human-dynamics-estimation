@@ -27,3 +27,13 @@ struct WearableActuatorCommand {
   2: double value;
   3: double duration;
 }
+
+// ==========================
+// Glove Actuator Command data type
+// ==========================
+
+struct GloveActuatorCommand {
+  1: ActuatorInfo info;
+  2: list<double> forceValue;
+  3: list<double> vibroTactileValue;
+}
