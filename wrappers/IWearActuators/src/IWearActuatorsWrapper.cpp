@@ -57,7 +57,7 @@ void IWearActuatorsWrapper::run()
 
 bool IWearActuatorsWrapper::open(yarp::os::Searchable& config)
 {
-    if (!config.check("actuatorCommandInputPortName") || !config.check("gloveActuatorCommandInputPortName"))
+    if (!config.check("actuatorCommandInputPortName") && !config.check("gloveActuatorCommandInputPortName"))
     {
         yError() << LogPrefix << "No actuator command input ports found.";
         return false;
