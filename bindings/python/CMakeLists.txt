@@ -27,7 +27,7 @@ set_target_properties(pybind11_hde PROPERTIES
 
 # Output package is:
 #
-# bipedal_locomotion
+# hde
 # |-- __init__.py (generated from main bindings CMake file)
 # `-- bindings.<cpython_extension>
 
