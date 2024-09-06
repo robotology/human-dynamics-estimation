@@ -7,6 +7,7 @@
         <param name="filexml_option">ftc_yarp_only.xml</param>
         <param name="ft_client_prefix">/IFrameTransformToIWear/tf</param>
         <param name="local_rpc">/IFrameTransformToIWear/tf/local_rpc</param>
+        <param name="ftc_storage_timeout">1.0</param>
     </device>
 
     <device type="iframetransform_to_iwear" name="IFrameTransformToIWear">
@@ -99,7 +100,8 @@
                                  "torso_yaw",
                                  "neck_pitch",
                                  "neck_roll",
-                                 "neck_yaw")
+                                 "neck_yaw",
+				 "camera_tilt")
         </param>
         <group name="MEASUREMENT_TO_LINK_TRANSFORMS">
             <param name="target_LeftHand">(-1.0   0.0  0.0  0.0
@@ -146,14 +148,15 @@
         <!-- Custom joint Configuration constraints-->
         <!-- if the boudary value is inf, I will use -1000.0 rad, or +1000.0 rad-->
             <param name="custom_constraint_variables">(
-             l_shoulder_roll, r_shoulder_roll)</param>
+             l_shoulder_roll, r_shoulder_roll, camera_tilt)</param>
             <param name="custom_constraint_matrix"> (
-            (1.0, 0.0),
-            (0.0, 1.0))</param>
+            (1.0, 0.0, 0.0),
+            (0.0, 1.0, 0.0),
+	    (0.0, 0.0, 1.0))</param>
             <param name="custom_constraint_lower_bound"> (
-            -100.0, -100.0)</param>
+            -100.0, -100.0, -0.1)</param>
             <param name="custom_constraint_upper_bound"> (
-             1.4, 1.4)</param>
+             1.4, 1.4, 0.1)</param>
             <param name="k_u">0.5</param>
             <param name="k_l">0.5</param>
         </group>
