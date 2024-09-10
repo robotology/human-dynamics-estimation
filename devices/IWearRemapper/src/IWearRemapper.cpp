@@ -268,6 +268,13 @@ bool IWearRemapper::open(yarp::os::Searchable& config)
             // ================
             yDebug() << logPrefix << "Opening input ports";
 
+            // Initialize the network
+            pImpl->network = yarp::os::Network();
+            if (!yarp::os::Network::initialized() || !yarp::os::Network::checkNetwork(5.0)) {
+                yError() << logPrefix << "YARP server wasn't found active.";
+                return false;
+            }
+
             for (unsigned i = 0; i < inputDataPortsNamesList->size(); ++i) {
                 if (!yarp::os::Network::connect(inputDataPortsNamesVector[i],
                                                 pImpl->inputPortsWearData[i]->getName(),
@@ -276,13 +283,6 @@ bool IWearRemapper::open(yarp::os::Searchable& config)
                             << " with " << pImpl->inputPortsWearData[i]->getName();
                     return false;
                 }
-            }
-
-            // Initialize the network
-            pImpl->network = yarp::os::Network();
-            if (!yarp::os::Network::initialized() || !yarp::os::Network::checkNetwork(5.0)) {
-                yError() << logPrefix << "YARP server wasn't found active.";
-                return false;
             }
 
             // If it not necessary to wait for the attachAll start the callbacks
