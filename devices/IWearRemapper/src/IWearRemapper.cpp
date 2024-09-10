@@ -36,7 +36,7 @@ public:
     bool firstRun = true;
     bool terminationCall = false;
     bool inputDataPorts = false;
-    
+
     bool allowDynamicData = true;
 
     // Flag to wait for first data received
@@ -148,7 +148,7 @@ IWearRemapper::~IWearRemapper() = default;
 bool IWearRemapper::open(yarp::os::Searchable& config)
 {
     // =====================
-    // CHECK THE INPUT PORTS 
+    // CHECK THE INPUT PORTS
     // =====================
 
     // wait for attachAll
@@ -169,7 +169,7 @@ bool IWearRemapper::open(yarp::os::Searchable& config)
         pImpl->allowDynamicData = config.find("allowDynamicData").asBool();
     }
     yInfo() << logPrefix << "Using allowDynamicData parameter:"<<pImpl->allowDynamicData;
-    
+
     pImpl->inputDataPorts = config.check("wearableDataPorts");
 
     if (pImpl->inputDataPorts) {
@@ -183,7 +183,7 @@ bool IWearRemapper::open(yarp::os::Searchable& config)
         yarp::os::Bottle* inputDataPortsNamesList = config.find("wearableDataPorts").asList();
 
         if (inputDataPortsNamesList->size() == 0) {
-            pImpl->inputDataPorts = false; 
+            pImpl->inputDataPorts = false;
         }
         else {
             for (unsigned i = 0; i < inputDataPortsNamesList->size(); ++i) {
@@ -260,10 +260,10 @@ bool IWearRemapper::open(yarp::os::Searchable& config)
             if (!pImpl->waitForAttachAll) {
                 start();
             }
-        
+
         }
     }
-    
+
 
     yDebug() << logPrefix << "Opened correctly";
     return true;
@@ -311,7 +311,7 @@ bool IWearRemapper::impl::updateData(msg::WearableData& receivedWearData, bool c
         // ====================
         // EXPOSE THE INTERFACE
         // ====================
-        
+
         auto isensor = getOrCreateSensor<const sensor::IAccelerometer, sensor::impl::Accelerometer>(
                             inputSensorName, sensor::SensorType::Accelerometer, accelerometers, create);
 
@@ -751,7 +751,7 @@ void IWearRemapper::onRead(msg::WearableData& wearData, const yarp::os::TypedRea
                     allRead = false;
                 }
             }
-            
+
             if(allRead)
             {
                 pImpl->firstRun = false;
@@ -985,7 +985,7 @@ IWearRemapper::getSensors(const sensor::SensorType type) const
     {
         pImpl->mutex.lock();
     }
-    
+
     switch (type) {
         case sensor::SensorType::Accelerometer:
             for (const auto& s : pImpl->accelerometers) {
