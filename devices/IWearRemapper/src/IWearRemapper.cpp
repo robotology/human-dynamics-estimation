@@ -188,8 +188,38 @@ bool IWearRemapper::open(yarp::os::Searchable& config)
         else {
             for (unsigned i = 0; i < inputDataPortsNamesList->size(); ++i) {
                 if (!inputDataPortsNamesList->get(i).isString()) {
-                    yError() << logPrefix << "ith entry of wearableDataPorts list is not a string";
+                    yError() << logPrefix << i << "th entry of wearableDataPorts list is not a string";
                     return false;
+                }
+            }
+
+            std::vector<std::string> localNames;
+            if (config.check("wearableDataLocals")) {
+                if (!config.find("wearableDataLocals").isList()) {
+                    yError() << logPrefix << "wearableDataLocals option found, but it is not a list.";
+                    return false;
+                }
+                yarp::os::Bottle* localDataPortsNamesList =
+                    config.find("wearableDataLocals").asList();
+                if (localDataPortsNamesList->size() != inputDataPortsNamesList->size()) {
+                    yError() << logPrefix
+                             << "wearableDataLocals and wearableDataPorts have different sizes.";
+                    return false;
+                }
+                for (unsigned i = 0; i < localDataPortsNamesList->size(); ++i) {
+                    if (!localDataPortsNamesList->get(i).isString()) {
+                        yError() << logPrefix << i
+                                 << "th entry of wearableDataLocals list is not a string.";
+                        return false;
+                    }
+                    localNames.push_back(localDataPortsNamesList->get(i).asString());
+                }
+            }
+            else {
+                yInfo() << logPrefix
+                        << "wearableDataLocals option not found, using temporary port names for the local ports.";
+                for (unsigned i = 0; i < inputDataPortsNamesList->size(); ++i) {
+                    localNames.push_back("..."); // use temporary port names
                 }
             }
 
@@ -222,11 +252,11 @@ bool IWearRemapper::open(yarp::os::Searchable& config)
             // ==========================
             yDebug() << logPrefix << "Configuring input data ports";
 
-            for (unsigned i = 0; i < config.find("wearableDataPorts").asList()->size(); ++i) {
+            for (unsigned i = 0; i < inputDataPortsNamesList->size(); ++i) {
                 pImpl->inputPortsWearData.emplace_back(new yarp::os::BufferedPort<msg::WearableData>());
                 pImpl->inputPortsWearData.back()->useCallback(*this);
 
-                if (!pImpl->inputPortsWearData.back()->open("...")) {
+                if (!pImpl->inputPortsWearData.back()->open(localNames[i])) {
                     yError() << logPrefix << "Failed to open local input port";
                     return false;
                 }
@@ -238,7 +268,7 @@ bool IWearRemapper::open(yarp::os::Searchable& config)
             // ================
             yDebug() << logPrefix << "Opening input ports";
 
-            for (unsigned i = 0; i < config.find("wearableDataPorts").asList()->size(); ++i) {
+            for (unsigned i = 0; i < inputDataPortsNamesList->size(); ++i) {
                 if (!yarp::os::Network::connect(inputDataPortsNamesVector[i],
                                                 pImpl->inputPortsWearData[i]->getName(),
                                                 carrier)) {
