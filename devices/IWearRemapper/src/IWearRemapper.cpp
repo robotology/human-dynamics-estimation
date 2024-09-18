@@ -36,7 +36,7 @@ public:
     bool firstRun = true;
     bool terminationCall = false;
     bool inputDataPorts = false;
-    
+
     bool allowDynamicData = true;
 
     // Flag to wait for first data received
@@ -148,7 +148,7 @@ IWearRemapper::~IWearRemapper() = default;
 bool IWearRemapper::open(yarp::os::Searchable& config)
 {
     // =====================
-    // CHECK THE INPUT PORTS 
+    // CHECK THE INPUT PORTS
     // =====================
 
     // wait for attachAll
@@ -169,7 +169,7 @@ bool IWearRemapper::open(yarp::os::Searchable& config)
         pImpl->allowDynamicData = config.find("allowDynamicData").asBool();
     }
     yInfo() << logPrefix << "Using allowDynamicData parameter:"<<pImpl->allowDynamicData;
-    
+
     pImpl->inputDataPorts = config.check("wearableDataPorts");
 
     if (pImpl->inputDataPorts) {
@@ -183,13 +183,43 @@ bool IWearRemapper::open(yarp::os::Searchable& config)
         yarp::os::Bottle* inputDataPortsNamesList = config.find("wearableDataPorts").asList();
 
         if (inputDataPortsNamesList->size() == 0) {
-            pImpl->inputDataPorts = false; 
+            pImpl->inputDataPorts = false;
         }
         else {
             for (unsigned i = 0; i < inputDataPortsNamesList->size(); ++i) {
                 if (!inputDataPortsNamesList->get(i).isString()) {
-                    yError() << logPrefix << "ith entry of wearableDataPorts list is not a string";
+                    yError() << logPrefix << i << "th entry of wearableDataPorts list is not a string";
                     return false;
+                }
+            }
+
+            std::vector<std::string> localNames;
+            if (config.check("wearableDataLocals")) {
+                if (!config.find("wearableDataLocals").isList()) {
+                    yError() << logPrefix << "wearableDataLocals option found, but it is not a list.";
+                    return false;
+                }
+                yarp::os::Bottle* localDataPortsNamesList =
+                    config.find("wearableDataLocals").asList();
+                if (localDataPortsNamesList->size() != inputDataPortsNamesList->size()) {
+                    yError() << logPrefix
+                             << "wearableDataLocals and wearableDataPorts have different sizes.";
+                    return false;
+                }
+                for (unsigned i = 0; i < localDataPortsNamesList->size(); ++i) {
+                    if (!localDataPortsNamesList->get(i).isString()) {
+                        yError() << logPrefix << i
+                                 << "th entry of wearableDataLocals list is not a string.";
+                        return false;
+                    }
+                    localNames.push_back(localDataPortsNamesList->get(i).asString());
+                }
+            }
+            else {
+                yInfo() << logPrefix
+                        << "wearableDataLocals option not found, using temporary port names for the local ports.";
+                for (unsigned i = 0; i < inputDataPortsNamesList->size(); ++i) {
+                    localNames.push_back("..."); // use temporary port names
                 }
             }
 
@@ -222,11 +252,11 @@ bool IWearRemapper::open(yarp::os::Searchable& config)
             // ==========================
             yDebug() << logPrefix << "Configuring input data ports";
 
-            for (unsigned i = 0; i < config.find("wearableDataPorts").asList()->size(); ++i) {
+            for (unsigned i = 0; i < inputDataPortsNamesList->size(); ++i) {
                 pImpl->inputPortsWearData.emplace_back(new yarp::os::BufferedPort<msg::WearableData>());
                 pImpl->inputPortsWearData.back()->useCallback(*this);
 
-                if (!pImpl->inputPortsWearData.back()->open("...")) {
+                if (!pImpl->inputPortsWearData.back()->open(localNames[i])) {
                     yError() << logPrefix << "Failed to open local input port";
                     return false;
                 }
@@ -238,7 +268,14 @@ bool IWearRemapper::open(yarp::os::Searchable& config)
             // ================
             yDebug() << logPrefix << "Opening input ports";
 
-            for (unsigned i = 0; i < config.find("wearableDataPorts").asList()->size(); ++i) {
+            // Initialize the network
+            pImpl->network = yarp::os::Network();
+            if (!yarp::os::Network::initialized() || !yarp::os::Network::checkNetwork(5.0)) {
+                yError() << logPrefix << "YARP server wasn't found active.";
+                return false;
+            }
+
+            for (unsigned i = 0; i < inputDataPortsNamesList->size(); ++i) {
                 if (!yarp::os::Network::connect(inputDataPortsNamesVector[i],
                                                 pImpl->inputPortsWearData[i]->getName(),
                                                 carrier)) {
@@ -248,22 +285,15 @@ bool IWearRemapper::open(yarp::os::Searchable& config)
                 }
             }
 
-            // Initialize the network
-            pImpl->network = yarp::os::Network();
-            if (!yarp::os::Network::initialized() || !yarp::os::Network::checkNetwork(5.0)) {
-                yError() << logPrefix << "YARP server wasn't found active.";
-                return false;
-            }
-
             // If it not necessary to wait for the attachAll start the callbacks
             // We use callbacks on the input ports, the loop is a no-op
             if (!pImpl->waitForAttachAll) {
                 start();
             }
-        
+
         }
     }
-    
+
 
     yDebug() << logPrefix << "Opened correctly";
     return true;
@@ -311,7 +341,7 @@ bool IWearRemapper::impl::updateData(msg::WearableData& receivedWearData, bool c
         // ====================
         // EXPOSE THE INTERFACE
         // ====================
-        
+
         auto isensor = getOrCreateSensor<const sensor::IAccelerometer, sensor::impl::Accelerometer>(
                             inputSensorName, sensor::SensorType::Accelerometer, accelerometers, create);
 
@@ -751,7 +781,7 @@ void IWearRemapper::onRead(msg::WearableData& wearData, const yarp::os::TypedRea
                     allRead = false;
                 }
             }
-            
+
             if(allRead)
             {
                 pImpl->firstRun = false;
@@ -985,7 +1015,7 @@ IWearRemapper::getSensors(const sensor::SensorType type) const
     {
         pImpl->mutex.lock();
     }
-    
+
     switch (type) {
         case sensor::SensorType::Accelerometer:
             for (const auto& s : pImpl->accelerometers) {
