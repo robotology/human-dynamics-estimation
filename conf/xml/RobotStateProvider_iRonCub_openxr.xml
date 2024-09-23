@@ -73,24 +73,18 @@
         <param name="dynamicalIKIntegralCorrectionGainsLinRot">(0.0 0.0)</param>
         <group name="WEARABLE_SENSOR_TARGETS">
             <param name="target_Pelvis">(root_link, TransformServer::pose::iCub_robots_base_link, orientation)</param>
-            <param name="target_RightHand">(r_hand, TransformServer::pose::vive_tracker_right_elbow_pose, pose)</param>
-            <param name="target_LeftHand">(l_hand, TransformServer::pose::vive_tracker_left_elbow_pose, pose)</param>
+            <param name="target_RightHand">(r_elbow_1, TransformServer::pose::vive_tracker_right_elbow_pose, pose)</param>
+            <param name="target_LeftHand">(l_elbow_1, TransformServer::pose::vive_tracker_left_elbow_pose, pose)</param>
             <param name="target_Head">(head, TransformServer::pose::openxr_head, pose)</param>
         </group>
         <param name="jointList">("l_shoulder_pitch",
                                  "l_shoulder_roll",
                                  "l_shoulder_yaw",
                                  "l_elbow",
-                                 "l_wrist_prosup",
-                                 "l_wrist_pitch",
-                                 "l_wrist_yaw",
                                  "r_shoulder_pitch",
                                  "r_shoulder_roll",
                                  "r_shoulder_yaw",
                                  "r_elbow",
-                                 "r_wrist_prosup",
-                                 "r_wrist_pitch",
-                                 "r_wrist_yaw",
                                  "torso_pitch",
                                  "torso_roll",
                                  "torso_yaw",
@@ -100,11 +94,11 @@
         </param>
         <group name="MEASUREMENT_TO_LINK_TRANSFORMS">
             <param name="target_LeftHand">( 0.0   0.0  1.0  0.0
-                                           -1.0   0.0  0.0 -0.1
+                                           -1.0   0.0  0.0  0.1
                                             0.0  -1.0  0.0  0.0
                                             0.0   0.0  0.0  1.0)</param>
             <param name="target_RightHand">( 0.0  0.0 -1.0  0.0
-                                             1.0  0.0  0.0 -0.1
+                                             1.0  0.0  0.0  0.1
                                              0.0 -1.0  0.0  0.0
                                              0.0  0.0  0.0  1.0)</param>
             <param name="target_Head">(-1.0  0.0  0.0  0.0
@@ -135,31 +129,25 @@
         <!-- Custom joint Configuration constraints-->
         <!-- if the boudary value is inf, I will use -1000.0 rad, or +1000.0 rad-->
             <param name="custom_constraint_variables">(
-            l_shoulder_pitch, l_shoulder_roll, l_shoulder_yaw, l_elbow, l_wrist_prosup,
-            r_shoulder_pitch, r_shoulder_roll, r_shoulder_yaw, r_elbow, r_wrist_prosup)</param>
+            l_shoulder_pitch, l_shoulder_roll, l_shoulder_yaw, r_shoulder_pitch, r_shoulder_roll, r_shoulder_yaw)</param>
             <param name="custom_constraint_matrix"> (
-            (1.7105, -1.7105,  0.0,     0.0,    0.0,    0.0,     0.0,      0.0,       0.0,    0.0),
-            (1.7105, -1.7105,  -1.7105, 0.0,    0.0,    0.0,     0.0,      0.0,       0.0,    0.0),
-            (0.0,    1.0,      1.0,     0.0,    0.0,    0.0,     0.0,      0.0,       0.0,    0.0),
-            (0.0,    1.0,      0.0427,  0.0,    0.0,    0.0,     0.0,      0.0,       0.0,    0.0),
-            (0.0,    1.0,      0.0,     0.0,    0.0,    0.0,     0.0,      0.0,       0.0,    0.0),
-            (0.0,    0.0,      0.0,     2.5,    1.0,    0.0,     0.0,      0.0,       0.0,    0.0),
-            (0.0,    0.0,      0.0,     -2.5,   1.0,    0.0,     0.0,      0.0,       0.0,    0.0),
-            (0.0,    0.0,      0.0,     0.0,    0.0,    1.7105,  -1.7105,  0.0,       0.0,    0.0),
-            (0.0,    0.0,      0.0,     0.0,    0.0,    1.7105,  -1.7105,  -1.7105,   0.0,    0.0,),
-            (0.0,    0.0,      0.0,     0.0,    0.0,    0.0,     1.0,       1.0,      0.0,    0.0,),
-            (0.0,    0.0,      0.0,     0.0,    0.0,    0.0,     1.0,       0.0427,   0.0,    0.0,),
-            (0.0,    0.0,      0.0,     0.0,    0.0,    0.0,     1.0,       0.0,      0.0,    0.0,),
-            (0.0,    0.0,      0.0,     0.0,    0.0,    0.0,     0.0,       0.0,      2.5,    1.0,),
-            (0.0,    0.0,      0.0,     0.0,    0.0,    0.0,     0.0,       0.0,      -2.5,   1.0,),
+            (1.7105, -1.7105,  0.0,     0.0,     0.0,      0.0,       ),
+            (1.7105, -1.7105,  -1.7105, 0.0,     0.0,      0.0,       ),
+            (0.0,    1.0,      1.0,     0.0,     0.0,      0.0,       ),
+            (0.0,    1.0,      0.0427,  0.0,     0.0,      0.0,       ),
+            (0.0,    1.0,      0.0,     0.0,     0.0,      0.0,       ),
+            (0.0,    0.0,      0.0,     1.7105,  -1.7105,  0.0,       ),
+            (0.0,    0.0,      0.0,     1.7105,  -1.7105,  -1.7105,   ),
+            (0.0,    0.0,      0.0,     0.0,     1.0,       1.0,      ),
+            (0.0,    0.0,      0.0,     0.0,     1.0,       0.0427,   ),
+            (0.0,    0.0,      0.0,     0.0,     1.0,       0.0,      ),
             )</param>
             <param name="custom_constraint_lower_bound"> (
-            -6.0563,  -6.3979,  -1.1623,  0.4611,  0.5,  -1000.0,  -5.2796,
-            -6.0563,  -6.3979,  -1.1623,  0.4611,  0.5,  -1000.0,  -5.2796)</param>
+            -6.0563,  -6.3979,  -1.1623,  0.4611,  0.5,
+            -6.0563,  -6.3979,  -1.1623,  0.4611,  0.5,)</param>
             <param name="custom_constraint_upper_bound"> (
-            1000.0,  1.9622,  3.7228,  1000.0,  1.7453,  5.2796,  1000.0,
-            1000.0,  1.9622,  3.7228,  1000.0,  1.7453,  5.2796,  1000.0)</param>
-            <param name="k_u">0.5</param>
+            1000.0,  1.9622,  3.7228,  1000.0,  1.7453,
+            1000.0,  1.9622,  3.7228,  1000.0,  1.7453,)</param>
             <param name="k_l">0.5</param>
         </group>
         <action phase="startup" level="5" type="attach">
