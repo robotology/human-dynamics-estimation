@@ -14,4 +14,4 @@ set (WEARABLES_XML_FILES xml/FTShoeLeftWearableDevice.xml
                    xml/applications/WearableDevices.xml)
 
 install(FILES ${WEARABLES_XML_FILES}
-             DESTINATION ${CMAKE_INSTALL_DATADIR}/${WEARABLES_PROJECT_NAME})
+             DESTINATION ${CMAKE_INSTALL_DATADIR}/HumanDynamicsEstimation)

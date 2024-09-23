@@ -28,4 +28,4 @@ yarp_install(
 
 set (WEARABLES_XML_FILES conf/iframetransform_to_iwear.xml)
 install(FILES ${WEARABLES_XML_FILES}
-        DESTINATION ${CMAKE_INSTALL_DATADIR}/${WEARABLES_PROJECT_NAME})
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/HumanDynamicsEstimation)

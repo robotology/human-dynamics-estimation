@@ -41,4 +41,4 @@ yarp_install(TARGETS HapticGlove
 
 set (WEARABLES_XML_FILES conf/HapticGlove.xml)
 install(FILES ${WEARABLES_XML_FILES}
-        DESTINATION ${CMAKE_INSTALL_DATADIR}/${WEARABLES_PROJECT_NAME})
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/HumanDynamicsEstimation)
