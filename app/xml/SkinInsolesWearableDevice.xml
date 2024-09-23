@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE robot PUBLIC "-//YARP//DTD yarprobotinterface 3.0//EN" "http://www.yarp.it/DTD/yarprobotinterfaceV3.0.dtd">
+<robot name="skininsoles_ianalogsensor_to_iwear" build=0 portprefix="">
+
+  <device name="skin_insoles" type="canBusSkin">
+      <params robot="icub" build="1">
+          <param name="canDeviceNum">0</param>
+          <param name="skinCanIds">5 6 7 8 9 10</param>
+          <param name="period">20</param>
+          <param name="canbusDevice">socketcan</param>
+      </params>
+      <params robot="icub" build="1">
+          <group name="defaultCfgBoard">
+              <param name="period">50</param>
+              <param name="skinType">0</param> <!-- 0 ==> new skin
+                                                    1 ==> palm and fingertips skin
+                                                    2 ==> old skin without temperature compensation -->
+              <param name="noLoad">0xff</param>
+              <param name="diagnostic">false</param> <!-- used to config high level -->
+          </group>
+          <group name="defaultCfgTriangle">
+              <param name="enabled">true</param>
+              <param name="shift">3</param>
+              <param name="cdcOffset">0x2200</param>
+          </group>
+      </params>
+  </device>
+
+  <device name="sole_skin_wrapper" type="skinWrapper">
+      <param name="period">20</param>
+      <param name="total_taxels">1152</param>
+      <param name="device">skinWrapper</param>
+      <paramlist name="ports">
+          <elem name="skin_insoles">0 1151 0 1151</elem>
+      </paramlist>
+
+      <action phase="startup" level="5" type="attach">
+          <paramlist name="networks">
+              <elem name="FirstSetOfSkins">skin_insoles</elem>
+          </paramlist>
+      </action>
+      <action phase="shutdown" level="5" type="detach" />
+  </device>
+
+  <device type="ianalogsensor_to_iwear" name="SkinInsolesIAnalogSensorToIWear">
+      <param name="sensorName">SkinInsolesSensor</param>
+      <param name="wearableName">SkinInsoles</param>
+      <param name="numberOfChannels">1152</param>
+      <param name="channelOffset">0</param>
+      <param name="wearableSensorType">SkinSensor</param>
+      <action phase="startup" level="5" type="attach">
+          <paramlist name="networks">
+              <elem name="SkinInsolesIAnalogSensorToIWearLabel">skin_insoles</elem>
+          </paramlist>
+      </action>
+      <action phase="shutdown" level="5" type="detach"/>
+  </device>
+
+  <device type="iwear_wrapper" name="SkinInsolesIWearWrapper">
+      <param name="period">0.01</param>
+      <param name="dataPortName">/SkinInsoles/WearableData/data:o</param>
+      <param name="rpcPortName">/SkinInsoles/WearableData/metadataRpc:o</param>
+      <action phase="startup" level="5" type="attach">
+          <paramlist name="networks">
+              <elem name="SkinInsolesIWearWrapperLabel">SkinInsolesIAnalogSensorToIWear</elem>
+          </paramlist>
+      </action>
+      <action phase="shutdown" level="5" type="detach"/>
+  </device>
+
+</robot>

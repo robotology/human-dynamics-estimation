@@ -1,199 +1,62 @@
-name: C++ CI Workflow
-
-# template derived from https://github.com/robotology/how-to-export-cpp-library/tree/master/.github/workflows 
-# and https://github.com/robotology/idyntree/blob/master/.github/workflows/ci.yml
+name: C++ CI Workflow with dependencies installed via conda
 
 on:
-    push:
-    pull_request:
-    schedule:
-    # run a cron job for a nightly build
-    # * is a special character in YAML so you have to quote this string
-    # Execute a "nightly" build at 2 AM UTC
-    - cron: '0 2 * * *'
-    
-env:
-    YCM_TAG: v0.15.3
-    YARP_TAG: v3.8.1
-    iDynTree_TAG: v12.0.0 
-    wearables_TAG: v1.7.1 
-    icub_main_TAG: v2.2.1    
-    osqp_TAG: v0.6.3
-    OsqpEigen_TAG: v0.8.1
-    matioCpp_TAG: v0.2.4
-    robometry_TAG: v1.2.1
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+  # * is a special character in YAML so you have to quote this string
+  # Execute a "nightly" build at 2 AM UTC
+  - cron:  '0 2 * * *'
 
 jobs:
-    build:
-        name: '[${{matrix.os}}@${{matrix.build_type}}]'
-        runs-on: ${{matrix.os}}
-        strategy:
-            matrix:
-                build_type: [Release]
-                os: [ubuntu-latest, windows-latest, macos-12]  
-            fail-fast: false
-                
-        steps:
-        # Clone the repository in $GITHUB_WORKSPACE
-        - uses: actions/checkout@master  
+  build:
+    name: '[${{ matrix.os }}@${{ matrix.build_type }}@conda]'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        build_type: [Release]
+        os: [ubuntu-latest, windows-2019, macOS-latest]
+      fail-fast: false
 
-        # Use mamba for Windows and macos dependencies
-        - uses: mamba-org/setup-micromamba@v1
-          if: matrix.os == 'windows-latest' || contains(matrix.os, 'macos')
-          with:
-            environment-file: ci_env.yml
-            channel-priority: true
-        
-        # Print the environment variables to simplify development and debugging
-        - name: Environment Variables
-          if: matrix.os == 'ubuntu-latest'
-          shell: bash
-          run: env
-        
-        # ============
-        # DEPENDENCIES
-        # ============
-             
-        - name: Dependencies [Ubuntu]
-          if: matrix.os == 'ubuntu-latest'
-          run: |
-            sudo apt update
-            sudo apt install git build-essential cmake libace-dev coinor-libipopt-dev  libboost-system-dev libboost-filesystem-dev \
-                             libboost-thread-dev liborocos-kdl-dev libeigen3-dev swig qtbase5-dev qtdeclarative5-dev qtmultimedia5-dev libqt5charts5-dev \
-                             libxml2-dev liburdfdom-dev libtinyxml-dev liburdfdom-dev liboctave-dev python3-dev valgrind libassimp-dev libirrlicht-dev libmatio-dev libglfw3-dev
+    steps:
+    - uses: actions/checkout@v2
 
-        - name: Source-based Dependencies [Ubuntu]
-          if: steps.cache-source-deps.outputs.cache-hit != 'true' && matrix.os == 'ubuntu-latest'
-          shell: bash
-          run: |
-            # YCM
-            cd ${GITHUB_WORKSPACE}
-            git clone -b ${YCM_TAG} https://github.com/robotology/ycm
-            cd ycm
-            mkdir -p build
-            cd build
-            cmake -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/install/deps ..
-            cmake --build . --config ${{matrix.build_type}} --target install
-             
-            # YARP
-            cd ${GITHUB_WORKSPACE}
-            git clone https://github.com/robotology/yarp
-            cd yarp
-            git checkout ${YARP_TAG}
-            mkdir -p build
-            cd build
-            cmake -DCMAKE_PREFIX_PATH=${GITHUB_WORKSPACE}/install/deps \
-                  -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/install/deps ..
-            cmake --build . --config ${{matrix.build_type}} --target install
+    - uses: mamba-org/setup-micromamba@v1
+      with:
+        environment-file: ci_env.yml
 
-            # icub-main
-            cd ${GITHUB_WORKSPACE}
-            git clone -b ${icub_main_TAG} https://github.com/robotology/icub-main
-            cd icub-main
-            mkdir -p build
-            cd build
-            cmake -DCMAKE_PREFIX_PATH=${GITHUB_WORKSPACE}/install/deps \
-                  -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/install/deps ..
-            cmake --build . --config ${{matrix.build_type}} --target install
-            
-            # iDynTree
-            cd ${GITHUB_WORKSPACE}
-            git clone https://github.com/robotology/iDynTree
-            cd iDynTree
-            git checkout ${iDynTree_TAG}
-            mkdir -p build
-            cd build
-            cmake -DCMAKE_PREFIX_PATH=${GITHUB_WORKSPACE}/install/deps \
-                  -DIDYNTREE_USES_IRRLICHT:BOOL=ON \
-                  -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/install/deps ..
-            cmake --build . --config ${{matrix.build_type}} --target install
+    - name: Configure VS Toolchain (Windows)
+      if: contains(matrix.os, 'windows')
+      uses: ilammy/msvc-dev-cmd@v1.12.1
 
-            # wearables
-            cd ${GITHUB_WORKSPACE}
-            git clone https://github.com/robotology/wearables
-            cd wearables
-            git checkout ${wearables_TAG}
-            mkdir -p build
-            cd build
-            cmake -DCMAKE_PREFIX_PATH=${GITHUB_WORKSPACE}/install/deps \
-                  -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/install/deps ..
-            cmake --build . --config ${{matrix.build_type}} --target install
+    - name: Setup compilation env variables (Windows)
+      if: contains(matrix.os, 'windows')
+      shell: bash -l {0}
+      run: |
+        bash_vc_install=${VCToolsInstallDir//\\//}
+        compiler_path=${bash_vc_install}bin/Hostx64/x64/cl.exe
+        echo "CC=${compiler_path}" >> $GITHUB_ENV
+        echo "CXX=${compiler_path}" >> $GITHUB_ENV
 
-            # osqp
-            cd ${GITHUB_WORKSPACE}
-            git clone --recursive -b ${osqp_TAG} https://github.com/oxfordcontrol/osqp
-            cd osqp
-            mkdir -p build
-            cd build
-            cmake -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/install/deps ..
-            cmake --build . --config ${{ matrix.build_type }} --target install
+    - name: Configure
+      shell: bash -l {0}
+      run: |
+        mkdir -p build
+        cd build
+        cmake -GNinja -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+              -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/install -DBUILD_TESTING:BOOL=ON \
+              -DWEARABLES_COMPILE_PYTHON_BINDINGS=ON -DHUMANSTATEPROVIDER_ENABLE_VISUALIZER:BOOL=ON \
+              -DHUMANSTATEPROVIDER_ENABLE_LOGGER:BOOL=ON ..
 
-            # OsqpEigen
-            cd ${GITHUB_WORKSPACE}
-            git clone https://github.com/robotology/osqp-eigen
-            cd osqp-eigen
-            git checkout ${OsqpEigen_TAG}
-            mkdir -p build
-            cd build
-            cmake -DCMAKE_PREFIX_PATH=${GITHUB_WORKSPACE}/install/deps \
-                  -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/install/deps ..
-            cmake --build . --config ${{matrix.build_type}} --target install
-            
-            # matioCpp
-            cd ${GITHUB_WORKSPACE}
-            git clone https://github.com/dic-iit/matio-cpp
-            cd matio-cpp
-            git checkout ${matioCpp_TAG}
-            mkdir -p build
-            cd build
-            cmake -DCMAKE_PREFIX_PATH=${GITHUB_WORKSPACE}/install/deps \
-                  -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/install/deps ..
-            cmake --build . --config ${{matrix.build_type}} --target install
-            # robometry
-            cd ${GITHUB_WORKSPACE}
-            git clone https://github.com/robotology/robometry
-            cd robometry
-            git checkout ${robometry_TAG}
-            mkdir -p build
-            cd build
-            cmake -DCMAKE_PREFIX_PATH=${GITHUB_WORKSPACE}/install/deps \
-                  -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/install/deps ..
-            cmake --build . --config ${{matrix.build_type}} --target install
-              
-        # ===================
-        # CMAKE-BASED PROJECT
-        # ===================
-        # We will just configure and build the project now. Further modifications and tests can be added
-        # Configure step
-        - name: Configure [Windows]
-          if: matrix.os == 'windows-latest'
-          shell: bash -l {0}
-          run: |
-            mkdir -p build
-            cd build
-            cmake -A x64 cmake -G"Visual Studio 17 2022" -DCMAKE_PREFIX_PATH=${GITHUB_WORKSPACE}/install/deps \
-                                                         -DCMAKE_BUILD_TYPE=${{matrix.build_type}} \
-                                                         -DHUMANSTATEPROVIDER_ENABLE_VISUALIZER:BOOL=ON \
-                                                         -DHUMANSTATEPROVIDER_ENABLE_LOGGER:BOOL=ON \
-                                                         -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/install ..
-            
-        - name: Configure [Ubuntu/macOS]
-          if: matrix.os == 'ubuntu-latest' || contains(matrix.os, 'macos')
-          shell: bash -l {0}
-          run: |
-            mkdir -p build
-            cd build
-            cmake -DCMAKE_PREFIX_PATH=${GITHUB_WORKSPACE}/install/deps \
-                  -DCMAKE_BUILD_TYPE=${{matrix.build_type}} \
-                  -DHUMANSTATEPROVIDER_ENABLE_VISUALIZER:BOOL=ON \
-                  -DHUMANSTATEPROVIDER_ENABLE_LOGGER:BOOL=ON \
-                  -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/install ..
-        
-        # Build step          
-        - name: Build
-          shell: bash
-          run: |
-            cd build
-            cmake --build . --config ${{matrix.build_type}}
-            
-                    
+    - name: Build
+      shell: bash -l {0}
+      run: |
+        cd build
+        cmake --build . --config ${{ matrix.build_type }}
+
+    - name: Test
+      shell: bash -l {0}
+      run: |
+        cd build
+        ctest  --repeat until-pass:5 --output-on-failure -C ${{ matrix.build_type }} .

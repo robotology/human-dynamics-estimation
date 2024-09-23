@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE robot PUBLIC "-//YARP//DTD yarprobotinterface 3.0//EN" "http://www.yarp.it/DTD/yarprobotinterfaceV3.0.dtd">
+<robot name="ICub">
+    <device type="icub_wearable_device" name="ICubWearableDevice">
+        <param name="urdf">model.urdf</param>
+        <param name="floatingBase">root_link</param>
+        <group name="ft-sensors">
+            <param name="leftHandWBDFTSensor">/wholeBodyDynamics/left_arm/endEffectorWrench:o</param>
+            <param name="rightHandWBDFTSensor">/wholeBodyDynamics/right_arm/endEffectorWrench:o</param>
+            <param name="LeftFootWBDFTSensor">/wholeBodyDynamics/left_foot/cartesianEndEffectorWrench:o</param>
+            <param name="rightFootWBDFTSensor">/wholeBodyDynamics/right_foot/cartesianEndEffectorWrench:o</param>
+        </group>
+        <group name="joint-sensors">
+            <param name="controlBoardsList">(head torso left_arm right_arm left_leg right_leg)</param>
+            <param name="remotePrefix">/icubSim</param>
+            <param name="localPrefix">/ICubWearableRemoteClient</param>
+        </group>
+    </device>
+
+    <device type="iwear_wrapper" name="ICubWearableDeviceWrapper">
+        <param name="period">0.01</param>
+        <param name="dataPortName">/ICub/WearableData/data:o</param>
+        <param name="rpcPortName">/ICub/WearableData/metadataRpc:o</param>
+        <action phase="startup" level="5" type="attach">
+            <paramlist name="networks">
+                <elem name="ICubWearableDeviceWrapper"> ICubWearableDevice </elem>
+            </paramlist>
+        </action>
+        <action phase="shutdown" level="5" type="detach"/>
+    </device>
+</robot>

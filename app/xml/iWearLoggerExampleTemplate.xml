@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE robot PUBLIC "-//YARP//DTD yarprobotinterface 3.0//EN" "http://www.yarp.it/DTD/yarprobotinterfaceV3.0.dtd">
+<robot name="robot-name" build=0 portprefix="">
+    <!--Producer Device -->
+    <device type="producer_name" name="ProducerDevice">
+        <!-- producer parameters go here -->
+    </device>
+    
+    <device type="iwear_logger" name="ProducerLoggerDevice">
+        <param name="period">0.01</param>
+        
+        <!--Logger level parameter to control logging to matlab/yarp/both-->
+        <!--either a text parameter or a list of , separated text parameters-->
+        <param name="LoggerType">(matlab, yarp)</param>
+
+        <param name="logAllQuantities">false</param>
+        <param name="logAccelerometers">false</param>
+        <param name="logEMGSensors">false</param>
+        <param name="logForce3DSensors">false</param>
+        <param name="logForceTorque6DSensors">true</param>
+        <param name="logFreeBodyAccelerationSensors">true</param>
+        <param name="logGyroscopes">true</param>
+        <param name="logMagnetometers">false</param>
+        <param name="logOrientationSensors">true</param>
+        <param name="logPoseSensors">false</param>
+        <param name="logPositionSensors">false</param>
+        <param name="logTemperatureSensors">false</param>
+        <param name="logTorque3DSensors">false</param>
+        <param name="logVirtualLinkKinSensors">false</param>
+        <param name="logVirtualJointKinSensors">false</param>
+        <param name="logVirtualSphericalJointKinSensors">false</param>                
+        <param name="logSkinSensors">false</param>
+        
+        <param name="saveBufferManagerConfiguration">true</param>
+        <param name="experimentName">test_iwear_logger</param>
+        <param name="path">/path/to/some/folder/</param>
+        <param name="n_samples">100000</param>
+        <param name="save_periodically">true</param>
+        <param name="save_period">120.0</param>
+        <param name="data_threshold">300</param>
+        <param name="auto_save">true</param>
+
+        <action phase="startup" level="5" type="attach">
+            <paramlist name="networks">
+            	<!-- attach the source device here -->
+                <elem name="ProducerDeviceWrapperLabel"> ProducerDevice </elem>
+            </paramlist>
+        </action>
+        <action phase="shutdown" level="5" type="detach"/>
+    </device>
+
+</robot>
+

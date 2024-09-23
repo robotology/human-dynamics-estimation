@@ -1,4 +1,5 @@
 # Changelog
+
 This file documents notable changes to this project done before November 2023. For changes after that date, please refer to the release notes of each release at https://github.com/robotology/human-dynamics-estimation/releases.
 
 ## [3.0.0] - 2023-11-09

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<robot name="ianalogsensor_to_iwear" build=0 portprefix="">
+
+<device type="fakeAnalogSensor" name="FakeAnalogSensor">
+    <param name="period">0.5</param>
+    <param name="name">fakeSensor</param>
+</device>
+
+<device type="ianalogsensor_to_iwear" name="IAnalogSensorToIWear">
+
+    <param name="sensorName">FakeSensor</param>
+    <param name="wearableName">FakeWearable</param>
+    <param name="numberOfChannels">1</param>
+    <param name="channelOffset">0</param>
+    <param name="wearableSensorType">TemperatureSensor</param>
+
+    <action phase="startup" level="5" type="attach">
+        <paramlist name="networks">
+            <elem name="IAnalogSensorToIWearLabel">FakeAnalogSensor</elem>
+        </paramlist>
+    </action>
+    <action phase="shutdown" level="5" type="detach"/>
+
+</device>
+
+<device type="iwear_wrapper" name="IWearWrapper">
+
+    <param name="period">0.01</param>
+    <param name="dataPortName">/Example/IWearWrapper/data:o</param>
+    <param name="rpcPortName">/Example/IWearWrapper/metadata:o</param>
+
+    <action phase="startup" level="5" type="attach">
+        <paramlist name="networks">
+            <elem name="IWearWrapperLabel">IAnalogSensorToIWear</elem>
+        </paramlist>
+    </action>
+    <action phase="shutdown" level="5" type="detach"/>
+
+</device>
+
+</robot>

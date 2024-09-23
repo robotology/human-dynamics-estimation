@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 find_package(YARP COMPONENTS rosmsg REQUIRED)
-find_package(IWear REQUIRED)
 find_package(iDynTree REQUIRED)
 
 yarp_prepare_plugin(xsens_tf_publisher
