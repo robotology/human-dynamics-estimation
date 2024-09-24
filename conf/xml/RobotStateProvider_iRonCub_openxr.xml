@@ -103,7 +103,7 @@
                                              0.0  0.0  0.0  1.0)</param>
             <param name="target_Head">(-1.0  0.0  0.0  0.0
                                         0.0  1.0  0.0 -0.2
-                                        0.0  0.0 -1.0  0.2
+                                        0.0  0.0 -1.0  0.0
                                         0.0  0.0  0.0  1.0)</param>
         </group>
         <group name="MEASUREMENT_POSITION_SCALE_FACTOR">
