@@ -12,7 +12,7 @@
 yarp_add_idl(WEARABLEDATA_FILES thrift/WearableData.thrift)
 
 add_library(WearableData ${WEARABLEDATA_FILES} thrift/WearableData.thrift)
-add_library(Wearable::WearableData ALIAS WearableData)
+add_library(WearableData::WearableData ALIAS WearableData)
 target_link_libraries(WearableData YARP::YARP_os)
 
 # Extract the include directory from the files names
@@ -60,7 +60,7 @@ install(FILES ${WEARABLEDATA_FILES}
 yarp_add_idl(WEARABLEACTUATORS_FILES thrift/WearableActuators.thrift)
 
 add_library(WearableActuators ${WEARABLEACTUATORS_FILES} thrift/WearableActuators.thrift)
-add_library(Wearable::WearableActuators ALIAS WearableActuators)
+add_library(WearableActuators::WearableActuators ALIAS WearableActuators)
 target_link_libraries(WearableActuators YARP::YARP_os)
 
 # Extract the include directory from the files names

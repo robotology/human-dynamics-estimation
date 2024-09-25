@@ -17,8 +17,8 @@ target_include_directories(IWearRemapper PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
 
 target_link_libraries(IWearRemapper PUBLIC
-   IWear::IWear
-    Wearable::WearableData
+    IWear::IWear
+    WearableData::WearableData
     Wearable::SensorsImpl
     YARP::YARP_dev
     YARP::YARP_os
