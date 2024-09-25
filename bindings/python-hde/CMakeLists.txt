@@ -29,6 +29,9 @@ target_link_libraries(pybind11_hde PRIVATE
 # # module, i.e. `bindings`.
 set_target_properties(pybind11_hde PROPERTIES
   LIBRARY_OUTPUT_DIRECTORY "${HDE_PYTHON_PACKAGE}"
+  ARCHIVE_OUTPUT_DIRECTORY "${HDE_PYTHON_PACKAGE}"
+  RUNTIME_OUTPUT_DIRECTORY "${HDE_PYTHON_PACKAGE}"
+  PDB_OUTPUT_DIRECTORY "${HDE_PYTHON_PACKAGE}"
   OUTPUT_NAME "bindings")
 
 # Output package is:
