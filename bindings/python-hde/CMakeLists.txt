@@ -42,7 +42,7 @@ install(TARGETS pybind11_hde DESTINATION ${PYTHON_INSTDIR})
 # Create the __init__.py file
 file(GENERATE
   OUTPUT "${HDE_PYTHON_PACKAGE}/__init__.py"
-  CONTENT "from .bindings import *${NEW_LINE}")
+  CONTENT "from .bindings import *\n")
 # Install the __init__.py file
 install(FILES "${HDE_PYTHON_PACKAGE}/__init__.py"
   DESTINATION ${PYTHON_INSTDIR})
@@ -51,16 +51,11 @@ install(FILES "${HDE_PYTHON_PACKAGE}/__init__.py"
 # and https://packaging.python.org/en/latest/specifications/core-metadata/#core-metadata
 if(HDE_PYTHON_PIP_METADATA_INSTALL)
   get_filename_component(PYTHON_METADATA_PARENT_DIR ${PYTHON_INSTDIR} DIRECTORY)
-  if(WIN32)
-    set(NEW_LINE "\n\r")
-  else()
-    set(NEW_LINE "\n")
-  endif()
   file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/METADATA "")
-  file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/METADATA "Metadata-Version: 2.1${NEW_LINE}")
-  file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/METADATA "Name: hde${NEW_LINE}")
-  file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/METADATA "Version: ${PROJECT_VERSION}${NEW_LINE}")
-  file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/INSTALLER "${HDE_PYTHON_PIP_METADATA_INSTALLER}${NEW_LINE}")
+  file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/METADATA "Metadata-Version: 2.1\n")
+  file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/METADATA "Name: hde\n")
+  file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/METADATA "Version: ${PROJECT_VERSION}\n")
+  file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/INSTALLER "${HDE_PYTHON_PIP_METADATA_INSTALLER}\n")
   install(
     FILES "${CMAKE_CURRENT_BINARY_DIR}/METADATA" "${CMAKE_CURRENT_BINARY_DIR}/INSTALLER"
     DESTINATION ${PYTHON_METADATA_PARENT_DIR}/hde-${PROJECT_VERSION}.dist-info)

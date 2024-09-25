@@ -7,8 +7,6 @@ if(HDE_COMPILE_PYTHON_BINDINGS)
 
   find_package(pybind11 2.4.3 CONFIG REQUIRED)
 
-  set(NEW_LINE "\n")
-
   option(HDE_DETECT_ACTIVE_PYTHON_SITEPACKAGES
     "Do you want HDE to detect and use the active site-package directory? (it could be a system dir)"
     FALSE)
