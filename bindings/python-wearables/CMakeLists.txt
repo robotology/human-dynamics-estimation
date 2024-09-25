@@ -39,6 +39,9 @@ set_target_properties(pybind11_wearables PROPERTIES
 
 install(TARGETS pybind11_wearables DESTINATION ${PYTHON_INSTDIR})
 
+file(GENERATE
+  OUTPUT "${WEARABLES_PYTHON_PACKAGE}/__init__.py"
+  CONTENT "from .bindings import *\n")
 # Install the __init__.py file
 install(FILES "${WEARABLES_PYTHON_PACKAGE}/__init__.py"
   DESTINATION ${PYTHON_INSTDIR})
