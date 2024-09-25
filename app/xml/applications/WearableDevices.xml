@@ -1,0 +1,50 @@
+<application>
+  <name>WearableDevices</name>
+  <description>An application for running wearable devices</description>
+
+  <!--yarprobotinterface for xsens suit wearable device-->
+  <module>
+    <name>yarprobotinterface</name>
+    <parameters>--config XsensSuitWearableDevice.xml</parameters>
+    <environment>YARP_FORWARD_LOG_ENABLE=1</environment>
+    <description>Run xsens suit wearable device</description>
+    <node>localhost</node>
+  </module>
+
+  <!--yarprobotinterface for left ftshoe wearable device-->
+  <module>
+    <name>yarprobotinterface</name>
+    <parameters>--config FTShoeLeftWearableDevice.xml</parameters>
+    <environment>YARP_FORWARD_LOG_ENABLE=1</environment>
+    <description>Run left ftshoe wearable device</description>
+    <node>localhost</node>
+  </module>
+
+  <!--yarprobotinterface for right ftshoe wearable device-->
+  <module>
+    <name>yarprobotinterface</name>
+    <parameters>--config FTShoeRightWearableDevice.xml</parameters>
+    <environment>YARP_FORWARD_LOG_ENABLE=1</environment>
+    <description>Run right ftshoe wearable device</description>
+    <node>localhost</node>
+  </module>
+
+  <!--yarprobotinterface for skin insoles wearable device-->
+  <module>
+    <name>yarprobotinterface</name>
+    <parameters>--config SkinInsolesWearableDevice.xml</parameters>
+    <environment>YARP_FORWARD_LOG_ENABLE=1</environment>
+    <description>Run skin insoles wearable device</description>
+    <node>localhost</node>
+  </module>
+
+  <!--yarprobotinterface for icub wearable device-->
+  <module>
+    <name>yarprobotinterface</name>
+    <parameters>--config ICubWearableDevice.xml</parameters>
+    <environment>YARP_FORWARD_LOG_ENABLE=1</environment>
+    <description>Run icub wearable device</description>
+    <node>localhost</node>
+  </module>
+
+</application>

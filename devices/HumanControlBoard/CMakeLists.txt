@@ -1,7 +1,6 @@
 # SPDX-FileCopyrightText: Fondazione Istituto Italiano di Tecnologia (IIT)
 # SPDX-License-Identifier: BSD-3-Clause
 
-find_package(IWear REQUIRED)
 find_package(iDynTree REQUIRED)
 
 yarp_prepare_plugin(human_control_board

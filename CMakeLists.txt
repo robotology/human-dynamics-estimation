@@ -4,7 +4,7 @@
 cmake_minimum_required(VERSION 3.5)
 project(HumanDynamicsEstimation
         LANGUAGES CXX
-        VERSION 3.1.1)
+        VERSION 4.0.0)
 
 # =====================
 # PROJECT CONFIGURATION
@@ -55,7 +55,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 # Flag to enable python bindings
 option(HDE_COMPILE_PYTHON_BINDINGS "Flag that enables building the bindings" OFF)
 
-# Plugins are force to be Shared/Dynamic Library 
+# Plugins are force to be Shared/Dynamic Library
 set(YARP_FORCE_DYNAMIC_PLUGINS ON)
 
 # Control where binaries and libraries are placed in the build folder.
@@ -74,18 +74,68 @@ if(NOT MSVC)
                               USE_LINK_PATH)
 endif()
 
+
+#Function to automatize the process of creating python bindings
+include(AddWearablesPythonModule)
+
+
+# Tweak linker flags in Linux
+if(UNIX AND NOT APPLE)
+    get_filename_component(LINKER_BIN ${CMAKE_LINKER} NAME)
+    if(${LINKER_BIN} STREQUAL "ld")
+        set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--unresolved-symbols=report-all")
+    endif()
+endif()
+
+if(WIN32)
+  #Add compile definition to suppress warning related to header <experimental/filesystem>
+  add_compile_definitions(_SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING)
+endif()
+
+# Flag to enable Paexo wearable device
+option(WEARABLES_COMPILE_PYTHON_BINDINGS "Flag that enables building the bindings" OFF)
+
+# Flag to enable XSensSuit wearable device
+find_package(XsensXME QUIET)
+option(ENABLE_XsensSuit "Flag that enables building XsensSuit wearable device" ${XsensXME_FOUND})
+if(ENABLE_XsensSuit)
+  add_subdirectory(XSensMVN)
+endif()
+
+# Flag to enable Paexo wearable device
+option(ENABLE_Paexo "Flag that enables building Paexo wearable device" OFF)
+
+# Flag to enable SenseGlove wearable device
+option(ENABLE_HapticGlove "Flag that enables building Haptic Sense Glove wearable device" OFF)
+
+# Flag to enable IWearFrameVisualizer module
+find_package(iDynTree QUIET)
+option(ENABLE_FrameVisualizer "Flag that enables building IWearFrameVisualizer module" ${iDynTree_FOUND})
+
+# Flag to enable IWearLogger device
+find_package(robometry QUIET)
+option(ENABLE_Logger "Flag that enables building Wearable Logger device" ${robometry_FOUND})
+
+# Flag to enable ICub wearable device
+option(ENABLE_ICub "Flag that enables building iCub wearable device" ${iDynTree_FOUND})
+
+
 # Add the uninstall target
 include(AddUninstallTarget)
 
 # ===================
 # PROJECT DIRECTORIES
 # ===================
+include(InstallBasicPackageFiles)
 
 yarp_configure_plugins_installation(hde)
 add_subdirectory(conf)
 add_subdirectory(msgs)
 add_subdirectory(interfaces)
+add_subdirectory(impl)
 add_subdirectory(devices)
+add_subdirectory(wrappers)
+add_subdirectory(app)
 add_subdirectory(modules)
 add_subdirectory(servers)
 add_subdirectory(clients)
@@ -93,7 +143,6 @@ add_subdirectory(publishers)
 add_subdirectory(bindings)
 add_subdirectory(HumanDynamicsEstimationLibrary)
 
-include(InstallBasicPackageFiles)
 install_basic_package_files(${PROJECT_NAME}
   VERSION ${${PROJECT_NAME}_VERSION}
   COMPATIBILITY AnyNewerVersion

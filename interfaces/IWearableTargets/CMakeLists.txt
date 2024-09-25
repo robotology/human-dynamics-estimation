@@ -4,7 +4,6 @@
 add_library(IWearableTargets INTERFACE)
 
 find_package(iDynTree REQUIRED)
-find_package(IWear REQUIRED)
 
 target_sources(IWearableTargets INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/hde/interfaces/IWearableTargets.h>

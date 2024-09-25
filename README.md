@@ -1,8 +1,10 @@
-# YARP devices for the Human Dynamics Estimation (HDE)
+# Human Dynamics Estimation (HDE)
 
-[![C++ CI Action Status](https://github.com/robotology/human-dynamics-estimation/workflows/C++%20CI%20Workflow/badge.svg)](https://github.com/robotology/human-dynamics-estimation/actions/workflows/ci.yml)
 
-Human Dynamics Estimation (HDE) is a collection of YARP devices for the online estimation of the kinematics and dynamics of a human subject monitored with a set of wearable sensors and/or interacting with a robot. A ROS-based visualizer allows to visualize in real-time the output of the estimation. The devices can be installed and run in Linux, MacOS and Windows.
+Human Dynamics Estimation (HDE) is a collection of YARP devices for the online estimation of the kinematics and dynamics of a human subject monitored with a set of wearable sensors and/or interacting with a robot. A ROS-based visualizer allows to visualize in real-time the output of the estimation. The devices can be installed and run in Linux, macOS and Windows.
+
+> !NOTE
+> Since September 2024 (release 4.0.0) the human-dynamics-estimation repo contains the software that used to be part of the https://github.com/robotology/wearables repository.
 
 
 ##  Contents
@@ -19,7 +21,7 @@ The main devices contained in this project are the following:
 - **HumanDynamicsEstimator**: solve the inverse dynamics given the kinematic state and a set of wrenches measurment.
 - **RobotPositionControl**: controls the position of a robot with a given kinematic state.
 
-The information coming from the sensors come in the form of the `IWear` [YARP interface](https://www.yarp.it/group__dev__iface.html), for more reference on how those are generated please refer to [`Wearables`](https://github.com/robotology/wearables). All the information exchanged among the HDE devices trough implmented in this project (`IHumanDynamics`, `IHumanState`, `IHumanWrench`) and can be published among a network using the coreresponding wrapper devices
+The information coming from the sensors come in the form of the `IWear` [YARP interface](https://www.yarp.it/group__dev__iface.html, contained in the `interfaces/IWear` folder. All the information exchanged among the HDE devices trough implmented in this project (`IHumanDynamics`, `IHumanState`, `IHumanWrench`) and can be published among a network using the coreresponding wrapper devices
 
 A possible architecture integrating wearable sensors and HDE is described in the following scheme: 
 <img src="misc/hde_scheme.png">
@@ -37,7 +39,6 @@ For installing the dependencies you can decide to install them individually or t
 - [**YARP**](https://github.com/robotology/yarp): a library and toolkit for communication and device interfaces.
 - [**icub-main**](https://github.com/robotology/icub-main): a library for the interaction with the iCub robot.
 - [**iDynTree**](https://github.com/robotology/idyntree): a library of robots dynamics algorithms for control, estimation and simulation.
-- [**Wearables**](https://github.com/robotology/wearables): a library for communication and interfaces with wearable sensors.
 - [**Eigen**](http://eigen.tuxfamily.org/index.php?title=Main_Page) (3.3 or later): a C++ template library for linear algebra.
 - [**IPOPT**](http://wiki.icub.org/wiki/Installing_IPOPT): a software package for large-scale nonlinear optimization.
 
@@ -45,11 +46,13 @@ For installing the dependencies you can decide to install them individually or t
 - [**ROS**](http://wiki.ros.org) with [**rviz**](http://wiki.ros.org/rviz) package: an open-source provider of libraries and tools for creating robot applications.
 - [**irrlicht**](http://irrlicht.sourceforge.net/) and [**iDynTree**](https://github.com/robotology/idyntree) compiled with `IDYNTREE_USES_IRRLICHT` enabled: visualizer for floating-base rigid-body systems.
 - [**Robometry**](https://github.com/robotology/robometry) : a telemetry suite for logging data.
+- [**pybind11**](https://github.com/pybind/pybind11): if present, the user can enable `HDE_COMPILE_PYTHON_BINDINGS` to enable the compilation of the python bindings.
 
 ## How to install
 After installing all the dependencies, you can install the HDE project:
+
 ```bash
-git clone https://github.com/robotology-playground/human-dynamics-estimation.git
+git clone https://github.com/robotology/human-dynamics-estimation.git
 mkdir build
 cd build
 ```
@@ -61,6 +64,10 @@ where the `name-of-your-cmake-generator` is your project generator, see [Cmake-G
 You can configure the following optional cmake options:
 - `HUMANSTATEPROVIDER_ENABLE_VISUALIZER`: enables the `irricht`-based iDynTree Visualizer.
 - `HUMANSTATEPROVIDER_ENABLE_LOGGER`: enables the `robometry`-based data logger.
+- `ENABLE_FrameVisualizer`: enable the compilation of the `IWearFrameVisualizer` module that allows to visualize wearble inertial measurements.
+- `ENABLE_Logger`: enable the compilation of the `IWearLogger` device that allows to save wearable data as `.mat` or stream the data on YARP as analog vector data.
+- `ENABLE_<device>`: enable the compilation of the optional wearable device (see documentation in [Wearable device sources](#wearable-device-sources)).
+
 
 Then, for compiling
 ```bash
@@ -70,6 +77,20 @@ and installing
 ```bash
 cmake --build . --config Release --target install
 ```
+
+## Wearable device sources
+Wearable devices contained in [`/devices/`](/devices) are [YARP devices](http://www.yarp.it/git-master/note_devices.html) that exposes sensors data using `IWear` interface. List of the dependencies and documentation for running some of the wearable data sources can be found at the links in the table below. The compilation of some of theese devices can be enable/disabled changing the CMAKE option `ENABLE_<device>`.
+
+| Device Name | Description | OS | Dependencies| Documentation |
+|---------------|------|---------------|----------------------------------------------------------|------|
+| IAnalogSensor | Exposes YARP [`IAnalogSensor` Interface](http://www.yarp.it/git-master/classyarp_1_1dev_1_1IAnalogSensor.html). |  Linux/MacOS/Windows  | - |  - |
+| FTShoes | Exposes YARP [`ftShoe`](https://github.com/robotology/forcetorque-yarp-devices/tree/master/ftShoe) data. |  Linux/MacOS/Windows   | [`forcetorque-yarp-devices`](https://github.com/robotology/forcetorque-yarp-devices) | [:books:](/doc/How-to-run-FTshoes.md) |
+| XsensSuit | Exposes [`XsensSuit`](https://www.xsens.com/motion-capture) data. |  Windows   | xsens MVN SDK 2018.0.3 | [:books:](/doc/How-to-run-XsensSuit.md) |
+| ICub | Exposes [iCub](https://icub.iit.it/) robot data. |  Linux/MacOS/Windows   | [`iDynTree`](https://github.com/robotology/idyntree) | [:books:](/doc/How-to-run-iCub-as-wearable-source.md) |
+| Paexo | Exposes [Paexo](https://paexo.com/?lang=en) data. |  Linux  | `iFeelDriver` (Contact the maintainer for more details) | - |
+| HapticGlove | Exposes [SenseGlove](https://www.senseglove.com/product/developers-kit/) data. |  Linux/Windows  | [`SenseGloveSDK`](https://github.com/Adjuvo/SenseGlove-API) | [:books:](./doc/How-to-compile-and-run-HapticGlove.md) |
+| IFrameTransform | Exposes YARP [`IFrameTransform` Interface](http://www.yarp.it/git-master/classyarp_1_1dev_1_1IFrameTransform.html). |  Linux/MacOS/Windows  | - |  - |
+
 
 ## Applications
 The code contained in this repository can serve different application. Depending on the type of application, a different set of hardware and sensors are required. In addiction, since the applications are based on [wearables devices](https://github.com/robotology/wearables), a certain number of wearable devices should be running providing the source sensor data.
@@ -148,4 +169,6 @@ The development is also supported by the [Istituto Italiano di Tecnologia](http:
 
 ## Mantainers
 
-* Lorenzo Rapetti ([@lrapetti](https://github.com/lrapetti))
+* Silvio Traversaro ([@traversaro](https://github.com/traversaro))
+* Stefano Dafarra ([@S-Dafarra](https://github.com/S-Dafarra))
+* Dario Sortino ([@dariosortino](https://github.com/dariosortino))

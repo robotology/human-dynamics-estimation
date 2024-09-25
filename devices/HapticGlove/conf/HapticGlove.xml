@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE robot PUBLIC "-//YARP//DTD yarprobotinterface 3.0//EN" "http://www.yarp.it/DTD/yarprobotinterfaceV3.0.dtd">
+<robot name="SenseGloveWearableDevice" build=0 portprefix="">
+<!--Following the example in https://github.com/robotology/robots-configuration/blob/devel/experimentalSetups/battery/hardware/battery/icubbattery.xml-->
+
+    <!--Left HapticGlove Device-->
+    <device type="hapticGlove" name="LeftHapticGloveWearableDevice">
+        <param extern-name="period" name="period">0.01</param>
+        <param name="rightHand">false</param>
+        <param name="human_joint_list">( "l_thumb_oppose", "l_thumb_proximal", "l_thumb_middle", "l_thumb_distal",
+                                         "l_index_abduction", "l_index_proximal", "l_index_middle", "l_index_distal",
+                                         "l_middle_abduction", "l_middle_proximal", "l_middle_middle", "l_middle_distal",
+                                         "l_ring_abduction", "l_ring_proximal",   "l_ring_middle",   "l_ring_distal",
+                                         "l_pinky_abduction", "l_pinky_proximal",   "l_pinky_middle",   "l_pinky_distal" ) </param>
+        <param name="human_finger_list">( "l_thumb_finger", "l_index_finger", "l_middle_finger", "l_ring_finger", "l_little_finger" ) </param>
+        <param name="hand_link">l_hand</param>
+    </device>
+
+    <device type="iwear_wrapper" name="LeftHapticGloveWearableDeviceWrapper">
+        <param extern-name="period" name="period">0.1</param>
+        <param name="dataPortName">/WearableData/HapticGlove/LeftHand/data:o</param>
+        <param name="rpcPortName">/WearableData/HapticGlove/LeftHand/metadataRpc:o</param>
+        <action phase="startup" level="5" type="attach">
+            <paramlist name="networks">
+                <elem name="HapticGloveWearableDeviceWrapperLabel"> LeftHapticGloveWearableDevice </elem>
+            </paramlist>
+        </action>
+        <action phase="shutdown" level="4" type="detach"/>
+    </device>
+
+    <device type="iwearactuators_wrapper" name="LeftHapticGloveWearableDeviceActuatorsWrapper">
+        <param extern-name="period" name="period">0.1</param>
+        <param name="gloveActuatorCommandInputPortName">/WearableData/HapticGlove/LeftHand/Actuators/input:i</param>
+        <action phase="startup" level="5" type="attach">
+            <paramlist name="networks">
+                <elem name="HapticGloveWearableDeviceActuatorWrapperLabel"> LeftHapticGloveWearableDevice </elem>
+            </paramlist>
+        </action>
+        <action phase="shutdown" level="4" type="detach"/>
+    </device>
+
+    <!--Right HapticGlove Device-->
+    <device type="hapticGlove" name="RightHapticGloveWearableDevice">
+        <param extern-name="period" name="period">0.01</param>
+        <param name="rightHand">true</param>
+        <param name="human_joint_list">( "r_thumb_oppose", "r_thumb_proximal", "r_thumb_middle", "r_thumb_distal",
+                                     "r_index_abduction", "r_index_proximal", "r_index_middle", "r_index_distal",
+                                     "r_middle_abduction", "r_middle_proximal", "r_middle_middle", "r_middle_distal",
+                                     "r_ring_abduction", "r_ring_proximal",   "r_ring_middle",   "r_ring_distal",
+                                     "r_pinky_abduction", "r_pinky_proximal",   "r_pinky_middle",   "r_pinky_distal" ) </param>
+        <param name="human_finger_list">( "r_thumb_finger", "r_index_finger", "r_middle_finger", "r_ring_finger", "r_little_finger" ) </param>
+        <param name="hand_link">r_hand</param>
+    </device>
+
+    <device type="iwear_wrapper" name="RightHapticGloveWearableDeviceWrapper">
+        <param extern-name="period" name="period">0.1</param>
+        <param name="dataPortName">/WearableData/HapticGlove/RightHand/data:o</param>
+        <param name="rpcPortName">/WearableData/HapticGlove/RightHand/metadataRpc:o</param>
+        <action phase="startup" level="5" type="attach">
+            <paramlist name="networks">
+                <elem name="HapticGloveWearableDeviceWrapperLabel"> RightHapticGloveWearableDevice </elem>
+            </paramlist>
+        </action>
+        <action phase="shutdown" level="4" type="detach"/>
+    </device>
+
+    <device type="iwearactuators_wrapper" name="RightHapticGloveWearableDeviceActuatorsWrapper">
+        <param extern-name="period" name="period">0.1</param>
+        <param name="gloveActuatorCommandInputPortName">/WearableData/HapticGlove/RightHand/Actuators/input:i</param>
+        <action phase="startup" level="5" type="attach">
+            <paramlist name="networks">
+                <elem name="HapticGloveWearableDeviceActuatorWrapperLabel"> RightHapticGloveWearableDevice </elem>
+            </paramlist>
+        </action>
+        <action phase="shutdown" level="4" type="detach"/>
+    </device>
+
+</robot>

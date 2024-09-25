@@ -5,4 +5,17 @@ build*
 *.txt.user*
 *.vscode*
 .vs/
+build/
+build*/
+install/
+CMakeLists.txt.*
+.DS_Store
+*.bak
+*.orig
+*.autosave
+*.original
+*.*~
+.vscode/c_cpp_properties.json
+.vscode/settings.json
+.vs/*
 CMakeSettings.json

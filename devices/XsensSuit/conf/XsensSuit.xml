@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<robot name="xsens-suit">
+    <device type="XsensSuit" name="XsensSuit">
+        <!-- Folder where XsensMVN runtime dependencies are stored -->
+        <param name="xsens-rundeps-dir">"C:\Program Files\Xsens\MVN SDK 2018.0.3\SDK Files\rundeps"</param>
+        <!-- XsensSuit configuration to be used. Available values are:-->
+        <!-- FullBody -  FullBodyNoSternum - FullBodyNoHands - FullBodyNoSternumNoHands -->
+        <!-- LowerBody - UpperBody - UpperBodyNoSternum - UpperBodyNoHands - UpperBodyNoSternumNoHands -->
+        <!-- FullBodyNoShoulders - SingleDevice - PelvisSternum - LowerBodyPlus -->
+        <param name="suit-config">FullBody</param>
+        <!-- Acquisition scenario to be used - it influences how the contacts are used to prevent drifts. Available values are:-->
+        <!-- default- singleLevel - multiLevel - noLevel - softFloor -->
+        <param name="acquisition-scenario">singleLevel</param>
+        <!-- Calibration type to be used as fallback. Available values are:-->
+        <!-- NposeWalk - TposeWalk - Npose - Tpose-->
+        <param name="default-calibration-type">Npose</param>
+        <!-- Minimum calibration quality to be considered good enought to be applied and allow the acquisition to start. Available values are: -->
+        <!-- Poor - Acceptable -- Good -->
+        <param name="minumum-calibration-quality-required">acceptable</param>
+        <!-- Maximum Time [s] to scan for the suit. Set to -1 enables endless scan-->
+        <param name="scan-timeout">60</param>
+        <!-- Sampling rate [Hz]. Available values are:-->
+        <!-- 240 - 120 - 80 - 60 -->
+        <param name="sampling-rate">120</param>
+		<!-- Subject=specific body dimensions -->
+    <group name="body-dimensions">
+            <param name="ankleHeight">0.07</param>
+            <param name="armSpan">1.71</param>
+            <param name="bodyHeight">1.71</param>
+            <param name="footSize">0.26</param>
+            <param name="hipHeight">0.87</param>
+            <param name="hipWidth">0.25</param>
+            <param name="kneeHeight">0.50</param>
+            <param name="shoulderWidth">0.34</param>
+            <param name="shoeSoleHeight">0.02</param>
+    </group>
+    <!-- Quantities to be extracted from the driver for each time sample -->
+    </group name="output-stream-configuration">
+      <param name="enable-joint-data">false</param>
+      <param name="enable-link-data">true</param>
+      <param name="enable-sensor-data">true</param>
+    </device>
+</robot> 

@@ -3,15 +3,15 @@ channels:
   - conda-forge
   - robotology
 dependencies:
-  - cmake 
+  - cmake
   - compilers
-  - make 
+  - make
   - ninja
-  - pkg-config 
+  - pkg-config
+  - pybind11
   - yarp
-  - icub-main 
-  - wearables 
-  - idyntree 
-  - libmatio-cpp 
-  - robometry 
+  - icub-main
+  - idyntree
+  - libmatio-cpp
+  - robometry
   - osqp-eigen
