@@ -43,9 +43,7 @@ set_target_properties(pybind11_hde PROPERTIES
 install(TARGETS pybind11_hde DESTINATION ${PYTHON_INSTDIR})
 
 # Create the __init__.py file
-file(GENERATE
-  OUTPUT "${HDE_PYTHON_PACKAGE}/__init__.py"
-  CONTENT "from .bindings import *\n")
+hde_generate_init_py_file("${HDE_PYTHON_PACKAGE}" "${PYTHON_INSTDIR}")
 # Install the __init__.py file
 install(FILES "${HDE_PYTHON_PACKAGE}/__init__.py"
   DESTINATION ${PYTHON_INSTDIR})

@@ -35,6 +35,31 @@ if(HDE_COMPILE_PYTHON_BINDINGS)
     "Do you want HDE to detect and use the active site-package directory? (it could be a system dir)"
     FALSE)
 
+  # Function to generate __init__.py file for both hde and wearables
+  # It contains logic to ensure that it works fine on Windows when installing in arbitrary folders,
+  # See https://docs.python.org/3.8/library/os.html#os.add_dll_directory
+  function(hde_generate_init_py_file GENERATION_LOCATION_OF_INIT_PY_FILE INSTALLATION_LOCATION_OF_INIT_PY_FILE)
+    file(WRITE ${GENERATION_LOCATION_OF_INIT_PY_FILE}/__init__.py "")
+    if(WIN32 AND BUILD_SHARED_LIBS)
+        if(IS_ABSOLUTE ${INSTALLATION_LOCATION_OF_INIT_PY_FILE})
+            set(PYTHON_FULL_INSTDIR "${INSTALLATION_LOCATION_OF_INIT_PY_FILE}")
+        else()
+            set(PYTHON_FULL_INSTDIR "${CMAKE_INSTALL_PREFIX}/${INSTALLATION_LOCATION_OF_INIT_PY_FILE}")
+        endif()
+        file(RELATIVE_PATH RELATIVE_PATH_BETWEEN_INIT_PY_AND_DLL_DIRECTORY ${PYTHON_FULL_INSTDIR} ${CMAKE_INSTALL_FULL_BINDIR})
+        file(APPEND ${GENERATION_LOCATION_OF_INIT_PY_FILE}/__init__.py "import os\n")
+        file(APPEND ${GENERATION_LOCATION_OF_INIT_PY_FILE}/__init__.py "library_dll_path = os.path.join(os.path.dirname(__file__),'${RELATIVE_PATH_BETWEEN_INIT_PY_AND_DLL_DIRECTORY}')\n")
+        file(APPEND ${GENERATION_LOCATION_OF_INIT_PY_FILE}/__init__.py "# Avoid to call add_dll_directory if not necessary,\n")
+        file(APPEND ${GENERATION_LOCATION_OF_INIT_PY_FILE}/__init__.py "# for example if the library to find are already found in the proper location in a conda\n")
+        file(APPEND ${GENERATION_LOCATION_OF_INIT_PY_FILE}/__init__.py "if(library_dll_path != os.path.join(os.environ.get('CONDA_PREFIX', ''),'Library','bin') and library_dll_path != os.path.join(os.environ.get('CONDA_PREFIX', ''),'bin')):\n")
+        file(APPEND ${GENERATION_LOCATION_OF_INIT_PY_FILE}/__init__.py "    if(os.path.exists(library_dll_path)):\n")
+        file(APPEND ${GENERATION_LOCATION_OF_INIT_PY_FILE}/__init__.py "        os.add_dll_directory(library_dll_path)$\n")
+        file(APPEND ${GENERATION_LOCATION_OF_INIT_PY_FILE}/__init__.py "\n")
+    endif()
+
+    file(APPEND ${GENERATION_LOCATION_OF_INIT_PY_FILE}/__init__.py "from .bindings import *\n")
+  endfunction()
+
   # Install the resulting Python package for the active interpreter
   if(NOT DEFINED HDE_PYTHON_INSTALL_DIR)
     if(HDE_DETECT_ACTIVE_PYTHON_SITEPACKAGES)
