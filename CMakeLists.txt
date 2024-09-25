@@ -36,7 +36,6 @@ find_package(YCM REQUIRED)
 # Import cmake utilities
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 include(AddWarningsConfigurationToTarget)
-include(AddHDEPythonModule)
 
 # To build shared libraries in Windows, we set CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS to TRUE
 # See https://cmake.org/cmake/help/v3.4/variable/CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS.html
@@ -73,11 +72,6 @@ if(NOT MSVC)
                               DEPENDS HDE_ENABLE_RPATH
                               USE_LINK_PATH)
 endif()
-
-
-#Function to automatize the process of creating python bindings
-include(AddWearablesPythonModule)
-
 
 # Tweak linker flags in Linux
 if(UNIX AND NOT APPLE)
