@@ -42,9 +42,7 @@ set_target_properties(pybind11_wearables PROPERTIES
 
 install(TARGETS pybind11_wearables DESTINATION ${PYTHON_INSTDIR})
 
-file(GENERATE
-  OUTPUT "${WEARABLES_PYTHON_PACKAGE}/__init__.py"
-  CONTENT "from .bindings import *\n")
+hde_generate_init_py_file("${WEARABLES_PYTHON_PACKAGE}" "${PYTHON_INSTDIR}")
 # Install the __init__.py file
 install(FILES "${WEARABLES_PYTHON_PACKAGE}/__init__.py"
   DESTINATION ${PYTHON_INSTDIR})
