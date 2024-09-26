@@ -70,6 +70,11 @@ jobs:
     - name: Check install
       shell: bash -l {0}
       run: |
-        cd build
+        # Test CMake packages
+        cmake-package-check IWear --targets IWear::IWear
+        cmake-package-check WearableData --targets WearableData::WearableData
+        cmake-package-check WearableActuators --targets WearableActuators::WearableActuators
+        cmake-package-check HumanDynamicsEstimation --targets HumanDynamicsEstimation::HumanStateMsg
+        # Test python packages
         python -c "import wearables"
         python -c "import hde"
