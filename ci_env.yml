@@ -15,5 +15,5 @@ dependencies:
   - idyntree
   - libmatio-cpp
   - librobometry
-  - libosqp-eigen
+  - osqp-eigen
   - cmake-package-check
