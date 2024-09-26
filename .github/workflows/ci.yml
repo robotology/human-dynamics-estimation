@@ -30,6 +30,12 @@ jobs:
       if: contains(matrix.os, 'windows')
       uses: ilammy/msvc-dev-cmd@v1.12.1
 
+    - name: Setup compilation env variables (not Windows)
+      if: contains(matrix.os, 'ubuntu') || contains(matrix.os, 'macos') 
+      shell: bash -l {0}
+      run: |
+        echo "CMAKE_INSTALL_PREFIX=${CONDA_PREFIX}" >> $GITHUB_ENV
+
     - name: Setup compilation env variables (Windows)
       if: contains(matrix.os, 'windows')
       shell: bash -l {0}
@@ -38,6 +44,7 @@ jobs:
         compiler_path=${bash_vc_install}bin/Hostx64/x64/cl.exe
         echo "CC=${compiler_path}" >> $GITHUB_ENV
         echo "CXX=${compiler_path}" >> $GITHUB_ENV
+        echo "CMAKE_INSTALL_PREFIX=${CONDA_PREFIX}\Library" >> $GITHUB_ENV
 
     - name: Configure
       shell: bash -l {0}
@@ -45,7 +52,7 @@ jobs:
         mkdir -p build
         cd build
         cmake -GNinja -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
-              -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/install -DBUILD_TESTING:BOOL=ON \
+              -DBUILD_TESTING:BOOL=ON \
               -DHDE_COMPILE_PYTHON_BINDINGS:BOOL=ON -DHUMANSTATEPROVIDER_ENABLE_VISUALIZER:BOOL=ON \
               -DHUMANSTATEPROVIDER_ENABLE_LOGGER:BOOL=ON -DHDE_DETECT_ACTIVE_PYTHON_SITEPACKAGES:BOOL=ON ..
 
@@ -70,6 +77,11 @@ jobs:
     - name: Check install
       shell: bash -l {0}
       run: |
-        cd build
+        # Test CMake packages
+        cmake-package-check IWear --targets IWear::IWear
+        cmake-package-check WearableData --targets WearableData::WearableData
+        cmake-package-check WearableActuators --targets WearableActuators::WearableActuators
+        cmake-package-check HumanDynamicsEstimation --targets HumanDynamicsEstimation::HumanStateMsg
+        # Test python packages
         python -c "import wearables"
         python -c "import hde"

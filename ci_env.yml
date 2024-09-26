@@ -8,10 +8,12 @@ dependencies:
   - make
   - ninja
   - pkg-config
+  - python
   - pybind11
   - yarp
   - icub-main
   - idyntree
   - libmatio-cpp
-  - robometry
+  - librobometry
   - osqp-eigen
+  - cmake-package-check

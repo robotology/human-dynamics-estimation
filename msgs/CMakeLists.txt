@@ -48,7 +48,8 @@ install_basic_package_files(WearableData
         VERSION ${PROJECT_VERSION}
         COMPATIBILITY AnyNewerVersion
         EXPORT WearableData
-        NO_CHECK_REQUIRED_COMPONENTS_MACRO)
+        NO_CHECK_REQUIRED_COMPONENTS_MACRO
+        DEPENDENCIES YARP)
 
 install(FILES ${WEARABLEDATA_FILES}
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/thrift)
@@ -97,7 +98,8 @@ install_basic_package_files(WearableActuators
         VERSION ${PROJECT_VERSION}
         COMPATIBILITY AnyNewerVersion
         EXPORT WearableActuators
-        NO_CHECK_REQUIRED_COMPONENTS_MACRO)
+        NO_CHECK_REQUIRED_COMPONENTS_MACRO
+        DEPENDENCIES YARP)
 
 install(FILES ${WEARABLEACTUATORS_FILES}
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/thrift)
