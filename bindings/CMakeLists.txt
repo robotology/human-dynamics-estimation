@@ -21,6 +21,8 @@ if(HDE_BINDINGS_BUILD_STANDALONE)
   find_package(WearableData REQUIRED)
   find_package(HumanDynamicsEstimation REQUIRED)
   list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake)
+  set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+  option(BUILD_SHARED_LIBS "Build libraries as shared as opposed to static" ON)
 endif()
 
 if(HDE_COMPILE_PYTHON_BINDINGS)
