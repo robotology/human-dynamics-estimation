@@ -53,7 +53,7 @@ if(HDE_COMPILE_PYTHON_BINDINGS)
         file(APPEND ${GENERATION_LOCATION_OF_INIT_PY_FILE}/__init__.py "# for example if the library to find are already found in the proper location in a conda\n")
         file(APPEND ${GENERATION_LOCATION_OF_INIT_PY_FILE}/__init__.py "if(library_dll_path != os.path.join(os.environ.get('CONDA_PREFIX', ''),'Library','bin') and library_dll_path != os.path.join(os.environ.get('CONDA_PREFIX', ''),'bin')):\n")
         file(APPEND ${GENERATION_LOCATION_OF_INIT_PY_FILE}/__init__.py "    if(os.path.exists(library_dll_path)):\n")
-        file(APPEND ${GENERATION_LOCATION_OF_INIT_PY_FILE}/__init__.py "        os.add_dll_directory(library_dll_path)$\n")
+        file(APPEND ${GENERATION_LOCATION_OF_INIT_PY_FILE}/__init__.py "        os.add_dll_directory(library_dll_path)\n")
         file(APPEND ${GENERATION_LOCATION_OF_INIT_PY_FILE}/__init__.py "\n")
     endif()
 
