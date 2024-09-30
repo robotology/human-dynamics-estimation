@@ -18,8 +18,8 @@
                                                      openxr_head
                                                      openxr_right_hand
                                                      openxr_left_hand
-                                                     vive_tracker_right_elbow_pose
-                                                     vive_tracker_left_elbow_pose)</param>
+                                                     vive_tracker_right_shoulder_pose
+                                                     vive_tracker_left_shoulder_pose)</param>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
                 <elem name="IFrameTransformToIWearLabel">TransformClient</elem>
@@ -78,8 +78,8 @@
             <param name="target_RightHand">(r_hand_palm, TransformServer::pose::openxr_right_hand, pose)</param>
             <param name="target_LeftHand">(l_hand_palm, TransformServer::pose::openxr_left_hand, pose)</param>
             <param name="target_Head">(head, TransformServer::pose::openxr_head, pose)</param>
-            <param name="target_r_upper_arm">(r_upperarm TransformServer::pose::vive_tracker_right_elbow_pose, orientation)</param>
-            <param name="target_l_upper_arm">(l_upperarm TransformServer::pose::vive_tracker_left_elbow_pose, orientation)</param>
+            <param name="target_r_upper_arm">(r_upperarm TransformServer::pose::vive_tracker_right_shoulder_pose, orientation)</param>
+            <param name="target_l_upper_arm">(l_upperarm TransformServer::pose::vive_tracker_left_shoulder_pose, orientation)</param>
         </group>
         <param name="jointList">("l_shoulder_pitch",
                                  "l_shoulder_roll",
