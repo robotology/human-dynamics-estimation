@@ -1,10 +1,10 @@
 # SPDX-FileCopyrightText: Fondazione Istituto Italiano di Tecnologia (IIT)
 # SPDX-License-Identifier: BSD-3-Clause
 
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.16)
 project(HumanDynamicsEstimation
         LANGUAGES CXX
-        VERSION 4.0.2)
+        VERSION 4.0.3)
 
 # =====================
 # PROJECT CONFIGURATION
@@ -43,11 +43,7 @@ include(AddWarningsConfigurationToTarget)
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 # Shared/Dynamic or Static library?
-if(MSVC)
-    option(BUILD_SHARED_LIBS "Build libraries as shared as opposed to static" OFF)
-else()
-    option(BUILD_SHARED_LIBS "Build libraries as shared as opposed to static" ON)
-endif()
+option(BUILD_SHARED_LIBS "Build libraries as shared as opposed to static" ON)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 

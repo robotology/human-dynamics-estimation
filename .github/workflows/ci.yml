@@ -85,3 +85,25 @@ jobs:
         # Test python packages
         python -c "import wearables"
         python -c "import hde"
+
+    - name: Test standalone build of bindings
+      shell: bash -l {0}
+      run: |
+        cd bindings
+        mkdir -p build
+        cd build
+        cmake -GNinja -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+              -DBUILD_TESTING:BOOL=ON -DBUILD_SHARED_LIBS:BOOL=ON \
+              -DHDE_DETECT_ACTIVE_PYTHON_SITEPACKAGES:BOOL=ON ..
+        cmake --build . --config ${{ matrix.build_type }}
+        ctest --output-on-failure -C ${{ matrix.build_type }} .
+        cmake --install . --config ${{ matrix.build_type }}
+
+    - name: Check install of standalone build of bindings
+      shell: bash -l {0}
+      run: |
+        # Test python packages
+        python -c "import wearables"
+        python -c "import hde"
+
+
