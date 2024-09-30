@@ -1,7 +1,7 @@
-# SPDX-FileCopyrightText: Fondazione Istituto Italiano di Tecnologia (IIT)
+e_mi# SPDX-FileCopyrightText: Fondazione Istituto Italiano di Tecnologia (IIT)
 # SPDX-License-Identifier: BSD-3-Clause
 
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.16)
 project(HumanDynamicsEstimation
         LANGUAGES CXX
         VERSION 4.0.2)
