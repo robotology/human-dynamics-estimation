@@ -7,12 +7,12 @@
         <param name="filexml_option">ftc_yarp_only.xml</param>
         <param name="ft_client_prefix">/IFrameTransformToIWear/tf</param>
         <param name="local_rpc">/IFrameTransformToIWear/tf/local_rpc</param>
-        <param name="ftc_storage_timeout">1.0</param>
+        <param name="ftc_storage_timeout">10.0</param>
     </device>
 
     <device type="iframetransform_to_iwear" name="IFrameTransformToIWear">
         <param name="wearableName">TransformServer</param>
-        <param extern-name="rootFrame" name="rootFrameID">root_link_desired</param>
+        <param extern-name="rootFrame" name="rootFrameID">world_grounded</param>
         <param name="wearableSensorType">PoseSensor</param>
         <param extern-name="frames" name="frameIDs">(root_link_desired
                                                      openxr_head
@@ -71,7 +71,7 @@
         <!-- integration based IK parameters -->
         <param name='dynamicalIKJointVelocityLimit'>10.0</param> <!-- comment or -1.0 for no limits -->
         <param name="dynamicalIKMeasuredVelocityGainLinRot">(1.0 1.0)</param>
-        <param name="dynamicalIKCorrectionGainsLinRot">(700.0 20.0)</param>
+        <param name="dynamicalIKCorrectionGainsLinRot">(200.0 20.0)</param>
         <param name="dynamicalIKIntegralCorrectionGainsLinRot">(0.0 0.0)</param>
         <group name="WEARABLE_SENSOR_TARGETS">
             <param name="target_Pelvis">(root_link, TransformServer::pose::root_link_desired, orientation)</param>
@@ -138,13 +138,13 @@
         <!-- note that a group can not be empty, otherwise it returns error-->
         <!-- custom joint limits velocities-->
             <!--param name="custom_joints_velocity_limits_names">(neck_roll, neck_pitch)</param-->
-            <param name="custom_joints_velocity_limits_names">( )</param>
+            <param name="custom_joints_velocity_limits_names">()</param>
             <!-- the upper bound is "+", while the lower bounds are "-" -->
             <!--param name="custom_joints_velocity_limits_values">(10.0, 15.0)</param-->
-            <param name="custom_joints_velocity_limits_values">( )</param>
+            <param name="custom_joints_velocity_limits_values">()</param>
         <!-- **** base velocity limit: x, y, z, roll, pitch, yaw ****-->
-            <param name="base_velocity_limit_upper_buond">(0.0, 0.0, 0.0, 0.0, 0.0, 0.0)</param>
-            <param name="base_velocity_limit_lower_buond">(0.0, 0.0, 0.0, 0.0, 0.0, 0.0)</param>
+            <param name="base_velocity_limit_upper_buond">(0.0, 0.0,  0.2, 0.0, 0.0, 0.0)</param>
+            <param name="base_velocity_limit_lower_buond">(0.0, 0.0, -0.2, 0.0, 0.0, 0.0)</param>
         <!-- Custom joint Configuration constraints-->
         <!-- if the boudary value is inf, I will use -1000.0 rad, or +1000.0 rad-->
             <param name="custom_constraint_variables">(
