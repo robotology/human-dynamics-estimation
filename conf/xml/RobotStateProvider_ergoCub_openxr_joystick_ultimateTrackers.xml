@@ -12,14 +12,14 @@
 
     <device type="iframetransform_to_iwear" name="IFrameTransformToIWear">
         <param name="wearableName">TransformServer</param>
-        <param extern-name="rootFrame" name="rootFrameID">root_link_desired</param>
+        <param extern-name="rootFrame" name="rootFrameID">world_ut</param>
         <param name="wearableSensorType">PoseSensor</param>
-        <param extern-name="frames" name="frameIDs">(root_link_desired
+        <param extern-name="frames" name="frameIDs">(world_ut
                                                      openxr_head
                                                      openxr_right_hand
                                                      openxr_left_hand
-                                                     vive_tracker_right_shoulder_pose
-                                                     vive_tracker_left_shoulder_pose)</param>
+                                                     vive_tracker_right_elbow_pose
+                                                     vive_tracker_left_elbow_pose)</param>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
                 <elem name="IFrameTransformToIWearLabel">TransformClient</elem>
@@ -71,15 +71,15 @@
         <!-- integration based IK parameters -->
         <param name='dynamicalIKJointVelocityLimit'>10.0</param> <!-- comment or -1.0 for no limits -->
         <param name="dynamicalIKMeasuredVelocityGainLinRot">(1.0 1.0)</param>
-        <param name="dynamicalIKCorrectionGainsLinRot">(700.0 20.0)</param>
+        <param name="dynamicalIKCorrectionGainsLinRot">(500.0 20.0)</param>
         <param name="dynamicalIKIntegralCorrectionGainsLinRot">(0.0 0.0)</param>
         <group name="WEARABLE_SENSOR_TARGETS">
-            <param name="target_Pelvis">(root_link, TransformServer::pose::root_link_desired, orientation)</param>
+            <param name="target_Pelvis">(root_link, TransformServer::pose::world_ut, orientation)</param>
             <param name="target_RightHand">(r_hand_palm, TransformServer::pose::openxr_right_hand, pose)</param>
             <param name="target_LeftHand">(l_hand_palm, TransformServer::pose::openxr_left_hand, pose)</param>
             <param name="target_Head">(head, TransformServer::pose::openxr_head, pose)</param>
-            <param name="target_r_upper_arm">(r_upperarm TransformServer::pose::vive_tracker_right_shoulder_pose, orientation)</param>
-            <param name="target_l_upper_arm">(l_upperarm TransformServer::pose::vive_tracker_left_shoulder_pose, orientation)</param>
+            <param name="target_r_upper_arm">(r_upperarm TransformServer::pose::vive_tracker_right_elbow_pose, orientation)</param>
+            <param name="target_l_upper_arm">(l_upperarm TransformServer::pose::vive_tracker_left_elbow_pose, orientation)</param>
         </group>
         <param name="jointList">("l_shoulder_pitch",
                                  "l_shoulder_roll",
@@ -115,13 +115,13 @@
                                         0.0  0.0  1.0  0.0
                                        -1.0  0.0  0.0  0.3
                                         0.0  0.0  0.0  1.0)</param>
-            <param name="target_l_upper_arm">( 1.0   0.0  0.0  0.0
-                                               0.0   0.0  1.0  0.0
-                                               0.0  -1.0  0.0  0.0
+            <param name="target_l_upper_arm">(-1.0   0.0  0.0  0.0
+                                               0.0   1.0  0.0  0.0
+                                               0.0   0.0 -1.0  0.0
                                                0.0   0.0  0.0  1.0)</param>
-            <param name="target_r_upper_arm">(-1.0  0.0  0.0  0.0
-                                               0.0  0.0  1.0  0.0
-                                               0.0  1.0  0.0  0.0
+            <param name="target_r_upper_arm">( 1.0  0.0  0.0  0.0
+                                               0.0 -1.0  0.0  0.0
+                                               0.0  0.0 -1.0  0.0
                                                0.0  0.0  0.0  1.0)</param>
         </group>
         <group name="MEASUREMENT_POSITION_SCALE_FACTOR">
