@@ -21,6 +21,7 @@ endif()
 include(GNUInstallDirs)
 include(CTest)
 
+option(HUMANSTATEPROVIDER_ENABLE_ROS1VISUALIZER "Enable the ROS 1-based RViz Human State Visualizer" OFF)
 option(HUMANSTATEPROVIDER_ENABLE_VISUALIZER "Enable the iDyntree-irricht based Human State Visualizer" OFF)
 
 find_package(robometry QUIET)
@@ -129,7 +130,11 @@ add_subdirectory(app)
 add_subdirectory(modules)
 add_subdirectory(servers)
 add_subdirectory(clients)
-add_subdirectory(publishers)
+
+if(HUMANSTATEPROVIDER_ENABLE_ROS1VISUALIZER)
+  add_subdirectory(publishers)
+endif()
+
 add_subdirectory(bindings)
 add_subdirectory(HumanDynamicsEstimationLibrary)
 

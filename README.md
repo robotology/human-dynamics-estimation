@@ -1,7 +1,7 @@
 # Human Dynamics Estimation (HDE)
 
 
-Human Dynamics Estimation (HDE) is a collection of YARP devices for the online estimation of the kinematics and dynamics of a human subject monitored with a set of wearable sensors and/or interacting with a robot. A ROS-based visualizer allows to visualize in real-time the output of the estimation. The devices can be installed and run in Linux, macOS and Windows.
+Human Dynamics Estimation (HDE) is a collection of YARP devices for the online estimation of the kinematics and dynamics of a human subject monitored with a set of wearable sensors and/or interacting with a robot. The devices can be installed and run in Linux, macOS and Windows.
 
 > !NOTE
 > Since September 2024 (release 4.0.0) the human-dynamics-estimation repo contains the software that used to be part of the https://github.com/robotology/wearables repository.
@@ -43,7 +43,6 @@ For installing the dependencies you can decide to install them individually or t
 - [**IPOPT**](http://wiki.icub.org/wiki/Installing_IPOPT): a software package for large-scale nonlinear optimization.
 
 #### Optional dependencies
-- [**ROS**](http://wiki.ros.org) with [**rviz**](http://wiki.ros.org/rviz) package: an open-source provider of libraries and tools for creating robot applications.
 - [**irrlicht**](http://irrlicht.sourceforge.net/) and [**iDynTree**](https://github.com/robotology/idyntree) compiled with `IDYNTREE_USES_IRRLICHT` enabled: visualizer for floating-base rigid-body systems.
 - [**Robometry**](https://github.com/robotology/robometry) : a telemetry suite for logging data.
 - [**pybind11**](https://github.com/pybind/pybind11): if present, the user can enable `HDE_COMPILE_PYTHON_BINDINGS` to enable the compilation of the python bindings.

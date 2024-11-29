@@ -142,4 +142,7 @@ install(TARGETS XsensSuitControl
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 add_subdirectory(yarp)
-add_subdirectory(ros)
+
+if(HUMANSTATEPROVIDER_ENABLE_ROS1VISUALIZER)
+  add_subdirectory(ros)
+endif()
