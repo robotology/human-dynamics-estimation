@@ -16,8 +16,8 @@
         <param name="wearableSensorType">PoseSensor</param>
         <param extern-name="frames" name="frameIDs">(iCub_robots_base_link
                                                      openxr_head
-                                                     vive_tracker_right_elbow_pose
-                                                     vive_tracker_left_elbow_pose)</param>
+                                                     right_glove
+                                                     left_glove)</param>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
                 <elem name="IFrameTransformToIWearLabel">TransformClient</elem>
@@ -73,8 +73,8 @@
         <param name="dynamicalIKIntegralCorrectionGainsLinRot">(0.0 0.0)</param>
         <group name="WEARABLE_SENSOR_TARGETS">
             <param name="target_Pelvis">(root_link, TransformServer::pose::iCub_robots_base_link, orientation)</param>
-            <param name="target_RightHand">(r_elbow_1, TransformServer::pose::vive_tracker_right_elbow_pose, pose)</param>
-            <param name="target_LeftHand">(l_elbow_1, TransformServer::pose::vive_tracker_left_elbow_pose, pose)</param>
+            <param name="target_RightHand">(r_elbow_1, TransformServer::pose::right_glove, pose)</param>
+            <param name="target_LeftHand">(l_elbow_1, TransformServer::pose::left_glove, pose)</param>
             <param name="target_Head">(head, TransformServer::pose::openxr_head, pose)</param>
         </group>
         <param name="jointList">("l_shoulder_pitch",

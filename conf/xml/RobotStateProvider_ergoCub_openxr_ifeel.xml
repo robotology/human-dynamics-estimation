@@ -16,8 +16,8 @@
         <param name="wearableSensorType">PoseSensor</param>
         <param extern-name="frames" name="frameIDs">(root_link_desired
                                                      openxr_head
-                                                     vive_tracker_right_elbow_pose
-                                                     vive_tracker_left_elbow_pose)</param>
+                                                     right_glove
+                                                     left_glove)</param>
         <action phase="startup" level="5" type="attach">
             <paramlist name="networks">
                 <elem name="IFrameTransformToIWearLabel">TransformClient</elem>
@@ -73,8 +73,8 @@
         <group name="WEARABLE_SENSOR_TARGETS">
             <param name="target_Pelvis">(root_link, TransformServer::pose::root_link_desired, pose)</param>
             <param name="target_Chest">(chest, iFeelSuit::vLink::Node#6, gravity)</param>
-            <param name="target_RightHand">(r_hand_palm, TransformServer::pose::vive_tracker_right_elbow_pose, pose)</param>
-            <param name="target_LeftHand">(l_hand_palm, TransformServer::pose::vive_tracker_left_elbow_pose, pose)</param>
+            <param name="target_RightHand">(r_hand_palm, TransformServer::pose::right_glove, pose)</param>
+            <param name="target_LeftHand">(l_hand_palm, TransformServer::pose::left_glove, pose)</param>
             <param name="target_Head">(head, TransformServer::pose::openxr_head, pose)</param>
             <param name="target_l_upper_arm">(l_upper_arm iFeelSuit::vLink::Node#5, gravity)</param>
             <param name="target_l_forearm">(l_forearm, iFeelSuit::vLink::Node#4, gravity)</param>

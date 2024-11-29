@@ -16,8 +16,8 @@
         <param name="wearableSensorType">PoseSensor</param>
         <param extern-name="frames" name="frameIDs">(world_ut
                                                      openxr_head
-                                                     vive_tracker_right_elbow_pose
-                                                     vive_tracker_left_elbow_pose
+                                                     right_glove
+                                                     left_glove
                                                      vive_tracker_right_shoulder_pose
                                                      vive_tracker_left_shoulder_pose)</param>
         <action phase="startup" level="5" type="attach">
@@ -75,8 +75,8 @@
         <param name="dynamicalIKIntegralCorrectionGainsLinRot">(0.0 0.0)</param>
         <group name="WEARABLE_SENSOR_TARGETS">
             <param name="target_Pelvis">(root_link, TransformServer::pose::world_ut, orientation)</param>
-            <param name="target_RightHand">(r_hand_palm, TransformServer::pose::vive_tracker_right_elbow_pose, pose)</param>
-            <param name="target_LeftHand">(l_hand_palm, TransformServer::pose::vive_tracker_left_elbow_pose, pose)</param>
+            <param name="target_RightHand">(r_hand_palm, TransformServer::pose::right_glove, pose)</param>
+            <param name="target_LeftHand">(l_hand_palm, TransformServer::pose::left_glove, pose)</param>
             <param name="target_Head">(head, TransformServer::pose::openxr_head, pose)</param>
             <param name="target_r_upper_arm">(r_upper_arm TransformServer::pose::vive_tracker_right_shoulder_pose, orientation)</param>
             <param name="target_l_upper_arm">(l_upper_arm TransformServer::pose::vive_tracker_left_shoulder_pose, orientation)</param>
