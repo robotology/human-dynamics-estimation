@@ -2,6 +2,11 @@
 
 This file documents notable changes to this project done before November 2023. For changes after that date, please refer to the release notes of each release at https://github.com/robotology/human-dynamics-estimation/releases.
 
+## [Unreleased]
+
+### Fixed
+- Set the calibrationMeasurementToLink matrix to the initial when `resetAll` rpc command is called (https://github.com/robotology/human-dynamics-estimation/pull/421).
+
 ## [3.0.0] - 2023-11-09
 
 ### Changed
