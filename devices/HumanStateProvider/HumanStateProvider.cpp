@@ -787,6 +787,8 @@ bool HumanStateProvider::open(yarp::os::Searchable& config)
             fixedRightRotation);
         pImpl->wearableTargets[targetName].get()->calibrationMeasurementToLink.setPosition(
             fixedRightPositionOffset);
+        pImpl->wearableTargets[targetName].get()->calibrationMeasurementToLinkInitial =
+            pImpl->wearableTargets[targetName].get()->calibrationMeasurementToLink;
         yInfo()
             << LogPrefix << "Adding Fixed Rotation for " << targetName << "==>"
             << pImpl->wearableTargets[targetName].get()->calibrationMeasurementToLink.toString();

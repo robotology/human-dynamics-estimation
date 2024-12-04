@@ -46,6 +46,7 @@ namespace hde {
 
         iDynTree::Transform calibrationWorldToMeasurementWorld;
         iDynTree::Transform calibrationMeasurementToLink;
+        iDynTree::Transform calibrationMeasurementToLinkInitial;
         iDynTree::Vector3 positionScaleFactor;
 
         // buffer variables
@@ -89,7 +90,7 @@ namespace hde {
         {
             std::lock_guard<std::mutex> lock(mutex);
             calibrationWorldToMeasurementWorld = iDynTree::Transform::Identity();
-            calibrationMeasurementToLink = iDynTree::Transform::Identity();
+            calibrationMeasurementToLink = calibrationMeasurementToLinkInitial;
         };
 
         void clearWorldCalibrationMatrix()
