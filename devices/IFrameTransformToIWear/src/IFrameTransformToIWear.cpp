@@ -6,6 +6,7 @@
 #include <yarp/dev/IFrameTransform.h>
 #include <yarp/os/LogStream.h>
 #include <yarp/sig/Vector.h>
+#include <yarp/conf/version.h>
 
 #include <map>
 #include <mutex>
@@ -18,6 +19,36 @@ const std::string LogPrefix = DeviceName + " :";
 using namespace wearable;
 using namespace wearable::sensor;
 using namespace wearable::devices;
+
+inline bool IFrameTransformToIWearFrameExists(yarp::dev::IFrameTransform* frameTransformInterface,
+                                       const std::string& frameID)
+{
+    bool frameExists = false;
+#if YARP_VERSION_MAJOR == 3 && YARP_VERSION_MINOR < 11
+    frameExists = frameTransformInterface->frameExists(frameID);
+#else
+    bool frameExistsOk = false;
+    bool frameExistsReturnValue = false;
+    frameExistsReturnValue = frameTransformInterface->frameExists(frameID, frameExistsOk);
+    frameExists = frameExistsOk && frameExistsReturnValue;
+#endif
+    return frameExists;
+}
+
+inline bool IFrameTransformToIWearCanTransform(yarp::dev::IFrameTransform* frameTransformInterface,
+                                        const std::string& targetID, const std::string& sourceID)
+{
+    bool canTransform = false;
+#if YARP_VERSION_MAJOR == 3 && YARP_VERSION_MINOR < 11
+    canTransform = frameTransformInterface->canTransform(targetID, sourceID);
+#else
+    bool canTransformOk = false;
+    bool canTransformReturnValue = false;
+    canTransformReturnValue = frameTransformInterface->canTransform(targetID, sourceID, canTransformOk);
+    canTransform = canTransformOk && canTransformReturnValue;
+#endif
+    return canTransform;
+}
 
 // Class that provides each frame information, and utilites
 // to map its data to containers compatible with IWear
@@ -34,7 +65,7 @@ public:
 
     wearable::sensor::SensorStatus getStatus()
     {
-        if (m_frameTransformInterface->canTransform(m_targetFrame, m_rootFrame)) {
+        if (IFrameTransformToIWearCanTransform(m_frameTransformInterface, m_targetFrame, m_rootFrame)) {
             return SensorStatus::Ok;
         }
         else {
@@ -256,7 +287,7 @@ bool IFrameTransformToIWear::attach(yarp::dev::PolyDriver* poly)
     auto poseSensPrefix = getWearableName() + sensor::IPoseSensor::getPrefix();
     auto virtualLinkSensPrefix = getWearableName() + sensor::IVirtualLinkKinSensor::getPrefix();
 
-    if (!pImpl->frameTransformInterface->frameExists(pImpl->options.rootFrameID)) {
+    if (!IFrameTransformToIWearFrameExists(pImpl->frameTransformInterface, pImpl->options.rootFrameID)) {
         yError() << LogPrefix << "No transform found for the root frame ( "
                  << pImpl->options.rootFrameID << " )";
         return false;
@@ -264,7 +295,7 @@ bool IFrameTransformToIWear::attach(yarp::dev::PolyDriver* poly)
 
     for (auto ID : pImpl->options.frameIDs) {
 
-        if (!pImpl->frameTransformInterface->frameExists(ID)) {
+        if (!IFrameTransformToIWearFrameExists(pImpl->frameTransformInterface, ID)) {
             yError() << LogPrefix << "No transform found for the frame ( " << ID << " )";
             return false;
         }
