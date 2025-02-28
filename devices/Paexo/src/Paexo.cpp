@@ -12,6 +12,7 @@
 #include <yarp/os/TypedReaderCallback.h>
 
 #include <assert.h>
+#include <chrono>
 #include <mutex>
 #include <stdexcept>
 #include <stdio.h>

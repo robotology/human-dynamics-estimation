@@ -6,6 +6,7 @@
 
 #include <array>
 #include <numeric>
+#include <chrono>
 #include <cmath>
 
 #include <thread>
