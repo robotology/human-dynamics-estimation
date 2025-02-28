@@ -7,6 +7,7 @@
 
 #include <iDynTree/Core/EigenHelpers.h>
 
+#include <chrono>
 #include <thread>
 
 const std::string IKLogPrefix = "IKWorkerPool :";

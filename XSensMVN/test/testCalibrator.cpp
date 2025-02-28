@@ -6,6 +6,9 @@
 
 #include "xme.h"
 
+#include <chrono>
+#include <thread>
+
 int main(int argc, const char* argv[])
 {
     // Create a licence object

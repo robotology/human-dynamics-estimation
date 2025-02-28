@@ -13,6 +13,7 @@
 #include <yarp/os/RpcServer.h>
 
 #include <assert.h>
+#include <chrono>
 #include <cmath>
 #include <map>
 #include <mutex>
