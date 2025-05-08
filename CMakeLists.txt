@@ -96,9 +96,6 @@ endif()
 # Flag to enable Paexo wearable device
 option(ENABLE_Paexo "Flag that enables building Paexo wearable device" OFF)
 
-# Flag to enable SenseGlove wearable device
-option(ENABLE_HapticGlove "Flag that enables building Haptic Sense Glove wearable device" OFF)
-
 # Flag to enable IWearFrameVisualizer module
 find_package(iDynTree QUIET)
 option(ENABLE_FrameVisualizer "Flag that enables building IWearFrameVisualizer module" ${iDynTree_FOUND})
