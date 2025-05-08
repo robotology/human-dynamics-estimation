@@ -19,10 +19,6 @@ if(ENABLE_ICub)
   add_subdirectory(ICub)
 endif()
 
-if(ENABLE_HapticGlove)
-    add_subdirectory(HapticGlove)
-endif()
-
 add_subdirectory(HumanStateProvider)
 add_subdirectory(HumanWrenchProvider)
 add_subdirectory(HumanDynamicsEstimator)

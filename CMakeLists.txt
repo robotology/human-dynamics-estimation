@@ -4,7 +4,7 @@
 cmake_minimum_required(VERSION 3.16)
 project(HumanDynamicsEstimation
         LANGUAGES CXX
-        VERSION 4.2.2)
+        VERSION 5.0.0)
 
 # =====================
 # PROJECT CONFIGURATION
@@ -95,9 +95,6 @@ endif()
 
 # Flag to enable Paexo wearable device
 option(ENABLE_Paexo "Flag that enables building Paexo wearable device" OFF)
-
-# Flag to enable SenseGlove wearable device
-option(ENABLE_HapticGlove "Flag that enables building Haptic Sense Glove wearable device" OFF)
 
 # Flag to enable IWearFrameVisualizer module
 find_package(iDynTree QUIET)
