@@ -73,25 +73,6 @@ struct SolutionIK
     }
 };
 
-enum SolverIK
-{
-    global,
-    pairwised,
-    dynamical
-};
-
-enum rpcCommand
-{
-    empty,
-    calibrateAll,
-    calibrateAllWithWorld,
-    calibrateAllWorldYaw,
-    calibrateRelativeLink,
-    setRotationOffset,
-    resetCalibration,
-    resetAll
-};
-
 static std::unordered_map<std::string, hde::KinematicTargetType> const stringToKinemaitcTargetType =
     {{"pose", hde::KinematicTargetType::pose},
      {"poseAndVelocity", hde::KinematicTargetType::poseAndVelocity},
@@ -129,12 +110,6 @@ public:
     bool resetIntegrator = false;
     std::mutex mutexFlagIntegrator;
 
-    // Rpc
-    class CmdParser;
-    std::unique_ptr<CmdParser> commandPro;
-    yarp::os::RpcServer rpcPort;
-    bool applyRpcCommand();
-
     // Wearable variables
     WearableStorage wearableStorage;
 
@@ -157,16 +132,8 @@ public:
     iDynTree::Transform baseTransformSolution;
     iDynTree::Twist baseVelocitySolution;
 
-    std::unordered_map<std::string, hde::utils::idyntree::rotation::RotationDistance>
-        linkErrorOrientations;
-    std::unordered_map<std::string, iDynTree::Vector3> linkErrorAngularVelocities;
-
     // IK parameters
-    int ikPoolSize{1};
-    int maxIterationsIK;
-    double costTolerance;
-    std::string linearSolverName;
-    yarp::os::Value ikPoolOption;
+
     SolutionIK solution;
     InverseVelocityKinematicsSolverName inverseVelocityKinematicsSolver;
 
@@ -198,29 +165,10 @@ public:
     iDynTree::VectorDynSize baseVelocityLowerLimit;
     double k_u, k_l;
 
-    // Secondary calibration
-    void ereaseTargetCalibration(const hde::TargetName& targetName);
-    void ereaseTargetsCalibration();
-    void selectChainJointsAndLinksForSecondaryCalibration(
-        const std::string& linkName,
-        const std::string& childLinkName,
-        std::vector<iDynTree::JointIndex>& jointZeroIndices,
-        std::vector<iDynTree::LinkIndex>& linkToCalibrateIndices);
-    void computeSecondaryCalibrationRotationsForChain(
-        const std::vector<iDynTree::JointIndex>& jointZeroIndices,
-        const iDynTree::Transform& refLinkForCalibrationTransform,
-        const std::vector<iDynTree::LinkIndex>& linkToCalibrateIndices,
-        const hde::TargetName& refLinkForCalibrationName);
-
-    SolverIK ikSolver;
-
     // flags
     bool useDirectBaseMeasurement;
     bool useFixedBase;
 
-    //iDynTree::InverseKinematics globalIK;
-    hde::algorithms::InverseVelocityKinematics
-        inverseVelocityKinematics; // used for computing joint velocity in global IK solution
     hde::algorithms::DynamicalInverseKinematics dynamicalInverseKinematics;
 
     // clock
@@ -234,12 +182,7 @@ public:
     bool updateWearableTargets();
 
     // solver initialization and update
-    bool createLinkPairs();
-    bool initializePairwisedInverseKinematicsSolver();
-    bool initializeGlobalInverseKinematicsSolver();
     bool initializeDynamicalInverseKinematicsSolver();
-    bool solvePairwisedInverseKinematicsSolver();
-    bool solveGlobalInverseKinematicsSolver();
     bool solveDynamicalInverseKinematics();
 
     // optimization targets
@@ -249,20 +192,6 @@ public:
     // dynamical inverse kinematic targets
     bool addDynamicalInverseKinematicsTargets();
 
-    bool computeLinksOrientationErrors(
-        std::unordered_map<std::string, iDynTree::Transform> linkDesiredOrientations,
-        iDynTree::VectorDynSize jointConfigurations,
-        iDynTree::Transform floatingBasePose,
-        std::unordered_map<std::string, hde::utils::idyntree::rotation::RotationDistance>&
-            linkErrorOrientations);
-    bool computeLinksAngularVelocityErrors(
-        std::unordered_map<std::string, iDynTree::Twist> linkDesiredVelocities,
-        iDynTree::VectorDynSize jointConfigurations,
-        iDynTree::Transform floatingBasePose,
-        iDynTree::VectorDynSize jointVelocities,
-        iDynTree::Twist baseVelocity,
-        std::unordered_map<std::string, iDynTree::Vector3>& linkAngularVelocityError);
-
     // constructor
     impl();
 
@@ -270,138 +199,11 @@ public:
     bool attach(yarp::dev::PolyDriver* poly);
 };
 
-// ===============
-// RPC PORT PARSER
-// ===============
-
-class RetargetingProvider::impl::CmdParser : public yarp::os::PortReader
-{
-
-public:
-    std::atomic<rpcCommand> cmdStatus{rpcCommand::empty};
-    std::string parentLinkName;
-    std::string childLinkName;
-    std::string refLinkName;
-    // variables for manual calibration
-    std::atomic<double> roll; // [deg]
-    std::atomic<double> pitch; // [deg]
-    std::atomic<double> yaw; // [deg]
-
-    void resetInternalVariables()
-    {
-        parentLinkName = "";
-        childLinkName = "";
-        cmdStatus = rpcCommand::empty;
-    }
-
-    bool read(yarp::os::ConnectionReader& connection) override
-    {
-        yarp::os::Bottle command, response;
-        if (command.read(connection)) {
-            if (command.get(0).asString() == "help") {
-                response.addVocab32(yarp::os::Vocab32::encode("many"));
-                response.addString("The following commands can be used to apply a secondary "
-                                   "calibration assuming the subject is in the zero configuration "
-                                   "of the model for the calibrated links. \n");
-                response.addString("Enter <calibrateAll> to apply a secondary calibration for all "
-                                   "the targets using the measured base pose \n");
-                response.addString(
-                    "Enter <calibrateAllWithWorld <refTarget>> to apply a secondary calibration "
-                    "for all the targets assuming the <refTarget> to be in the world origin \n");
-                response.addString(
-                    "Enter <calibrateAllWorldYaw> to remove the yaw offset for all the data \n");
-                response.addString("Enter <setRotationOffset <targetName> <r p y [deg]>> to apply "
-                                   "a secondary calibration for the given target using the given "
-                                   "rotation offset (defined using rpy)\n");
-                response.addString(
-                    "Enter <calibrateRelativeLink <parentTargetName> <childTargetName>> to apply a "
-                    "secondary calibration for the child target using the parent target "
-                    "measurement as reference \n");
-                response.addString("Enter <reset <targetName>> to remove secondary calibration for "
-                                   "the given target \n");
-                response.addString("Enter <resetAll> to remove all the secondary calibrations");
-            }
-            else if (command.get(0).asString() == "calibrateRelativeLink"
-                     && !command.get(1).isNull() && !command.get(2).isNull()) {
-                this->parentLinkName = command.get(1).asString();
-                this->childLinkName = command.get(2).asString();
-                response.addString(
-                    "Entered command <calibrateRelativeLink> is correct, trying to set offset of "
-                    + this->childLinkName + " using " + this->parentLinkName + " as reference");
-                this->cmdStatus = rpcCommand::calibrateRelativeLink;
-            }
-            else if (command.get(0).asString() == "calibrateAllWorldYaw") {
-                this->parentLinkName = "";
-                response.addString("Entered command <calibrateAllWorldYaw> is correct, trying to "
-                                   "set yaw calibration for all the targets");
-                this->cmdStatus = rpcCommand::calibrateAllWorldYaw;
-            }
-            else if (command.get(0).asString() == "calibrateAll") {
-                this->parentLinkName = "";
-                response.addString("Entered command <calibrateAll> is correct, trying to set "
-                                   "offset calibration for all the targets");
-                this->cmdStatus = rpcCommand::calibrateAll;
-            }
-            else if (command.get(0).asString() == "calibrateAllWithWorld") {
-                this->parentLinkName = "";
-                this->refLinkName = command.get(1).asString();
-                response.addString("Entered command <calibrateAllWithWorld> is correct, trying to "
-                                   "set offset calibration for all the targets, and setting target "
-                                   + this->refLinkName + " to the origin");
-                this->cmdStatus = rpcCommand::calibrateAllWithWorld;
-            }
-            else if (command.get(0).asString() == "setRotationOffset" && !command.get(1).isNull()
-                     && command.get(2).isFloat64() && command.get(3).isFloat64()
-                     && command.get(4).isFloat64()) {
-                this->parentLinkName = command.get(1).asString();
-                this->roll = command.get(2).asFloat64();
-                this->pitch = command.get(3).asFloat64();
-                this->yaw = command.get(4).asFloat64();
-                response.addString("Entered command <calibrate> is correct, trying to set rotation "
-                                   "offset for the target "
-                                   + this->parentLinkName);
-                this->cmdStatus = rpcCommand::setRotationOffset;
-            }
-            else if (command.get(0).asString() == "resetAll") {
-                response.addString("Entered command <resetAll> is correct,  trying to remove "
-                                   "calibration transforms (right and left) for all the targets");
-                this->cmdStatus = rpcCommand::resetAll;
-            }
-            else if (command.get(0).asString() == "reset" && !command.get(1).isNull()) {
-                this->parentLinkName = command.get(1).asString();
-                response.addString("Entered command <reset> is correct, trying to remove "
-                                   "calibration transforms (right and left) for the target "
-                                   + this->parentLinkName);
-                this->cmdStatus = rpcCommand::resetCalibration;
-            }
-            else {
-                response.addString(
-                    "Entered command is incorrect. Enter help to know available commands");
-            }
-        }
-        else {
-            resetInternalVariables();
-            return false;
-        }
-
-        yarp::os::ConnectionWriter* reply = connection.getWriter();
-
-        if (reply != NULL) {
-            response.write(*reply);
-        }
-        else
-            return false;
-
-        return true;
-    }
-};
-
 // ===========
 // CONSTRUCTOR
 // ===========
 
 RetargetingProvider::impl::impl()
-    : commandPro(new CmdParser())
 {}
 
 // =========================
@@ -427,11 +229,6 @@ bool RetargetingProvider::open(yarp::os::Searchable& config)
 
     if (!(config.check("urdf") && config.find("urdf").isString())) {
         yError() << LogPrefix << "urdf option not found or not valid";
-        return false;
-    }
-
-    if (!(config.check("ikSolver") && config.find("ikSolver").isString())) {
-        yError() << LogPrefix << "ikSolver option not found or not valid";
         return false;
     }
 
@@ -660,18 +457,6 @@ bool RetargetingProvider::open(yarp::os::Searchable& config)
     // PARSE THE GENERAL CONFIGURATION OPTIONS
     // =======================================
 
-    std::string solverName = config.find("ikSolver").asString();
-    if (solverName == "global")
-        pImpl->ikSolver = SolverIK::global;
-    else if (solverName == "pairwised")
-        pImpl->ikSolver = SolverIK::pairwised;
-    else if (solverName == "dynamical")
-        pImpl->ikSolver = SolverIK::dynamical;
-    else {
-        yError() << LogPrefix << "ikSolver " << solverName << " not found";
-        return false;
-    }
-
     const std::string urdfFileName = config.find("urdf").asString();
     pImpl->floatingBaseFrame = baseFrameName;
     pImpl->period = config.check("period", yarp::os::Value(DefaultPeriod)).asFloat64();
@@ -832,153 +617,77 @@ bool RetargetingProvider::open(yarp::os::Searchable& config)
     // PARSE THE DEPENDENDT CONFIGURATION OPTIONS
     // ==========================================
 
-    if (pImpl->ikSolver == SolverIK::pairwised || pImpl->ikSolver == SolverIK::global) {
-        if (!(config.check("allowIKFailures") && config.find("allowIKFailures").isBool())) {
-            yError() << LogPrefix << "allowFailures option not found or not valid";
-            return false;
-        }
-        if (!(config.check("maxIterationsIK") && config.find("maxIterationsIK").isInt32())) {
-            yError() << LogPrefix << "maxIterationsIK option not found or not valid";
-            return false;
-        }
 
-        if (!(config.check("costTolerance") && config.find("costTolerance").isFloat64())) {
-            yError() << LogPrefix << "costTolerance option not found or not valid";
-            return false;
-        }
-        if (!(config.check("ikLinearSolver") && config.find("ikLinearSolver").isString())) {
-            yError() << LogPrefix << "ikLinearSolver option not found or not valid";
-            return false;
-        }
-        if (!(config.check("posTargetWeight") && config.find("posTargetWeight").isFloat64())) {
-            yError() << LogPrefix << "posTargetWeight option not found or not valid";
-            return false;
-        }
-
-        if (!(config.check("rotTargetWeight") && config.find("rotTargetWeight").isFloat64())) {
-            yError() << LogPrefix << "rotTargetWeight option not found or not valid";
-            return false;
-        }
-        if (!(config.check("costRegularization")
-              && config.find("costRegularization").isFloat64())) {
-            yError() << LogPrefix << "costRegularization option not found or not valid";
-            return false;
-        }
-
-        pImpl->allowIKFailures = config.find("allowIKFailures").asBool();
-        pImpl->maxIterationsIK = config.find("maxIterationsIK").asInt32();
-        pImpl->costTolerance = config.find("costTolerance").asFloat64();
-        pImpl->linearSolverName = config.find("ikLinearSolver").asString();
-        pImpl->posTargetWeight = config.find("posTargetWeight").asFloat64();
-        pImpl->rotTargetWeight = config.find("rotTargetWeight").asFloat64();
-        pImpl->costRegularization = config.find("costRegularization").asFloat64();
+    if (!(config.check("useDirectBaseMeasurement")
+            && config.find("useDirectBaseMeasurement").isBool())) {
+        yError() << LogPrefix << "useDirectBaseMeasurement option not found or not valid";
+        return false;
+    }
+    if (!(config.check("linVelTargetWeight")
+            && config.find("linVelTargetWeight").isFloat64())) {
+        yError() << LogPrefix << "linVelTargetWeight option not found or not valid";
+        return false;
     }
 
-    if (pImpl->ikSolver == SolverIK::global || pImpl->ikSolver == SolverIK::dynamical) {
-        if (!(config.check("useDirectBaseMeasurement")
-              && config.find("useDirectBaseMeasurement").isBool())) {
-            yError() << LogPrefix << "useDirectBaseMeasurement option not found or not valid";
-            return false;
-        }
-        if (!(config.check("linVelTargetWeight")
-              && config.find("linVelTargetWeight").isFloat64())) {
-            yError() << LogPrefix << "linVelTargetWeight option not found or not valid";
-            return false;
-        }
-
-        if (!(config.check("angVelTargetWeight")
-              && config.find("angVelTargetWeight").isFloat64())) {
-            yError() << LogPrefix << "angVelTargetWeight option not found or not valid";
-            return false;
-        }
-
-        if (config.check("inverseVelocityKinematicsSolver")
-            && config.find("inverseVelocityKinematicsSolver").isString()) {
-            pImpl->inverseVelocityKinematicsSolver =
-                config.find("inverseVelocityKinematicsSolver").asString();
-        }
-        else {
-            pImpl->inverseVelocityKinematicsSolver = "moorePenrose";
-            yInfo() << LogPrefix << "Using default inverse velocity kinematics solver";
-        }
-
-        pImpl->useDirectBaseMeasurement = config.find("useDirectBaseMeasurement").asBool();
-        pImpl->linVelTargetWeight = config.find("linVelTargetWeight").asFloat64();
-        pImpl->angVelTargetWeight = config.find("angVelTargetWeight").asFloat64();
-        pImpl->costRegularization = config.find("costRegularization").asFloat64();
+    if (!(config.check("angVelTargetWeight")
+            && config.find("angVelTargetWeight").isFloat64())) {
+        yError() << LogPrefix << "angVelTargetWeight option not found or not valid";
+        return false;
     }
 
-    if (pImpl->ikSolver == SolverIK::pairwised) {
-        if (!(config.check("ikPoolSizeOption")
-              && (config.find("ikPoolSizeOption").isString()
-                  || config.find("ikPoolSizeOption").isInt32()))) {
-            yError() << LogPrefix << "ikPoolOption option not found or not valid";
-            return false;
-        }
-
-        // Get ikPoolSizeOption
-        if (config.find("ikPoolSizeOption").isString()
-            && config.find("ikPoolSizeOption").asString() == "auto") {
-            yInfo() << LogPrefix << "Using " << std::thread::hardware_concurrency()
-                    << " available logical threads for ik pool";
-            pImpl->ikPoolSize = static_cast<int>(std::thread::hardware_concurrency());
-        }
-        else if (config.find("ikPoolSizeOption").isInt32()) {
-            pImpl->ikPoolSize = config.find("ikPoolSizeOption").asInt32();
-        }
-
-        // The pairwised IK will always use the measured base pose and velocity for the base link
-        if (config.check("useDirectBaseMeasurement")
-            && config.find("useDirectBaseMeasurement").isBool()
-            && !config.find("useDirectBaseMeasurement").asBool()) {
-            yWarning() << LogPrefix
-                       << "useDirectBaseMeasurement is required from Pair-Wised IK. Assuming its "
-                          "value to be true";
-        }
-        pImpl->useDirectBaseMeasurement = true;
+    if (config.check("inverseVelocityKinematicsSolver")
+        && config.find("inverseVelocityKinematicsSolver").isString()) {
+        pImpl->inverseVelocityKinematicsSolver =
+            config.find("inverseVelocityKinematicsSolver").asString();
+    }
+    else {
+        pImpl->inverseVelocityKinematicsSolver = "moorePenrose";
+        yInfo() << LogPrefix << "Using default inverse velocity kinematics solver";
     }
 
-    if (pImpl->ikSolver == SolverIK::dynamical) {
+    pImpl->useDirectBaseMeasurement = config.find("useDirectBaseMeasurement").asBool();
+    pImpl->linVelTargetWeight = config.find("linVelTargetWeight").asFloat64();
+    pImpl->angVelTargetWeight = config.find("angVelTargetWeight").asFloat64();
+    pImpl->costRegularization = config.find("costRegularization").asFloat64();
 
-        if (!(config.check("dynamicalIKMeasuredVelocityGainLinRot")
-              && config.find("dynamicalIKMeasuredVelocityGainLinRot").isList()
-              && config.find("dynamicalIKMeasuredVelocityGainLinRot").asList()->size() == 2)) {
-            yError() << LogPrefix
-                     << "dynamicalIKMeasuredVelocityGainLinRot option not found or not valid";
-            return false;
-        }
-
-        if (!(config.check("dynamicalIKCorrectionGainsLinRot")
-              && config.find("dynamicalIKCorrectionGainsLinRot").isList()
-              && config.find("dynamicalIKCorrectionGainsLinRot").asList()->size() == 2)) {
-            yError() << LogPrefix
-                     << "dynamicalIKCorrectionGainsLinRot option not found or not valid";
-            return false;
-        }
-
-        if (config.check("dynamicalIKJointVelocityLimit")
-            && config.find("dynamicalIKJointVelocityLimit").isFloat64()) {
-            pImpl->dynamicalIKJointVelocityLimit =
-                config.find("dynamicalIKJointVelocityLimit").asFloat64();
-        }
-        else {
-            pImpl->dynamicalIKJointVelocityLimit =
-                1000.0; // if no limits given for a joint we put 1000.0 rad/sec, which is very high
-        }
-
-        yarp::os::Bottle* dynamicalIKMeasuredVelocityGainLinRot =
-            config.find("dynamicalIKMeasuredVelocityGainLinRot").asList();
-        yarp::os::Bottle* dynamicalIKCorrectionGainsLinRot =
-            config.find("dynamicalIKCorrectionGainsLinRot").asList();
-        pImpl->dynamicalIKMeasuredLinearVelocityGain =
-            dynamicalIKMeasuredVelocityGainLinRot->get(0).asFloat64();
-        pImpl->dynamicalIKMeasuredAngularVelocityGain =
-            dynamicalIKMeasuredVelocityGainLinRot->get(1).asFloat64();
-        pImpl->dynamicalIKLinearCorrectionGain =
-            dynamicalIKCorrectionGainsLinRot->get(0).asFloat64();
-        pImpl->dynamicalIKAngularCorrectionGain =
-            dynamicalIKCorrectionGainsLinRot->get(1).asFloat64();
+    if (!(config.check("dynamicalIKMeasuredVelocityGainLinRot")
+            && config.find("dynamicalIKMeasuredVelocityGainLinRot").isList()
+            && config.find("dynamicalIKMeasuredVelocityGainLinRot").asList()->size() == 2)) {
+        yError() << LogPrefix
+                    << "dynamicalIKMeasuredVelocityGainLinRot option not found or not valid";
+        return false;
     }
+
+    if (!(config.check("dynamicalIKCorrectionGainsLinRot")
+            && config.find("dynamicalIKCorrectionGainsLinRot").isList()
+            && config.find("dynamicalIKCorrectionGainsLinRot").asList()->size() == 2)) {
+        yError() << LogPrefix
+                    << "dynamicalIKCorrectionGainsLinRot option not found or not valid";
+        return false;
+    }
+
+    if (config.check("dynamicalIKJointVelocityLimit")
+        && config.find("dynamicalIKJointVelocityLimit").isFloat64()) {
+        pImpl->dynamicalIKJointVelocityLimit =
+            config.find("dynamicalIKJointVelocityLimit").asFloat64();
+    }
+    else {
+        pImpl->dynamicalIKJointVelocityLimit =
+            1000.0; // if no limits given for a joint we put 1000.0 rad/sec, which is very high
+    }
+
+    yarp::os::Bottle* dynamicalIKMeasuredVelocityGainLinRot =
+        config.find("dynamicalIKMeasuredVelocityGainLinRot").asList();
+    yarp::os::Bottle* dynamicalIKCorrectionGainsLinRot =
+        config.find("dynamicalIKCorrectionGainsLinRot").asList();
+    pImpl->dynamicalIKMeasuredLinearVelocityGain =
+        dynamicalIKMeasuredVelocityGainLinRot->get(0).asFloat64();
+    pImpl->dynamicalIKMeasuredAngularVelocityGain =
+        dynamicalIKMeasuredVelocityGainLinRot->get(1).asFloat64();
+    pImpl->dynamicalIKLinearCorrectionGain =
+        dynamicalIKCorrectionGainsLinRot->get(0).asFloat64();
+    pImpl->dynamicalIKAngularCorrectionGain =
+        dynamicalIKCorrectionGainsLinRot->get(1).asFloat64();
 
     // ===================================
     // PRINT CURRENT CONFIGURATION OPTIONS
@@ -987,39 +696,22 @@ bool RetargetingProvider::open(yarp::os::Searchable& config)
     yInfo() << LogPrefix << "*** ===================================";
     yInfo() << LogPrefix << "*** Period                            :" << pImpl->period;
     yInfo() << LogPrefix << "*** Urdf file name                    :" << urdfFileName;
-    yInfo() << LogPrefix << "*** Ik solver                         :" << solverName;
     yInfo() << LogPrefix
             << "*** Use Directly base measurement    :" << pImpl->useDirectBaseMeasurement;
-    if (pImpl->ikSolver == SolverIK::pairwised || pImpl->ikSolver == SolverIK::global) {
-        yInfo() << LogPrefix << "*** Allow IK failures                 :" << pImpl->allowIKFailures;
-        yInfo() << LogPrefix << "*** Max IK iterations                 :" << pImpl->maxIterationsIK;
-        yInfo() << LogPrefix << "*** Cost Tolerance                    :" << pImpl->costTolerance;
-        yInfo() << LogPrefix
-                << "*** IK Solver Name                    :" << pImpl->linearSolverName;
-        yInfo() << LogPrefix << "*** Position target weight            :" << pImpl->posTargetWeight;
-        yInfo() << LogPrefix << "*** Rotation target weight            :" << pImpl->rotTargetWeight;
-        yInfo() << LogPrefix
-                << "*** Cost regularization              :" << pImpl->costRegularization;
-        yInfo() << LogPrefix << "*** Size of thread pool               :" << pImpl->ikPoolSize;
-    }
-    if (pImpl->ikSolver == SolverIK::dynamical) {
-        yInfo() << LogPrefix << "*** Measured Linear velocity gain     :"
-                << pImpl->dynamicalIKMeasuredLinearVelocityGain;
-        yInfo() << LogPrefix << "*** Measured Angular velocity gain    :"
-                << pImpl->dynamicalIKMeasuredAngularVelocityGain;
-        yInfo() << LogPrefix << "*** Linear correction gain            :"
-                << pImpl->dynamicalIKLinearCorrectionGain;
-        yInfo() << LogPrefix << "*** Angular correction gain           :"
-                << pImpl->dynamicalIKAngularCorrectionGain;
-        yInfo() << LogPrefix
-                << "*** Cost regularization              :" << pImpl->costRegularization;
-        yInfo() << LogPrefix
-                << "*** Joint velocity limit             :" << pImpl->dynamicalIKJointVelocityLimit;
-    }
-    if (pImpl->ikSolver == SolverIK::dynamical || pImpl->ikSolver == SolverIK::global) {
-        yInfo() << LogPrefix << "*** Inverse Velocity Kinematics solver:"
-                << pImpl->inverseVelocityKinematicsSolver;
-    }
+    yInfo() << LogPrefix << "*** Measured Linear velocity gain     :"
+            << pImpl->dynamicalIKMeasuredLinearVelocityGain;
+    yInfo() << LogPrefix << "*** Measured Angular velocity gain    :"
+            << pImpl->dynamicalIKMeasuredAngularVelocityGain;
+    yInfo() << LogPrefix << "*** Linear correction gain            :"
+            << pImpl->dynamicalIKLinearCorrectionGain;
+    yInfo() << LogPrefix << "*** Angular correction gain           :"
+            << pImpl->dynamicalIKAngularCorrectionGain;
+    yInfo() << LogPrefix
+            << "*** Cost regularization              :" << pImpl->costRegularization;
+    yInfo() << LogPrefix
+            << "*** Joint velocity limit             :" << pImpl->dynamicalIKJointVelocityLimit;
+    yInfo() << LogPrefix << "*** Inverse Velocity Kinematics solver:"
+            << pImpl->inverseVelocityKinematicsSolver;
     yInfo() << LogPrefix << "*** ===================================";
 
     // ==========================
@@ -1135,11 +827,10 @@ bool RetargetingProvider::open(yarp::os::Searchable& config)
             yError() << LogPrefix << "Failed to find group CUSTOM_CONSTRAINTS";
             return false;
         }
-        if (pImpl->inverseVelocityKinematicsSolver != "QP"
-            || pImpl->ikSolver != SolverIK::dynamical) {
+        if (pImpl->inverseVelocityKinematicsSolver != "QP") {
             yWarning() << LogPrefix
                        << "'CUSTOM_CONSTRAINTS' group option is available only if "
-                          "'ikSolver==dynamical' & 'inverseVelocityKinematicsSolver==QP'. \n "
+                          "'inverseVelocityKinematicsSolver==QP'. \n "
                           "Currently, you are NOT using the customized constraint group.";
         }
 
@@ -1307,15 +998,15 @@ bool RetargetingProvider::open(yarp::os::Searchable& config)
     if ((pImpl->customConstraintUpperBound.size() != pImpl->customConstraintLowerBound.size())
         && (pImpl->customConstraintLowerBound.size() != pImpl->customConstraintMatrix.rows())) {
         yError() << "the number of lower bound (" << pImpl->customConstraintLowerBound.size()
-                 << "), upper buond(" << pImpl->customConstraintUpperBound.size()
-                 << "), and cosntraint matrix rows(" << pImpl->customConstraintMatrix.rows()
+                 << "), upper bound(" << pImpl->customConstraintUpperBound.size()
+                 << "), and constraint matrix rows(" << pImpl->customConstraintMatrix.rows()
                  << ") are not equal";
 
         return false;
     }
     if ((pImpl->customConstraintVariables.size() != pImpl->customConstraintMatrix.cols())) {
         yError() << "the number of constraint variables ("
-                 << pImpl->customConstraintVariables.size() << "), and cosntraint matrix columns ("
+                 << pImpl->customConstraintVariables.size() << "), and constraint matrix columns ("
                  << pImpl->customConstraintMatrix.cols() << ") are not equal";
         return false;
     }
@@ -1333,32 +1024,10 @@ bool RetargetingProvider::open(yarp::os::Searchable& config)
                 << pImpl->customConstraintVariablesIndex[i];
     }
 
-    if (pImpl->ikSolver == SolverIK::dynamical) {
-        if (!pImpl->initializeDynamicalInverseKinematicsSolver()) {
-            askToStop();
-            return false;
-        }
-    }
-
-    // ===================
-    // INITIALIZE RPC PORT
-    // ===================
-
-    std::string rpcPortName;
-    if (!(config.check("rpcPortPrefix") && config.find("rpcPortPrefix").isString())) {
-        rpcPortName = "/" + DeviceName + "/rpc:i";
-    }
-    else {
-        rpcPortName = "/" + config.find("rpcPortPrefix").asString() + "/" + DeviceName + "/rpc:i";
-    }
-
-    if (!pImpl->rpcPort.open(rpcPortName)) {
-        yError() << LogPrefix << "Unable to open rpc port " << rpcPortName;
+    if (!pImpl->initializeDynamicalInverseKinematicsSolver()) {
+        askToStop();
         return false;
     }
-
-    // Set rpc port reader
-    pImpl->rpcPort.setReader(*pImpl->commandPro);
 
     return true;
 }
@@ -1450,261 +1119,6 @@ void RetargetingProvider::run()
         pImpl->solution.CoMPosition = {CoM_position[0], CoM_position[1], CoM_position[2]};
         pImpl->solution.CoMVelocity = {CoM_velocity[0], CoM_velocity[1], CoM_velocity[2]};
     }
-
-    // Check for rpc command status and apply command
-    if (pImpl->commandPro->cmdStatus != rpcCommand::empty) {
-
-        // Apply rpc command
-        if (!pImpl->applyRpcCommand()) {
-            yWarning() << LogPrefix << "Failed to execute the rpc command";
-        }
-
-        // reset the rpc internal status
-        {
-            std::lock_guard<std::mutex> lock(pImpl->mutex);
-            pImpl->commandPro->resetInternalVariables();
-        }
-    }
-}
-
-void RetargetingProvider::impl::ereaseTargetCalibration(const hde::TargetName& targetName)
-{
-    wearableTargets[targetName].get()->clearCalibrationMatrices();
-}
-
-void RetargetingProvider::impl::ereaseTargetsCalibration()
-{
-    for (auto wearableTargetEntry : wearableTargets) {
-        wearableTargetEntry.second.get()->clearCalibrationMatrices();
-    }
-}
-
-void RetargetingProvider::impl::computeSecondaryCalibrationRotationsForChain(
-    const std::vector<iDynTree::JointIndex>& jointZeroIndices,
-    const iDynTree::Transform& refLinkForCalibrationTransform,
-    const std::vector<iDynTree::LinkIndex>& linkToCalibrateIndices,
-    const hde::TargetName& refTargetForCalibrationName)
-{
-    // initialize vectors
-    iDynTree::VectorDynSize jointPos(jointConfigurationSolution);
-    jointPos.zero();
-    iDynTree::VectorDynSize jointVel(jointVelocitiesSolution);
-    jointVel.zero();
-    iDynTree::Twist baseVel;
-    baseVel.zero();
-
-    {
-        std::lock_guard<std::mutex> lock(mutexFlagIntegrator);
-        resetIntegrator = true;
-    }
-
-    // TODO check which value to give to the base (before we were using the base target measurement)
-    kinDynComputations->setRobotState(
-        iDynTree::Transform::Identity(), jointPos, baseVel, jointVel, worldGravity);
-
-    // If needed compute world calibration matrix
-    // in this case the same world calibration transform i used for all the targets
-    iDynTree::Transform secondaryCalibrationWorld = iDynTree::Transform::Identity();
-    if (refTargetForCalibrationName != "") {
-        std::string linkName = wearableTargets[refTargetForCalibrationName].get()->modelLinkName;
-        iDynTree::Transform linkForCalibrationTransform =
-            kinDynComputations->getWorldTransform(linkName);
-        secondaryCalibrationWorld =
-            refLinkForCalibrationTransform * linkForCalibrationTransform.inverse();
-    }
-
-    for (auto wearableTargetEntry : wearableTargets) {
-        hde::TargetName targetName = wearableTargetEntry.first;
-        ModelLinkName linkName = wearableTargetEntry.second->modelLinkName;
-        iDynTree::LinkIndex linkIndex = kinDynComputations->model().getLinkIndex(linkName);
-
-        std::cerr << "target: " << targetName << std::endl;
-        std::cerr << "link index" << linkIndex << std::endl;
-
-        if (std::find(linkToCalibrateIndices.begin(), linkToCalibrateIndices.end(), linkIndex)
-            != linkToCalibrateIndices.end()) {
-            std::cerr << "link found" << std::endl;
-            wearableTargetEntry.second->clearSecondaryCalibrationMatrix();
-            wearableTargetEntry.second->calibrationMeasurementToLink.setRotation(
-                wearableTargetEntry.second->getCalibratedRotation().inverse()
-                * kinDynComputations->getWorldTransform(linkName).getRotation());
-            wearableTargetEntry.second->calibrationMeasurementToLink.setPosition(
-                ((kinDynComputations->getWorldTransform(linkName).getPosition()
-                  - wearableTargetEntry.second->calibrationWorldToMeasurementWorld.getPosition())
-                     .changeCoordinateFrame(
-                         wearableTargetEntry.second->calibrationWorldToMeasurementWorld
-                             .getRotation()
-                             .inverse())
-                 - iDynTree::Position(wearableTargetEntry.second->position))
-                    .changeCoordinateFrame(wearableTargetEntry.second->rotation.inverse()));
-
-            wearableTargetEntry.second->calibrationWorldToMeasurementWorld =
-                secondaryCalibrationWorld
-                * wearableTargetEntry.second->calibrationWorldToMeasurementWorld;
-
-            yInfo() << LogPrefix << "Sensor to Link calibration rotation for " << targetName
-                    << " is set";
-        }
-    }
-}
-
-bool RetargetingProvider::impl::applyRpcCommand()
-{
-    // check is the choosen links are valid
-    hde::TargetName targetName = commandPro->parentLinkName;
-    hde::TargetName childTargetName = commandPro->childLinkName;
-    if (!(targetName == "") && (wearableTargets.find(targetName) == wearableTargets.end())) {
-        yWarning() << LogPrefix << "Target " << targetName
-                   << " choosen for secondaty calibration is not valid";
-        return false;
-    }
-    if (!(childTargetName == "")
-        && (wearableTargets.find(childTargetName) == wearableTargets.end())) {
-        yWarning() << LogPrefix << "Target " << childTargetName
-                   << " choosen for secondaty calibration is not valid";
-        return false;
-    }
-
-    // initialize buffer variable for calibration
-    std::vector<iDynTree::JointIndex> jointZeroIndices;
-    std::vector<iDynTree::LinkIndex> linkToCalibrateIndices;
-    iDynTree::Rotation secondaryCalibrationRotation;
-
-    switch (commandPro->cmdStatus) {
-        case rpcCommand::resetAll: {
-            ereaseTargetsCalibration();
-            break;
-        }
-        case rpcCommand::resetCalibration: {
-            ereaseTargetCalibration(targetName);
-            break;
-        }
-        case rpcCommand::calibrateAll: {
-            // Select all the links and the joints
-            // add all the links of the model to [linkToCalibrateIndices]
-            linkToCalibrateIndices.resize(kinDynComputations->getNrOfLinks());
-            std::iota(linkToCalibrateIndices.begin(), linkToCalibrateIndices.end(), 0);
-
-            // add all the joints of the model to [jointZeroIndices]
-            jointZeroIndices.resize(kinDynComputations->getNrOfDegreesOfFreedom());
-            std::iota(jointZeroIndices.begin(), jointZeroIndices.end(), 0);
-
-            // Compute secondary calibration for the selected links setting to zero the given joints
-            computeSecondaryCalibrationRotationsForChain(
-                jointZeroIndices, iDynTree::Transform::Identity(), linkToCalibrateIndices, "");
-            break;
-        }
-        case rpcCommand::calibrateAllWorldYaw: {
-            // Select all the links and the joints
-            linkToCalibrateIndices.resize(kinDynComputations->getNrOfLinks());
-            std::iota(linkToCalibrateIndices.begin(), linkToCalibrateIndices.end(), 0);
-
-            // add all the joints of the model to [jointZeroIndices]
-            jointZeroIndices.resize(kinDynComputations->getNrOfDegreesOfFreedom());
-            std::iota(jointZeroIndices.begin(), jointZeroIndices.end(), 0);
-
-            // initialize vectors
-            iDynTree::VectorDynSize jointPos(jointConfigurationSolution);
-            iDynTree::VectorDynSize jointVel(jointVelocitiesSolution);
-            jointVel.zero();
-            iDynTree::Twist baseVel;
-            baseVel.zero();
-
-            for (auto const& jointZeroIdx : jointZeroIndices) {
-
-                jointPos.setVal(jointZeroIdx, jointCalibrationSolution.getVal(jointZeroIdx));
-            }
-
-            kinDynComputations->setRobotState(
-                iDynTree::Transform::Identity(), jointPos, baseVel, jointVel, worldGravity);
-
-            for (auto wearableTargetEntry : wearableTargets) {
-                hde::TargetName targetName = wearableTargetEntry.first;
-                ModelLinkName linkName = wearableTargetEntry.second->modelLinkName;
-                iDynTree::LinkIndex linkIndex = kinDynComputations->model().getLinkIndex(linkName);
-
-                if (std::find(
-                        linkToCalibrateIndices.begin(), linkToCalibrateIndices.end(), linkIndex)
-                    != linkToCalibrateIndices.end()) {
-                    wearableTargetEntry.second->clearWorldCalibrationMatrix();
-
-                    iDynTree::Vector3 rpyOffsetTransform =
-                        iDynTree::Rotation(
-                            kinDynComputations->getWorldTransform(linkName).getRotation()
-                            * wearableTargetEntry.second->getCalibratedRotation().inverse())
-                            .asRPY();
-                    wearableTargetEntry.second->calibrationWorldToMeasurementWorld.setRotation(
-                        iDynTree::Rotation::RotZ(rpyOffsetTransform.getVal(2)));
-                }
-            }
-        }
-        case rpcCommand::calibrateAllWithWorld: {
-            // Check if the chose baseLink exist in the model
-            hde::TargetName refTargetForCalibrationName = commandPro->refLinkName;
-            if ((wearableTargets.find(refTargetForCalibrationName) == wearableTargets.end())) {
-                yWarning() << LogPrefix << "Target " << refTargetForCalibrationName
-                           << " choosen as base for secondaty calibration is not valid";
-                return false;
-            }
-
-            // Select all the links and the joints
-            // add all the links of the model to [linkToCalibrateIndices]
-            linkToCalibrateIndices.resize(kinDynComputations->getNrOfLinks());
-            std::iota(linkToCalibrateIndices.begin(), linkToCalibrateIndices.end(), 0);
-
-            // add all the joints of the model to [jointZeroIndices]
-            jointZeroIndices.resize(kinDynComputations->getNrOfDegreesOfFreedom());
-            std::iota(jointZeroIndices.begin(), jointZeroIndices.end(), 0);
-
-            // Compute secondary calibration for the selected links setting to zero the given joints
-            computeSecondaryCalibrationRotationsForChain(jointZeroIndices,
-                                                         iDynTree::Transform::Identity(),
-                                                         linkToCalibrateIndices,
-                                                         refTargetForCalibrationName);
-            break;
-        }
-        case rpcCommand::calibrateRelativeLink: {
-            ereaseTargetCalibration(childTargetName);
-            // Compute the relative transform at zero configuration
-            // setting to zero all the joints
-            iDynTree::VectorDynSize jointPos;
-            jointPos.resize(jointConfigurationSolution.size());
-            jointPos.zero();
-            kinDynComputations->setJointPos(jointPos);
-            std::string childLinkName = wearableTargets[childTargetName].get()->modelLinkName;
-            std::string parentLinkName = wearableTargets[targetName].get()->modelLinkName;
-
-            iDynTree::Rotation relativeRotationZero =
-                kinDynComputations->getWorldTransform(parentLinkName).getRotation().inverse()
-                * kinDynComputations->getWorldTransform(childLinkName).getRotation();
-
-            iDynTree::Rotation calibrationRotationMeasurementToLink =
-                wearableTargets[childTargetName].get()->rotation
-                * wearableTargets[childTargetName].get()->rotation * relativeRotationZero;
-            wearableTargets[childTargetName].get()->calibrationMeasurementToLink.setRotation(
-                calibrationRotationMeasurementToLink);
-            yInfo() << LogPrefix << "secondary calibration for " << childTargetName << " is set";
-            break;
-        }
-        case rpcCommand::setRotationOffset: {
-            ereaseTargetCalibration(targetName);
-            iDynTree::Rotation calibrationRotationMeasurementToLink =
-                iDynTree::Rotation::RPY(3.14 * commandPro->roll / 180,
-                                        3.14 * commandPro->pitch / 180,
-                                        3.14 * commandPro->yaw / 180);
-            // add new calibration
-            wearableTargets[targetName].get()->calibrationMeasurementToLink.setRotation(
-                calibrationRotationMeasurementToLink);
-            yInfo() << LogPrefix << "secondary calibration for " << targetName << " is set";
-            break;
-        }
-        default: {
-            yWarning() << LogPrefix << "Command not valid";
-            return false;
-        }
-    }
-
-    return true;
 }
 
 bool RetargetingProvider::impl::updateWearableTargets()
@@ -2210,54 +1624,6 @@ bool RetargetingProvider::impl::addDynamicalInverseKinematicsTargets()
                 return false;
             }
         }
-    }
-
-    return true;
-}
-
-bool RetargetingProvider::impl::computeLinksOrientationErrors(
-    std::unordered_map<std::string, iDynTree::Transform> linkDesiredTransforms,
-    iDynTree::VectorDynSize jointConfigurations,
-    iDynTree::Transform floatingBasePose,
-    std::unordered_map<std::string, hde::utils::idyntree::rotation::RotationDistance>&
-        linkErrorOrientations)
-{
-    iDynTree::VectorDynSize zeroJointVelocities = jointConfigurations;
-    zeroJointVelocities.zero();
-
-    iDynTree::Twist zeroBaseVelocity;
-    zeroBaseVelocity.zero();
-
-    iDynTree::KinDynComputations* computations = kinDynComputations.get();
-    computations->setRobotState(
-        floatingBasePose, jointConfigurations, zeroBaseVelocity, zeroJointVelocities, worldGravity);
-
-    for (const auto& linkMapEntry : linkDesiredTransforms) {
-        const ModelLinkName& linkName = linkMapEntry.first;
-        linkErrorOrientations[linkName] = hde::utils::idyntree::rotation::RotationDistance(
-            computations->getWorldTransform(linkName).getRotation(),
-            linkDesiredTransforms[linkName].getRotation());
-    }
-    return true;
-}
-
-bool RetargetingProvider::impl::computeLinksAngularVelocityErrors(
-    std::unordered_map<std::string, iDynTree::Twist> linkDesiredVelocities,
-    iDynTree::VectorDynSize jointConfigurations,
-    iDynTree::Transform floatingBasePose,
-    iDynTree::VectorDynSize jointVelocities,
-    iDynTree::Twist baseVelocity,
-    std::unordered_map<std::string, iDynTree::Vector3>& linkAngularVelocityError)
-{
-    iDynTree::KinDynComputations* computations = kinDynComputations.get();
-    computations->setRobotState(
-        floatingBasePose, jointConfigurations, baseVelocity, jointVelocities, worldGravity);
-
-    for (const auto& linkMapEntry : linkDesiredVelocities) {
-        const ModelLinkName& linkName = linkMapEntry.first;
-        iDynTree::toEigen(linkAngularVelocityError[linkName]) =
-            iDynTree::toEigen(linkDesiredVelocities[linkName].getLinearVec3())
-            - iDynTree::toEigen(computations->getFrameVel(linkName).getLinearVec3());
     }
 
     return true;
