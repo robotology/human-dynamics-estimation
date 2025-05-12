@@ -20,6 +20,7 @@ if(ENABLE_ICub)
 endif()
 
 add_subdirectory(HumanStateProvider)
+add_subdirectory(RetargetingProvider)
 add_subdirectory(HumanWrenchProvider)
 add_subdirectory(HumanDynamicsEstimator)
 add_subdirectory(HumanControlBoard)
