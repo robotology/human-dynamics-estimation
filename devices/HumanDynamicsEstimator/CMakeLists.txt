@@ -16,8 +16,7 @@ yarp_add_plugin(HumanDynamicsEstimator
     HumanDynamicsEstimator.h)
 
 target_include_directories(HumanDynamicsEstimator PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-    SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIR})
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
 
 target_link_libraries(HumanDynamicsEstimator PUBLIC
     IHumanState
@@ -30,6 +29,7 @@ target_link_libraries(HumanDynamicsEstimator PUBLIC
     iDynTree::idyntree-core
     iDynTree::idyntree-model
     iDynTree::idyntree-estimation)
+target_link_libraries(HumanDynamicsEstimator PRIVATE Eigen3::Eigen)
 
 if(MSVC)
   target_compile_options(HumanDynamicsEstimator PRIVATE /bigobj)

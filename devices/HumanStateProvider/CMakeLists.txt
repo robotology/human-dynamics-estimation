@@ -19,8 +19,7 @@ yarp_add_plugin(HumanStateProvider
     IKWorkerPool.h)
 
 target_include_directories(HumanStateProvider PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-    SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIR})
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
 
 target_link_libraries(HumanStateProvider PUBLIC
     YARP::YARP_OS
@@ -36,6 +35,9 @@ target_link_libraries(HumanStateProvider PUBLIC
     HumanDynamicsEstimation::utils
     HumanDynamicsEstimation::algorithms
     )
+
+target_link_libraries(HumanStateProvider PRIVATE Eigen3::Eigen)
+
 
 if(MSVC)
   target_compile_options(HumanStateProvider PRIVATE /bigobj)
