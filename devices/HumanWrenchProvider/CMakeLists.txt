@@ -18,8 +18,7 @@ yarp_add_plugin(HumanWrenchProvider
     WrenchFrameTransformers.h)
 
 target_include_directories(HumanWrenchProvider PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-    SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIR})
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
 
 target_link_libraries(HumanWrenchProvider PUBLIC
     IHumanState
@@ -33,6 +32,7 @@ target_link_libraries(HumanWrenchProvider PUBLIC
     iDynTree::idyntree-model
     iDynTree::idyntree-estimation
     iDynTree::idyntree-high-level)
+target_link_libraries(HumanWrenchProvider PRIVATE Eigen3::Eigen)
 
 yarp_install(
     TARGETS HumanWrenchProvider
