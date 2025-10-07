@@ -413,7 +413,11 @@ bool InverseVelocityKinematics::impl::solveInverseDifferentialKinematics(
             (iDynTree::toEigen(matrix).transpose() * weightInverse.toDenseMatrix()
                  * iDynTree::toEigen(matrix)
              + iDynTree::toEigen(regularizationMatrix))
+#if EIGEN_VERSION_AT_LEAST(5,0,0)
+                .bdcSvd<Eigen::ComputeFullU | Eigen::ComputeFullV>()
+#else
                 .bdcSvd(Eigen::ComputeFullU | Eigen::ComputeFullV)
+#endif
                 .solve(iDynTree::toEigen(matrix).transpose() * weightInverse.toDenseMatrix()
                        * iDynTree::toEigen(inputVector));
     }
