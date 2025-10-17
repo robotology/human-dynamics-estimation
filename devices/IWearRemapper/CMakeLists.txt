@@ -18,7 +18,7 @@ target_include_directories(IWearRemapper PUBLIC
 
 target_link_libraries(IWearRemapper PUBLIC
     IWear::IWear
-    WearableData::WearableData
+    trintrin::msgs
     Wearable::SensorsImpl
     YARP::YARP_dev
     YARP::YARP_os
