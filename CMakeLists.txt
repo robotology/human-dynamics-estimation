@@ -21,7 +21,6 @@ endif()
 include(GNUInstallDirs)
 include(CTest)
 
-option(HUMANSTATEPROVIDER_ENABLE_ROS1VISUALIZER "Enable the ROS 1-based RViz Human State Visualizer" OFF)
 option(HUMANSTATEPROVIDER_ENABLE_VISUALIZER "Enable the iDyntree-irricht based Human State Visualizer" OFF)
 
 find_package(robometry QUIET)
@@ -33,6 +32,7 @@ option(BUILD_TESTING "Build tests" OFF)
 # Subfolders will find the dependencies they need.
 find_package(YARP 3.2 REQUIRED)
 find_package(YCM REQUIRED)
+find_package(trintrin REQUIRED)
 
 # Import cmake utilities
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
@@ -127,12 +127,6 @@ add_subdirectory(app)
 add_subdirectory(modules)
 add_subdirectory(servers)
 add_subdirectory(clients)
-
-if(HUMANSTATEPROVIDER_ENABLE_ROS1VISUALIZER)
-  add_subdirectory(publishers)
-endif()
-
-add_subdirectory(bindings)
 add_subdirectory(HumanDynamicsEstimationLibrary)
 
 install_basic_package_files(${PROJECT_NAME}
