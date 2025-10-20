@@ -13,8 +13,8 @@
 #include <yarp/os/Stamp.h>
 #include <yarp/sig/Vector.h>
 
-#include <iDynTree/Model/Model.h>
-#include <iDynTree/ModelIO/ModelLoader.h>
+#include <iDynTree/Model.h>
+#include <iDynTree/ModelLoader.h>
 
 const std::string DeviceName = "HumanControlBoard";
 const std::string LogPrefix = DeviceName + " :";

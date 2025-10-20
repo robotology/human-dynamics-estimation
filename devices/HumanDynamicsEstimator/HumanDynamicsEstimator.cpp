@@ -10,17 +10,17 @@
 #include <Eigen/SparseCore>
 #include <Eigen/SparseLU>
 
-#include <iDynTree/Core/EigenHelpers.h>
-#include <iDynTree/Core/EigenSparseHelpers.h>
-#include <iDynTree/Core/TestUtils.h>
-#include <iDynTree/Core/Transform.h>
-#include <iDynTree/Core/Triplets.h>
-#include <iDynTree/Core/Wrench.h>
-#include <iDynTree/Estimation/BerdyHelper.h>
-#include <iDynTree/Estimation/BerdySparseMAPSolver.h>
-#include <iDynTree/Model/ContactWrench.h>
-#include <iDynTree/Model/Model.h>
-#include <iDynTree/ModelIO/ModelLoader.h>
+#include <iDynTree/EigenHelpers.h>
+#include <iDynTree/EigenSparseHelpers.h>
+#include <iDynTree/TestUtils.h>
+#include <iDynTree/Transform.h>
+#include <iDynTree/Triplets.h>
+#include <iDynTree/Wrench.h>
+#include <iDynTree/BerdyHelper.h>
+#include <iDynTree/BerdySparseMAPSolver.h>
+#include <iDynTree/ContactWrench.h>
+#include <iDynTree/Model.h>
+#include <iDynTree/ModelLoader.h>
 #include <iDynTree/Sensors/Sensors.h>
 #include <iDynTree/Sensors/ThreeAxisForceTorqueContactSensor.h>
 

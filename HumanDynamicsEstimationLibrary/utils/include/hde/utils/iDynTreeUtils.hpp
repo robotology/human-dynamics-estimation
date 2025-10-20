@@ -5,10 +5,10 @@
 #define HUMANDYNAMICSESTIMATION_UTILS_HPP
 
 // iDynTree
-#include <iDynTree/Core/Rotation.h>
-#include <iDynTree/Core/Transform.h>
-#include <iDynTree/Core/VectorDynSize.h>
-#include <iDynTree/Core/VectorFixSize.h>
+#include <iDynTree/Rotation.h>
+#include <iDynTree/Transform.h>
+#include <iDynTree/VectorDynSize.h>
+#include <iDynTree/VectorFixSize.h>
 
 #include <vector>
 

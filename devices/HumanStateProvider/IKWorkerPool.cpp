@@ -5,7 +5,7 @@
 
 #include <yarp/os/LogStream.h>
 
-#include <iDynTree/Core/EigenHelpers.h>
+#include <iDynTree/EigenHelpers.h>
 
 #include <chrono>
 #include <thread>

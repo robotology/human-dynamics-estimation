@@ -10,15 +10,15 @@
 
 #include <Wearable/IWear/IWear.h>
 #include <iDynTree/InverseKinematics.h>
-#include <iDynTree/Model/Model.h>
-#include <iDynTree/ModelIO/ModelLoader.h>
+#include <iDynTree/Model.h>
+#include <iDynTree/ModelLoader.h>
 #include <yarp/os/LogStream.h>
 #include <yarp/os/ResourceFinder.h>
 #include <yarp/os/RpcServer.h>
 #include <yarp/os/Vocab.h>
 
-#include <iDynTree/Core/EigenHelpers.h>
-#include <iDynTree/Model/Traversal.h>
+#include <iDynTree/EigenHelpers.h>
+#include <iDynTree/Traversal.h>
 
 #include <algorithm>
 #include <array>

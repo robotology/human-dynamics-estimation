@@ -11,7 +11,7 @@
 #include "OsqpEigen/OsqpEigen.h"
 
 // idyntree
-#include <iDynTree/Core/EigenHelpers.h>
+#include <iDynTree/EigenHelpers.h>
 #include <iDynTree/KinDynComputations.h>
 
 // yarp

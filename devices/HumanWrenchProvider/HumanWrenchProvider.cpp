@@ -8,15 +8,15 @@
 
 #include <Wearable/IWear/IWear.h>
 
-#include <iDynTree/Model/Model.h>
-#include <iDynTree/ModelIO/ModelLoader.h>
-#include <iDynTree/Core/EigenHelpers.h>
-#include <iDynTree/Core/EigenSparseHelpers.h>
-#include <iDynTree/Core/Transform.h>
-#include <iDynTree/Core/Wrench.h>
+#include <iDynTree/Model.h>
+#include <iDynTree/ModelLoader.h>
+#include <iDynTree/EigenHelpers.h>
+#include <iDynTree/EigenSparseHelpers.h>
+#include <iDynTree/Transform.h>
+#include <iDynTree/Wrench.h>
 #include <iDynTree/KinDynComputations.h>
-#include <iDynTree/Estimation/BerdySparseMAPSolver.h>
-#include <iDynTree/Estimation/BerdyHelper.h>
+#include <iDynTree/BerdySparseMAPSolver.h>
+#include <iDynTree/BerdyHelper.h>
 
 #include <yarp/os/LogStream.h>
 #include <yarp/os/ResourceFinder.h>
@@ -57,7 +57,7 @@ enum rpcCommand
     setWorldWrench,
 };
 
-/** 
+/**
  * This structure holds the parameters used for the Non-Collocated Wrench Estimation.
  */
 struct MAPEstParams
@@ -111,7 +111,7 @@ public:
     //pHRI scenario flag
     bool pHRIScenario;
     iDynTree::Transform robotHumanFeetFixedTransform;
-    
+
     // Read human data
     bool readHumanData = false;
 
@@ -152,7 +152,7 @@ public:
     std::unique_ptr<CmdParser> commandPro;
     yarp::os::RpcServer rpcPort;
     bool applyRpcCommand();
-    
+
     // MAP estimator variables
     MAPEstParams mapEstParams;
     MAPEstHelper mapEstHelper;
@@ -283,14 +283,14 @@ bool parseMeasurementsCovariance(yarp::os::Searchable& config, MAPEstParams& map
         yError() << LogPrefix << "Missing group cov_measurements_NET_EXT_WRENCH_SENSOR!";
         return false;
     }
-    
+
     // find the default value
     if(!priorMeasurementsCovarianceBottle.check("value"))
     {
         yError() << LogPrefix << "Missing default covariance value for NET_EXT_WRENCH_SENSORs!";
         return false;
     }
-    mapEstParams.measurementDefaultCovariance = priorMeasurementsCovarianceBottle.find("value").asFloat64();  
+    mapEstParams.measurementDefaultCovariance = priorMeasurementsCovarianceBottle.find("value").asFloat64();
 
     // find the elements with specific covariance
     yarp::os::Value& specificElements = priorMeasurementsCovarianceBottle.find("specificElements");
@@ -424,7 +424,7 @@ iDynTree::SpatialForceVector HumanWrenchProvider::Impl::computeRCMInBaseUsingMea
 {
     iDynTree::SpatialForceVector rcm;
     rcm.zero();
-    
+
     iDynTree::AngularForceVector3 gravityTorque(0., 0., 0.);
     iDynTree::SpatialForceVector subjectWeightInCentroidal(world_gravity, gravityTorque);
     subjectWeightInCentroidal = subjectWeightInCentroidal*(-humanMass);
@@ -588,7 +588,7 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
         pImpl->robotHumanFeetFixedTransform = {rotation, position};
 
 
-                
+
         yarp::os::Bottle& robotJointsGroup = config.findGroup("RobotJoints");
         if (robotJointsGroup.isNull()) {
             yError() << LogPrefix << "Failed to find RobotJoints group in the configuration file";
@@ -713,7 +713,7 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
                     return false;
                 }
 
-                // Store the transform 
+                // Store the transform
                 WrenchSourceData.frameTransformer.transform = {rotation, position};
 
                 yDebug() << LogPrefix << "=============:";
@@ -851,7 +851,7 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
         }
 
         // Initialize the BerdyHelper
-        if (!pImpl->mapEstHelper.berdyHelper.init(pImpl->humanModel, iDynTree::SensorsList(), pImpl->mapEstHelper.berdyOptions)) {
+        if (!pImpl->mapEstHelper.berdyHelper.init(pImpl->humanModel, pImpl->mapEstHelper.berdyOptions)) {
             yError() << LogPrefix << "Failed to initialize BERDY";
             return false;
         }
@@ -869,21 +869,21 @@ bool HumanWrenchProvider::open(yarp::os::Searchable& config)
                     // initialize with default covariance
                     iDynTree::Vector6 wrenchCovariance;
                     for(int i=0; i<6; i++) wrenchCovariance.setVal(i,pImpl->mapEstParams.measurementDefaultCovariance);
-                    
+
                     // set specific covariance if configured
                     auto specificMeasurementsPtr = pImpl->mapEstParams.specificMeasurementsCovariance.find(berdySensor.id);
                     if(specificMeasurementsPtr!=pImpl->mapEstParams.specificMeasurementsCovariance.end())
                     {
                         for(int i=0; i<6; i++) wrenchCovariance.setVal(i, specificMeasurementsPtr->second[i]);
                     }
-                    
+
                     for(std::size_t i=0; i<6; i++) measurementsCovarianceMatrixTriplets.setTriplet({berdySensor.range.offset+i,berdySensor.range.offset+i, wrenchCovariance[i]});
-                }    
+                }
                     break;
                 case iDynTree::BerdySensorTypes::RCM_SENSOR:
                 {
                     auto specificMeasurementsPtr = pImpl->mapEstParams.specificMeasurementsCovariance.find("RCM_SENSOR");
-                    for(std::size_t i=0; i<6; i++) 
+                    for(std::size_t i=0; i<6; i++)
                     {
                         measurementsCovarianceMatrixTriplets.setTriplet({berdySensor.range.offset+i,berdySensor.range.offset+i, specificMeasurementsPtr->second[i]});
                     }
@@ -1096,7 +1096,7 @@ void HumanWrenchProvider::run()
                                                   {torques[0], torques[1], torques[2]});
         }
 
-        
+
 
         // Tranform it to the correct frame
         // ================================
@@ -1225,7 +1225,7 @@ void HumanWrenchProvider::run()
             {
                 pImpl->transformedWrenches[i].setVal(j, linkExtWrenches(linkIndex).getVal(j));
             }
-        
+
         }
     }
 
@@ -1275,7 +1275,7 @@ bool HumanWrenchProvider::Impl::attach(const std::string& deviceKey, yarp::dev::
         // Check the iHumanState interface
         while (tmpIHumanState->getNumberOfJoints() == 0
             || tmpIHumanState->getNumberOfJoints() != tmpIHumanState->getJointNames().size()) {
-            
+
             yInfo() << LogPrefix << "IHumanState interface waiting for first data. Waiting...";
             yarp::os::Time::delay(5);
         }
@@ -1375,7 +1375,7 @@ bool HumanWrenchProvider::Impl::attach(const std::string& deviceKey, yarp::dev::
         yError() << LogPrefix << "Device"<<deviceKey<<"does not implement any of the attachable interfaces!";
         return false;
     }
-    
+
     return true;
 }
 
@@ -1490,7 +1490,7 @@ int HumanWrenchProvider::getState(int ch)
             return IAnalogSensor::AS_TIMEOUT;
     };
 
-    // If there is no mapping between Wearable sensor 
+    // If there is no mapping between Wearable sensor
     // status to IAnalogSensor, return error
     return IAnalogSensor::AS_ERROR;
 }

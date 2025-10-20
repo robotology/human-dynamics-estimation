@@ -11,12 +11,12 @@
 #include <condition_variable>
 #include <unordered_map>
 
-#include <iDynTree/Core/MatrixDynSize.h>
-#include <iDynTree/Core/VectorDynSize.h>
-#include <iDynTree/Core/Transform.h>
-#include <iDynTree/Model/Model.h>
-#include <iDynTree/Model/Indices.h>
-#include <iDynTree/Model/JointState.h>
+#include <iDynTree/MatrixDynSize.h>
+#include <iDynTree/VectorDynSize.h>
+#include <iDynTree/Transform.h>
+#include <iDynTree/Model.h>
+#include <iDynTree/Indices.h>
+#include <iDynTree/JointState.h>
 #include <iDynTree/KinDynComputations.h>
 #include <iDynTree/InverseKinematics.h>
 

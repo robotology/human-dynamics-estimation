@@ -4,8 +4,8 @@
 #ifndef HDE_DEVICES_IMPL_IWRENCHFRAMETRANSFORMERS
 #define HDE_DEVICES_IMPL_IWRENCHFRAMETRANSFORMERS
 
-#include <iDynTree/Core/Transform.h>
-#include <iDynTree/Core/Wrench.h>
+#include <iDynTree/Transform.h>
+#include <iDynTree/Wrench.h>
 
 #include <mutex>
 #include <string>
