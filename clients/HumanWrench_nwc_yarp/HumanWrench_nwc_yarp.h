@@ -4,7 +4,7 @@
 #ifndef HDE_DEVICES_HUMANWRENCH_NWC_YARP
 #define HDE_DEVICES_HUMANWRENCH_NWC_YARP
 
-#include <hde/interfaces/IHumanWrench.h> 
+#include <hde/interfaces/IHumanWrench.h>
 
 #include <yarp/dev/DeviceDriver.h>
 #include <yarp/dev/IPreciselyTimed.h>
@@ -13,9 +13,9 @@
 
 #include <memory>
 
-namespace hde::msgs {
+namespace trintrin::msgs {
     class HumanWrench;
-} // namespace hde::msgs
+} // namespace trintrin::msgs
 namespace hde::devices {
     class HumanWrench_nwc_yarp;
 } // namespace hde::devices
@@ -25,7 +25,7 @@ class hde::devices::HumanWrench_nwc_yarp final
     // inherite from the interface to be exposed
     , public hde::interfaces::IHumanWrench
     // implement the callback to read the thrifted message
-    , public yarp::os::TypedReaderCallback<hde::msgs::HumanWrench>
+    , public yarp::os::TypedReaderCallback<trintrin::msgs::HumanWrench>
     // implement the periodic thread
     , public yarp::os::PeriodicThread
 {
@@ -36,7 +36,7 @@ private:
 public:
     HumanWrench_nwc_yarp();
     ~HumanWrench_nwc_yarp() override;
-    
+
 
 
     // DeviceDriver interface
@@ -48,7 +48,7 @@ public:
     void threadRelease() override;
 
     // TypedReaderCallback
-    void onRead(hde::msgs::HumanWrench& humanWrench) override;
+    void onRead(trintrin::msgs::HumanWrench& humanWrench) override;
 
     // IHumanWrench interface
     std::vector<std::string> getWrenchSourceNames() const override;

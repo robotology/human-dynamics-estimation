@@ -23,7 +23,7 @@ target_include_directories(HumanWrenchProvider PUBLIC
 target_link_libraries(HumanWrenchProvider PUBLIC
     IHumanState
     IHumanWrench
-    YARP::YARP_OS
+    YARP::YARP_os
     YARP::YARP_dev
     YARP::YARP_sig
     YARP::YARP_init

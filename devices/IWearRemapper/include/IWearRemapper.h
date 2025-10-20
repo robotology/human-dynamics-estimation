@@ -15,10 +15,10 @@
 
 #include <memory>
 
+namespace trintrin::msgs {
+    class WearableData;
+} // namespace trintrin::msgs
 namespace wearable {
-    namespace msg {
-        class WearableData;
-    }
     namespace devices {
         class IWearRemapper;
     }
@@ -27,7 +27,7 @@ namespace wearable {
 class wearable::devices::IWearRemapper
     : public yarp::dev::DeviceDriver
     , public wearable::IWear
-    , public yarp::os::TypedReaderCallback<msg::WearableData>
+    , public yarp::os::TypedReaderCallback<trintrin::msgs::WearableData>
     , public yarp::os::PeriodicThread
     , public yarp::dev::IMultipleWrapper
     , public yarp::dev::IPreciselyTimed
@@ -49,7 +49,7 @@ public:
     void threadRelease() override;
 
     // TypedReaderCallback
-    void onRead(msg::WearableData& wearData, const yarp::os::TypedReader<msg::WearableData>& typedReader) override;
+    void onRead(trintrin::msgs::WearableData& wearData, const yarp::os::TypedReader<trintrin::msgs::WearableData>& typedReader) override;
 
     // PreciselyTimed interface
     yarp::os::Stamp getLastInputStamp() override;

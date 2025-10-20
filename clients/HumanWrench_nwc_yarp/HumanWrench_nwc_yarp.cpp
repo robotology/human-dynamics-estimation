@@ -3,7 +3,7 @@
 
 #include "HumanWrench_nwc_yarp.h"
 
-#include <hde/msgs/HumanWrench.h>
+#include <trintrin/msgs/HumanWrench.h>
 
 #include <yarp/os/Network.h>
 #include <yarp/os/LogStream.h>
@@ -25,7 +25,7 @@ class HumanWrench_nwc_yarp::impl
 public:
     std::mutex mtx;
     yarp::os::Network network;
-    yarp::os::BufferedPort<hde::msgs::HumanWrench> inputPort;
+    yarp::os::BufferedPort<trintrin::msgs::HumanWrench> inputPort;
     bool terminationCall = false;
 
     // Buffer HumanWrench variables
@@ -123,7 +123,7 @@ void HumanWrench_nwc_yarp::run()
 }
 
 // data are read from the port and saved in buffer variables
-void HumanWrench_nwc_yarp::onRead(hde::msgs::HumanWrench& humanWrenchData)
+void HumanWrench_nwc_yarp::onRead(trintrin::msgs::HumanWrench& humanWrenchData)
 {
     std::lock_guard<std::mutex> lock(pImpl->mtx);
     if(!pImpl->terminationCall) {

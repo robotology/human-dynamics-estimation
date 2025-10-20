@@ -20,7 +20,7 @@ target_include_directories(HumanLogger PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
 
 target_link_libraries(HumanLogger PUBLIC
-    YARP::YARP_OS
+    YARP::YARP_os
     YARP::YARP_dev
     YARP::YARP_init
     robometry::robometry

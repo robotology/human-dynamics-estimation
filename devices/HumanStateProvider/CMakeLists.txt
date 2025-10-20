@@ -22,7 +22,7 @@ target_include_directories(HumanStateProvider PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
 
 target_link_libraries(HumanStateProvider PUBLIC
-    YARP::YARP_OS
+    YARP::YARP_os
     YARP::YARP_dev
     YARP::YARP_init
     IWear::IWear

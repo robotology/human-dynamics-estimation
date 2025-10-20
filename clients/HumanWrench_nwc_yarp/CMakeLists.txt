@@ -17,8 +17,8 @@ target_include_directories(HumanWrench_nwc_yarp PUBLIC
 
 target_link_libraries(HumanWrench_nwc_yarp PUBLIC
     IHumanWrench
-    HumanWrenchMsg
-    YARP::YARP_OS
+    trintrin::msgs
+    YARP::YARP_os
     YARP::YARP_dev
     YARP::YARP_init)
 
@@ -28,4 +28,4 @@ yarp_install(
     LIBRARY DESTINATION ${YARP_DYNAMIC_PLUGINS_INSTALL_DIR}
     ARCHIVE DESTINATION ${YARP_STATIC_PLUGINS_INSTALL_DIR}
     YARP_INI DESTINATION ${YARP_PLUGIN_MANIFESTS_INSTALL_DIR})
-    
+

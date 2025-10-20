@@ -13,9 +13,9 @@
 
 #include <memory>
 
-namespace hde::msgs {
+namespace trintrin::msgs {
     class HumanState;
-} // namespace hde::msgs
+}
 namespace hde::devices {
     class HumanState_nwc_yarp;
 } // namespace hde::devices
@@ -23,7 +23,7 @@ namespace hde::devices {
 class hde::devices::HumanState_nwc_yarp final
     : public yarp::dev::DeviceDriver
     , public hde::interfaces::IHumanState
-    , public yarp::os::TypedReaderCallback<hde::msgs::HumanState>
+    , public yarp::os::TypedReaderCallback<trintrin::msgs::HumanState>
     , public yarp::os::PeriodicThread
 {
 private:
@@ -45,7 +45,7 @@ public:
     void threadRelease() override;
 
     // TypedReaderCallback
-    void onRead(hde::msgs::HumanState& humanState) override;
+    void onRead(trintrin::msgs::HumanState& humanState) override;
 
     // IHumanState interface
     std::vector<std::string> getJointNames() const override;

@@ -10,8 +10,8 @@ add_component(NAME algorithms
                       ${CMAKE_CURRENT_SOURCE_DIR}/src/DynamicalInverseKinematics.cpp
               PUBLIC_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/include/hde/algorithms/InverseVelocityKinematics.hpp
                              ${CMAKE_CURRENT_SOURCE_DIR}/include/hde/algorithms/DynamicalInverseKinematics.hpp
-              PUBLIC_LINK_LIBRARIES iDynTree::idyntree-model                           
-              PRIVATE_LINK_LIBRARIES YARP::YARP_OS
+              PUBLIC_LINK_LIBRARIES iDynTree::idyntree-model
+              PRIVATE_LINK_LIBRARIES YARP::YARP_os
                                      iDynTree::idyntree-high-level
                                      OsqpEigen::OsqpEigen
                                      osqp::osqp

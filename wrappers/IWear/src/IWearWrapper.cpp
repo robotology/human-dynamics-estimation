@@ -3,7 +3,7 @@
 
 #include "IWearWrapper.h"
 #include "Wearable/IWear/IWear.h"
-#include "thrift/WearableData.h"
+#include "trintrin/msgs/WearableData.h"
 
 #include <yarp/dev/IPreciselyTimed.h>
 #include <yarp/os/BufferedPort.h>
@@ -19,7 +19,7 @@ using namespace wearable::wrappers;
 class IWearWrapper::impl
 {
 public:
-    yarp::os::BufferedPort<msg::WearableData> dataPort;
+    yarp::os::BufferedPort<trintrin::msgs::WearableData> dataPort;
 
     std::string dataPortName;
 
@@ -68,34 +68,34 @@ IWearWrapper::~IWearWrapper()
 // Helpers
 // =======
 
-const std::map<sensor::SensorStatus, msg::SensorStatus> mapSensorStatus = {
-    {sensor::SensorStatus::Ok, msg::SensorStatus::OK},
-    {sensor::SensorStatus::Error, msg::SensorStatus::ERROR},
-    {sensor::SensorStatus::Overflow, msg::SensorStatus::DATA_OVERFLOW},
-    {sensor::SensorStatus::Calibrating, msg::SensorStatus::CALIBRATING},
-    {sensor::SensorStatus::Timeout, msg::SensorStatus::TIMEOUT},
-    {sensor::SensorStatus::WaitingForFirstRead, msg::SensorStatus::WAITING_FOR_FIRST_READ},
-    {sensor::SensorStatus::Unknown, msg::SensorStatus::UNKNOWN},
+const std::map<sensor::SensorStatus, trintrin::msgs::SensorStatus> mapSensorStatus = {
+    {sensor::SensorStatus::Ok, trintrin::msgs::SensorStatus::OK},
+    {sensor::SensorStatus::Error, trintrin::msgs::SensorStatus::ERROR},
+    {sensor::SensorStatus::Overflow, trintrin::msgs::SensorStatus::DATA_OVERFLOW},
+    {sensor::SensorStatus::Calibrating, trintrin::msgs::SensorStatus::CALIBRATING},
+    {sensor::SensorStatus::Timeout, trintrin::msgs::SensorStatus::TIMEOUT},
+    {sensor::SensorStatus::WaitingForFirstRead, trintrin::msgs::SensorStatus::WAITING_FOR_FIRST_READ},
+    {sensor::SensorStatus::Unknown, trintrin::msgs::SensorStatus::UNKNOWN},
 };
 
-msg::SensorInfo generateSensorStatus(const wearable::sensor::ISensor* sensor)
+trintrin::msgs::SensorInfo generateSensorStatus(const wearable::sensor::ISensor* sensor)
 {
     return {sensor->getSensorName(), mapSensorStatus.at(sensor->getSensorStatus())};
 }
 
-msg::VectorXYZ vector3ToVectorXYZ(const wearable::Vector3& input)
+trintrin::msgs::VectorXYZ vector3ToVectorXYZ(const wearable::Vector3& input)
 {
     return {input[0], input[1], input[2]};
 }
 
-msg::VectorRPY vector3ToVectorRPY(const wearable::Vector3& input)
+trintrin::msgs::VectorRPY vector3ToVectorRPY(const wearable::Vector3& input)
 {
     return {input[0], input[1], input[2]};
 }
 
-msg::QuaternionWXYZ convertQuaternion(const wearable::Quaternion& input)
+trintrin::msgs::Quaternion convertQuaternion(const wearable::Quaternion& input)
 {
-    return {input[0], input[1], input[2], input[3]};
+    return {input[0], {input[1], input[2], input[3]}};
 }
 
 // ========================
@@ -160,7 +160,7 @@ void IWearWrapper::run()
         pImpl->virtualSphericalJointKinSensors = pImpl->iWear->getVirtualSphericalJointKinSensors();
     }
 
-    msg::WearableData& data = pImpl->dataPort.prepare();
+    trintrin::msgs::WearableData& data = pImpl->dataPort.prepare();
     data.producerName = pImpl->iWear->getWearableName();
 
     yarp::os::Stamp timestamp = pImpl->iPreciselyTimed->getLastInputStamp();

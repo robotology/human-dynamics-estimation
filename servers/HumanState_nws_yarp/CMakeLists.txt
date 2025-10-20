@@ -17,8 +17,8 @@ target_include_directories(HumanState_nws_yarp PUBLIC
 
 target_link_libraries(HumanState_nws_yarp PUBLIC
     IHumanState
-    HumanStateMsg
-    YARP::YARP_OS
+    trintrin::msgs
+    YARP::YARP_os
     YARP::YARP_dev
     YARP::YARP_init)
 

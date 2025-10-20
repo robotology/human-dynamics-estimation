@@ -3,7 +3,7 @@
 
 #include "WearableTargets_nws_yarp.h"
 #include <hde/interfaces/IWearableTargets.h>
-#include <hde/msgs/WearableTargets.h>
+#include <trintrin/msgs/WearableTargets.h>
 
 #include <yarp/os/BufferedPort.h>
 #include <yarp/os/LogStream.h>
@@ -21,45 +21,45 @@ using namespace hde::servers;
 // Helpers
 // =======
 
-const std::map<hde::KinematicTargetType, hde::msgs::KinematicTargetType> mapKinematicTargetType = {
-    {hde::KinematicTargetType::none, hde::msgs::KinematicTargetType::NONE},
-    {hde::KinematicTargetType::pose, hde::msgs::KinematicTargetType::POSE},
-    {hde::KinematicTargetType::poseAndVelocity, hde::msgs::KinematicTargetType::POSEANDVELOCITY},
-    {hde::KinematicTargetType::position, hde::msgs::KinematicTargetType::POSITION},
-    {hde::KinematicTargetType::positionAndVelocity, hde::msgs::KinematicTargetType::POSITIONANDVELOCITY},
-    {hde::KinematicTargetType::orientation, hde::msgs::KinematicTargetType::ORIENTATION},
-    {hde::KinematicTargetType::orientationAndVelocity, hde::msgs::KinematicTargetType::ORIENTATIONANDVELOCITY},
-    {hde::KinematicTargetType::gravity, hde::msgs::KinematicTargetType::GRAVITY},
-    {hde::KinematicTargetType::floorContact, hde::msgs::KinematicTargetType::FLOORCONTACT},
+const std::map<hde::KinematicTargetType, trintrin::msgs::KinematicTargetType> mapKinematicTargetType = {
+    {hde::KinematicTargetType::none, trintrin::msgs::KinematicTargetType::NONE},
+    {hde::KinematicTargetType::pose, trintrin::msgs::KinematicTargetType::POSE},
+    {hde::KinematicTargetType::poseAndVelocity, trintrin::msgs::KinematicTargetType::POSEANDVELOCITY},
+    {hde::KinematicTargetType::position, trintrin::msgs::KinematicTargetType::POSITION},
+    {hde::KinematicTargetType::positionAndVelocity, trintrin::msgs::KinematicTargetType::POSITIONANDVELOCITY},
+    {hde::KinematicTargetType::orientation, trintrin::msgs::KinematicTargetType::ORIENTATION},
+    {hde::KinematicTargetType::orientationAndVelocity, trintrin::msgs::KinematicTargetType::ORIENTATIONANDVELOCITY},
+    {hde::KinematicTargetType::gravity, trintrin::msgs::KinematicTargetType::GRAVITY},
+    {hde::KinematicTargetType::floorContact, trintrin::msgs::KinematicTargetType::FLOORCONTACT},
 };
 
-hde::msgs::KinematicTargetType generateMsgKinematicTargetType(const hde::KinematicTargetType kinematicTargetType)
+trintrin::msgs::KinematicTargetType generateMsgKinematicTargetType(const hde::KinematicTargetType kinematicTargetType)
 {
     return mapKinematicTargetType.at(kinematicTargetType);
 }
 
-hde::msgs::Vector3 generateMsgVector3(const iDynTree::Vector3& input)
+trintrin::msgs::VectorXYZ generateMsgVectorXYZ(const iDynTree::Vector3& input)
 {
     return {input[0], input[1], input[2]};
 }
 
-hde::msgs::Quaternion generateMsgQuaternion(const iDynTree::Rotation& input)
+trintrin::msgs::Quaternion generateMsgQuaternion(const iDynTree::Rotation& input)
 {
     iDynTree::Vector4 quaternion;
     input.getQuaternion(quaternion);
     return {quaternion[0], {quaternion[1], quaternion[2], quaternion[3]}};
 }
 
-hde::msgs::Transform generateMsgTransform(const iDynTree::Transform& input)
+trintrin::msgs::Transform generateMsgTransform(const iDynTree::Transform& input)
 {
-    return {generateMsgVector3(input.getPosition()), generateMsgQuaternion(input.getRotation())};
+    return {generateMsgVectorXYZ(input.getPosition()), generateMsgQuaternion(input.getRotation())};
 }
 
 class WearableTargets_nws_yarp::impl
 {
 public:
     hde::interfaces::IWearableTargets* iWearableTargets = nullptr;
-    yarp::os::BufferedPort<hde::msgs::WearableTargets> outputPort;
+    yarp::os::BufferedPort<trintrin::msgs::WearableTargets> outputPort;
 
     bool firstRun = true;
 
@@ -134,86 +134,23 @@ void WearableTargets_nws_yarp::run()
         }
     }
 
-    hde::msgs::WearableTargets& data = pImpl->outputPort.prepare();
+    trintrin::msgs::WearableTargets& data = pImpl->outputPort.prepare();
 
     for (const auto& wearableTargetEntry : pImpl->wearableTargets) {
-        data.targets[wearableTargetEntry.first] = {wearableTargetEntry.second.get()->wearableName, 
-                                                   wearableTargetEntry.second.get()->modelLinkName, 
+        data.targets[wearableTargetEntry.first] = {wearableTargetEntry.second.get()->wearableName,
+                                                   wearableTargetEntry.second.get()->modelLinkName,
                                                    generateMsgKinematicTargetType(wearableTargetEntry.second.get()->targetType),
-                                                   generateMsgVector3(wearableTargetEntry.second.get()->position),
+                                                   generateMsgVectorXYZ(wearableTargetEntry.second.get()->position),
                                                    generateMsgQuaternion(wearableTargetEntry.second.get()->rotation),
-                                                   generateMsgVector3(wearableTargetEntry.second.get()->linearVelocity),
-                                                   generateMsgVector3(wearableTargetEntry.second.get()->angularVelocity),
+                                                   generateMsgVectorXYZ(wearableTargetEntry.second.get()->linearVelocity),
+                                                   generateMsgVectorXYZ(wearableTargetEntry.second.get()->angularVelocity),
                                                    generateMsgTransform(wearableTargetEntry.second.get()->calibrationWorldToMeasurementWorld),
                                                    generateMsgTransform(wearableTargetEntry.second.get()->calibrationMeasurementToLink),
-                                                   generateMsgVector3(wearableTargetEntry.second.get()->positionScaleFactor)};
+                                                   generateMsgVectorXYZ(wearableTargetEntry.second.get()->positionScaleFactor)};
     }
 
     // Stream the data though the port
     pImpl->outputPort.write(true);
-
-    // // Get data from the interface
-    // pImpl->CoMPositionInterface = pImpl->iHumanState->getCoMPosition();
-    // pImpl->CoMVelocityInterface = pImpl->iHumanState->getCoMVelocity();
-    // pImpl->basePositionInterface = pImpl->iHumanState->getBasePosition();
-    // pImpl->baseOrientationInterface = pImpl->iHumanState->getBaseOrientation();
-    // pImpl->baseVelocity = pImpl->iHumanState->getBaseVelocity();
-    // pImpl->jointPositionsInterface = pImpl->iHumanState->getJointPositions();
-    // pImpl->jointVelocitiesInterface = pImpl->iHumanState->getJointVelocities();
-    // pImpl->jointNames = pImpl->iHumanState->getJointNames();
-    // pImpl->baseName = pImpl->iHumanState->getBaseName();
-
-    // // Prepare the message
-    // hde::msgs::HumanState& humanStateData = pImpl->outputPort.prepare();
-
-    // // Convert the COM position
-    // humanStateData.CoMPositionWRTGlobal = {
-    //     pImpl->CoMPositionInterface[0], pImpl->CoMPositionInterface[1], pImpl->CoMPositionInterface[2]};
-
-    // // Convert the COM velocity
-    // humanStateData.CoMVelocityWRTGlobal = {
-    //     pImpl->CoMVelocityInterface[0], pImpl->CoMVelocityInterface[1], pImpl->CoMVelocityInterface[2]};
-
-    // // Convert the base position
-    // humanStateData.baseOriginWRTGlobal = {
-    //     pImpl->basePositionInterface[0], pImpl->basePositionInterface[1], pImpl->basePositionInterface[2]};
-
-    // // Convert the base orientation
-    // humanStateData.baseOrientationWRTGlobal = {
-    //     pImpl->baseOrientationInterface[0], {pImpl->baseOrientationInterface[1], pImpl->baseOrientationInterface[2], pImpl->baseOrientationInterface[3]}};
-
-    // // Convert the base velocity
-    // humanStateData.baseVelocityWRTGlobal.resize(6);
-    // humanStateData.baseVelocityWRTGlobal[0] = pImpl->baseVelocity[0];
-    // humanStateData.baseVelocityWRTGlobal[1] = pImpl->baseVelocity[1];
-    // humanStateData.baseVelocityWRTGlobal[2] = pImpl->baseVelocity[2];
-    // humanStateData.baseVelocityWRTGlobal[3] = pImpl->baseVelocity[3];
-    // humanStateData.baseVelocityWRTGlobal[4] = pImpl->baseVelocity[4];
-    // humanStateData.baseVelocityWRTGlobal[5] = pImpl->baseVelocity[5];
-
-    // // Convert the joint names
-    // humanStateData.jointNames.resize(pImpl->jointPositionsInterface.size());
-    // for (unsigned i = 0; i < pImpl->jointPositionsInterface.size(); ++i) {
-    //     humanStateData.jointNames[i] = pImpl->jointNames[i];
-    // }
-
-    // // Convert the joint positions
-    // humanStateData.positions.resize(pImpl->jointPositionsInterface.size());
-    // for (unsigned i = 0; i < pImpl->jointPositionsInterface.size(); ++i) {
-    //     humanStateData.positions[i] = pImpl->jointPositionsInterface[i];
-    // }
-
-    // // Convert the joint velocities
-    // humanStateData.velocities.resize(pImpl->jointVelocitiesInterface.size());
-    // for (unsigned i = 0; i < pImpl->jointVelocitiesInterface.size(); ++i) {
-    //     humanStateData.velocities[i] = pImpl->jointVelocitiesInterface[i];
-    // }
-
-    // // Store the name of the base link
-    // humanStateData.baseName = pImpl->baseName;
-
-    // // Send the data
-    // pImpl->outputPort.write(/*forceStrict=*/true);
 }
 
 bool WearableTargets_nws_yarp::attach(yarp::dev::PolyDriver* poly)

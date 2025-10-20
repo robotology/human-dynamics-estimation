@@ -3,7 +3,7 @@
 
 #include "HumanWrench_nws_yarp.h"
 #include <hde/interfaces/IHumanWrench.h>
-#include <hde/msgs/HumanWrench.h>
+#include <trintrin/msgs/HumanWrench.h>
 
 #include <yarp/os/BufferedPort.h>
 #include <yarp/os/LogStream.h>
@@ -22,7 +22,7 @@ class HumanWrench_nws_yarp::impl
 public:
     mutable std::mutex mutex;
     hde::interfaces::IHumanWrench* humanWrench = nullptr;
-    yarp::os::BufferedPort<hde::msgs::HumanWrench> outputPort;
+    yarp::os::BufferedPort<trintrin::msgs::HumanWrench> outputPort;
 };
 
 HumanWrench_nws_yarp::HumanWrench_nws_yarp()
@@ -85,7 +85,7 @@ void HumanWrench_nws_yarp::run()
     std::vector<double> wrenches = pImpl->humanWrench->getWrenches();
 
     // Prepare the message
-    hde::msgs::HumanWrench& humanWrenchData = pImpl->outputPort.prepare();
+    trintrin::msgs::HumanWrench& humanWrenchData = pImpl->outputPort.prepare();
 
 
     // Convert the wrench siurce names

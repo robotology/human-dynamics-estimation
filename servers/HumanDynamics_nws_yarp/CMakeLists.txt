@@ -17,8 +17,8 @@ target_include_directories(HumanDynamics_nws_yarp PUBLIC
 
 target_link_libraries(HumanDynamics_nws_yarp PUBLIC
     IHumanDynamics
-    HumanDynamicsMsg
-    YARP::YARP_OS
+    trintrin::msgs
+    YARP::YARP_os
     YARP::YARP_dev
     YARP::YARP_init)
 
