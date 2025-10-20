@@ -3,7 +3,7 @@
 
 #include "HumanState_nws_yarp.h"
 #include <hde/interfaces/IHumanState.h>
-#include <hde/msgs/HumanState.h>
+#include <trintrin/msgs/HumanState.h>
 
 #include <yarp/os/BufferedPort.h>
 #include <yarp/os/LogStream.h>
@@ -19,7 +19,7 @@ class HumanState_nws_yarp::impl
 {
 public:
     hde::interfaces::IHumanState* iHumanState = nullptr;
-    yarp::os::BufferedPort<hde::msgs::HumanState> outputPort;
+    yarp::os::BufferedPort<trintrin::msgs::HumanState> outputPort;
 
     // buffer variables
     std::array<double, 3> CoMPositionInterface;
@@ -102,7 +102,7 @@ void HumanState_nws_yarp::run()
     pImpl->baseName = pImpl->iHumanState->getBaseName();
 
     // Prepare the message
-    hde::msgs::HumanState& humanStateData = pImpl->outputPort.prepare();
+    trintrin::msgs::HumanState& humanStateData = pImpl->outputPort.prepare();
 
     // Convert the COM position
     humanStateData.CoMPositionWRTGlobal = {

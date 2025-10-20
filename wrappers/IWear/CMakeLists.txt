@@ -17,7 +17,7 @@ target_include_directories(IWearWrapper PRIVATE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
 
 target_link_libraries(IWearWrapper PUBLIC
-    IWear WearableData YARP::YARP_dev)
+    IWear trintrin::msgs YARP::YARP_dev)
 
 yarp_install(
     TARGETS IWearWrapper

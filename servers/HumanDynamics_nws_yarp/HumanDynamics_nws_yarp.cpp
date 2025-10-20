@@ -3,7 +3,7 @@
 
 #include "HumanDynamics_nws_yarp.h"
 #include <hde/interfaces/IHumanDynamics.h>
-#include <hde/msgs/HumanDynamics.h>
+#include <trintrin/msgs/HumanDynamics.h>
 
 #include <yarp/os/BufferedPort.h>
 #include <yarp/os/LogStream.h>
@@ -22,7 +22,7 @@ class HumanDynamics_nws_yarp::impl
 public:
     mutable std::mutex mutex;
     hde::interfaces::IHumanDynamics* humanDynamics = nullptr;
-    yarp::os::BufferedPort<hde::msgs::HumanDynamics> outputPort;
+    yarp::os::BufferedPort<trintrin::msgs::HumanDynamics> outputPort;
 };
 
 HumanDynamics_nws_yarp::HumanDynamics_nws_yarp()
@@ -85,7 +85,7 @@ void HumanDynamics_nws_yarp::run()
     std::vector<std::string> jointNames = pImpl->humanDynamics->getJointNames();
 
     // Prepare the message
-    hde::msgs::HumanDynamics& humanDynamicsData = pImpl->outputPort.prepare();
+    trintrin::msgs::HumanDynamics& humanDynamicsData = pImpl->outputPort.prepare();
 
     // Convert the joint names
     humanDynamicsData.jointNames.resize(jointTorques.size());

@@ -17,8 +17,8 @@ target_include_directories(WearableTargets_nwc_yarp PUBLIC
 
 target_link_libraries(WearableTargets_nwc_yarp PUBLIC
     IWearableTargets
-    WearableTargetsMsg
-    YARP::YARP_OS
+    trintrin::msgs
+    YARP::YARP_os
     YARP::YARP_dev
     YARP::YARP_init)
 

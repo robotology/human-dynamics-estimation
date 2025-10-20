@@ -17,20 +17,20 @@ const std::string WrapperName = "IWearActuatorsWrapper";
 const std::string LogPrefix = WrapperName + wearable::Separator;
 constexpr double DefaultPeriod = 0.01;
 
-class IWearActuatorsWrapper::impl : public wearable::msg::WearableActuatorCommand
+class IWearActuatorsWrapper::impl : public trintrin::msgs::WearableActuatorCommand
 {
 public:
     std::string attachedWearableDeviceKey = "defaultIWearActuatorsWrapperDevice";
 
     std::string actuatorCommandInputPortName;
     std::string gloveActuatorCommandInputPortName;
-    yarp::os::BufferedPort<wearable::msg::WearableActuatorCommand> actuatorCommandInputPort;
-    yarp::os::BufferedPort<wearable::msg::GloveActuatorCommand> gloveActuatorCommandInputPort;
+    yarp::os::BufferedPort<trintrin::msgs::WearableActuatorCommand> actuatorCommandInputPort;
+    yarp::os::BufferedPort<trintrin::msgs::GloveActuatorCommand> gloveActuatorCommandInputPort;
 
     std::unordered_map<std::string, wearable::ElementPtr<const actuator::IActuator>> actuatorsMap;
 
-    msg::WearableActuatorCommand wearableActuatorCommand;
-    msg::GloveActuatorCommand gloveActuatorCommand;
+    trintrin::msgs::WearableActuatorCommand wearableActuatorCommand;
+    trintrin::msgs::GloveActuatorCommand gloveActuatorCommand;
 
     wearable::IWear* iWear = nullptr;
 };
@@ -107,10 +107,10 @@ bool IWearActuatorsWrapper::open(yarp::os::Searchable& config)
     return true;
 }
 
-void IWearActuatorsWrapper::onRead(msg::WearableActuatorCommand& wearableActuatorCommand)
+void IWearActuatorsWrapper::onRead(trintrin::msgs::WearableActuatorCommand& wearableActuatorCommand)
 {
    // Unpack the actuator in from incoming command
-   wearable::msg::ActuatorInfo info = wearableActuatorCommand.info;
+    trintrin::msgs::ActuatorInfo info = wearableActuatorCommand.info;
 
    // Check if the commanded actuator name is available
    if (pImpl->actuatorsMap.find(info.name) == pImpl->actuatorsMap.end())
@@ -125,7 +125,7 @@ void IWearActuatorsWrapper::onRead(msg::WearableActuatorCommand& wearableActuato
             case wearable::actuator::ActuatorType::Haptic: {
 
                // Check if the actuator type in the wearable command is correct
-               if(info.type == wearable::msg::ActuatorType::HAPTIC)
+                if (info.type == trintrin::msgs::ActuatorType::HAPTIC)
                {
                    // Get haptic actuator
                    wearable::ElementPtr<const wearable::actuator::IHaptic> castActuator = std::static_pointer_cast<const wearable::actuator::IHaptic>(pImpl->actuatorsMap[info.name]);
@@ -139,7 +139,7 @@ void IWearActuatorsWrapper::onRead(msg::WearableActuatorCommand& wearableActuato
             case wearable::actuator::ActuatorType::Motor: {
 
                // Check if the actuator type in the wearable command is correct
-               if (info.type == wearable::msg::ActuatorType::MOTOR)
+                if (info.type == trintrin::msgs::ActuatorType::MOTOR)
                {
                    // Get motor actuator
                    wearable::ElementPtr<const wearable::actuator::IMotor> castActuator = std::static_pointer_cast<const wearable::actuator::IMotor>(pImpl->actuatorsMap[info.name]);
@@ -157,10 +157,10 @@ void IWearActuatorsWrapper::onRead(msg::WearableActuatorCommand& wearableActuato
    }
 }
 
-void IWearActuatorsWrapper::onRead(msg::GloveActuatorCommand& gloveActuatorCommand)
+void IWearActuatorsWrapper::onRead(trintrin::msgs::GloveActuatorCommand& gloveActuatorCommand)
 {
    // Unpack the actuator in from incoming command
-   wearable::msg::ActuatorInfo info = gloveActuatorCommand.info;
+    trintrin::msgs::ActuatorInfo info = gloveActuatorCommand.info;
 
    // Check if the commanded actuator name is available
    if (pImpl->actuatorsMap.find(info.name) == pImpl->actuatorsMap.end())
@@ -173,7 +173,7 @@ void IWearActuatorsWrapper::onRead(msg::GloveActuatorCommand& gloveActuatorComma
         if (aType == wearable::actuator::ActuatorType::Haptic)
         {
             // Check if the actuator type in the wearable command is correct
-            if(info.type == wearable::msg::ActuatorType::HAPTIC)
+            if (info.type == trintrin::msgs::ActuatorType::HAPTIC)
             {
                 // Get haptic actuator
                 wearable::ElementPtr<const wearable::actuator::IHaptic> castActuator = std::static_pointer_cast<const wearable::actuator::IHaptic>(pImpl->actuatorsMap[info.name]);
@@ -278,7 +278,7 @@ bool IWearActuatorsWrapper::attachAll(const yarp::dev::PolyDriverList& driverLis
         yError() << LogPrefix << "Passed PolyDriverDescriptor is nullptr.";
         return false;
     }
-    
+
     // Save key that identifies the driver
     pImpl->attachedWearableDeviceKey = driver->key;
 

@@ -4,7 +4,7 @@
 #include "IWearRemapper.h"
 #include "Wearable/IWear/IWear.h"
 #include "Wearable/IWear/Sensors/impl/SensorsImpl.h"
-#include "thrift/WearableData.h"
+#include <trintrin/msgs/WearableData.h>
 
 #include <yarp/dev/IPreciselyTimed.h>
 #include <yarp/os/BufferedPort.h>
@@ -44,8 +44,8 @@ public:
 
     mutable std::mutex mutex;
 
-    msg::WearableData wearableData;
-    std::vector<std::unique_ptr<yarp::os::BufferedPort<msg::WearableData>>> inputPortsWearData;
+    trintrin::msgs::WearableData wearableData;
+    std::vector<std::unique_ptr<yarp::os::BufferedPort<trintrin::msgs::WearableData>>> inputPortsWearData;
     std::vector<bool> firstInputReceived; //flag to check that at least a first message from the inputs port was received
 
     // Sensors stored for exposing wearable::IWear
@@ -70,7 +70,7 @@ public:
     std::unordered_map<std::string, std::shared_ptr<sensor::impl::VirtualSphericalJointKinSensor>>
         virtualSphericalJointKinSensors;
 
-    bool updateData(msg::WearableData& receivedWearData, bool create);
+    bool updateData(trintrin::msgs::WearableData& receivedWearData, bool create);
 
     template <typename SensorInterface, typename SensorImpl>
     SensorPtr<const SensorInterface>
@@ -253,7 +253,7 @@ bool IWearRemapper::open(yarp::os::Searchable& config)
             yDebug() << logPrefix << "Configuring input data ports";
 
             for (unsigned i = 0; i < inputDataPortsNamesList->size(); ++i) {
-                pImpl->inputPortsWearData.emplace_back(new yarp::os::BufferedPort<msg::WearableData>());
+                pImpl->inputPortsWearData.emplace_back(new yarp::os::BufferedPort<trintrin::msgs::WearableData>());
                 pImpl->inputPortsWearData.back()->useCallback(*this);
 
                 if (!pImpl->inputPortsWearData.back()->open(localNames[i])) {
@@ -319,20 +319,20 @@ void IWearRemapper::run()
     return;
 }
 
-const std::unordered_map<msg::SensorStatus, sensor::SensorStatus> MapSensorStatus = {
-    {msg::SensorStatus::OK, sensor::SensorStatus::Ok},
-    {msg::SensorStatus::ERROR, sensor::SensorStatus::Error},
-    {msg::SensorStatus::DATA_OVERFLOW, sensor::SensorStatus::Overflow},
-    {msg::SensorStatus::CALIBRATING, sensor::SensorStatus::Calibrating},
-    {msg::SensorStatus::TIMEOUT, sensor::SensorStatus::Timeout},
-    {msg::SensorStatus::WAITING_FOR_FIRST_READ, sensor::SensorStatus::WaitingForFirstRead},
-    {msg::SensorStatus::UNKNOWN, sensor::SensorStatus::Unknown},
+const std::unordered_map<trintrin::msgs::SensorStatus, sensor::SensorStatus> MapSensorStatus = {
+    {trintrin::msgs::SensorStatus::OK, sensor::SensorStatus::Ok},
+    {trintrin::msgs::SensorStatus::ERROR, sensor::SensorStatus::Error},
+    {trintrin::msgs::SensorStatus::DATA_OVERFLOW, sensor::SensorStatus::Overflow},
+    {trintrin::msgs::SensorStatus::CALIBRATING, sensor::SensorStatus::Calibrating},
+    {trintrin::msgs::SensorStatus::TIMEOUT, sensor::SensorStatus::Timeout},
+    {trintrin::msgs::SensorStatus::WAITING_FOR_FIRST_READ, sensor::SensorStatus::WaitingForFirstRead},
+    {trintrin::msgs::SensorStatus::UNKNOWN, sensor::SensorStatus::Unknown},
 };
 
 
 
 
-bool IWearRemapper::impl::updateData(msg::WearableData& receivedWearData, bool create)
+bool IWearRemapper::impl::updateData(trintrin::msgs::WearableData& receivedWearData, bool create)
 {
     for (auto& accelerometersMap : receivedWearData.accelerometers) {
         const std::string& inputSensorName = accelerometersMap.first;
@@ -514,9 +514,9 @@ bool IWearRemapper::impl::updateData(msg::WearableData& receivedWearData, bool c
         auto* sensor = const_cast<sensor::impl::OrientationSensor*>(constSensor);
         // Copy its data to the buffer used for exposing the IWear interface
         sensor->setBuffer({wearDataInputSensor.data.w,
-                           wearDataInputSensor.data.x,
-                           wearDataInputSensor.data.y,
-                           wearDataInputSensor.data.z});
+                           wearDataInputSensor.data.imaginary.x,
+                           wearDataInputSensor.data.imaginary.y,
+                           wearDataInputSensor.data.imaginary.z});
         // Set the status
         sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
     }
@@ -538,9 +538,9 @@ bool IWearRemapper::impl::updateData(msg::WearableData& receivedWearData, bool c
         auto* sensor = const_cast<sensor::impl::PoseSensor*>(constSensor);
         // Copy its data to the buffer used for exposing the IWear interface
         sensor->setBuffer({wearDataInputSensor.data.orientation.w,
-                           wearDataInputSensor.data.orientation.x,
-                           wearDataInputSensor.data.orientation.y,
-                           wearDataInputSensor.data.orientation.z},
+                           wearDataInputSensor.data.orientation.imaginary.x,
+                           wearDataInputSensor.data.orientation.imaginary.y,
+                           wearDataInputSensor.data.orientation.imaginary.z},
                           {wearDataInputSensor.data.position.x,
                            wearDataInputSensor.data.position.y,
                            wearDataInputSensor.data.position.z});
@@ -670,9 +670,9 @@ bool IWearRemapper::impl::updateData(msg::WearableData& receivedWearData, bool c
                            wearDataInputSensor.data.position.y,
                            wearDataInputSensor.data.position.z},
                           {wearDataInputSensor.data.orientation.w,
-                           wearDataInputSensor.data.orientation.x,
-                           wearDataInputSensor.data.orientation.y,
-                           wearDataInputSensor.data.orientation.z});
+                           wearDataInputSensor.data.orientation.imaginary.x,
+                           wearDataInputSensor.data.orientation.imaginary.y,
+                           wearDataInputSensor.data.orientation.imaginary.z});
 
         // Set the status
         sensor->setStatus(MapSensorStatus.at(wearDataInputSensor.info.status));
@@ -736,7 +736,7 @@ bool IWearRemapper::impl::updateData(msg::WearableData& receivedWearData, bool c
     return true;
 }
 
-void IWearRemapper::onRead(msg::WearableData& wearData, const yarp::os::TypedReader<msg::WearableData>& typedReader)
+void IWearRemapper::onRead(trintrin::msgs::WearableData& wearData, const yarp::os::TypedReader<trintrin::msgs::WearableData>& typedReader)
 {
     if (pImpl->terminationCall) {
         return;

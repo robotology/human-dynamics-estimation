@@ -17,8 +17,8 @@ target_include_directories(HumanWrench_nws_yarp PUBLIC
 
 target_link_libraries(HumanWrench_nws_yarp PUBLIC
     IHumanWrench
-    HumanWrenchMsg
-    YARP::YARP_OS
+    trintrin::msgs
+    YARP::YARP_os
     YARP::YARP_dev
     YARP::YARP_init)
 

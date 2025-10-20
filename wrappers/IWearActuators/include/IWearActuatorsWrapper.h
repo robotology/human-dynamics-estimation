@@ -11,8 +11,8 @@
 #include <yarp/os/PeriodicThread.h>
 #include <yarp/os/TypedReaderCallback.h>
 
-#include "thrift/WearableActuatorCommand.h"
-#include "thrift/GloveActuatorCommand.h"
+#include "trintrin/msgs/WearableActuatorCommand.h"
+#include "trintrin/msgs/GloveActuatorCommand.h"
 
 namespace wearable {
     namespace wrappers {
@@ -25,8 +25,8 @@ class wearable::wrappers::IWearActuatorsWrapper
     , public yarp::dev::IWrapper
     , public yarp::dev::IMultipleWrapper
     , public yarp::os::PeriodicThread
-    , public yarp::os::TypedReaderCallback<msg::WearableActuatorCommand>
-    , public yarp::os::TypedReaderCallback<msg::GloveActuatorCommand>
+    , public yarp::os::TypedReaderCallback<trintrin::msgs::WearableActuatorCommand>
+    , public yarp::os::TypedReaderCallback<trintrin::msgs::GloveActuatorCommand>
 {
 private:
     class impl;
@@ -41,8 +41,8 @@ public:
     bool close() override;
 
     // TypedReaderCallback
-    void onRead(msg::WearableActuatorCommand& wearableActuatorCommand) override;
-    void onRead(msg::GloveActuatorCommand& gloveActuatorCommand) override;
+    void onRead(trintrin::msgs::WearableActuatorCommand& wearableActuatorCommand) override;
+    void onRead(trintrin::msgs::GloveActuatorCommand& gloveActuatorCommand) override;
 
     // PeriodicThread
     void run() override;

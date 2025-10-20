@@ -13,9 +13,9 @@
 
 #include <memory>
 
-namespace hde::msgs {
+namespace trintrin::msgs {
     class WearableTargets;
-} // namespace hde::msgs
+} // namespace trintrin::msgs
 namespace hde::devices {
     class WearableTargets_nwc_yarp;
 } // namespace hde::devices
@@ -23,7 +23,7 @@ namespace hde::devices {
 class hde::devices::WearableTargets_nwc_yarp final
     : public yarp::dev::DeviceDriver
     , public hde::interfaces::IWearableTargets
-    , public yarp::os::TypedReaderCallback<hde::msgs::WearableTargets>
+    , public yarp::os::TypedReaderCallback<trintrin::msgs::WearableTargets>
     , public yarp::os::PeriodicThread
 {
 private:
@@ -43,7 +43,7 @@ public:
     void threadRelease() override;
 
     // TypedReaderCallback
-    void onRead(hde::msgs::WearableTargets& wearableTargetsMgs) override;
+    void onRead(trintrin::msgs::WearableTargets& wearableTargetsMgs) override;
 
     // IWearableTargets interface
     std::vector<hde::TargetName> getAllTargetsName() const override;

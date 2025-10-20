@@ -9,6 +9,6 @@ add_component(NAME utils
               SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/iDynTreeUtils.cpp
               PUBLIC_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/include/hde/utils/iDynTreeUtils.hpp
               PUBLIC_LINK_LIBRARIES iDynTree::idyntree-core
-              PRIVATE_LINK_LIBRARIES YARP::YARP_OS
+              PRIVATE_LINK_LIBRARIES YARP::YARP_os
                                      Eigen3::Eigen
              )

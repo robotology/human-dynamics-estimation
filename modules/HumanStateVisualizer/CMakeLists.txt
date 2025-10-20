@@ -31,7 +31,7 @@ include_directories(
 add_executable(${EXE_TARGET_NAME} ${${EXE_TARGET_NAME}_SRC} )
 
 target_link_libraries(${EXE_TARGET_NAME} LINK_PUBLIC
-  YARP::YARP_OS
+  YARP::YARP_os
   YARP::YARP_dev
   YARP::YARP_init
   OsqpEigen::OsqpEigen

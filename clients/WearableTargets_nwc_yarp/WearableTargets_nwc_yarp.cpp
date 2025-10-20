@@ -3,7 +3,7 @@
 
 #include "WearableTargets_nwc_yarp.h"
 
-#include <hde/msgs/WearableTargets.h>
+#include <trintrin/msgs/WearableTargets.h>
 
 #include <yarp/os/Network.h>
 #include <yarp/os/LogStream.h>
@@ -20,19 +20,19 @@ using namespace hde::devices;
 // IMPL AND UTILS
 // ==============
 
-const std::map<hde::msgs::KinematicTargetType, hde::KinematicTargetType> mapKinematicTargetType = {
-    {hde::msgs::KinematicTargetType::NONE, hde::KinematicTargetType::none},
-    {hde::msgs::KinematicTargetType::POSE, hde::KinematicTargetType::pose},
-    {hde::msgs::KinematicTargetType::POSEANDVELOCITY, hde::KinematicTargetType::poseAndVelocity},
-    {hde::msgs::KinematicTargetType::POSITION, hde::KinematicTargetType::position},
-    {hde::msgs::KinematicTargetType::POSITIONANDVELOCITY, hde::KinematicTargetType::positionAndVelocity},
-    {hde::msgs::KinematicTargetType::ORIENTATION, hde::KinematicTargetType::orientation},
-    {hde::msgs::KinematicTargetType::ORIENTATIONANDVELOCITY, hde::KinematicTargetType::orientationAndVelocity},
-    {hde::msgs::KinematicTargetType::GRAVITY, hde::KinematicTargetType::gravity},
-    {hde::msgs::KinematicTargetType::FLOORCONTACT, hde::KinematicTargetType::floorContact},
+const std::map<trintrin::msgs::KinematicTargetType, hde::KinematicTargetType> mapKinematicTargetType = {
+    {trintrin::msgs::KinematicTargetType::NONE, hde::KinematicTargetType::none},
+    {trintrin::msgs::KinematicTargetType::POSE, hde::KinematicTargetType::pose},
+    {trintrin::msgs::KinematicTargetType::POSEANDVELOCITY, hde::KinematicTargetType::poseAndVelocity},
+    {trintrin::msgs::KinematicTargetType::POSITION, hde::KinematicTargetType::position},
+    {trintrin::msgs::KinematicTargetType::POSITIONANDVELOCITY, hde::KinematicTargetType::positionAndVelocity},
+    {trintrin::msgs::KinematicTargetType::ORIENTATION, hde::KinematicTargetType::orientation},
+    {trintrin::msgs::KinematicTargetType::ORIENTATIONANDVELOCITY, hde::KinematicTargetType::orientationAndVelocity},
+    {trintrin::msgs::KinematicTargetType::GRAVITY, hde::KinematicTargetType::gravity},
+    {trintrin::msgs::KinematicTargetType::FLOORCONTACT, hde::KinematicTargetType::floorContact},
 };
 
-iDynTree::Vector3 generateVector3FromMsg(const hde::msgs::Vector3& input)
+iDynTree::Vector3 generateVector3FromMsg(const trintrin::msgs::VectorXYZ& input)
 {
     iDynTree::Vector3 vector3;
     vector3.setVal(0, input.x);
@@ -41,7 +41,7 @@ iDynTree::Vector3 generateVector3FromMsg(const hde::msgs::Vector3& input)
     return vector3;
 }
 
-iDynTree::Rotation generateRotationFromMsg(const hde::msgs::Quaternion& input)
+iDynTree::Rotation generateRotationFromMsg(const trintrin::msgs::Quaternion& input)
 {
     iDynTree::Vector4 vector4;
     vector4.setVal(0, input.w);
@@ -51,7 +51,7 @@ iDynTree::Rotation generateRotationFromMsg(const hde::msgs::Quaternion& input)
     return iDynTree::Rotation::RotationFromQuaternion(vector4);
 }
 
-iDynTree::Transform generateTransformFromMsg(const hde::msgs::Transform& input)
+iDynTree::Transform generateTransformFromMsg(const trintrin::msgs::Transform& input)
 {
     return iDynTree::Transform(generateRotationFromMsg(input.orientation), iDynTree::Position(generateVector3FromMsg(input.position)));
 }
@@ -60,7 +60,7 @@ class WearableTargets_nwc_yarp::impl
 {
 public:
     yarp::os::Network network;
-    yarp::os::BufferedPort<hde::msgs::WearableTargets> inputPort;
+    yarp::os::BufferedPort<trintrin::msgs::WearableTargets> inputPort;
     bool terminationCall = false;
 
     mutable std::recursive_mutex mutex;
@@ -156,7 +156,7 @@ void WearableTargets_nwc_yarp::run()
     return;
 }
 
-void WearableTargets_nwc_yarp::onRead(hde::msgs::WearableTargets& wearableTargetsData)
+void WearableTargets_nwc_yarp::onRead(trintrin::msgs::WearableTargets& wearableTargetsData)
 {
     if(!pImpl->terminationCall) {
 

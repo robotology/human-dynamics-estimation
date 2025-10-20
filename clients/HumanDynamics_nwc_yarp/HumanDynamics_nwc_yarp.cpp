@@ -3,7 +3,7 @@
 
 #include "HumanDynamics_nwc_yarp.h"
 
-#include <hde/msgs/HumanDynamics.h>
+#include <trintrin/msgs/HumanDynamics.h>
 
 #include <yarp/os/Network.h>
 #include <yarp/os/LogStream.h>
@@ -25,7 +25,7 @@ class HumanDynamics_nwc_yarp::impl
 public:
     std::mutex mtx;
     yarp::os::Network network;
-    yarp::os::BufferedPort<hde::msgs::HumanDynamics> inputPort;
+    yarp::os::BufferedPort<trintrin::msgs::HumanDynamics> inputPort;
     bool terminationCall = false;
 
     // Buffer HumanDynamics variables
@@ -123,7 +123,7 @@ void HumanDynamics_nwc_yarp::run()
 }
 
 // data are read from the port and saved in buffer variables
-void HumanDynamics_nwc_yarp::onRead(hde::msgs::HumanDynamics& humanDynamicsData)
+void HumanDynamics_nwc_yarp::onRead(trintrin::msgs::HumanDynamics& humanDynamicsData)
 {
     std::lock_guard<std::mutex> lock(pImpl->mtx);
     if(!pImpl->terminationCall) {

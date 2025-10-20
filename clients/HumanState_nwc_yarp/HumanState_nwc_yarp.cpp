@@ -3,7 +3,7 @@
 
 #include "HumanState_nwc_yarp.h"
 
-#include <hde/msgs/HumanState.h>
+#include <trintrin/msgs/HumanState.h>
 
 #include <yarp/os/Network.h>
 #include <yarp/os/LogStream.h>
@@ -25,7 +25,7 @@ class HumanState_nwc_yarp::impl
 public:
     std::mutex mtx;
     yarp::os::Network network;
-    yarp::os::BufferedPort<hde::msgs::HumanState> inputPort;
+    yarp::os::BufferedPort<trintrin::msgs::HumanState> inputPort;
     bool terminationCall = false;
 
     // Buffer HumanState variables
@@ -130,7 +130,7 @@ void HumanState_nwc_yarp::run()
     return;
 }
 
-void HumanState_nwc_yarp::onRead(hde::msgs::HumanState& humanStateData)
+void HumanState_nwc_yarp::onRead(trintrin::msgs::HumanState& humanStateData)
 {
     std::lock_guard<std::mutex> lock(pImpl->mtx);
     if(!pImpl->terminationCall) {
