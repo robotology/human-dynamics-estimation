@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: BSD-3-Clause
 
 #include <WrenchFrameTransformers.h>
-#include <iDynTree/Core/EigenHelpers.h>
-#include <iDynTree/Model/Link.h>
+#include <iDynTree/EigenHelpers.h>
+#include <iDynTree/Link.h>
 
 using namespace hde::devices::impl;
 

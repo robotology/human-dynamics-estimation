@@ -9,9 +9,9 @@
 #include <vector>
 #include <mutex>
 
-#include <iDynTree/Core/SpatialVector.h>
-#include <iDynTree/Core/Transform.h>
-#include <iDynTree/Core/Twist.h>
+#include <iDynTree/SpatialVector.h>
+#include <iDynTree/Transform.h>
+#include <iDynTree/Twist.h>
 #include <Wearable/IWear/IWear.h>
 
 namespace hde {

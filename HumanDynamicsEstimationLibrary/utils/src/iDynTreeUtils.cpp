@@ -10,7 +10,7 @@
 #include <cmath>
 
 // iDynTree
-#include <iDynTree/Core/EigenHelpers.h>
+#include <iDynTree/EigenHelpers.h>
 
 // YARP
 #include <yarp/os/LogStream.h>

@@ -4,9 +4,9 @@
 #ifndef INVERSEVELOCITYKINEMATICS_HPP
 #define INVERSEVELOCITYKINEMATICS_HPP
 
-#include <iDynTree/Core/VectorDynSize.h>
-#include <iDynTree/Core/MatrixDynSize.h>
-#include <iDynTree/Model/Model.h>
+#include <iDynTree/VectorDynSize.h>
+#include <iDynTree/MatrixDynSize.h>
+#include <iDynTree/Model.h>
 
 #include <map>
 #include <memory>

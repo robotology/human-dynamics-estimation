@@ -13,8 +13,8 @@
 #include <yarp/dev/IAxisInfo.h>
 #include <yarp/os/ResourceFinder.h>
 
-#include <iDynTree/Model/Model.h>
-#include <iDynTree/ModelIO/ModelLoader.h>
+#include <iDynTree/Model.h>
+#include <iDynTree/ModelLoader.h>
 #include <iDynTree/KinDynComputations.h>
 
 #include <cassert>
