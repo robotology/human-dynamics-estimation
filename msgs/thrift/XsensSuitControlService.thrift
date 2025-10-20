@@ -3,11 +3,6 @@
 
 namespace yarp wearable.msg
 
-/*struct FrameReference {
-    1: string frameReference;
-    2: string frameName;
-}*/
-
 /**
  * Methods definition for the XsensDriver Wrapper service
  */
@@ -18,9 +13,9 @@ service XsensSuitControlService {
      * @return true if the calibration is successful, false otherwise
      */
     bool calibrate();
-    
+
     /**
-     * Calibrate the Xsens device with the calibration procedure identified 
+     * Calibrate the Xsens device with the calibration procedure identified
      * by the specified parameter
      *
      * @param calibrationType name of the calibration to execute
@@ -32,12 +27,12 @@ service XsensSuitControlService {
      * Abort the calibration procedure
      */
     bool abortCalibration();
-    
+
     /**
      * Start acquiring data from the Xsens suit
      */
     bool startAcquisition();
-    
+
     /**
      * Stop acquiring data from the suit
      */
