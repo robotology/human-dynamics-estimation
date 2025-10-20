@@ -703,13 +703,13 @@ public:
 
         motorCommand += EOL;
 
-        char c[motorCommand.length() + 1];
-        std::strcpy(c, motorCommand.c_str());
+        std::vector<char> c(motorCommand.length() + 1);
+        std::strcpy(c.data(), motorCommand.c_str());
 
         // Set the commanded value to the serial write
         // TODO: Check for serial write failure
         paexoImpl->iSerialDevice->flush();
-        paexoImpl->iSerialDevice->send(c, motorCommand.length());
+        paexoImpl->iSerialDevice->send(c.data(), motorCommand.length());
 
         return true;
     }
@@ -734,9 +734,9 @@ void Paexo::run()
         if (pImpl->cmdPro->cmdUpdated) {
 
             int s = pImpl->cmdPro->cmdString.length();
-            char c[s + 1];
-            std::strcpy(c, pImpl->cmdPro->cmdString.c_str());
-            if (pImpl->iSerialDevice->send(c, s)) {
+            std::vector<char> c(s + 1);
+            std::strcpy(c.data(), pImpl->cmdPro->cmdString.c_str());
+            if (pImpl->iSerialDevice->send(c.data(), s)) {
                 pImpl->cmdPro->cmdUpdated = false;
             }
         }
