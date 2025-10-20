@@ -63,7 +63,7 @@ jobs:
         cd build
         cmake -GNinja -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
               -DBUILD_TESTING:BOOL=ON \
-              -DHUMANSTATEPROVIDER_ENABLE_VISUALIZER:BOOL=ON -DHUMANSTATEPROVIDER_ENABLE_LOGGER:BOOL=ON..
+              -DHUMANSTATEPROVIDER_ENABLE_VISUALIZER:BOOL=ON -DHUMANSTATEPROVIDER_ENABLE_LOGGER:BOOL=ON ..
 
     - name: Build
       shell: bash -l {0}
