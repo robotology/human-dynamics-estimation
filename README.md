@@ -37,6 +37,7 @@ For installing the dependencies you can decide to install them individually or t
 
 #### Libraries
 - [**YARP**](https://github.com/robotology/yarp): a library and toolkit for communication and device interfaces.
+- [**trintrin**](https://github.com/ami-iit/trintrin): a library with common messages for interprocess communication in robotics applications.
 - [**icub-main**](https://github.com/robotology/icub-main): a library for the interaction with the iCub robot.
 - [**iDynTree**](https://github.com/robotology/idyntree): a library of robots dynamics algorithms for control, estimation and simulation.
 - [**Eigen**](http://eigen.tuxfamily.org/index.php?title=Main_Page) (3.3 or later): a C++ template library for linear algebra.
@@ -45,7 +46,6 @@ For installing the dependencies you can decide to install them individually or t
 #### Optional dependencies
 - [**irrlicht**](http://irrlicht.sourceforge.net/) and [**iDynTree**](https://github.com/robotology/idyntree) compiled with `IDYNTREE_USES_IRRLICHT` enabled: visualizer for floating-base rigid-body systems.
 - [**Robometry**](https://github.com/robotology/robometry) : a telemetry suite for logging data.
-- [**pybind11**](https://github.com/pybind/pybind11): if present, the user can enable `HDE_COMPILE_PYTHON_BINDINGS` to enable the compilation of the python bindings.
 
 ## How to install
 After installing all the dependencies, you can install the HDE project:
@@ -87,7 +87,6 @@ Wearable devices contained in [`/devices/`](/devices) are [YARP devices](http://
 | XsensSuit | Exposes [`XsensSuit`](https://www.xsens.com/motion-capture) data. |  Windows   | xsens MVN SDK 2018.0.3 | [:books:](/doc/How-to-run-XsensSuit.md) |
 | ICub | Exposes [iCub](https://icub.iit.it/) robot data. |  Linux/MacOS/Windows   | [`iDynTree`](https://github.com/robotology/idyntree) | [:books:](/doc/How-to-run-iCub-as-wearable-source.md) |
 | Paexo | Exposes [Paexo](https://paexo.com/?lang=en) data. |  Linux  | `iFeelDriver` (Contact the maintainer for more details) | - |
-| HapticGlove | Exposes [SenseGlove](https://www.senseglove.com/product/developers-kit/) data. |  Linux/Windows  | [`SenseGloveSDK`](https://github.com/Adjuvo/SenseGlove-API) | [:books:](./doc/How-to-compile-and-run-HapticGlove.md) |
 | IFrameTransform | Exposes YARP [`IFrameTransform` Interface](http://www.yarp.it/git-master/classyarp_1_1dev_1_1IFrameTransform.html). |  Linux/MacOS/Windows  | - |  - |
 
 
@@ -170,4 +169,5 @@ The development is also supported by the [Istituto Italiano di Tecnologia](http:
 
 * Silvio Traversaro ([@traversaro](https://github.com/traversaro))
 * Stefano Dafarra ([@S-Dafarra](https://github.com/S-Dafarra))
-* Dario Sortino ([@dariosortino](https://github.com/dariosortino))
+* Davide Gorbani ([@davidegorbani](https://github.com/davidegorbani))
+* Gianluca Milani ([@Gianlucamilani](https://github.com/Gianlucamilani))
