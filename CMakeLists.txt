@@ -48,9 +48,6 @@ option(BUILD_SHARED_LIBS "Build libraries as shared as opposed to static" ON)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-# Flag to enable python bindings
-option(HDE_COMPILE_PYTHON_BINDINGS "Flag that enables building the bindings" OFF)
-
 # Plugins are force to be Shared/Dynamic Library
 set(YARP_FORCE_DYNAMIC_PLUGINS ON)
 
@@ -82,9 +79,6 @@ if(WIN32)
   #Add compile definition to suppress warning related to header <experimental/filesystem>
   add_compile_definitions(_SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING)
 endif()
-
-# Flag to enable Paexo wearable device
-option(WEARABLES_COMPILE_PYTHON_BINDINGS "Flag that enables building the bindings" OFF)
 
 # Flag to enable XSensSuit wearable device
 find_package(XsensXME QUIET)

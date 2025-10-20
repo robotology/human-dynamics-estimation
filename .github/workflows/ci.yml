@@ -31,7 +31,7 @@ jobs:
       uses: ilammy/msvc-dev-cmd@v1.12.1
 
     - name: Setup compilation env variables (not Windows)
-      if: contains(matrix.os, 'ubuntu') || contains(matrix.os, 'macos') 
+      if: contains(matrix.os, 'ubuntu') || contains(matrix.os, 'macos')
       shell: bash -l {0}
       run: |
         echo "CMAKE_INSTALL_PREFIX=${CONDA_PREFIX}" >> $GITHUB_ENV
@@ -46,6 +46,16 @@ jobs:
         echo "CXX=${compiler_path}" >> $GITHUB_ENV
         echo "CMAKE_INSTALL_PREFIX=${CONDA_PREFIX}\Library" >> $GITHUB_ENV
 
+    - name: Install trintrin from source
+      shell: bash -l {0}
+      run: |
+        git clone https://github.com/ami-iit/trintrin
+        cd trintrin
+        mkdir build && cd build
+        cmake -G Ninja -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} ..
+        cmake --build . --config ${{ matrix.build_type }}
+        cmake --install . --config ${{ matrix.build_type }}
+
     - name: Configure
       shell: bash -l {0}
       run: |
@@ -53,8 +63,7 @@ jobs:
         cd build
         cmake -GNinja -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
               -DBUILD_TESTING:BOOL=ON \
-              -DHDE_COMPILE_PYTHON_BINDINGS:BOOL=ON -DHUMANSTATEPROVIDER_ENABLE_VISUALIZER:BOOL=ON \
-              -DHUMANSTATEPROVIDER_ENABLE_LOGGER:BOOL=ON -DHDE_DETECT_ACTIVE_PYTHON_SITEPACKAGES:BOOL=ON ..
+              -DHUMANSTATEPROVIDER_ENABLE_VISUALIZER:BOOL=ON -DHUMANSTATEPROVIDER_ENABLE_LOGGER:BOOL=ON..
 
     - name: Build
       shell: bash -l {0}
@@ -79,31 +88,3 @@ jobs:
       run: |
         # Test CMake packages
         cmake-package-check IWear --targets IWear::IWear
-        cmake-package-check WearableData --targets WearableData::WearableData
-        cmake-package-check WearableActuators --targets WearableActuators::WearableActuators
-        cmake-package-check HumanDynamicsEstimation --targets HumanDynamicsEstimation::HumanStateMsg
-        # Test python packages
-        python -c "import wearables"
-        python -c "import hde"
-
-    - name: Test standalone build of bindings
-      shell: bash -l {0}
-      run: |
-        cd bindings
-        mkdir -p build
-        cd build
-        cmake -GNinja -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
-              -DBUILD_TESTING:BOOL=ON -DBUILD_SHARED_LIBS:BOOL=ON \
-              -DHDE_DETECT_ACTIVE_PYTHON_SITEPACKAGES:BOOL=ON ..
-        cmake --build . --config ${{ matrix.build_type }}
-        ctest --output-on-failure -C ${{ matrix.build_type }} .
-        cmake --install . --config ${{ matrix.build_type }}
-
-    - name: Check install of standalone build of bindings
-      shell: bash -l {0}
-      run: |
-        # Test python packages
-        python -c "import wearables"
-        python -c "import hde"
-
-
