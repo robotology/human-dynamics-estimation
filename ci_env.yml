@@ -8,8 +8,6 @@ dependencies:
   - make
   - ninja
   - pkg-config
-  - python
-  - pybind11
   - libyarp
   - libicub-main
   - idyntree

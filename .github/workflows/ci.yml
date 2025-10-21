@@ -30,10 +30,6 @@ jobs:
         conda-remove-defaults: true
         environment-file: ci_env.yml
 
-    - name: Configure VS Toolchain (Windows)
-      if: contains(matrix.os, 'windows')
-      uses: ilammy/msvc-dev-cmd@v1.12.1
-
     - name: Setup compilation env variables (not Windows)
       if: contains(matrix.os, 'ubuntu') || contains(matrix.os, 'macos')
       shell: bash -l {0}
@@ -42,13 +38,59 @@ jobs:
 
     - name: Setup compilation env variables (Windows)
       if: contains(matrix.os, 'windows')
+      shell: cmd /C CALL {0}
+      run: |
+        REM ============================================================
+        REM  Setup compilation environment variables for Windows builds
+        REM ============================================================
+
+        REM This is necessary to use Ninja in bash shells on Windows.
+        REM Enable delayed expansion so that variables inside echo commands
+        REM expand correctly at runtime (not at parse time).
+        REM This fixes the issue where %compiler_path% was empty when
+        REM writing to %GITHUB_ENV%.
+        setlocal enabledelayedexpansion
+
+        REM Construct the full path to the MSVC compiler (cl.exe).
+        REM %VCToolsInstallDir% is provided by the Visual Studio environment
+        REM and should already exist on the GitHub-hosted Windows runners.
+        set "compiler_path=%VCToolsInstallDir%bin\Hostx64\x64\cl.exe"
+
+        REM Convert backslashes to forward slashes so bash/CMake handle paths properly.
+        REM The 'set' with '!' ensures delayed expansion is applied correctly.
+        set "compiler_path_fwd=!compiler_path:\=/!"
+
+        REM Print out values for debugging (visible in workflow logs).
+        echo VCToolsInstallDir=%VCToolsInstallDir%
+        echo compiler_path=!compiler_path!
+        echo compiler_path_fwd=!compiler_path_fwd!
+
+        REM ============================================================
+        REM  Append environment variables for subsequent steps
+        REM ============================================================
+        REM Quotes around "%GITHUB_ENV%" are essential because the path
+        REM can contain spaces (e.g. in C:\Users\runneradmin\AppData...).
+        REM Using !var! ensures correct runtime expansion.
+        >> "%GITHUB_ENV%" echo CC=!compiler_path_fwd!
+        >> "%GITHUB_ENV%" echo CXX=!compiler_path_fwd!
+        >> "%GITHUB_ENV%" echo CMAKE_INSTALL_PREFIX=%CONDA_PREFIX%\Library
+
+        REM Export VS and SDK environment
+        >> "%GITHUB_ENV%" echo VCToolsInstallDir=%VCToolsInstallDir%
+        >> "%GITHUB_ENV%" echo VCINSTALLDIR=%VCINSTALLDIR%
+        >> "%GITHUB_ENV%" echo VSINSTALLDIR=%VSINSTALLDIR%
+        >> "%GITHUB_ENV%" echo WindowsSdkDir=%WindowsSdkDir%
+        >> "%GITHUB_ENV%" echo WindowsSdkVersion=%WindowsSdkVersion%
+        >> "%GITHUB_ENV%" echo INCLUDE=%INCLUDE%
+        >> "%GITHUB_ENV%" echo LIB=%LIB%
+        >> "%GITHUB_ENV%" echo LIBPATH=%LIBPATH%
+        >> "%GITHUB_ENV%" echo PATH=%PATH%
+
+    - name: Print environment info
       shell: bash -l {0}
       run: |
-        bash_vc_install=${VCToolsInstallDir//\\//}
-        compiler_path=${bash_vc_install}bin/Hostx64/x64/cl.exe
-        echo "CC=${compiler_path}" >> $GITHUB_ENV
-        echo "CXX=${compiler_path}" >> $GITHUB_ENV
-        echo "CMAKE_INSTALL_PREFIX=${CONDA_PREFIX}\Library" >> $GITHUB_ENV
+        env
+        conda list
 
     - name: Configure
       shell: bash -l {0}
