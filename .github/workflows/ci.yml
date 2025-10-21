@@ -20,10 +20,14 @@ jobs:
       fail-fast: false
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v5
 
-    - uses: mamba-org/setup-micromamba@v1
+    - uses: conda-incubator/setup-miniconda@v3
       with:
+        miniforge-variant: Miniforge3
+        miniforge-version: latest
+        channel-priority: true
+        conda-remove-defaults: true
         environment-file: ci_env.yml
 
     - name: Configure VS Toolchain (Windows)
@@ -45,16 +49,6 @@ jobs:
         echo "CC=${compiler_path}" >> $GITHUB_ENV
         echo "CXX=${compiler_path}" >> $GITHUB_ENV
         echo "CMAKE_INSTALL_PREFIX=${CONDA_PREFIX}\Library" >> $GITHUB_ENV
-
-    - name: Install trintrin from source
-      shell: bash -l {0}
-      run: |
-        git clone https://github.com/ami-iit/trintrin
-        cd trintrin
-        mkdir build && cd build
-        cmake -G Ninja -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} ..
-        cmake --build . --config ${{ matrix.build_type }}
-        cmake --install . --config ${{ matrix.build_type }}
 
     - name: Configure
       shell: bash -l {0}
