@@ -1,6 +1,7 @@
 name: human-dynamics-estimation
 channels:
   - conda-forge
+  - robotology
 dependencies:
   - cmake
   - cxx-compiler
@@ -16,3 +17,4 @@ dependencies:
   - librobometry
   - osqp-eigen
   - cmake-package-check
+  - libtrintrin
