@@ -100,6 +100,15 @@ int main(int argc, char* argv[])
     }
     std::string urdfFile = rf.find("modelURDFName").asString();
 
+    std::string rootLinkName;
+    if (rf.check("rootLinkName")) {
+        if (!rf.find("rootLinkName").isString() || rf.find("rootLinkName").asString().empty()) {
+            yError() << LogPrefix << "'rootLinkName' option must be a non-empty string.";
+            return EXIT_FAILURE;
+        }
+        rootLinkName = rf.find("rootLinkName").asString();
+    }
+
     bool ignoreMissingLinks;
     if( !(rf.check("ignoreMissingLinks") && rf.find("ignoreMissingLinks").isBool()) ) 
     {
@@ -473,6 +482,18 @@ int main(int argc, char* argv[])
 
     iDynTree::Model model = modelLoader.model();
 
+    if (!rootLinkName.empty()) {
+        const auto rootLinkIndex = model.getLinkIndex(rootLinkName);
+        if (rootLinkIndex == iDynTree::FRAME_INVALID_INDEX) {
+            yError() << LogPrefix << "root link [ " << rootLinkName
+                     << " ] not found in the visualized model";
+            return EXIT_FAILURE;
+        }
+        model.setDefaultBaseLink(rootLinkIndex);
+        yInfo() << LogPrefix << "Default base link of the visualized model is set to "
+                << rootLinkName;
+    }
+
     // check if wrench sources are found in the model and save the link index
     std::vector<iDynTree::LinkIndex> wrenchSourceLinkIndices;
     if (visualizeWrenches)
@@ -545,7 +566,8 @@ int main(int argc, char* argv[])
      
     // compare the iHumanState base and joint names with the visualization model
     yInfo() << LogPrefix << "Human State Interface providing data for the base link [ " << iHumanState->getBaseName() << " ]";
-    if ( iHumanState->getBaseName() != model.getLinkName(model.getDefaultBaseLink()))
+    if (rootLinkName.empty()
+        && iHumanState->getBaseName() != model.getLinkName(model.getDefaultBaseLink()))
     {
         model.setDefaultBaseLink(model.getLinkIndex(iHumanState->getBaseName()));
         yInfo() << LogPrefix << "Default base link of the visualized model is changed to " << iHumanState->getBaseName();
